@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24d469c3ce4fd914d9eb95135b7e747b, type: 3}
+  m_Name: Iron
+  m_EditorClassIdentifier: 
+  id: 1
+  displayName: Iron
+  itemDrop: {fileID: 11400000, guid: 13a72d4a121bd0e499c2737ebc0b56ed, type: 2}
+  digSound: 4
+  breakSound: 5
+  hardness: 1.5
+  points: 750
+  isSolid: 1
+  variants:
+  - {fileID: 11400000, guid: cd6bc72d7957dee42b1133b014e68817, type: 2}
+  - {fileID: 11400000, guid: 88ffa3629a47a7642b4591219185e876, type: 2}
+  - {fileID: 11400000, guid: c45beb857736e7a418670d84ffe0e98f, type: 2}
+  rarityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.02
+      inSlope: 0.19999999
+      outSlope: 0.19999999
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.1
+      value: 0.04
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0.03
+      inSlope: -0.011111111
+      outSlope: -0.011111111
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spawnWithNoise: 1
+  noiseScale: 0.13
+  noiseSeedOffset: 2000

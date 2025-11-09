@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24d469c3ce4fd914d9eb95135b7e747b, type: 3}
+  m_Name: Stone
+  m_EditorClassIdentifier: 
+  id: 0
+  displayName: Stone
+  digSound: 0
+  breakSound: 1
+  hardness: 1
+  points: 100
+  isSolid: 1
+  variants:
+  - {fileID: 11400000, guid: 2f826492f99e4924f965da054d34e34d, type: 2}
+  - {fileID: 11400000, guid: 2a4ab652221e0194b9417f67842eaec2, type: 2}
+  - {fileID: 11400000, guid: 387798fb017e19a4aace671726bca1de, type: 2}
+  - {fileID: 11400000, guid: feaa8dc61fa03634e8f8599f19af1df4, type: 2}
+  rarityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spawnWithNoise: 0
+  noiseScale: 1
+  noiseSeedOffset: 0

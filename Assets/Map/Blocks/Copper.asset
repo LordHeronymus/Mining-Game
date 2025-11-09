@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24d469c3ce4fd914d9eb95135b7e747b, type: 3}
+  m_Name: Copper
+  m_EditorClassIdentifier: 
+  id: 2
+  displayName: Copper
+  itemDrop: {fileID: 11400000, guid: 2db8d69ab3b281f4bb7db704f45308c0, type: 2}
+  digSound: 4
+  breakSound: 5
+  hardness: 0.8
+  points: 500
+  isSolid: 1
+  variants:
+  - {fileID: 11400000, guid: 5a771d9368874eb44bc9ebae9ad7a2be, type: 2}
+  - {fileID: 11400000, guid: a459cd594cd1a044ebe77454ab26ef34, type: 2}
+  - {fileID: 11400000, guid: 1d779eb7d3be67246a43689ab57b3888, type: 2}
+  rarityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.02
+      inSlope: 0.40797037
+      outSlope: 0.40797037
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.10324803
+    - serializedVersion: 3
+      time: 0.1
+      value: 0.045
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0.02
+      inSlope: -0.027777782
+      outSlope: -0.027777782
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spawnWithNoise: 1
+  noiseScale: 0.12
+  noiseSeedOffset: 1000
