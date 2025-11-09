@@ -9,6 +9,7 @@ public enum SoundType
     DigOre = 4,
     BreakRock = 1,
     BreakOre = 5,
+    SellItem = 6,
 }
 
 [System.Serializable]
@@ -23,9 +24,10 @@ public class Sound
 public class AudioManager : MonoBehaviour
 {
     [Header("Settings")]
+    [SerializeField] Sound[] sounds;
     [SerializeField] int initialPoolSize = 8;
     [SerializeField] int maxPoolSize = 32;
-    [SerializeField] Sound[] sounds;
+    [SerializeField] float dispersionAmount = 0.05f;
 
     [HideInInspector] public static AudioManager Instance;
 
@@ -52,16 +54,19 @@ public class AudioManager : MonoBehaviour
         oldest.Stop(); return oldest;
     }
 
-    public void Play(SoundType type)
+    public void Play(SoundType type, bool dispersion = false)
     {
         var sr = GetFreeSource();
         if (!sr) return;
 
         if (soundLookup.TryGetValue(type, out Sound s))
         {
+            if (dispersion)
+                sr.pitch = s.pitch + Random.Range(-dispersionAmount, dispersionAmount);
+            else sr.pitch = s.pitch;
+
             sr.clip = s.clip;
             sr.volume = s.volume;
-            sr.pitch = s.pitch;
             sr.Play();
             return;
         }

@@ -91,7 +91,7 @@ public class TileMiner : MonoBehaviour
                 if (curBlock != null) hit = curBlock.digSound;
             }
 
-            AudioManager.Instance.Play(hit);
+            AudioManager.Instance.Play(hit, true);
             nextMiningSoundTime = Time.time + miningSoundInterval;
         }
     }

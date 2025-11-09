@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 public class StatsManager : MonoBehaviour
 {
@@ -7,6 +8,7 @@ public class StatsManager : MonoBehaviour
     public int Points { get; private set; } = 0;
     public int Money { get; private set; } = 0;
 
+    public Action<int> OnMoneyChanged;
 
     void OnEnable()
     {
@@ -28,14 +30,13 @@ public class StatsManager : MonoBehaviour
     void HandlePoints(Vector2 pos, int points)
     {
         Points += points;
-        HUDPoints.Instance?.UpdatePoints(Points);
+        HUDPoints.Instance?.UpdatePoints(Points, PointType.Points);
     }
 
     public void AddMoney(int amount)
     {
-        if (amount <= 0) return;
         Money += amount;
-        // Optional: Event/Anzeige aktualisieren
-        // z.B. HUDMoney.Instance?.UpdateMoney(Money);
+        HUDPoints.Instance?.UpdatePoints(Money, PointType.Money);
+        OnMoneyChanged?.Invoke(Money);
     }
 }

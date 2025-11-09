@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
 
 public class ShopManager : MonoBehaviour
 {
@@ -37,7 +38,6 @@ public class ShopManager : MonoBehaviour
         return item.worth * qty;
     }
 
-    /// <summary> Verkauft eine Menge eines Items. </summary>
     public bool TrySell(ItemSO item, int qty = 1)
     {
         if (!CanSell(item, qty)) return false;
@@ -50,20 +50,23 @@ public class ShopManager : MonoBehaviour
 
         StatsManager.Instance.AddMoney(value);
         OnItemSold?.Invoke(item, qty, value);
+
+        if (qty > 1) StartCoroutine(SellSound(qty));
+        else AudioManager.Instance.Play(SoundType.SellItem);
+
         return true;
     }
 
-    /// <summary> Verkauft alle Items mit worth > 0. </summary>
     public int SellAll()
     {
         var inv = InventoryManager.Instance;
         if (!inv) return 0;
 
         int total = 0;
-        // Snapshot holen (direkt iterierbar)
+        int soldCount = 0;
+
         IReadOnlyDictionary<ItemSO, int> snap = inv.GetSnapshot();
 
-        // Liste bauen, damit wir während des Iterierens entfernen dürfen
         var buffer = new List<(ItemSO item, int count)>();
         foreach (var kv in snap)
             if (kv.Key && kv.Key.worth > 0 && kv.Value > 0)
@@ -72,7 +75,10 @@ public class ShopManager : MonoBehaviour
         foreach (var entry in buffer)
         {
             if (inv.TryRemove(entry.item, entry.count))
+            {
                 total += entry.item.worth * entry.count;
+                soldCount += entry.count;
+            }
         }
 
         if (total > 0)
@@ -81,6 +87,21 @@ public class ShopManager : MonoBehaviour
             OnSellAll?.Invoke(total);
         }
 
+        StartCoroutine(SellSound(soldCount));
         return total;
+    }
+
+
+    IEnumerator SellSound(int count)
+    {
+        int iterations = Mathf.FloorToInt(Mathf.Sqrt(count) * 2 + 1);
+
+        for (int i = 0; i < iterations; i++)
+        {
+            AudioManager.Instance.Play(SoundType.SellItem);
+
+            float waitTime = UnityEngine.Random.Range(0.001f, 0.1f);
+            yield return new WaitForSeconds(waitTime);
+        }
     }
 }

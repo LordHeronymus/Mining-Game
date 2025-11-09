@@ -16,10 +16,11 @@ public class ShopUI : MonoBehaviour
     // --- Details Panel (nur Texte) ---
     [Header("Details Panel (Texts)")]
     [SerializeField] private GameObject detailsPanel;
-    [SerializeField] private TextMeshProUGUI oreNameText;    // OreName
-    [SerializeField] private TextMeshProUGUI oreWorthText;   // OreWorth (Stückpreis)
-    [SerializeField] private TextMeshProUGUI countText;      // Count (Anzahl im Inventar)
-    [SerializeField] private TextMeshProUGUI totalWorthText; // TotalWorth = worth * count
+    [SerializeField] private TextMeshProUGUI oreNameText;    
+    [SerializeField] private TextMeshProUGUI oreWorthText;   
+    [SerializeField] private TextMeshProUGUI countText;      
+    [SerializeField] private TextMeshProUGUI totalWorthText;
+    [SerializeField] private TextMeshProUGUI moneyText;
 
     [Header("Buttons")]
     [SerializeField] private Button sell1Button;
@@ -27,7 +28,9 @@ public class ShopUI : MonoBehaviour
     [SerializeField] private Button sellMaxButton;
     [SerializeField] private Button sellAllButton;
 
+    [Header("Settings")]
     [SerializeField] float fadeDuration = 0.1f;
+    [SerializeField] float lerpCounterTime = 0.5f;
 
     private bool panelVisible = false;
     private ItemSO _selected;
@@ -40,15 +43,18 @@ public class ShopUI : MonoBehaviour
         if (sellAllButton) sellAllButton.onClick.AddListener(SellAll);
 
         if (panel) panel.alpha = 0f;
+        HandleMoney(0);
     }
 
     void OnEnable()
     {
         if (InventoryManager.Instance) InventoryManager.Instance.OnInventoryChanged += OnInvChanged;
+        if (StatsManager.Instance) StatsManager.Instance.OnMoneyChanged += HandleMoney;
     }
     void OnDisable()
     {
         if (InventoryManager.Instance) InventoryManager.Instance.OnInventoryChanged -= OnInvChanged;
+        if (StatsManager.Instance) StatsManager.Instance.OnMoneyChanged -= HandleMoney;
     }
     void OnInvChanged()
     {
@@ -56,12 +62,33 @@ public class ShopUI : MonoBehaviour
         RequestRebuild();
     }
 
+    void HandleMoney(int newMoney)
+    {
+        if (moneyCo != null) StopCoroutine(moneyCo);
+        moneyCo = StartCoroutine(LerpCounter(newMoney));
+    }
+
+    float currentMoneyShow = 0f;
+    Coroutine moneyCo;
+
+    IEnumerator LerpCounter(int amount)
+    {
+        float delta = amount - currentMoneyShow;
+        float step = delta * (1 / lerpCounterTime) * Time.deltaTime;
+
+        while (currentMoneyShow < amount)
+        {
+            currentMoneyShow = Mathf.Min(currentMoneyShow + step, amount);
+            moneyText.text = Mathf.Floor(currentMoneyShow).ToString();
+            yield return null;
+        }
+    }
+
     void Update()
     {
         if (panelVisible && Input.GetKeyDown(KeyCode.Escape)) HidePanel();
     }
 
-    // ---- Öffnen/Schließen ----
     public void ShowPanel()
     {
         Rebuild();
