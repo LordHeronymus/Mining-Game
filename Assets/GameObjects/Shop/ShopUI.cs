@@ -1,9 +1,10 @@
 ﻿// ShopUI.cs
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class ShopUI : MonoBehaviour
 {
@@ -43,12 +44,16 @@ public class ShopUI : MonoBehaviour
 
     void OnEnable()
     {
-        if (InventoryManager.Instance) InventoryManager.Instance.OnInventoryChanged += RefreshSelectionAndList;
+        if (InventoryManager.Instance) InventoryManager.Instance.OnInventoryChanged += OnInvChanged;
     }
-
     void OnDisable()
     {
-        if (InventoryManager.Instance) InventoryManager.Instance.OnInventoryChanged -= RefreshSelectionAndList;
+        if (InventoryManager.Instance) InventoryManager.Instance.OnInventoryChanged -= OnInvChanged;
+    }
+    void OnInvChanged()
+    {
+        if (!panelVisible) return;   // 👈 nichts tun, wenn zu
+        RequestRebuild();
     }
 
     void Update()
@@ -86,21 +91,42 @@ public class ShopUI : MonoBehaviour
         panel.interactable = enabled;
     }
 
+    bool _pendingRebuild;
+    void RequestRebuild()
+    {
+        if (!panelVisible) return;
+        if (_pendingRebuild) return;
+        _pendingRebuild = true;
+        StartCoroutine(CoRebuildNextFrame());
+    }
+    IEnumerator CoRebuildNextFrame()
+    {
+        yield return null;  // sammelt mehrere Events in einem Frame
+        _pendingRebuild = false;
+        Rebuild();
+    }
+
     // ---- Liste/Slots ----
+    private readonly List<(ItemSO item, int count)> _buffer = new();
+
     private void Rebuild()
     {
         if (!content || InventoryManager.Instance == null) return;
         ClearChildren();
 
-        var snap = InventoryManager.Instance.GetSnapshot();
+        _buffer.Clear();
+        foreach (var kv in InventoryManager.Instance.GetSnapshot())
+        {
+            if (kv.Key != null && kv.Key.category == ItemCategory.Ore)
+                _buffer.Add((kv.Key, kv.Value));
+        }
+        _buffer.Sort((a, b) => string.Compare(a.item.displayName, b.item.displayName, System.StringComparison.Ordinal));
 
-        foreach (var kv in snap
-            .Where(k => k.Key != null && k.Key.category == ItemCategory.Ore)
-            .OrderBy(k => k.Key.displayName))
+        foreach (var e in _buffer)
         {
             var slot = Instantiate(slotPrefab, content);
-            slot.Bind(kv.Key, kv.Value, this);
-            slot.name = $"Slot_{kv.Key.displayName}";
+            slot.Bind(e.item, e.count, this);
+            slot.name = $"Slot_{e.item.displayName}";
         }
 
         ApplySelectionHighlight();
@@ -112,11 +138,6 @@ public class ShopUI : MonoBehaviour
     {
         for (int i = content.childCount - 1; i >= 0; i--)
             Destroy(content.GetChild(i).gameObject);
-    }
-
-    private void RefreshSelectionAndList()
-    {
-        Rebuild();
     }
 
     // ---- Auswahl ----
