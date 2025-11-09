@@ -11,16 +11,6 @@ public class InventoryManager : MonoBehaviour
     public event Action<ItemSO, int> OnItemChanged;
     public event Action OnInventoryChanged;
 
-    void Update()
-    {
-        /*
-        foreach (var kvp in _counts)
-        {
-            Debug.Log($"Item: {kvp.Key.name}, Count: {kvp.Value}");
-        }
-        */
-    }
-
     void Awake()
     {
         if (Instance && Instance != this) { Destroy(gameObject); return; }
@@ -36,7 +26,6 @@ public class InventoryManager : MonoBehaviour
 
         OnItemChanged?.Invoke(item, _counts[item]);
         OnInventoryChanged?.Invoke();
-        Debug.Log("Event fired");
     }
 
     public bool TryRemove(ItemSO item, int amount = 1)

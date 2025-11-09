@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿// ShopUI.cs
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,11 +12,13 @@ public class ShopUI : MonoBehaviour
     [SerializeField] private ShopSlot slotPrefab;
     [SerializeField] private CanvasGroup panel;
 
-    [Header("Details Panel")]
-    [SerializeField] private Image selectedIcon;
-    [SerializeField] private TextMeshProUGUI selectedNameText;
-    [SerializeField] private TextMeshProUGUI selectedCountText;
-    [SerializeField] private TextMeshProUGUI selectedWorthText;
+    // --- Details Panel (nur Texte) ---
+    [Header("Details Panel (Texts)")]
+    [SerializeField] private GameObject detailsPanel;
+    [SerializeField] private TextMeshProUGUI oreNameText;    // OreName
+    [SerializeField] private TextMeshProUGUI oreWorthText;   // OreWorth (Stückpreis)
+    [SerializeField] private TextMeshProUGUI countText;      // Count (Anzahl im Inventar)
+    [SerializeField] private TextMeshProUGUI totalWorthText; // TotalWorth = worth * count
 
     [Header("Buttons")]
     [SerializeField] private Button sell1Button;
@@ -35,7 +38,7 @@ public class ShopUI : MonoBehaviour
         if (sellMaxButton) sellMaxButton.onClick.AddListener(SellMax);
         if (sellAllButton) sellAllButton.onClick.AddListener(SellAll);
 
-        panel.alpha = 0f;
+        if (panel) panel.alpha = 0f;
     }
 
     void OnEnable()
@@ -100,7 +103,6 @@ public class ShopUI : MonoBehaviour
             slot.name = $"Slot_{kv.Key.displayName}";
         }
 
-        // Nach Rebuild aktuelle Auswahl erneut hervorheben
         ApplySelectionHighlight();
         UpdateDetails();
         UpdateButtons();
@@ -114,7 +116,6 @@ public class ShopUI : MonoBehaviour
 
     private void RefreshSelectionAndList()
     {
-        // Daten haben sich geändert (Verkauf etc.)
         Rebuild();
     }
 
@@ -142,18 +143,26 @@ public class ShopUI : MonoBehaviour
     {
         if (_selected == null)
         {
-            if (selectedIcon) selectedIcon.enabled = false;
-            if (selectedNameText) selectedNameText.text = "";
-            if (selectedCountText) selectedCountText.text = "";
-            if (selectedWorthText) selectedWorthText.text = "";
+            detailsPanel.SetActive(false);
+            if (oreNameText) oreNameText.text = "";
+            if (oreWorthText) oreWorthText.text = "";
+            if (countText) countText.text = "";
+            if (totalWorthText) totalWorthText.text = "";
             return;
+        }
+        else
+        {
+            detailsPanel.SetActive(true);
         }
 
         int count = InventoryManager.Instance?.GetCount(_selected) ?? 0;
-        if (selectedIcon) { selectedIcon.enabled = true; selectedIcon.sprite = _selected.icon; }
-        if (selectedNameText) selectedNameText.text = _selected.displayName;
-        if (selectedCountText) selectedCountText.text = $"x{count}";
-        if (selectedWorthText) selectedWorthText.text = $"{_selected.worth} each";
+        int worth = _selected.worth;
+        int total = worth * count;
+
+        if (oreNameText) oreNameText.text = _selected.displayName;
+        if (oreWorthText) oreWorthText.text = $"Worth: {worth}";
+        if (countText) countText.text = $"Count: {count}";
+        if (totalWorthText) totalWorthText.text = $"Total: {total}";
     }
 
     private void UpdateButtons()
@@ -168,15 +177,13 @@ public class ShopUI : MonoBehaviour
 
     private void Sell(int qty)
     {
-        if (!_selected || !_selected || InventoryManager.Instance == null) return;
+        if (!_selected || InventoryManager.Instance == null) return;
         int have = InventoryManager.Instance.GetCount(_selected);
         if (have <= 0) return;
 
         int q = Mathf.Min(qty, have);
         ShopManager.Instance?.TrySell(_selected, q);
-        Rebuild();
-        UpdateDetails();
-        UpdateButtons();
+        Rebuild();           // Liste & Counts sofort aktualisieren
     }
 
     private void SellMax()
@@ -187,15 +194,11 @@ public class ShopUI : MonoBehaviour
 
         ShopManager.Instance?.TrySell(_selected, have);
         Rebuild();
-        UpdateDetails();
-        UpdateButtons();
     }
 
     private void SellAll()
     {
         ShopManager.Instance?.SellAll();
         Rebuild();
-        UpdateDetails();
-        UpdateButtons();
     }
 }

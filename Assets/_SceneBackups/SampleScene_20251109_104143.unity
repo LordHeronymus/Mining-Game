@@ -866,7 +866,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -250, y: -150}
+  m_AnchoredPosition: {x: -216, y: -150}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &561489614
@@ -884,13 +884,13 @@ MonoBehaviour:
   m_Padding:
     m_Left: 0
     m_Right: 0
-    m_Top: 93
+    m_Top: 100
     m_Bottom: 0
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 400, y: 80}
-  m_Spacing: {x: 0, y: 40}
+  m_CellSize: {x: 400, y: 100}
+  m_Spacing: {x: 0, y: 0}
   m_Constraint: 1
   m_ConstraintCount: 2
 --- !u!1 &581918358
@@ -2827,7 +2827,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Padding:
     m_Left: 0
-    m_Right: 200
+    m_Right: 0
     m_Top: 78
     m_Bottom: 0
   m_ChildAlignment: 4
@@ -6058,10 +6058,10 @@ MonoBehaviour:
   content: {fileID: 2052464123}
   slotPrefab: {fileID: 3368478671358310595, guid: 550429c42bb3ace45b84c29bec21aa94, type: 3}
   panel: {fileID: 2115622153}
-  oreNameText: {fileID: 1826883094}
-  oreWorthText: {fileID: 617746980}
-  countText: {fileID: 1755252547}
-  totalWorthText: {fileID: 660580259}
+  selectedIcon: {fileID: 0}
+  selectedNameText: {fileID: 0}
+  selectedCountText: {fileID: 0}
+  selectedWorthText: {fileID: 0}
   sell1Button: {fileID: 1870818899}
   sell10Button: {fileID: 1292161028}
   sellMaxButton: {fileID: 1800591407}
