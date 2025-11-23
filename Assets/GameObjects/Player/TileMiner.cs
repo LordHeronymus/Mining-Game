@@ -8,15 +8,14 @@ using System;
 public class TileMiner : MonoBehaviour
 {
     [Header("Refs")]
-    public Tilemap tilemap;
-    public BlockRegistry blockRegistry;
-    public Camera cam;
-    public Tilemap highlightMap;
-    public TileBase highlightTile;
+    [SerializeField] StatsManager stats;
+    [SerializeField] Tilemap tilemap;
+    [SerializeField] Tilemap highlightMap;
+    [SerializeField] TileBase highlightTile;
+    [SerializeField] BlockRegistry blockRegistry;
+    [SerializeField] Camera cam;
 
     [Header("Mining")]
-    public float mineTime = 0.6f;
-    public float maxReach = 2.0f;
     public int searchRadiusCells = 2;
     public float miningSoundInterval = 0.5f;
 
@@ -25,6 +24,9 @@ public class TileMiner : MonoBehaviour
     private float nextMiningSoundTime = 0f;
 
     public static Action<Vector2, int> OnBlockMined;
+
+    private bool mining;
+    public bool IsMingin => mining;
 
     void Awake()
     {
@@ -53,7 +55,13 @@ public class TileMiner : MonoBehaviour
             if (tilemap.HasTile(targetCell)) highlightMap.SetTile(targetCell, highlightTile);
         }
 
-        if (!Input.GetMouseButton(0)) return;
+        if (!Input.GetMouseButton(0))
+        {
+            mining = false;
+            return;
+        }
+        else mining = true;
+
         TileBase t = tilemap.GetTile(targetCell);
         if (!t) return;
 
@@ -122,16 +130,16 @@ public class TileMiner : MonoBehaviour
         Vector3 playerPos = transform.position;
 
         float dist = Vector2.Distance(cellWorld, playerPos);
-        if (dist <= maxReach) return cell;
+        if (dist <= stats.Reach) return cell;
 
         Vector2 dir = (cellWorld - playerPos).normalized;
-        Vector3 limited = playerPos + (Vector3)(dir * maxReach);
+        Vector3 limited = playerPos + (Vector3)(dir * stats.Reach);
         return tilemap.WorldToCell(limited);
     }
 
     float GetTargetMineTime(Vector3Int cell)
     {
-        float time = mineTime;
+        float time = 1 / stats.MiningSpeed;
 
         if (blockRegistry != null)
         {

@@ -5,7 +5,7 @@ public class ShopBuilding : MonoBehaviour
 {
     [SerializeField] private CanvasGroup panel;
 
-    [SerializeField] float fadeDuration = 0.3f;
+    [SerializeField] float fadeDuration = 0.1f;
 
     void OnTriggerEnter2D(Collider2D other)
     {

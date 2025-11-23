@@ -1,0 +1,276 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class SellPage : MonoBehaviour
+{
+    [Header("Refs")]
+    [SerializeField] private Transform content;
+    [SerializeField] private ShopSlot slotPrefab;
+    [SerializeField] private CanvasGroup panel;
+
+    // --- Details Panel (nur Texte) ---
+    [Header("Details Panel (Texts)")]
+    [SerializeField] private GameObject detailsPanel;
+    [SerializeField] private TextMeshProUGUI oreNameText;    
+    [SerializeField] private TextMeshProUGUI oreWorthText;   
+    [SerializeField] private TextMeshProUGUI countText;      
+    [SerializeField] private TextMeshProUGUI totalWorthText;
+    [SerializeField] private TextMeshProUGUI moneyText;
+
+    [Header("Buttons")]
+    [SerializeField] private Button sell1Button;
+    [SerializeField] private Button sell10Button;
+    [SerializeField] private Button sellMaxButton;
+    [SerializeField] private Button sellAllButton;
+
+    [Header("Settings")]
+    [SerializeField] float lerpCounterTime = 0.5f;
+
+    private bool panelVisible = false;
+    private ItemSO _selected;
+
+    void Awake()
+    {
+        if (sell1Button) sell1Button.onClick.AddListener(() => Sell(1));
+        if (sell10Button) sell10Button.onClick.AddListener(() => Sell(10));
+        if (sellMaxButton) sellMaxButton.onClick.AddListener(SellMax);
+        if (sellAllButton) sellAllButton.onClick.AddListener(SellAll);
+
+        gameObject.SetActive(true);
+        HandleMoney(0);
+    }
+
+    void OnEnable()
+    {
+        if (InventoryManager.Instance) InventoryManager.Instance.OnInventoryChanged += OnInvChanged;
+        if (StatsManager.Instance) StatsManager.Instance.OnMoneyChanged += HandleMoney;
+    }
+    void OnDisable()
+    {
+        if (InventoryManager.Instance) InventoryManager.Instance.OnInventoryChanged -= OnInvChanged;
+        if (StatsManager.Instance) StatsManager.Instance.OnMoneyChanged -= HandleMoney;
+    }
+    void OnInvChanged()
+    {
+        if (!panelVisible) return;   // 👈 nichts tun, wenn zu
+        RequestRebuild();
+    }
+
+    void HandleMoney(int newMoney)
+    {
+        if (moneyCo != null) StopCoroutine(moneyCo);
+        moneyCo = StartCoroutine(LerpCounter(newMoney));
+    }
+
+    float currentMoneyShow = 0f;
+    Coroutine moneyCo;
+
+    IEnumerator LerpCounter(int amount)
+    {
+        float delta = amount - currentMoneyShow;
+        float step = delta * (1 / lerpCounterTime) * Time.deltaTime;
+
+        while (currentMoneyShow < amount)
+        {
+            currentMoneyShow = Mathf.Min(currentMoneyShow + step, amount);
+            moneyText.text = Mathf.Floor(currentMoneyShow).ToString();
+            yield return null;
+        }
+    }
+
+    public void ShowPanel(bool show)
+    {
+        panel.alpha = show ? 1f : 0f;
+        panel.blocksRaycasts = show;
+        panel.interactable = show;
+        Rebuild();
+    }
+
+    bool _pendingRebuild;
+    void RequestRebuild()
+    {
+        if (!panelVisible) return;
+        if (_pendingRebuild) return;
+        _pendingRebuild = true;
+        StartCoroutine(CoRebuildNextFrame());
+    }
+
+    IEnumerator CoRebuildNextFrame()
+    {
+        yield return null;  // sammelt mehrere Events in einem Frame
+        _pendingRebuild = false;
+        Rebuild();
+    }
+
+    // ---- Liste/Slots ----
+    private readonly List<(ItemSO item, int count)> _buffer = new();
+
+    public void Rebuild()
+    {
+        if (!content || InventoryManager.Instance == null) return;
+        ItemSO previousSelected = _selected;
+        ClearChildren();
+
+        _buffer.Clear();
+        foreach (var kv in InventoryManager.Instance.GetSnapshot())
+        {
+            if (kv.Key != null && kv.Key.category == ItemCategory.Ore)
+                _buffer.Add((kv.Key, kv.Value));
+        }
+
+        _buffer.Sort((a, b) => string.Compare(
+            a.item.displayName,
+            b.item.displayName,
+            System.StringComparison.Ordinal));
+
+        ItemSO newSelected = null;
+        if (_buffer.Count > 0)
+        {
+            if (previousSelected == null) newSelected = _buffer[0].item;
+            else
+            {
+                int idx = _buffer.FindIndex(e => e.item == previousSelected);
+                if (idx >= 0) newSelected = previousSelected;
+                else
+                {
+                    int nextIndex = _buffer.FindIndex(e =>
+                        string.Compare(e.item.displayName, previousSelected.displayName,
+                            System.StringComparison.Ordinal) > 0);
+
+                    if (nextIndex < 0) nextIndex = _buffer.Count - 1;
+                    newSelected = _buffer[nextIndex].item;
+                }
+            }
+        }
+
+        _selected = newSelected;
+
+        foreach (var e in _buffer)
+        {
+            var slot = Instantiate(slotPrefab, content);
+            slot.Bind(e.item, e.count, this);
+            slot.name = $"Slot_{e.item.displayName}";
+        }
+
+        ApplySelectionHighlight();
+        UpdateDetails();
+        UpdateButtons();
+    }
+
+    private void ClearChildren()
+    {
+        for (int i = content.childCount - 1; i >= 0; i--)
+            Destroy(content.GetChild(i).gameObject);
+    }
+
+    public void SelectItem(ItemSO item)
+    {
+        AudioManager.Instance?.Play(SoundType.UI_Click);
+
+        _selected = item;
+
+        ApplySelectionHighlight();
+        UpdateDetails();
+        UpdateButtons();
+    }
+
+    private void ApplySelectionHighlight()
+    {
+        for (int i = 0; i < content.childCount; i++)
+        {
+            var slot = content.GetChild(i).GetComponent<ShopSlot>();
+            if (!slot) continue;
+            slot.SetSelected(_selected != null && slot.Item == _selected);
+        }
+    }
+
+    private void UpdateDetails()
+    {
+        if (_selected == null)
+        {
+            detailsPanel.SetActive(false);
+            if (oreNameText) oreNameText.text = "";
+            if (oreWorthText) oreWorthText.text = "";
+            if (countText) countText.text = "";
+            if (totalWorthText) totalWorthText.text = "";
+            return;
+        }
+        else
+        {
+            detailsPanel.SetActive(true);
+        }
+
+        int count = InventoryManager.Instance?.GetCount(_selected) ?? 0;
+        int worth = _selected.worth;
+        int total = worth * count;
+
+        if (oreNameText) oreNameText.text = _selected.displayName;
+        if (oreWorthText) oreWorthText.text = $"{worth}";
+        if (countText) countText.text = $"{count}";
+        if (totalWorthText) totalWorthText.text = $"{total}";
+    }
+
+    private void UpdateButtons()
+    {
+        int count = (_selected && InventoryManager.Instance) ? InventoryManager.Instance.GetCount(_selected) : 0;
+        bool canSellSelected = _selected && _selected.worth > 0 && count > 0;
+
+        if (sell1Button) sell1Button.interactable = canSellSelected && count >= 1;
+        if (sell10Button) sell10Button.interactable = canSellSelected && count >= 10;
+        if (sellMaxButton) sellMaxButton.interactable = canSellSelected && count >= 1;
+
+        // ---- Sell All: nur aktiv, wenn es IRGENDEIN verkaufbares Ore gibt ----
+        bool canSellAny = false;
+
+        if (InventoryManager.Instance != null)
+        {
+            foreach (var kv in InventoryManager.Instance.GetSnapshot())
+            {
+                if (kv.Key != null
+                    && kv.Key.category == ItemCategory.Ore
+                    && kv.Key.worth > 0
+                    && kv.Value > 0)
+                {
+                    canSellAny = true;
+                    break;
+                }
+            }
+        }
+
+        if (sellAllButton) sellAllButton.interactable = canSellAny;
+    }
+
+    private void Sell(int qty)
+    {
+        if (!_selected || InventoryManager.Instance == null) return;
+        int have = InventoryManager.Instance.GetCount(_selected);
+        if (have <= 0) return;
+
+        AudioManager.Instance?.Play(SoundType.UI_Click);
+        int q = Mathf.Min(qty, have);
+        ShopManager.Instance?.TrySell(_selected, q);
+        Rebuild();           // Liste & Counts sofort aktualisieren
+    }
+
+    private void SellMax()
+    {
+        if (!_selected || InventoryManager.Instance == null) return;
+        int have = InventoryManager.Instance.GetCount(_selected);
+        if (have <= 0) return;
+
+        AudioManager.Instance?.Play(SoundType.UI_Click);
+        ShopManager.Instance?.TrySell(_selected, have);
+        Rebuild();
+    }
+
+    private void SellAll()
+    {
+        if (!_selected) return;
+        AudioManager.Instance?.Play(SoundType.UI_Click);
+        ShopManager.Instance?.SellAll();
+        Rebuild();
+    }
+}

@@ -100,7 +100,7 @@ public class ShopManager : MonoBehaviour
         {
             AudioManager.Instance.Play(SoundType.SellItem);
 
-            float waitTime = UnityEngine.Random.Range(0.001f, 0.1f);
+            float waitTime = UnityEngine.Random.Range(0.005f, 0.1f);
             yield return new WaitForSeconds(waitTime);
         }
     }

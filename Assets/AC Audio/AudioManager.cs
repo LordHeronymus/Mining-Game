@@ -10,6 +10,10 @@ public enum SoundType
     BreakRock = 1,
     BreakOre = 5,
     SellItem = 6,
+    Recharge = 9,
+    DoorOpen = 10,
+    UI_Alert = 7,
+    UI_Click = 8,
 }
 
 [System.Serializable]

@@ -51,11 +51,16 @@ public class HUDPoints : MonoBehaviour
         float current = type == PointType.Points ? currentPoints : currentMoney;
 
         float delta = amount - current;
-        float step = delta * (1 / lerpTime) * Time.deltaTime;
+        float stepPerSecond = delta / lerpTime;
 
-        while (current < amount)
+        while (current != amount)
         {
-            current = Mathf.Min(current + step, amount);
+            current += stepPerSecond * Time.deltaTime;
+
+            if (delta > 0)
+                current = Mathf.Min(current, amount);
+            else
+                current = Mathf.Max(current, amount);
 
             if (type == PointType.Points)
             {

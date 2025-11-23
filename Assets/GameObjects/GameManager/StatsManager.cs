@@ -3,10 +3,17 @@ using System;
 
 public class StatsManager : MonoBehaviour
 {
+    [SerializeField] PlayerBaseStats baseStats;
     public static StatsManager Instance;
 
     public int Points { get; private set; } = 0;
     public int Money { get; private set; } = 0;
+
+    public float MoveSpeed;
+    public float JumpForce;
+    public float MiningSpeed;
+    public float Reach;
+    public float MaxEnergy;
 
     public Action<int> OnMoneyChanged;
 
@@ -27,6 +34,11 @@ public class StatsManager : MonoBehaviour
         HandlePoints(Vector2.zero, 0);
     }
 
+    void Start()
+    {
+        Reset();
+    }
+
     void HandlePoints(Vector2 pos, int points)
     {
         Points += points;
@@ -37,6 +49,18 @@ public class StatsManager : MonoBehaviour
     {
         Money += amount;
         HUDPoints.Instance?.UpdatePoints(Money, PointType.Money);
-        OnMoneyChanged?.Invoke(Money);
+        OnMoneyChanged?.Invoke(Money); // für ShopUI
+    }
+
+    void Reset()
+    {
+        Points = 0;
+        Money = 0;
+
+        MoveSpeed = baseStats.moveSpeed;
+        JumpForce = baseStats.jumpForce;
+        MiningSpeed = baseStats.miningSpeed;
+        Reach = baseStats.reach;
+        MaxEnergy = baseStats.maxEnergy;
     }
 }

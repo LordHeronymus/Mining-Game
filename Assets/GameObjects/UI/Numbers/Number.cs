@@ -8,8 +8,8 @@ public class Number : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] AnimationCurve alphaCurve;
+    [SerializeField] float speedX = 0.5f;
 
-    float speedX = 0.5f;
     Vector2 position;
 
     public void Init(Color color, float size, float number, float duration)

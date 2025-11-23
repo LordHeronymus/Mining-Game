@@ -2,11 +2,17 @@ using UnityEngine;
 
 public enum Item
 {
-    coal = 3,
-    copper = 0,
-    iron = 1,
-    silver = 4,
-    gold = 2,
+    //next 8
+
+    Coal = 3,
+    Copper = 0,
+    Iron = 1,
+    Silver = 4,
+    Gold = 2,
+
+    Torche = 5,
+    Dynamite = 6,
+    Ladder = 7,
 }
 
 public enum ItemCategory

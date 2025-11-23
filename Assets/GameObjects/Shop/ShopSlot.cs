@@ -14,10 +14,10 @@ public class ShopSlot : MonoBehaviour
     public ItemSO Item { get; private set; }
     public int Count { get; private set; }
 
-    private ShopUI shop;                                   // Referenz auf ShopUI für Callbacks
+    private SellPage shop;                                   // Referenz auf ShopUI für Callbacks
 
     /// <summary> Slot befüllen und Klick-Callback setzen. </summary>
-    public void Bind(ItemSO item, int count, ShopUI shopUI)
+    public void Bind(ItemSO item, int count, SellPage shopUI)
     {
         Item = item;
         Count = count;
