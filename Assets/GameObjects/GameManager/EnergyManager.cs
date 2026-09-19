@@ -31,8 +31,8 @@ public class EnergyManager : MonoBehaviour
         if (playerMovement.IsMoving) consumption += moveConsumption;
         if (tileMiner.IsMingin) consumption += diggingConsumption;
 
-        if (energy <= 0f) return;
-        energy = Mathf.Max(energy - consumption * Time.deltaTime, 0f);
+        if (!GameplayTestSettings.NoEnergyConsume)
+            energy = Mathf.Max(energy - consumption * Time.deltaTime, 0f);
 
         slider.value = energy / stats.MaxEnergy;
         energyText.text = $"{Mathf.CeilToInt(energy).ToString()} / {stats.MaxEnergy}";

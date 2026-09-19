@@ -1,0 +1,2080 @@
+fileFormatVersion: 2
+guid: 7d8ac28b783c43a48998542d33da16ea
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -4699793381985427198
+    second: Parallax_02_Berge_6144x2046_0
+  - first:
+      213: -5339518380514358633
+    second: Parallax_02_Berge_6144x2046_1
+  - first:
+      213: -4030365928959879039
+    second: Parallax_02_Berge_6144x2046_2
+  - first:
+      213: 6641656812971734765
+    second: Parallax_02_Berge_6144x2046_3
+  - first:
+      213: -1925912041994658724
+    second: Parallax_02_Berge_6144x2046_4
+  - first:
+      213: 959183482056259038
+    second: Parallax_02_Berge_6144x2046_5
+  - first:
+      213: 3694527135437383426
+    second: Parallax_02_Berge_6144x2046_6
+  - first:
+      213: -6234329097750908111
+    second: Parallax_02_Berge_6144x2046_7
+  - first:
+      213: 8199743189723560460
+    second: Parallax_02_Berge_6144x2046_8
+  - first:
+      213: -7171750771879652713
+    second: Parallax_02_Berge_6144x2046_9
+  - first:
+      213: 5455520307459835681
+    second: Parallax_02_Berge_6144x2046_10
+  - first:
+      213: 2923414478133764642
+    second: Parallax_02_Berge_6144x2046_11
+  - first:
+      213: -5696631286266207887
+    second: Parallax_02_Berge_6144x2046_12
+  - first:
+      213: -3769709970099575386
+    second: Parallax_02_Berge_6144x2046_13
+  - first:
+      213: 4881222701457943339
+    second: Parallax_02_Berge_6144x2046_14
+  - first:
+      213: -6806064138113376096
+    second: Parallax_02_Berge_6144x2046_15
+  - first:
+      213: 5869052605942656270
+    second: Parallax_02_Berge_6144x2046_16
+  - first:
+      213: 8472790702320768375
+    second: Parallax_02_Berge_6144x2046_17
+  - first:
+      213: -4801973984813677888
+    second: Parallax_02_Berge_6144x2046_18
+  - first:
+      213: 6971367120859046063
+    second: Parallax_02_Berge_6144x2046_19
+  - first:
+      213: -8574457741525989676
+    second: Parallax_02_Berge_6144x2046_20
+  - first:
+      213: -4703324744769111533
+    second: Parallax_02_Berge_6144x2046_21
+  - first:
+      213: -8498866783470944620
+    second: Parallax_02_Berge_6144x2046_22
+  - first:
+      213: 7184256631501904229
+    second: Parallax_02_Berge_6144x2046_23
+  - first:
+      213: 4405851678124073552
+    second: Parallax_02_Berge_6144x2046_24
+  - first:
+      213: 8811008541086309268
+    second: Parallax_02_Berge_6144x2046_25
+  - first:
+      213: -1872860601894159540
+    second: Parallax_02_Berge_6144x2046_26
+  - first:
+      213: -4759514398416334638
+    second: Parallax_02_Berge_6144x2046_27
+  - first:
+      213: 3509889292133003468
+    second: Parallax_02_Berge_6144x2046_28
+  - first:
+      213: -7016253972660427433
+    second: Parallax_02_Berge_6144x2046_29
+  - first:
+      213: -6971943686869531640
+    second: Parallax_02_Berge_6144x2046_30
+  - first:
+      213: -1999203329385999799
+    second: Parallax_02_Berge_6144x2046_31
+  - first:
+      213: -422577822443204696
+    second: Parallax_02_Berge_6144x2046_32
+  - first:
+      213: -1803316021731270508
+    second: Parallax_02_Berge_6144x2046_33
+  - first:
+      213: 5749671319502959367
+    second: Parallax_02_Berge_6144x2046_34
+  - first:
+      213: -5983971118063345535
+    second: Parallax_02_Berge_6144x2046_35
+  - first:
+      213: 5818455516281908456
+    second: Parallax_02_Berge_6144x2046_36
+  - first:
+      213: -95641733451729489
+    second: Parallax_02_Berge_6144x2046_37
+  - first:
+      213: 8739906735207127445
+    second: Parallax_02_Berge_6144x2046_38
+  - first:
+      213: 8372442049000804984
+    second: Parallax_02_Berge_6144x2046_39
+  - first:
+      213: -844077000523494272
+    second: Parallax_02_Berge_6144x2046_40
+  - first:
+      213: -7120868856426470626
+    second: Parallax_02_Berge_6144x2046_41
+  - first:
+      213: -3685050937759172757
+    second: Parallax_02_Berge_6144x2046_42
+  - first:
+      213: 1325153875147400563
+    second: Parallax_02_Berge_6144x2046_43
+  - first:
+      213: -7304864239631892247
+    second: Parallax_02_Berge_6144x2046_44
+  - first:
+      213: 7174982587205035298
+    second: Parallax_02_Berge_6144x2046_45
+  - first:
+      213: 1759681812012556249
+    second: Parallax_02_Berge_6144x2046_46
+  - first:
+      213: 5204039887678601058
+    second: Parallax_02_Berge_6144x2046_47
+  - first:
+      213: 6995665771113518293
+    second: Parallax_02_Berge_6144x2046_48
+  - first:
+      213: 5212503360253513698
+    second: Parallax_02_Berge_6144x2046_49
+  - first:
+      213: -6746830828647493073
+    second: Parallax_02_Berge_6144x2046_50
+  - first:
+      213: 5152950295364313629
+    second: Parallax_02_Berge_6144x2046_51
+  - first:
+      213: -4613991955921119792
+    second: Parallax_02_Berge_6144x2046_52
+  - first:
+      213: 7449425784204541155
+    second: Parallax_02_Berge_6144x2046_53
+  - first:
+      213: 7550616307362550919
+    second: Parallax_02_Berge_6144x2046_54
+  - first:
+      213: -7553358452329674093
+    second: Parallax_02_Berge_6144x2046_55
+  - first:
+      213: -4433967818758624535
+    second: Parallax_02_Berge_6144x2046_56
+  - first:
+      213: 6523034119394708033
+    second: Parallax_02_Berge_6144x2046_57
+  - first:
+      213: -5918389425788519405
+    second: Parallax_02_Berge_6144x2046_58
+  - first:
+      213: 3959584901144796763
+    second: Parallax_02_Berge_6144x2046_59
+  - first:
+      213: 3439212834577865237
+    second: Parallax_02_Berge_6144x2046_60
+  - first:
+      213: -139567556815734092
+    second: Parallax_02_Berge_6144x2046_61
+  - first:
+      213: 7972866805129689699
+    second: Parallax_02_Berge_6144x2046_62
+  - first:
+      213: -6190856298016194443
+    second: Parallax_02_Berge_6144x2046_63
+  - first:
+      213: 2647880461146231121
+    second: Parallax_02_Berge_6144x2046_64
+  - first:
+      213: 4341762832262607847
+    second: Parallax_02_Berge_6144x2046_65
+  - first:
+      213: 1212960133892989457
+    second: Parallax_02_Berge_6144x2046_66
+  - first:
+      213: 5781864809869334971
+    second: Parallax_02_Berge_6144x2046_67
+  - first:
+      213: 8826065498347132972
+    second: Parallax_02_Berge_6144x2046_68
+  - first:
+      213: 4953754893073115841
+    second: Parallax_02_Berge_6144x2046_69
+  - first:
+      213: -6102034163042066106
+    second: Parallax_02_Berge_6144x2046_70
+  - first:
+      213: -2119282511943288151
+    second: Parallax_02_Berge_6144x2046_71
+  - first:
+      213: 7857174446868224536
+    second: Parallax_02_Berge_6144x2046_72
+  - first:
+      213: 6957861637678565200
+    second: Parallax_02_Berge_6144x2046_73
+  - first:
+      213: 4447966844175595606
+    second: Parallax_02_Berge_6144x2046_74
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 0
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 8192
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_0
+      rect:
+        serializedVersion: 2
+        x: 1057
+        y: 1531
+        width: 40
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 201e605d1daf6ceb0800000000000000
+      internalID: -4699793381985427198
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_1
+      rect:
+        serializedVersion: 2
+        x: 4651
+        y: 1564
+        width: 28
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 79ac5c9a25836e5b0800000000000000
+      internalID: -5339518380514358633
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_2
+      rect:
+        serializedVersion: 2
+        x: 4651
+        y: 1543
+        width: 28
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18852899a834118c0800000000000000
+      internalID: -4030365928959879039
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_3
+      rect:
+        serializedVersion: 2
+        x: 4678
+        y: 1543
+        width: 13
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de6bb31bea7eb2c50800000000000000
+      internalID: 6641656812971734765
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_4
+      rect:
+        serializedVersion: 2
+        x: 1063
+        y: 1540
+        width: 7
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c5cd244a339c545e0800000000000000
+      internalID: -1925912041994658724
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_5
+      rect:
+        serializedVersion: 2
+        x: 4662
+        y: 1537
+        width: 17
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed5b2628b44bf4d00800000000000000
+      internalID: 959183482056259038
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_6
+      rect:
+        serializedVersion: 2
+        x: 3730
+        y: 1492
+        width: 16
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 20769c0fad8954330800000000000000
+      internalID: 3694527135437383426
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_7
+      rect:
+        serializedVersion: 2
+        x: 4438
+        y: 1492
+        width: 46
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 133fcab67b63b79a0800000000000000
+      internalID: -6234329097750908111
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_8
+      rect:
+        serializedVersion: 2
+        x: 4444
+        y: 1522
+        width: 11
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0ab6e8acf65bc170800000000000000
+      internalID: 8199743189723560460
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_9
+      rect:
+        serializedVersion: 2
+        x: 4455
+        y: 1522
+        width: 15
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 792da78aba2d87c90800000000000000
+      internalID: -7171750771879652713
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_10
+      rect:
+        serializedVersion: 2
+        x: 3718
+        y: 1498
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 127c217a0d6e5bb40800000000000000
+      internalID: 5455520307459835681
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_11
+      rect:
+        serializedVersion: 2
+        x: 3724
+        y: 1510
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 222a56c9afd029820800000000000000
+      internalID: 2923414478133764642
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_12
+      rect:
+        serializedVersion: 2
+        x: 3745
+        y: 1501
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 171e9b5f60081f0b0800000000000000
+      internalID: -5696631286266207887
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_13
+      rect:
+        serializedVersion: 2
+        x: 4426
+        y: 1498
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a567f541cc4fabc0800000000000000
+      internalID: -3769709970099575386
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_14
+      rect:
+        serializedVersion: 2
+        x: 5986
+        y: 1381
+        width: 13
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2b29f56f269db340800000000000000
+      internalID: 4881222701457943339
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_15
+      rect:
+        serializedVersion: 2
+        x: 5998
+        y: 1396
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a02a39f9b00c81a0800000000000000
+      internalID: -6806064138113376096
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_16
+      rect:
+        serializedVersion: 2
+        x: 5998
+        y: 1387
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e0dea41ef30137150800000000000000
+      internalID: 5869052605942656270
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_17
+      rect:
+        serializedVersion: 2
+        x: 6007
+        y: 1381
+        width: 13
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 775df04c046659570800000000000000
+      internalID: 8472790702320768375
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_18
+      rect:
+        serializedVersion: 2
+        x: 571
+        y: 1363
+        width: 14
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c2838e4a16fb5db0800000000000000
+      internalID: -4801973984813677888
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_19
+      rect:
+        serializedVersion: 2
+        x: 586
+        y: 1363
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa024a5e5754fb060800000000000000
+      internalID: 6971367120859046063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_20
+      rect:
+        serializedVersion: 2
+        x: 5998
+        y: 1375
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d6cebe0d18610980800000000000000
+      internalID: -8574457741525989676
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_21
+      rect:
+        serializedVersion: 2
+        x: 559
+        y: 1333
+        width: 28
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 31a7bbc501f6abeb0800000000000000
+      internalID: -4703324744769111533
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_22
+      rect:
+        serializedVersion: 2
+        x: 586
+        y: 1333
+        width: 10
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49ef8d970b5fd0a80800000000000000
+      internalID: -8498866783470944620
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_23
+      rect:
+        serializedVersion: 2
+        x: 595
+        y: 1351
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5695aefa75b93b360800000000000000
+      internalID: 7184256631501904229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_24
+      rect:
+        serializedVersion: 2
+        x: 595
+        y: 1339
+        width: 7
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 052e4af02cab42d30800000000000000
+      internalID: 4405851678124073552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_25
+      rect:
+        serializedVersion: 2
+        x: 573
+        y: 1327
+        width: 14
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49bd16cd59df64a70800000000000000
+      internalID: 8811008541086309268
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_26
+      rect:
+        serializedVersion: 2
+        x: 4182
+        y: 1318
+        width: 8
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c4b364694334206e0800000000000000
+      internalID: -1872860601894159540
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_27
+      rect:
+        serializedVersion: 2
+        x: 5773
+        y: 1318
+        width: 13
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d099032fdec2fdb0800000000000000
+      internalID: -4759514398416334638
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_28
+      rect:
+        serializedVersion: 2
+        x: 5785
+        y: 1327
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc0f88a07b1a5b030800000000000000
+      internalID: 3509889292133003468
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_29
+      rect:
+        serializedVersion: 2
+        x: 5785
+        y: 1318
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 755e6a18f2241ae90800000000000000
+      internalID: -7016253972660427433
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_30
+      rect:
+        serializedVersion: 2
+        x: 5794
+        y: 1312
+        width: 13
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8044d1ed72eae3f90800000000000000
+      internalID: -6971943686869531640
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_31
+      rect:
+        serializedVersion: 2
+        x: 5998
+        y: 1318
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9425b260a276144e0800000000000000
+      internalID: -1999203329385999799
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_32
+      rect:
+        serializedVersion: 2
+        x: 6010
+        y: 1318
+        width: 22
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8af805b95b3b22af0800000000000000
+      internalID: -422577822443204696
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_33
+      rect:
+        serializedVersion: 2
+        x: 6019
+        y: 1324
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 490efe2f1a559f6e0800000000000000
+      internalID: -1803316021731270508
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_34
+      rect:
+        serializedVersion: 2
+        x: 4162
+        y: 1303
+        width: 13
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 703b93e1a9feacf40800000000000000
+      internalID: 5749671319502959367
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_35
+      rect:
+        serializedVersion: 2
+        x: 4174
+        y: 1297
+        width: 16
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18023a9f8f9a4fca0800000000000000
+      internalID: -5983971118063345535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_36
+      rect:
+        serializedVersion: 2
+        x: 4189
+        y: 1303
+        width: 13
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ec256de67e4fb050800000000000000
+      internalID: 5818455516281908456
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_37
+      rect:
+        serializedVersion: 2
+        x: 5779
+        y: 1312
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa538e3a9563caef0800000000000000
+      internalID: -95641733451729489
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_38
+      rect:
+        serializedVersion: 2
+        x: 5787
+        y: 1306
+        width: 8
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5999012aed26a4970800000000000000
+      internalID: 8739906735207127445
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_39
+      rect:
+        serializedVersion: 2
+        x: 6010
+        y: 1318
+        width: 10
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8729c393fa3e03470800000000000000
+      internalID: 8372442049000804984
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_40
+      rect:
+        serializedVersion: 2
+        x: 6079
+        y: 1306
+        width: 8
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 08c48bca07c3944f0800000000000000
+      internalID: -844077000523494272
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_41
+      rect:
+        serializedVersion: 2
+        x: 5464
+        y: 1285
+        width: 19
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e13ee88c0879d2d90800000000000000
+      internalID: -7120868856426470626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_42
+      rect:
+        serializedVersion: 2
+        x: 5995
+        y: 1294
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b67f4a342b11cdcc0800000000000000
+      internalID: -3685050937759172757
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_43
+      rect:
+        serializedVersion: 2
+        x: 6007
+        y: 1300
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 375a4e0bd64e36210800000000000000
+      internalID: 1325153875147400563
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_44
+      rect:
+        serializedVersion: 2
+        x: 6016
+        y: 1300
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e089484da8ef9a90800000000000000
+      internalID: -7304864239631892247
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_45
+      rect:
+        serializedVersion: 2
+        x: 6024
+        y: 1300
+        width: 11
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22528fbf5a8a29360800000000000000
+      internalID: 7174982587205035298
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_46
+      rect:
+        serializedVersion: 2
+        x: 6058
+        y: 1291
+        width: 22
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9df59bae845ab6810800000000000000
+      internalID: 1759681812012556249
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_47
+      rect:
+        serializedVersion: 2
+        x: 6079
+        y: 1291
+        width: 10
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 267fb06a4b6783840800000000000000
+      internalID: 5204039887678601058
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_48
+      rect:
+        serializedVersion: 2
+        x: 6088
+        y: 1306
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5d4949644f8951160800000000000000
+      internalID: 6995665771113518293
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_49
+      rect:
+        serializedVersion: 2
+        x: 6088
+        y: 1285
+        width: 13
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2efc07a6038865840800000000000000
+      internalID: 5212503360253513698
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_50
+      rect:
+        serializedVersion: 2
+        x: 418
+        y: 1270
+        width: 43
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f22dfca8b117e52a0800000000000000
+      internalID: -6746830828647493073
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_51
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 1288
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d122f6cfdf4f28740800000000000000
+      internalID: 5152950295364313629
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_52
+      rect:
+        serializedVersion: 2
+        x: 481
+        y: 1288
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d5dfc613cec7ffb0800000000000000
+      internalID: -4613991955921119792
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_53
+      rect:
+        serializedVersion: 2
+        x: 493
+        y: 1288
+        width: 22
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ecb520384da16760800000000000000
+      internalID: 7449425784204541155
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_54
+      rect:
+        serializedVersion: 2
+        x: 4168
+        y: 1297
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 784dd93d68d29c860800000000000000
+      internalID: 7550616307362550919
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_55
+      rect:
+        serializedVersion: 2
+        x: 4176
+        y: 1291
+        width: 8
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 39a02bbc1841d2790800000000000000
+      internalID: -7553358452329674093
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_56
+      rect:
+        serializedVersion: 2
+        x: 5470
+        y: 1285
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9eae061d2c16772c0800000000000000
+      internalID: -4433967818758624535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_57
+      rect:
+        serializedVersion: 2
+        x: 6007
+        y: 1294
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14a464898f8768a50800000000000000
+      internalID: 6523034119394708033
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_58
+      rect:
+        serializedVersion: 2
+        x: 6007
+        y: 1288
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 31c72799c28addda0800000000000000
+      internalID: -5918389425788519405
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_59
+      rect:
+        serializedVersion: 2
+        x: 6016
+        y: 1282
+        width: 7
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b5e5cb22d7543f630800000000000000
+      internalID: 3959584901144796763
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_60
+      rect:
+        serializedVersion: 2
+        x: 6022
+        y: 1288
+        width: 13
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51a5affe9d98abf20800000000000000
+      internalID: 3439212834577865237
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_61
+      rect:
+        serializedVersion: 2
+        x: 6034
+        y: 1288
+        width: 7
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ba34d9eb08201ef0800000000000000
+      internalID: -139567556815734092
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_62
+      rect:
+        serializedVersion: 2
+        x: 6037
+        y: 1243
+        width: 52
+        height: 49
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36a32410e1055ae60800000000000000
+      internalID: 7972866805129689699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_63
+      rect:
+        serializedVersion: 2
+        x: 6043
+        y: 1288
+        width: 10
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 570414d5ff8a51aa0800000000000000
+      internalID: -6190856298016194443
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_64
+      rect:
+        serializedVersion: 2
+        x: 6079
+        y: 1285
+        width: 10
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 151915610492fb420800000000000000
+      internalID: 2647880461146231121
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_65
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 6144
+        height: 1289
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e3b104da4a014c30800000000000000
+      internalID: 4341762832262607847
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_66
+      rect:
+        serializedVersion: 2
+        x: 493
+        y: 1279
+        width: 16
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 112e663b0dc45d010800000000000000
+      internalID: 1212960133892989457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_67
+      rect:
+        serializedVersion: 2
+        x: 6022
+        y: 1282
+        width: 13
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb9d793396f4d3050800000000000000
+      internalID: 5781864809869334971
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_68
+      rect:
+        serializedVersion: 2
+        x: 6022
+        y: 1276
+        width: 13
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c28df49eecb7c7a70800000000000000
+      internalID: 8826065498347132972
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_69
+      rect:
+        serializedVersion: 2
+        x: 6036
+        y: 1276
+        width: 8
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1cae9f144d54fb440800000000000000
+      internalID: 4953754893073115841
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_70
+      rect:
+        serializedVersion: 2
+        x: 6057
+        y: 1282
+        width: 11
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64164983248315ba0800000000000000
+      internalID: -6102034163042066106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_71
+      rect:
+        serializedVersion: 2
+        x: 6088
+        y: 1259
+        width: 7
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9aa3ce8a8cbc692e0800000000000000
+      internalID: -2119282511943288151
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_72
+      rect:
+        serializedVersion: 2
+        x: 6099
+        y: 1276
+        width: 8
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 81a5bd3c78a4a0d60800000000000000
+      internalID: 7857174446868224536
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_73
+      rect:
+        serializedVersion: 2
+        x: 498
+        y: 1273
+        width: 11
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 057062e8b4a4f8060800000000000000
+      internalID: 6957861637678565200
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_02_Berge_6144x2046_74
+      rect:
+        serializedVersion: 2
+        x: 6094
+        y: 1261
+        width: 19
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6583dc7474a5abd30800000000000000
+      internalID: 4447966844175595606
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Parallax_02_Berge_6144x2046_0: -4699793381985427198
+      Parallax_02_Berge_6144x2046_1: -5339518380514358633
+      Parallax_02_Berge_6144x2046_10: 5455520307459835681
+      Parallax_02_Berge_6144x2046_11: 2923414478133764642
+      Parallax_02_Berge_6144x2046_12: -5696631286266207887
+      Parallax_02_Berge_6144x2046_13: -3769709970099575386
+      Parallax_02_Berge_6144x2046_14: 4881222701457943339
+      Parallax_02_Berge_6144x2046_15: -6806064138113376096
+      Parallax_02_Berge_6144x2046_16: 5869052605942656270
+      Parallax_02_Berge_6144x2046_17: 8472790702320768375
+      Parallax_02_Berge_6144x2046_18: -4801973984813677888
+      Parallax_02_Berge_6144x2046_19: 6971367120859046063
+      Parallax_02_Berge_6144x2046_2: -4030365928959879039
+      Parallax_02_Berge_6144x2046_20: -8574457741525989676
+      Parallax_02_Berge_6144x2046_21: -4703324744769111533
+      Parallax_02_Berge_6144x2046_22: -8498866783470944620
+      Parallax_02_Berge_6144x2046_23: 7184256631501904229
+      Parallax_02_Berge_6144x2046_24: 4405851678124073552
+      Parallax_02_Berge_6144x2046_25: 8811008541086309268
+      Parallax_02_Berge_6144x2046_26: -1872860601894159540
+      Parallax_02_Berge_6144x2046_27: -4759514398416334638
+      Parallax_02_Berge_6144x2046_28: 3509889292133003468
+      Parallax_02_Berge_6144x2046_29: -7016253972660427433
+      Parallax_02_Berge_6144x2046_3: 6641656812971734765
+      Parallax_02_Berge_6144x2046_30: -6971943686869531640
+      Parallax_02_Berge_6144x2046_31: -1999203329385999799
+      Parallax_02_Berge_6144x2046_32: -422577822443204696
+      Parallax_02_Berge_6144x2046_33: -1803316021731270508
+      Parallax_02_Berge_6144x2046_34: 5749671319502959367
+      Parallax_02_Berge_6144x2046_35: -5983971118063345535
+      Parallax_02_Berge_6144x2046_36: 5818455516281908456
+      Parallax_02_Berge_6144x2046_37: -95641733451729489
+      Parallax_02_Berge_6144x2046_38: 8739906735207127445
+      Parallax_02_Berge_6144x2046_39: 8372442049000804984
+      Parallax_02_Berge_6144x2046_4: -1925912041994658724
+      Parallax_02_Berge_6144x2046_40: -844077000523494272
+      Parallax_02_Berge_6144x2046_41: -7120868856426470626
+      Parallax_02_Berge_6144x2046_42: -3685050937759172757
+      Parallax_02_Berge_6144x2046_43: 1325153875147400563
+      Parallax_02_Berge_6144x2046_44: -7304864239631892247
+      Parallax_02_Berge_6144x2046_45: 7174982587205035298
+      Parallax_02_Berge_6144x2046_46: 1759681812012556249
+      Parallax_02_Berge_6144x2046_47: 5204039887678601058
+      Parallax_02_Berge_6144x2046_48: 6995665771113518293
+      Parallax_02_Berge_6144x2046_49: 5212503360253513698
+      Parallax_02_Berge_6144x2046_5: 959183482056259038
+      Parallax_02_Berge_6144x2046_50: -6746830828647493073
+      Parallax_02_Berge_6144x2046_51: 5152950295364313629
+      Parallax_02_Berge_6144x2046_52: -4613991955921119792
+      Parallax_02_Berge_6144x2046_53: 7449425784204541155
+      Parallax_02_Berge_6144x2046_54: 7550616307362550919
+      Parallax_02_Berge_6144x2046_55: -7553358452329674093
+      Parallax_02_Berge_6144x2046_56: -4433967818758624535
+      Parallax_02_Berge_6144x2046_57: 6523034119394708033
+      Parallax_02_Berge_6144x2046_58: -5918389425788519405
+      Parallax_02_Berge_6144x2046_59: 3959584901144796763
+      Parallax_02_Berge_6144x2046_6: 3694527135437383426
+      Parallax_02_Berge_6144x2046_60: 3439212834577865237
+      Parallax_02_Berge_6144x2046_61: -139567556815734092
+      Parallax_02_Berge_6144x2046_62: 7972866805129689699
+      Parallax_02_Berge_6144x2046_63: -6190856298016194443
+      Parallax_02_Berge_6144x2046_64: 2647880461146231121
+      Parallax_02_Berge_6144x2046_65: 4341762832262607847
+      Parallax_02_Berge_6144x2046_66: 1212960133892989457
+      Parallax_02_Berge_6144x2046_67: 5781864809869334971
+      Parallax_02_Berge_6144x2046_68: 8826065498347132972
+      Parallax_02_Berge_6144x2046_69: 4953754893073115841
+      Parallax_02_Berge_6144x2046_7: -6234329097750908111
+      Parallax_02_Berge_6144x2046_70: -6102034163042066106
+      Parallax_02_Berge_6144x2046_71: -2119282511943288151
+      Parallax_02_Berge_6144x2046_72: 7857174446868224536
+      Parallax_02_Berge_6144x2046_73: 6957861637678565200
+      Parallax_02_Berge_6144x2046_74: 4447966844175595606
+      Parallax_02_Berge_6144x2046_8: 8199743189723560460
+      Parallax_02_Berge_6144x2046_9: -7171750771879652713
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

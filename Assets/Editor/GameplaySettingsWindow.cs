@@ -1,0 +1,480 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using Object = UnityEngine.Object;
+
+// This window edits the existing sources of truth; it does not copy scene settings
+// into a second configuration asset that could drift out of sync.
+public class GameplaySettingsWindow : EditorWindow
+{
+    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Blöcke & Beute", "Debug", "Licht" };
+    [SerializeField] int tab;
+    [SerializeField] int selectedBlock;
+    [SerializeField] StatsManager stats;
+    [SerializeField] PlayerMovement movement;
+    [SerializeField] TileMiner miner;
+    [SerializeField] EnergyManager energy;
+    [SerializeField] EnergyMonolyth station;
+    [SerializeField] MapGenerator map;
+    [SerializeField] MapLighting lighting;
+    [SerializeField] CameraFollow follow;
+    Vector2 scroll;
+    Component[] sceneComponents = Array.Empty<Component>();
+    ItemSO[] items = Array.Empty<ItemSO>();
+    bool showOtherItems;
+    bool showSources;
+    string notification;
+    GameplaySettingsData savedOverride;
+    string overrideWarning;
+    bool overrideExists;
+
+    [MenuItem("Mining Game/Gameplay Settings")]
+    public static void Open()
+    {
+        var window = GetWindow<GameplaySettingsWindow>("Gameplay Settings");
+        window.minSize = new Vector2(760, 640);
+        window.Show();
+    }
+
+    void OnEnable()
+    {
+        minSize = new Vector2(760, 640);
+        EditorApplication.hierarchyChanged += Refresh;
+        EditorApplication.projectChanged += Refresh;
+        EditorApplication.playModeStateChanged += PlayModeChanged;
+        EditorSceneManager.activeSceneChangedInEditMode += SceneChanged;
+        Undo.undoRedoPerformed += Refresh;
+        Refresh();
+    }
+
+    void OnDisable()
+    {
+        EditorApplication.hierarchyChanged -= Refresh;
+        EditorApplication.projectChanged -= Refresh;
+        EditorApplication.playModeStateChanged -= PlayModeChanged;
+        EditorSceneManager.activeSceneChangedInEditMode -= SceneChanged;
+        Undo.undoRedoPerformed -= Refresh;
+    }
+
+    void OnFocus() => Refresh();
+    void PlayModeChanged(PlayModeStateChange state) => Refresh();
+    void SceneChanged(Scene previous, Scene next) => Refresh();
+
+    void Refresh()
+    {
+        var scene = SceneManager.GetActiveScene();
+        sceneComponents = scene.IsValid() && scene.isLoaded
+            ? scene.GetRootGameObjects().SelectMany(go => go.GetComponentsInChildren<Component>(true)).Where(c => c).ToArray()
+            : Array.Empty<Component>();
+        stats = Resolve(stats);
+        movement = Resolve(movement);
+        miner = Resolve(miner);
+        energy = Resolve(energy);
+        station = Resolve(station);
+        map = Resolve(map);
+        lighting = Resolve(lighting);
+        follow = Resolve(follow);
+        items = AssetDatabase.FindAssets("t:ItemSO").Select(guid => AssetDatabase.LoadAssetAtPath<ItemSO>(AssetDatabase.GUIDToAssetPath(guid)))
+            .Where(item => item).OrderBy(item => item.displayName).ToArray();
+        ReadOverride();
+        Repaint();
+    }
+
+    T Resolve<T>(T current) where T : Component => current && sceneComponents.Contains(current)
+        ? current : sceneComponents.OfType<T>().FirstOrDefault();
+
+    PlayerBaseStats BaseStats => stats ? new SerializedObject(stats).FindProperty("baseStats").objectReferenceValue as PlayerBaseStats : null;
+    BlockRegistry Registry => map ? map.registry : null;
+
+    void ReadOverride()
+    {
+        overrideExists = File.Exists(GameplaySettings.FilePath);
+        savedOverride = GameplaySettingsStore.Load(GameplaySettings.FilePath, BaseStats ? BaseStats.miningSpeed : 1.5f, out overrideWarning);
+    }
+
+    void OnGUI()
+    {
+        bool saveRequested = false;
+        EditorGUIUtility.labelWidth = 285;
+        EditorGUILayout.Space(8);
+        EditorGUILayout.LabelField("Gameplay Settings", EditorStyles.largeLabel);
+        var scene = SceneManager.GetActiveScene();
+        EditorGUILayout.LabelField("Aktive Szene: " + (scene.IsValid() ? scene.name : "keine") + (scene.isDirty ? "  • ungespeichert" : ""), EditorStyles.miniLabel);
+        using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+        {
+            if (GUILayout.Button("Aktualisieren", EditorStyles.toolbarButton, GUILayout.Width(105))) Refresh();
+            GUILayout.FlexibleSpace();
+            using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
+                if (GUILayout.Button("Einstellungen speichern", EditorStyles.toolbarButton, GUILayout.Width(170)))
+                {
+                    // Finish field focus, then save after this GUI pass applies
+                    // any remaining property changes.
+                    GUI.FocusControl(null);
+                    saveRequested = true;
+                }
+        }
+        if (EditorApplication.isPlayingOrWillChangePlaymode)
+            EditorGUILayout.HelpBox("Standardwerte sind im Play-Modus schreibgeschützt. Zum Ausprobieren F1 verwenden; für dauerhafte Änderungen den Play-Modus beenden.", MessageType.Info);
+        else if (overrideExists)
+            EditorGUILayout.HelpBox(overrideWarning ?? $"JSON-Test-Override vorhanden: Abbaugeschwindigkeit {savedOverride.baseDiggingSpeed:g}{(savedOverride.hasLightingOverride ? " und Lichtwerte" : "")}. Diese Werte haben im Editor/Development Build Vorrang vor den Basiswerten. Verwaltung unter Debug.", overrideWarning == null ? MessageType.Warning : MessageType.Error);
+
+        int nextTab = GUILayout.Toolbar(tab, Tabs, GUILayout.Height(30));
+        if (nextTab != tab) { tab = nextTab; scroll = Vector2.zero; }
+        scroll = EditorGUILayout.BeginScrollView(scroll);
+        using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
+        {
+            switch (tab)
+            {
+                case 0: DrawPlayer(); break;
+                case 1: DrawEnergy(); break;
+                case 2: DrawMap(); break;
+                case 3: DrawBlocks(); break;
+                case 4: DrawDebug(); break;
+                case 5: DrawLighting(); break;
+            }
+        }
+        EditorGUILayout.Space(12);
+        EditorGUILayout.EndScrollView();
+        EditorGUILayout.LabelField("Änderungen direkt an Asset/Szene · Strg+Z: Undo · Speichern sichert Assets und aktive Szene", EditorStyles.miniLabel);
+        if (!string.IsNullOrEmpty(notification)) EditorGUILayout.HelpBox(notification, MessageType.Info);
+        if (saveRequested) SaveSettings();
+    }
+
+    void DrawLighting()
+    {
+        lighting = Picker("Map-Beleuchtung", lighting);
+        Section("Tageslicht und Dunkelheit", lighting, data =>
+        {
+            EditorGUILayout.PropertyField(data.FindProperty("lightingEnabled"), new GUIContent("Beleuchtung aktiv"));
+            Float(data, "daylightStrength", "Tageslichtstärke", "Ausgangswert des Lichts über der obersten Blockreihe. 1 = volle Helligkeit.", 0, 1);
+            Float(data, "ambientBrightness", "Grundhelligkeit im Untergrund", "Untergrenze der Helligkeit. 0 = vollständige Dunkelheit. Dieser Wert erzeugt kein weiterwanderndes Licht.", 0, 1);
+        });
+        Section("Exponentieller Lichtabfall", lighting, data =>
+        {
+            Float(data, "exponentialStrength", "Exponentielle Stärke", "1 = normal. Höhere Werte lassen Licht schneller abklingen; kleinere Werte verlängern die weiche Auslaufzone.", 0.1f, 5f);
+            Float(data, "downwardLoss", "Nach unten durch Luft", "Anteil des verbleibenden Lichts pro Schritt bei Stärke 1. 0,01 = 1 %. Kleine Werte halten Schächte lange hell.", 0.0001f, 1);
+            Float(data, "sidewaysLoss", "Seitlich / nach oben durch Luft", "Anteil des verbleibenden Lichts bei seitlichen oder aufwärts gerichteten Schritten. 0,08 = 8 % bei Stärke 1.", 0.0001f, 1);
+            Float(data, "blockLoss", "Zusätzlicher Verlust durch Blöcke", "Zusätzlicher Anteil des verbleibenden Lichts beim Eintritt in Stein oder Erz. 0,28 = 28 % bei Stärke 1.", 0, 1);
+        });
+        if (lighting)
+        {
+            EditorGUILayout.HelpBox("Pro Zelle bleibt ein Anteil des Lichts erhalten: Restlicht × (1 − Verlust)^Stärke. Der Abfall ist zunächst stark und wird dann flacher. Sehr schwaches Restlicht wird sanft auf Schwarz ausgeblendet. Grundhelligkeit 0 erlaubt vollständige Dunkelheit.", MessageType.Info);
+            if (lighting.sidewaysLoss < lighting.downwardLoss)
+                EditorGUILayout.HelpBox("Aktuell reicht Licht seitlich weiter als nach unten. Für helle Schächte den Abwärtsverlust kleiner einstellen.", MessageType.Warning);
+        }
+        EditorGUILayout.HelpBox("Abbau öffnet Lichtwege automatisch. Die Beleuchtung betrifft die Spielwelt; HUD und Map Overview bleiben lesbar. Standardwerte mit Einstellungen speichern sichern.", MessageType.None);
+    }
+
+    void DrawPlayer()
+    {
+        stats = Picker("Spieler-Basiswerte", stats);
+        if (BaseStats)
+        {
+            Section("Bewegung und Abbauen", BaseStats, data =>
+            {
+                Float(data, "moveSpeed", "Laufgeschwindigkeit", "Welteinheiten pro Sekunde.", 0.01f);
+                Float(data, "jumpForce", "Sprungimpuls", "Impuls auf den Rigidbody. Auch Masse und Gravitation beeinflussen den Sprung.", 0);
+                Float(data, "miningSpeed", "Basis-Abbaugeschwindigkeit", "Mehr = schneller. Zeit pro Block = Härte / Geschwindigkeit.", GameplaySettingsStore.MinDiggingSpeed, GameplaySettingsStore.MaxDiggingSpeed);
+                Float(data, "reach", "Abbau-Reichweite", "Maximale Entfernung vom Spieler zum Blockzentrum in Welteinheiten.", 0.01f);
+            });
+        }
+        else Missing("Kein PlayerBaseStats-Asset am StatsManager zugewiesen.");
+
+        movement = Picker("Bewegungssteuerung", movement);
+        Section("Bewegungsgefühl", movement, data =>
+        {
+            Float(data, "accelTime", "Beschleunigungszeit (s)", "Zeit bis zum Maximaltempo in der Luft. Am Boden wirkt zusätzlich der Bodenfaktor.", 0.01f);
+            Float(data, "decelTime", "Bremszeit (s)", "Zeit von Maximaltempo bis Stillstand in der Luft.", 0.01f);
+            Float(data, "groundedCoeff", "Beschleunigungsfaktor am Boden", "Multipliziert Beschleunigen und Bremsen am Boden. Kleiner = träger. In der Luft gilt Faktor 1.", 0.01f);
+        });
+        var body = movement ? movement.GetComponent<Rigidbody2D>() : null;
+        Section("Sprungphysik", body, data =>
+        {
+            Float(data, "m_GravityScale", "Gravitationsfaktor", "Skaliert die globale 2D-Gravitation für den Spieler.", 0.01f);
+            Float(data, "m_Mass", "Spielermasse", "Höhere Masse reduziert die Wirkung des Sprungimpulses.", 0.01f);
+        });
+
+        follow = Picker("Spielkamera", follow);
+        Section("Kamera", follow, data =>
+        {
+            Float(data, "smoothSpeed", "Nachführgeschwindigkeit", "Höher = Kamera folgt schneller.", 0.01f);
+            var property = data.FindProperty("offset");
+            Vector3 offset = property.vector3Value;
+            EditorGUI.BeginChangeCheck();
+            Vector2 xy = EditorGUILayout.Vector2Field(new GUIContent("Bildausschnitt-Versatz (X/Y)", "Verschiebt den Bildausschnitt relativ zum Spieler. Kamera-Z bleibt unverändert."), new Vector2(offset.x, offset.y));
+            if (EditorGUI.EndChangeCheck() && Finite(xy.x) && Finite(xy.y)) property.vector3Value = new Vector3(xy.x, xy.y, offset.z);
+        });
+        var camera = follow ? follow.GetComponent<Camera>() : null;
+        if (camera && camera.orthographic)
+            Section("Sichtweite", camera, data => Float(data, "orthographic size", "Halbe sichtbare Höhe", "Orthographic Size: größere Werte zeigen mehr von der Welt.", 0.1f));
+    }
+
+    void DrawEnergy()
+    {
+        stats = Picker("Spieler-Basiswerte", stats);
+        Section("Kapazität", BaseStats, data => Float(data, "maxEnergy", "Maximale Energie", "Kapazität und Startenergie des Spielers.", 1));
+        energy = Picker("Energieverbrauch", energy);
+        Section("Verbrauch pro Sekunde", energy, data =>
+        {
+            Float(data, "idleConsumtion", "Grundverbrauch", "Fällt immer an, solange Energie vorhanden ist.", 0);
+            Float(data, "moveConsumption", "Zusatz beim Bewegen", "Wird zum Grundverbrauch addiert, wenn Bewegungseingaben anliegen.", 0);
+            Float(data, "diggingConsumption", "Zusatz beim Abbauen", "Wird zum Grundverbrauch addiert, solange der Miner abbaut.", 0);
+        });
+        if (energy && BaseStats)
+        {
+            float total = energy.idleConsumtion + energy.moveConsumption + energy.diggingConsumption;
+            EditorGUILayout.HelpBox($"Bewegen + Abbauen: {total:g} Energie/s. Theoretische Laufzeit mit vollem Vorrat: {(total > 0 ? (BaseStats.maxEnergy / total).ToString("0.0") + " s" : "unbegrenzt")}.", MessageType.Info);
+        }
+        station = Picker("Aufladestation", station);
+        Section("Aufladen", station, data => Float(data, "rechargeCost", "Preis pro Energieeinheit", "Geldkosten pro fehlender Energieeinheit. Die aktuelle Aufladelogik rundet auf ganze Münzen ab.", 0.01f));
+        EditorGUILayout.HelpBox("Aktueller Spielstand: Leere Energie stoppt Bewegung/Abbau noch nicht. Teilaufladung bei zu wenig Geld enthält einen bekannten Berechnungsfehler; Details in der Gameplay-Analyse.", MessageType.Warning);
+    }
+
+    void DrawMap()
+    {
+        map = Picker("Map-Generator", map);
+        Section("Kartengröße und Zufall", map, data =>
+        {
+            Integer(data, "mapWidth", "Breite (Zellen)", "Die Karte wird horizontal um X = 0 zentriert.", 1, 10000);
+            Integer(data, "mapHeight", "Tiefe (Zellen)", "Die Karte wächst von Y = 0 nach unten.", 1, 10000);
+            Integer(data, "seed", "Seed", "0 = neue Zufallswelt bei jedem Start. Anderer Wert = reproduzierbare Welt bei gleichen Einstellungen.", -10000000, 10000000);
+        });
+        if (!map) return;
+        long cells = (long)map.mapWidth * map.mapHeight;
+        EditorGUILayout.HelpBox($"{cells:N0} Zellen. Änderungen werden beim nächsten Spielstart generiert; bestehende Tiles werden hier nicht überschrieben.", cells > 1000000 ? MessageType.Warning : MessageType.Info);
+        if (!Registry) { Missing("Dem Map-Generator fehlt ein BlockRegistry-Asset."); return; }
+
+        EditorGUILayout.Space(8);
+        EditorGUILayout.LabelField("Generierungsreihenfolge", EditorStyles.boldLabel);
+        Source(Registry);
+        EditorGUILayout.HelpBox("Der erste passende Noise-Block gewinnt. Stone füllt die verbleibenden Zellen. Die Tiefenkurve steuert eine ungefähre Häufigkeit vor Konkurrenz durch andere Erztypen.", MessageType.Info);
+        var registryData = new SerializedObject(Registry);
+        registryData.Update();
+        var blocks = registryData.FindProperty("blocks");
+        for (int i = 0; i < blocks.arraySize; i++)
+        {
+            var block = blocks.GetArrayElementAtIndex(i).objectReferenceValue as Block;
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.LabelField($"{i + 1}. {(block ? block.displayName : "FEHLENDER BLOCK")}" + (block && !block.spawnWithNoise ? "  (ohne Noise)" : ""));
+                using (new EditorGUI.DisabledScope(i == 0))
+                    if (GUILayout.Button("↑", GUILayout.Width(30))) { blocks.MoveArrayElement(i, i - 1); Apply(registryData); GUIUtility.ExitGUI(); }
+                using (new EditorGUI.DisabledScope(i == blocks.arraySize - 1))
+                    if (GUILayout.Button("↓", GUILayout.Width(30))) { blocks.MoveArrayElement(i, i + 1); Apply(registryData); GUIUtility.ExitGUI(); }
+            }
+        }
+        ValidateRegistry();
+        EditorGUILayout.Space(10);
+        DrawBlockGeneration();
+    }
+
+    Block BlockPicker()
+    {
+        if (!Registry || Registry.blocks == null || Registry.blocks.Length == 0) { Missing("Keine Blöcke im aktiven Map-Katalog."); return null; }
+        selectedBlock = Mathf.Clamp(selectedBlock, 0, Registry.blocks.Length - 1);
+        selectedBlock = EditorGUILayout.Popup("Block / Erz", selectedBlock, Registry.blocks.Select(b => b ? b.displayName + " (" + b.name + ")" : "Fehlender Block").ToArray());
+        return Registry.blocks[selectedBlock];
+    }
+
+    void DrawBlockGeneration()
+    {
+        var block = BlockPicker();
+        Section("Vorkommen nach Tiefe", block, data =>
+        {
+            EditorGUILayout.PropertyField(data.FindProperty("spawnWithNoise"), new GUIContent("Noise-Vorkommen aktiv", "Prüft diesen Block beim Generieren. Stone bleibt zusätzlich der Füllblock."));
+            if (!data.FindProperty("spawnWithNoise").boolValue) return;
+            Float(data, "noiseScale", "Noise-Skalierung", "Kleiner = größere zusammenhängende Erzflächen. Höher = kleinteiligere Verteilung.", 0.001f, 1);
+            Integer(data, "noiseSeedOffset", "Noise-Seed-Versatz", "Verschiebt das Muster dieses Erztyps relativ zu den anderen.", -10000000, 10000000);
+            EditorGUILayout.HelpBox("Kurve: X = relative Tiefe (0 Oberfläche, 1 Kartenboden), Y = Häufigkeit (0–1). 0,05 entspricht ungefähr 5 % vor Verdrängung durch frühere Erztypen.", MessageType.None);
+            var curve = data.FindProperty("rarityCurve");
+            EditorGUILayout.PropertyField(curve, new GUIContent("Häufigkeit nach Tiefe"));
+            var value = curve.animationCurveValue;
+            if (value != null)
+                EditorGUILayout.LabelField($"Oberfläche: {Mathf.Clamp01(value.Evaluate(0)):P1}   ·   Halbe Tiefe: {Mathf.Clamp01(value.Evaluate(0.5f)):P1}   ·   Boden: {Mathf.Clamp01(value.Evaluate(1)):P1}", EditorStyles.miniLabel);
+        });
+    }
+
+    void DrawBlocks()
+    {
+        map = Picker("Map-Katalog aus", map);
+        var block = BlockPicker();
+        Section("Abbau und Belohnung", block, data =>
+        {
+            Float(data, "hardness", "Blockhärte", "Mehr = längere Abbauzeit. Zeit = Härte / Abbaugeschwindigkeit.", 0.01f);
+            Integer(data, "points", "Punkte pro Block", "Wird beim vollständigen Abbau gutgeschrieben.", 0, 100000000);
+            EditorGUILayout.PropertyField(data.FindProperty("itemDrop"), new GUIContent("Beute-Gegenstand", "Ein Exemplar pro Block. Leer = keine Inventarbeute."));
+        });
+        if (block && BaseStats && BaseStats.miningSpeed > 0)
+            EditorGUILayout.LabelField($"Abbauzeit mit Basiswert: {Mathf.Max(0.01f, block.hardness <= 0 ? 1 : block.hardness) / BaseStats.miningSpeed:0.###} s  (ohne JSON-Override/Upgrades)", EditorStyles.miniLabel);
+        if (block && block.itemDrop) DrawItem(block.itemDrop);
+        EditorGUILayout.Space(12);
+        EditorGUILayout.LabelField("Verkaufswerte im Überblick", EditorStyles.boldLabel);
+        showOtherItems = EditorGUILayout.ToggleLeft("Auch Gegenstände ohne Beute-Zuordnung anzeigen", showOtherItems);
+        var usedItems = Registry && Registry.blocks != null
+            ? new HashSet<ItemSO>(Registry.blocks.Where(b => b && b.itemDrop).Select(b => b.itemDrop)) : new HashSet<ItemSO>();
+        foreach (var item in items.Where(item => showOtherItems || usedItems.Contains(item)))
+        {
+            var data = new SerializedObject(item);
+            data.Update();
+            Integer(data, "worth", item.displayName + (usedItems.Contains(item) ? "" : " (nicht als Beute genutzt)"), AssetDatabase.GetAssetPath(item), 0, 1000000);
+            Apply(data);
+        }
+        EditorGUILayout.HelpBox("Verkaufspreis gilt pro Stück; 0 = nicht verkaufbar. Der Shop zeigt nur Kategorie Ore. Kauf, Werkzeugwirkungen und Inventarlimits sind noch nicht implementiert.", MessageType.Info);
+        ValidateRegistry();
+    }
+
+    void DrawItem(ItemSO item)
+    {
+        Section("Zugehöriger Gegenstand", item, data =>
+        {
+            Integer(data, "worth", "Verkaufspreis pro Stück", "0 = nicht verkaufbar.", 0, 1000000);
+            EditorGUILayout.PropertyField(data.FindProperty("category"), new GUIContent("Kategorie", "Im aktuellen Verkaufsfenster erscheinen nur Gegenstände der Kategorie Ore."));
+        });
+    }
+
+    void DrawDebug()
+    {
+        EditorGUILayout.Space(8);
+        EditorGUILayout.LabelField("Standardwerte und Test-Overrides", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox("Dieses Fenster bearbeitet die Standardwerte in Assets/Szene. Das F1-Panel schreibt eine separate JSON-Datei, die im Editor und in Development Builds Vorrang hat. Reguläre Builds ignorieren diese Datei.", MessageType.Info);
+        EditorGUILayout.LabelField("Basis-Abbaugeschwindigkeit", BaseStats ? BaseStats.miningSpeed.ToString("g") : "Kein Basiswerte-Asset");
+        EditorGUILayout.LabelField("Gespeicherter JSON-Override", !overrideExists ? "Keiner" : overrideWarning == null ? savedOverride.baseDiggingSpeed.ToString("g") : "Ungültig – Standardwerte werden verwendet");
+        EditorGUILayout.SelectableLabel(GameplaySettings.FilePath, EditorStyles.textField, GUILayout.Height(40));
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Speicherordner öffnen")) EditorUtility.RevealInFinder(Application.persistentDataPath);
+            using (new EditorGUI.DisabledScope(!overrideExists))
+                if (GUILayout.Button("Test-Override zurücksetzen")) ResetOverride();
+        }
+        EditorGUILayout.HelpBox("Zurücksetzen verschiebt die JSON-Datei in eine Sicherung. Ab dem nächsten Spielstart gilt wieder das Basiswerte-Asset. Die Sicherung bleibt im selben Ordner.", MessageType.None);
+        if (GUILayout.Button("Gameplay-Analyse öffnen"))
+            Application.OpenURL(new Uri(Path.GetFullPath("Docs/Gameplay-Einstellungen.md")).AbsoluteUri);
+        showSources = EditorGUILayout.Foldout(showSources, "Verwendete Quellen", true);
+        if (showSources)
+            foreach (var source in new Object[] { BaseStats, movement, energy, station, map, Registry, follow }) if (source) Source(source);
+    }
+
+    void ValidateRegistry()
+    {
+        if (!Registry || Registry.blocks == null) return;
+        var blocks = Registry.blocks.Where(b => b).ToArray();
+        if (blocks.Length != Registry.blocks.Length) Missing("Der Blockkatalog enthält leere Einträge; die Map-Generierung überspringt sie.");
+        if (!blocks.Any(b => b.id == BlockType.Stone)) Missing("Stone als Füllblock fehlt. Die Welt kann dadurch Lücken erhalten.");
+        if (blocks.GroupBy(b => b.id).Any(g => g.Count() > 1)) Missing("Doppelte Block-IDs: Registry-Zuordnung und Generierungsreihenfolge können voneinander abweichen.");
+        if (blocks.Any(b => b.variants == null || b.variants.Length == 0 || b.variants.Any(t => !t))) Missing("Ein Block hat fehlende Tile-Varianten; beim Generieren können Löcher entstehen.");
+        if (miner && new SerializedObject(miner).FindProperty("blockRegistry").objectReferenceValue != Registry)
+            Missing("Map und Spieler verwenden unterschiedliche Blockkataloge. Beute/Härte könnten deshalb nicht zu den generierten Tiles passen.");
+    }
+
+    T Picker<T>(string label, T current) where T : Component
+    {
+        var candidates = sceneComponents.OfType<T>().ToArray();
+        if (candidates.Length == 0) { Missing(label + ": keine passende Komponente in der aktiven Szene."); return null; }
+        if (!current || !candidates.Contains(current)) current = candidates[0];
+        if (candidates.Length > 1)
+        {
+            int index = Array.IndexOf(candidates, current);
+            index = EditorGUILayout.Popup(label, index, candidates.Select(c => HierarchyPath(c.transform)).ToArray());
+            current = candidates[index];
+        }
+        return current;
+    }
+
+    static string HierarchyPath(Transform transform) => transform.parent ? HierarchyPath(transform.parent) + "/" + transform.name : transform.name;
+
+    static void Section(string title, Object target, Action<SerializedObject> draw)
+    {
+        if (!target) return;
+        EditorGUILayout.Space(8);
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+            Source(target);
+            var data = new SerializedObject(target);
+            data.Update();
+            draw(data);
+            Apply(data);
+        }
+    }
+
+    static void Source(Object target)
+    {
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            string path = target is Component c ? HierarchyPath(c.transform) + " · " + c.GetType().Name : AssetDatabase.GetAssetPath(target);
+            EditorGUILayout.LabelField(path, EditorStyles.miniLabel);
+            if (GUILayout.Button("Anzeigen", EditorStyles.miniButton, GUILayout.Width(65))) EditorGUIUtility.PingObject(target);
+        }
+    }
+
+    // Apply valid input immediately, as in Unity's Inspector. Delayed fields keep
+    // a private text buffer that may commit after a toolbar Save click has finished.
+    // Merely opening the window never changes existing game balance.
+    static void Float(SerializedObject data, string name, string label, string tooltip, float min, float max = float.MaxValue)
+    {
+        var property = data.FindProperty(name);
+        if (property == null) { Missing("Feld nicht gefunden: " + name); return; }
+        EditorGUI.BeginChangeCheck();
+        float value = EditorGUILayout.FloatField(new GUIContent(label, tooltip), property.floatValue);
+        if (EditorGUI.EndChangeCheck() && Finite(value)) property.floatValue = Mathf.Clamp(value, min, max);
+    }
+
+    static void Integer(SerializedObject data, string name, string label, string tooltip, int min, int max)
+    {
+        var property = data.FindProperty(name);
+        EditorGUI.BeginChangeCheck();
+        int value = EditorGUILayout.IntField(new GUIContent(label, tooltip), property.intValue);
+        if (EditorGUI.EndChangeCheck()) property.intValue = Mathf.Clamp(value, min, max);
+    }
+
+    static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+
+    static void Apply(SerializedObject data)
+    {
+        if (!data.ApplyModifiedProperties()) return;
+        if (data.targetObject is Component component)
+        {
+            PrefabUtility.RecordPrefabInstancePropertyModifications(component);
+            EditorSceneManager.MarkSceneDirty(component.gameObject.scene);
+        }
+    }
+
+    static void Missing(string message) => EditorGUILayout.HelpBox(message, MessageType.Warning);
+
+    void SaveSettings()
+    {
+        if (!this || EditorApplication.isPlayingOrWillChangePlaymode) return;
+        AssetDatabase.SaveAssets();
+        var scene = SceneManager.GetActiveScene();
+        bool saved = !scene.IsValid() || !scene.isDirty || EditorSceneManager.SaveScene(scene);
+        notification = saved ? "Einstellungen gespeichert." : "Szene wurde nicht gespeichert.";
+        ReadOverride();
+        Repaint();
+    }
+
+    void ResetOverride()
+    {
+        try
+        {
+            ArchiveOverride(GameplaySettings.FilePath);
+            notification = "Test-Override zurückgesetzt. Standardwerte gelten ab dem nächsten Spielstart.";
+            ReadOverride();
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+        {
+            notification = "Zurücksetzen fehlgeschlagen: " + ex.Message;
+        }
+    }
+
+    internal static string ArchiveOverride(string path)
+    {
+        string backup = path + "." + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff") + "." + Guid.NewGuid().ToString("N").Substring(0, 8) + ".bak";
+        File.Move(path, backup);
+        return backup;
+    }
+}

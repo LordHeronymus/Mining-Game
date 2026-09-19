@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using System;
@@ -35,6 +35,12 @@ public class TileMiner : MonoBehaviour
 
     void Update()
     {
+        if (GameplayDebugPanel.IsOpen)
+        {
+            mining = false;
+            if (highlightMap) highlightMap.ClearAllTiles();
+            return;
+        }
         if (!_cam || !tilemap) return;
 
         Vector3 mouseWorld = _cam.ScreenToWorldPoint(Input.mousePosition);
@@ -81,6 +87,7 @@ public class TileMiner : MonoBehaviour
             OnBlockMined?.Invoke(tilemap.GetCellCenterWorld(targetCell), points);
 
             tilemap.SetTile(targetCell, null);
+            tilemap.GetComponent<MapLighting>()?.NotifyTileChanged(targetCell);
             progress.Remove(targetCell);
 
             SoundType endSfx = SoundType.BreakRock; // Fallback

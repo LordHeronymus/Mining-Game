@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 7
   jumpForce: 10
-  miningSpeed: 15
+  miningSpeed: 1
   reach: 2
   maxEnergy: 100

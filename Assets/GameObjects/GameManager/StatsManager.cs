@@ -11,7 +11,11 @@ public class StatsManager : MonoBehaviour
 
     public float MoveSpeed;
     public float JumpForce;
-    public float MiningSpeed;
+    public float MiningSpeedMultiplier { get; set; } = 1f;
+    public float MiningSpeed => GameplaySettings.BaseDiggingSpeed * MiningSpeedMultiplier * GameplayTestSettings.DiggingMultiplier;
+    // Future damage handlers must respect this gate before applying damage.
+    public bool IsInvulnerable => GameplayTestSettings.GodMode;
+    public bool CanTakeDamage => !IsInvulnerable;
     public float Reach;
     public float MaxEnergy;
 
@@ -31,6 +35,7 @@ public class StatsManager : MonoBehaviour
     {
         if (Instance && Instance != this) { Destroy(gameObject); return; }
         Instance = this; DontDestroyOnLoad(gameObject);
+        GameplaySettings.Initialize(baseStats.miningSpeed);
         HandlePoints(Vector2.zero, 0);
     }
 
@@ -59,7 +64,7 @@ public class StatsManager : MonoBehaviour
 
         MoveSpeed = baseStats.moveSpeed;
         JumpForce = baseStats.jumpForce;
-        MiningSpeed = baseStats.miningSpeed;
+        MiningSpeedMultiplier = 1f;
         Reach = baseStats.reach;
         MaxEnergy = baseStats.maxEnergy;
     }

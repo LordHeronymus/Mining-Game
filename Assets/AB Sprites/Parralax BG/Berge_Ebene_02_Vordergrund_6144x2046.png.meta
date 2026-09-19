@@ -1,0 +1,1092 @@
+fileFormatVersion: 2
+guid: 11e8f29b332b8e041a33ee525d56d6f8
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1481529511723384741
+    second: Berge_Ebene_02_Vordergrund_6144x2046_0
+  - first:
+      213: -8935190215822284691
+    second: Berge_Ebene_02_Vordergrund_6144x2046_1
+  - first:
+      213: -8421651776959955408
+    second: Berge_Ebene_02_Vordergrund_6144x2046_2
+  - first:
+      213: 601028482454778428
+    second: Berge_Ebene_02_Vordergrund_6144x2046_3
+  - first:
+      213: -1865621702649591106
+    second: Berge_Ebene_02_Vordergrund_6144x2046_4
+  - first:
+      213: 3986329311434943931
+    second: Berge_Ebene_02_Vordergrund_6144x2046_5
+  - first:
+      213: 121717977531597656
+    second: Berge_Ebene_02_Vordergrund_6144x2046_6
+  - first:
+      213: -8929144393442284903
+    second: Berge_Ebene_02_Vordergrund_6144x2046_7
+  - first:
+      213: 1288956243930024568
+    second: Berge_Ebene_02_Vordergrund_6144x2046_8
+  - first:
+      213: -7338802128091023769
+    second: Berge_Ebene_02_Vordergrund_6144x2046_9
+  - first:
+      213: 4723429345559393300
+    second: Berge_Ebene_02_Vordergrund_6144x2046_10
+  - first:
+      213: 4842192687638285927
+    second: Berge_Ebene_02_Vordergrund_6144x2046_11
+  - first:
+      213: -4891958263953448204
+    second: Berge_Ebene_02_Vordergrund_6144x2046_12
+  - first:
+      213: -4565313837856197153
+    second: Berge_Ebene_02_Vordergrund_6144x2046_13
+  - first:
+      213: -1123966747246481476
+    second: Berge_Ebene_02_Vordergrund_6144x2046_14
+  - first:
+      213: 5172937142938854953
+    second: Berge_Ebene_02_Vordergrund_6144x2046_15
+  - first:
+      213: 5669742495538937486
+    second: Berge_Ebene_02_Vordergrund_6144x2046_16
+  - first:
+      213: -3680903364174247291
+    second: Berge_Ebene_02_Vordergrund_6144x2046_17
+  - first:
+      213: -7445860498099829299
+    second: Berge_Ebene_02_Vordergrund_6144x2046_18
+  - first:
+      213: -6902052686932679503
+    second: Berge_Ebene_02_Vordergrund_6144x2046_19
+  - first:
+      213: -8815212485071517787
+    second: Berge_Ebene_02_Vordergrund_6144x2046_20
+  - first:
+      213: -9025431815240903500
+    second: Berge_Ebene_02_Vordergrund_6144x2046_21
+  - first:
+      213: -1721891876178048354
+    second: Berge_Ebene_02_Vordergrund_6144x2046_22
+  - first:
+      213: -25237797096493343
+    second: Berge_Ebene_02_Vordergrund_6144x2046_23
+  - first:
+      213: -5437793865319358857
+    second: Berge_Ebene_02_Vordergrund_6144x2046_24
+  - first:
+      213: 4284050118660825765
+    second: Berge_Ebene_02_Vordergrund_6144x2046_25
+  - first:
+      213: 5740078652339584633
+    second: Berge_Ebene_02_Vordergrund_6144x2046_26
+  - first:
+      213: 5631920609390333426
+    second: Berge_Ebene_02_Vordergrund_6144x2046_27
+  - first:
+      213: -6639923970124758642
+    second: Berge_Ebene_02_Vordergrund_6144x2046_28
+  - first:
+      213: -549411884231243798
+    second: Berge_Ebene_02_Vordergrund_6144x2046_29
+  - first:
+      213: -7178979024545692239
+    second: Berge_Ebene_02_Vordergrund_6144x2046_30
+  - first:
+      213: 7469761376748662954
+    second: Berge_Ebene_02_Vordergrund_6144x2046_31
+  - first:
+      213: 3063892630551022303
+    second: Berge_Ebene_02_Vordergrund_6144x2046_32
+  - first:
+      213: -676951053430087170
+    second: Berge_Ebene_02_Vordergrund_6144x2046_33
+  - first:
+      213: -2836116235443260410
+    second: Berge_Ebene_02_Vordergrund_6144x2046_34
+  - first:
+      213: 2843950049832858840
+    second: Berge_Ebene_02_Vordergrund_6144x2046_35
+  - first:
+      213: -3275511205910294846
+    second: Berge_Ebene_02_Vordergrund_6144x2046_36
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 0
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 8192
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_0
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 1996
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5afb78ecd337f8410800000000000000
+      internalID: 1481529511723384741
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_1
+      rect:
+        serializedVersion: 2
+        x: 6028
+        y: 1483
+        width: 30
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d68ed51e6d3dff380800000000000000
+      internalID: -8935190215822284691
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_2
+      rect:
+        serializedVersion: 2
+        x: 5980
+        y: 1377
+        width: 30
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03eb3442458402b80800000000000000
+      internalID: -8421651776959955408
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_3
+      rect:
+        serializedVersion: 2
+        x: 252
+        y: 1353
+        width: 14
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c32fb9c6838475800800000000000000
+      internalID: 601028482454778428
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_4
+      rect:
+        serializedVersion: 2
+        x: 236
+        y: 1305
+        width: 14
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ebacf4822fafb16e0800000000000000
+      internalID: -1865621702649591106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_5
+      rect:
+        serializedVersion: 2
+        x: 248
+        y: 1317
+        width: 14
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bbdaec56369425730800000000000000
+      internalID: 3986329311434943931
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_6
+      rect:
+        serializedVersion: 2
+        x: 12
+        y: 1225
+        width: 26
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 853cc8d0bdd60b100800000000000000
+      internalID: 121717977531597656
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_7
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 1261
+        width: 14
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 99aa3b89b7e451480800000000000000
+      internalID: -8929144393442284903
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_8
+      rect:
+        serializedVersion: 2
+        x: 268
+        y: 1243
+        width: 42
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 87a887aefda43e110800000000000000
+      internalID: 1288956243930024568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_9
+      rect:
+        serializedVersion: 2
+        x: 5980
+        y: 1261
+        width: 14
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 766f04ed856572a90800000000000000
+      internalID: -7338802128091023769
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_10
+      rect:
+        serializedVersion: 2
+        x: 6044
+        y: 1257
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41439b7c6fdfc8140800000000000000
+      internalID: 4723429345559393300
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_11
+      rect:
+        serializedVersion: 2
+        x: 6044
+        y: 1213
+        width: 30
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76e8ca8289ce23340800000000000000
+      internalID: 4842192687638285927
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_12
+      rect:
+        serializedVersion: 2
+        x: 6074
+        y: 1233
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4f2a40da0e54c1cb0800000000000000
+      internalID: -4891958263953448204
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_13
+      rect:
+        serializedVersion: 2
+        x: 6076
+        y: 1241
+        width: 14
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd5f766a04fb4a0c0800000000000000
+      internalID: -4565313837856197153
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_14
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1213
+        width: 10
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cbfa50bc23ed660f0800000000000000
+      internalID: -1123966747246481476
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_15
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 1225
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9266b429ce6f9c740800000000000000
+      internalID: 5172937142938854953
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_16
+      rect:
+        serializedVersion: 2
+        x: 632
+        y: 1225
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e8ef88692c8feae40800000000000000
+      internalID: 5669742495538937486
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_17
+      rect:
+        serializedVersion: 2
+        x: 660
+        y: 1213
+        width: 24
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 58a8add74edcaecc0800000000000000
+      internalID: -3680903364174247291
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_18
+      rect:
+        serializedVersion: 2
+        x: 686
+        y: 1218
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc585aba35dfaa890800000000000000
+      internalID: -7445860498099829299
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_19
+      rect:
+        serializedVersion: 2
+        x: 6080
+        y: 1229
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b4e85e56abf630a0800000000000000
+      internalID: -6902052686932679503
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_20
+      rect:
+        serializedVersion: 2
+        x: 6120
+        y: 1211
+        width: 24
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a749b723f21aa580800000000000000
+      internalID: -8815212485071517787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_21
+      rect:
+        serializedVersion: 2
+        x: 252
+        y: 1213
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b49e0435993fb280800000000000000
+      internalID: -9025431815240903500
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_22
+      rect:
+        serializedVersion: 2
+        x: 686
+        y: 1199
+        width: 11
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e9ac6ca267c9a18e0800000000000000
+      internalID: -1721891876178048354
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_23
+      rect:
+        serializedVersion: 2
+        x: 3540
+        y: 1191
+        width: 18
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ee66257b5656aff0800000000000000
+      internalID: -25237797096493343
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_24
+      rect:
+        serializedVersion: 2
+        x: 5472
+        y: 1165
+        width: 25
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77e57d74a431984b0800000000000000
+      internalID: -5437793865319358857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_25
+      rect:
+        serializedVersion: 2
+        x: 5992
+        y: 1193
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a2afb292e0047b30800000000000000
+      internalID: 4284050118660825765
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_26
+      rect:
+        serializedVersion: 2
+        x: 1729
+        y: 1128
+        width: 49
+        height: 41
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97ef08f3f1bd8af40800000000000000
+      internalID: 5740078652339584633
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_27
+      rect:
+        serializedVersion: 2
+        x: 5452
+        y: 1153
+        width: 22
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2fd89ed74f9982e40800000000000000
+      internalID: 5631920609390333426
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_28
+      rect:
+        serializedVersion: 2
+        x: 5912
+        y: 1161
+        width: 22
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e81cc1934504ad3a0800000000000000
+      internalID: -6639923970124758642
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_29
+      rect:
+        serializedVersion: 2
+        x: 5932
+        y: 1149
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae7c40d5dc81068f0800000000000000
+      internalID: -549411884231243798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_30
+      rect:
+        serializedVersion: 2
+        x: 532
+        y: 1139
+        width: 18
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b549ffec942f5c90800000000000000
+      internalID: -7178979024545692239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_31
+      rect:
+        serializedVersion: 2
+        x: 540
+        y: 1129
+        width: 14
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa0790a456ce9a760800000000000000
+      internalID: 7469761376748662954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_32
+      rect:
+        serializedVersion: 2
+        x: 5457
+        y: 1134
+        width: 17
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fda4ee14d12258a20800000000000000
+      internalID: 3063892630551022303
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_33
+      rect:
+        serializedVersion: 2
+        x: 5812
+        y: 1093
+        width: 18
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef129f18a9cfa96f0800000000000000
+      internalID: -676951053430087170
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_34
+      rect:
+        serializedVersion: 2
+        x: 5836
+        y: 1097
+        width: 18
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 604bfac6f4714a8d0800000000000000
+      internalID: -2836116235443260410
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_35
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 6144
+        height: 1091
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d4fd3f908db77720800000000000000
+      internalID: 2843950049832858840
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Berge_Ebene_02_Vordergrund_6144x2046_36
+      rect:
+        serializedVersion: 2
+        x: 5984
+        y: 1053
+        width: 34
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cec7e1a9eb0b82d0800000000000000
+      internalID: -3275511205910294846
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Berge_Ebene_02_Vordergrund_6144x2046_0: 1481529511723384741
+      Berge_Ebene_02_Vordergrund_6144x2046_1: -8935190215822284691
+      Berge_Ebene_02_Vordergrund_6144x2046_10: 4723429345559393300
+      Berge_Ebene_02_Vordergrund_6144x2046_11: 4842192687638285927
+      Berge_Ebene_02_Vordergrund_6144x2046_12: -4891958263953448204
+      Berge_Ebene_02_Vordergrund_6144x2046_13: -4565313837856197153
+      Berge_Ebene_02_Vordergrund_6144x2046_14: -1123966747246481476
+      Berge_Ebene_02_Vordergrund_6144x2046_15: 5172937142938854953
+      Berge_Ebene_02_Vordergrund_6144x2046_16: 5669742495538937486
+      Berge_Ebene_02_Vordergrund_6144x2046_17: -3680903364174247291
+      Berge_Ebene_02_Vordergrund_6144x2046_18: -7445860498099829299
+      Berge_Ebene_02_Vordergrund_6144x2046_19: -6902052686932679503
+      Berge_Ebene_02_Vordergrund_6144x2046_2: -8421651776959955408
+      Berge_Ebene_02_Vordergrund_6144x2046_20: -8815212485071517787
+      Berge_Ebene_02_Vordergrund_6144x2046_21: -9025431815240903500
+      Berge_Ebene_02_Vordergrund_6144x2046_22: -1721891876178048354
+      Berge_Ebene_02_Vordergrund_6144x2046_23: -25237797096493343
+      Berge_Ebene_02_Vordergrund_6144x2046_24: -5437793865319358857
+      Berge_Ebene_02_Vordergrund_6144x2046_25: 4284050118660825765
+      Berge_Ebene_02_Vordergrund_6144x2046_26: 5740078652339584633
+      Berge_Ebene_02_Vordergrund_6144x2046_27: 5631920609390333426
+      Berge_Ebene_02_Vordergrund_6144x2046_28: -6639923970124758642
+      Berge_Ebene_02_Vordergrund_6144x2046_29: -549411884231243798
+      Berge_Ebene_02_Vordergrund_6144x2046_3: 601028482454778428
+      Berge_Ebene_02_Vordergrund_6144x2046_30: -7178979024545692239
+      Berge_Ebene_02_Vordergrund_6144x2046_31: 7469761376748662954
+      Berge_Ebene_02_Vordergrund_6144x2046_32: 3063892630551022303
+      Berge_Ebene_02_Vordergrund_6144x2046_33: -676951053430087170
+      Berge_Ebene_02_Vordergrund_6144x2046_34: -2836116235443260410
+      Berge_Ebene_02_Vordergrund_6144x2046_35: 2843950049832858840
+      Berge_Ebene_02_Vordergrund_6144x2046_36: -3275511205910294846
+      Berge_Ebene_02_Vordergrund_6144x2046_4: -1865621702649591106
+      Berge_Ebene_02_Vordergrund_6144x2046_5: 3986329311434943931
+      Berge_Ebene_02_Vordergrund_6144x2046_6: 121717977531597656
+      Berge_Ebene_02_Vordergrund_6144x2046_7: -8929144393442284903
+      Berge_Ebene_02_Vordergrund_6144x2046_8: 1288956243930024568
+      Berge_Ebene_02_Vordergrund_6144x2046_9: -7338802128091023769
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

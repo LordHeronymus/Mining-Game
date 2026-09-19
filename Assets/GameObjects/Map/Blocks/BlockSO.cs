@@ -8,7 +8,7 @@ public enum BlockType
     CopperOre = 2,
     SilverOre = 4,
     GoldOre = 3,
-    Empty
+    Empty = 5
 }
 
 [CreateAssetMenu(fileName = "New BlockType", menuName = "Blocks/BlockType", order = 0)]
