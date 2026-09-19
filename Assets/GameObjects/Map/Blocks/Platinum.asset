@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24d469c3ce4fd914d9eb95135b7e747b, type: 3}
+  m_Name: Platinum
+  m_EditorClassIdentifier: 
+  id: 6
+  displayName: Platin
+  itemDrop: {fileID: 11400000, guid: fad75854b09df8c458950d7b96227137, type: 2}
+  digSound: 4
+  breakSound: 5
+  hardness: 1.9499999
+  points: 2000
+  isSolid: 1
+  variants: []
+  smallOre:
+  - {fileID: 11400000, guid: 0868a0d3421f2534cba6642ce890727d, type: 2}
+  - {fileID: 11400000, guid: ea4bfe2582d10d1408acb818beaf516c, type: 2}
+  mediumOre:
+  - {fileID: 11400000, guid: 83696962b5807f044ba4da585d6cfb9b, type: 2}
+  - {fileID: 11400000, guid: cf710814ba5fc7849be259719d251786, type: 2}
+  richOre:
+  - {fileID: 11400000, guid: aafa146b6fab25e4a91b25e53a8206f8, type: 2}
+  - {fileID: 11400000, guid: 6c51c55713469894ba95e490c98d4ed4, type: 2}
+  - {fileID: 11400000, guid: 5521f4bfea1f97e4889c715f11cea3f9, type: 2}
+  spawnWithNoise: 1
+  oreFrequencyPercent: 2.37
+  veinSizeIndex: 7
+  rarityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0.25250742
+      outSlope: 0.25250742
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.22542532
+    - serializedVersion: 3
+      time: 0.1
+      value: 0.015
+      inSlope: 0.02640059
+      outSlope: 0.02640059
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.06822738
+    - serializedVersion: 3
+      time: 1
+      value: 0.035
+      inSlope: 0.022222223
+      outSlope: 0.022222223
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  noiseScale: 0.15
+  noiseSeedOffset: 4000
+  generationSettingsVersion: 1

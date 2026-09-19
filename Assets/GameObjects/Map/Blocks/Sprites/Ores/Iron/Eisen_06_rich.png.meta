@@ -1,0 +1,520 @@
+fileFormatVersion: 2
+guid: 4ff87cfb6a7bf644da0ddf07d8dbef01
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -550675994580528896
+    second: Eisen_06_Rich_0
+  - first:
+      213: 3004194364296141434
+    second: Eisen_06_Rich_1
+  - first:
+      213: -886115205230683524
+    second: Eisen_06_Rich_2
+  - first:
+      213: -6701346347077529480
+    second: Eisen_06_Rich_3
+  - first:
+      213: -8887974389875378619
+    second: Eisen_06_Rich_4
+  - first:
+      213: 8515475143469239102
+    second: Eisen_06_Rich_5
+  - first:
+      213: -5065631131916751580
+    second: Eisen_06_Rich_6
+  - first:
+      213: 4530515593425921301
+    second: Eisen_06_Rich_7
+  - first:
+      213: -5551069742954780107
+    second: Eisen_06_Rich_8
+  - first:
+      213: -7865936569425171743
+    second: Eisen_06_Rich_9
+  - first:
+      213: -5019513453599847517
+    second: Eisen_06_Rich_10
+  - first:
+      213: -6113105508102458742
+    second: Eisen_06_Rich_11
+  - first:
+      213: -7520008853019751432
+    second: Eisen_06_Rich_12
+  - first:
+      213: -8105776290008897042
+    second: Eisen_06_Rich_13
+  - first:
+      213: 6181471956035936159
+    second: Eisen_06_Rich_14
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 2
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 2508
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 0
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: 4
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: 4
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: 4
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Eisen_06_Rich_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1211
+        height: 1234
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00151bcb91b9b58f0800000000000000
+      internalID: -550675994580528896
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_06_Rich_1
+      rect:
+        serializedVersion: 2
+        x: 665
+        y: 1195
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a7a1a108bda01b920800000000000000
+      internalID: 3004194364296141434
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_06_Rich_2
+      rect:
+        serializedVersion: 2
+        x: 731
+        y: 1156
+        width: 36
+        height: 91
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7a172a6ae2e3b3f0800000000000000
+      internalID: -886115205230683524
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_06_Rich_3
+      rect:
+        serializedVersion: 2
+        x: 818
+        y: 1114
+        width: 11
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8701599a0090003a0800000000000000
+      internalID: -6701346347077529480
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_06_Rich_4
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 917
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54675b6026297a480800000000000000
+      internalID: -8887974389875378619
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_06_Rich_5
+      rect:
+        serializedVersion: 2
+        x: 107
+        y: 915
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3b072ca68b0d2670800000000000000
+      internalID: 8515475143469239102
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_06_Rich_6
+      rect:
+        serializedVersion: 2
+        x: 1172
+        y: 738
+        width: 63
+        height: 98
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 42d21fa035343b9b0800000000000000
+      internalID: -5065631131916751580
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_06_Rich_7
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 648
+        width: 5
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5152583bdef9fde30800000000000000
+      internalID: 4530515593425921301
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_06_Rich_8
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 359
+        width: 13
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 53ae2c7ca73a6f2b0800000000000000
+      internalID: -5551069742954780107
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_06_Rich_9
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 353
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ea68a99d5496d290800000000000000
+      internalID: -7865936569425171743
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_06_Rich_10
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 329
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ab03e4cb1b175ab0800000000000000
+      internalID: -5019513453599847517
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_06_Rich_11
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 290
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a82b113dde2e92ba0800000000000000
+      internalID: -6113105508102458742
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_06_Rich_12
+      rect:
+        serializedVersion: 2
+        x: 386
+        y: 97
+        width: 17
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8fb07f77acf83a790800000000000000
+      internalID: -7520008853019751432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_06_Rich_13
+      rect:
+        serializedVersion: 2
+        x: 796
+        y: 94
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee96c35196f728f80800000000000000
+      internalID: -8105776290008897042
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_06_Rich_14
+      rect:
+        serializedVersion: 2
+        x: 418
+        y: 63
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f9f9f804efff8c550800000000000000
+      internalID: 6181471956035936159
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Eisen_06_Rich_0: -550675994580528896
+      Eisen_06_Rich_1: 3004194364296141434
+      Eisen_06_Rich_10: -5019513453599847517
+      Eisen_06_Rich_11: -6113105508102458742
+      Eisen_06_Rich_12: -7520008853019751432
+      Eisen_06_Rich_13: -8105776290008897042
+      Eisen_06_Rich_14: 6181471956035936159
+      Eisen_06_Rich_2: -886115205230683524
+      Eisen_06_Rich_3: -6701346347077529480
+      Eisen_06_Rich_4: -8887974389875378619
+      Eisen_06_Rich_5: 8515475143469239102
+      Eisen_06_Rich_6: -5065631131916751580
+      Eisen_06_Rich_7: 4530515593425921301
+      Eisen_06_Rich_8: -5551069742954780107
+      Eisen_06_Rich_9: -7865936569425171743
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

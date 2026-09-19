@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Silver
   m_EditorClassIdentifier: 
   item: 4
+  category: 0
   displayName: Silver
   icon: {fileID: 21300000, guid: e9c2ec5960afafb40b1644dd078a9a24, type: 3}
-  worth: 500
+  worth: 40

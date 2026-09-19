@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Copper
   m_EditorClassIdentifier: 
   item: 0
+  category: 0
   displayName: Copper
   icon: {fileID: -5311988217735673151, guid: 5f74f84e2ce0fa24d90d44f7c4abbe24, type: 3}
-  worth: 150
+  worth: 10

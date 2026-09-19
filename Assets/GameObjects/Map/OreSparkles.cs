@@ -8,9 +8,15 @@ public sealed class OreSparkles : MonoBehaviour
 {
     public Material sparkleMaterial;
     [Min(0.1f)] public float intervalPerBlock = 3f;
+    [Min(1f), InspectorName("Funkelintervall im Dunkeln (Faktor)")]
+    public float darkIntervalMultiplier = 5f;
     [Min(0.1f)] public float lifetime = 1.2f;
     [Range(0.02f, 1f)] public float size = 0.65f;
     [Range(0f, 1f)] public float opacity = 0.9f;
+    [Range(0f, 1f), InspectorName("Erzfarb-Anteil")]
+    public float oreColorStrength = 0.45f;
+    [Range(1f, 8f), InspectorName("Helligkeit")]
+    public float brightness = 2.5f;
 
     const int Capacity = 32;
     readonly ParticleSystem.Particle[] buffer = new ParticleSystem.Particle[Capacity];
@@ -19,6 +25,10 @@ public sealed class OreSparkles : MonoBehaviour
     MapGenerator map;
     MapLighting lighting;
     ParticleSystem particles;
+    ParticleSystemRenderer sparkleRenderer;
+    MaterialPropertyBlock materialProperties;
+    float appliedBrightness = -1;
+    static readonly int ColorProperty = Shader.PropertyToID("_Color");
     sealed class Schedule
     {
         public Vector3Int cell;
@@ -76,11 +86,14 @@ public sealed class OreSparkles : MonoBehaviour
         scale.size = new ParticleSystem.MinMaxCurve(1, new AnimationCurve(
             new Keyframe(0, .35f), new Keyframe(.4f, 1), new Keyframe(1, .3f)));
         var renderer = particles.GetComponent<ParticleSystemRenderer>();
+        sparkleRenderer = renderer;
         renderer.sharedMaterial = sparkleMaterial;
         renderer.renderMode = ParticleSystemRenderMode.Billboard;
         // Specular highlights follow the darkness overlay (32760), with explicit light attenuation.
         renderer.sortingLayerID = SortingLayer.layers[SortingLayer.layers.Length - 1].id;
         renderer.sortingOrder = 32761;
+        appliedBrightness = -1;
+        ApplyBrightness();
         particles.Play();
         schedules.Clear(); queue.Clear(); scanIndex = 0; nextScan = 0;
         scanBounds = new BoundsInt();
@@ -90,13 +103,14 @@ public sealed class OreSparkles : MonoBehaviour
     {
         using var sample = UpdateMarker.Auto();
         if (!particles || !map.registry) return;
+        ApplyBrightness();
         var camera = Camera.main;
-        // Remove glints immediately when their ore is mined or becomes completely dark.
+        // Darkness changes the rhythm; only mined and offscreen glints are removed.
         int count = particles.GetParticles(buffer);
         for (int i = 0; i < count; i++)
         {
             var cell = tiles.WorldToCell(buffer[i].position);
-            if (!IsOre(map.registry.FromTile(tiles.GetTile(cell))) || !IsLit(cell) ||
+            if (!CanSparkle(cell) ||
                 !camera || !InView(camera, buffer[i].position)) buffer[i].remainingLifetime = 0;
         }
         particles.SetParticles(buffer, count);
@@ -106,8 +120,36 @@ public sealed class OreSparkles : MonoBehaviour
     bool IsLit(Vector3Int cell) => !lighting || !lighting.isActiveAndEnabled ||
         !lighting.lightingEnabled || lighting.GetBrightness(cell) > .03f;
 
-    public static bool IsOre(Block block) => block && (block.id == BlockType.IronOre ||
-        block.id == BlockType.CopperOre || block.id == BlockType.SilverOre || block.id == BlockType.GoldOre);
+    // Layered ores are lit exclusively with their stone substrate, never with emissive glints.
+    bool CanSparkle(Vector3Int cell) => !map.GetOreAt(cell) && IsOre(map.GetBlockAt(cell));
+
+    void ApplyBrightness()
+    {
+        if (!sparkleRenderer) return;
+        float value = float.IsNaN(brightness) || float.IsInfinity(brightness) ? 2.5f : Mathf.Clamp(brightness, 1f, 8f);
+        if (appliedBrightness == value) return;
+        materialProperties ??= new MaterialPropertyBlock();
+        // HDR gain belongs on the material: particle startColor is limited to Color32.
+        sparkleRenderer.GetPropertyBlock(materialProperties);
+        materialProperties.SetColor(ColorProperty, new Color(value, value, value, 1f));
+        sparkleRenderer.SetPropertyBlock(materialProperties);
+        appliedBrightness = value;
+    }
+
+    float IntervalFor(Vector3Int cell) => Mathf.Max(lifetime + .15f, intervalPerBlock) *
+        (IsLit(cell) ? 1f : Mathf.Max(1f, darkIntervalMultiplier));
+
+    public static bool IsOre(Block block) => block && (block.HasOreOverlays || block.id == BlockType.IronOre ||
+        block.id == BlockType.CopperOre || block.id == BlockType.SilverOre || block.id == BlockType.GoldOre ||
+        block.id == BlockType.PlatinumOre || block.id == BlockType.Coal || block.id == BlockType.DiamondOre);
+
+    public static Color GetOreColor(BlockType type) =>
+        type == BlockType.DiamondOre ? new Color(.49f, .91f, .95f) :
+        type == BlockType.Coal ? new Color(.22f, .23f, .25f) :
+        type == BlockType.PlatinumOre ? new Color(.88f, .85f, .75f) :
+        type == BlockType.GoldOre ? new Color(1f, .76f, .16f) :
+        type == BlockType.CopperOre ? new Color(1f, .45f, .16f) :
+        type == BlockType.SilverOre ? new Color(.83f, .92f, 1f) : new Color(.72f, .78f, .84f);
 
     static bool InView(Camera camera, Vector3 position)
     {
@@ -141,9 +183,9 @@ public sealed class OreSparkles : MonoBehaviour
             for (; scanIndex < end; scanIndex++)
             {
                 var cell = new Vector3Int(left + scanIndex % visible.size.x, bottom + scanIndex / visible.size.x, 0);
-                if (schedules.ContainsKey(cell) || !IsLit(cell) ||
-                    !IsOre(map.registry.FromTile(tiles.GetTile(cell))) || !InView(camera, tiles.GetCellCenterWorld(cell))) continue;
-                var item = new Schedule { cell = cell, due = now + (float)random.NextDouble() * Mathf.Max(.1f, intervalPerBlock) };
+                if (schedules.ContainsKey(cell) ||
+                    !CanSparkle(cell) || !InView(camera, tiles.GetCellCenterWorld(cell))) continue;
+                var item = new Schedule { cell = cell, due = now + (float)random.NextDouble() * IntervalFor(cell) };
                 schedules.Add(cell, item); queue.Add(item);
             }
             if (scanIndex >= area) { scanIndex = 0; nextScan = now + .5f; }
@@ -155,8 +197,8 @@ public sealed class OreSparkles : MonoBehaviour
             var item = queue.Min;
             if (item.due > now) break;
             var cell = item.cell;
-            var block = map.registry.FromTile(tiles.GetTile(cell));
-            if (!visible.Contains(cell) || !IsOre(block) || !IsLit(cell) || !InView(camera, tiles.GetCellCenterWorld(cell)))
+            var block = map.GetBlockAt(cell);
+            if (!visible.Contains(cell) || !CanSparkle(cell) || !InView(camera, tiles.GetCellCenterWorld(cell)))
             {
                 queue.Remove(item); schedules.Remove(cell); continue;
             }
@@ -165,7 +207,7 @@ public sealed class OreSparkles : MonoBehaviour
             queue.Remove(item);
             EmitCell(cell, block);
             free--;
-            item.due = now + Mathf.Max(lifetime + .15f, intervalPerBlock * (.8f + (float)random.NextDouble() * .4f));
+            item.due = now + Mathf.Max(lifetime + .15f, IntervalFor(cell) * (.8f + (float)random.NextDouble() * .4f));
             queue.Add(item);
         }
     }
@@ -176,12 +218,12 @@ public sealed class OreSparkles : MonoBehaviour
             var localOffset = Vector3.Scale(tiles.layoutGrid.cellSize,
                 new Vector3((float)random.NextDouble() * .5f - .25f, (float)random.NextDouble() * .5f - .25f));
             Vector3 position = center + tiles.transform.TransformVector(localOffset);
-            Color tint = block.id == BlockType.GoldOre ? new Color(1f, .88f, .48f) :
-                block.id == BlockType.CopperOre ? new Color(1f, .7f, .48f) : new Color(.83f, .93f, 1f);
-            tint = Color.Lerp(tint, Color.white, .75f);
+            Color oreColor = GetOreColor(block.id);
+            Color tint = Color.Lerp(Color.white, oreColor, oreColorStrength);
             float brightness = lighting && lighting.isActiveAndEnabled && lighting.lightingEnabled
                 ? lighting.GetBrightness(cell) : 1f;
-            tint.a = opacity * Mathf.Sqrt(Mathf.Clamp01(brightness));
+            // A small self-visible glint remains even when the terrain is completely black.
+            tint.a = opacity * Mathf.Sqrt(Mathf.Lerp(.12f, 1f, Mathf.Clamp01(brightness)));
             float cellSize = Mathf.Min(
                 tiles.transform.TransformVector(Vector3.right * tiles.layoutGrid.cellSize.x).magnitude,
                 tiles.transform.TransformVector(Vector3.up * tiles.layoutGrid.cellSize.y).magnitude);

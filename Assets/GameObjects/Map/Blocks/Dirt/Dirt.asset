@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24d469c3ce4fd914d9eb95135b7e747b, type: 3}
+  m_Name: Dirt
+  m_EditorClassIdentifier: 
+  id: 11
+  displayName: Erde
+  itemDrop: {fileID: 0}
+  digSound: 2
+  breakSound: 1
+  hardness: 0.6
+  points: 100
+  isSolid: 1
+  variants:
+  - {fileID: 11400000, guid: 8863131d1dc6f824d9f0ca57d7caa37f, type: 2}
+  - {fileID: 11400000, guid: a16507deef25fff4fae47a2e6064b22f, type: 2}
+  - {fileID: 11400000, guid: d75ec0bc67f701846bae4b794183e1a3, type: 2}
+  - {fileID: 11400000, guid: d5aa2976a68cf3a4fba6a6a205ea789d, type: 2}
+  smallOre: []
+  mediumOre: []
+  richOre: []
+  spawnWithNoise: 0
+  oreFrequencyPercent: 3
+  veinSizeIndex: 7
+  rarityCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  noiseScale: 0.05
+  noiseSeedOffset: 0
+  generationSettingsVersion: 1

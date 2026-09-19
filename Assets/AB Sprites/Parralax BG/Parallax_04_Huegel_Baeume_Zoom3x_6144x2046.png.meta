@@ -1,0 +1,1355 @@
+fileFormatVersion: 2
+guid: 21dfc1940dcf80946b6b1c1f7686f24f
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -6917412160073366481
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_0
+  - first:
+      213: 5213158716588855585
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_1
+  - first:
+      213: -6113722463692585847
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_2
+  - first:
+      213: -4493360925123801648
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_3
+  - first:
+      213: -7734357574038968402
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_4
+  - first:
+      213: 1022279180153860372
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_5
+  - first:
+      213: 728981587620948866
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_6
+  - first:
+      213: 7144689628653069693
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_7
+  - first:
+      213: -4311250653630782763
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_8
+  - first:
+      213: 174136067728234253
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_9
+  - first:
+      213: 2372217444932260312
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_10
+  - first:
+      213: -3703378515330916069
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_11
+  - first:
+      213: -6312914635123004829
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_12
+  - first:
+      213: 2168113301513728067
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_13
+  - first:
+      213: 6884219341261784532
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_14
+  - first:
+      213: 1181095891722607211
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_15
+  - first:
+      213: 8047474779428646321
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_16
+  - first:
+      213: 6654508243740291962
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_17
+  - first:
+      213: 3818198063794151998
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_18
+  - first:
+      213: -2613521408069233399
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_19
+  - first:
+      213: 3752281633144448502
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_20
+  - first:
+      213: 3297696677896283616
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_21
+  - first:
+      213: -4025396887017217635
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_22
+  - first:
+      213: -5446041174229613232
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_23
+  - first:
+      213: 7992763079589465993
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_24
+  - first:
+      213: 3676142571779109857
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_25
+  - first:
+      213: 5545156765160126754
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_26
+  - first:
+      213: -4044522591603559760
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_27
+  - first:
+      213: -6815875818180021410
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_28
+  - first:
+      213: 2357302824265348263
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_29
+  - first:
+      213: -8594792197358093959
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_30
+  - first:
+      213: -8239548409124699009
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_31
+  - first:
+      213: 1183438807717734835
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_32
+  - first:
+      213: -8459482498991746112
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_33
+  - first:
+      213: -3050749655490973848
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_34
+  - first:
+      213: -2369585725834125923
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_35
+  - first:
+      213: -6533239602497249760
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_36
+  - first:
+      213: 5860445894205518996
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_37
+  - first:
+      213: -74361695809112174
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_38
+  - first:
+      213: 5724631614071505438
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_39
+  - first:
+      213: -5955701478720740838
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_40
+  - first:
+      213: -4961753884137341024
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_41
+  - first:
+      213: -7417686152866933973
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_42
+  - first:
+      213: 6162928068574420801
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_43
+  - first:
+      213: -8051951692819917644
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_44
+  - first:
+      213: -4500146276386743147
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_45
+  - first:
+      213: 3540381022030042667
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_46
+  - first:
+      213: 4304237058201183764
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_47
+  - first:
+      213: 5712570597317260485
+    second: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_48
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 6144
+        height: 877
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f240cd95a4a6000a0800000000000000
+      internalID: -6917412160073366481
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_1
+      rect:
+        serializedVersion: 2
+        x: 834
+        y: 864
+        width: 27
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12192047b3cd85840800000000000000
+      internalID: 5213158716588855585
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_2
+      rect:
+        serializedVersion: 2
+        x: 1837
+        y: 868
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9840748afc1b72ba0800000000000000
+      internalID: -6113722463692585847
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_3
+      rect:
+        serializedVersion: 2
+        x: 5859
+        y: 864
+        width: 19
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0dd0062ab0064a1c0800000000000000
+      internalID: -4493360925123801648
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_4
+      rect:
+        serializedVersion: 2
+        x: 5888
+        y: 860
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea72e89c3ca0aa490800000000000000
+      internalID: -7734357574038968402
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_5
+      rect:
+        serializedVersion: 2
+        x: 5994
+        y: 856
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41139528f7ddf2e00800000000000000
+      internalID: 1022279180153860372
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_6
+      rect:
+        serializedVersion: 2
+        x: 6139
+        y: 864
+        width: 5
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 28b62f144ecdd1a00800000000000000
+      internalID: 728981587620948866
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_7
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 839
+        width: 9
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d75a842fc59072360800000000000000
+      internalID: 7144689628653069693
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_8
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 839
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5d2aaac5f5c5b24c0800000000000000
+      internalID: -4311250653630782763
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_9
+      rect:
+        serializedVersion: 2
+        x: 45
+        y: 840
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d07568bb4d7aa6200800000000000000
+      internalID: 174136067728234253
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_10
+      rect:
+        serializedVersion: 2
+        x: 415
+        y: 839
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d11c27923fcbe020800000000000000
+      internalID: 2372217444932260312
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_11
+      rect:
+        serializedVersion: 2
+        x: 746
+        y: 839
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1123e49cd4fa9cc0800000000000000
+      internalID: -3703378515330916069
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_12
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 826
+        width: 28
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36ae02c26950468a0800000000000000
+      internalID: -6312914635123004829
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_13
+      rect:
+        serializedVersion: 2
+        x: 1722
+        y: 840
+        width: 10
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34076818f8fa61e10800000000000000
+      internalID: 2168113301513728067
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_14
+      rect:
+        serializedVersion: 2
+        x: 1863
+        y: 843
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d548c74409a98f50800000000000000
+      internalID: 6884219341261784532
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_15
+      rect:
+        serializedVersion: 2
+        x: 1937
+        y: 811
+        width: 60
+        height: 41
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b6a9ccfa478146010800000000000000
+      internalID: 1181095891722607211
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_16
+      rect:
+        serializedVersion: 2
+        x: 5401
+        y: 837
+        width: 25
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1bd62ceacaf5eaf60800000000000000
+      internalID: 8047474779428646321
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_17
+      rect:
+        serializedVersion: 2
+        x: 5471
+        y: 839
+        width: 18
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a737c079dff895c50800000000000000
+      internalID: 6654508243740291962
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_18
+      rect:
+        serializedVersion: 2
+        x: 5958
+        y: 839
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e32e88ac8e6fcf430800000000000000
+      internalID: 3818198063794151998
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_19
+      rect:
+        serializedVersion: 2
+        x: 6031
+        y: 832
+        width: 29
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 905972b5028eabbd0800000000000000
+      internalID: -2613521408069233399
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_20
+      rect:
+        serializedVersion: 2
+        x: 6080
+        y: 836
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f52cc0d348c21430800000000000000
+      internalID: 3752281633144448502
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_21
+      rect:
+        serializedVersion: 2
+        x: 6097
+        y: 794
+        width: 47
+        height: 52
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0e56ef618a5c3cd20800000000000000
+      internalID: 3297696677896283616
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_22
+      rect:
+        serializedVersion: 2
+        x: 851
+        y: 829
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d912065dbdae228c0800000000000000
+      internalID: -4025396887017217635
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_23
+      rect:
+        serializedVersion: 2
+        x: 1044
+        y: 831
+        width: 9
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05584e90866cb64b0800000000000000
+      internalID: -5446041174229613232
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_24
+      rect:
+        serializedVersion: 2
+        x: 3059
+        y: 828
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 98f89c46caffbee60800000000000000
+      internalID: 7992763079589465993
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_25
+      rect:
+        serializedVersion: 2
+        x: 5415
+        y: 824
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e3b5962138440330800000000000000
+      internalID: 3676142571779109857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_26
+      rect:
+        serializedVersion: 2
+        x: 5653
+        y: 831
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 229393bc2ba54fc40800000000000000
+      internalID: 5545156765160126754
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_27
+      rect:
+        serializedVersion: 2
+        x: 5836
+        y: 831
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b27d69b128fed7c0800000000000000
+      internalID: -4044522591603559760
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_28
+      rect:
+        serializedVersion: 2
+        x: 813
+        y: 804
+        width: 23
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5374303e052961a0800000000000000
+      internalID: -6815875818180021410
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_29
+      rect:
+        serializedVersion: 2
+        x: 1686
+        y: 805
+        width: 11
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a47c5cdd62d6b020800000000000000
+      internalID: 2357302824265348263
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_30
+      rect:
+        serializedVersion: 2
+        x: 1698
+        y: 810
+        width: 23
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 979fb2e980a29b880800000000000000
+      internalID: -8594792197358093959
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_31
+      rect:
+        serializedVersion: 2
+        x: 1765
+        y: 765
+        width: 28
+        height: 52
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f74cc7c706e37ad80800000000000000
+      internalID: -8239548409124699009
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_32
+      rect:
+        serializedVersion: 2
+        x: 1931
+        y: 810
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b96d63535b6c6010800000000000000
+      internalID: 1183438807717734835
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_33
+      rect:
+        serializedVersion: 2
+        x: 1955
+        y: 809
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c396f7cc71e99a80800000000000000
+      internalID: -8459482498991746112
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_34
+      rect:
+        serializedVersion: 2
+        x: 1998
+        y: 800
+        width: 21
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 86fa0d51a5f89a5d0800000000000000
+      internalID: -3050749655490973848
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_35
+      rect:
+        serializedVersion: 2
+        x: 2020
+        y: 811
+        width: 20
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d9d12d2465a8d1fd0800000000000000
+      internalID: -2369585725834125923
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_36
+      rect:
+        serializedVersion: 2
+        x: 2036
+        y: 810
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 02e13a432354555a0800000000000000
+      internalID: -6533239602497249760
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_37
+      rect:
+        serializedVersion: 2
+        x: 3530
+        y: 805
+        width: 21
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4943485ad7c745150800000000000000
+      internalID: 5860445894205518996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_38
+      rect:
+        serializedVersion: 2
+        x: 5291
+        y: 811
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 297f6608e60d7fef0800000000000000
+      internalID: -74361695809112174
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_39
+      rect:
+        serializedVersion: 2
+        x: 5729
+        y: 811
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1204b26f1af17f40800000000000000
+      internalID: 5724631614071505438
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_40
+      rect:
+        serializedVersion: 2
+        x: 1347
+        y: 798
+        width: 8
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a12e49c4f09195da0800000000000000
+      internalID: -5955701478720740838
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_41
+      rect:
+        serializedVersion: 2
+        x: 1713
+        y: 787
+        width: 19
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0af3411812f442bb0800000000000000
+      internalID: -4961753884137341024
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_42
+      rect:
+        serializedVersion: 2
+        x: 1978
+        y: 785
+        width: 22
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b23580b9eb51f0990800000000000000
+      internalID: -7417686152866933973
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_43
+      rect:
+        serializedVersion: 2
+        x: 2001
+        y: 791
+        width: 14
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14f99affc6e178550800000000000000
+      internalID: 6162928068574420801
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_44
+      rect:
+        serializedVersion: 2
+        x: 3009
+        y: 785
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b41dd0b898b14090800000000000000
+      internalID: -8051951692819917644
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_45
+      rect:
+        serializedVersion: 2
+        x: 3539
+        y: 796
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 59cdbaeedc44c81c0800000000000000
+      internalID: -4500146276386743147
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_46
+      rect:
+        serializedVersion: 2
+        x: 4887
+        y: 785
+        width: 17
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2692a328c5f12130800000000000000
+      internalID: 3540381022030042667
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_47
+      rect:
+        serializedVersion: 2
+        x: 4906
+        y: 796
+        width: 11
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4166723bcc8bbbb30800000000000000
+      internalID: 4304237058201183764
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Parallax_04_Huegel_Baeume_Zoom3x_6144x2046_48
+      rect:
+        serializedVersion: 2
+        x: 5057
+        y: 787
+        width: 9
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c4bf6711b0274f40800000000000000
+      internalID: 5712570597317260485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable: {}
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

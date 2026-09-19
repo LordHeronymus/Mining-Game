@@ -40,6 +40,10 @@ public sealed class ParallaxLayer : MonoBehaviour
     SurfaceBackgroundController controller;
     GameObject generatedRoot;
 
+    public IReadOnlyList<SpriteRenderer> Renderers => renderers;
+    public Color LightingTint { get; set; } = Color.white;
+    public bool IsBottomEdge(Sprite sprite) => bottomEdges.ContainsValue(sprite);
+
     void OnEnable()
     {
         if (horizontalCount < 0) horizontalCount = legacyRepeatHorizontally ? 0 : 1;
@@ -103,7 +107,7 @@ public sealed class ParallaxLayer : MonoBehaviour
         double first = count == 0 ? System.Math.Floor((left - cycleStart) / cycleWidth) - 1.0 : -(count - 1) * 0.5;
         int cycles = count == 0 ? Mathf.CeilToInt((right - left) / cycleWidth) + 3 : count;
         float worldHeight = imageHeight * scale.y;
-        Color color = tint;
+        Color color = tint * LightingTint;
         color.a *= Mathf.Clamp01(opacity) * controller.GetOpacity(camera);
         if (color.a <= 0f) { HideUnused(0); return; }
 

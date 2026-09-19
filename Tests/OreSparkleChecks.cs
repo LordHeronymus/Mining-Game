@@ -80,12 +80,29 @@ public static class OreSparkleChecks
             lighting.daylightStrength=0;lighting.ambientBrightness=0;
             typeof(OreSparkles).GetField("lighting",Private).SetValue(effect,lighting);
             tick.Invoke(effect,new object[]{camera,35f});
-            Check(system.particleCount==0,"Unlit ore emitted particles");
+            var interval=typeof(OreSparkles).GetMethod("IntervalFor",Private);
+            float darkInterval=(float)interval.Invoke(effect,new object[]{Vector3Int.zero});
+            lighting.lightingEnabled=false;
+            float litInterval=(float)interval.Invoke(effect,new object[]{Vector3Int.zero});
+            Check(Mathf.Approximately(darkInterval,litInterval*5),"Dark interval must be five times longer");
+            lighting.lightingEnabled=true;
+            bool darkGlint=false;
+            for(int step=0;step<250;step++)
+            {
+                system.Simulate(.1f,true,false);
+                tick.Invoke(effect,new object[]{camera,35f+step*.1f});
+                int count=system.GetParticles(buffer);
+                for(int i=0;i<count;i++) if(buffer[i].startColor.a>0)darkGlint=true;
+            }
+            Check(darkGlint,"Completely dark ore never produced a visible glint");
+            effect.darkIntervalMultiplier=2;
+            Check(Mathf.Approximately((float)interval.Invoke(effect,new object[]{Vector3Int.zero}),litInterval*2),"Inspector factor ignored");
+            system.Clear();
             lighting.lightingEnabled=false;
             camera.transform.position=new Vector3(100,100,-10);
             tick.Invoke(effect,new object[]{camera,40f});
             Check(system.particleCount==0,"Offscreen ore emitted particles");
-            return new {passed=true,all64CellsSparkled=true,miningCleanup=true,darkness=true,offscreen=true,budget=32,scheduler300TicksMs=timer.Elapsed.TotalMilliseconds};
+            return new {passed=true,all64CellsSparkled=true,miningCleanup=true,darkGlint=true,darkIntervalFactor=5,adjustableFactor=true,offscreen=true,budget=32,scheduler300TicksMs=timer.Elapsed.TotalMilliseconds};
         }
         finally
         {

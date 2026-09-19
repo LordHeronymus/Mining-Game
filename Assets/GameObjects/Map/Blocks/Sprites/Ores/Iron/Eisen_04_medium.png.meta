@@ -1,0 +1,702 @@
+fileFormatVersion: 2
+guid: 3b2a4a9b3e93bb64db3f3f8b467914b7
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -1225445711211718676
+    second: Eisen_04_Medium_0
+  - first:
+      213: 2711116126528211047
+    second: Eisen_04_Medium_1
+  - first:
+      213: 8666669552468112629
+    second: Eisen_04_Medium_2
+  - first:
+      213: 6438028430528768218
+    second: Eisen_04_Medium_3
+  - first:
+      213: 2387869397240633488
+    second: Eisen_04_Medium_4
+  - first:
+      213: -1586292388535018678
+    second: Eisen_04_Medium_5
+  - first:
+      213: 6371592349728387830
+    second: Eisen_04_Medium_6
+  - first:
+      213: -1064736082555686485
+    second: Eisen_04_Medium_7
+  - first:
+      213: 2454334066085619352
+    second: Eisen_04_Medium_8
+  - first:
+      213: 8053421373308950970
+    second: Eisen_04_Medium_9
+  - first:
+      213: -4441826722062937095
+    second: Eisen_04_Medium_10
+  - first:
+      213: 2204260172808277471
+    second: Eisen_04_Medium_11
+  - first:
+      213: 5529354296827181526
+    second: Eisen_04_Medium_12
+  - first:
+      213: -8487078899234252714
+    second: Eisen_04_Medium_13
+  - first:
+      213: -7496128176477753692
+    second: Eisen_04_Medium_14
+  - first:
+      213: 2920322984663819999
+    second: Eisen_04_Medium_15
+  - first:
+      213: -3277061169786426809
+    second: Eisen_04_Medium_16
+  - first:
+      213: 5361214406133939112
+    second: Eisen_04_Medium_17
+  - first:
+      213: -6862653877324727960
+    second: Eisen_04_Medium_18
+  - first:
+      213: -6413447891705953813
+    second: Eisen_04_Medium_19
+  - first:
+      213: 790920291328856401
+    second: Eisen_04_Medium_20
+  - first:
+      213: -5130925590187009805
+    second: Eisen_04_Medium_21
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 2
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 2508
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 0
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: 4
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: 4
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: 4
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Eisen_04_Medium_0
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 33
+        width: 1115
+        height: 1201
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ce713bb4e975efee0800000000000000
+      internalID: -1225445711211718676
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_1
+      rect:
+        serializedVersion: 2
+        x: 739
+        y: 1100
+        width: 24
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7680c82c0c1df9520800000000000000
+      internalID: 2711116126528211047
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_2
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 915
+        width: 10
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f43e8c3a02364870800000000000000
+      internalID: 8666669552468112629
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_3
+      rect:
+        serializedVersion: 2
+        x: 1083
+        y: 909
+        width: 21
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ad868875fb8785950800000000000000
+      internalID: 6438028430528768218
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_4
+      rect:
+        serializedVersion: 2
+        x: 1101
+        y: 917
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 098dd88b09a632120800000000000000
+      internalID: 2387869397240633488
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_5
+      rect:
+        serializedVersion: 2
+        x: 1117
+        y: 882
+        width: 38
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a4bd6772a7b5cf9e0800000000000000
+      internalID: -1586292388535018678
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_6
+      rect:
+        serializedVersion: 2
+        x: 1099
+        y: 867
+        width: 9
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f23823eb717c6850800000000000000
+      internalID: 6371592349728387830
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_7
+      rect:
+        serializedVersion: 2
+        x: 1133
+        y: 795
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ba13ab39c2c4931f0800000000000000
+      internalID: -1064736082555686485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_8
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 369
+        width: 65
+        height: 77
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8966c2954db8f0220800000000000000
+      internalID: 2454334066085619352
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_9
+      rect:
+        serializedVersion: 2
+        x: 145
+        y: 304
+        width: 21
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab95e96f11083cf60800000000000000
+      internalID: 8053421373308950970
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_10
+      rect:
+        serializedVersion: 2
+        x: 1133
+        y: 200
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9f3d99d41267b52c0800000000000000
+      internalID: -4441826722062937095
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_11
+      rect:
+        serializedVersion: 2
+        x: 528
+        y: 115
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fdd47c0d2fa179e10800000000000000
+      internalID: 2204260172808277471
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_12
+      rect:
+        serializedVersion: 2
+        x: 538
+        y: 113
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d9f9abef663cbc40800000000000000
+      internalID: 5529354296827181526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_13
+      rect:
+        serializedVersion: 2
+        x: 541
+        y: 115
+        width: 35
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 658dd6625b6d73a80800000000000000
+      internalID: -8487078899234252714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_14
+      rect:
+        serializedVersion: 2
+        x: 547
+        y: 105
+        width: 7
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ae2f32c32768f790800000000000000
+      internalID: -7496128176477753692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_15
+      rect:
+        serializedVersion: 2
+        x: 553
+        y: 101
+        width: 9
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd6ab423842178820800000000000000
+      internalID: 2920322984663819999
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_16
+      rect:
+        serializedVersion: 2
+        x: 663
+        y: 109
+        width: 19
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 74a67ab8a3a8582d0800000000000000
+      internalID: -3277061169786426809
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_17
+      rect:
+        serializedVersion: 2
+        x: 683
+        y: 109
+        width: 7
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8abf152f81cd66a40800000000000000
+      internalID: 5361214406133939112
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_18
+      rect:
+        serializedVersion: 2
+        x: 699
+        y: 103
+        width: 7
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8693a9198a4f2c0a0800000000000000
+      internalID: -6862653877324727960
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_19
+      rect:
+        serializedVersion: 2
+        x: 585
+        y: 95
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be183655f1bdef6a0800000000000000
+      internalID: -6413447891705953813
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_20
+      rect:
+        serializedVersion: 2
+        x: 932
+        y: 97
+        width: 12
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1511e4280d9e9fa00800000000000000
+      internalID: 790920291328856401
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Eisen_04_Medium_21
+      rect:
+        serializedVersion: 2
+        x: 810
+        y: 31
+        width: 9
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f811fb4c5a4bc8b0800000000000000
+      internalID: -5130925590187009805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Eisen_04_Medium_0: -1225445711211718676
+      Eisen_04_Medium_1: 2711116126528211047
+      Eisen_04_Medium_10: -4441826722062937095
+      Eisen_04_Medium_11: 2204260172808277471
+      Eisen_04_Medium_12: 5529354296827181526
+      Eisen_04_Medium_13: -8487078899234252714
+      Eisen_04_Medium_14: -7496128176477753692
+      Eisen_04_Medium_15: 2920322984663819999
+      Eisen_04_Medium_16: -3277061169786426809
+      Eisen_04_Medium_17: 5361214406133939112
+      Eisen_04_Medium_18: -6862653877324727960
+      Eisen_04_Medium_19: -6413447891705953813
+      Eisen_04_Medium_2: 8666669552468112629
+      Eisen_04_Medium_20: 790920291328856401
+      Eisen_04_Medium_21: -5130925590187009805
+      Eisen_04_Medium_3: 6438028430528768218
+      Eisen_04_Medium_4: 2387869397240633488
+      Eisen_04_Medium_5: -1586292388535018678
+      Eisen_04_Medium_6: 6371592349728387830
+      Eisen_04_Medium_7: -1064736082555686485
+      Eisen_04_Medium_8: 2454334066085619352
+      Eisen_04_Medium_9: 8053421373308950970
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

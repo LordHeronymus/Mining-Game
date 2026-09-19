@@ -21,20 +21,25 @@ public class TileMiner : MonoBehaviour
 
     private Dictionary<Vector3Int, float> progress = new();
     private Camera _cam;
+    private MapGenerator map;
     private float nextMiningSoundTime = 0f;
 
     public static Action<Vector2, int> OnBlockMined;
 
     private bool mining;
     public bool IsMingin => mining;
+    public bool IsMining => mining;
+    public Vector2 MiningTarget { get; private set; }
 
     void Awake()
     {
         _cam = cam ? cam : Camera.main;
+        map = tilemap ? tilemap.GetComponent<MapGenerator>() : null;
     }
 
     void Update()
     {
+        mining = false;
         if (GameplayDebugPanel.IsOpen)
         {
             mining = false;
@@ -66,10 +71,10 @@ public class TileMiner : MonoBehaviour
             mining = false;
             return;
         }
-        else mining = true;
-
         TileBase t = tilemap.GetTile(targetCell);
         if (!t) return;
+        mining = true;
+        MiningTarget = tilemap.GetCellCenterWorld(targetCell);
 
         float p = progress.TryGetValue(targetCell, out var cur) ? cur : 0f;
         float targetTime = GetTargetMineTime(targetCell);
@@ -78,21 +83,7 @@ public class TileMiner : MonoBehaviour
 
         if (p >= 1f)
         {
-            TileBase minedTile = tilemap.GetTile(targetCell);
-            Block minedBlock = blockRegistry != null ? blockRegistry.FromTile(minedTile) : null;
-            if (minedBlock != null && minedBlock.itemDrop != null)
-                InventoryManager.Instance?.Add(minedBlock.itemDrop, 1);
-
-            int points = minedBlock != null ? minedBlock.points : 0;
-            OnBlockMined?.Invoke(tilemap.GetCellCenterWorld(targetCell), points);
-
-            tilemap.SetTile(targetCell, null);
-            tilemap.GetComponent<MapLighting>()?.NotifyTileChanged(targetCell);
-            progress.Remove(targetCell);
-
-            SoundType endSfx = SoundType.BreakRock; // Fallback
-            if (minedBlock != null) endSfx = minedBlock.breakSound;
-            AudioManager.Instance.Play(endSfx);
+            CompleteMining(targetCell);
             return;
         }
 
@@ -101,14 +92,39 @@ public class TileMiner : MonoBehaviour
             SoundType hit = SoundType.DigMedium; // Fallback
             if (blockRegistry != null)
             {
-                TileBase curTile = tilemap.GetTile(targetCell);
-                Block curBlock = curTile ? blockRegistry.FromTile(curTile) : null;
+                Block curBlock = GetBlock(targetCell);
                 if (curBlock != null) hit = curBlock.digSound;
             }
 
             AudioManager.Instance.Play(hit, true);
             nextMiningSoundTime = Time.time + miningSoundInterval;
         }
+    }
+
+    Block GetBlock(Vector3Int cell)
+    {
+        if (!map && tilemap) map = tilemap.GetComponent<MapGenerator>();
+        return map ? map.GetBlockAt(cell) : blockRegistry ? blockRegistry.FromTile(tilemap.GetTile(cell)) : null;
+    }
+
+    // One transaction for rewards, effects and both render layers. Effects read the cell before removal.
+    public bool CompleteMining(Vector3Int cell)
+    {
+        if (!tilemap || !tilemap.HasTile(cell)) return false;
+        var block = GetBlock(cell);
+        var ore = map ? map.GetOreAt(cell) : null;
+        int amount = ore ? OreTile.DropCount(ore.richness, UnityEngine.Random.value) : 1;
+        if (block && block.itemDrop && amount > 0) InventoryManager.Instance?.Add(block.itemDrop, amount);
+        OnBlockMined?.Invoke(tilemap.GetCellCenterWorld(cell), block ? block.points : 0);
+        if (map) map.RemoveBlock(cell);
+        else
+        {
+            tilemap.SetTile(cell, null);
+            tilemap.GetComponent<MapLighting>()?.NotifyTileChanged(cell);
+        }
+        progress.Remove(cell);
+        AudioManager.Instance?.Play(block ? block.breakSound : SoundType.BreakRock);
+        return true;
     }
 
     Vector3Int? FindNearestExistingCell(Vector3 mouseWorld, int radius)
@@ -150,8 +166,7 @@ public class TileMiner : MonoBehaviour
 
         if (blockRegistry != null)
         {
-            TileBase t = tilemap.GetTile(cell);
-            Block b = t ? blockRegistry.FromTile(t) : null;
+            Block b = GetBlock(cell);
             if (b != null) time *= Mathf.Max(0.01f, b.hardness <= 0 ? 1f : b.hardness);
         }
 

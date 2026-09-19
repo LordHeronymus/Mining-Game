@@ -70,19 +70,26 @@ public static class LastPlayedMap
 
     static void Write(MapGenerator map, string path)
     {
-        var tilemap = map.GetComponent<Tilemap>();
+        using (var stream = new GZipStream(File.Create(path), System.IO.Compression.CompressionLevel.Fastest))
+        using (var writer = new BinaryWriter(stream))
+        {
+            writer.Write(2);
+            writer.Write(GlobalObjectId.GetGlobalObjectIdSlow(map).ToString());
+            writer.Write(map.ActiveSeed); writer.Write(map.GeneratedWidth); writer.Write(map.GeneratedHeight);
+            WriteLayer(writer, map.GetComponent<Tilemap>());
+            WriteLayer(writer, map.EnsureOreOverlay());
+        }
+    }
+
+    static void WriteLayer(BinaryWriter writer, Tilemap tilemap)
+    {
         var bounds = tilemap.cellBounds;
         var tiles = tilemap.GetTilesBlock(bounds);
         var palette = new List<TileBase>();
         var indices = new Dictionary<TileBase,int>();
         foreach (var tile in tiles)
             if (tile && !indices.ContainsKey(tile)) { indices[tile] = palette.Count; palette.Add(tile); }
-        using (var stream = new GZipStream(File.Create(path), System.IO.Compression.CompressionLevel.Fastest))
-        using (var writer = new BinaryWriter(stream))
         {
-            writer.Write(1);
-            writer.Write(GlobalObjectId.GetGlobalObjectIdSlow(map).ToString());
-            writer.Write(map.ActiveSeed); writer.Write(map.GeneratedWidth); writer.Write(map.GeneratedHeight);
             writer.Write(bounds.xMin); writer.Write(bounds.yMin); writer.Write(bounds.zMin);
             writer.Write(bounds.size.x); writer.Write(bounds.size.y); writer.Write(bounds.size.z);
             writer.Write(palette.Count);
@@ -130,11 +137,24 @@ public static class LastPlayedMap
         using (var stream = new GZipStream(File.OpenRead(path), CompressionMode.Decompress))
         using (var reader = new BinaryReader(stream))
         {
-            if(reader.ReadInt32()!=1) throw new InvalidDataException("Unbekanntes Mapformat.");
+            int version = reader.ReadInt32();
+            if(version != 1 && version != 2) throw new InvalidDataException("Unbekanntes Mapformat.");
             GlobalObjectId.TryParse(reader.ReadString(), out var mapId);
             var map = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(mapId) as MapGenerator;
             if (!map) throw new InvalidOperationException("Map-Szene ist nicht geladen.");
             int seed=reader.ReadInt32(), width=reader.ReadInt32(), height=reader.ReadInt32();
+            ReadLayer(reader, map.GetComponent<Tilemap>());
+            var overlay = map.EnsureOreOverlay();
+            if (version >= 2) ReadLayer(reader, overlay);
+            else overlay.ClearAllTiles();
+            map.RestorePreviewMetadata(seed,width,height);
+            EditorUtility.SetDirty(map);
+            EditorSceneManager.MarkSceneDirty(map.gameObject.scene);
+        }
+    }
+
+    static void ReadLayer(BinaryReader reader, Tilemap tilemap)
+    {
             var bounds = new BoundsInt(reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32());
             var palette=new TileBase[reader.ReadInt32()];
             for(int i=0;i<palette.Length;i++)
@@ -155,7 +175,6 @@ public static class LastPlayedMap
                 var matrix=new Matrix4x4();for(int n=0;n<16;n++)matrix[n]=reader.ReadSingle();
                 custom[i]=(color,matrix);
             }
-            var tilemap=map.GetComponent<Tilemap>();
             tilemap.ClearAllTiles();tilemap.SetTilesBlock(bounds,tiles);
             int cellIndex=0;
             foreach(var cell in bounds.allPositionsWithin)
@@ -165,9 +184,7 @@ public static class LastPlayedMap
                 if(custom.TryGetValue(i,out var value)) {tilemap.SetColor(cell,value.color);tilemap.SetTransformMatrix(cell,value.matrix);}
                 tilemap.SetTileFlags(cell,flags[i]);
             }
-            tilemap.CompressBounds();map.RestorePreviewMetadata(seed,width,height);
-            EditorUtility.SetDirty(tilemap);EditorUtility.SetDirty(map);
-            EditorSceneManager.MarkSceneDirty(map.gameObject.scene);
-        }
+            tilemap.CompressBounds();
+            EditorUtility.SetDirty(tilemap);
     }
 }

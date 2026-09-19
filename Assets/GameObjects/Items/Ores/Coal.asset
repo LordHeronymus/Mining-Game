@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Coal
   m_EditorClassIdentifier: 
   item: 3
-  displayName: Coal
-  icon: {fileID: 21300000, guid: 7f18af7a3f658f3419383180cced9403, type: 3}
-  worth: 50
+  category: 0
+  displayName: Kohle
+  icon: {fileID: 21300000, guid: 904587ca0bb375c46b1860f470cf2977, type: 3}
+  worth: 3

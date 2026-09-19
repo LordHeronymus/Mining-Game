@@ -24,6 +24,19 @@ MonoBehaviour:
   - {fileID: 11400000, guid: da3400c5744ec884f849f614f3468d32, type: 2}
   - {fileID: 11400000, guid: b9ac66f86e972e44097a0fdf8aa9d3be, type: 2}
   - {fileID: 11400000, guid: 2f80364986d67b746a6096397774f2da, type: 2}
+  smallOre:
+  - {fileID: 11400000, guid: ec3589bb2b27f444f936ef24549bb3ce, type: 2}
+  - {fileID: 11400000, guid: f5440cdcde70653489da06e11386be6f, type: 2}
+  mediumOre:
+  - {fileID: 11400000, guid: ac906a768767e7e4084579f33887aa02, type: 2}
+  - {fileID: 11400000, guid: f6fcd4a23508c9d4aa64cacfaa49b9b0, type: 2}
+  richOre:
+  - {fileID: 11400000, guid: c6b007bc69b2bcf48b3cbda92907aaec, type: 2}
+  - {fileID: 11400000, guid: da24a4e5e74f7ce4bbcd6dd1572b68fc, type: 2}
+  - {fileID: 11400000, guid: 6035a19d9740e284bb84282fc647ed61, type: 2}
+  spawnWithNoise: 1
+  oreFrequencyPercent: 2.37
+  veinSizeIndex: 7
   rarityCurve:
     serializedVersion: 2
     m_Curve:
@@ -57,6 +70,6 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  spawnWithNoise: 1
   noiseScale: 0.15
   noiseSeedOffset: 3000
+  generationSettingsVersion: 1

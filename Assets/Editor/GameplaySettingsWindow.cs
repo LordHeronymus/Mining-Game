@@ -147,6 +147,15 @@ public class GameplaySettingsWindow : EditorWindow
 
     void DrawLighting()
     {
+        var sky = sceneComponents.OfType<SkyController>().FirstOrDefault();
+        Section("Himmel", sky, data =>
+        {
+            Float(data, "SkyFadeDuration", "SkyFadeDuration (s)", "", 0.01f);
+            EditorGUILayout.PropertyField(data.FindProperty("automaticCycle"), new GUIContent("Automatischer Wechsel"));
+            Float(data, "DayDuration", "Tagdauer (s)", "", 0.01f);
+            Float(data, "NightDuration", "Nachtdauer (s)", "", 0.01f);
+            EditorGUILayout.PropertyField(data.FindProperty("isNight"), new GUIContent("Nacht"));
+        });
         lighting = Picker("Map-Beleuchtung", lighting);
         Section("Tageslicht und Dunkelheit", lighting, data =>
         {
@@ -243,16 +252,20 @@ public class GameplaySettingsWindow : EditorWindow
             Integer(data, "mapWidth", "Breite (Zellen)", "Die Karte wird horizontal um X = 0 zentriert.", 1, 10000);
             Integer(data, "mapHeight", "Tiefe (Zellen)", "Die Karte wächst von Y = 0 nach unten.", 1, 10000);
             Integer(data, "seed", "Seed", "0 = neue Zufallswelt bei jedem Start. Anderer Wert = reproduzierbare Welt bei gleichen Einstellungen.", -10000000, 10000000);
+            EditorGUILayout.Slider(data.FindProperty("oreScale"), .5f, 3f, new GUIContent("Erzgröße (×)"));
+            EditorGUILayout.CurveField(data.FindProperty("oreDensityByDepth"), Color.cyan,
+                new Rect(0f, 0f, 1f, 100f), new GUIContent("Erzanteil (%) nach Tiefe (0–1)"));
         });
         if (!map) return;
+        Section("Layers", map, data =>
+            EditorGUILayout.PropertyField(data.FindProperty("layers"), new GUIContent("Layers"), true));
         long cells = (long)map.mapWidth * map.mapHeight;
         EditorGUILayout.HelpBox($"{cells:N0} Zellen. Änderungen werden beim nächsten Spielstart generiert; bestehende Tiles werden hier nicht überschrieben.", cells > 1000000 ? MessageType.Warning : MessageType.Info);
         if (!Registry) { Missing("Dem Map-Generator fehlt ein BlockRegistry-Asset."); return; }
 
         EditorGUILayout.Space(8);
-        EditorGUILayout.LabelField("Generierungsreihenfolge", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Blockkatalog", EditorStyles.boldLabel);
         Source(Registry);
-        EditorGUILayout.HelpBox("Der erste passende Noise-Block gewinnt. Stone füllt die verbleibenden Zellen. Die Tiefenkurve steuert eine ungefähre Häufigkeit vor Konkurrenz durch andere Erztypen.", MessageType.Info);
         var registryData = new SerializedObject(Registry);
         registryData.Update();
         var blocks = registryData.FindProperty("blocks");
@@ -261,7 +274,7 @@ public class GameplaySettingsWindow : EditorWindow
             var block = blocks.GetArrayElementAtIndex(i).objectReferenceValue as Block;
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.LabelField($"{i + 1}. {(block ? block.displayName : "FEHLENDER BLOCK")}" + (block && !block.spawnWithNoise ? "  (ohne Noise)" : ""));
+                EditorGUILayout.LabelField($"{i + 1}. {(block ? block.displayName : "FEHLENDER BLOCK")}" + (block && !block.spawnWithNoise ? "  (inaktiv)" : ""));
                 using (new EditorGUI.DisabledScope(i == 0))
                     if (GUILayout.Button("↑", GUILayout.Width(30))) { blocks.MoveArrayElement(i, i - 1); Apply(registryData); GUIUtility.ExitGUI(); }
                 using (new EditorGUI.DisabledScope(i == blocks.arraySize - 1))
@@ -284,18 +297,12 @@ public class GameplaySettingsWindow : EditorWindow
     void DrawBlockGeneration()
     {
         var block = BlockPicker();
-        Section("Vorkommen nach Tiefe", block, data =>
+        Section("Erzverteilung", block, data =>
         {
-            EditorGUILayout.PropertyField(data.FindProperty("spawnWithNoise"), new GUIContent("Noise-Vorkommen aktiv", "Prüft diesen Block beim Generieren. Stone bleibt zusätzlich der Füllblock."));
+            EditorGUILayout.PropertyField(data.FindProperty("spawnWithNoise"), new GUIContent("Vorkommen aktiv"));
             if (!data.FindProperty("spawnWithNoise").boolValue) return;
-            Float(data, "noiseScale", "Noise-Skalierung", "Kleiner = größere zusammenhängende Erzflächen. Höher = kleinteiligere Verteilung.", 0.001f, 1);
-            Integer(data, "noiseSeedOffset", "Noise-Seed-Versatz", "Verschiebt das Muster dieses Erztyps relativ zu den anderen.", -10000000, 10000000);
-            EditorGUILayout.HelpBox("Kurve: X = relative Tiefe (0 Oberfläche, 1 Kartenboden), Y = Häufigkeit (0–1). 0,05 entspricht ungefähr 5 % vor Verdrängung durch frühere Erztypen.", MessageType.None);
-            var curve = data.FindProperty("rarityCurve");
-            EditorGUILayout.PropertyField(curve, new GUIContent("Häufigkeit nach Tiefe"));
-            var value = curve.animationCurveValue;
-            if (value != null)
-                EditorGUILayout.LabelField($"Oberfläche: {Mathf.Clamp01(value.Evaluate(0)):P1}   ·   Halbe Tiefe: {Mathf.Clamp01(value.Evaluate(0.5f)):P1}   ·   Boden: {Mathf.Clamp01(value.Evaluate(1)):P1}", EditorStyles.miniLabel);
+            EditorGUILayout.Slider(data.FindProperty("oreFrequencyPercent"), 0f, 100f, new GUIContent("Erzgewicht"));
+            EditorGUILayout.IntSlider(data.FindProperty("veinSizeIndex"), 1, 100, new GUIContent("Adergröße (Index)"));
         });
     }
 
@@ -307,7 +314,7 @@ public class GameplaySettingsWindow : EditorWindow
         {
             Float(data, "hardness", "Blockhärte", "Mehr = längere Abbauzeit. Zeit = Härte / Abbaugeschwindigkeit.", 0.01f);
             Integer(data, "points", "Punkte pro Block", "Wird beim vollständigen Abbau gutgeschrieben.", 0, 100000000);
-            EditorGUILayout.PropertyField(data.FindProperty("itemDrop"), new GUIContent("Beute-Gegenstand", "Ein Exemplar pro Block. Leer = keine Inventarbeute."));
+            EditorGUILayout.PropertyField(data.FindProperty("itemDrop"), new GUIContent("Beute-Gegenstand"));
         });
         if (block && BaseStats && BaseStats.miningSpeed > 0)
             EditorGUILayout.LabelField($"Abbauzeit mit Basiswert: {Mathf.Max(0.01f, block.hardness <= 0 ? 1 : block.hardness) / BaseStats.miningSpeed:0.###} s  (ohne JSON-Override/Upgrades)", EditorStyles.miniLabel);
@@ -366,7 +373,9 @@ public class GameplaySettingsWindow : EditorWindow
         if (blocks.Length != Registry.blocks.Length) Missing("Der Blockkatalog enthält leere Einträge; die Map-Generierung überspringt sie.");
         if (!blocks.Any(b => b.id == BlockType.Stone)) Missing("Stone als Füllblock fehlt. Die Welt kann dadurch Lücken erhalten.");
         if (blocks.GroupBy(b => b.id).Any(g => g.Count() > 1)) Missing("Doppelte Block-IDs: Registry-Zuordnung und Generierungsreihenfolge können voneinander abweichen.");
-        if (blocks.Any(b => b.variants == null || b.variants.Length == 0 || b.variants.Any(t => !t))) Missing("Ein Block hat fehlende Tile-Varianten; beim Generieren können Löcher entstehen.");
+        if (blocks.Any(b => b.HasOreOverlays
+            ? b.smallOre.Concat(b.mediumOre).Concat(b.richOre).Any(t => !t)
+            : b.variants == null || b.variants.Length == 0 || b.variants.Any(t => !t))) Missing("Ein Block hat fehlende Tile-Varianten; beim Generieren können Löcher entstehen.");
         if (miner && new SerializedObject(miner).FindProperty("blockRegistry").objectReferenceValue != Registry)
             Missing("Map und Spieler verwenden unterschiedliche Blockkataloge. Beute/Härte könnten deshalb nicht zu den generierten Tiles passen.");
     }

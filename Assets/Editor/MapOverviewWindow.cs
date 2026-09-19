@@ -127,7 +127,7 @@ public sealed class MapOverviewWindow : EditorWindow
                 int x = index % width;
                 int y = index / width;
                 var cell = new Vector3Int(x - width / 2, -y, 0);
-                SetCell(x, y, map.registry.FromTile(tilemap.GetTile(cell)));
+                SetCell(x, y, map.GetBlockAt(cell));
             }
             changedCells.Clear();
             texture.Apply(false, false);
@@ -156,7 +156,7 @@ public sealed class MapOverviewWindow : EditorWindow
         types = new BlockType[width * height];
         try
         {
-            sampler = live ? null : new MapGenerationSampler(map.registry, seed, height);
+            sampler = live ? null : new MapGenerationSampler(map.registry, seed, height, map.layers, map.oreDensityByDepth);
             building = true;
         }
         catch (Exception ex)
@@ -173,12 +173,9 @@ public sealed class MapOverviewWindow : EditorWindow
         int end = Mathf.Min(height, nextRow + RowsPerUpdate);
         for (int y = nextRow; y < end; y++)
         {
-            TileBase[] row = live
-                ? tilemap.GetTilesBlock(new BoundsInt(-width / 2, -y, 0, width, 1, 1))
-                : null;
             for (int x = 0; x < width; x++)
             {
-                Block block = live ? map.registry.FromTile(row[x]) : sampler.GetBlock(x, y);
+                Block block = live ? map.GetBlockAt(new Vector3Int(x - width / 2, -y, 0)) : sampler.GetBlock(x, y);
                 SetCell(x, y, block);
             }
         }
@@ -213,11 +210,17 @@ public sealed class MapOverviewWindow : EditorWindow
     {
         switch (type)
         {
+            case BlockType.Dirt: return new Color32(109, 72, 42, 255);
             case BlockType.Stone: return new Color32(80, 86, 96, 255);
+            case BlockType.StoneLayer2: return new Color32(67, 72, 82, 255);
+            case BlockType.StoneLayer3: return new Color32(54, 58, 68, 255);
+            case BlockType.DiamondOre: return new Color32(124, 231, 241, 255);
             case BlockType.IronOre: return new Color32(168, 179, 195, 255);
             case BlockType.CopperOre: return new Color32(211, 111, 69, 255);
             case BlockType.SilverOre: return new Color32(226, 228, 222, 255);
             case BlockType.GoldOre: return new Color32(246, 192, 58, 255);
+            case BlockType.PlatinumOre: return new Color32(210, 204, 184, 255);
+            case BlockType.Coal: return new Color32(38, 40, 45, 255);
             case BlockType.Empty: return EmptyColor;
             default: return UnknownColor;
         }
@@ -225,7 +228,7 @@ public sealed class MapOverviewWindow : EditorWindow
 
     void OnTilesChanged(Tilemap changedMap, Tilemap.SyncTile[] changes)
     {
-        if (!live || changedMap != tilemap || !HasLiveMap() || changes == null) return;
+        if (!live || (changedMap != tilemap && changedMap != map.OreOverlay) || !HasLiveMap() || changes == null) return;
         foreach (var change in changes)
             QueueCell(change.position);
     }
@@ -294,7 +297,9 @@ public sealed class MapOverviewWindow : EditorWindow
             return;
         }
 
-        float bottom = 76f;
+        int legendColumns = Mathf.Max(1, Mathf.FloorToInt((position.width - 24 + 3) / 83));
+        float legendHeight = Mathf.CeilToInt(13f / legendColumns) * 18f;
+        float bottom = 40f + legendHeight;
         var area = new Rect(12, GUILayoutUtility.GetLastRect().yMax + 8, position.width - 24, position.height - GUILayoutUtility.GetLastRect().yMax - bottom);
         if (area.width <= 0 || area.height <= 0) return;
         Vector2 center = view.center;
@@ -305,8 +310,8 @@ public sealed class MapOverviewWindow : EditorWindow
         HandleInput(area);
         DrawMap(area);
         DrawPlayerMarker(area);
-        DrawStatus(area);
-        DrawLegend(new Rect(12, position.height - 38, position.width - 24, 36));
+        DrawStatus(area, position.height - legendHeight - 24);
+        DrawLegend(new Rect(12, position.height - legendHeight - 2, position.width - 24, legendHeight));
     }
 
     Vector2 ViewSize(Rect area)
@@ -384,7 +389,7 @@ public sealed class MapOverviewWindow : EditorWindow
         else if (e.type == EventType.MouseMove) Repaint();
     }
 
-    void DrawStatus(Rect imageRect)
+    void DrawStatus(Rect imageRect, float statusY)
     {
         string status = "Mausrad: Zoom  •  Ziehen: Verschieben  •  Klick: Scene-Ansicht";
         int x, y;
@@ -393,7 +398,7 @@ public sealed class MapOverviewWindow : EditorWindow
             status = "X " + (x - width / 2) + "  •  Tiefe " + y + "  •  " + types[y * width + x]
                 + "  |  Mausrad: Zoom  •  Klick: Scene";
         }
-        GUI.Label(new Rect(12, position.height - 61, position.width - 24, 20), status, EditorStyles.miniLabel);
+        GUI.Label(new Rect(12, statusY, position.width - 24, 20), status, EditorStyles.miniLabel);
     }
 
     bool CellUnderMouse(Vector2 mouse, Rect imageRect, out int x, out int y)
@@ -432,14 +437,15 @@ public sealed class MapOverviewWindow : EditorWindow
 
     void DrawLegend(Rect area)
     {
-        string[] names = { "Stein", "Eisen", "Kupfer", "Silber", "Gold", "Leer", "Spieler" };
-        BlockType[] ids = { BlockType.Stone, BlockType.IronOre, BlockType.CopperOre,
-            BlockType.SilverOre, BlockType.GoldOre, BlockType.Empty };
+        string[] names = { "Erde", "Stein 1", "Stein 2", "Stein 3", "Kohle", "Eisen", "Kupfer", "Silber", "Gold", "Platin", "Diamant", "Leer", "Spieler" };
+        BlockType[] ids = { BlockType.Dirt, BlockType.Stone, BlockType.StoneLayer2, BlockType.StoneLayer3,
+            BlockType.Coal, BlockType.IronOre, BlockType.CopperOre,
+            BlockType.SilverOre, BlockType.GoldOre, BlockType.PlatinumOre, BlockType.DiamondOre, BlockType.Empty };
         float x = area.x;
         for (int i = 0; i < names.Length; i++)
         {
             if (x + 80 > area.xMax) { x = area.x; area.y += 18; }
-            EditorGUI.DrawRect(new Rect(x, area.y + 2, 11, 11), i == 6 ? Color.cyan : ColorFor(ids[i]));
+            EditorGUI.DrawRect(new Rect(x, area.y + 2, 11, 11), i == ids.Length ? Color.cyan : ColorFor(ids[i]));
             GUI.Label(new Rect(x + 15, area.y, 65, 17), names[i], EditorStyles.miniLabel);
             x += 83;
         }

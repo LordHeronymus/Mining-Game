@@ -2,13 +2,14 @@ using UnityEngine;
 
 public enum Item
 {
-    //next 8
+    //next 9
 
     Coal = 3,
     Copper = 0,
     Iron = 1,
     Silver = 4,
     Gold = 2,
+    Platinum = 8,
 
     Torche = 5,
     Dynamite = 6,

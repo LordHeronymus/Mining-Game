@@ -20,6 +20,9 @@ public class PlayerMovement : MonoBehaviour
 
     private bool moving;
     public bool IsMoving => moving;
+    public float HorizontalInput => inputX;
+    public bool IsFlying => flying;
+    public bool IsOnGround => col && IsGrounded();
 
 
     float Accel => stats.MoveSpeed / Mathf.Max(0.0001f, accelTime);
