@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 // into a second configuration asset that could drift out of sync.
 public class GameplaySettingsWindow : EditorWindow
 {
-    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Blöcke & Beute", "Debug", "Licht", "Werkbank", "Audio" };
+    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Blöcke & Beute", "Debug", "Licht", "Werkbank", "Audio", "Bäume", "Tiere" };
     [SerializeField] int tab;
     [SerializeField] int selectedBlock;
     [SerializeField] StatsManager stats;
@@ -24,6 +24,12 @@ public class GameplaySettingsWindow : EditorWindow
     [SerializeField] MapLighting lighting;
     [SerializeField] OreSparkles oreSparkles;
     [SerializeField] SurfaceBirds birds;
+    [SerializeField] SurfaceTrees trees;
+    [SerializeField] SurfaceRabbit rabbit;
+    [SerializeField] SurfaceRabbitSpawner rabbitSpawner;
+    [SerializeField] SurfaceCritters frogs;
+    [SerializeField] SurfaceCritters snails;
+    [SerializeField] SurfaceFireflies fireflies;
     [SerializeField] CameraFollow follow;
     Vector2 scroll;
     Component[] sceneComponents = Array.Empty<Component>();
@@ -84,6 +90,12 @@ public class GameplaySettingsWindow : EditorWindow
         lighting = Resolve(lighting);
         oreSparkles = Resolve(oreSparkles);
         birds = Resolve(birds);
+        trees = Resolve(trees);
+        rabbit = Resolve(rabbit);
+        rabbitSpawner = Resolve(rabbitSpawner);
+        frogs = sceneComponents.OfType<SurfaceCritters>().FirstOrDefault(group => group.species == SurfaceCritters.Species.Frog);
+        snails = sceneComponents.OfType<SurfaceCritters>().FirstOrDefault(group => group.species == SurfaceCritters.Species.Snail);
+        fireflies = Resolve(fireflies);
         follow = Resolve(follow);
         items = AssetDatabase.FindAssets("t:ItemSO").Select(guid => AssetDatabase.LoadAssetAtPath<ItemSO>(AssetDatabase.GUIDToAssetPath(guid)))
             .Where(item => item).OrderBy(item => item.displayName).ToArray();
@@ -148,6 +160,8 @@ public class GameplaySettingsWindow : EditorWindow
                 case 5: DrawLighting(); break;
                 case 6: DrawWorkbench(); break;
                 case 7: DrawAudio(); break;
+                case 8: DrawTrees(); break;
+                case 9: DrawAnimals(); break;
             }
         }
         EditorGUILayout.Space(12);
@@ -155,6 +169,105 @@ public class GameplaySettingsWindow : EditorWindow
         EditorGUILayout.LabelField("Änderungen direkt an Asset/Szene · Strg+Z: Undo · Speichern sichert Assets und aktive Szene", EditorStyles.miniLabel);
         if (!string.IsNullOrEmpty(notification)) EditorGUILayout.HelpBox(notification, MessageType.Info);
         if (saveRequested) SaveSettings();
+    }
+
+    void DrawTrees()
+    {
+        if (!trees) { Missing("Keine Oberflächenbäume in der aktiven Szene."); return; }
+        Section("Oberflächenbäume", trees, data =>
+        {
+            Integer(data, "maximumTrees", "Maximale Anzahl", "", 0, 20);
+            var spacing = data.FindProperty("minimumTreeSpacing");
+            float cellWidth = map && map.Terrain ? map.Terrain.layoutGrid.cellSize.x : .5f;
+            EditorGUI.BeginChangeCheck();
+            int tiles = EditorGUILayout.IntField("Mindestabstand (Kacheln)",
+                Mathf.RoundToInt(spacing.floatValue / cellWidth));
+            if (EditorGUI.EndChangeCheck()) spacing.floatValue = Mathf.Max(4, tiles) * cellWidth;
+            Integer(data, "hitsToFell", "Treffer zum Fällen", "", 1, 100);
+            Integer(data, "woodYieldMin", "Holz mindestens", "", 1, 9999);
+            Integer(data, "woodYieldMax", "Holz höchstens", "", 1, 9999);
+            var minimum = data.FindProperty("woodYieldMin");
+            var maximum = data.FindProperty("woodYieldMax");
+            if (maximum.intValue < minimum.intValue) maximum.intValue = minimum.intValue;
+            Integer(data, "maximumBonusWood", "Max. Bonus-Holz", "", 0, 9999 - maximum.intValue);
+            Float(data, "growthSpeedPercentPerMinute", "Wachstum (% pro Minute)", "", 0f, 300f);
+            Float(data, "maximumSizeBonusPercent", "Max. Größenbonus (%)", "", 0f, 200f);
+            var interval = data.FindProperty("regrowthSeconds");
+            Vector2 seconds = interval.vector2Value;
+            EditorGUI.BeginChangeCheck();
+            float earliest = EditorGUILayout.FloatField("Nachwuchs frühestens (s)", seconds.x);
+            float latest = EditorGUILayout.FloatField("Nachwuchs spätestens (s)", seconds.y);
+            if (EditorGUI.EndChangeCheck() && Finite(earliest) && Finite(latest))
+            {
+                earliest = Mathf.Clamp(earliest, 1f, 3600f);
+                interval.vector2Value = new Vector2(earliest, Mathf.Clamp(latest, earliest, 3600f));
+            }
+        }, false);
+    }
+
+    void DrawAnimals()
+    {
+        Section("Vögel", birds, data =>
+        {
+            Float(data, "size", "Größe", "", .1f, 10f);
+            FloatRange(data, "flockInterval", "Schwarmintervall (s)", .1f, 3600f);
+            Integer(data, "birdsPerFlock", "Vögel pro Schwarm", "", 1, 8);
+            Float(data, "flightSpeed", "Fluggeschwindigkeit", "", .1f, 100f);
+            FloatRange(data, "altitude", "Flughöhe", 0f, 100f);
+            Float(data, "wingbeatsPerSecond", "Flügelschläge pro Sekunde", "", .1f, 30f);
+            Float(data, "nightOffscreenDespawnDelay", "Nacht-Despawn (s)", "", .1f, 3600f);
+        }, false);
+
+        Section("Häschen", rabbitSpawner, data =>
+        {
+            FloatRange(data, "spawnInterval", "Spawnintervall (s)", .1f, 3600f);
+            Integer(data, "maxRabbits", "Maximale Anzahl", "", 1, 20);
+            Float(data, "despawnDistance", "Despawn-Abstand", "", 1f, 10000f);
+            Float(data, "despawnDelay", "Despawn-Verzögerung (s)", "", .1f, 3600f);
+        }, false);
+        Section("Häschen-Bewegung", rabbit, data =>
+        {
+            Float(data, "roamRadius", "Bewegungsradius", "", 1f, 1000f);
+            Float(data, "hopHeight", "Hüpfhöhe", "", .1f, 100f);
+            Float(data, "hopDuration", "Hüpfdauer (s)", "", .2f, 60f);
+            Float(data, "entryDelay", "Wartezeit vor Auftauchen (s)", "", 0f, 3600f);
+            FloatRange(data, "entryRestDuration", "Pausen beim Reinhoppeln (s)", .1f, 3600f);
+            FloatRange(data, "restDuration", "Ruhephase (s)", .1f, 3600f);
+            FloatRange(data, "restInterval", "Abstand zwischen Ruhephasen (s)", .1f, 3600f);
+        }, false);
+
+        DrawCritterBehavior("Frösche", frogs, true);
+        DrawCritterBehavior("Schnecken", snails, false);
+
+        Section("Glühwürmchen", fireflies, data =>
+        {
+            Integer(data, "count", "Anzahl", "", 0, 80);
+            Float(data, "cameraMargin", "Abstand ausserhalb der Kamera", "", 0f, 1000f);
+            FloatRange(data, "altitude", "Flughöhe", 0f, 100f);
+            Float(data, "flightSpeed", "Fluggeschwindigkeit", "", .01f, 100f);
+            Float(data, "pulseDuration", "Pulsdauer (s)", "", .1f, 3600f);
+            Float(data, "fadeDuration", "Ein-/Ausblenden (s)", "", .1f, 3600f);
+        }, false);
+    }
+
+    void DrawCritterBehavior(string title, SurfaceCritters critter, bool frog)
+    {
+        Section(title, critter, data =>
+        {
+            Integer(data, "maxCount", "Maximale Anzahl", "", 0, 12);
+            FloatRange(data, "spawnInterval", "Spawnintervall (s)", .1f, 3600f);
+            FloatRange(data, "restDuration", "Ruhephasen (s)", .1f, 3600f);
+            Float(data, "roamRadius", "Bewegungsradius", "", .5f, 1000f);
+            Float(data, "despawnDistance", "Despawn-Abstand", "", 2f, 10000f);
+            Float(data, "despawnDelay", "Despawn-Verzögerung (s)", "", .1f, 3600f);
+            if (frog)
+            {
+                Float(data, "hopHeight", "Sprunghöhe", "", .1f, 100f);
+                Float(data, "hopDuration", "Sprungdauer (s)", "", .1f, 60f);
+                FloatRange(data, "hopDistance", "Sprungweite", .1f, 100f);
+            }
+            else Float(data, "crawlSpeed", "Kriechgeschwindigkeit", "", .01f, 100f);
+        }, false);
     }
 
     void DrawAudio()
@@ -445,8 +558,62 @@ public class GameplaySettingsWindow : EditorWindow
     {
         if (!Registry || Registry.blocks == null || Registry.blocks.Length == 0) { Missing("Keine Blöcke im aktiven Map-Katalog."); return null; }
         selectedBlock = Mathf.Clamp(selectedBlock, 0, Registry.blocks.Length - 1);
-        selectedBlock = EditorGUILayout.Popup("Block / Erz", selectedBlock, Registry.blocks.Select(b => b ? b.displayName + " (" + b.name + ")" : "Fehlender Block").ToArray());
+        var indices = Enumerable.Range(0, Registry.blocks.Length)
+            .OrderBy(index => BlockPickerOrder(Registry.blocks[index]))
+            .ThenBy(index => Registry.blocks[index] ? Registry.blocks[index].displayName : "")
+            .ToArray();
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            EditorGUILayout.PrefixLabel("Block / Erz");
+            var rect = GUILayoutUtility.GetRect(new GUIContent(BlockPickerName(Registry.blocks[selectedBlock])), EditorStyles.popup);
+            if (EditorGUI.DropdownButton(rect, new GUIContent(BlockPickerName(Registry.blocks[selectedBlock])), FocusType.Keyboard))
+            {
+                var menu = new GenericMenu();
+                foreach (int index in indices)
+                {
+                    int choice = index;
+                    menu.AddItem(new GUIContent(BlockPickerName(Registry.blocks[choice])), choice == selectedBlock,
+                        () => { selectedBlock = choice; Repaint(); });
+                }
+                menu.DropDown(rect);
+            }
+        }
         return Registry.blocks[selectedBlock];
+    }
+
+    static int BlockPickerOrder(Block block)
+    {
+        if (!block) return 99;
+        switch (block.id)
+        {
+            case BlockType.Dirt: return 0;
+            case BlockType.Stone: return 1;
+            case BlockType.StoneLayer2: return 2;
+            case BlockType.StoneLayer3: return 3;
+            case BlockType.StoneLayer4: return 4;
+            case BlockType.Coal: return 10;
+            case BlockType.CopperOre: return 11;
+            case BlockType.IronOre: return 12;
+            case BlockType.SilverOre: return 13;
+            case BlockType.GoldOre: return 14;
+            case BlockType.PlatinumOre: return 15;
+            case BlockType.DiamondOre: return 16;
+            default: return 90;
+        }
+    }
+
+    static string BlockPickerName(Block block)
+    {
+        if (!block) return "Sonstige/Fehlender Block";
+        switch (block.id)
+        {
+            case BlockType.Dirt: return "Gestein/Erde";
+            case BlockType.Stone: return "Gestein/Übergangsgestein";
+            case BlockType.StoneLayer2: return "Gestein/Stein";
+            case BlockType.StoneLayer3: return "Gestein/Tiefstein 1";
+            case BlockType.StoneLayer4: return "Gestein/Tiefstein 2";
+            default: return (block.HasOreOverlays ? "Erze/" : "Sonstige/") + block.displayName;
+        }
     }
 
     void DrawBlockGeneration()
@@ -468,7 +635,6 @@ public class GameplaySettingsWindow : EditorWindow
         Section("Abbau und Belohnung", block, data =>
         {
             Float(data, "hardness", "Blockhärte", "Mehr = längere Abbauzeit. Zeit = Härte / Abbaugeschwindigkeit.", 0.01f);
-            Integer(data, "points", "Punkte pro Block", "Wird beim vollständigen Abbau gutgeschrieben.", 0, 100000000);
             EditorGUILayout.PropertyField(data.FindProperty("itemDrop"), new GUIContent("Beute-Gegenstand"));
         });
         if (block && BaseStats && BaseStats.miningSpeed > 0)
@@ -594,6 +760,19 @@ public class GameplaySettingsWindow : EditorWindow
         EditorGUI.BeginChangeCheck();
         int value = EditorGUILayout.IntField(new GUIContent(label, tooltip), property.intValue);
         if (EditorGUI.EndChangeCheck()) property.intValue = Mathf.Clamp(value, min, max);
+    }
+
+    static void FloatRange(SerializedObject data, string name, string label, float min, float max)
+    {
+        var property = data.FindProperty(name);
+        if (property == null) { Missing("Feld nicht gefunden: " + name); return; }
+        EditorGUI.BeginChangeCheck();
+        Vector2 value = EditorGUILayout.Vector2Field(label, property.vector2Value);
+        if (EditorGUI.EndChangeCheck() && Finite(value.x) && Finite(value.y))
+        {
+            float lower = Mathf.Clamp(Mathf.Min(value.x, value.y), min, max);
+            property.vector2Value = new Vector2(lower, Mathf.Clamp(Mathf.Max(value.x, value.y), lower, max));
+        }
     }
 
     static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);

@@ -9,8 +9,13 @@ public class InfoPanel : MonoBehaviour
     void Awake()
     {
         if (Instance && Instance != this) { Destroy(gameObject); return; }
-        Instance = this; DontDestroyOnLoad(gameObject);
+        Instance = this;
         GetComponent<CanvasGroup>().alpha = 1;
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     public void ShowPanel(bool show)

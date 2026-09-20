@@ -16,4 +16,5 @@ MonoBehaviour:
   category: 3
   displayName: "N\xE4gel"
   icon: {fileID: -1024831733, guid: 2e1a458a704f21a45a9a8a193c40a37d, type: 3}
+  themeColor: {r: 0.72156864, g: 0.76862746, b: 0.8, a: 1}
   worth: 0

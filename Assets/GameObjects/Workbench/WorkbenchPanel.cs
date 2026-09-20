@@ -14,6 +14,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
     public Material fontMaterial;
     public Sprite rowSprite, selectedRowSprite, actionSprite;
     public int initialRecipe = 2;
+    public bool allowKeyboardOpen = true;
 
     public bool IsOpen { get; private set; }
     public CraftingRecipe SelectedRecipe { get; private set; }
@@ -52,7 +53,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.B) || Input.GetKeyDown(KeyCode.Escape)) ShowPanel(false);
             else SubscribeInventory();
         }
-        else if (Input.GetKeyDown(KeyCode.B) && !GameplayInputBlocker.IsBlocked)
+        else if (allowKeyboardOpen && Input.GetKeyDown(KeyCode.B) && !GameplayInputBlocker.IsBlocked)
         {
             var selected = EventSystem.current ? EventSystem.current.currentSelectedGameObject : null;
             if (!selected || !selected.GetComponent<TMP_InputField>()) ShowPanel(true);

@@ -16,4 +16,5 @@ MonoBehaviour:
   category: 1
   displayName: Dynamit
   icon: {fileID: 1558289934, guid: 0b8f169855d95784ca489c7c7e09495a, type: 3}
+  themeColor: {r: 0.92941177, g: 0.5568628, b: 0.47058824, a: 1}
   worth: 500

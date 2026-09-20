@@ -14,6 +14,7 @@ public class TileMiner : MonoBehaviour
     [SerializeField] TileBase highlightTile;
     [SerializeField] BlockRegistry blockRegistry;
     [SerializeField] Camera cam;
+    [SerializeField] Texture2D treeCursorTexture;
 
     [Header("Mining")]
     public int searchRadiusCells = 2;
@@ -23,13 +24,17 @@ public class TileMiner : MonoBehaviour
     private Camera _cam;
     private MapGenerator map;
     private float nextMiningSoundTime = 0f;
+    private float nextTreeHitTime;
     private Vector3Int? highlightedCell;
+    private bool treeCursorActive;
 
     public static Action<Vector2, int> OnBlockMined;
+    public static Action<Vector2, int, ItemSO> OnMiningPoints;
 
     private bool mining;
     public bool IsMingin => mining;
     public bool IsMining => mining;
+    public bool IsChoppingTree { get; private set; }
     public Vector2 MiningTarget { get; private set; }
 
     void Awake()
@@ -39,21 +44,58 @@ public class TileMiner : MonoBehaviour
         if (highlightMap) highlightMap.ClearAllTiles();
     }
 
-    void OnDisable() => ClearHighlight();
+    void OnDisable()
+    {
+        ClearHighlight();
+        ClearTreeGlow();
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+        treeCursorActive = false;
+    }
 
     void Update()
     {
         mining = false;
+        IsChoppingTree = false;
         if (GameplayInputBlocker.IsBlocked)
         {
             mining = false;
             ClearHighlight();
+            ClearTreeGlow();
+            Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+            treeCursorActive = false;
             return;
         }
         if (!_cam || !tilemap) return;
 
         Vector3 mouseWorld = _cam.ScreenToWorldPoint(Input.mousePosition);
         mouseWorld.z = 0f;
+        var tree = ChoppableTree.At(mouseWorld);
+        bool hoverReachable = false;
+        foreach (var candidate in ChoppableTree.ActiveTrees)
+        {
+            bool reachable = candidate && candidate.CanChop && stats &&
+                Vector2.Distance(transform.position, candidate.HitPoint) <= stats.Reach;
+            bool hovered = reachable && candidate == tree;
+            candidate?.SetReachGlow(hovered ? 2 : reachable ? 1 : 0);
+            hoverReachable |= hovered;
+        }
+        UpdateTreeCursor(hoverReachable);
+        if (tree)
+        {
+            ClearHighlight();
+            if (Input.GetMouseButton(0) && Vector2.Distance(transform.position, tree.HitPoint) <= stats.Reach)
+            {
+                mining = true;
+                IsChoppingTree = true;
+                MiningTarget = tree.HitPoint;
+                if (Time.time >= nextTreeHitTime)
+                {
+                    tree.Hit(transform.position);
+                    nextTreeHitTime = Time.time + .55f / Mathf.Max(.25f, stats.MiningSpeed);
+                }
+            }
+            return;
+        }
         Vector3Int? nearest = FindNearestExistingCell(mouseWorld, searchRadiusCells);
 
         if (nearest == null)
@@ -63,6 +105,13 @@ public class TileMiner : MonoBehaviour
         }
 
         Vector3Int targetCell = GetReachLimitedCell(nearest.Value);
+
+        if (map && map.IsSurfaceCellProtected(targetCell))
+        {
+            progress.Remove(targetCell);
+            ClearHighlight();
+            return;
+        }
 
         ShowHighlight(targetCell);
 
@@ -118,6 +167,19 @@ public class TileMiner : MonoBehaviour
         highlightedCell = null;
     }
 
+    static void ClearTreeGlow()
+    {
+        foreach (var tree in ChoppableTree.ActiveTrees) tree?.SetReachGlow(0);
+    }
+
+    void UpdateTreeCursor(bool active)
+    {
+        if (treeCursorActive == active) return;
+        treeCursorActive = active;
+        Cursor.SetCursor(active ? treeCursorTexture : null,
+            active ? new Vector2(9f, 25f) : Vector2.zero, CursorMode.Auto);
+    }
+
     Block GetBlock(Vector3Int cell)
     {
         if (!map && tilemap) map = tilemap.GetComponent<MapGenerator>();
@@ -127,12 +189,16 @@ public class TileMiner : MonoBehaviour
     // One transaction for rewards, effects and both render layers. Effects read the cell before removal.
     public bool CompleteMining(Vector3Int cell)
     {
+        if (map && map.IsSurfaceCellProtected(cell)) return false;
         if (!tilemap || !tilemap.HasTile(cell)) return false;
         var block = GetBlock(cell);
         var ore = map ? map.GetOreAt(cell) : null;
         int amount = ore ? OreTile.DropCount(ore.richness, UnityEngine.Random.value) : 1;
         if (block && block.itemDrop && amount > 0) InventoryManager.Instance?.Add(block.itemDrop, amount);
-        OnBlockMined?.Invoke(tilemap.GetCellCenterWorld(cell), block ? block.points : 0);
+        int points = BlockRegistry.GetPoints(block, ore);
+        Vector2 minedPosition = tilemap.GetCellCenterWorld(cell);
+        OnBlockMined?.Invoke(minedPosition, points);
+        if (points > 0) OnMiningPoints?.Invoke(minedPosition, points, block.itemDrop);
         if (map) map.RemoveBlock(cell);
         else
         {

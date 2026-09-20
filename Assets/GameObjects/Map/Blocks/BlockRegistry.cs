@@ -46,7 +46,15 @@ public class BlockRegistry : ScriptableObject
     }
 
     public int GetPoints(TileBase tile)
-        => FromTile(tile)?.points ?? 0;
+        => GetPoints(FromTile(tile), tile as OreTile);
+
+    public static int GetPoints(Block block, OreTile ore)
+    {
+        if (!block || block.id == BlockType.Dirt || !block.itemDrop) return 0;
+        int halfUnits = ore ? OreTile.ExpectedDropHalfUnits(ore.richness) : 2;
+        return (int)System.Math.Min(int.MaxValue,
+            (long)halfUnits * System.Math.Max(0, block.itemDrop.worth) * 5L);
+    }
 
     public float GetHardness(TileBase tile)
         => FromTile(tile)?.hardness ?? 0f;

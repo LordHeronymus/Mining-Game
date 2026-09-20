@@ -16,4 +16,5 @@ MonoBehaviour:
   category: 1
   displayName: Leiter
   icon: {fileID: -257113800, guid: 0b8f169855d95784ca489c7c7e09495a, type: 3}
+  themeColor: {r: 0.81960785, g: 0.6509804, b: 0.43529412, a: 1}
   worth: 5

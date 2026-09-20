@@ -20,4 +20,16 @@ public sealed class OreTile : Tile
             default: throw new System.ArgumentOutOfRangeException(nameof(richness));
         }
     }
+
+    // Expected drop count in half-item units: 0.5, 1 and 1.5 items.
+    public static int ExpectedDropHalfUnits(OreRichness richness)
+    {
+        switch (richness)
+        {
+            case OreRichness.Small: return 1;
+            case OreRichness.Medium: return 2;
+            case OreRichness.Rich: return 3;
+            default: throw new System.ArgumentOutOfRangeException(nameof(richness));
+        }
+    }
 }

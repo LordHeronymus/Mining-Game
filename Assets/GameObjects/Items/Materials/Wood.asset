@@ -16,4 +16,5 @@ MonoBehaviour:
   category: 3
   displayName: Holz
   icon: {fileID: -1264334043, guid: 2e1a458a704f21a45a9a8a193c40a37d, type: 3}
+  themeColor: {r: 0.8509804, g: 0.6745098, b: 0.45882353, a: 1}
   worth: 0

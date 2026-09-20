@@ -34,11 +34,16 @@ public sealed class ParallaxLayer : MonoBehaviour
     public Material material;
     [Tooltip("Extend the bottom pixel row down to the camera edge. Use for the sky to avoid a visible rectangular lower edge behind translucent scenery.")]
     public bool extendBottomToCamera;
+    public bool ignoreDepthFade;
 
     [Header("Untergrund")]
     public Sprite undergroundTile;
+    [InspectorName("Layer-2-Bild")] public Sprite undergroundLayer2Tile;
+    [InspectorName("Layer-3-Bild")] public Sprite undergroundLayer3Tile;
     [Min(0)] public int undergroundHorizontalCount;
     [Min(0)] public int undergroundVerticalCount;
+    [InspectorName("Y-Versatz (Bildpixel)")]
+    public float undergroundYOffsetPixels = 1f;
 
     readonly List<SpriteRenderer> renderers = new List<SpriteRenderer>();
     readonly Dictionary<Sprite, Sprite> bottomEdges = new Dictionary<Sprite, Sprite>();
@@ -90,7 +95,7 @@ public sealed class ParallaxLayer : MonoBehaviour
 
         Vector3 anchor = transform.TransformPoint(new Vector3(horizontalOffset, verticalOffset, 0f));
         anchor.y += controller.verticalOffset;
-        Vector2 delta = (Vector2)camera.transform.position - controller.cameraReferencePosition;
+        Vector2 delta = controller.GetParallaxCameraDelta(camera);
         anchor.x += delta.x * (1f - Mathf.Clamp01(horizontalParallax));
         anchor.y += delta.y * (1f - Mathf.Clamp01(verticalParallax));
 
@@ -113,12 +118,12 @@ public sealed class ParallaxLayer : MonoBehaviour
         double first = count == 0 ? System.Math.Floor((left - cycleStart) / cycleWidth) - 1.0 : -(count - 1) * 0.5;
         int cycles = count == 0 ? Mathf.CeilToInt((right - left) / cycleWidth) + 3 : count;
         float worldHeight = imageHeight * scale.y;
+        float globalOpacity = controller.isActiveAndEnabled ? Mathf.Clamp01(controller.opacity) : 0f;
         Color color = tint * LightingTint;
-        color.a *= Mathf.Clamp01(opacity) * controller.GetOpacity(camera);
+        color.a *= Mathf.Clamp01(opacity) * (ignoreDepthFade ? globalOpacity : controller.GetOpacity(camera));
         Color undergroundColor = tint * LightingTint;
-        undergroundColor.a *= Mathf.Clamp01(opacity) *
-            (controller.isActiveAndEnabled ? Mathf.Clamp01(controller.opacity) : 0f);
-        if (color.a <= 0f && (!undergroundTile || undergroundColor.a <= 0f))
+        undergroundColor.a *= Mathf.Clamp01(opacity) * globalOpacity;
+        if (color.a <= 0f && ((!undergroundTile && !undergroundLayer2Tile && !undergroundLayer3Tile) || undergroundColor.a <= 0f))
         {
             HideUnused(0);
             return;
@@ -170,23 +175,45 @@ public sealed class ParallaxLayer : MonoBehaviour
                 x += width;
             }
         }
-        if (undergroundTile && undergroundColor.a > 0f)
-            DrawUnderground(anchor, cycleWidth, worldHeight,
-                scale, left, right, viewTop, viewBottom, undergroundColor, ref used);
+        if (undergroundColor.a > 0f)
+        {
+            float layer2Blend = undergroundLayer2Tile ? controller.GetLayer2Blend() : 0f;
+            float layer3Blend = undergroundLayer3Tile ? controller.GetLayer3Blend() : 0f;
+            if (layer3Blend < 1f)
+            {
+                if (undergroundTile && layer2Blend < 1f)
+                    DrawUnderground(undergroundTile, anchor, cycleWidth, worldHeight,
+                        scale, left, right, viewTop, viewBottom, undergroundColor, sortingOrder + 1, ref used);
+                if (undergroundLayer2Tile && layer2Blend > 0f)
+                {
+                    Color layer2Color = undergroundColor;
+                    layer2Color.a *= layer2Blend;
+                    DrawUnderground(undergroundLayer2Tile, anchor, cycleWidth, worldHeight,
+                        scale, left, right, viewTop, viewBottom, layer2Color, sortingOrder + 2, ref used);
+                }
+            }
+            if (undergroundLayer3Tile && layer3Blend > 0f)
+            {
+                Color layer3Color = undergroundColor;
+                layer3Color.a *= layer3Blend;
+                DrawUnderground(undergroundLayer3Tile, anchor, cycleWidth, worldHeight,
+                    scale, left, right, viewTop, viewBottom, layer3Color, sortingOrder + 3, ref used);
+            }
+        }
         HideUnused(used);
     }
 
-    void DrawUnderground(Vector3 anchor, float surfaceWidth, float surfaceHeight,
+    void DrawUnderground(Sprite sprite, Vector3 anchor, float surfaceWidth, float surfaceHeight,
         Vector3 scale, float left, float right, float viewTop, float viewBottom,
-        Color color, ref int used)
+        Color color, int order, ref int used)
     {
-        Sprite sprite = undergroundTile;
         if (sprite.rect.width <= 0f || sprite.rect.height <= 0f) return;
 
         float tileWidth = surfaceWidth;
         float tileHeight = tileWidth * sprite.rect.height / sprite.rect.width * scale.y / scale.x;
         if (tileHeight <= 0f || float.IsNaN(tileHeight) || float.IsInfinity(tileHeight)) return;
-        float top = anchor.y - surfaceHeight * 0.5f;
+        float top = anchor.y - surfaceHeight * 0.5f +
+            undergroundYOffsetPixels * tileHeight / sprite.rect.height;
         int firstRow = Mathf.Max(0, Mathf.FloorToInt((top - viewTop) / tileHeight));
         int lastRow = Mathf.Max(0, Mathf.CeilToInt((top - viewBottom) / tileHeight));
         if (undergroundVerticalCount > 0)
@@ -212,7 +239,7 @@ public sealed class ParallaxLayer : MonoBehaviour
             renderer.sharedMaterial = material;
             renderer.color = color;
             renderer.sortingLayerName = sortingLayerName;
-            renderer.sortingOrder = sortingOrder;
+            renderer.sortingOrder = order;
             renderer.gameObject.layer = gameObject.layer;
             renderer.transform.position = new Vector3(
                 (float)(start + (firstCycle + cycle) * tileWidth + tileWidth * pivotX),

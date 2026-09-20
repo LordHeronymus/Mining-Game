@@ -9,6 +9,7 @@ public class InventoryManager : MonoBehaviour
     private readonly Dictionary<ItemSO, int> _counts = new();
 
     public event Action<ItemSO, int> OnItemChanged;
+    public event Action<ItemSO, int> OnItemGained;
     public event Action OnInventoryChanged;
 
     void Awake()
@@ -26,6 +27,7 @@ public class InventoryManager : MonoBehaviour
 
         OnItemChanged?.Invoke(item, _counts[item]);
         OnInventoryChanged?.Invoke();
+        OnItemGained?.Invoke(item, amount);
     }
 
     public bool TryRemove(ItemSO item, int amount = 1)

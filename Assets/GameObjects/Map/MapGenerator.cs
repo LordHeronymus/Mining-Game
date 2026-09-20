@@ -55,6 +55,13 @@ public class MapGenerator : MonoBehaviour
     public int GeneratedWidth => isGenerated ? generatedWidth : mapWidth;
     public int GeneratedHeight => isGenerated ? generatedHeight : mapHeight;
     public event System.Action Generated;
+    SurfaceTrees surfaceTrees;
+    public bool IsSurfaceCellProtected(Vector3Int cell)
+    {
+        if (!Application.isPlaying || cell.y != 0) return false;
+        if (!surfaceTrees) surfaceTrees = FindFirstObjectByType<SurfaceTrees>();
+        return surfaceTrees && surfaceTrees.Protects(cell);
+    }
 #if UNITY_EDITOR
     public static event System.Action<MapGenerator> InitialMapGenerated;
 #endif
@@ -240,6 +247,7 @@ public class MapGenerator : MonoBehaviour
 
     public bool RemoveBlock(Vector3Int cell)
     {
+        if (IsSurfaceCellProtected(cell)) return false;
         if (!Terrain.HasTile(cell)) return false;
         if (oreOverlay) oreOverlay.SetTile(cell, null);
         if (grassOverlay && cell.y == 0) grassOverlay.SetTile(cell, null);

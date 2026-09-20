@@ -16,4 +16,5 @@ MonoBehaviour:
   category: 3
   displayName: Seil
   icon: {fileID: 1854809752, guid: 2e1a458a704f21a45a9a8a193c40a37d, type: 3}
+  themeColor: {r: 0.8392157, g: 0.7411765, b: 0.5529412, a: 1}
   worth: 0

@@ -20,6 +20,7 @@ public enum SoundType
     DigTransitionStone = 12,
     DigStone = 13,
     DirtHit = 14,
+    WoodChop = 15,
 }
 
 [System.Serializable]

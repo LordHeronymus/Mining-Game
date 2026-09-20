@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class NumnberSpawner : MonoBehaviour
 {
@@ -6,23 +7,32 @@ public class NumnberSpawner : MonoBehaviour
     [SerializeField] GameObject numberPrefab;
 
     [Header("Settings")]
-    [SerializeField] Color color = Color.green;
-    [SerializeField] float fontSize = 10f;
-    [SerializeField] float duration = 1.5f;
+    [SerializeField] float fontSize = 9f;
+    [SerializeField] float duration = 2f;
+    [SerializeField] float accumulationRadius = 2.5f;
+    readonly List<(ItemSO item, Number popup)> active = new();
 
-    void OnEnable() => TileMiner.OnBlockMined += HandleBlockMined;
-    void OnDisable() => TileMiner.OnBlockMined -= HandleBlockMined;
+    void OnEnable() => TileMiner.OnMiningPoints += HandleMiningPoints;
+    void OnDisable() => TileMiner.OnMiningPoints -= HandleMiningPoints;
 
 
-    void SpawnNumber(Vector2 position, Color color, float size, float number)
+    void HandleMiningPoints(Vector2 position, int points, ItemSO item)
     {
-        var go = Instantiate(numberPrefab, position, Quaternion.identity);
-        var n = go.GetComponent<Number>();
-        n.Init(color, size, number, duration);
-    }
-
-    void HandleBlockMined(Vector2 position, int points)
-    {
-        SpawnNumber(position, color, fontSize, points);
+        if (points <= 0 || !item) return;
+        active.RemoveAll(entry => !entry.popup || !entry.popup.CanAccumulate);
+        Number nearest = null;
+        float distance = accumulationRadius;
+        foreach (var entry in active)
+        {
+            if (entry.item != item) continue;
+            float candidate = Vector2.Distance(entry.popup.Origin, position);
+            if (candidate > distance) continue;
+            distance = candidate;
+            nearest = entry.popup;
+        }
+        if (nearest) { nearest.Accumulate(points); return; }
+        var popup = Instantiate(numberPrefab, position, Quaternion.identity).GetComponent<Number>();
+        popup.Init(item.themeColor, fontSize, points, duration);
+        active.Add((item, popup));
     }
 }

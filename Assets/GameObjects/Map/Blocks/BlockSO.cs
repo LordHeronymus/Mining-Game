@@ -30,7 +30,7 @@ public class Block : ScriptableObject
 
     [Header("Stats")]
     public float hardness = 1f;
-    public int points = 0;
+    [HideInInspector] public int points = 0;
     public bool isSolid = true;         
 
     public bool IsStone => id == BlockType.Stone || id == BlockType.StoneLayer2 ||

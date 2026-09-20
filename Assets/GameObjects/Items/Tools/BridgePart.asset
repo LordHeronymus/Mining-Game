@@ -16,4 +16,5 @@ MonoBehaviour:
   category: 1
   displayName: "Br\xFCckenteil"
   icon: {fileID: 435080474, guid: 2e1a458a704f21a45a9a8a193c40a37d, type: 3}
+  themeColor: {r: 0.8117647, g: 0.60784316, b: 0.4117647, a: 1}
   worth: 0

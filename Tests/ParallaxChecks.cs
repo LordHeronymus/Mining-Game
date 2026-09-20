@@ -240,9 +240,13 @@ public static class ParallaxChecks
             var earth = Visible(layer).Where(r => r.sprite == underground).ToArray();
             Assert(earth.Length > 0, "Underground tiles should cover the camera beneath the surface.");
             float seamY = surface.Min(r => r.bounds.min.y);
-            Assert(Mathf.Abs(earth.Max(r => r.bounds.max.y) - seamY) < 0.001f,
-                "Underground must meet the surface's bottom edge exactly.");
-            var firstRow = earth.Where(r => Mathf.Abs(r.bounds.max.y - seamY) < 0.001f)
+            float pixelHeight = earth[0].bounds.size.y / underground.rect.height;
+            float undergroundTop = seamY + pixelHeight;
+            Assert(Mathf.Abs(earth.Max(r => r.bounds.max.y) - undergroundTop) < 0.001f,
+                "Underground must overlap the surface by one source pixel.");
+            Assert(earth.All(r => r.sortingOrder == layer.sortingOrder + 1),
+                "Underground must render over the surface in the overlap.");
+            var firstRow = earth.Where(r => Mathf.Abs(r.bounds.max.y - undergroundTop) < 0.001f)
                 .OrderBy(r => r.bounds.min.x).ToArray();
             Assert(firstRow.First().bounds.min.x <= camera.transform.position.x - camera.orthographicSize * camera.aspect &&
                 firstRow.Last().bounds.max.x >= camera.transform.position.x + camera.orthographicSize * camera.aspect,
@@ -259,10 +263,14 @@ public static class ParallaxChecks
             controller.fadeWithDepth = true;
             controller.fadeStartY = 0f;
             controller.fadeEndY = -10f;
+            layer.ignoreDepthFade = true;
             layer.Refresh();
-            Assert(Visible(layer).All(r => r.sprite == underground),
-                "Surface fade must not hide the underground tiles.");
-            return "PASS: coverage, segment seams, underground X/Y repetition and seam, camera/background zoom, parallax, depth fade, pooling and lifecycle.";
+            Assert(Visible(layer).Where(r => r.sprite != underground).All(r => Mathf.Abs(r.color.a - 1f) < 0.001f),
+                "NearHills must keep full opacity below the depth fade range.");
+            Assert(Visible(layer).Where(r => r.sprite == underground).All(r => Mathf.Abs(r.color.a - 1f) < 0.001f),
+                "Underground must keep full opacity below the depth fade range.");
+
+            return "PASS: coverage, segment seams, underground X/Y repetition, one-pixel overlap, full NearHills opacity, zoom, parallax, depth fade and lifecycle.";
         }
         finally
         {

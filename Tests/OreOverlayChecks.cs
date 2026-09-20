@@ -174,14 +174,19 @@ public static class OreOverlayChecks
                 UnityEngine.Object.DestroyImmediate(services);
             }
             int events=0;
+            OreRichness currentRichness=OreRichness.Small;
             TileMiner.OnBlockMined=(position,points)=> {
                 events++; Check(map.GetBlockAt(map.Terrain.WorldToCell(position))==oreBlock,"Mining event lost ore identity");
-                Check(points==oreBlock.points,"Mining points changed");
+                int expected=OreTile.ExpectedDropHalfUnits(currentRichness)*oreBlock.itemDrop.worth*5;
+                Check(points==expected,"Mining points must use the richness tier's average drop");
             };
             var totals=new int[3];
             UnityEngine.Random.InitState(123456);
             foreach(OreRichness r in Enum.GetValues(typeof(OreRichness)))
             {
+                currentRichness=r;
+                int expected=OreTile.ExpectedDropHalfUnits(r)*oreBlock.itemDrop.worth*5;
+                Check(registry.GetPoints(oreBlock.GetOreVariants(r)[0])==expected,"Registry points differ from mining points");
                 int before=inventory.GetCount(oreBlock.itemDrop);
                 for(int n=0;n<1000;n++)
                 {

@@ -36,6 +36,7 @@ public class ItemSO : ScriptableObject
     public ItemCategory category;
     public string displayName;
     public Sprite icon;
+    public Color themeColor = new Color(1f, .86f, .58f);
 
     [Header("Stats")]
     public int worth = 0;

@@ -22,6 +22,25 @@ public sealed class SurfaceBackgroundController : MonoBehaviour
     [Min(0.01f), Tooltip("Größenfaktor für alle Hintergrundbilder um ihre jeweilige Bildmitte. 1 = Originalgröße. Versätze und Spielkamera bleiben unverändert.")]
     public float zoom = 1f;
 
+    [Header("Parallax-Stopp")]
+    [Min(0f), InspectorName("Starttiefe (Blöcke)")]
+    public float parallaxStopDepth = 20f;
+    [Min(0.01f), InspectorName("Übergang (Blöcke)")]
+    public float parallaxTransitionDepth = 5f;
+
+    [Header("Untergrund Layer 2")]
+    [Min(0.01f), InspectorName("Fade-Breite (Blöcke)")]
+    public float layer2FadeDepth = 20f;
+
+    [Header("Untergrund Layer 3")]
+    [Min(0.01f), InspectorName("Fade-Breite (Blöcke)")]
+    public float layer3FadeDepth = 20f;
+
+    Transform player;
+    MapGenerator map;
+    Vector2 frozenCameraDelta;
+    bool hasFrozenCameraDelta;
+
     [Header("Optional transition underground")]
     public bool fadeWithDepth;
     [Tooltip("World Y where the surface background is fully visible.")]
@@ -31,6 +50,66 @@ public sealed class SurfaceBackgroundController : MonoBehaviour
 
     public Camera RenderCamera => targetCamera ? targetCamera : Camera.main;
     public float EffectiveZoom => float.IsNaN(zoom) || float.IsInfinity(zoom) ? 1f : Mathf.Max(0.01f, zoom);
+
+    public float GetParallaxInfluence()
+    {
+        if (!TryGetPlayerDepth(out float depth)) return 1f;
+        float blend = Mathf.InverseLerp(parallaxStopDepth,
+            parallaxStopDepth + Mathf.Max(0.01f, parallaxTransitionDepth), depth);
+        return 1f - Mathf.SmoothStep(0f, 1f, blend);
+    }
+
+    public float GetLayer2Blend()
+        => GetUndergroundBlend(1, layer2FadeDepth);
+
+    public float GetLayer3Blend()
+        => GetUndergroundBlend(2, layer3FadeDepth);
+
+    float GetUndergroundBlend(int layerIndex, float fadeDepth)
+    {
+        if (!TryGetPlayerDepth(out float depth) || map.layers == null || map.layers.Length <= layerIndex ||
+            map.layers[layerIndex] == null)
+            return 0f;
+        float midpoint = map.layers[layerIndex].startDepth;
+        float halfWidth = Mathf.Max(0.01f, fadeDepth) * 0.5f;
+        float blend = Mathf.InverseLerp(midpoint - halfWidth, midpoint + halfWidth, depth);
+        return Mathf.SmoothStep(0f, 1f, blend);
+    }
+    bool TryGetPlayerDepth(out float depth)
+    {
+        depth = 0f;
+        if (!player)
+        {
+            var movement = FindFirstObjectByType<PlayerMovement>();
+            if (movement) player = movement.transform;
+        }
+        if (!map) map = FindFirstObjectByType<MapGenerator>();
+        if (!player || !map || !map.Terrain) return false;
+
+        var terrain = map.Terrain;
+        float blockHeight = terrain.transform.TransformVector(
+            Vector3.up * terrain.layoutGrid.cellSize.y).magnitude;
+        if (blockHeight <= 0f) return false;
+        float surfaceY = terrain.CellToWorld(new Vector3Int(0, 1, 0)).y;
+        depth = (surfaceY - player.position.y) / blockHeight;
+        return true;
+    }
+    public Vector2 GetParallaxCameraDelta(Camera camera)
+    {
+        Vector2 currentDelta = (Vector2)camera.transform.position - cameraReferencePosition;
+        float influence = GetParallaxInfluence();
+        if (influence >= 1f)
+        {
+            hasFrozenCameraDelta = false;
+            return currentDelta;
+        }
+        if (!hasFrozenCameraDelta)
+        {
+            frozenCameraDelta = currentDelta;
+            hasFrozenCameraDelta = true;
+        }
+        return Vector2.Lerp(frozenCameraDelta, currentDelta, influence);
+    }
 
     public float GetOpacity(Camera camera)
     {
