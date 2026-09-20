@@ -15,5 +15,5 @@ MonoBehaviour:
   item: 3
   category: 0
   displayName: Kohle
-  icon: {fileID: 21300000, guid: 904587ca0bb375c46b1860f470cf2977, type: 3}
+  icon: {fileID: 21300000, guid: efa21dbad7c7bd24895d825a90caf683, type: 3}
   worth: 3

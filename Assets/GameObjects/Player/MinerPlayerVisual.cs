@@ -12,10 +12,11 @@ public sealed class MinerPlayerVisual : MonoBehaviour
     [Min(.3f), InspectorName("Figurenhöhe")] public float height = 1.06f;
     [Min(.1f), InspectorName("Laufanimation")] public float walkAnimationSpeed = 1;
     [Min(.1f), InspectorName("Abbauanimation (Schläge/s)")] public float miningSwingsPerSecond = 2;
-    [InspectorName("Helmfarbe")] public Color helmetColor = new Color(1, .56f, .025f);
-    [InspectorName("Arbeitsgewand")] public Color clothingColor = new Color(.035f, .24f, .55f);
-    [InspectorName("Hautfarbe")] public Color skinColor = new Color(.78f, .43f, .24f);
-    [InspectorName("Stiefel und Handschuhe")] public Color leatherColor = new Color(.22f, .105f, .045f);
+    [InspectorName("Helmfarbe")] public Color helmetColor = new Color(.84f, .33f, .011f);
+    [InspectorName("Arbeitsgewand")] public Color clothingColor = new Color(.009f, .085f, .29f);
+    [InspectorName("Hautfarbe")] public Color skinColor = new Color(.90f, .34f, .10f);
+    [InspectorName("Stiefel und Handschuhe")] public Color leatherColor = new Color(.14f, .055f, .018f);
+    [Min(0f), InspectorName("Stirnlampenhelligkeit")] public float headlampIntensity = 1.5f;
 
     const string GeneratedName = "Miner figure (generated)";
     CritterMesh geometry;
@@ -39,7 +40,7 @@ public sealed class MinerPlayerVisual : MonoBehaviour
 
     public void Refresh()
     {
-        if (geometry == null && material) geometry = new CritterMesh(transform, GeneratedName, material, 30);
+        if (geometry == null && material) geometry = new CritterMesh(transform, GeneratedName, material, 30, true);
         if (geometry == null) return;
         if (legacySprite) legacySprite.enabled = false;
         geometry.renderer.sharedMaterial = material;
@@ -101,41 +102,44 @@ public sealed class MinerPlayerVisual : MonoBehaviour
         frontFoot.ankle += new Vector2(.025f, .065f) * airborne;
         backFoot.angle *= walking; frontFoot.angle *= walking;
         float armSwing = Mathf.Cos(walkPhase - gaitDuty * Mathf.PI) * walking;
-        Color darkCloth = Color.Lerp(clothingColor, new Color(.01f, .035f, .08f), .48f);
-        Color lightCloth = Color.Lerp(clothingColor, new Color(.12f, .48f, .78f), .38f);
+        Color darkCloth = Color.Lerp(clothingColor, new Color(.006f, .025f, .09f), .42f);
+        Color lightCloth = Color.Lerp(clothingColor, new Color(.045f, .22f, .53f), .25f);
         Color leatherShade = Color.Lerp(leatherColor, Color.black, .42f);
-        Color skinShade = Color.Lerp(skinColor, new Color(.30f, .13f, .06f), .35f);
-        Color helmetShade = Color.Lerp(helmetColor, new Color(.53f, .22f, .005f), .48f);
+        Color skinShade = Color.Lerp(skinColor, new Color(.40f, .15f, .04f), .33f);
+        Color helmetShade = Color.Lerp(helmetColor, new Color(.43f, .15f, .006f), .45f);
 
         // Far leg and arm sit behind the body; the near limbs stay readable during a swing.
         Leg(-.035f, backFoot, bob, darkCloth, leatherShade);
         Vector2 farShoulder = new Vector2(-.15f, .76f + bob);
         Vector2 farHand = new Vector2(-.16f + armSwing * .11f, .51f + bob + Mathf.Abs(armSwing) * .018f + airborne * .08f);
         Arm(farShoulder, new Vector2(-.24f + armSwing * .035f, .625f + bob), farHand, darkCloth, skinShade, leatherShade);
-        geometry.Ellipse(-.16f, .65f + bob, .10f, .18f, leatherShade, 8);
-        geometry.Ellipse(-.174f, .66f + bob, .067f, .14f, leatherColor, 8);
+        geometry.ShadedEllipse(-.16f, .65f + bob, .10f, .18f, leatherShade, leatherColor, Color.Lerp(leatherColor, new Color(.58f, .30f, .13f), .22f), 8);
+        geometry.ShadedEllipse(-.174f, .66f + bob, .067f, .14f, leatherShade, leatherColor, Color.Lerp(leatherColor, new Color(.70f, .36f, .16f), .24f), 8);
         Leg(.035f, frontFoot, bob, clothingColor, leatherColor);
 
-        geometry.Ellipse(0, .635f + bob, .205f, .25f, darkCloth);
-        geometry.Ellipse(.015f, .65f + bob, .182f, .218f, clothingColor);
-        geometry.Ellipse(.044f, .65f + bob, .115f, .175f, lightCloth);
+        geometry.ShadedEllipse(0, .635f + bob, .205f, .25f, new Color(.006f, .045f, .13f), darkCloth, clothingColor);
+        geometry.ShadedEllipse(.015f, .65f + bob, .182f, .218f, darkCloth, clothingColor, lightCloth);
+        geometry.ShadedEllipse(-.028f, .675f + bob, .078f, .157f, clothingColor, lightCloth, Color.Lerp(lightCloth, Color.white, .08f));
+        geometry.Stroke(-.068f, .85f + bob, -.032f, .735f + bob, .012f, Color.Lerp(lightCloth, Color.white, .16f));
+        geometry.Stroke(.085f, .80f + bob, .097f, .68f + bob, .007f, Color.Lerp(lightCloth, Color.white, .12f));
         geometry.Stroke(-.12f, .81f + bob, -.10f, .56f + bob, .025f, darkCloth);
         geometry.Stroke(.13f, .81f + bob, .11f, .56f + bob, .025f, darkCloth);
         geometry.Ellipse(-.10f, .62f + bob, .015f, .017f, helmetColor);
         geometry.Ellipse(.11f, .62f + bob, .015f, .017f, helmetColor);
         geometry.Ellipse(.017f, .56f + bob, .065f, .05f, darkCloth);
         geometry.Stroke(-.17f, .45f + bob, .17f, .45f + bob, .039f, leatherShade);
-        geometry.Ellipse(.067f, .45f + bob, .039f, .034f, new Color(.65f, .49f, .13f));
+        geometry.ShadedEllipse(.067f, .45f + bob, .039f, .034f, new Color(.35f, .21f, .035f), new Color(.78f, .56f, .16f), new Color(1, .82f, .34f));
         geometry.Ellipse(.067f, .45f + bob, .019f, .016f, leatherShade);
 
         geometry.Ellipse(.035f, .84f + bob, .07f, .069f, skinShade);
-        geometry.Ellipse(.074f, .99f + bob, .187f, .176f, skinShade);
-        geometry.Ellipse(.10f, 1.005f + bob, .168f, .155f, skinColor);
+        geometry.ShadedEllipse(.074f, .99f + bob, .187f, .176f, new Color(.36f, .15f, .09f), skinShade, skinColor);
+        geometry.ShadedEllipse(.10f, 1.005f + bob, .168f, .155f, skinShade, skinColor, Color.Lerp(skinColor, Color.white, .11f));
         geometry.Ellipse(-.035f, 1.005f + bob, .046f, .06f, skinShade);
         geometry.Ellipse(-.025f, 1.011f + bob, .027f, .038f, skinColor);
-        geometry.Ellipse(.245f, .976f + bob, .060f, .043f, skinColor);
+        geometry.ShadedEllipse(.245f, .976f + bob, .060f, .043f, skinShade, skinColor, Color.Lerp(skinColor, Color.white, .25f));
+        geometry.Ellipse(.205f, .992f + bob, .020f, .009f, Color.Lerp(skinColor, Color.white, .28f));
         geometry.Ellipse(.13f, .896f + bob, .118f, .062f, leatherShade);
-        geometry.Ellipse(.176f, .922f + bob, .072f, .028f, skinColor);
+        geometry.Ellipse(.176f, .922f + bob, .072f, .028f, Color.Lerp(skinColor, new Color(.46f, .20f, .12f), .17f));
         bool blink = Mathf.Repeat(age, 5.2f) > 5.04f;
         geometry.Ellipse(.192f, 1.037f + bob, .023f, blink ? .005f : .032f, new Color(.018f, .025f, .032f));
         if (!blink) geometry.Ellipse(.200f, 1.049f + bob, .007f, .009f, Color.white);
@@ -144,12 +148,11 @@ public sealed class MinerPlayerVisual : MonoBehaviour
 
         HelmetDome(.067f, 1.111f + bob, .239f, .177f, helmetShade);
         HelmetDome(.075f, 1.124f + bob, .216f, .160f, helmetColor);
-        geometry.Ellipse(.016f, 1.205f + bob, .111f, .049f, Color.Lerp(helmetColor, Color.white, .32f), 15);
         geometry.Stroke(.095f, 1.19f + bob, .095f, 1.263f + bob, .018f, helmetShade);
-        geometry.Ellipse(.117f, 1.113f + bob, .283f, .038f, helmetShade);
-        geometry.Ellipse(.127f, 1.126f + bob, .28f, .023f, helmetColor);
+        geometry.ShadedEllipse(.117f, 1.113f + bob, .283f, .038f, helmetShade, helmetColor, Color.Lerp(helmetColor, Color.white, .19f));
+        geometry.Ellipse(.127f, 1.126f + bob, .28f, .023f, Color.Lerp(helmetColor, Color.white, .06f));
         geometry.Ellipse(.31f, 1.155f + bob, .078f, .072f, new Color(.07f, .09f, .11f));
-        geometry.Ellipse(.326f, 1.161f + bob, .059f, .056f, new Color(.70f, .73f, .64f));
+        geometry.ShadedEllipse(.326f, 1.161f + bob, .059f, .056f, new Color(.30f, .33f, .30f), new Color(.70f, .73f, .64f), new Color(1, .98f, .79f));
         geometry.Ellipse(.337f, 1.165f + bob, .043f, .041f, new Color(1.3f, 1.18f, .75f));
         geometry.Ellipse(.348f, 1.177f + bob, .018f, .019f, Color.white);
         lampPosition = footPosition + new Vector2(.36f * facing, 1.16f + bob) * scale;
@@ -178,10 +181,17 @@ public sealed class MinerPlayerVisual : MonoBehaviour
         knee = Vector2.Lerp(new Vector2(Mathf.Lerp(hipX, ankle.x, .5f), .245f + airborne * .05f), knee, Mathf.Max(walking, airborne));
         geometry.Stroke(hip.x, hip.y, knee.x, knee.y, .074f, pants);
         geometry.Stroke(knee.x, knee.y, ankle.x, ankle.y, .068f, pants);
-        geometry.Ellipse(knee.x, knee.y, .073f, .070f, pants);
-        geometry.Ellipse(ankle.x, ankle.y, .078f, .079f, boot);
+        Color pantLight = Color.Lerp(pants, new Color(.08f, .30f, .62f), .23f);
+        geometry.Stroke(hip.x - .017f, hip.y + .009f, knee.x - .017f, knee.y + .009f, .013f, pantLight);
+        geometry.Stroke(knee.x - .015f, knee.y + .008f, ankle.x - .015f, ankle.y + .008f, .010f, pantLight);
+        geometry.ShadedEllipse(knee.x, knee.y, .073f, .070f, Color.Lerp(pants, Color.black, .35f), pants, pantLight);
+        Color bootShadow = Color.Lerp(boot, Color.black, .50f);
+        Color bootLight = Color.Lerp(boot, new Color(.70f, .35f, .14f), .12f);
+        geometry.ShadedEllipse(ankle.x, ankle.y, .078f, .079f, bootShadow, boot, bootLight);
         Vector2 bootCenter = FootPoint(ankle, new Vector2(.04f, -.048f), foot.angle);
-        geometry.Ellipse(bootCenter.x, bootCenter.y, .112f, .050f, boot, foot.angle);
+        geometry.ShadedEllipse(bootCenter.x, bootCenter.y, .112f, .050f, bootShadow, boot, bootLight, foot.angle);
+        Vector2 toeShine = FootPoint(ankle, new Vector2(.086f, -.026f), foot.angle);
+        geometry.Ellipse(toeShine.x, toeShine.y, .043f, .009f, Color.Lerp(boot, new Color(.85f, .47f, .22f), .19f), foot.angle);
         Vector2 heel = FootPoint(ankle, new Vector2(-.056f, -.081f), foot.angle);
         Vector2 toe = FootPoint(ankle, new Vector2(.123f, -.081f), foot.angle);
         geometry.Stroke(heel.x, heel.y, toe.x, toe.y, .015f, new Color(.018f, .021f, .025f));
@@ -199,9 +209,9 @@ public sealed class MinerPlayerVisual : MonoBehaviour
     void HelmetDome(float x, float y, float rx, float ry, Color color)
     {
         var center = new Vector2(x, y);
-        for (int i = 0; i < 20; i++)
+        for (int i = 0; i < 32; i++)
         {
-            float a = i * Mathf.PI / 20, b = (i + 1) * Mathf.PI / 20;
+            float a = i * Mathf.PI / 32, b = (i + 1) * Mathf.PI / 32;
             geometry.Triangle(center, center + new Vector2(Mathf.Cos(a) * rx, Mathf.Sin(a) * ry),
                 center + new Vector2(Mathf.Cos(b) * rx, Mathf.Sin(b) * ry), color);
         }
@@ -210,8 +220,11 @@ public sealed class MinerPlayerVisual : MonoBehaviour
     void Arm(Vector2 shoulder, Vector2 elbow, Vector2 hand, Color sleeve, Color skin, Color glove)
     {
         geometry.Stroke(shoulder.x, shoulder.y, elbow.x, elbow.y, .064f, sleeve);
+        geometry.Stroke(shoulder.x - .016f, shoulder.y + .011f, elbow.x - .016f, elbow.y + .011f, .014f,
+            Color.Lerp(sleeve, new Color(.12f, .35f, .70f), .22f));
         geometry.Stroke(elbow.x, elbow.y, hand.x, hand.y, .043f, skin);
-        geometry.Ellipse(hand.x, hand.y, .054f, .049f, glove);
+        geometry.ShadedEllipse(hand.x, hand.y, .054f, .049f, Color.Lerp(glove, Color.black, .45f), glove,
+            Color.Lerp(glove, new Color(.85f, .47f, .23f), .38f));
     }
 
     void DrawPickaxe(Vector2 hand, float degrees, Color dark)
@@ -220,24 +233,35 @@ public sealed class MinerPlayerVisual : MonoBehaviour
         Vector2 direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
         Vector2 side = new Vector2(-direction.y, direction.x);
         Vector2 butt = hand - direction * .12f, head = hand + direction * .37f;
-        geometry.Stroke(butt.x, butt.y, head.x, head.y, .027f, dark);
-        geometry.Stroke(butt.x + .006f, butt.y, head.x + .006f, head.y, .016f, new Color(.52f, .28f, .10f));
-        Color steel = new Color(.36f, .49f, .59f), edge = new Color(.72f, .85f, .91f);
+        geometry.Stroke(butt.x, butt.y, head.x, head.y, .029f, dark);
+        geometry.Stroke(butt.x - .009f, butt.y + .006f, head.x - .009f, head.y + .006f, .013f, new Color(.71f, .39f, .16f));
+        geometry.Stroke(butt.x + .012f, butt.y - .006f, head.x + .012f, head.y - .006f, .007f, new Color(.24f, .105f, .035f));
+        Color steelShadow = new Color(.20f, .19f, .26f), steel = new Color(.41f, .40f, .46f);
+        Color edge = new Color(.88f, .94f, 1);
         Vector2 left = head + side * .13f - direction * .015f, right = head - side * .13f - direction * .015f;
         Vector2 leftTip = head + side * .25f - direction * .11f, rightTip = head - side * .25f - direction * .11f;
-        geometry.Stroke(left.x, left.y, right.x, right.y, .032f, steel);
-        geometry.Triangle(left + direction * .025f, left - direction * .033f, leftTip, steel);
-        geometry.Triangle(right + direction * .025f, right - direction * .033f, rightTip, steel);
-        geometry.Stroke(left.x, left.y + .015f, right.x, right.y + .015f, .010f, edge);
-        geometry.Ellipse(head.x, head.y, .038f, .039f, new Color(.10f, .14f, .18f));
+        geometry.Stroke(left.x, left.y, right.x, right.y, .039f, steelShadow);
+        geometry.Stroke(left.x + direction.x * .018f, left.y + direction.y * .018f,
+            right.x + direction.x * .018f, right.y + direction.y * .018f, .020f, steel);
+        geometry.Triangle(left + direction * .022f, left - direction * .038f, leftTip, steel);
+        geometry.Triangle(right + direction * .022f, right - direction * .038f, rightTip, steelShadow);
+        geometry.Stroke(left.x + direction.x * .037f, left.y + direction.y * .037f,
+            right.x + direction.x * .037f, right.y + direction.y * .037f, .008f, edge);
+        float glint = Mathf.Pow(Mathf.Max(0, Mathf.Sin(age * 1.7f + swingPhase)), 12);
+        Vector2 flash = Vector2.Lerp(left, head, .30f);
+        geometry.Stroke(flash.x, flash.y, flash.x + side.x * .055f, flash.y + side.y * .055f,
+            .006f + glint * .006f, Color.Lerp(edge, Color.white, .35f + glint * .65f));
+        geometry.ShadedEllipse(head.x, head.y, .038f, .039f, new Color(.08f, .11f, .15f), steelShadow, steel);
     }
 
     void UpdateLamp()
     {
         if (!headlamp) return;
         headlamp.transform.position = new Vector3(lampPosition.x, lampPosition.y, transform.position.z);
+        float direction = Mathf.Atan2(-.22f, facing) * Mathf.Rad2Deg - 90f;
+        headlamp.transform.rotation = Quaternion.Euler(0, 0, direction);
         headlamp.color = new Color(1, .83f, .48f);
-        headlamp.intensity = sky && sky.isActiveAndEnabled ? sky.NightBlend * 1.5f : 0;
+        headlamp.intensity = Mathf.Max(0, headlampIntensity);
     }
 
     void OnDisable()

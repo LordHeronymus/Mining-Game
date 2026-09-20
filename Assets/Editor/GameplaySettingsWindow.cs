@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 // into a second configuration asset that could drift out of sync.
 public class GameplaySettingsWindow : EditorWindow
 {
-    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Blöcke & Beute", "Debug", "Licht" };
+    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Blöcke & Beute", "Debug", "Licht", "Werkbank", "Audio" };
     [SerializeField] int tab;
     [SerializeField] int selectedBlock;
     [SerializeField] StatsManager stats;
@@ -22,10 +22,14 @@ public class GameplaySettingsWindow : EditorWindow
     [SerializeField] EnergyMonolyth station;
     [SerializeField] MapGenerator map;
     [SerializeField] MapLighting lighting;
+    [SerializeField] OreSparkles oreSparkles;
+    [SerializeField] SurfaceBirds birds;
     [SerializeField] CameraFollow follow;
     Vector2 scroll;
     Component[] sceneComponents = Array.Empty<Component>();
     ItemSO[] items = Array.Empty<ItemSO>();
+    CraftingRecipe[] recipes = Array.Empty<CraftingRecipe>();
+    [SerializeField] CraftingRecipe selectedRecipe;
     bool showOtherItems;
     bool showSources;
     string notification;
@@ -78,9 +82,15 @@ public class GameplaySettingsWindow : EditorWindow
         station = Resolve(station);
         map = Resolve(map);
         lighting = Resolve(lighting);
+        oreSparkles = Resolve(oreSparkles);
+        birds = Resolve(birds);
         follow = Resolve(follow);
         items = AssetDatabase.FindAssets("t:ItemSO").Select(guid => AssetDatabase.LoadAssetAtPath<ItemSO>(AssetDatabase.GUIDToAssetPath(guid)))
             .Where(item => item).OrderBy(item => item.displayName).ToArray();
+        recipes = AssetDatabase.FindAssets("t:CraftingRecipe")
+            .Select(guid => AssetDatabase.LoadAssetAtPath<CraftingRecipe>(AssetDatabase.GUIDToAssetPath(guid)))
+            .Where(recipe => recipe).OrderBy(recipe => recipe.output ? recipe.output.displayName : recipe.name).ToArray();
+        if (!selectedRecipe || !recipes.Contains(selectedRecipe)) selectedRecipe = recipes.FirstOrDefault();
         ReadOverride();
         Repaint();
     }
@@ -136,6 +146,8 @@ public class GameplaySettingsWindow : EditorWindow
                 case 3: DrawBlocks(); break;
                 case 4: DrawDebug(); break;
                 case 5: DrawLighting(); break;
+                case 6: DrawWorkbench(); break;
+                case 7: DrawAudio(); break;
             }
         }
         EditorGUILayout.Space(12);
@@ -143,6 +155,101 @@ public class GameplaySettingsWindow : EditorWindow
         EditorGUILayout.LabelField("Änderungen direkt an Asset/Szene · Strg+Z: Undo · Speichern sichert Assets und aktive Szene", EditorStyles.miniLabel);
         if (!string.IsNullOrEmpty(notification)) EditorGUILayout.HelpBox(notification, MessageType.Info);
         if (saveRequested) SaveSettings();
+    }
+
+    void DrawAudio()
+    {
+        Section("Ambience", sceneComponents.OfType<AudioManager>().FirstOrDefault(), data =>
+        {
+            VolumeSlider(data, "ambienceVolume", "Gesamtlautstärke (%)");
+            VolumeSlider(data, "surfaceVolume", "Oberfläche (%)");
+            VolumeSlider(data, "rainVolume", "Regen (%)");
+            VolumeSlider(data, "thunderstormVolume", "Gewitter (%)");
+            VolumeSlider(data, "undergroundVolume", "Untergrund (%)");
+            VolumeSlider(data, "caveVolume", "Höhle (%)");
+        }, false);
+        Section("Tier-Landungen", sceneComponents.OfType<AudioManager>().FirstOrDefault(), data =>
+        {
+            Float(data, "grassLandingOffset", "Zeitversatz (s)", "", -1f, 1f);
+        }, false);
+        Section("Vogelgezwitscher", birds, data =>
+        {
+            VolumeSlider(data, "chirpVolume", "Lautstärke (%)");
+            Float(data, "chirpsPerMinute", "Rufe pro Minute", "", 0f, 120f);
+            EditorGUILayout.Slider(data.FindProperty("chirpIrregularity"), 0f, 1f,
+                new GUIContent("Unregelmässigkeit"));
+        }, false);
+        Section("Froschquaken", sceneComponents.OfType<SurfaceCritters>()
+            .FirstOrDefault(group => group.species == SurfaceCritters.Species.Frog), data =>
+        {
+            VolumeSlider(data, "croakVolume", "Lautstärke (%)");
+            Float(data, "croaksPerMinute", "Quaks pro Minute", "", 0f, 120f);
+            EditorGUILayout.Slider(data.FindProperty("croakIrregularity"), 0f, 1f,
+                new GUIContent("Unregelmäßigkeit"));
+        }, false);
+    }
+
+    static void VolumeSlider(SerializedObject data, string field, string label)
+    {
+        var volume = data.FindProperty(field);
+        EditorGUI.BeginChangeCheck();
+        float percent = EditorGUILayout.Slider(label, volume.floatValue * 100f, 0f, 100f);
+        if (EditorGUI.EndChangeCheck()) volume.floatValue = percent / 100f;
+    }
+
+    void DrawWorkbench()
+    {
+        if (recipes.Length == 0)
+        {
+            EditorGUILayout.LabelField("Keine Rezepte");
+            return;
+        }
+        int index = Mathf.Max(0, Array.IndexOf(recipes, selectedRecipe));
+        index = EditorGUILayout.Popup("Rezept", index,
+            recipes.Select(recipe => recipe.output ? recipe.output.displayName : recipe.name).ToArray());
+        selectedRecipe = recipes[index];
+        Section("Rezept", selectedRecipe, data =>
+        {
+            Integer(data, "outputAmount", "Hergestellte Stückzahl", "", 1, int.MaxValue);
+            EditorGUILayout.Space(8);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.LabelField("Zutaten", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("Anzahl", EditorStyles.boldLabel, GUILayout.Width(100));
+                GUILayout.Space(30);
+            }
+            var ingredients = data.FindProperty("ingredients");
+            var choices = items.Where(item => item != selectedRecipe.output).ToArray();
+            var names = new[] { "Auswählen" }.Concat(choices.Select(item => item.displayName)).ToArray();
+            int remove = -1;
+            for (int i = 0; i < ingredients.arraySize; i++)
+            {
+                var ingredient = ingredients.GetArrayElementAtIndex(i);
+                var item = ingredient.FindPropertyRelative("item");
+                var amount = ingredient.FindPropertyRelative("amount");
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    int current = Array.IndexOf(choices, item.objectReferenceValue as ItemSO) + 1;
+                    EditorGUI.BeginChangeCheck();
+                    int next = EditorGUILayout.Popup(current, names);
+                    if (EditorGUI.EndChangeCheck()) item.objectReferenceValue = next > 0 ? choices[next - 1] : null;
+                    EditorGUI.BeginChangeCheck();
+                    int value = EditorGUILayout.IntField(amount.intValue, GUILayout.Width(100));
+                    if (EditorGUI.EndChangeCheck()) amount.intValue = Mathf.Max(1, value);
+                    using (new EditorGUI.DisabledScope(ingredients.arraySize <= 1))
+                        if (GUILayout.Button("−", GUILayout.Width(26))) remove = i;
+                }
+            }
+            if (remove >= 0) ingredients.DeleteArrayElementAtIndex(remove);
+            using (new EditorGUI.DisabledScope(choices.Length == 0))
+                if (GUILayout.Button("Zutat hinzufügen"))
+                {
+                    int added = ingredients.arraySize++;
+                    var ingredient = ingredients.GetArrayElementAtIndex(added);
+                    ingredient.FindPropertyRelative("item").objectReferenceValue = choices.FirstOrDefault();
+                    ingredient.FindPropertyRelative("amount").intValue = 1;
+                }
+        }, false);
     }
 
     void DrawLighting()
@@ -247,20 +354,68 @@ public class GameplaySettingsWindow : EditorWindow
     void DrawMap()
     {
         map = Picker("Map-Generator", map);
-        Section("Kartengröße und Zufall", map, data =>
+        using (new EditorGUI.DisabledScope(!map || !Registry))
+            if (GUILayout.Button("Map im Editor generieren", GUILayout.Height(28)))
+            {
+                GUI.FocusControl(null);
+                try { notification = $"Map generiert (Seed {MapEditorGeneration.Generate(map)})."; }
+                catch (Exception ex) { notification = "Generierung fehlgeschlagen: " + ex.Message; Debug.LogException(ex); }
+                GUIUtility.ExitGUI();
+            }
+        Section("Kartengröße und Seed", map, data =>
         {
             Integer(data, "mapWidth", "Breite (Zellen)", "Die Karte wird horizontal um X = 0 zentriert.", 1, 10000);
             Integer(data, "mapHeight", "Tiefe (Zellen)", "Die Karte wächst von Y = 0 nach unten.", 1, 10000);
-            Integer(data, "seed", "Seed", "0 = neue Zufallswelt bei jedem Start. Anderer Wert = reproduzierbare Welt bei gleichen Einstellungen.", -10000000, 10000000);
-            EditorGUILayout.Slider(data.FindProperty("oreScale"), .5f, 3f, new GUIContent("Erzgröße (×)"));
-            EditorGUILayout.CurveField(data.FindProperty("oreDensityByDepth"), Color.cyan,
-                new Rect(0f, 0f, 1f, 100f), new GUIContent("Erzanteil (%) nach Tiefe (0–1)"));
+            var randomSeed = data.FindProperty("randomizeSeed");
+            EditorGUILayout.PropertyField(randomSeed, new GUIContent("Seed zufällig generieren"));
+            using (new EditorGUI.DisabledScope(randomSeed.boolValue))
+                Integer(data, "seed", "Seed", "", -10000000, 10000000);
         });
+        Section("Oberfläche", map, data =>
+        {
+            Integer(data, "transitionThickness", "Übergangsdicke (Kacheln)", "", 1, 100);
+            EditorGUILayout.Slider(data.FindProperty("grassYOffset"), -.5f, .5f,
+                new GUIContent("Gras Y-Versatz (Welteinheiten)"));
+        }, false);
+        Section("Erzverteilung", map, data =>
+        {
+            EditorGUILayout.CurveField(data.FindProperty("oreDensityCurve"), Color.cyan,
+                new Rect(0f, 0f, 1f, 1f), new GUIContent("Erzverteilung nach Tiefe"));
+            EditorGUILayout.Slider(data.FindProperty("oreDensityMultiplierPercent"), 0f, 100f,
+                new GUIContent("Multiplikator (%)"));
+            EditorGUILayout.Space(6);
+            EditorGUILayout.LabelField("Oberflächenanstieg", EditorStyles.boldLabel);
+            Integer(data, "surfaceOreRampDepth", "Höhe (Blöcke)", "", 0, 10000);
+            EditorGUILayout.CurveField(data.FindProperty("surfaceOreRampCurve"), new Color(1f, .55f, .2f),
+                new Rect(0f, 0f, 1f, 1f), new GUIContent("Verteilung im Anfangsbereich"));
+        }, false);
+        Section("Adern und Layer-Übergänge", map, data =>
+        {
+            EditorGUILayout.Slider(data.FindProperty("oreScale"), .5f, 3f, new GUIContent("Erzgröße (×)"));
+            Integer(data, "minimumOreVeinSize", "Minimale Adergröße (Blöcke)", "", 1, 10000);
+            EditorGUILayout.CurveField(data.FindProperty("oreTransitionCurve"), Color.yellow,
+                new Rect(0f, 0f, 1f, 1f), new GUIContent("Erz-Übergangskurve"));
+            Integer(data, "oreTransitionDepth", "Erz-Übergang (Blöcke)", "", 1, 10000);
+            EditorGUILayout.CurveField(data.FindProperty("oreVeinSizeCurve"), Color.green,
+                new Rect(0f, 0f, 1f, 1f), new GUIContent("Adergröße im Erz-Übergang"));
+        }, false);
+        oreSparkles = Picker("Erzfunkeln", oreSparkles);
+        Section("Erzfunkeln", oreSparkles, data =>
+        {
+            EditorGUILayout.PropertyField(data.FindProperty("sparkleMaterial"), new GUIContent("Material"));
+            Float(data, "intervalPerBlock", "Intervall pro Erzblock (s)", "", 0.1f);
+            Float(data, "darkIntervalMultiplier", "Intervall im Dunkeln (×)", "", 1f);
+            Float(data, "lifetime", "Lebensdauer (s)", "", 0.1f);
+            Float(data, "size", "Größe", "", 0.02f, 1f);
+            Float(data, "opacity", "Deckkraft", "", 0f, 1f);
+            Float(data, "oreColorStrength", "Erzfarb-Anteil", "", 0f, 1f);
+            Float(data, "brightness", "Helligkeit", "", 1f, 8f);
+        }, false);
         if (!map) return;
         Section("Layers", map, data =>
-            EditorGUILayout.PropertyField(data.FindProperty("layers"), new GUIContent("Layers"), true));
+            EditorGUILayout.PropertyField(data.FindProperty("layers"), new GUIContent("Layers"), true), false);
         long cells = (long)map.mapWidth * map.mapHeight;
-        EditorGUILayout.HelpBox($"{cells:N0} Zellen. Änderungen werden beim nächsten Spielstart generiert; bestehende Tiles werden hier nicht überschrieben.", cells > 1000000 ? MessageType.Warning : MessageType.Info);
+        EditorGUILayout.LabelField($"{cells:N0} Zellen", EditorStyles.miniLabel);
         if (!Registry) { Missing("Dem Map-Generator fehlt ein BlockRegistry-Asset."); return; }
 
         EditorGUILayout.Space(8);
@@ -396,14 +551,14 @@ public class GameplaySettingsWindow : EditorWindow
 
     static string HierarchyPath(Transform transform) => transform.parent ? HierarchyPath(transform.parent) + "/" + transform.name : transform.name;
 
-    static void Section(string title, Object target, Action<SerializedObject> draw)
+    static void Section(string title, Object target, Action<SerializedObject> draw, bool showSource = true)
     {
         if (!target) return;
         EditorGUILayout.Space(8);
         using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
         {
             EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
-            Source(target);
+            if (showSource) Source(target);
             var data = new SerializedObject(target);
             data.Update();
             draw(data);

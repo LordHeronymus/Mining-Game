@@ -15,8 +15,8 @@ MonoBehaviour:
   id: 11
   displayName: Erde
   itemDrop: {fileID: 0}
-  digSound: 2
-  breakSound: 1
+  digSound: 14
+  breakSound: 11
   hardness: 0.6
   points: 100
   isSolid: 1

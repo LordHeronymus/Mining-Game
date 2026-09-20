@@ -7,6 +7,7 @@ public class ShopSlot : MonoBehaviour
     [Header("UI")]
     [SerializeField] private Image iconImage;              // Kind "Icon"
     [SerializeField] private TextMeshProUGUI countText;    // Kind "CountText"
+    [SerializeField] private Image countBadge;
     [SerializeField] private Image selectionFrame;         // optionaler Rahmen fürs Highlight
     [SerializeField] private Button button;                // Button auf demselben GO
 
@@ -24,7 +25,7 @@ public class ShopSlot : MonoBehaviour
         shop = shopUI;
 
         if (iconImage) { iconImage.sprite = item ? item.icon : null; iconImage.enabled = item && item.icon; }
-        if (countText) countText.text = count.ToString();
+        UpdateCountDisplay(count);
 
         if (button)
         {
@@ -45,6 +46,15 @@ public class ShopSlot : MonoBehaviour
     public void SetCount(int newCount)
     {
         Count = newCount;
-        if (countText) countText.text = newCount.ToString();
+        UpdateCountDisplay(newCount);
+    }
+
+    private void UpdateCountDisplay(int count)
+    {
+        if (!countText) return;
+        countText.text = count.ToString();
+        float width = Mathf.Max(52f, Mathf.Ceil(countText.GetPreferredValues(countText.text).x) + 18f);
+        if (countBadge) countBadge.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+        countText.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
     }
 }

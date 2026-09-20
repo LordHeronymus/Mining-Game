@@ -29,6 +29,13 @@ public sealed class SurfaceBirds : MonoBehaviour
     [Min(.1f)] public float wingbeatsPerSecond = 1.6f;
     [Min(0.1f), InspectorName("Nachts außerhalb des Bildes (s)")]
     public float nightOffscreenDespawnDelay = 3f;
+    [Header("Birdsong")]
+    public AudioClip[] chirpClips;
+    [Range(0f, 1f)] public float chirpVolume = .22f;
+    [Range(0f, 120f), InspectorName("Zwitscherrufe pro Minute")]
+    public float chirpsPerMinute = 24f;
+    [Range(0f, 1f), InspectorName("Unregelmässigkeit")]
+    public float chirpIrregularity = .7f;
 
     const int Capacity = 24, WingSegments = 12, BodySegments = 16;
     const int WingVertices = (WingSegments + 1) * 2;
@@ -52,7 +59,9 @@ public sealed class SurfaceBirds : MonoBehaviour
     Mesh mesh;
     MeshRenderer meshRenderer;
     float nextFlock;
+    float nextChirp;
     bool firstFlock;
+    AudioClip[] defaultChirps;
 
     void OnEnable()
     {
@@ -69,6 +78,8 @@ public sealed class SurfaceBirds : MonoBehaviour
         background = GetComponentInParent<SurfaceBackgroundController>();
         sky = background ? background.GetComponentInChildren<SkyController>(true) : null;
         nextFlock = 0; firstFlock = true;
+        nextChirp = Random(.35f, .8f);
+        defaultChirps = Resources.LoadAll<AudioClip>("BirdChirps");
         System.Array.Clear(birds, 0, birds.Length);
         if (!material) return;
         var child = new GameObject("Bird silhouettes (generated)") { hideFlags = HideFlags.DontSave };
@@ -245,6 +256,47 @@ public sealed class SurfaceBirds : MonoBehaviour
             colors[beak+2] = yellow;
         }
         mesh.vertices = vertices; mesh.colors = colors; mesh.RecalculateBounds();
+        UpdateBirdsong(camera, visibility, deltaTime);
+    }
+
+    void UpdateBirdsong(Camera camera, float visibility, float deltaTime)
+    {
+        if (!Application.isPlaying || !meshRenderer.enabled || visibility <= .01f ||
+            chirpVolume <= 0f || !(chirpsPerMinute > 0f)) return;
+        var clips = chirpClips != null && chirpClips.Length > 0 ? chirpClips : defaultChirps;
+        if (clips == null || clips.Length == 0 || !AudioManager.Instance) return;
+
+        int visibleCount = 0;
+        Bird chosen = default;
+        float worldScale = Mathf.Max(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.y));
+        foreach (var bird in birds)
+        {
+            if (!bird.active) continue;
+            Vector3 origin = new Vector3(bird.x,
+                bird.y + Mathf.Sin(bird.age * 1.15f + bird.phase) * .18f, transform.position.z);
+            float radius = Mathf.Max(.1f, size) * bird.scale *
+                GetDepthScale(bird.age, bird.depthPhase, bird.depthPeriodFactor) * worldScale * .8f;
+            if (!GeometryUtility.TestPlanesAABB(viewPlanes, new Bounds(origin, Vector3.one * radius * 2f))) continue;
+            visibleCount++;
+            if (random.Next(visibleCount) == 0) chosen = bird;
+        }
+        if (visibleCount == 0) { nextChirp = Mathf.Min(nextChirp, .5f); return; }
+        nextChirp -= Mathf.Max(0f, deltaTime);
+        if (nextChirp > 0f) return;
+        float randomInterval = Mathf.Clamp(-Mathf.Log(1f - (float)random.NextDouble()), .1f, 4f);
+        nextChirp = 60f / Mathf.Clamp(chirpsPerMinute, 1f, 120f) *
+            Mathf.Lerp(1f, randomInterval, Mathf.Clamp01(chirpIrregularity));
+        int start = random.Next(clips.Length);
+        for (int i = 0; i < clips.Length; i++)
+        {
+            var clip = clips[(start + i) % clips.Length];
+            if (!clip) continue;
+            float halfWidth = Mathf.Max(.01f, camera.orthographicSize * camera.aspect);
+            float pan = Mathf.Clamp((chosen.x - camera.transform.position.x) / halfWidth * .7f, -.7f, .7f);
+            float volume = Mathf.Clamp01(chirpVolume) * visibility * Mathf.Lerp(1f, .72f, chosen.depth);
+            AudioManager.Instance.PlayClip(clip, volume, pan, Random(.94f, 1.06f), ambience: true, ambienceType: AmbienceType.Birds);
+            break;
+        }
     }
 
     void Put(int index, Vector3 origin, float scale, float x, float y) =>

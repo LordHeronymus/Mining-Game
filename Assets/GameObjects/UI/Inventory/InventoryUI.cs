@@ -22,11 +22,14 @@ public class InventoryUI : MonoBehaviour
 
     void OnEnable()
     {
+        if (panelVisible) GameplayInputBlocker.SetBlocked(this, true);
+        if (panelVisible) Rebuild();
         if (subCo == null) subCo = StartCoroutine(TrySubscribe());
     }
 
     void OnDisable()
     {
+        GameplayInputBlocker.SetBlocked(this, false);
         if (InventoryManager.Instance) InventoryManager.Instance.OnInventoryChanged -= Rebuild;
         subscribed = false;
     }
@@ -53,7 +56,7 @@ public class InventoryUI : MonoBehaviour
 
     private void Rebuild()
     {
-        if (!content || InventoryManager.Instance == null) return;
+        if (!panelVisible || !content || InventoryManager.Instance == null) return;
         ClearChildren();
 
         var snap = InventoryManager.Instance.GetSnapshot();
@@ -86,6 +89,8 @@ public class InventoryUI : MonoBehaviour
     public IEnumerator FadePanel(bool enabled)
     {
         panelVisible = enabled;
+        if (enabled) Rebuild();
+        if (enabled) GameplayInputBlocker.SetBlocked(this, true);
         float elapsed = 0f;
         while (elapsed < fadeDuration)
         {
@@ -99,5 +104,6 @@ public class InventoryUI : MonoBehaviour
         panel.alpha = enabled ? 1f : 0f;
         panel.blocksRaycasts = enabled;
         panel.interactable = enabled;
+        if (!enabled) GameplayInputBlocker.SetBlocked(this, false);
     }
 }

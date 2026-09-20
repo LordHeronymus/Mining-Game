@@ -57,6 +57,15 @@ public static class SurfaceWildlifeChecks
             Tick(frogs, 0); Tick(snails, 0); Tick(flies, 3);
             Check(frogs.ActiveCount == 1 && snails.ActiveCount == 1, "Initial surface animals missing");
             Check(flies.ActiveCount == 0 && flies.Visibility == 0, "Fireflies visible during day");
+            ((IList)typeof(SurfaceCritters).GetField("animals", Private).GetValue(snails)).Clear();
+            typeof(SurfaceCritters).GetField("initialPopulation", Private).SetValue(snails, false);
+            typeof(SurfaceCritters).GetField("nextSpawn", Private).SetValue(snails, 0f);
+            Tick(snails, 0);
+            Check(snails.ActiveCount == 1, "Off-screen snail did not spawn");
+            float entryX = Get<float>(Animal(snails), "x");
+            Check(Mathf.Abs(Get<float>(Animal(snails), "home") - entryX) < .001f, "Off-screen snail starts outside its roam radius");
+            for (int i = 0; i < 30; i++) Tick(snails, .05f);
+            Check(Mathf.Abs(Get<float>(Animal(snails), "x")) < Mathf.Abs(entryX) - .05f, "Off-screen snail turns without crawling into view");
             CheckVisibleBudget(frogs, snails, map);
             bool hopped = false, rested = false, crawled = false;
             float lastSnail = Get<float>(Animal(snails), "x");

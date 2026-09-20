@@ -10,9 +10,11 @@ public sealed class GameplayTestSettingsData
     public bool godMode, noEnergyConsume, flyMode;
     public bool testModeDisabled;
     public bool discardPlayedMap;
+    public GameplayDayNightMode dayNightMode;
 }
 
 public enum GameplayTestMode { God, NoEnergyConsume, Fly, Active, KeepMap }
+public enum GameplayDayNightMode { Automatic, Day, Night }
 
 // Deliberately separate from GameplaySettingsData and the editor defaults writer.
 public static class GameplayTestSettings
@@ -20,8 +22,9 @@ public static class GameplayTestSettings
     static bool loaded;
     static float multiplier = 1f, saved = 1f;
     static bool godMode, noEnergyConsume, flyMode, testModeDisabled, discardPlayedMap;
+    static GameplayDayNightMode dayNightMode;
     static string savedModes;
-    static string Modes => $"{godMode},{noEnergyConsume},{flyMode},{testModeDisabled},{discardPlayedMap}";
+    static string Modes => $"{godMode},{noEnergyConsume},{flyMode},{testModeDisabled},{discardPlayedMap},{dayNightMode}";
     // Editor preview preference is independent of gameplay cheats and their master switch.
     public static bool KeepMapInEditor => GetConfiguredMode(GameplayTestMode.KeepMap);
     public static bool IsActive => GetMode(GameplayTestMode.Active);
@@ -29,6 +32,19 @@ public static class GameplayTestSettings
     public static bool GodMode => GetMode(GameplayTestMode.God);
     public static bool NoEnergyConsume => GetMode(GameplayTestMode.NoEnergyConsume);
     public static bool FlyMode => GetMode(GameplayTestMode.Fly);
+    public static GameplayDayNightMode ConfiguredDayNightMode { get { EnsureLoaded(); return dayNightMode; } }
+    public static GameplayDayNightMode EffectiveDayNightMode
+    {
+        get
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            EnsureLoaded();
+            return testModeDisabled ? GameplayDayNightMode.Automatic : dayNightMode;
+#else
+            return GameplayDayNightMode.Automatic;
+#endif
+        }
+    }
     public static bool GetMode(GameplayTestMode mode)
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -62,7 +78,7 @@ public static class GameplayTestSettings
     public static bool IsValid(float value) => !float.IsNaN(value) && !float.IsInfinity(value) && value >= .1f && value <= 100f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetSession() { loaded = false; multiplier = saved = 1f; Warning = null; godMode = noEnergyConsume = flyMode = testModeDisabled = discardPlayedMap = false; savedModes = Modes; }
+    static void ResetSession() { loaded = false; multiplier = saved = 1f; Warning = null; godMode = noEnergyConsume = flyMode = testModeDisabled = discardPlayedMap = false; dayNightMode = GameplayDayNightMode.Automatic; savedModes = Modes; }
 
     static void EnsureLoaded()
     {
@@ -79,6 +95,8 @@ public static class GameplayTestSettings
                 multiplier = data.diggingMultiplier; testModeDisabled = data.testModeDisabled;
                 discardPlayedMap = data.discardPlayedMap;
                 godMode = data.godMode; noEnergyConsume = data.noEnergyConsume; flyMode = data.flyMode;
+                dayNightMode = Enum.IsDefined(typeof(GameplayDayNightMode), data.dayNightMode)
+                    ? data.dayNightMode : GameplayDayNightMode.Automatic;
             }
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is FormatException)
@@ -95,6 +113,18 @@ public static class GameplayTestSettings
         AssignMode(mode, value);
         if (Save(out error)) return true;
         AssignMode(mode, previous);
+        return false;
+    }
+
+    public static bool SetDayNightMode(GameplayDayNightMode mode, out string error)
+    {
+        EnsureLoaded();
+        if (!Enum.IsDefined(typeof(GameplayDayNightMode), mode))
+        { error = "Ungültige Tageszeit."; return false; }
+        GameplayDayNightMode previous = dayNightMode;
+        dayNightMode = mode;
+        if (Save(out error)) return true;
+        dayNightMode = previous;
         return false;
     }
 
@@ -122,7 +152,8 @@ public static class GameplayTestSettings
             string temp = FilePath + ".tmp";
             File.WriteAllText(temp, JsonUtility.ToJson(new GameplayTestSettingsData {
                 discardPlayedMap = discardPlayedMap,
-                testModeDisabled = testModeDisabled, diggingMultiplier = multiplier, godMode = godMode, noEnergyConsume = noEnergyConsume, flyMode = flyMode
+                testModeDisabled = testModeDisabled, diggingMultiplier = multiplier, godMode = godMode, noEnergyConsume = noEnergyConsume, flyMode = flyMode,
+                dayNightMode = dayNightMode
             }, true));
             if (File.Exists(FilePath)) File.Replace(temp, FilePath, null);
             else File.Move(temp, FilePath);

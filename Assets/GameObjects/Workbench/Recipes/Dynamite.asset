@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bd168b198ca49c4a82450a3ed868988, type: 3}
+  m_Name: Dynamite
+  m_EditorClassIdentifier: 
+  output: {fileID: 11400000, guid: 8c38485e5162d9149b8eeeab7190ae52, type: 2}
+  outputAmount: 1
+  pluralName: Dynamit
+  ingredients:
+  - item: {fileID: 11400000, guid: 8ce50848319387b46b7171f0cf06cdc0, type: 2}
+    amount: 3
+  - item: {fileID: 11400000, guid: 2db8d69ab3b281f4bb7db704f45308c0, type: 2}
+    amount: 2
+  - item: {fileID: 11400000, guid: 760648c834dc0cd46b697d742b6e7447, type: 2}
+    amount: 1

@@ -19,6 +19,7 @@ public class SellPage : MonoBehaviour
     [SerializeField] private TextMeshProUGUI countText;      
     [SerializeField] private TextMeshProUGUI totalWorthText;
     [SerializeField] private TextMeshProUGUI moneyText;
+    [SerializeField] private Image selectedOreIcon;
 
     [Header("Buttons")]
     [SerializeField] private Button sell1Button;
@@ -29,7 +30,6 @@ public class SellPage : MonoBehaviour
     [Header("Settings")]
     [SerializeField] float lerpCounterTime = 0.5f;
 
-    private bool panelVisible = false;
     private ItemSO _selected;
 
     void Awake()
@@ -40,7 +40,7 @@ public class SellPage : MonoBehaviour
         if (sellAllButton) sellAllButton.onClick.AddListener(SellAll);
 
         gameObject.SetActive(true);
-        HandleMoney(0);
+        HandleMoney(StatsManager.Instance ? StatsManager.Instance.Money : 0);
     }
 
     void OnEnable()
@@ -55,7 +55,7 @@ public class SellPage : MonoBehaviour
     }
     void OnInvChanged()
     {
-        if (!panelVisible) return;   // 👈 nichts tun, wenn zu
+        if (!isActiveAndEnabled || !panel || panel.alpha <= 0f) return;
         RequestRebuild();
     }
 
@@ -65,20 +65,22 @@ public class SellPage : MonoBehaviour
         moneyCo = StartCoroutine(LerpCounter(newMoney));
     }
 
-    float currentMoneyShow = 0f;
+    double currentMoneyShow = 0;
     Coroutine moneyCo;
 
     IEnumerator LerpCounter(int amount)
     {
-        float delta = amount - currentMoneyShow;
-        float step = delta * (1 / lerpCounterTime) * Time.deltaTime;
-
-        while (currentMoneyShow < amount)
+        double start = currentMoneyShow;
+        float elapsed = 0f;
+        while (elapsed < lerpCounterTime && start != amount)
         {
-            currentMoneyShow = Mathf.Min(currentMoneyShow + step, amount);
-            moneyText.text = Mathf.Floor(currentMoneyShow).ToString();
+            elapsed += Time.unscaledDeltaTime;
+            currentMoneyShow = start + (amount - start) * Mathf.Clamp01(elapsed / lerpCounterTime);
+            moneyText.text = ShopMoneyFormatter.Format((long)System.Math.Floor(currentMoneyShow));
             yield return null;
         }
+        currentMoneyShow = amount;
+        moneyText.text = ShopMoneyFormatter.Format(amount);
     }
 
     public void ShowPanel(bool show)
@@ -92,7 +94,7 @@ public class SellPage : MonoBehaviour
     bool _pendingRebuild;
     void RequestRebuild()
     {
-        if (!panelVisible) return;
+        if (!isActiveAndEnabled || !panel || panel.alpha <= 0f) return;
         if (_pendingRebuild) return;
         _pendingRebuild = true;
         StartCoroutine(CoRebuildNextFrame());
@@ -192,6 +194,7 @@ public class SellPage : MonoBehaviour
         if (_selected == null)
         {
             detailsPanel.SetActive(false);
+            if (selectedOreIcon) selectedOreIcon.enabled = false;
             if (oreNameText) oreNameText.text = "";
             if (oreWorthText) oreWorthText.text = "";
             if (countText) countText.text = "";
@@ -208,6 +211,11 @@ public class SellPage : MonoBehaviour
         int total = worth * count;
 
         if (oreNameText) oreNameText.text = _selected.displayName;
+        if (selectedOreIcon)
+        {
+            selectedOreIcon.sprite = _selected.icon;
+            selectedOreIcon.enabled = _selected.icon;
+        }
         if (oreWorthText) oreWorthText.text = $"{worth}";
         if (countText) countText.text = $"{count}";
         if (totalWorthText) totalWorthText.text = $"{total}";
@@ -221,6 +229,11 @@ public class SellPage : MonoBehaviour
         if (sell1Button) sell1Button.interactable = canSellSelected && count >= 1;
         if (sell10Button) sell10Button.interactable = canSellSelected && count >= 10;
         if (sellMaxButton) sellMaxButton.interactable = canSellSelected && count >= 1;
+        if (sellMaxButton)
+        {
+            var label = sellMaxButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (label) label.text = canSellSelected ? $"{count} {_selected.displayName} verkaufen" : "Erz verkaufen";
+        }
 
         // ---- Sell All: nur aktiv, wenn es IRGENDEIN verkaufbares Ore gibt ----
         bool canSellAny = false;

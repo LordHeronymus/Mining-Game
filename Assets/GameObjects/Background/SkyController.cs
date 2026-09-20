@@ -12,6 +12,7 @@ public sealed class SkyController : MonoBehaviour
     [Min(0.01f)] public float NightDuration = 60f;
     [SerializeField] bool isNight;
     float phaseElapsed;
+    GameplayDayNightMode debugMode;
 
     public bool IsNight => isNight;
     public float NightBlend { get; private set; }
@@ -27,6 +28,7 @@ public sealed class SkyController : MonoBehaviour
         sky = GetComponent<ParallaxLayer>();
         NightBlend = isNight ? 1f : 0f;
         phaseElapsed = 0f;
+        debugMode = GameplayDayNightMode.Automatic;
     }
 
     public void SetNight(bool value)
@@ -40,7 +42,13 @@ public sealed class SkyController : MonoBehaviour
 
     void Update()
     {
-        if (Application.isPlaying) AdvanceTime(Time.deltaTime);
+        if (Application.isPlaying)
+        {
+            var mode = GameplayTestSettings.EffectiveDayNightMode;
+            if (mode != debugMode) { phaseElapsed = 0f; debugMode = mode; }
+            if (mode == GameplayDayNightMode.Automatic) AdvanceTime(Time.deltaTime);
+            else { SetNight(mode == GameplayDayNightMode.Night); AdvanceFade(Time.deltaTime); }
+        }
         else NightBlend = isNight ? 1f : 0f;
     }
 

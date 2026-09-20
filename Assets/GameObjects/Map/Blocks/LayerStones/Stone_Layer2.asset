@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Stone_Layer2
   m_EditorClassIdentifier: 
   id: 9
-  displayName: Stein Layer 2
+  displayName: Stein
   itemDrop: {fileID: 0}
-  digSound: 0
-  breakSound: 1
+  digSound: 13
+  breakSound: 13
   hardness: 1
   points: 100
   isSolid: 1

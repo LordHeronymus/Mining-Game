@@ -88,6 +88,7 @@ public class GameplayDebugPanel : MonoBehaviour
     void SetVisible(bool visible)
     {
         IsOpen = visible;
+        GameplayInputBlocker.SetBlocked(this, visible);
         if (!visible) GetComponent<GameplayDebugWindow>()?.HideTooltip();
         panel.alpha = visible ? 1f : 0f;
         panel.interactable = visible;
@@ -180,11 +181,16 @@ public class GameplayDebugPanel : MonoBehaviour
         statusText.text = GameplaySettings.LoadWarning ?? "";
     }
 
-    void OnDisable() => IsOpen = false;
+    void OnDisable()
+    {
+        IsOpen = false;
+        GameplayInputBlocker.SetBlocked(this, false);
+    }
 
     void OnDestroy()
     {
         GameplaySettings.Changed -= Refresh;
         IsOpen = false;
+        GameplayInputBlocker.SetBlocked(this, false);
     }
 }

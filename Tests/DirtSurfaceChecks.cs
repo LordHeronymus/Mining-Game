@@ -27,18 +27,23 @@ public static class DirtSurfaceChecks
             SceneManager.SetActiveScene(scene);
             var grid=new GameObject("Dirt Check Grid",typeof(Grid));grid.GetComponent<Grid>().cellSize=new Vector3(.5f,.5f,0);
             var go=new GameObject("Dirt Check",typeof(Tilemap),typeof(TilemapRenderer),typeof(MapGenerator));go.layer=31;go.transform.SetParent(grid.transform,false);
-            var map=go.GetComponent<MapGenerator>();map.enabled=false;map.registry=registry;map.mapWidth=36;map.mapHeight=40;map.seed=42319;
-            map.oreDensityByDepth=AnimationCurve.Constant(0,1,100);
+            var map=go.GetComponent<MapGenerator>();map.enabled=false;map.registry=registry;map.mapWidth=36;map.mapHeight=40;map.seed=42319;map.randomizeSeed=false;
+            map.oreDensityCurve=AnimationCurve.Constant(0,1,1);map.oreDensityMultiplierPercent=100;
             go.GetComponent<DirtSurfaceAppearance>().TerrainMaterial=material;
             map.GenerateMap();map.OreOverlay.GetComponent<TilemapRenderer>().enabled=false;
-            var sampler=new MapGenerationSampler(registry,map.seed,40,null,map.oreDensityByDepth);
+            var sampler=new MapGenerationSampler(registry,map.seed,40,null,map.oreDensityCurve,map.oreDensityMultiplierPercent,map.transitionThickness);
+            var expected=new Block[map.mapWidth*map.mapHeight];
+            for(int y=0;y<map.mapHeight;y++)for(int x=0;x<map.mapWidth;x++)
+                expected[y*map.mapWidth+x]=sampler.GetBlock(x,y);
+            OreVeins.PruneSmallVeins(expected,map.mapWidth,map.mapHeight,map.minimumOreVeinSize,sampler.GetBaseBlock);
             int[] variants=new int[4];
-            for(int y=0;y<28;y++)for(int x=0;x<36;x++)
+            for(int y=0;y<sampler.DirtEndDepth;y++)for(int x=0;x<36;x++)
             {
                 var cell=new Vector3Int(x-18,-y,0);
                 var chosen=map.GetBlockAt(cell);
-                Check(chosen==sampler.GetBlock(x,y),"Surface map and sampler disagree");
-                Check(y<4 ? !map.GetOreAt(cell) : map.GetOreAt(cell)!=null,"Ore depth limit or dirt spawning incorrect");
+                Check(chosen==expected[y*map.mapWidth+x],"Surface map and sampler disagree");
+                Check((map.GetOreAt(cell)!=null)==expected[y*map.mapWidth+x].HasOreOverlays,
+                    "Ore overlay disagrees with the pruned map at "+cell);
                 chosen=registry.FromTile(map.Terrain.GetTile(cell));
                 Check(chosen==sampler.GetBaseBlock(x,y),"Ore replaced its dirt/stone substrate");
                 Check(y<20 ? chosen==dirt : chosen==dirt || chosen.IsStone,"Invalid surface block type");
@@ -50,17 +55,17 @@ public static class DirtSurfaceChecks
                     variants[Array.IndexOf(dirt.variants,tile)]++;
                 }
             }
-            var shares=new int[8];int changedBySeed=0;
+            var shares=new int[map.transitionThickness];int changedBySeed=0;
             var repeat=new MapGenerationSampler(registry,map.seed,40);
             var other=new MapGenerationSampler(registry,map.seed+1,40);
-            for(int y=20;y<28;y++)for(int x=0;x<1024;x++)
+            for(int y=20;y<sampler.DirtEndDepth;y++)for(int x=0;x<1024;x++)
             {
                 bool earth=sampler.IsDirtAt(x,y);
                 if(earth)shares[y-20]++;
                 Check(earth==repeat.IsDirtAt(x,y),"Boundary is not deterministic");
                 if(earth!=other.IsDirtAt(x,y))changedBySeed++;
             }
-            for(int row=0;row<8;row++)
+            for(int row=0;row<map.transitionThickness;row++)
             {
                 Check(shares[row]>0 && shares[row]<1024,"Transition row is a hard uniform cut");
                 if(row>0)Check(shares[row]<shares[row-1],"Dirt share did not decrease with depth");
@@ -89,7 +94,7 @@ public static class DirtSurfaceChecks
             Check(opaque>450000,"Terrain contains translucent tiles");
             light.intensity=0;Render();int bright=0;foreach(var p in pixels.GetPixels32())if(p.r>8||p.g>8||p.b>8)bright++;
             Check(bright==0,"Dirt or transition is self illuminated");
-            return new{passed=true,pureDirtRows=20,transitionRows=8,variants,dirtCountsPer1024Cells=shares,changedBySeed,opaquePixels=opaque,darkPixels=bright,mining=true,persistence=true};
+            return new{passed=true,pureDirtRows=20,transitionRows=map.transitionThickness,variants,dirtCountsPer1024Cells=shares,changedBySeed,opaquePixels=opaque,darkPixels=bright,mining=true,persistence=true};
         }
         finally
         {

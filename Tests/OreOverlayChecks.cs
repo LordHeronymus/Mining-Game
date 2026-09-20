@@ -95,10 +95,11 @@ public static class OreOverlayChecks
             var terrain=new GameObject("Test Terrain",typeof(Tilemap),typeof(TilemapRenderer),typeof(MapGenerator));
             terrain.transform.SetParent(grid.transform,false);
             var map=terrain.GetComponent<MapGenerator>();map.enabled=false;
-            map.registry=registry;map.mapWidth=128;map.mapHeight=128;map.seed=42319;
+            map.registry=registry;map.mapWidth=128;map.mapHeight=128;map.seed=42319;map.randomizeSeed=false;
             terrain.GetComponent<TilemapRenderer>().sharedMaterial=AssetDatabase.LoadAssetAtPath<Material>(
                 "Packages/com.unity.render-pipelines.universal/Runtime/Materials/Sprite-Lit-Default.mat");
             map.GenerateMap();
+            var sampler=new MapGenerationSampler(registry,map.seed,map.mapHeight);
             var bounds=map.Terrain.cellBounds;
             var terrainBefore=map.Terrain.GetTilesBlock(bounds);
             var oreBefore=map.OreOverlay.GetTilesBlock(bounds);
@@ -109,7 +110,7 @@ public static class OreOverlayChecks
             {
                 var ore=map.GetOreAt(cell);if(!ore || ore.block != oreBlock)continue;
                 oreCount++;baseArt.Add(map.Terrain.GetTile(cell));oreArt.Add(ore);
-                Check(registry.FromTile(map.Terrain.GetTile(cell))==stone,"Ore has no stone substrate");
+                Check(registry.FromTile(map.Terrain.GetTile(cell))==sampler.GetBaseBlock(cell.x+map.mapWidth/2,-cell.y),"Ore has wrong substrate");
                 Check(map.GetBlockAt(cell)==oreBlock,"Layered ore resolves as stone");
                 var m=map.OreOverlay.GetTransformMatrix(cell);matrices[cell]=m;
                 float angle=Mathf.Atan2(m.m10,m.m00)*Mathf.Rad2Deg;
@@ -117,7 +118,7 @@ public static class OreOverlayChecks
                 Check(Mathf.Abs(angle/90-Mathf.Round(angle/90))<.001f,"Rotation is not a quarter-turn");
                 Check(Mathf.Abs(m.MultiplyVector(Vector3.right).magnitude-1)<.001f,"Overlay scale differs from stone");
             }
-            Check(oreCount>100 && oreArt.Count==7 && baseArt.Count==6 && angles.Count==4,"Generation missed art or rotation variants");
+            Check(oreCount>100 && oreArt.Count==7 && baseArt.Count>=stone.variants.Length && angles.Count==4,"Generation missed art or rotation variants");
             for(int i=0;i<100;i++)UnityEngine.Random.value.ToString();
             map.GenerateMap();
             var terrainAfter=map.Terrain.GetTilesBlock(bounds);var oreAfter=map.OreOverlay.GetTilesBlock(bounds);
@@ -130,8 +131,7 @@ public static class OreOverlayChecks
             typeof(OreSparkles).GetField("map",Private).SetValue(glints,map);
             var canSparkle=typeof(OreSparkles).GetMethod("CanSparkle",Private);
             foreach(var cell in matrices.Keys)
-                Check(!(bool)canSparkle.Invoke(glints,new object[]{cell}),"Layered ore emitted an emissive glint");
-            UnityEngine.Object.DestroyImmediate(glints);
+                Check((bool)canSparkle.Invoke(glints,new object[]{cell}),"Layered ore did not sparkle");
             Check(!map.OreOverlay.GetComponent<Collider2D>() && map.OreOverlay.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>().Length==0,
                 "Overlay must not add collisions or lights");
 
@@ -140,6 +140,8 @@ public static class OreOverlayChecks
             var second=new List<Vector3Int>(matrices.Keys)[1];
             Check(map.RemoveBlock(first),"Failed to remove layered ore");
             Check(!map.Terrain.HasTile(first)&&!map.OreOverlay.HasTile(first),"Removal left an orphan layer");
+            Check(!(bool)canSparkle.Invoke(glints,new object[]{first}),"Mined ore kept sparkling");
+            UnityEngine.Object.DestroyImmediate(glints);
             RoundTrip(map);
             Check(!map.Terrain.HasTile(first)&&!map.OreOverlay.HasTile(first),"Mined cell came back after restore");
             Check(map.GetBlockAt(second)==oreBlock && map.OreOverlay.GetTransformMatrix(second)==matrices[second],"Overlay restore lost identity or rotation");
@@ -183,7 +185,7 @@ public static class OreOverlayChecks
                 int before=inventory.GetCount(oreBlock.itemDrop);
                 for(int n=0;n<1000;n++)
                 {
-                    map.Terrain.SetTile(first,stone.variants[n%6]);
+                    map.Terrain.SetTile(first,stone.variants[n%stone.variants.Length]);
                     map.OreOverlay.SetTile(first,oreBlock.GetOreVariants(r)[0]);
                     Check(miner.CompleteMining(first),"Mining transaction failed");
                     Check(!map.GetBlockAt(first)&&!map.OreOverlay.HasTile(first),"Mining failed to remove both layers");

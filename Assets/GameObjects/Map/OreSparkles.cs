@@ -120,8 +120,7 @@ public sealed class OreSparkles : MonoBehaviour
     bool IsLit(Vector3Int cell) => !lighting || !lighting.isActiveAndEnabled ||
         !lighting.lightingEnabled || lighting.GetBrightness(cell) > .03f;
 
-    // Layered ores are lit exclusively with their stone substrate, never with emissive glints.
-    bool CanSparkle(Vector3Int cell) => !map.GetOreAt(cell) && IsOre(map.GetBlockAt(cell));
+    bool CanSparkle(Vector3Int cell) => IsOre(map.GetBlockAt(cell));
 
     void ApplyBrightness()
     {

@@ -66,25 +66,26 @@ public static class SetupDirtSurface
         const string matPath="Assets/GameObjects/Map/DirtTerrainLit.mat";
         var material=AssetDatabase.LoadAssetAtPath<Material>(matPath);
         if(!material){material=new Material(shader);AssetDatabase.CreateAsset(material,matPath);}
-        material.SetTexture("_StoneTex",AssetDatabase.LoadAssetAtPath<Texture2D>(Root+"/Sprites/Stein_01_Ruhig.png"));
+        material.SetTexture("_StoneTex",AssetDatabase.LoadAssetAtPath<Texture2D>(Root+"/Sprites/TransitionStone/Erde_Fels_01.png"));
+        material.SetTexture("_DeepStoneTex",AssetDatabase.LoadAssetAtPath<Texture2D>(Root+"/Sprites/Stein_01_Ruhig.png"));
         material.SetTexture("_DirtTex",AssetDatabase.LoadAssetAtPath<Texture2D>(Root+"/Sprites/Dirt/Dirt_Wurzeln_01.png"));
         material.SetVector("_DirtSurface",Vector4.zero);
         EditorUtility.SetDirty(material);AssetDatabase.SaveAssetIfDirty(material);
-        int converted=0,holes=0;
+        int converted=0,holes=0,thickness=MapGenerationSampler.DefaultTransitionThickness;
         foreach(var map in UnityEngine.Object.FindObjectsByType<MapGenerator>(FindObjectsInactive.Include,FindObjectsSortMode.None))
         {
             var appearance=map.GetComponent<DirtSurfaceAppearance>();
             if(!appearance)appearance=map.gameObject.AddComponent<DirtSurfaceAppearance>();
             appearance.TerrainMaterial=material;EditorUtility.SetDirty(appearance);
             map.EnsureOreOverlay();
-            var sampler=new MapGenerationSampler(map.registry,map.ActiveSeed,map.GeneratedHeight,map.layers,map.oreDensityByDepth);
+            var sampler=new MapGenerationSampler(map.registry,map.ActiveSeed,map.GeneratedHeight,map.layers,map.oreDensityCurve,map.oreDensityMultiplierPercent,map.transitionThickness,map.oreTransitionCurve,map.oreTransitionDepth, map.oreVeinSizeCurve, map.surfaceOreRampDepth, map.surfaceOreRampCurve);
+            thickness=sampler.TransitionThickness;
             var changes=new List<TileChangeData>();
-            for(int y=0;y<Math.Min(map.GeneratedHeight,MapGenerationSampler.DirtEndDepth);y++)
+            for(int y=0;y<Math.Min(map.GeneratedHeight,sampler.DirtEndDepth);y++)
                 for(int x=0;x<map.GeneratedWidth;x++)
                 {
                     var cell=new Vector3Int(x-map.GeneratedWidth/2,-y,0);
                     if(!map.Terrain.HasTile(cell)){holes++;continue;}
-                    if(y<MapGenerationSampler.SurfaceStoneRows)map.OreOverlay?.SetTile(cell,null);
                     var chosen=sampler.GetBaseBlock(x,y);
                     var variants=chosen.variants;
                     var tile=variants[OreVeins.Hash(map.ActiveSeed,x,y,0x1234u)%(uint)variants.Length];
@@ -96,7 +97,7 @@ public static class SetupDirtSurface
             EditorSceneManager.MarkSceneDirty(map.gameObject.scene);
             if(!EditorSceneManager.SaveScene(map.gameObject.scene))throw new Exception("Could not save dirt surface");
         }
-        return new{success=true,variants=4,pureDirtRows=20,transitionRows=8,converted,preservedHoles=holes};
+        return new{success=true,variants=4,pureDirtRows=20,transitionRows=thickness,converted,preservedHoles=holes};
     }
     static void Folder(string path)
     {

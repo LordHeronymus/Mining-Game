@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.Serialization;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(OreOverlayAppearance), typeof(DirtSurfaceAppearance))]
 public class MapGenerator : MonoBehaviour
@@ -11,18 +13,41 @@ public class MapGenerator : MonoBehaviour
     [Header("Generation")]
     public BlockRegistry registry;
     [Range(-1e7f, 1e7f)] public int seed = 0;
+    [InspectorName("Seed zufällig generieren")] public bool randomizeSeed;
+    [SerializeField, HideInInspector] bool seedModeInitialized;
     [Range(.5f, 3f), InspectorName("Erzgröße (×)")] public float oreScale = 1.35f;
+    [Range(1, 100), InspectorName("Übergangsdicke (Kacheln)")] public int transitionThickness = 15;
+    [Range(-.5f, .5f), InspectorName("Gras Y-Versatz (Welteinheiten)")] public float grassYOffset;
+    [SerializeField] TileBase[] grassVariants;
 
-    [InspectorName("Erzanteil (%) nach Tiefe (0–1)")]
-    public AnimationCurve oreDensityByDepth = AnimationCurve.Linear(0f, 5f, 1f, 50f);
+    [InspectorName("Erzverteilung nach Tiefe")]
+    public AnimationCurve oreDensityCurve = AnimationCurve.Linear(0f, .1f, 1f, 1f);
+    [Range(0f, 100f), InspectorName("Multiplikator (%)")]
+    public float oreDensityMultiplierPercent = 50f;
+    [Min(0), InspectorName("Oberflächenanstieg (Blöcke)")]
+    public int surfaceOreRampDepth = 10;
+    [InspectorName("Kurve Oberflächenanstieg")]
+    public AnimationCurve surfaceOreRampCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
+    [InspectorName("Erz-Übergangskurve")]
+    public AnimationCurve oreTransitionCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [Min(1), InspectorName("Erz-Übergang (Blöcke)")]
+    public int oreTransitionDepth = 100;
+    [InspectorName("Adergröße im Erz-Übergang")]
+    public AnimationCurve oreVeinSizeCurve = AnimationCurve.Linear(0f, .5f, 1f, 1f);
+    [Min(1), InspectorName("Minimale Adergröße (Blöcke)")]
+    public int minimumOreVeinSize = 4;
+    [SerializeField, HideInInspector, FormerlySerializedAs("oreDensityByDepth")]
+    AnimationCurve legacyOreDensityByDepth;
 
     [Header("Layers")]
     public MapLayer[] layers;
 
     private Tilemap tilemap;
     [SerializeField] Tilemap oreOverlay;
+    [SerializeField] Tilemap grassOverlay;
     public Tilemap Terrain => tilemap ? tilemap : tilemap = GetComponent<Tilemap>();
     public Tilemap OreOverlay => oreOverlay;
+    public Tilemap GrassOverlay => grassOverlay;
     [SerializeField, HideInInspector] bool isGenerated;
     [SerializeField, HideInInspector] int generatedSeed, generatedWidth, generatedHeight;
     public bool IsGenerated => isGenerated;
@@ -36,13 +61,64 @@ public class MapGenerator : MonoBehaviour
 
     void Awake()
     {
+        MigrateSeedMode();
+        MigrateOreDensitySettings();
         tilemap = GetComponent<Tilemap>();
         isGenerated = false;
+        if (Application.isPlaying && GetComponent<TilemapCollider2D>() && !GetComponent<TerrainColliderChunks>())
+            gameObject.AddComponent<TerrainColliderChunks>();
+    }
+
+    void OnValidate()
+    {
+        MigrateSeedMode();
+        MigrateOreDensitySettings();
+        UpdateGrassOffset();
+    }
+
+    public void MigrateSeedMode()
+    {
+        if (seedModeInitialized) return;
+        randomizeSeed = seed == 0;
+        seedModeInitialized = true;
+    }
+
+    public int ChooseGenerationSeed()
+    {
+        MigrateSeedMode();
+        if (!randomizeSeed) return seed;
+        int value;
+        do value = Random.Range(-10000000, 10000001); while (value == 0);
+        return value;
+    }
+
+    public bool MigrateOreDensitySettings()
+    {
+        if (legacyOreDensityByDepth == null || legacyOreDensityByDepth.length == 0) return false;
+        var keys = legacyOreDensityByDepth.keys;
+        float maximum = 0f;
+        foreach (var key in keys) maximum = Mathf.Max(maximum, key.value);
+        oreDensityMultiplierPercent = Mathf.Clamp(maximum, 0f, 100f);
+        float factor = oreDensityMultiplierPercent > 0f ? 1f / oreDensityMultiplierPercent : 0f;
+        for (int i = 0; i < keys.Length; i++)
+        {
+            var key = keys[i];
+            key.value *= factor;
+            key.inTangent *= factor;
+            key.outTangent *= factor;
+            keys[i] = key;
+        }
+        oreDensityCurve = new AnimationCurve(keys)
+        {
+            preWrapMode = legacyOreDensityByDepth.preWrapMode,
+            postWrapMode = legacyOreDensityByDepth.postWrapMode
+        };
+        legacyOreDensityByDepth = null;
+        return true;
     }
 
     void Start()
     {
-        if (seed == 0) seed = Random.Range(-(int)1e7, (int)1e7);
         GenerateMap();
     }
 
@@ -51,9 +127,13 @@ public class MapGenerator : MonoBehaviour
 
     void TerrainChanged(Tilemap source, Tilemap.SyncTile[] changes)
     {
-        if (source != Terrain || !oreOverlay || changes == null) return;
+        if (source != Terrain || changes == null) return;
         foreach (var change in changes)
-            if (!source.HasTile(change.position)) oreOverlay.SetTile(change.position, null);
+            if (!source.HasTile(change.position))
+            {
+                if (oreOverlay) oreOverlay.SetTile(change.position, null);
+                if (grassOverlay && change.position.y == 0) grassOverlay.SetTile(change.position, null);
+            }
     }
 
     public Tilemap EnsureOreOverlay()
@@ -88,6 +168,65 @@ public class MapGenerator : MonoBehaviour
         return oreOverlay;
     }
 
+    public Tilemap EnsureGrassOverlay()
+    {
+        if (!grassOverlay)
+        {
+            var existing = transform.Find("Grass Overlay");
+            if (existing) grassOverlay = existing.GetComponent<Tilemap>();
+            if (!grassOverlay)
+            {
+                var child = new GameObject("Grass Overlay", typeof(Tilemap), typeof(TilemapRenderer));
+                child.transform.SetParent(transform, false);
+                grassOverlay = child.GetComponent<Tilemap>();
+            }
+        }
+        grassOverlay.gameObject.layer = gameObject.layer;
+        grassOverlay.tileAnchor = Terrain.tileAnchor;
+        grassOverlay.orientation = Terrain.orientation;
+        grassOverlay.orientationMatrix = Terrain.orientationMatrix;
+        UpdateGrassOffset();
+        var source = GetComponent<TilemapRenderer>();
+        var target = grassOverlay.GetComponent<TilemapRenderer>();
+        if (source && target)
+        {
+            target.sharedMaterial = source.sharedMaterial;
+            target.sortingLayerName = "Grass";
+            target.sortingOrder = 0;
+            target.mode = source.mode;
+            target.sortOrder = source.sortOrder;
+        }
+        return grassOverlay;
+    }
+
+    void UpdateGrassOffset()
+    {
+        if (!grassOverlay) return;
+        var position = grassOverlay.transform.localPosition;
+        position.y = grassYOffset;
+        grassOverlay.transform.localPosition = position;
+    }
+
+    public void SetGrassVariants(TileBase[] variants) => grassVariants = variants;
+
+    public void SyncGrassFromTerrain()
+    {
+        var overlay = EnsureGrassOverlay();
+        overlay.ClearAllTiles();
+        int width = GeneratedWidth;
+        if (width <= 0 || grassVariants == null || grassVariants.Length == 0) return;
+        var tiles = new TileBase[width];
+        int left = -width / 2;
+        for (int x = 0; x < width; x++)
+        {
+            var cell = new Vector3Int(left + x, 0, 0);
+            if (Terrain.HasTile(cell))
+                tiles[x] = grassVariants[OreVeins.Hash(ActiveSeed, x, 0, 0x6A55u) % (uint)grassVariants.Length];
+        }
+        overlay.SetTilesBlock(new BoundsInt(left, 0, 0, width, 1, 1), tiles);
+        overlay.CompressBounds();
+    }
+
     public OreTile GetOreAt(Vector3Int cell) => Terrain.HasTile(cell) && oreOverlay
         ? oreOverlay.GetTile<OreTile>(cell) : null;
 
@@ -103,16 +242,21 @@ public class MapGenerator : MonoBehaviour
     {
         if (!Terrain.HasTile(cell)) return false;
         if (oreOverlay) oreOverlay.SetTile(cell, null);
+        if (grassOverlay && cell.y == 0) grassOverlay.SetTile(cell, null);
         Terrain.SetTile(cell, null);
         GetComponent<MapLighting>()?.NotifyTileChanged(cell);
         return true;
     }
 
-    public void GenerateMap()
+    public void GenerateMap(int? seedOverride = null)
     {
+        int usedSeed = seedOverride ?? ChooseGenerationSeed();
+        MigrateOreDensitySettings();
         if (!registry || mapWidth <= 0 || mapHeight <= 0)
             throw new System.InvalidOperationException("Map generation requires a registry and positive dimensions.");
-        var sampler = new MapGenerationSampler(registry, seed, mapHeight, layers, oreDensityByDepth);
+        var sampler = new MapGenerationSampler(registry, usedSeed, mapHeight, layers, oreDensityCurve,
+            oreDensityMultiplierPercent, transitionThickness, oreTransitionCurve, oreTransitionDepth,
+            oreVeinSizeCurve, surfaceOreRampDepth, surfaceOreRampCurve);
         for (int y = 0; y < mapHeight; y++)
         {
             var stone = sampler.GetStone(y);
@@ -122,17 +266,21 @@ public class MapGenerator : MonoBehaviour
         }
         tilemap = Terrain;
         EnsureOreOverlay();
-        isGenerated = false;
-        oreOverlay.ClearAllTiles();
-        tilemap.ClearAllTiles();
+        EnsureGrassOverlay();
 
         int offsetX = -mapWidth / 2;
         var blocks = new Block[checked(mapWidth * mapHeight)];
         for (int y = 0; y < mapHeight; y++)
             for (int x = 0; x < mapWidth; x++) blocks[y * mapWidth + x] = sampler.GetBlock(x, y);
-        var richness = OreVeins.Build(blocks, mapWidth, mapHeight, seed);
+        OreVeins.PruneSmallVeins(blocks, mapWidth, mapHeight, minimumOreVeinSize, sampler.GetBaseBlock);
+        var richness = OreVeins.Build(blocks, mapWidth, mapHeight, usedSeed);
         var terrainTiles = new TileBase[blocks.Length];
         var oreTiles = new TileBase[blocks.Length];
+        var previousBlocks = new Block[mapWidth];
+        var currentBlocks = new Block[mapWidth];
+        var previousVariants = new int[mapWidth];
+        var currentVariants = new int[mapWidth];
+        var variantGroups = new Dictionary<Block,int[]>();
 
         for (int y = 0; y < mapHeight; y++)
         {
@@ -142,16 +290,33 @@ public class MapGenerator : MonoBehaviour
                 Block chosen = blocks[i];
                 if (!chosen) continue;
                 bool layered = chosen.HasOreOverlays;
-                var baseVariants = (layered ? sampler.GetBaseBlock(x, y) : chosen).variants;
+                Block baseBlock = layered ? sampler.GetBaseBlock(x, y) : chosen;
+                var baseVariants = baseBlock.variants;
                 if (baseVariants == null || baseVariants.Length == 0)
                     throw new System.InvalidOperationException("Missing terrain variants for " + chosen.name);
-                terrainTiles[tileIndex] = baseVariants[OreVeins.Hash(seed, x, y, 0x1234u) % (uint)baseVariants.Length];
+                int left = x > 0 && currentBlocks[x - 1] == baseBlock ? currentVariants[x - 1] : -1;
+                int above = previousBlocks[x] == baseBlock ? previousVariants[x] : -1;
+                if(!variantGroups.TryGetValue(baseBlock,out var groups))
+                {
+                    groups=TerrainVariantSelector.VisualGroups(baseVariants);
+                    variantGroups.Add(baseBlock,groups);
+                }
+                int variant = TerrainVariantSelector.Choose(usedSeed, x, y, groups, left, above);
+                currentBlocks[x] = baseBlock;
+                currentVariants[x] = variant;
+                terrainTiles[tileIndex] = baseVariants[variant];
                 if (!layered) continue;
                 var overlays = chosen.GetOreVariants(richness[i]);
-                oreTiles[tileIndex] = overlays[OreVeins.Hash(seed, x, y, 0x5678u) % (uint)overlays.Length];
+                oreTiles[tileIndex] = overlays[OreVeins.Hash(usedSeed, x, y, 0x5678u) % (uint)overlays.Length];
             }
+            (previousBlocks, currentBlocks) = (currentBlocks, previousBlocks);
+            (previousVariants, currentVariants) = (currentVariants, previousVariants);
+            System.Array.Clear(currentBlocks, 0, currentBlocks.Length);
         }
         var bounds = new BoundsInt(offsetX, 1 - mapHeight, 0, mapWidth, mapHeight, 1);
+        isGenerated = false;
+        oreOverlay.ClearAllTiles();
+        tilemap.ClearAllTiles();
         tilemap.SetTilesBlock(bounds, terrainTiles);
         oreOverlay.SetTilesBlock(bounds, oreTiles);
         for (int y = 0; y < mapHeight; y++)
@@ -159,7 +324,7 @@ public class MapGenerator : MonoBehaviour
             {
                 if (!oreTiles[(mapHeight - 1 - y) * mapWidth + x]) continue;
                 var cell = new Vector3Int(x + offsetX, -y, 0);
-                int turns = (int)(OreVeins.Hash(seed, x, y, 0x9abcu) % 4);
+                int turns = (int)(OreVeins.Hash(usedSeed, x, y, 0x9abcu) % 4);
                 oreOverlay.SetTileFlags(cell, TileFlags.None);
                 var ore = (OreTile)oreTiles[(mapHeight - 1 - y) * mapWidth + x];
                 oreOverlay.SetTransformMatrix(cell, Matrix4x4.Rotate(Quaternion.Euler(0, 0, turns * 90)) * ore.transform);
@@ -167,10 +332,11 @@ public class MapGenerator : MonoBehaviour
 
         tilemap.CompressBounds();
         oreOverlay.CompressBounds();
-        generatedSeed = seed;
+        generatedSeed = usedSeed;
         generatedWidth = mapWidth;
         generatedHeight = mapHeight;
         isGenerated = true;
+        SyncGrassFromTerrain();
         GetComponent<DirtSurfaceAppearance>()?.Apply();
 
 #if UNITY_EDITOR
@@ -184,6 +350,8 @@ public class MapGenerator : MonoBehaviour
     {
         generatedSeed = usedSeed; generatedWidth = width; generatedHeight = height;
         isGenerated = true;
+        UpdateGrassOffset();
+        SyncGrassFromTerrain();
         GetComponent<DirtSurfaceAppearance>()?.Apply();
 
         Generated?.Invoke();

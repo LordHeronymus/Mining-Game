@@ -14,7 +14,8 @@ public enum BlockType
     DiamondOre = 8,
     StoneLayer2 = 9,
     StoneLayer3 = 10,
-    Dirt = 11
+    Dirt = 11,
+    StoneLayer4 = 12
 }
 
 [CreateAssetMenu(fileName = "New BlockType", menuName = "Blocks/BlockType", order = 0)]
@@ -32,7 +33,8 @@ public class Block : ScriptableObject
     public int points = 0;
     public bool isSolid = true;         
 
-    public bool IsStone => id == BlockType.Stone || id == BlockType.StoneLayer2 || id == BlockType.StoneLayer3;
+    public bool IsStone => id == BlockType.Stone || id == BlockType.StoneLayer2 ||
+        id == BlockType.StoneLayer3 || id == BlockType.StoneLayer4;
 
     [Header("Variants")]
     [Tooltip("Alle möglichen Tiles, aus denen zufällig gewählt wird.")]

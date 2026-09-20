@@ -33,7 +33,7 @@ public static class ParallaxChecks
         Assert(!Application.isPlaying, "Run these checks outside Play Mode.");
         var scene = EditorSceneManager.NewPreviewScene();
         Texture2D texture = null;
-        Sprite a = null, b = null;
+        Sprite a = null, b = null, underground = null;
         Material material = null;
         try
         {
@@ -222,13 +222,54 @@ public static class ParallaxChecks
             }
             layer.horizontalCount = 0;
             CheckCoverage(layer, camera);
-            return "PASS: coverage, segment seams/pivots, negative coordinates, teleports, camera/background zoom, global Y offset, pooling, no drift, X/Y factors, scaled offsets, depth fade, invalid input, disable/re-enable.";
+
+            underground = Sprite.Create(texture, new Rect(0, 0, 96, 32),
+                new Vector2(0.5f, 0.5f), 16f, 0, SpriteMeshType.FullRect);
+            layer.undergroundTile = underground;
+            layer.horizontalCount = 1;
+            layer.horizontalParallax = 1f;
+            layer.verticalParallax = 1f;
+            layer.verticalOffset = 0f;
+            layer.opacity = 1f;
+            controller.zoom = 1f;
+            controller.opacity = 1f;
+            controller.fadeWithDepth = false;
+            camera.transform.position = new Vector3(0f, -10f, -10f);
+            layer.Refresh();
+            var surface = Visible(layer).Where(r => r.sprite != underground).ToArray();
+            var earth = Visible(layer).Where(r => r.sprite == underground).ToArray();
+            Assert(earth.Length > 0, "Underground tiles should cover the camera beneath the surface.");
+            float seamY = surface.Min(r => r.bounds.min.y);
+            Assert(Mathf.Abs(earth.Max(r => r.bounds.max.y) - seamY) < 0.001f,
+                "Underground must meet the surface's bottom edge exactly.");
+            var firstRow = earth.Where(r => Mathf.Abs(r.bounds.max.y - seamY) < 0.001f)
+                .OrderBy(r => r.bounds.min.x).ToArray();
+            Assert(firstRow.First().bounds.min.x <= camera.transform.position.x - camera.orthographicSize * camera.aspect &&
+                firstRow.Last().bounds.max.x >= camera.transform.position.x + camera.orthographicSize * camera.aspect,
+                "Underground must repeat across the viewport.");
+            for (int i = 1; i < firstRow.Length; i++)
+                Assert(Mathf.Abs(firstRow[i - 1].bounds.max.x - firstRow[i].bounds.min.x) < 0.001f,
+                    "Underground horizontal tiles must meet without gaps.");
+            camera.transform.position = new Vector3(0f, -100f, -10f);
+            layer.Refresh();
+            earth = Visible(layer).Where(r => r.sprite == underground).ToArray();
+            Assert(earth.Length > 0 && earth.Min(r => r.bounds.min.y) <= -110f &&
+                earth.Max(r => r.bounds.max.y) >= -90f,
+                "Underground must repeat vertically at depth.");
+            controller.fadeWithDepth = true;
+            controller.fadeStartY = 0f;
+            controller.fadeEndY = -10f;
+            layer.Refresh();
+            Assert(Visible(layer).All(r => r.sprite == underground),
+                "Surface fade must not hide the underground tiles.");
+            return "PASS: coverage, segment seams, underground X/Y repetition and seam, camera/background zoom, parallax, depth fade, pooling and lifecycle.";
         }
         finally
         {
             EditorSceneManager.ClosePreviewScene(scene);
             if (a) UnityEngine.Object.DestroyImmediate(a);
             if (b) UnityEngine.Object.DestroyImmediate(b);
+            if (underground) UnityEngine.Object.DestroyImmediate(underground);
             if (texture) UnityEngine.Object.DestroyImmediate(texture);
             if (material) UnityEngine.Object.DestroyImmediate(material);
         }

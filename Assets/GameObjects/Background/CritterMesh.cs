@@ -14,9 +14,11 @@ public sealed class CritterMesh
     Vector2 origin;
     float size = 1, facing = 1;
     Color tint = Color.white;
+    readonly bool smoothCurves;
 
-    public CritterMesh(Transform owner, string name, Material material, int order)
+    public CritterMesh(Transform owner, string name, Material material, int order, bool smoothCurves = false)
     {
+        this.smoothCurves = smoothCurves;
         var child = new GameObject(name) { hideFlags = HideFlags.DontSave };
         child.layer = owner.gameObject.layer;
         child.transform.SetParent(owner, false);
@@ -41,8 +43,9 @@ public sealed class CritterMesh
         colors.Add(color * tint); uvs.Add(uv);
     }
 
-    public void Ellipse(float x, float y, float rx, float ry, Color color, float angle = 0, int segments = 16)
+    public void Ellipse(float x, float y, float rx, float ry, Color color, float angle = 0, int segments = 0)
     {
+        if (segments <= 0) segments = smoothCurves ? 32 : 16;
         int start = vertices.Count;
         float cos = Mathf.Cos(angle * Mathf.Deg2Rad), sin = Mathf.Sin(angle * Mathf.Deg2Rad);
         Vertex(x, y, color, Vector2.zero);
@@ -54,11 +57,29 @@ public sealed class CritterMesh
         }
     }
 
+    public void ShadedEllipse(float x, float y, float rx, float ry, Color shadow, Color baseColor, Color light, float angle = 0, int segments = 0)
+    {
+        if (segments <= 0) segments = smoothCurves ? 32 : 24;
+        int start = vertices.Count;
+        float rotation = angle * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(rotation), sin = Mathf.Sin(rotation);
+        Vertex(x, y, baseColor, Vector2.zero);
+        for (int i = 0; i < segments; i++)
+        {
+            float a = i * Mathf.PI * 2 / segments;
+            float px = Mathf.Cos(a), py = Mathf.Sin(a);
+            float lightAmount = Mathf.Clamp01(.5f + .5f * (px * -.55f + py * .83f));
+            Color edge = Color.Lerp(shadow, light, lightAmount);
+            Vertex(x + (px * rx) * cos - (py * ry) * sin, y + (px * rx) * sin + (py * ry) * cos, edge, Vector2.zero);
+            indices.Add(start); indices.Add(start + 1 + i); indices.Add(start + 1 + (i + 1) % segments);
+        }
+    }
+
     public void Stroke(float x, float y, float endX, float endY, float width, Color color)
     {
         float dx = endX - x, dy = endY - y;
         Ellipse((x + endX) * .5f, (y + endY) * .5f, Mathf.Sqrt(dx * dx + dy * dy) * .5f + width, width,
-            color, Mathf.Atan2(dy, dx) * Mathf.Rad2Deg, 10);
+            color, Mathf.Atan2(dy, dx) * Mathf.Rad2Deg, smoothCurves ? 20 : 10);
     }
 
     public void Quad(float radius, Color color)

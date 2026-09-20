@@ -18,8 +18,16 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     readonly List<string> gameplayItems = new List<string>();
     readonly List<string> testItems = new List<string>();
     TMP_InputField testMultiplier;
+    TMP_Dropdown giftItem;
+    TMP_InputField giftAmount;
+    Button giftButton;
+    ItemSO[] giftItems = System.Array.Empty<ItemSO>();
+    static int lastGiftItem = -1;
+    static string lastGiftAmount = "10";
     TextMeshProUGUI testStatus;
     readonly Dictionary<GameplayTestMode, Toggle> modeToggles = new Dictionary<GameplayTestMode, Toggle>();
+    readonly RectTransform[] dayNightButtons = new RectTransform[3];
+    readonly Image[] dayNightBackgrounds = new Image[3];
     public bool IsTestTab { get; private set; }
 
     void Awake()
@@ -83,6 +91,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         CreateTooltip();
         AttachTooltip("MakeDefaults", "Übernimmt beide Sektionen nach dem Play-Stopp dauerhaft in die Gameplay Settings.");
         CreateLightingInfo();
+        CreateItemGifting();
         foreach (var entry in items) if (entry.Value.parent == content) gameplayItems.Add(entry.Key);
         CreateTabs();
         window.sizeDelta += new Vector2(0,56);
@@ -98,6 +107,89 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         var trigger = rect.GetComponent<GameplayButtonTooltip>();
         if (trigger) Destroy(trigger);
         return rect;
+    }
+
+    void CreateItemGifting()
+    {
+        CloneItem("Section", "ItemsSection", content, "ITEMS");
+        var dropdownObject = TMP_DefaultControls.CreateDropdown(new TMP_DefaultControls.Resources());
+        dropdownObject.name = "GiftItem";
+        dropdownObject.transform.SetParent(content, false);
+        items["GiftItem"] = (RectTransform)dropdownObject.transform;
+        giftItem = dropdownObject.GetComponent<TMP_Dropdown>();
+        var font = items["Title"].GetComponent<TextMeshProUGUI>().font;
+        var arrow = dropdownObject.transform.Find("Arrow");
+        arrow.GetComponent<Image>().enabled = false;
+        var arrowLabel = MakeRect("Caption", arrow);
+        arrowLabel.anchorMin = Vector2.zero; arrowLabel.anchorMax = Vector2.one;
+        arrowLabel.offsetMin = arrowLabel.offsetMax = Vector2.zero;
+        var arrowText = arrowLabel.gameObject.AddComponent<TextMeshProUGUI>();
+        arrowText.text = "v";
+        arrowText.alignment = TextAlignmentOptions.Center;
+        arrowText.raycastTarget = false;
+        foreach (var label in dropdownObject.GetComponentsInChildren<TextMeshProUGUI>(true))
+        {
+            label.font = font;
+            label.fontSize = label == arrowText ? 18 : 22;
+            label.color = Color.white;
+        }
+        dropdownObject.GetComponent<Image>().color = new Color(.2f, .25f, .32f);
+        giftItem.template.GetComponent<Image>().color = new Color(.2f, .25f, .32f);
+        var optionToggle = giftItem.itemText.GetComponentInParent<Toggle>(true);
+        optionToggle.targetGraphic.color = new Color(.3f, .37f, .45f);
+        ((RectTransform)optionToggle.transform).sizeDelta = new Vector2(0, 36);
+        giftItem.ClearOptions();
+        var catalog = Resources.Load<ItemCatalog>("ItemCatalog");
+        if (catalog) giftItems = System.Array.FindAll(catalog.items, item => item);
+        var options = new List<TMP_Dropdown.OptionData>();
+        foreach (var item in giftItems)
+            options.Add(new TMP_Dropdown.OptionData(string.IsNullOrWhiteSpace(item.displayName) ? item.name : item.displayName));
+        giftItem.AddOptions(options);
+        int selected = System.Array.FindIndex(giftItems, item => (int)item.item == lastGiftItem);
+        giftItem.SetValueWithoutNotify(Mathf.Max(0, selected));
+        giftItem.onValueChanged.AddListener(i => lastGiftItem = (int)giftItems[i].item);
+        giftAmount = CloneItem("DiggingSpeed", "GiftAmount", content).GetComponent<TMP_InputField>();
+        giftAmount.onEndEdit = new TMP_InputField.SubmitEvent();
+        giftAmount.onValueChanged = new TMP_InputField.OnChangeEvent();
+        giftAmount.contentType = TMP_InputField.ContentType.IntegerNumber;
+        giftAmount.characterLimit = 10;
+        giftAmount.SetTextWithoutNotify(lastGiftAmount);
+        giftAmount.onValueChanged.AddListener(value => lastGiftAmount = value);
+        giftButton = CloneItem("Defaults", "GiftAdd", content, "Hinzufügen").GetComponent<Button>();
+        giftButton.onClick = new Button.ButtonClickedEvent();
+        giftButton.onClick.AddListener(GiveItem);
+        RefreshGifting();
+    }
+
+    bool CanGiveItem(out int amount)
+    {
+        amount = 0;
+        var inventory = InventoryManager.Instance;
+        return inventory && giftItems.Length > 0 && giftItem.value < giftItems.Length &&
+            int.TryParse(giftAmount.text, out amount) && amount > 0 &&
+            inventory.GetCount(giftItems[giftItem.value]) <= int.MaxValue - amount;
+    }
+
+    void GiveItem()
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!CanGiveItem(out int amount)) return;
+        var item = giftItems[giftItem.value];
+        lastGiftItem = (int)item.item;
+        InventoryManager.Instance.Add(item, amount);
+        string itemName = string.IsNullOrWhiteSpace(item.displayName) ? item.name : item.displayName;
+        Debug.Log($"[Debug] {amount} × {itemName} zum Inventar hinzugefügt.", this);
+        RefreshGifting();
+#endif
+    }
+
+    void RefreshGifting()
+    {
+        bool available = InventoryManager.Instance && giftItems.Length > 0;
+        giftItem.interactable = available;
+        giftAmount.interactable = available;
+        giftButton.interactable = CanGiveItem(out _);
+        if (!GameplayDebugPanel.IsOpen || IsTestTab) giftItem.Hide();
     }
 
     void CreateTabs()
@@ -123,7 +215,49 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             "Verhindert Energieverbrauch im Stand, beim Bewegen und beim Abbauen.");
         CreateModeToggle("FlyMode", "Fly Mode", GameplayTestMode.Fly,
             "Gravitation aus. W/S: aufwärts/abwärts. A/D: seitwärts. Ohne Taste schweben. Kollisionen bleiben aktiv.");
+        CreateDayNightSelector();
         testItems.AddRange(new[] {"TestSection","TestLabel","TestMultiplier","TestStatus"});
+    }
+
+    void CreateDayNightSelector()
+    {
+        var row = MakeRect("DayNightRow", content);
+        items[row.name] = row;
+        testItems.Add(row.name);
+        var caption = MakeRect("Label", row);
+        caption.anchorMin = Vector2.zero; caption.anchorMax = Vector2.up;
+        caption.offsetMin = Vector2.zero; caption.offsetMax = new Vector2(150, 0);
+        var label = caption.gameObject.AddComponent<TextMeshProUGUI>();
+        label.font = items["Title"].GetComponent<TextMeshProUGUI>().font;
+        label.fontSize = 26; label.text = "Tag / Nacht";
+        label.alignment = TextAlignmentOptions.MidlineLeft;
+        label.raycastTarget = false;
+        string[] names = { "Auto", "Tag", "Nacht" };
+        for (int i = 0; i < names.Length; i++)
+        {
+            var rect = MakeRect(names[i], row);
+            rect.anchorMin = rect.anchorMax = new Vector2(0, .5f);
+            rect.pivot = new Vector2(0, .5f);
+            dayNightButtons[i] = rect;
+            var background = rect.gameObject.AddComponent<Image>();
+            dayNightBackgrounds[i] = background;
+            var button = rect.gameObject.AddComponent<Button>();
+            button.targetGraphic = background;
+            button.transition = Selectable.Transition.None;
+            var textRect = MakeRect("Text", rect);
+            textRect.anchorMin = Vector2.zero; textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = textRect.offsetMax = Vector2.zero;
+            var text = textRect.gameObject.AddComponent<TextMeshProUGUI>();
+            text.font = label.font; text.fontSize = 22;
+            text.text = names[i]; text.alignment = TextAlignmentOptions.Center;
+            text.raycastTarget = false;
+            var selected = (GameplayDayNightMode)i;
+            button.onClick.AddListener(() => {
+                bool saved = GameplayTestSettings.SetDayNightMode(selected, out string error);
+                RefreshDayNight();
+                testStatus.text = saved ? "" : error;
+            });
+        }
     }
 
     void CreateModeToggle(string name, string label, GameplayTestMode mode, string hint)
@@ -173,6 +307,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
 
     void SetTab(bool tests)
     {
+        if (giftItem) giftItem.Hide();
         HideTooltip(); IsTestTab = tests;
         foreach (var name in gameplayItems) items[name].gameObject.SetActive(!tests);
         foreach (var name in testItems) items[name].gameObject.SetActive(tests);
@@ -190,6 +325,15 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         float factor = GameplayTestSettings.ConfiguredDiggingMultiplier;
         testMultiplier.SetTextWithoutNotify(factor.ToString("R", CultureInfo.InvariantCulture));
         testStatus.text = GameplayTestSettings.Warning ?? "";
+        RefreshDayNight();
+    }
+
+    void RefreshDayNight()
+    {
+        var selected = GameplayTestSettings.ConfiguredDayNightMode;
+        for (int i = 0; i < dayNightBackgrounds.Length; i++)
+            dayNightBackgrounds[i].color = (int)selected == i
+                ? new Color(.55f, .35f, .12f) : new Color(.2f, .25f, .32f);
     }
 
     public bool ApplyTestInput()
@@ -315,6 +459,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
 
     void LateUpdate()
     {
+        RefreshGifting();
         if (lastSize != window.sizeDelta || lastBounds != bounds.rect.size) { ClampWindow(); Layout(); }
     }
 
@@ -363,13 +508,24 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             Place("TestActive",x,60,inner,44);
             Place("TestLabel",x,122,inner-170,50); Place("TestMultiplier",x+inner-150,122,150,50);
             Place("GodMode",x,202,inner,44); Place("NoEnergy",x,256,inner,44); Place("FlyMode",x,310,inner,44);
-            Place("TestStatus",x,386,inner,80); content.sizeDelta = new Vector2(0,480);
+            Place("DayNightRow",x,370,inner,50);
+            float buttonWidth = (inner - 165 - 16) / 3f;
+            for (int i = 0; i < dayNightButtons.Length; i++)
+            {
+                dayNightButtons[i].anchoredPosition = new Vector2(165 + i * (buttonWidth + 8), 0);
+                dayNightButtons[i].sizeDelta = new Vector2(buttonWidth, 42);
+            }
+            Place("TestStatus",x,444,inner,80); content.sizeDelta = new Vector2(0,540);
             return;
         }
         Place("Section",x,12,col,36);
         Place("SpeedLabel",x,58,col-150,64); Place("DiggingSpeed",x+col-140,58,140,50);
         items["SpeedHint"].gameObject.SetActive(false);
-        float lx = columns ? x+col+32 : x, ly = columns ? 12 : 140;
+        Place("ItemsSection",x,140,col,36);
+        Place("GiftItem",x,190,col-270,50);
+        Place("GiftAmount",x+col-260,190,90,50);
+        Place("GiftAdd",x+col-160,190,160,50);
+        float lx = columns ? x+col+32 : x, ly = columns ? 12 : 280;
         Place("LightingSection",lx,ly,col-170,36);
         Place("LightingInfo",lx+78,ly+6,27,27);
         Place("LightingEnabled",lx+col-150,ly,150,42);

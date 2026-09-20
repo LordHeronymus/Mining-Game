@@ -15,5 +15,5 @@ MonoBehaviour:
   item: 2
   category: 0
   displayName: Gold
-  icon: {fileID: 21300000, guid: e2ac62fc10d07b345b474d4e29ac7a03, type: 3}
+  icon: {fileID: 21300000, guid: c4be618c57dc19349884303a5b17af8f, type: 3}
   worth: 100

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class SurfaceCritters : MonoBehaviour
+public sealed partial class SurfaceCritters : MonoBehaviour
 {
     public enum Species { Frog, Snail }
     [InspectorName("Tierart")] public Species species;
@@ -28,7 +28,7 @@ public sealed class SurfaceCritters : MonoBehaviour
     {
         public float x, home, from, to, phase, age, wait, travel, scale, shade, distant;
         public int direction, hops;
-        public bool jumping, returning, awaitingEntrance;
+        public bool jumping, returning, awaitingEntrance, landingSoundTriggered;
     }
     readonly List<Critter> animals = new List<Critter>();
     static readonly HashSet<SurfaceCritters> populations = new HashSet<SurfaceCritters>();
@@ -50,14 +50,14 @@ public sealed class SurfaceCritters : MonoBehaviour
         if (map) { subscribedMap = map; map.Generated += ResetPopulation; }
         ResetPopulation();
     }
-    void ResetPopulation() { animals.Clear(); nextSpawn = 0; initialPopulation = true; }
+    void ResetPopulation() { animals.Clear(); nextSpawn = 0; initialPopulation = true; StopCroaking(); }
     void Update() => Tick(Time.deltaTime);
 
     void Tick(float dt)
     {
         if (geometry == null) return;
         geometry.Clear();
-        if (!map || !map.IsGenerated) { animals.Clear(); geometry.Upload(); return; }
+        if (!map || !map.IsGenerated) { animals.Clear(); geometry.Upload(); StopCroaking(); return; }
         referenceRetry -= dt;
         if (referenceRetry <= 0)
         {
@@ -86,6 +86,7 @@ public sealed class SurfaceCritters : MonoBehaviour
             else nextSpawn = 1;
         }
         geometry.Upload();
+        UpdateCroaking(dt);
     }
 
     bool SurfaceInView(out float left, out float right)
@@ -112,7 +113,7 @@ public sealed class SurfaceCritters : MonoBehaviour
             bool crowded = false;
             foreach (var other in animals) if (Mathf.Abs(other.x - x) < 1.2f) { crowded = true; break; }
             if (crowded) continue;
-            animals.Add(new Critter { x = x, home = inside ? x : (left + right) * .5f, scale = scale,
+            animals.Add(new Critter { x = x, home = x, scale = scale,
                 direction = inside ? side : -side, wait = inside ? Random(.4f, 3) : .2f,
                 travel = Random(6, 12), phase = Random(0, 6.28f), shade = Random(.87f, 1.1f), awaitingEntrance = !inside });
             return true;
@@ -159,10 +160,16 @@ public sealed class SurfaceCritters : MonoBehaviour
             a.travel = a.returning ? Mathf.Max(0, a.travel - dt) : a.travel + dt;
             float progress = Mathf.Clamp01(a.travel / Mathf.Max(.1f, hopDuration));
             a.x = Mathf.Lerp(a.from, a.to, progress);
+            float landingX = a.returning ? a.from : a.to;
+            if (species == Species.Frog && HasGround(landingX, landingX, a.scale) && AudioManager.Instance)
+                AudioManager.Instance.UpdateGrassLanding(ref a.landingSoundTriggered,
+                    a.returning ? a.travel : Mathf.Max(0f, Mathf.Max(.1f, hopDuration) - a.travel),
+                    new Vector3(landingX, surfaceY, 0));
             if ((a.returning && progress <= 0) || progress >= 1)
             {
                 a.jumping = false; a.wait = --a.hops > 0 && !a.returning ? .16f : Range(restDuration);
                 if (a.returning) a.home = a.x;
+
             }
             return;
         }
@@ -188,7 +195,7 @@ public sealed class SurfaceCritters : MonoBehaviour
             float target = a.x + a.direction * Range(hopDistance);
             if (Mathf.Abs(target - a.home) > Mathf.Max(.5f, roamRadius) || !HasGround(a.x, target, a.scale))
             { a.direction *= -1; a.wait = .5f; a.hops = 0; return; }
-            a.from = a.x; a.to = target; a.travel = 0; a.jumping = true; a.returning = false;
+            a.from = a.x; a.to = target; a.travel = 0; a.jumping = true; a.returning = false; a.landingSoundTriggered = false;
         }
     }
 
@@ -285,6 +292,7 @@ public sealed class SurfaceCritters : MonoBehaviour
     float Range(Vector2 range) => Random(Mathf.Max(.1f, Mathf.Min(range.x, range.y)), Mathf.Max(.1f, Mathf.Max(range.x, range.y)));
     void OnDisable()
     {
+        StopCroaking();
         populations.Remove(this);
         if (subscribedMap) subscribedMap.Generated -= ResetPopulation;
         subscribedMap = null; animals.Clear(); geometry?.Dispose(); geometry = null;

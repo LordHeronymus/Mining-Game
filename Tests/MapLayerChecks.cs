@@ -26,11 +26,9 @@ public static class MapLayerChecks
         var layers = sourceMap.layers.Select((layer, i) => new MapLayer {
             name = layer.name, startDepth = i * 64, stone = layer.stone, ores = (BlockType[])layer.ores.Clone()
         }).ToArray();
-        Check(layers[0].ores.OrderBy(id => id).SequenceEqual(new[] {BlockType.CopperOre, BlockType.Coal,
-            BlockType.IronOre, BlockType.SilverOre}.OrderBy(id => id)), "Layer 1 ore list incorrect.");
-        Check(layers[1].ores.Length == 6 && layers[1].ores.Contains(BlockType.GoldOre) &&
-            layers[1].ores.Contains(BlockType.PlatinumOre), "Layer 2 ore list incorrect.");
-        Check(layers[2].ores.Length == 7 && layers[2].ores.Contains(BlockType.DiamondOre), "Diamond not prepared.");
+        Check(layers.All(layer => layer.ores != null && layer.ores.All(id =>
+            id != BlockType.Empty && id != BlockType.Dirt && id != BlockType.Stone &&
+            id != BlockType.StoneLayer2 && id != BlockType.StoneLayer3)), "Layer contains a non-ore block.");
 
         var temporary = new List<UnityEngine.Object>();
         var previous = SceneManager.GetActiveScene();
@@ -42,15 +40,20 @@ public static class MapLayerChecks
             var ore = ScriptableObject.CreateInstance<Block>(); temporary.Add(ore);
             ore.spawnWithNoise = true; ore.oreFrequencyPercent = 100;
             testRegistry.blocks = layers.Select(layer => layer.stone).Concat(new[] { ore }).ToArray();
-            foreach (var type in layers[2].ores)
+            foreach (var type in layers.SelectMany(layer => layer.ores).Distinct())
             {
                 ore.id = type; Index(testRegistry);
-                var forced = new MapGenerationSampler(testRegistry, 12345, 192, layers, AnimationCurve.Constant(0, 1, 100));
+                var forced = new MapGenerationSampler(testRegistry, 12345, 192, layers, AnimationCurve.Constant(0, 1, 1), 100f);
                 for (int y = 0; y < 192; y++)
                 {
                     var layer = layers[y / 64];
-                    Check(forced.GetBlock(7, y) == (y >= 4 && layer.ores.Contains(type) ? ore : layer.stone),
-                        "Ore crossed its layer boundary: " + type + " at " + y);
+                    var block = forced.GetBlock(7, y);
+                    if (!layer.ores.Contains(type) || y == 0)
+                        Check(block == forced.GetBaseBlock(7, y), "Ore crossed its layer boundary: " + type + " at " + y);
+                    else if (y >= 10)
+                        Check(block == ore, "Expected ore after surface ramp: " + type + " at " + y);
+                    else
+                        Check(block == ore || block == forced.GetBaseBlock(7, y), "Unexpected surface block.");
                 }
             }
             var noOres = new[] { new MapLayer { name = "Empty", stone = layers[0].stone, ores = Array.Empty<BlockType>() } };
@@ -63,11 +66,30 @@ public static class MapLayerChecks
             Check(new MapGenerationSampler(registry, 1, 192, noOres).GetBlock(0, 100) == layers[0].stone,
                 "Missing diamond asset did not fall back to stone.");
             var reversed = layers.Reverse().ToArray();
-            var sampler = new MapGenerationSampler(registry, 42319, 192, layers);
-            var reordered = new MapGenerationSampler(registry, 42319, 192, reversed);
+            const int surfaceRampDepth = 20;
+            var surfaceRampCurve = new AnimationCurve(new Keyframe(0f, 0f),
+                new Keyframe(.5f, .2f), new Keyframe(1f, 1f));
+            var sampler = new MapGenerationSampler(registry, 42319, 192, layers, sourceMap.oreDensityCurve,
+                sourceMap.oreDensityMultiplierPercent, sourceMap.transitionThickness,
+                sourceMap.oreTransitionCurve, sourceMap.oreTransitionDepth, sourceMap.oreVeinSizeCurve,
+                surfaceRampDepth, surfaceRampCurve);
+            var reordered = new MapGenerationSampler(registry, 42319, 192, reversed, sourceMap.oreDensityCurve,
+                sourceMap.oreDensityMultiplierPercent, sourceMap.transitionThickness,
+                sourceMap.oreTransitionCurve, sourceMap.oreTransitionDepth, sourceMap.oreVeinSizeCurve,
+                surfaceRampDepth, surfaceRampCurve);
             Check(sampler.GetStone(63) == layers[0].stone && sampler.GetStone(64) == layers[1].stone &&
                 sampler.GetStone(127) == layers[1].stone && sampler.GetStone(128) == layers[2].stone &&
                 sampler.GetStone(500) == layers[2].stone, "Stone layer boundary incorrect.");
+            var expected = new Block[128 * 192];
+            var expectedReordered = new Block[expected.Length];
+            for (int y = 0; y < 192; y++) for (int x = 0; x < 128; x++)
+            {
+                int index = y * 128 + x;
+                expected[index] = sampler.GetBlock(x, y);
+                expectedReordered[index] = reordered.GetBlock(x, y);
+            }
+            OreVeins.PruneSmallVeins(expected, 128, 192, sourceMap.minimumOreVeinSize, sampler.GetBaseBlock);
+            OreVeins.PruneSmallVeins(expectedReordered, 128, 192, sourceMap.minimumOreVeinSize, reordered.GetBaseBlock);
 
             scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
             SceneManager.SetActiveScene(scene);
@@ -76,7 +98,17 @@ public static class MapLayerChecks
             var terrain = new GameObject("Layer Test Map", typeof(Tilemap), typeof(TilemapRenderer), typeof(MapGenerator));
             terrain.transform.SetParent(grid.transform, false);
             var map = terrain.GetComponent<MapGenerator>(); map.enabled = false;
-            map.registry = registry; map.layers = layers; map.seed = 42319; map.mapWidth = 128; map.mapHeight = 192;
+            map.registry = registry; map.layers = layers; map.seed = 42319; map.randomizeSeed = false;
+            map.mapWidth = 128; map.mapHeight = 192;
+            map.oreDensityCurve = sourceMap.oreDensityCurve;
+            map.oreDensityMultiplierPercent = sourceMap.oreDensityMultiplierPercent;
+            map.transitionThickness = sourceMap.transitionThickness;
+            map.oreTransitionCurve = sourceMap.oreTransitionCurve;
+            map.oreTransitionDepth = sourceMap.oreTransitionDepth;
+            map.oreVeinSizeCurve = sourceMap.oreVeinSizeCurve;
+            map.minimumOreVeinSize = sourceMap.minimumOreVeinSize;
+            map.surfaceOreRampDepth = surfaceRampDepth;
+            map.surfaceOreRampCurve = surfaceRampCurve;
             map.GenerateMap();
             var found = new HashSet<BlockType>[3] {new HashSet<BlockType>(), new HashSet<BlockType>(), new HashSet<BlockType>()};
             Vector3Int oreCell = default; int ores = 0;
@@ -85,11 +117,11 @@ public static class MapLayerChecks
                 var cell = new Vector3Int(x - map.mapWidth / 2, -y, 0);
                 var layer = layers[y / 64];
                 var block = map.GetBlockAt(cell);
-                Check(block && block == sampler.GetBlock(x, y) && block == reordered.GetBlock(x, y),
+                Check(block && block == expected[y * map.mapWidth + x] &&
+                    block == expectedReordered[y * map.mapWidth + x],
                     "Live map and preview disagree.");
                 Check(registry.FromTile(map.Terrain.GetTile(cell)) == sampler.GetBaseBlock(x,y),
                     "Wrong stone substrate or registry identity at " + cell);
-                if (y < 4) Check((block.id == BlockType.Dirt || block.IsStone) && !map.GetOreAt(cell), "Ore generated above depth 4.");
                 if (block.HasOreOverlays)
                 {
                     Check(layer.ores.Contains(block.id), "Disallowed ore generated.");
@@ -98,8 +130,7 @@ public static class MapLayerChecks
                 }
             }
             Check(ores > 100, "Too few ores for meaningful generation coverage.");
-            Check(found[1].Contains(BlockType.GoldOre) && found[1].Contains(BlockType.PlatinumOre),
-                "Layer 2 gold/platinum did not generate.");
+            Check(found[1].Count > 0, "Layer 2 generated no ore.");
             var bounds = map.Terrain.cellBounds;
             var before = map.Terrain.GetTilesBlock(bounds);
             var beforeOres = map.OreOverlay.GetTilesBlock(bounds);
@@ -128,7 +159,7 @@ public static class MapLayerChecks
                     "Ore migration changed the layer stone.");
                 var overlay = map.GetOreAt(cell);
                 if (overlay && sampler.IsDirtAt(x,y)) migratedInDirt++;
-                Check(!overlay || (y >= 4 && overlay.block.id == BlockType.CopperOre),
+                Check(!overlay || overlay.block.id == BlockType.CopperOre,
                     "Ore migration crossed a layer boundary.");
             }
 

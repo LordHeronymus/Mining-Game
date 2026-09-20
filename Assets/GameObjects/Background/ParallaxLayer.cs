@@ -35,6 +35,11 @@ public sealed class ParallaxLayer : MonoBehaviour
     [Tooltip("Extend the bottom pixel row down to the camera edge. Use for the sky to avoid a visible rectangular lower edge behind translucent scenery.")]
     public bool extendBottomToCamera;
 
+    [Header("Untergrund")]
+    public Sprite undergroundTile;
+    [Min(0)] public int undergroundHorizontalCount;
+    [Min(0)] public int undergroundVerticalCount;
+
     readonly List<SpriteRenderer> renderers = new List<SpriteRenderer>();
     readonly Dictionary<Sprite, Sprite> bottomEdges = new Dictionary<Sprite, Sprite>();
     SurfaceBackgroundController controller;
@@ -92,13 +97,14 @@ public sealed class ParallaxLayer : MonoBehaviour
         // Viewport corners also cover a rotated orthographic camera and aspect/zoom changes.
         float distance = Vector3.Dot(anchor - camera.transform.position, camera.transform.forward);
         float left = float.PositiveInfinity, right = float.NegativeInfinity;
-        float viewBottom = float.PositiveInfinity;
+        float viewBottom = float.PositiveInfinity, viewTop = float.NegativeInfinity;
         for (int corner = 0; corner < 4; corner++)
         {
             Vector3 cornerPosition = camera.ViewportToWorldPoint(new Vector3(corner % 2, corner / 2, distance));
             left = Mathf.Min(left, cornerPosition.x);
             right = Mathf.Max(right, cornerPosition.x);
             viewBottom = Mathf.Min(viewBottom, cornerPosition.y);
+            viewTop = Mathf.Max(viewTop, cornerPosition.y);
         }
 
         // Work relative to the camera, so negative coordinates and teleports need no catch-up loop.
@@ -109,10 +115,18 @@ public sealed class ParallaxLayer : MonoBehaviour
         float worldHeight = imageHeight * scale.y;
         Color color = tint * LightingTint;
         color.a *= Mathf.Clamp01(opacity) * controller.GetOpacity(camera);
-        if (color.a <= 0f) { HideUnused(0); return; }
+        Color undergroundColor = tint * LightingTint;
+        undergroundColor.a *= Mathf.Clamp01(opacity) *
+            (controller.isActiveAndEnabled ? Mathf.Clamp01(controller.opacity) : 0f);
+        if (color.a <= 0f && (!undergroundTile || undergroundColor.a <= 0f))
+        {
+            HideUnused(0);
+            return;
+        }
 
         EnsureRoot();
         int used = 0;
+        if (color.a > 0f)
         for (int cycle = 0; cycle < cycles; cycle++)
         {
             double x = cycleStart + (first + cycle) * cycleWidth;
@@ -156,7 +170,56 @@ public sealed class ParallaxLayer : MonoBehaviour
                 x += width;
             }
         }
+        if (undergroundTile && undergroundColor.a > 0f)
+            DrawUnderground(anchor, cycleWidth, worldHeight,
+                scale, left, right, viewTop, viewBottom, undergroundColor, ref used);
         HideUnused(used);
+    }
+
+    void DrawUnderground(Vector3 anchor, float surfaceWidth, float surfaceHeight,
+        Vector3 scale, float left, float right, float viewTop, float viewBottom,
+        Color color, ref int used)
+    {
+        Sprite sprite = undergroundTile;
+        if (sprite.rect.width <= 0f || sprite.rect.height <= 0f) return;
+
+        float tileWidth = surfaceWidth;
+        float tileHeight = tileWidth * sprite.rect.height / sprite.rect.width * scale.y / scale.x;
+        if (tileHeight <= 0f || float.IsNaN(tileHeight) || float.IsInfinity(tileHeight)) return;
+        float top = anchor.y - surfaceHeight * 0.5f;
+        int firstRow = Mathf.Max(0, Mathf.FloorToInt((top - viewTop) / tileHeight));
+        int lastRow = Mathf.Max(0, Mathf.CeilToInt((top - viewBottom) / tileHeight));
+        if (undergroundVerticalCount > 0)
+            lastRow = Mathf.Min(lastRow, undergroundVerticalCount);
+
+        int horizontalCopies = Mathf.Max(0, undergroundHorizontalCount);
+        double start = anchor.x - tileWidth * 0.5;
+        double firstCycle = horizontalCopies == 0
+            ? System.Math.Floor((left - start) / tileWidth) - 1.0
+            : -(horizontalCopies - 1) * 0.5;
+        int cycles = horizontalCopies == 0
+            ? Mathf.CeilToInt((right - left) / tileWidth) + 3
+            : horizontalCopies;
+        float xScale = tileWidth * sprite.pixelsPerUnit / sprite.rect.width / scale.x;
+        float yScale = tileHeight * sprite.pixelsPerUnit / sprite.rect.height / scale.y;
+        float pivotX = sprite.pivot.x / sprite.rect.width;
+        float pivotY = sprite.pivot.y / sprite.rect.height;
+        for (int row = firstRow; row < lastRow; row++)
+        for (int cycle = 0; cycle < cycles; cycle++)
+        {
+            SpriteRenderer renderer = GetRenderer(used++);
+            renderer.sprite = sprite;
+            renderer.sharedMaterial = material;
+            renderer.color = color;
+            renderer.sortingLayerName = sortingLayerName;
+            renderer.sortingOrder = sortingOrder;
+            renderer.gameObject.layer = gameObject.layer;
+            renderer.transform.position = new Vector3(
+                (float)(start + (firstCycle + cycle) * tileWidth + tileWidth * pivotX),
+                top - row * tileHeight - tileHeight * (1f - pivotY), anchor.z);
+            renderer.transform.localScale = new Vector3(xScale, yScale, 1f);
+            renderer.enabled = true;
+        }
     }
 
     Sprite GetBottomEdge(Sprite source)

@@ -10,7 +10,7 @@ public static class SurfaceBackgroundSetup
     const string Folder = "Assets/AB Sprites/Parralax BG";
     static readonly string[] Files = {
         "Parallax_01_Himmel_6144x2046.png", "Parallax_02_Berge_6144x2046.png",
-        "Berge_Ebene_02_Vordergrund_6144x2046.png", "Parallax_04_Huegel_Baeume_V1_6144x2046.png"
+        "Berge_Ebene_02_Vordergrund_6144x2046.png", "Parallax_04_Huegel_Erde_Seamless_6144x4096.png"
     };
 
     [MenuItem("Mining Game/Background/Create Surface Background")]
@@ -28,6 +28,7 @@ public static class SurfaceBackgroundSetup
                 throw new InvalidOperationException("Missing panorama: " + file);
 
         var sprites = Files.Select(file => ImportPanorama(Folder + "/" + file)).ToArray();
+        var underground = ImportPanorama(Folder + "/Untergrund_01_Erdschicht_Seamless_XY_6144x4096.png", true);
 
         EnsureSortingLayer();
         string materialPath = Folder + "/ParallaxUnlit.mat";
@@ -67,6 +68,7 @@ public static class SurfaceBackgroundSetup
             layer.sortingOrder = orders[i];
             layer.material = material;
             layer.extendBottomToCamera = i == 0;
+            if (i == 3) layer.undergroundTile = underground;
             layer.Refresh();
         }
         controller.CollectLayers();
@@ -75,7 +77,7 @@ public static class SurfaceBackgroundSetup
         Selection.activeGameObject = root;
     }
 
-    public static Sprite ImportPanorama(string path)
+    public static Sprite ImportPanorama(string path, bool repeatVertically = false)
     {
         var importer = (TextureImporter)AssetImporter.GetAtPath(path);
         importer.textureType = TextureImporterType.Sprite;
@@ -88,7 +90,7 @@ public static class SurfaceBackgroundSetup
         importer.alphaIsTransparency = true;
         importer.filterMode = FilterMode.Bilinear;
         importer.wrapModeU = TextureWrapMode.Repeat;
-        importer.wrapModeV = TextureWrapMode.Clamp;
+        importer.wrapModeV = repeatVertically ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
         var settings = new TextureImporterSettings();
         importer.ReadTextureSettings(settings);
         settings.spriteMeshType = SpriteMeshType.FullRect;

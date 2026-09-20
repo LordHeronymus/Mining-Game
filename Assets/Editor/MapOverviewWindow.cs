@@ -22,6 +22,7 @@ public sealed class MapOverviewWindow : EditorWindow
     Texture2D texture;
     Color32[] pixels;
     BlockType[] types;
+    Block[] previewBlocks;
     MapGenerationSampler sampler;
     readonly HashSet<int> changedCells = new HashSet<int>();
     int width;
@@ -105,9 +106,9 @@ public sealed class MapOverviewWindow : EditorWindow
             return;
         }
 
-        // The runtime tilemap is populated in Start(). Until then, show a preview.
+        // Show the placed map when available; otherwise use a calculated preview.
         bool shouldUseLive = HasLiveMap();
-        int wantedSeed = shouldUseLive ? map.ActiveSeed : (map.seed == 0 ? previewSeed : map.seed);
+        int wantedSeed = shouldUseLive ? map.ActiveSeed : (map.randomizeSeed ? previewSeed : map.seed);
         if (shouldUseLive != live || wantedSeed != sourceSeed || width != (shouldUseLive ? map.GeneratedWidth : map.mapWidth) || height != (shouldUseLive ? map.GeneratedHeight : map.mapHeight))
             pendingBuild = true;
 
@@ -154,9 +155,13 @@ public sealed class MapOverviewWindow : EditorWindow
         nextRow = 0;
         pixels = new Color32[width * height];
         types = new BlockType[width * height];
+        previewBlocks = useLive ? null : new Block[width * height];
         try
         {
-            sampler = live ? null : new MapGenerationSampler(map.registry, seed, height, map.layers, map.oreDensityByDepth);
+            sampler = live ? null : new MapGenerationSampler(map.registry, seed, height, map.layers,
+                map.oreDensityCurve, map.oreDensityMultiplierPercent, map.transitionThickness,
+                map.oreTransitionCurve, map.oreTransitionDepth, map.oreVeinSizeCurve,
+                map.surfaceOreRampDepth, map.surfaceOreRampCurve);
             building = true;
         }
         catch (Exception ex)
@@ -176,11 +181,19 @@ public sealed class MapOverviewWindow : EditorWindow
             for (int x = 0; x < width; x++)
             {
                 Block block = live ? map.GetBlockAt(new Vector3Int(x - width / 2, -y, 0)) : sampler.GetBlock(x, y);
+                if (!live) previewBlocks[y * width + x] = block;
                 SetCell(x, y, block);
             }
         }
         nextRow = end;
         if (nextRow < height) { Repaint(); return; }
+
+        if (!live && map.minimumOreVeinSize > 1)
+        {
+            OreVeins.PruneSmallVeins(previewBlocks, width, height, map.minimumOreVeinSize, sampler.GetBaseBlock);
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++) SetCell(x, y, previewBlocks[y * width + x]);
+        }
 
         texture = new Texture2D(width, height, TextureFormat.RGBA32, false, true)
         {
@@ -192,6 +205,7 @@ public sealed class MapOverviewWindow : EditorWindow
         texture.SetPixels32(pixels);
         texture.Apply(false, false);
         sampler = null;
+        previewBlocks = null;
         building = false;
         Repaint();
     }
@@ -211,9 +225,10 @@ public sealed class MapOverviewWindow : EditorWindow
         switch (type)
         {
             case BlockType.Dirt: return new Color32(109, 72, 42, 255);
-            case BlockType.Stone: return new Color32(80, 86, 96, 255);
-            case BlockType.StoneLayer2: return new Color32(67, 72, 82, 255);
-            case BlockType.StoneLayer3: return new Color32(54, 58, 68, 255);
+            case BlockType.Stone: return new Color32(105, 78, 60, 255);
+            case BlockType.StoneLayer2: return new Color32(80, 86, 96, 255);
+            case BlockType.StoneLayer3: return new Color32(67, 72, 82, 255);
+            case BlockType.StoneLayer4: return new Color32(54, 58, 68, 255);
             case BlockType.DiamondOre: return new Color32(124, 231, 241, 255);
             case BlockType.IronOre: return new Color32(168, 179, 195, 255);
             case BlockType.CopperOre: return new Color32(211, 111, 69, 255);
@@ -261,6 +276,7 @@ public sealed class MapOverviewWindow : EditorWindow
         texture = null;
         pixels = null;
         types = null;
+        previewBlocks = null;
         sampler = null;
     }
 
@@ -282,12 +298,11 @@ public sealed class MapOverviewWindow : EditorWindow
 
         string mode = live ? "Live-Map" : "Vorschau";
         EditorGUILayout.LabelField(mode + "  •  " + width + " × " + height + " Blöcke  •  Seed " + sourceSeed);
-        if (!live && map.seed == 0)
+        if (!live && map.randomizeSeed)
         {
             EditorGUI.BeginChangeCheck();
             previewSeed = EditorGUILayout.IntField("Vorschau-Seed", previewSeed);
             if (EditorGUI.EndChangeCheck()) RequestBuild();
-            EditorGUILayout.HelpBox("Seed 0 erzeugt beim Spielstart eine zufällige Map. Die Vorschau verwendet den obigen Seed.", MessageType.None);
         }
 
         if (error != null) { EditorGUILayout.HelpBox(error, MessageType.Error); return; }
@@ -437,8 +452,8 @@ public sealed class MapOverviewWindow : EditorWindow
 
     void DrawLegend(Rect area)
     {
-        string[] names = { "Erde", "Stein 1", "Stein 2", "Stein 3", "Kohle", "Eisen", "Kupfer", "Silber", "Gold", "Platin", "Diamant", "Leer", "Spieler" };
-        BlockType[] ids = { BlockType.Dirt, BlockType.Stone, BlockType.StoneLayer2, BlockType.StoneLayer3,
+        string[] names = { "Erde", "Übergang", "Stein", "Tiefstein 1", "Tiefstein 2", "Kohle", "Eisen", "Kupfer", "Silber", "Gold", "Platin", "Diamant", "Leer", "Spieler" };
+        BlockType[] ids = { BlockType.Dirt, BlockType.Stone, BlockType.StoneLayer2, BlockType.StoneLayer3, BlockType.StoneLayer4,
             BlockType.Coal, BlockType.IronOre, BlockType.CopperOre,
             BlockType.SilverOre, BlockType.GoldOre, BlockType.PlatinumOre, BlockType.DiamondOre, BlockType.Empty };
         float x = area.x;

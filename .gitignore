@@ -3,6 +3,9 @@
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
 #
 .utmp/
+# Automatic scene backups stay local; the working scene is versioned separately.
+/Assets/_SceneBackups/
+/Assets/_SceneBackups.meta
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/

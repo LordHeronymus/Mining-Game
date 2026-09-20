@@ -13,20 +13,18 @@ MonoBehaviour:
   m_Name: Stone
   m_EditorClassIdentifier: 
   id: 0
-  displayName: Stone
+  displayName: "\xDCbergangsgestein"
   itemDrop: {fileID: 0}
-  digSound: 0
-  breakSound: 1
+  digSound: 14
+  breakSound: 12
   hardness: 1
   points: 100
   isSolid: 1
   variants:
-  - {fileID: 11400000, guid: 2f826492f99e4924f965da054d34e34d, type: 2}
-  - {fileID: 11400000, guid: 2a4ab652221e0194b9417f67842eaec2, type: 2}
-  - {fileID: 11400000, guid: 387798fb017e19a4aace671726bca1de, type: 2}
-  - {fileID: 11400000, guid: feaa8dc61fa03634e8f8599f19af1df4, type: 2}
-  - {fileID: 11400000, guid: c410ffa6e6b136943b94b39ed8e7f1b8, type: 2}
-  - {fileID: 11400000, guid: ffb1e718b9c538c4abc5f2490632ea8c, type: 2}
+  - {fileID: 11400000, guid: 6b2a6479f8abaac488ff0ba89728bcab, type: 2}
+  - {fileID: 11400000, guid: 29b7a20257e253043bb9ea8026ce7af2, type: 2}
+  - {fileID: 11400000, guid: 92f473566963dd24fb6ac7ed740c6126, type: 2}
+  - {fileID: 11400000, guid: ac3837ebebf101343be4e0972ef0286e, type: 2}
   smallOre: []
   mediumOre: []
   richOre: []

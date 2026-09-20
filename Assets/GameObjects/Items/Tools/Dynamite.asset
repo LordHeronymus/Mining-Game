@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   item: 6
   category: 1
-  displayName: Dynamite
-  icon: {fileID: -5847470760598031030, guid: 0ee88e76be7af7f49b75c7982c9e8592, type: 3}
+  displayName: Dynamit
+  icon: {fileID: 1558289934, guid: 0b8f169855d95784ca489c7c7e09495a, type: 3}
   worth: 500

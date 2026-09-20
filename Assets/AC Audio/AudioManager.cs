@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum AmbienceType { Surface, Rain, Thunderstorm, Underground, Cave, Birds, Frogs }
+
 public enum SoundType
 {
     DigSoft = 2,
@@ -14,6 +16,10 @@ public enum SoundType
     DoorOpen = 10,
     UI_Alert = 7,
     UI_Click = 8,
+    DigDirt = 11,
+    DigTransitionStone = 12,
+    DigStone = 13,
+    DirtHit = 14,
 }
 
 [System.Serializable]
@@ -21,6 +27,7 @@ public class Sound
 {
     public SoundType type;
     public AudioClip clip;
+    public AudioClip[] variants;
     [Range(0f, 1f)] public float volume = 1f;
     [Range(0f, 3f)] public float pitch = 1f;
 }
@@ -32,11 +39,72 @@ public class AudioManager : MonoBehaviour
     [SerializeField] int initialPoolSize = 8;
     [SerializeField] int maxPoolSize = 32;
     [SerializeField] float dispersionAmount = 0.05f;
+    [SerializeField, Range(0f, 1f)] float ambienceVolume = 1f;
+    [SerializeField, Range(0f, 1f)] float surfaceVolume = 1f;
+    [SerializeField, Range(0f, 1f)] float rainVolume = 1f;
+    [SerializeField, Range(0f, 1f)] float thunderstormVolume = 1f;
+    [SerializeField, Range(0f, 1f)] float undergroundVolume = 1f;
+    [SerializeField, Range(0f, 1f)] float caveVolume = 1f;
+
+    [SerializeField, Range(-1f, 1f)] float grassLandingOffset = -.08f;
+
+    public static float GetAmbienceVolume(AmbienceType type)
+    {
+        if (!Instance) return 1f;
+        float category = type switch
+        {
+            AmbienceType.Surface => Instance.surfaceVolume,
+            AmbienceType.Rain => Instance.rainVolume,
+            AmbienceType.Thunderstorm => Instance.thunderstormVolume,
+            AmbienceType.Underground => Instance.undergroundVolume,
+            AmbienceType.Cave => Instance.caveVolume,
+            _ => 1f
+        };
+        return AmbienceVolume * Mathf.Clamp01(category);
+    }
+
+    public static float AmbienceVolume => Instance ? Mathf.Clamp01(Instance.ambienceVolume) : 1f;
 
     [HideInInspector] public static AudioManager Instance;
 
     List<AudioSource> pool = new();
+    readonly Dictionary<AudioSource, (float volume, AmbienceType type)> ambienceSources = new();
     Dictionary<SoundType, Sound> soundLookup = new Dictionary<SoundType, Sound>();
+    AudioClip[] frogCroaks;
+    AudioClip grassLanding;
+    readonly System.Random ambienceRandom = new System.Random();
+
+    public AudioClip GetRandomFrogCroak()
+    {
+        if (frogCroaks == null) frogCroaks = Resources.LoadAll<AudioClip>("FrogCroaks");
+        return frogCroaks.Length > 0 ? frogCroaks[ambienceRandom.Next(frogCroaks.Length)] : null;
+    }
+
+    public void UpdateGrassLanding(ref bool triggered, float secondsToLanding, Vector3 position)
+    {
+        if (triggered || secondsToLanding > Mathf.Max(0f, -grassLandingOffset)) return;
+        triggered = true;
+        float delay = Mathf.Max(0f, secondsToLanding + grassLandingOffset);
+        if (delay > 0f) StartCoroutine(DelayedGrassLanding(position, delay));
+        else PlayGrassLanding(position);
+    }
+
+    System.Collections.IEnumerator DelayedGrassLanding(Vector3 position, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        PlayGrassLanding(position);
+    }
+
+    public void PlayGrassLanding(Vector3 position)
+    {
+        if (!grassLanding) grassLanding = Resources.Load<AudioClip>("Audio/WalkOnGrass");
+        var camera = Camera.main;
+        if (!grassLanding || !camera) return;
+        float distance = Vector2.Distance(position, camera.transform.position);
+        float volume = .35f * Mathf.Clamp01(1f - distance / 20f);
+        float pan = Mathf.Clamp((camera.WorldToViewportPoint(position).x - .5f) * 1.4f, -.7f, .7f);
+        PlayClip(grassLanding, volume, pan, ambience: true, ambienceType: AmbienceType.Surface);
+    }
 
     void Awake()
     {
@@ -52,7 +120,7 @@ public class AudioManager : MonoBehaviour
         foreach (var sr in pool) if (!sr.isPlaying) return sr;
         if (pool.Count < maxPoolSize) { ExtendPool(); return pool[^1]; }
 
-        AudioSource oldest = pool[0]; // terminiert älteste
+        AudioSource oldest = pool[0]; // terminiert Ã¤lteste
         float t = oldest.time;
         foreach (var sr in pool) if (sr.time > t) { oldest = sr; t = sr.time; }
         oldest.Stop(); return oldest;
@@ -60,21 +128,46 @@ public class AudioManager : MonoBehaviour
 
     public void Play(SoundType type, bool dispersion = false)
     {
-        var sr = GetFreeSource();
-        if (!sr) return;
-
         if (soundLookup.TryGetValue(type, out Sound s))
         {
+            var clip = s.variants != null && s.variants.Length > 0
+                ? s.variants[ambienceRandom.Next(s.variants.Length)] : s.clip;
+            if (!clip) return;
+            var sr = GetFreeSource();
+            if (!sr) return;
+            ambienceSources.Remove(sr);
             if (dispersion)
                 sr.pitch = s.pitch + Random.Range(-dispersionAmount, dispersionAmount);
             else sr.pitch = s.pitch;
 
-            sr.clip = s.clip;
+            sr.clip = clip;
             sr.volume = s.volume;
+            sr.panStereo = 0f;
             sr.Play();
             return;
         }
         else Debug.LogWarning($"Sound '{type}' not found in AudioManager!");
+    }
+
+    public void PlayClip(AudioClip clip, float volume, float pan, float pitch = 1f, bool ambience = false, AmbienceType ambienceType = AmbienceType.Surface)
+    {
+        if (!clip || volume <= 0f) return;
+        var source = GetFreeSource();
+        if (!source) return;
+        source.clip = clip;
+        ambienceSources.Remove(source);
+        if (ambience) ambienceSources[source] = (Mathf.Clamp01(volume), ambienceType);
+        source.volume = Mathf.Clamp01(volume) * (ambience ? GetAmbienceVolume(ambienceType) : 1f);
+        source.panStereo = Mathf.Clamp(pan, -1f, 1f);
+        source.pitch = Mathf.Clamp(pitch, .5f, 2f);
+        source.Play();
+    }
+
+    void LateUpdate()
+    {
+        foreach (var entry in ambienceSources)
+            if (entry.Key && entry.Key.isPlaying)
+                entry.Key.volume = entry.Value.volume * GetAmbienceVolume(entry.Value.type);
     }
 
     void ExtendPool()

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public enum Item
 {
-    //next 9
+    //next 14
 
     Coal = 3,
     Copper = 0,
@@ -14,6 +14,11 @@ public enum Item
     Torche = 5,
     Dynamite = 6,
     Ladder = 7,
+    Wood = 9,
+    BridgePart = 10,
+    Rope = 11,
+    Nails = 12,
+    PlantFiber = 13,
 }
 
 public enum ItemCategory

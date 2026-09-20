@@ -24,7 +24,7 @@ public sealed class SurfaceRabbit : MonoBehaviour
     float homeX, surfaceY, fromX, toX, hopTime, wait, age, retry;
     float restTime, untilRest, lookTime, headTilt;
     int direction = 1, hopsRemaining, entryHopsUntilRest, part;
-    bool ready, hopping, entering, returning, resting;
+    bool ready, hopping, entering, returning, resting, landingSoundTriggered;
 
     void OnEnable()
     {
@@ -125,10 +125,16 @@ public sealed class SurfaceRabbit : MonoBehaviour
             progress = Mathf.Clamp01(hopTime / Mathf.Max(.2f, hopDuration));
             lift = Mathf.Sin(progress * Mathf.PI) * Mathf.Max(.1f, hopHeight);
             transform.position = new Vector3(Mathf.Lerp(fromX, toX, progress), surfaceY + lift, transform.position.z);
+            float landingX = returning ? fromX : toX;
+            if (HasGround(landingX) && AudioManager.Instance)
+                AudioManager.Instance.UpdateGrassLanding(ref landingSoundTriggered,
+                    returning ? hopTime : Mathf.Max(0f, Mathf.Max(.2f, hopDuration) - hopTime),
+                    new Vector3(landingX, surfaceY, transform.position.z));
             if ((!returning && progress >= 1) || (returning && progress <= 0))
             {
                 hopping = false;
                 if (!HasGround(transform.position.x)) { ready = false; retry = 0; meshRenderer.enabled = false; }
+
                 if (entering && Mathf.Abs(transform.position.x-homeX) < .01f)
                 {
                     entering = false; hopsRemaining = 0;
@@ -183,7 +189,7 @@ public sealed class SurfaceRabbit : MonoBehaviour
                         HasContinuousGround(transform.position.x, candidate))
                     {
                         fromX = transform.position.x; toX = candidate;
-                        hopping = true; returning = false; hopTime = 0; found = true;
+                        hopping = true; returning = false; hopTime = 0; found = true; landingSoundTriggered = false;
                     }
                     else
                     {

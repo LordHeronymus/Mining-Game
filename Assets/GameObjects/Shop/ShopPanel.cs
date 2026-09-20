@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using TMPro;
+using UnityEngine.UI;
 
 public class ShopPanel : MonoBehaviour
 {
@@ -10,9 +11,13 @@ public class ShopPanel : MonoBehaviour
 
     [SerializeField] TextMeshProUGUI sellText;
     [SerializeField] TextMeshProUGUI buyText;
+    [SerializeField] Image sellTabBackground;
+    [SerializeField] Image buyTabBackground;
 
     [SerializeField] float fadeDuration = 0.1f;
-    [SerializeField] Color tabHighlight = Color.yellow;
+    [SerializeField] Color tabHighlight = new Color(1f, 0.55f, 0.16f);
+    [SerializeField] Color activeTabColor = new Color(0.63f, 0.25f, 0.06f);
+    [SerializeField] Color inactiveTabColor = new Color(0.22f, 0.13f, 0.10f);
 
     private bool panelVisible = false;
 
@@ -22,12 +27,20 @@ public class ShopPanel : MonoBehaviour
         sellText.color = tabHighlight;
         sellPage.gameObject.SetActive(true);
         buyPage.gameObject.SetActive(false);
+        UpdateTabAppearance(true);
     }
 
     void Update()
     {
         if (panelVisible && Input.GetKeyDown(KeyCode.Escape)) ShowPanel(false);
     }
+
+    void OnEnable()
+    {
+        if (panelVisible) GameplayInputBlocker.SetBlocked(this, true);
+    }
+
+    void OnDisable() => GameplayInputBlocker.SetBlocked(this, false);
 
     public void ShowPanel(bool show)
     {
@@ -43,9 +56,10 @@ public class ShopPanel : MonoBehaviour
 
     public IEnumerator FadePanel(bool enabled)
     {
+        if (enabled) GameplayInputBlocker.SetBlocked(this, true);
+        panelVisible = enabled;
         yield return new WaitForSeconds(0.2f);
         InfoPanel.Instance?.ShowPanel(!enabled);
-        panelVisible = enabled;
 
         float t = 0f;
         while (t < fadeDuration)
@@ -58,6 +72,7 @@ public class ShopPanel : MonoBehaviour
         panel.alpha = enabled ? 1f : 0f;
         panel.blocksRaycasts = enabled;
         panel.interactable = enabled;
+        if (!enabled) GameplayInputBlocker.SetBlocked(this, false);
     }
 
     public void ShowSellPage()
@@ -67,6 +82,7 @@ public class ShopPanel : MonoBehaviour
         sellPage.gameObject.SetActive(true);
         sellText.color = tabHighlight;
         buyText.color = Color.white;
+        UpdateTabAppearance(true);
     }
 
     public void ShowBuyPage()
@@ -76,6 +92,13 @@ public class ShopPanel : MonoBehaviour
         buyPage.gameObject.SetActive(true);
         buyText.color = tabHighlight;
         sellText.color = Color.white;
+        UpdateTabAppearance(false);
+    }
+
+    private void UpdateTabAppearance(bool selling)
+    {
+        if (sellTabBackground) sellTabBackground.color = selling ? activeTabColor : inactiveTabColor;
+        if (buyTabBackground) buyTabBackground.color = selling ? inactiveTabColor : activeTabColor;
     }
 
 }

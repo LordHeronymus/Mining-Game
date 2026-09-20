@@ -23,6 +23,7 @@ public class TileMiner : MonoBehaviour
     private Camera _cam;
     private MapGenerator map;
     private float nextMiningSoundTime = 0f;
+    private Vector3Int? highlightedCell;
 
     public static Action<Vector2, int> OnBlockMined;
 
@@ -35,15 +36,18 @@ public class TileMiner : MonoBehaviour
     {
         _cam = cam ? cam : Camera.main;
         map = tilemap ? tilemap.GetComponent<MapGenerator>() : null;
+        if (highlightMap) highlightMap.ClearAllTiles();
     }
+
+    void OnDisable() => ClearHighlight();
 
     void Update()
     {
         mining = false;
-        if (GameplayDebugPanel.IsOpen)
+        if (GameplayInputBlocker.IsBlocked)
         {
             mining = false;
-            if (highlightMap) highlightMap.ClearAllTiles();
+            ClearHighlight();
             return;
         }
         if (!_cam || !tilemap) return;
@@ -54,17 +58,13 @@ public class TileMiner : MonoBehaviour
 
         if (nearest == null)
         {
-            if (highlightMap) highlightMap.ClearAllTiles();
+            ClearHighlight();
             return;
         }
 
         Vector3Int targetCell = GetReachLimitedCell(nearest.Value);
 
-        if (highlightMap && highlightTile)
-        {
-            highlightMap.ClearAllTiles();
-            if (tilemap.HasTile(targetCell)) highlightMap.SetTile(targetCell, highlightTile);
-        }
+        ShowHighlight(targetCell);
 
         if (!Input.GetMouseButton(0))
         {
@@ -99,6 +99,23 @@ public class TileMiner : MonoBehaviour
             AudioManager.Instance.Play(hit, true);
             nextMiningSoundTime = Time.time + miningSoundInterval;
         }
+    }
+
+    void ShowHighlight(Vector3Int cell)
+    {
+        if (!highlightMap || !highlightTile) return;
+        if (!tilemap.HasTile(cell)) { ClearHighlight(); return; }
+        if (highlightedCell == cell && highlightMap.GetTile(cell) == highlightTile) return;
+        ClearHighlight();
+        highlightMap.SetTile(cell, highlightTile);
+        highlightedCell = cell;
+    }
+
+    void ClearHighlight()
+    {
+        if (!highlightMap || !highlightedCell.HasValue) return;
+        highlightMap.SetTile(highlightedCell.Value, null);
+        highlightedCell = null;
     }
 
     Block GetBlock(Vector3Int cell)

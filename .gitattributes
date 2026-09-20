@@ -1,10 +1,2 @@
 Assets/Scenes/SampleScene.unity filter=lfs diff=lfs merge=lfs -text
-Assets/_SceneBackups/SampleScene_20260919_163429.unity filter=lfs diff=lfs merge=lfs -text
-Assets/_SceneBackups/SampleScene_20260919_164858.unity filter=lfs diff=lfs merge=lfs -text
-Assets/_SceneBackups/SampleScene_20260919_173824.unity filter=lfs diff=lfs merge=lfs -text
-Assets/_SceneBackups/SampleScene_20260919_174602.unity filter=lfs diff=lfs merge=lfs -text
-Assets/_SceneBackups/SampleScene_20260919_180559.unity filter=lfs diff=lfs merge=lfs -text
-Assets/_SceneBackups/SampleScene_20260919_182755.unity filter=lfs diff=lfs merge=lfs -text
-Assets/_SceneBackups/SampleScene_20260919_185224.unity filter=lfs diff=lfs merge=lfs -text
-Assets/_SceneBackups/*.unity filter=lfs diff=lfs merge=lfs -text
 Assets/AB[[:space:]]Sprites/Parralax[[:space:]]BG/Himmel_Wolken_Sonne_14000x9333.png filter=lfs diff=lfs merge=lfs -text

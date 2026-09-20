@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d1514134bc4fbd41bb739b1b9a49231, type: 3}
   m_Name: Stone_Layer3_05
   m_EditorClassIdentifier: 
-  m_DefaultSprite: {fileID: 21300000, guid: 2d2fbc23517fc0e46a840ed7d1c10e45, type: 3}
+  m_DefaultSprite: {fileID: 21300000, guid: f5d75d401e736604db3a655eb8393204, type: 3}
   m_DefaultGameObject: {fileID: 0}
   m_DefaultColliderType: 1
   m_TilingRules: []

@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bd168b198ca49c4a82450a3ed868988, type: 3}
+  m_Name: Torch
+  m_EditorClassIdentifier: 
+  output: {fileID: 11400000, guid: d3d9bb2429b0b084d9b4726f97258eb4, type: 2}
+  outputAmount: 4
+  pluralName: Fackeln
+  ingredients:
+  - item: {fileID: 11400000, guid: 75e7eb8e62b50c64eb4dd8132de34314, type: 2}
+    amount: 2
+  - item: {fileID: 11400000, guid: 8ce50848319387b46b7171f0cf06cdc0, type: 2}
+    amount: 1

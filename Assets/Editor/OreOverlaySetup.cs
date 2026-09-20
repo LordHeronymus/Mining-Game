@@ -257,7 +257,10 @@ public static class OreOverlaySetup
         if (!map.registry || width <= 0 || height <= 0) return 0;
         var blocks = new Block[checked(width * height)];
         int left = -width / 2;
-        var sampler = new MapGenerationSampler(map.registry, map.ActiveSeed, height, map.layers, map.oreDensityByDepth);
+        var sampler = new MapGenerationSampler(map.registry, map.ActiveSeed, height, map.layers,
+            map.oreDensityCurve, map.oreDensityMultiplierPercent, map.transitionThickness,
+            map.oreTransitionCurve, map.oreTransitionDepth, map.oreVeinSizeCurve,
+            map.surfaceOreRampDepth, map.surfaceOreRampCurve);
         for (int y = 0; y < height; y++)
             for (int x = 0; x < width; x++)
             {
@@ -266,6 +269,9 @@ public static class OreOverlaySetup
                 blocks[y * width + x] = newOre && current && (current.IsStone || current.id == BlockType.Dirt) && sampler.GetBlock(x, y) == newOre
                     ? newOre : current;
             }
+        if (newOre)
+            OreVeins.PruneSmallVeins(blocks, width, height, map.minimumOreVeinSize,
+                sampler.GetBaseBlock, newOre);
         var richness = OreVeins.Build(blocks, width, height, map.ActiveSeed);
         int changed = 0;
         for (int y = 0; y < height; y++)

@@ -5,35 +5,47 @@ using UnityEngine;
 // Shared by live maps, the overview, and ore installation.
 public sealed class MapGenerationSampler
 {
-    public const int SurfaceStoneRows = 4;
+
     public const int SurfaceDirtRows = 20;
-    public const int DirtTransitionRows = 8;
-    public const int DirtEndDepth = SurfaceDirtRows + DirtTransitionRows;
+    public const int DefaultTransitionThickness = 15;
     const int Bins = 256;
     readonly Block stone, dirt;
     readonly int surfaceSeed;
     readonly Block[] noiseBlocks;
     readonly float[][] noiseCdfs;
     readonly float[] scales, weights, densityByRow;
+    readonly float[] transitionWeightsByRow;
+    readonly float[] transitionSizeByRow;
+    readonly float[][][] transitionNoiseCdfs;
     readonly Vector2[] noiseOffsets;
     readonly int[] layerStarts;
     readonly Block[] layerStones;
     readonly int[][] layerOres;
+    readonly int firstStoneBoundary;
+    readonly int transitionThickness;
 
     public MapGenerationSampler(BlockRegistry registry, int seed, int mapHeight, MapLayer[] layers = null,
-        AnimationCurve oreDensityByDepth = null)
+        AnimationCurve oreDensityCurve = null, float oreDensityMultiplierPercent = 50f,
+        int transitionThickness = DefaultTransitionThickness, AnimationCurve oreTransitionCurve = null,
+        int oreTransitionDepth = 100, AnimationCurve oreVeinSizeCurve = null,
+        int surfaceOreRampDepth = 10, AnimationCurve surfaceOreRampCurve = null)
     {
         if (!registry) throw new ArgumentNullException(nameof(registry));
         if (mapHeight <= 0) throw new ArgumentOutOfRangeException(nameof(mapHeight));
         surfaceSeed = seed;
+        this.transitionThickness = Mathf.Clamp(transitionThickness, 1, 100);
         stone = registry.GetById(BlockType.Stone);
         dirt = registry.GetById(BlockType.Dirt);
         densityByRow = new float[mapHeight];
-        for (int y = SurfaceStoneRows; y < mapHeight; y++)
+        int surfaceRampDepth = Mathf.Max(0, surfaceOreRampDepth);
+        float initialShape = oreDensityCurve == null ? .1f : oreDensityCurve.Evaluate(0f);
+        for (int y = 0; y < mapHeight; y++)
         {
-            float depth = mapHeight > 1 ? (float)y / (mapHeight - 1) : 0f;
-            float percent = oreDensityByDepth == null ? Mathf.Lerp(5f, 50f, depth) : oreDensityByDepth.Evaluate(depth);
-            densityByRow[y] = float.IsNaN(percent) ? 0f : Mathf.Clamp01(percent / 100f);
+            float depth = Mathf.Clamp01((float)(y - surfaceRampDepth) / Mathf.Max(1, mapHeight - surfaceRampDepth - 1));
+            float shape = y < surfaceRampDepth ? initialShape * RampFactor(surfaceOreRampCurve, (float)y / surfaceRampDepth) :
+                oreDensityCurve == null ? Mathf.Lerp(.1f, 1f, depth) : oreDensityCurve.Evaluate(depth);
+            densityByRow[y] = float.IsNaN(shape) || float.IsNaN(oreDensityMultiplierPercent)
+                ? 0f : Mathf.Clamp01(shape) * Mathf.Clamp(oreDensityMultiplierPercent, 0f, 100f) / 100f;
         }
         var blocks = new List<Block>();
         if (registry.blocks != null)
@@ -84,6 +96,75 @@ public sealed class MapGenerationSampler
                 if (layer.ores != null && Array.IndexOf(layer.ores, noiseBlocks[j].id) >= 0) allowed.Add(j);
             layerOres[i] = allowed.ToArray();
         }
+        firstStoneBoundary = ordered.Length > 1 ? ordered[1].startDepth : -1;
+        if (oreTransitionCurve == null || oreTransitionCurve.length == 0 || oreTransitionDepth <= 0) return;
+        transitionWeightsByRow = new float[mapHeight * noiseBlocks.Length];
+        if (oreVeinSizeCurve != null && oreVeinSizeCurve.length > 0)
+        {
+            transitionSizeByRow = new float[transitionWeightsByRow.Length];
+            transitionNoiseCdfs = new float[noiseBlocks.Length][][];
+            for (int i = 0; i < noiseBlocks.Length; i++)
+            {
+                var cdfs = new float[5][];
+                for (int step = 0; step < 4; step++)
+                    cdfs[step] = BuildCdf(scales[i], noiseOffsets[i], step / 4f);
+                cdfs[4] = noiseCdfs[i];
+                transitionNoiseCdfs[i] = cdfs;
+            }
+        }
+        for (int ore = 0; ore < noiseBlocks.Length; ore++)
+        {
+            int runStart = -1;
+            for (int layer = 0; layer <= layerStarts.Length; layer++)
+            {
+                bool allowed = layer < layerStarts.Length && layerStarts[layer] < mapHeight &&
+                    Array.IndexOf(layerOres[layer], ore) >= 0;
+                if (allowed && runStart < 0) runStart = layerStarts[layer];
+                if (allowed || runStart < 0) continue;
+                int runEnd = layer == layerStarts.Length ? mapHeight : Mathf.Min(layerStarts[layer], mapHeight);
+                FillTransitionWeights(ore, runStart, runEnd, runStart > 0, runEnd < mapHeight,
+                    oreTransitionCurve, oreTransitionDepth, oreVeinSizeCurve);
+                runStart = -1;
+            }
+        }
+    }
+
+    static float RampFactor(AnimationCurve curve, float progress)
+    {
+        if (progress <= 0f) return 0f;
+        if (progress >= 1f) return 1f;
+        if (curve == null || curve.length == 0) return progress;
+        float start = curve.Evaluate(0f), end = curve.Evaluate(1f);
+        if (float.IsNaN(start) || float.IsNaN(end) || float.IsInfinity(start) ||
+            float.IsInfinity(end) || Mathf.Approximately(start, end)) return progress;
+        float value = (curve.Evaluate(progress) - start) / (end - start);
+        return float.IsNaN(value) ? 0f : Mathf.Clamp01(value);
+    }
+
+    void FillTransitionWeights(int ore, int start, int end, bool fadeIn, bool fadeOut,
+        AnimationCurve curve, int requestedDepth, AnimationCurve veinSizeCurve)
+    {
+        int length = end - start;
+        if (length <= 0) return;
+        float width = Mathf.Min(requestedDepth, fadeIn && fadeOut ? (length - 1) * .5f : length - 1);
+        for (int y = start; y < end; y++)
+        {
+            float factor = 1f;
+            if (fadeIn) factor = width > 0f ? TransitionValue(curve, (y - start) / width) : 0f;
+            if (fadeOut) factor = Mathf.Min(factor,
+                width > 0f ? TransitionValue(curve, (end - 1 - y) / width) : 0f);
+            int index = y * noiseBlocks.Length + ore;
+            transitionWeightsByRow[index] = weights[ore] * factor;
+            if (transitionSizeByRow == null) continue;
+            float size = veinSizeCurve.Evaluate(factor);
+            transitionSizeByRow[index] = float.IsNaN(size) ? 0f : Mathf.Clamp01(size);
+        }
+    }
+
+    static float TransitionValue(AnimationCurve curve, float progress)
+    {
+        float value = curve.Evaluate(Mathf.Clamp01(progress));
+        return float.IsNaN(value) ? 0f : Mathf.Clamp01(value);
     }
 
     int LayerIndex(int depth)
@@ -99,11 +180,14 @@ public sealed class MapGenerationSampler
         return layer < 0 ? stone : layerStones[layer];
     }
 
+    public int TransitionThickness => transitionThickness;
+    public int DirtEndDepth => SurfaceDirtRows + transitionThickness;
+
     public bool IsDirtAt(int x, int depth)
     {
         if (!dirt || depth >= DirtEndDepth) return false;
         if (depth < SurfaceDirtRows) return true;
-        float t = (depth - SurfaceDirtRows + .5f) / DirtTransitionRows;
+        float t = (depth - SurfaceDirtRows + .5f) / transitionThickness;
         float offset = (OreVeins.Hash(surfaceSeed, 0, 0, 0xD171u) & 0xffff) / 64f;
         float clusters = Mathf.PerlinNoise(x * .18f + offset, depth * .24f + offset);
         float chance = Mathf.Clamp01(1f - t + (clusters - .5f) * .8f * Mathf.Sin(t * Mathf.PI));
@@ -111,12 +195,31 @@ public sealed class MapGenerationSampler
         return sample < chance;
     }
 
-    public Block GetBaseBlock(int x, int depth) => IsDirtAt(x, depth) ? dirt : GetStone(depth);
+    public int FirstStoneBoundary => firstStoneBoundary;
+
+    public bool IsFirstLayerStoneAt(int x, int depth)
+    {
+        if (layerStarts == null || layerStarts.Length < 2 || firstStoneBoundary <= 0 ||
+            depth < firstStoneBoundary || depth >= firstStoneBoundary + transitionThickness || LayerIndex(depth) != 1)
+            return false;
+        float t = (depth - firstStoneBoundary + .5f) / transitionThickness;
+        float offset = (OreVeins.Hash(surfaceSeed, 0, 0, 0x5171u) & 0xffff) / 64f;
+        float clusters = Mathf.PerlinNoise(x * .18f + offset, depth * .24f + offset);
+        float chance = Mathf.Clamp01(1f - t + (clusters - .5f) * .8f * Mathf.Sin(t * Mathf.PI));
+        float sample = (OreVeins.Hash(surfaceSeed, x, depth, 0x5172u) & 0xffffff) / 16777216f;
+        return sample < chance;
+    }
+
+    public Block GetBaseBlock(int x, int depth)
+    {
+        if (IsDirtAt(x, depth)) return dirt;
+        return IsFirstLayerStoneAt(x, depth) ? layerStones[0] : GetStone(depth);
+    }
 
     public Block GetBlock(int x, int y)
     {
-        // The cap applies only at the surface, not at every layer boundary.
-        if (y < SurfaceStoneRows) return GetBaseBlock(x, y);
+
+
         int layer = LayerIndex(y);
         var baseStone = GetBaseBlock(x, y);
         float density = densityByRow[Math.Min(y, densityByRow.Length - 1)];
@@ -124,22 +227,41 @@ public sealed class MapGenerationSampler
         int[] allowed = layer < 0 ? null : layerOres[layer];
         int count = allowed == null ? noiseBlocks.Length : allowed.Length;
         double totalWeight = 0, bestScore = double.PositiveInfinity;
+        float strongestTransition = 0f;
         Block chosen = null;
         for (int candidate = 0; candidate < count; candidate++)
         {
             int i = allowed == null ? candidate : allowed[candidate];
-            float uniform = UniformNoise(SampleNoise(x, y, scales[i], noiseOffsets[i]), noiseCdfs[i]);
-            double score = -Math.Log(uniform) / weights[i];
-            totalWeight += weights[i];
+            float weight = transitionWeightsByRow == null ? weights[i] :
+                transitionWeightsByRow[Math.Min(y, densityByRow.Length - 1) * noiseBlocks.Length + i];
+            if (weight <= 0f) continue;
+            int rowIndex = Math.Min(y, densityByRow.Length - 1) * noiseBlocks.Length + i;
+            float uniform;
+            if (transitionSizeByRow == null)
+                uniform = UniformNoise(SampleNoise(x, y, scales[i], noiseOffsets[i]), noiseCdfs[i]);
+            else
+            {
+                float size = transitionSizeByRow[rowIndex];
+                float noise = BlendNoise(x, y, scales[i], noiseOffsets[i], size);
+                float step = size * 4f;
+                int lower = Mathf.Min((int)step, 3);
+                var cdfs = transitionNoiseCdfs[i];
+                uniform = Mathf.Lerp(UniformNoise(noise, cdfs[lower]),
+                    UniformNoise(noise, cdfs[lower + 1]), step - lower);
+            }
+            double score = -Math.Log(uniform) / weight;
+            totalWeight += weight;
+            strongestTransition = Mathf.Max(strongestTransition, weight / weights[i]);
             if (score < bestScore) { bestScore = score; chosen = noiseBlocks[i]; }
         }
         if (!chosen) return baseStone;
+        if (transitionWeightsByRow != null) density *= strongestTransition;
         // Exponential race: winner probability is weight/sum, independent of the
         // minimum score. Its CDF supplies the total ore gate while retaining veins.
         return density >= 1f || bestScore * totalWeight < -Math.Log(1d - density) ? chosen : baseStone;
     }
 
-    static float[] BuildCdf(float scale, Vector2 offset)
+    static float[] BuildCdf(float scale, Vector2 offset, float size = 1f)
     {
         var histogram = new int[Bins];
         var cdf = new float[Bins + 1];
@@ -147,7 +269,7 @@ public sealed class MapGenerationSampler
             for (int y = 0; y < Bins; y++)
             {
                 // Sample many periods even for large veins; retain lattice phase for index 1.
-                float noise = SampleNoise(x * 17, y * 23, scale, offset);
+                float noise = BlendNoise(x * 17, y * 23, scale, offset, size);
                 int bin = Mathf.Clamp(Mathf.FloorToInt(noise * Bins), 0, Bins - 1);
                 histogram[bin]++;
             }
@@ -165,6 +287,13 @@ public sealed class MapGenerationSampler
         float position = Mathf.Clamp01(noise) * Bins;
         int bin = Mathf.Min((int)position, Bins - 1);
         return Mathf.Clamp(Mathf.Lerp(cdf[bin], cdf[bin + 1], position - bin), .000001f, .999999f);
+    }
+
+    static float BlendNoise(int x, int y, float scale, Vector2 offset, float size)
+    {
+        float coarse = SampleNoise(x, y, scale, offset);
+        return size >= 1f ? coarse : Mathf.Lerp(
+            SampleNoise(x, y, Mathf.Min(1f, scale * 2f), offset), coarse, size);
     }
 
     static float SampleNoise(int x, int y, float scale, Vector2 offset) =>

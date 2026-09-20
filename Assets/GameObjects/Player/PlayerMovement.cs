@@ -37,7 +37,7 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         SyncFlyMode();
-        if (GameplayDebugPanel.IsOpen)
+        if (GameplayInputBlocker.IsBlocked)
         {
             inputX = 0;
             inputY = 0;
@@ -60,6 +60,13 @@ public class PlayerMovement : MonoBehaviour
     void FixedUpdate()
     {
         SyncFlyMode();
+        if (GameplayInputBlocker.IsBlocked)
+        {
+            inputX = 0f;
+            inputY = 0f;
+            jumpRequested = false;
+            moving = false;
+        }
         float targetVx = inputX * stats.MoveSpeed;
 
         float rate = (Mathf.Abs(targetVx) > Mathf.Abs(rb.linearVelocity.x)) ? Accel : Decel;

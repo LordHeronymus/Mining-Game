@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.Tilemaps;
 
-[DisallowMultipleComponent]
+[DisallowMultipleComponent, DefaultExecutionOrder(1350)]
 [RequireComponent(typeof(MapGenerator), typeof(Tilemap))]
 public sealed class MapLighting : MonoBehaviour
 {
@@ -16,6 +17,11 @@ public sealed class MapLighting : MonoBehaviour
     [Range(0.1f, 5f)] public float exponentialStrength = 1f;
     [Range(0, 1)] public float ambientBrightness = 0f;
     [SerializeField] Shader darknessShader;
+    [SerializeField] Light2D headlamp;
+
+    static readonly int HeadlampOriginRange = Shader.PropertyToID("_HeadlampOriginRange");
+    static readonly int HeadlampDirectionAngles = Shader.PropertyToID("_HeadlampDirectionAngles");
+    static readonly int HeadlampInnerRadius = Shader.PropertyToID("_HeadlampInnerRadius");
 
     MapGenerator map;
     Tilemap tiles;
@@ -68,6 +74,11 @@ public sealed class MapLighting : MonoBehaviour
     {
         map = GetComponent<MapGenerator>();
         tiles = GetComponent<Tilemap>();
+        if (!headlamp)
+        {
+            var miner = FindFirstObjectByType<MinerPlayerVisual>();
+            if (miner) headlamp = miner.headlamp;
+        }
         map.Generated += RequestRebuild;
         Tilemap.tilemapTileChanged += TilesChanged;
         rebuild = true;
@@ -129,10 +140,31 @@ public sealed class MapLighting : MonoBehaviour
         while (field.HasPendingWork && processed < 8192 && timer.Elapsed.TotalMilliseconds < 2)
             processed += field.Process(256);
         timer.Stop();
-        if (!textureDirty) return;
-        texture.SetPixels32(pixels);
-        texture.Apply(false, false);
-        textureDirty = false;
+        if (textureDirty)
+        {
+            texture.SetPixels32(pixels);
+            texture.Apply(false, false);
+            textureDirty = false;
+        }
+        UpdateHeadlamp();
+    }
+
+    void UpdateHeadlamp()
+    {
+        if (!material) return;
+        if (!headlamp || !headlamp.isActiveAndEnabled || headlamp.intensity <= 0)
+        {
+            material.SetVector(HeadlampOriginRange, Vector4.zero);
+            return;
+        }
+        Vector3 origin = headlamp.transform.position;
+        Vector3 direction = headlamp.transform.up;
+        float inner = Mathf.Cos(headlamp.pointLightInnerAngle * .5f * Mathf.Deg2Rad);
+        float outer = Mathf.Cos(headlamp.pointLightOuterAngle * .5f * Mathf.Deg2Rad);
+        material.SetVector(HeadlampOriginRange,
+            new Vector4(origin.x, origin.y, headlamp.pointLightOuterRadius, headlamp.intensity));
+        material.SetVector(HeadlampDirectionAngles, new Vector4(direction.x, direction.y, inner, outer));
+        material.SetFloat(HeadlampInnerRadius, headlamp.pointLightInnerRadius);
     }
 
     void Initialize()

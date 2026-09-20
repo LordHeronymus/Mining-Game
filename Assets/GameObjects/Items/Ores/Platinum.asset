@@ -15,5 +15,5 @@ MonoBehaviour:
   item: 8
   category: 0
   displayName: Platin
-  icon: {fileID: 21300000, guid: d23cf9a3e3f15e44499adc4e06a3cb70, type: 3}
+  icon: {fileID: 21300000, guid: d1b367754e3f46b409d425cd071cd25d, type: 3}
   worth: 200

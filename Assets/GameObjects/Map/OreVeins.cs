@@ -3,6 +3,50 @@ using UnityEngine;
 
 public static class OreVeins
 {
+    public static int PruneSmallVeins(Block[] blocks, int width, int height, int minimumSize,
+        Func<int, int, Block> baseBlock, Block onlyOre = null)
+    {
+        if (blocks == null || width <= 0 || height <= 0 || blocks.Length != checked(width * height))
+            throw new ArgumentException("Invalid vein grid dimensions.");
+        if (baseBlock == null) throw new ArgumentNullException(nameof(baseBlock));
+        if (minimumSize <= 1) return 0;
+
+        var visited = new bool[blocks.Length];
+        var queue = new int[blocks.Length];
+        int removed = 0;
+        for (int start = 0; start < blocks.Length; start++)
+        {
+            var ore = blocks[start];
+            if (visited[start] || !ore || !ore.HasOreOverlays || (onlyOre && ore != onlyOre)) continue;
+            int head = 0, tail = 0;
+            queue[tail++] = start;
+            visited[start] = true;
+            while (head < tail)
+            {
+                int index = queue[head++], x = index % width, y = index / width;
+                if (x > 0) Visit(index - 1);
+                if (x + 1 < width) Visit(index + 1);
+                if (y > 0) Visit(index - width);
+                if (y + 1 < height) Visit(index + width);
+            }
+            if (tail >= minimumSize) continue;
+            for (int i = 0; i < tail; i++)
+            {
+                int index = queue[i];
+                blocks[index] = baseBlock(index % width, index / width);
+                removed++;
+            }
+
+            void Visit(int index)
+            {
+                if (visited[index] || blocks[index] != ore) return;
+                visited[index] = true;
+                queue[tail++] = index;
+            }
+        }
+        return removed;
+    }
+
     // Independent streams are stable even when another system consumes random numbers.
     public static uint Hash(int seed, int x, int y, uint stream)
     {

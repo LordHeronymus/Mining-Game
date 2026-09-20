@@ -6,7 +6,15 @@ Shader "Mining Game/Dirt Terrain Lit"
         _DirtTex("Transition Dirt", 2D) = "white" {}
         _DirtMask("Surface Mask", 2D) = "white" {}
         _DirtMaskBounds("Mask Bounds", Vector) = (0,0,0,0)
-        _DirtSurface("Surface", Vector) = (0,20,8,0)
+        _DirtSurface("Surface", Vector) = (0,20,15,0)
+        _DeepStoneTex("Layer 2 Stone", 2D) = "white" {}
+        _DeepMask("Layer 2 Mask", 2D) = "white" {}
+        _DeepMaskBounds("Layer 2 Mask Bounds", Vector) = (0,0,0,0)
+        _DeepSurface("Layer 2 Surface", Vector) = (0,0,0,0)
+        [HideInInspector] _DirtVariants("Dirt Variants", 2DArray) = "" {}
+        [HideInInspector] _StoneVariants("Transition Variants", 2DArray) = "" {}
+        [HideInInspector] _DeepVariants("Layer 2 Variants", 2DArray) = "" {}
+        [HideInInspector] _VariantCounts("Variant Counts", Vector) = (0,0,0,0)
         _MainTex("Diffuse", 2D) = "white" {}
         _MaskTex("Mask", 2D) = "white" {}
         _NormalMap("Normal Map", 2D) = "bump" {}
@@ -37,6 +45,7 @@ Shader "Mining Game/Dirt Terrain Lit"
 
             #pragma vertex CombinedShapeLightVertex
             #pragma fragment CombinedShapeLightFragment
+            #pragma target 3.5
 
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/ShapeLightShared.hlsl"
 
@@ -81,6 +90,9 @@ Shader "Mining Game/Dirt Terrain Lit"
                 half4 _Color;
                 float4 _DirtSurface;
                 float4 _DirtMaskBounds;
+                float4 _DeepSurface;
+                float4 _DeepMaskBounds;
+                float4 _VariantCounts;
             CBUFFER_END
             #include "Assets/GameObjects/Map/DirtSurfaceBlend.hlsl"
 
@@ -153,6 +165,7 @@ Shader "Mining Game/Dirt Terrain Lit"
 
             #pragma vertex NormalsRenderingVertex
             #pragma fragment NormalsRenderingFragment
+            #pragma target 3.5
 
             // GPU Instancing
             #pragma multi_compile_instancing
@@ -190,6 +203,9 @@ Shader "Mining Game/Dirt Terrain Lit"
                 half4 _Color;
                 float4 _DirtSurface;
                 float4 _DirtMaskBounds;
+                float4 _DeepSurface;
+                float4 _DeepMaskBounds;
+                float4 _VariantCounts;
             CBUFFER_END
             #include "Assets/GameObjects/Map/DirtSurfaceBlend.hlsl"
 
@@ -239,6 +255,7 @@ Shader "Mining Game/Dirt Terrain Lit"
 
             #pragma vertex UnlitVertex
             #pragma fragment UnlitFragment
+            #pragma target 3.5
 
             // GPU Instancing
             #pragma multi_compile_instancing
@@ -274,6 +291,9 @@ Shader "Mining Game/Dirt Terrain Lit"
                 half4 _Color;
                 float4 _DirtSurface;
                 float4 _DirtMaskBounds;
+                float4 _DeepSurface;
+                float4 _DeepMaskBounds;
+                float4 _VariantCounts;
             CBUFFER_END
             #include "Assets/GameObjects/Map/DirtSurfaceBlend.hlsl"
 
