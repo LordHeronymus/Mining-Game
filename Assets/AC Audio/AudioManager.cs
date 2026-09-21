@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public enum AmbienceType { Surface, Rain, Thunderstorm, Underground, Cave, Birds, Frogs }
+public enum AudioVolumeSetting { Ambience, Surface, Rain, Thunderstorm, Underground, Cave, DigSounds }
 
 public enum SoundType
 {
@@ -46,6 +47,7 @@ public class AudioManager : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float thunderstormVolume = 1f;
     [SerializeField, Range(0f, 1f)] float undergroundVolume = 1f;
     [SerializeField, Range(0f, 1f)] float caveVolume = 1f;
+    [SerializeField, Range(0f, 1f)] float digSoundVolume = 1f;
 
     [SerializeField, Range(-1f, 1f)] float grassLandingOffset = -.08f;
 
@@ -65,6 +67,33 @@ public class AudioManager : MonoBehaviour
     }
 
     public static float AmbienceVolume => Instance ? Mathf.Clamp01(Instance.ambienceVolume) : 1f;
+
+    public float GetVolume(AudioVolumeSetting setting) => setting switch
+    {
+        AudioVolumeSetting.Ambience => ambienceVolume,
+        AudioVolumeSetting.Surface => surfaceVolume,
+        AudioVolumeSetting.Rain => rainVolume,
+        AudioVolumeSetting.Thunderstorm => thunderstormVolume,
+        AudioVolumeSetting.Underground => undergroundVolume,
+        AudioVolumeSetting.Cave => caveVolume,
+        AudioVolumeSetting.DigSounds => digSoundVolume,
+        _ => 1f
+    };
+
+    public void SetVolume(AudioVolumeSetting setting, float value)
+    {
+        value = Mathf.Clamp01(value);
+        switch (setting)
+        {
+            case AudioVolumeSetting.Ambience: ambienceVolume = value; break;
+            case AudioVolumeSetting.Surface: surfaceVolume = value; break;
+            case AudioVolumeSetting.Rain: rainVolume = value; break;
+            case AudioVolumeSetting.Thunderstorm: thunderstormVolume = value; break;
+            case AudioVolumeSetting.Underground: undergroundVolume = value; break;
+            case AudioVolumeSetting.Cave: caveVolume = value; break;
+            case AudioVolumeSetting.DigSounds: digSoundVolume = value; break;
+        }
+    }
 
     [HideInInspector] public static AudioManager Instance;
 
@@ -142,7 +171,7 @@ public class AudioManager : MonoBehaviour
             else sr.pitch = s.pitch;
 
             sr.clip = clip;
-            sr.volume = s.volume;
+            sr.volume = s.volume * (IsDigSound(type) ? digSoundVolume : 1f);
             sr.panStereo = 0f;
             sr.Play();
             return;
@@ -177,5 +206,13 @@ public class AudioManager : MonoBehaviour
         s.playOnAwake = false;
         s.spatialBlend = 0f;
         pool.Add(s);
+    }
+
+    static bool IsDigSound(SoundType type)
+    {
+        return type is SoundType.DigSoft or SoundType.DigMedium or SoundType.DigHard or
+            SoundType.DigOre or SoundType.BreakRock or SoundType.BreakOre or
+            SoundType.DigDirt or SoundType.DigTransitionStone or SoundType.DigStone or
+            SoundType.DirtHit;
     }
 }

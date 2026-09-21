@@ -19,7 +19,7 @@ public sealed class DirtSurfaceAppearance : MonoBehaviour
         if(!map)map=GetComponent<MapGenerator>();
         if(map && map.ActiveSeed!=appliedSeed)Apply();
     }
-    public void Apply()
+    public void Apply(bool includeDeepBoundary=true)
     {
         if(!map)map=GetComponent<MapGenerator>();
         var renderer=GetComponent<TilemapRenderer>();
@@ -96,7 +96,7 @@ public sealed class DirtSurfaceAppearance : MonoBehaviour
             (OreVeins.Hash(appliedSeed,0,0,0xD17u)%10000u)*.01f));
         int firstRow=Mathf.Max(0,boundary-2);
         int deepHeight=Mathf.Min(map.GeneratedHeight,boundary+thickness+2)-firstRow;
-        if(boundary>0 && upper && lower && upper!=lower && deepHeight>0)
+        if(includeDeepBoundary && boundary>0 && upper && lower && upper!=lower && deepHeight>0)
         {
             var upperIndices=BuildIndices(appliedSeed,width,deepHeight,upper,firstRow);
             var lowerIndices=BuildIndices(appliedSeed,width,deepHeight,lower,firstRow);

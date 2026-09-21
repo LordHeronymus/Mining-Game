@@ -79,14 +79,14 @@ public sealed class MapLighting : MonoBehaviour
             var miner = FindFirstObjectByType<MinerPlayerVisual>();
             if (miner) headlamp = miner.headlamp;
         }
-        map.Generated += RequestRebuild;
+        map.GenerationCompleted += RequestRebuild;
         Tilemap.tilemapTileChanged += TilesChanged;
         rebuild = true;
     }
 
     void OnDisable()
     {
-        if (map) map.Generated -= RequestRebuild;
+        if (map) map.GenerationCompleted -= RequestRebuild;
         Tilemap.tilemapTileChanged -= TilesChanged;
         ReleaseResources();
     }
@@ -126,7 +126,7 @@ public sealed class MapLighting : MonoBehaviour
             if (overlay) overlay.SetActive(false);
             return;
         }
-        if (!map || !map.IsGenerated) return;
+        if (!map || !map.IsGenerated || map.IsGenerationStreaming) return;
         if (rebuild || field == null) Initialize();
         if (field == null) return;
         overlay.SetActive(true);
@@ -241,10 +241,33 @@ public sealed class MapLighting : MonoBehaviour
 
     public float GetBrightness(Vector3Int cell)
     {
-        if (!lightingEnabled || cell.y > 0) return Mathf.Max(ambientBrightness, daylightStrength);
+        if (!lightingEnabled) return Mathf.Max(ambientBrightness, daylightStrength);
         int x = cell.x + width / 2, y = -cell.y;
-        if (field == null || x < 0 || x >= width || y >= height) return ambientBrightness;
-        return Mathf.Max(ambientBrightness, GridDaylight.VisibleLight(field[x, y]));
+        float mapBrightness = cell.y > 0
+            ? Mathf.Max(ambientBrightness, daylightStrength)
+            : field == null || x < 0 || x >= width || y >= height
+            ? ambientBrightness
+            : Mathf.Max(ambientBrightness, GridDaylight.VisibleLight(field[x, y]));
+        if (!headlamp || !headlamp.isActiveAndEnabled || headlamp.intensity <= 0 || !tiles)
+            return mapBrightness;
+        return Mathf.Max(mapBrightness, GetHeadlampBrightness(tiles.GetCellCenterWorld(cell)));
+    }
+
+    float GetHeadlampBrightness(Vector2 worldPosition)
+    {
+        Vector2 delta = worldPosition - (Vector2)headlamp.transform.position;
+        float range = headlamp.pointLightOuterRadius;
+        float distanceSquared = delta.sqrMagnitude;
+        if (range <= 0 || distanceSquared >= range * range) return 0f;
+        float distance = Mathf.Sqrt(distanceSquared);
+        float innerAngle = Mathf.Cos(headlamp.pointLightInnerAngle * .5f * Mathf.Deg2Rad);
+        float outerAngle = Mathf.Cos(headlamp.pointLightOuterAngle * .5f * Mathf.Deg2Rad);
+        float angle = Vector2.Dot(delta, (Vector2)headlamp.transform.up) / Mathf.Max(distance, .0001f);
+        float beam = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(outerAngle, innerAngle, angle));
+        float innerRadius = Mathf.Max(headlamp.pointLightInnerRadius, .0001f);
+        float centerGlow = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0f, innerRadius, distance));
+        float falloff = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(headlamp.pointLightInnerRadius, range, distance));
+        return Mathf.Clamp01(Mathf.Max(beam, centerGlow) * falloff * headlamp.intensity);
     }
 
     void ReleaseResources()

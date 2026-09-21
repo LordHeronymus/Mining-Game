@@ -7,8 +7,10 @@ public sealed class BlockBreakParticles : MonoBehaviour
     public Material debrisMaterial;
     public Material dustMaterial;
     public Material oreMaterial;
-    [Range(1, 24)] public int fragmentsPerBlock = 9;
+    [Range(0, 24)] public int fragmentsPerBlock = 9;
     [Range(0, 16)] public int dustPerBlock = 5;
+    [Range(0, 12)] public int fragmentsPerHit = 3;
+    [Range(0, 8)] public int dustPerHit = 1;
     [Min(.1f)] public float burstSpeed = 1.4f;
     [Min(.1f)] public float duration = .65f;
     public Color stoneColor = new Color(.65f, .63f, .58f);
@@ -28,6 +30,7 @@ public sealed class BlockBreakParticles : MonoBehaviour
         if (dustMaterial) dust = CreateSystem("Block dust", dustMaterial, 96, true);
         if (oreMaterial) oreDebris = CreateSystem("Ore fragments", oreMaterial, 192, false);
         TileMiner.OnBlockMined += OnBlockMined;
+        TileMiner.OnBlockHit += OnBlockHit;
     }
 
     ParticleSystem CreateSystem(string name, Material material, int capacity, bool smoke)
@@ -82,15 +85,38 @@ public sealed class BlockBreakParticles : MonoBehaviour
         float cellSize = Mathf.Min(
             tiles.transform.TransformVector(Vector3.right * tiles.layoutGrid.cellSize.x).magnitude,
             tiles.transform.TransformVector(Vector3.up * tiles.layoutGrid.cellSize.y).magnitude);
-        Burst(isOre && oreDebris ? oreDebris : debris, center, cellSize, Mathf.Clamp(fragmentsPerBlock,1,24), false, tint,
+        Burst(isOre && oreDebris ? oreDebris : debris, center, cellSize, Mathf.Clamp(fragmentsPerBlock,0,24), false, tint,
             isOre ? Mathf.Clamp(oreFragmentSizeMultiplier, 1f, 3f) : 1f);
         Burst(dust, center, cellSize, Mathf.Clamp(dustPerBlock,0,16), true,
             isOre ? Color.Lerp(stoneColor, tint, .3f) : tint, 1f);
     }
 
+    void OnBlockHit(Vector2 position)
+    {
+        if (!map.registry) return;
+        var cell = tiles.WorldToCell(position);
+        var block = map.GetBlockAt(cell);
+        if (!block || (!block.IsStone && block.id != BlockType.Dirt && !OreSparkles.IsOre(block))) return;
+        var camera = Camera.main;
+        if (!camera) return;
+        Vector3 center = tiles.GetCellCenterWorld(cell);
+        var view = camera.WorldToViewportPoint(center);
+        if (view.z <= 0 || view.x < 0 || view.x > 1 || view.y < 0 || view.y > 1) return;
+        bool isOre = OreSparkles.IsOre(block);
+        Color tint = isOre ? OreSparkles.GetOreColor(block.id) : block.id == BlockType.Dirt ? new Color(.38f, .24f, .13f) : stoneColor;
+        float cellSize = Mathf.Min(
+            tiles.transform.TransformVector(Vector3.right * tiles.layoutGrid.cellSize.x).magnitude,
+            tiles.transform.TransformVector(Vector3.up * tiles.layoutGrid.cellSize.y).magnitude);
+        Burst(isOre && oreDebris ? oreDebris : debris, center, cellSize, Mathf.Clamp(fragmentsPerHit, 0, 12), false, tint,
+            isOre ? Mathf.Clamp(oreFragmentSizeMultiplier, 1f, 3f) : 1f, .55f, .65f);
+        Burst(dust, center, cellSize, Mathf.Clamp(dustPerHit, 0, 8), true,
+            isOre ? Color.Lerp(stoneColor, tint, .3f) : tint, 1f, .55f, .65f);
+    }
+
     float Range(float min, float max) => Mathf.Lerp(min,max,(float)random.NextDouble());
 
-    void Burst(ParticleSystem system, Vector3 center, float cellSize, int count, bool smoke, Color tint, float sizeMultiplier)
+    void Burst(ParticleSystem system, Vector3 center, float cellSize, int count, bool smoke, Color tint, float sizeMultiplier,
+        float speedMultiplier = 1f, float lifetimeMultiplier = 1f)
     {
         if (!system) return;
         count = Mathf.Min(count, system.main.maxParticles-system.particleCount);
@@ -99,12 +125,12 @@ public sealed class BlockBreakParticles : MonoBehaviour
             float angle = Range(0,Mathf.PI*2);
             var direction = new Vector3(Mathf.Cos(angle),Mathf.Sin(angle),0);
             Color color = tint * Range(.8f,1.15f);
-            color.a = tint.a * (smoke ? .28f : 1f);
+            color.a = tint.a * (smoke ? .75f : 1f);
             system.Emit(new ParticleSystem.EmitParams {
                 position = center + direction * cellSize * Range(.05f,.2f),
-                velocity = (direction + Vector3.up * .35f) * Mathf.Max(.1f,burstSpeed) * Range(.4f,1f) * (smoke ? .25f : 1f),
-                startSize = cellSize * sizeMultiplier * (smoke ? Range(.35f,.75f) : Range(.08f,.18f)),
-                startLifetime = Mathf.Max(.1f,duration) * Range(.75f,1.25f) * (smoke ? 1.3f : 1f),
+                velocity = (direction + Vector3.up * .35f) * Mathf.Max(.1f,burstSpeed) * speedMultiplier * Range(.4f,1f) * (smoke ? .25f : 1f),
+                startSize = cellSize * sizeMultiplier * (smoke ? Range(.55f,1.05f) : Range(.08f,.18f)),
+                startLifetime = Mathf.Max(.1f,duration) * lifetimeMultiplier * Range(.75f,1.25f) * (smoke ? 1.6f : 1f),
                 rotation = Range(0,360), startColor = color
             },1);
         }
@@ -113,6 +139,7 @@ public sealed class BlockBreakParticles : MonoBehaviour
     void OnDisable()
     {
         TileMiner.OnBlockMined -= OnBlockMined;
+        TileMiner.OnBlockHit -= OnBlockHit;
         Release(debris); Release(dust); Release(oreDebris); debris = dust = oreDebris = null;
     }
 

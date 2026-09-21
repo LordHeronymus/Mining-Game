@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>Shared camera reference and visibility for one background set.</summary>
 [ExecuteAlways, DisallowMultipleComponent]
@@ -36,6 +37,21 @@ public sealed class SurfaceBackgroundController : MonoBehaviour
     [Min(0.01f), InspectorName("Fade-Breite (Blöcke)")]
     public float layer3FadeDepth = 20f;
 
+    [Header("Oberflächen-Hintergrund")]
+    [FormerlySerializedAs("backgroundBrightness")]
+    [Range(0f, 2f), InspectorName("Helligkeit")]
+    public float surfaceBrightness = 0.8f;
+    [Range(0f, 2f), InspectorName("Kontrast")]
+    public float surfaceContrast = 1f;
+    [Range(0f, 2f), InspectorName("Sättigung")]
+    public float surfaceSaturation = 1f;
+
+    [Header("Untergrund-Hintergrund")]
+    [Range(0f, 2f), InspectorName("Helligkeit")]
+    public float undergroundBrightness = 0.8f;
+    [Min(0.01f), InspectorName("Volle Helligkeit ab (Blöcke)")]
+    public float undergroundBrightnessTransitionDepth = 30f;
+
     Transform player;
     MapGenerator map;
     Vector2 frozenCameraDelta;
@@ -64,6 +80,41 @@ public sealed class SurfaceBackgroundController : MonoBehaviour
 
     public float GetLayer3Blend()
         => GetUndergroundBlend(2, layer3FadeDepth);
+
+    public float GetUndergroundBackgroundBrightness(float depthInBlocks)
+    {
+        float surface = Mathf.Clamp(surfaceBrightness, 0f, 2f);
+        float targetBrightness = Mathf.Clamp(undergroundBrightness, 0f, 2f);
+        float blend = Mathf.Clamp01(Mathf.Max(0f, depthInBlocks) /
+            Mathf.Max(0.01f, undergroundBrightnessTransitionDepth));
+        return Mathf.Lerp(surface, targetBrightness, blend);
+    }
+
+    /// <summary>Returns the background brightness at a world-space height.
+    /// The transition starts at the actual terrain surface, so it is shared by
+    /// the surface panorama and every underground continuation.</summary>
+    public float GetBackgroundBrightnessAtWorldY(float worldY)
+    {
+        if (!map) map = FindFirstObjectByType<MapGenerator>();
+        if (!map || !map.Terrain) return GetSurfaceBackgroundBrightness();
+
+        float blockHeight = GetBlockWorldHeight();
+        float surfaceY = map.Terrain.CellToWorld(new Vector3Int(0, 1, 0)).y;
+        float depthInBlocks = Mathf.Max(0f, (surfaceY - worldY) / blockHeight);
+        return GetUndergroundBackgroundBrightness(depthInBlocks);
+    }
+
+    public float GetSurfaceBackgroundBrightness()
+        => Mathf.Clamp(surfaceBrightness, 0f, 2f);
+
+    public float GetBlockWorldHeight()
+    {
+        if (!map) map = FindFirstObjectByType<MapGenerator>();
+        if (!map || !map.Terrain) return 0.5f;
+        float height = map.Terrain.transform.TransformVector(
+            Vector3.up * map.Terrain.layoutGrid.cellSize.y).magnitude;
+        return height > 0f && !float.IsNaN(height) && !float.IsInfinity(height) ? height : 0.5f;
+    }
 
     float GetUndergroundBlend(int layerIndex, float fadeDepth)
     {

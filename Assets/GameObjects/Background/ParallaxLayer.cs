@@ -47,6 +47,7 @@ public sealed class ParallaxLayer : MonoBehaviour
 
     readonly List<SpriteRenderer> renderers = new List<SpriteRenderer>();
     readonly Dictionary<Sprite, Sprite> bottomEdges = new Dictionary<Sprite, Sprite>();
+    MaterialPropertyBlock lightingProperties;
     SurfaceBackgroundController controller;
     GameObject generatedRoot;
 
@@ -153,6 +154,7 @@ public sealed class ParallaxLayer : MonoBehaviour
                     anchor.y + worldHeight * (pivotY - 0.5f), anchor.z);
                 float spriteScale = imageHeight * sprite.pixelsPerUnit / sprite.rect.height;
                 renderer.transform.localScale = new Vector3(spriteScale, spriteScale, 1f);
+                ApplySurfaceLighting(renderer);
                 renderer.enabled = true;
                 float imageBottom = anchor.y - worldHeight * 0.5f;
                 if (extendBottomToCamera && imageBottom > viewBottom - 1f)
@@ -170,6 +172,7 @@ public sealed class ParallaxLayer : MonoBehaviour
                     fill.transform.localScale = new Vector3(
                         width * edge.pixelsPerUnit / edge.rect.width / scale.x,
                         (imageBottom - viewBottom + 1f) * edge.pixelsPerUnit / scale.y, 1f);
+                    ApplySurfaceLighting(fill);
                     fill.enabled = true;
                 }
                 x += width;
@@ -183,13 +186,15 @@ public sealed class ParallaxLayer : MonoBehaviour
             {
                 if (undergroundTile && layer2Blend < 1f)
                     DrawUnderground(undergroundTile, anchor, cycleWidth, worldHeight,
-                        scale, left, right, viewTop, viewBottom, undergroundColor, sortingOrder + 1, ref used);
+                        scale, left, right, viewTop, viewBottom, undergroundColor, sortingOrder - 1,
+                        true, ref used);
                 if (undergroundLayer2Tile && layer2Blend > 0f)
                 {
                     Color layer2Color = undergroundColor;
                     layer2Color.a *= layer2Blend;
                     DrawUnderground(undergroundLayer2Tile, anchor, cycleWidth, worldHeight,
-                        scale, left, right, viewTop, viewBottom, layer2Color, sortingOrder + 2, ref used);
+                        scale, left, right, viewTop, viewBottom, layer2Color, sortingOrder + 2,
+                        false, ref used);
                 }
             }
             if (undergroundLayer3Tile && layer3Blend > 0f)
@@ -197,7 +202,8 @@ public sealed class ParallaxLayer : MonoBehaviour
                 Color layer3Color = undergroundColor;
                 layer3Color.a *= layer3Blend;
                 DrawUnderground(undergroundLayer3Tile, anchor, cycleWidth, worldHeight,
-                    scale, left, right, viewTop, viewBottom, layer3Color, sortingOrder + 3, ref used);
+                    scale, left, right, viewTop, viewBottom, layer3Color, sortingOrder + 3,
+                    false, ref used);
             }
         }
         HideUnused(used);
@@ -205,7 +211,7 @@ public sealed class ParallaxLayer : MonoBehaviour
 
     void DrawUnderground(Sprite sprite, Vector3 anchor, float surfaceWidth, float surfaceHeight,
         Vector3 scale, float left, float right, float viewTop, float viewBottom,
-        Color color, int order, ref int used)
+        Color color, int order, bool useSurfaceAppearance, ref int used)
     {
         if (sprite.rect.width <= 0f || sprite.rect.height <= 0f) return;
 
@@ -245,8 +251,37 @@ public sealed class ParallaxLayer : MonoBehaviour
                 (float)(start + (firstCycle + cycle) * tileWidth + tileWidth * pivotX),
                 top - row * tileHeight - tileHeight * (1f - pivotY), anchor.z);
             renderer.transform.localScale = new Vector3(xScale, yScale, 1f);
+            ApplyUndergroundLighting(renderer, useSurfaceAppearance);
             renderer.enabled = true;
         }
+    }
+
+    void ApplySurfaceLighting(SpriteRenderer renderer)
+    {
+        if (lightingProperties == null) lightingProperties = new MaterialPropertyBlock();
+        Bounds bounds = renderer.bounds;
+        lightingProperties.Clear();
+        lightingProperties.SetFloat("_LightBottomY", bounds.min.y);
+        lightingProperties.SetFloat("_LightTopY", bounds.max.y);
+        lightingProperties.SetFloat("_LightBottom", controller.GetBackgroundBrightnessAtWorldY(bounds.min.y));
+        lightingProperties.SetFloat("_LightTop", controller.GetBackgroundBrightnessAtWorldY(bounds.max.y));
+        lightingProperties.SetFloat("_Contrast", Mathf.Clamp(controller.surfaceContrast, 0f, 2f));
+        lightingProperties.SetFloat("_Saturation", Mathf.Clamp(controller.surfaceSaturation, 0f, 2f));
+        renderer.SetPropertyBlock(lightingProperties);
+    }
+
+    void ApplyUndergroundLighting(SpriteRenderer renderer, bool useSurfaceColorAdjustment)
+    {
+        if (lightingProperties == null) lightingProperties = new MaterialPropertyBlock();
+        Bounds bounds = renderer.bounds;
+        lightingProperties.Clear();
+        lightingProperties.SetFloat("_LightBottomY", bounds.min.y);
+        lightingProperties.SetFloat("_LightTopY", bounds.max.y);
+        lightingProperties.SetFloat("_LightBottom", controller.GetBackgroundBrightnessAtWorldY(bounds.min.y));
+        lightingProperties.SetFloat("_LightTop", controller.GetBackgroundBrightnessAtWorldY(bounds.max.y));
+        lightingProperties.SetFloat("_Contrast", useSurfaceColorAdjustment ? Mathf.Clamp(controller.surfaceContrast, 0f, 2f) : 1f);
+        lightingProperties.SetFloat("_Saturation", useSurfaceColorAdjustment ? Mathf.Clamp(controller.surfaceSaturation, 0f, 2f) : 1f);
+        renderer.SetPropertyBlock(lightingProperties);
     }
 
     Sprite GetBottomEdge(Sprite source)

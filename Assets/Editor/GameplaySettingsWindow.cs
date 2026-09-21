@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 // into a second configuration asset that could drift out of sync.
 public class GameplaySettingsWindow : EditorWindow
 {
-    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Blöcke & Beute", "Debug", "Licht", "Werkbank", "Audio", "Bäume", "Tiere" };
+    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Partikel", "Blöcke & Beute", "Debug", "Licht", "Werkbank", "Audio", "Bäume", "Tiere" };
     [SerializeField] int tab;
     [SerializeField] int selectedBlock;
     [SerializeField] StatsManager stats;
@@ -23,6 +23,7 @@ public class GameplaySettingsWindow : EditorWindow
     [SerializeField] MapGenerator map;
     [SerializeField] MapLighting lighting;
     [SerializeField] OreSparkles oreSparkles;
+    [SerializeField] BlockBreakParticles blockBreakParticles;
     [SerializeField] SurfaceBirds birds;
     [SerializeField] SurfaceTrees trees;
     [SerializeField] SurfaceRabbit rabbit;
@@ -89,6 +90,7 @@ public class GameplaySettingsWindow : EditorWindow
         map = Resolve(map);
         lighting = Resolve(lighting);
         oreSparkles = Resolve(oreSparkles);
+        blockBreakParticles = Resolve(blockBreakParticles);
         birds = Resolve(birds);
         trees = Resolve(trees);
         rabbit = Resolve(rabbit);
@@ -145,7 +147,7 @@ public class GameplaySettingsWindow : EditorWindow
         else if (overrideExists)
             EditorGUILayout.HelpBox(overrideWarning ?? $"JSON-Test-Override vorhanden: Abbaugeschwindigkeit {savedOverride.baseDiggingSpeed:g}{(savedOverride.hasLightingOverride ? " und Lichtwerte" : "")}. Diese Werte haben im Editor/Development Build Vorrang vor den Basiswerten. Verwaltung unter Debug.", overrideWarning == null ? MessageType.Warning : MessageType.Error);
 
-        int nextTab = GUILayout.Toolbar(tab, Tabs, GUILayout.Height(30));
+        int nextTab = DrawTabRows();
         if (nextTab != tab) { tab = nextTab; scroll = Vector2.zero; }
         scroll = EditorGUILayout.BeginScrollView(scroll);
         using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
@@ -155,13 +157,14 @@ public class GameplaySettingsWindow : EditorWindow
                 case 0: DrawPlayer(); break;
                 case 1: DrawEnergy(); break;
                 case 2: DrawMap(); break;
-                case 3: DrawBlocks(); break;
-                case 4: DrawDebug(); break;
-                case 5: DrawLighting(); break;
-                case 6: DrawWorkbench(); break;
-                case 7: DrawAudio(); break;
-                case 8: DrawTrees(); break;
-                case 9: DrawAnimals(); break;
+                case 3: DrawParticles(); break;
+                case 4: DrawBlocks(); break;
+                case 5: DrawDebug(); break;
+                case 6: DrawLighting(); break;
+                case 7: DrawWorkbench(); break;
+                case 8: DrawAudio(); break;
+                case 9: DrawTrees(); break;
+                case 10: DrawAnimals(); break;
             }
         }
         EditorGUILayout.Space(12);
@@ -169,6 +172,23 @@ public class GameplaySettingsWindow : EditorWindow
         EditorGUILayout.LabelField("Änderungen direkt an Asset/Szene · Strg+Z: Undo · Speichern sichert Assets und aktive Szene", EditorStyles.miniLabel);
         if (!string.IsNullOrEmpty(notification)) EditorGUILayout.HelpBox(notification, MessageType.Info);
         if (saveRequested) SaveSettings();
+    }
+
+    int DrawTabRows()
+    {
+        const int tabsPerRow = 6;
+        int selected = tab;
+        for (int first = 0; first < Tabs.Length; first += tabsPerRow)
+        {
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+            {
+                int last = Mathf.Min(first + tabsPerRow, Tabs.Length);
+                for (int index = first; index < last; index++)
+                    if (GUILayout.Toggle(tab == index, Tabs[index], EditorStyles.toolbarButton,
+                        GUILayout.Height(28), GUILayout.ExpandWidth(true))) selected = index;
+            }
+        }
+        return selected;
     }
 
     void DrawTrees()
@@ -284,6 +304,23 @@ public class GameplaySettingsWindow : EditorWindow
         Section("Tier-Landungen", sceneComponents.OfType<AudioManager>().FirstOrDefault(), data =>
         {
             Float(data, "grassLandingOffset", "Zeitversatz (s)", "", -1f, 1f);
+        }, false);
+        Section("Abbausounds", sceneComponents.OfType<AudioManager>().FirstOrDefault(), data =>
+        {
+            VolumeSlider(data, "digSoundVolume", "Lautstärke (%)");
+        }, false);
+        Section("Layer 1 Details", sceneComponents.OfType<FirstLayerAmbience>().FirstOrDefault(), data =>
+        {
+            Float(data, "detailsPerMinute", "Ereignisse pro Minute", "", 0f, 60f);
+        }, false);
+        Section("Höhlen-Tribal-Song", sceneComponents.OfType<SecondLayerAmbience>().FirstOrDefault(), data =>
+        {
+            Float(data, "tribalSongLayer2MeanMinutes", "Ø Minuten in Layer 2", "", .01f, 120f);
+            Float(data, "tribalSongLayer3MeanMinutes", "Ø Minuten in Layer 3", "", .01f, 240f);
+        }, false);
+        Section("Geisterflüstern", sceneComponents.OfType<SecondLayerAmbience>().FirstOrDefault(), data =>
+        {
+            Float(data, "ghostWhisperMeanMinutes", "Ø Minuten", "", .01f, 120f);
         }, false);
         Section("Vogelgezwitscher", birds, data =>
         {
@@ -451,12 +488,13 @@ public class GameplaySettingsWindow : EditorWindow
         Section("Verbrauch pro Sekunde", energy, data =>
         {
             Float(data, "idleConsumtion", "Grundverbrauch", "Fällt immer an, solange Energie vorhanden ist.", 0);
+            Float(data, "consumptionMultiplier", "Verbrauchsmultiplikator", "", 0);
             Float(data, "moveConsumption", "Zusatz beim Bewegen", "Wird zum Grundverbrauch addiert, wenn Bewegungseingaben anliegen.", 0);
             Float(data, "diggingConsumption", "Zusatz beim Abbauen", "Wird zum Grundverbrauch addiert, solange der Miner abbaut.", 0);
         });
         if (energy && BaseStats)
         {
-            float total = energy.idleConsumtion + energy.moveConsumption + energy.diggingConsumption;
+            float total = (energy.idleConsumtion + energy.moveConsumption + energy.diggingConsumption) * energy.consumptionMultiplier;
             EditorGUILayout.HelpBox($"Bewegen + Abbauen: {total:g} Energie/s. Theoretische Laufzeit mit vollem Vorrat: {(total > 0 ? (BaseStats.maxEnergy / total).ToString("0.0") + " s" : "unbegrenzt")}.", MessageType.Info);
         }
         station = Picker("Aufladestation", station);
@@ -511,18 +549,6 @@ public class GameplaySettingsWindow : EditorWindow
             Integer(data, "oreTransitionDepth", "Erz-Übergang (Blöcke)", "", 1, 10000);
             EditorGUILayout.CurveField(data.FindProperty("oreVeinSizeCurve"), Color.green,
                 new Rect(0f, 0f, 1f, 1f), new GUIContent("Adergröße im Erz-Übergang"));
-        }, false);
-        oreSparkles = Picker("Erzfunkeln", oreSparkles);
-        Section("Erzfunkeln", oreSparkles, data =>
-        {
-            EditorGUILayout.PropertyField(data.FindProperty("sparkleMaterial"), new GUIContent("Material"));
-            Float(data, "intervalPerBlock", "Intervall pro Erzblock (s)", "", 0.1f);
-            Float(data, "darkIntervalMultiplier", "Intervall im Dunkeln (×)", "", 1f);
-            Float(data, "lifetime", "Lebensdauer (s)", "", 0.1f);
-            Float(data, "size", "Größe", "", 0.02f, 1f);
-            Float(data, "opacity", "Deckkraft", "", 0f, 1f);
-            Float(data, "oreColorStrength", "Erzfarb-Anteil", "", 0f, 1f);
-            Float(data, "brightness", "Helligkeit", "", 1f, 8f);
         }, false);
         if (!map) return;
         Section("Layers", map, data =>
@@ -579,6 +605,30 @@ public class GameplaySettingsWindow : EditorWindow
             }
         }
         return Registry.blocks[selectedBlock];
+    }
+
+    void DrawParticles()
+    {
+        blockBreakParticles = Picker("Blockabbau-Partikel", blockBreakParticles);
+        Section("Blockabbau-Partikel", blockBreakParticles, data =>
+        {
+            EditorGUILayout.IntSlider(data.FindProperty("fragmentsPerBlock"), 0, 24, new GUIContent("Splitter bei Zerstörung"));
+            EditorGUILayout.IntSlider(data.FindProperty("dustPerBlock"), 0, 16, new GUIContent("Staub bei Zerstörung"));
+            EditorGUILayout.IntSlider(data.FindProperty("fragmentsPerHit"), 0, 12, new GUIContent("Splitter pro Treffer"));
+            EditorGUILayout.IntSlider(data.FindProperty("dustPerHit"), 0, 8, new GUIContent("Staub pro Treffer"));
+        }, false);
+        oreSparkles = Picker("Erzfunkeln", oreSparkles);
+        Section("Erzfunkeln", oreSparkles, data =>
+        {
+            EditorGUILayout.PropertyField(data.FindProperty("sparkleMaterial"), new GUIContent("Material"));
+            Float(data, "intervalPerBlock", "Intervall pro Erzblock (s)", "", 0.1f);
+            Float(data, "darkIntervalMultiplier", "Intervall bei 0 % Licht (×)", "", 1f);
+            Float(data, "lifetime", "Lebensdauer (s)", "", 0.1f);
+            Float(data, "size", "Größe", "", 0.02f, 1f);
+            Float(data, "opacity", "Deckkraft", "", 0f, 1f);
+            Float(data, "oreColorStrength", "Erzfarb-Anteil", "", 0f, 1f);
+            Float(data, "brightness", "Helligkeit", "", 1f, 8f);
+        }, false);
     }
 
     static int BlockPickerOrder(Block block)

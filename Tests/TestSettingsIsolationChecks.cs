@@ -1,6 +1,7 @@
 // Run in Play mode. Leaves the requested 10x test factor saved.
 using System;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -21,8 +22,9 @@ public static class TestSettingsIsolationChecks
         var content=p.transform.Find("Card/WindowViewport/WindowContent");
         Check(!content.Find("MakeDefaults").gameObject.activeSelf,"Promotion button visible in test tab.");
         var input=content.Find("TestMultiplier").GetComponent<TMP_InputField>();
+        Check(input.GetComponentsInChildren<UnityEngine.UI.Graphic>(true).Where(g=>g && g!=input.targetGraphic).All(g=>!g.raycastTarget),"Input child intercepts clicks.");
         input.text="10";
-        content.Find("TestSave").GetComponent<Button>().onClick.Invoke();
+        input.onEndEdit.Invoke(input.text);
         Check(GameplayTestSettings.DiggingMultiplier==10 && !GameplayTestSettings.HasUnsavedChanges,"Test save failed.");
         Check(Mathf.Approximately(stats.MiningSpeed,basis*stats.MiningSpeedMultiplier*10),"Effective speed incorrect.");
         Check(GameplaySettings.BaseDiggingSpeed==basis,"Test factor changed base speed.");

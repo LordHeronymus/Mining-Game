@@ -117,8 +117,11 @@ public sealed class OreSparkles : MonoBehaviour
         if (camera && camera.orthographic) Tick(camera, Time.time);
     }
 
-    bool IsLit(Vector3Int cell) => !lighting || !lighting.isActiveAndEnabled ||
-        !lighting.lightingEnabled || lighting.GetBrightness(cell) > .03f;
+    float SparkleLightFactor(Vector3Int cell)
+    {
+        if (!lighting || !lighting.isActiveAndEnabled || !lighting.lightingEnabled) return 1f;
+        return Mathf.Clamp01(lighting.GetBrightness(cell) / .7f);
+    }
 
     bool CanSparkle(Vector3Int cell) => IsOre(map.GetBlockAt(cell));
 
@@ -136,7 +139,7 @@ public sealed class OreSparkles : MonoBehaviour
     }
 
     float IntervalFor(Vector3Int cell) => Mathf.Max(lifetime + .15f, intervalPerBlock) *
-        (IsLit(cell) ? 1f : Mathf.Max(1f, darkIntervalMultiplier));
+        Mathf.Lerp(Mathf.Max(1f, darkIntervalMultiplier), 1f, SparkleLightFactor(cell));
 
     public static bool IsOre(Block block) => block && (block.HasOreOverlays || block.id == BlockType.IronOre ||
         block.id == BlockType.CopperOre || block.id == BlockType.SilverOre || block.id == BlockType.GoldOre ||

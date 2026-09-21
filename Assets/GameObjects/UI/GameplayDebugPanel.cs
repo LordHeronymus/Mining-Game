@@ -30,8 +30,13 @@ public class GameplayDebugPanel : MonoBehaviour
         SetVisible(false);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         gameObject.AddComponent<GameplayDebugWindow>();
+        DisableInputChildRaycasts(diggingSpeedInput);
         diggingSpeedInput.onEndEdit.AddListener(ApplyInput);
-        foreach (var input in lightInputs) input.onEndEdit.AddListener(ApplyInput);
+        foreach (var input in lightInputs)
+        {
+            DisableInputChildRaycasts(input);
+            input.onEndEdit.AddListener(ApplyInput);
+        }
         lightingButton.onClick.AddListener(ToggleLighting);
         saveButton.gameObject.SetActive(false);
         defaultsButton.onClick.AddListener(RestoreDefaults);
@@ -45,6 +50,13 @@ public class GameplayDebugPanel : MonoBehaviour
 #else
         gameObject.SetActive(false);
 #endif
+    }
+
+    static void DisableInputChildRaycasts(TMP_InputField input)
+    {
+        if (!input) return;
+        foreach (var graphic in input.GetComponentsInChildren<Graphic>(true))
+            if (graphic != input.targetGraphic) graphic.raycastTarget = false;
     }
 
     void Start()
@@ -67,6 +79,7 @@ public class GameplayDebugPanel : MonoBehaviour
         else
         {
             Refresh();
+            GetComponent<GameplayDebugWindow>()?.RefreshSoundSettings();
             transform.SetAsLastSibling();
             SetVisible(true);
         }

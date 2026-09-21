@@ -28,6 +28,20 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     readonly Dictionary<GameplayTestMode, Toggle> modeToggles = new Dictionary<GameplayTestMode, Toggle>();
     readonly RectTransform[] dayNightButtons = new RectTransform[3];
     readonly Image[] dayNightBackgrounds = new Image[3];
+    static readonly (string label, AudioVolumeSetting setting)[] AudioSettings =
+    {
+        ("Gesamt-Ambience (%)", AudioVolumeSetting.Ambience),
+        ("Oberfläche (%)", AudioVolumeSetting.Surface),
+        ("Untergrund (%)", AudioVolumeSetting.Underground),
+        ("Höhle (%)", AudioVolumeSetting.Cave),
+        ("Abbausounds (%)", AudioVolumeSetting.DigSounds),
+    };
+    readonly TMP_InputField[] audioInputs = new TMP_InputField[AudioSettings.Length];
+    FirstLayerAmbience detailAmbience;
+    TMP_Dropdown detailClipDropdown;
+    TMP_InputField detailVolumeInput;
+    Button detailPreviewButton;
+    int detailClipCount;
     public bool IsTestTab { get; private set; }
 
     void Awake()
@@ -92,6 +106,8 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         AttachTooltip("MakeDefaults", "Übernimmt beide Sektionen nach dem Play-Stopp dauerhaft in die Gameplay Settings.");
         CreateLightingInfo();
         CreateItemGifting();
+        CreateAudioSettings();
+        CreateLayer1DetailSettings();
         foreach (var entry in items) if (entry.Value.parent == content) gameplayItems.Add(entry.Key);
         CreateTabs();
         window.sizeDelta += new Vector2(0,56);
@@ -153,12 +169,134 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         giftAmount.onValueChanged = new TMP_InputField.OnChangeEvent();
         giftAmount.contentType = TMP_InputField.ContentType.IntegerNumber;
         giftAmount.characterLimit = 10;
+        DisableInputChildRaycasts(giftAmount);
         giftAmount.SetTextWithoutNotify(lastGiftAmount);
         giftAmount.onValueChanged.AddListener(value => lastGiftAmount = value);
         giftButton = CloneItem("Defaults", "GiftAdd", content, "Hinzufügen").GetComponent<Button>();
         giftButton.onClick = new Button.ButtonClickedEvent();
         giftButton.onClick.AddListener(GiveItem);
         RefreshGifting();
+    }
+
+    void CreateAudioSettings()
+    {
+        CloneItem("Section", "AudioSection", content, "SOUND");
+        for (int i = 0; i < AudioSettings.Length; i++)
+        {
+            CloneItem("SpeedLabel", "AudioLabel" + i, content, AudioSettings[i].label);
+            var input = CloneItem("DiggingSpeed", "AudioInput" + i, content).GetComponent<TMP_InputField>();
+            input.onEndEdit = new TMP_InputField.SubmitEvent();
+            input.onValueChanged = new TMP_InputField.OnChangeEvent();
+            input.contentType = TMP_InputField.ContentType.DecimalNumber;
+            DisableInputChildRaycasts(input);
+            int index = i;
+            input.onEndEdit.AddListener(_ => ApplyAudioInput(index));
+            audioInputs[i] = input;
+        }
+        RefreshAudioSettings();
+    }
+
+    void ApplyAudioInput(int index)
+    {
+        var audio = AudioManager.Instance;
+        if (!audio || !float.TryParse(audioInputs[index].text.Replace(',', '.'), NumberStyles.Float,
+            CultureInfo.InvariantCulture, out float percent) || percent < 0f || percent > 100f)
+        {
+            items["Status"].GetComponent<TextMeshProUGUI>().text = "Soundlautstärke: bitte 0 bis 100 eingeben.";
+            RefreshAudioSettings();
+            return;
+        }
+        audio.SetVolume(AudioSettings[index].setting, percent / 100f);
+        items["Status"].GetComponent<TextMeshProUGUI>().text = "";
+        RefreshAudioSettings();
+    }
+
+    void RefreshAudioSettings()
+    {
+        var audio = AudioManager.Instance;
+        for (int i = 0; i < audioInputs.Length; i++)
+        {
+            audioInputs[i].interactable = audio;
+            if (audio) audioInputs[i].SetTextWithoutNotify((audio.GetVolume(AudioSettings[i].setting) * 100f)
+                .ToString("0.##", CultureInfo.InvariantCulture));
+        }
+    }
+
+    public void RefreshSoundSettings()
+    {
+        RefreshAudioSettings();
+        RefreshDetailSettings();
+    }
+
+    void CreateLayer1DetailSettings()
+    {
+        CloneItem("Section", "DetailSection", content, "LAYER 1 DETAILS");
+        CloneItem("SpeedLabel", "DetailClipLabel", content, "Detailclip");
+        detailClipDropdown = CloneItem("GiftItem", "DetailClipDropdown", content).GetComponent<TMP_Dropdown>();
+        detailClipDropdown.onValueChanged = new TMP_Dropdown.DropdownEvent();
+        detailClipDropdown.onValueChanged.AddListener(_ => RefreshDetailSettings());
+        CloneItem("SpeedLabel", "DetailVolumeLabel", content, "Lautstärke (%)");
+        detailVolumeInput = CloneItem("DiggingSpeed", "DetailVolumeInput", content).GetComponent<TMP_InputField>();
+        detailVolumeInput.onEndEdit = new TMP_InputField.SubmitEvent();
+        detailVolumeInput.onValueChanged = new TMP_InputField.OnChangeEvent();
+        detailVolumeInput.contentType = TMP_InputField.ContentType.DecimalNumber;
+        DisableInputChildRaycasts(detailVolumeInput);
+        detailVolumeInput.onEndEdit.AddListener(_ => ApplyDetailVolume());
+        detailPreviewButton = CloneItem("Defaults", "DetailPreview", content, "Testen").GetComponent<Button>();
+        detailPreviewButton.onClick = new Button.ButtonClickedEvent();
+        detailPreviewButton.onClick.AddListener(PreviewDetailClip);
+        RefreshDetailSettings();
+    }
+
+    void RefreshDetailSettings()
+    {
+        var ambience = UnityEngine.Object.FindFirstObjectByType<FirstLayerAmbience>();
+        int count = ambience ? ambience.DetailClipCount : 0;
+        if (ambience != detailAmbience || count != detailClipCount)
+        {
+            int selected = detailClipDropdown ? detailClipDropdown.value : 0;
+            detailAmbience = ambience;
+            detailClipCount = count;
+            detailClipDropdown.ClearOptions();
+            if (ambience)
+            {
+                var options = new List<TMP_Dropdown.OptionData>();
+                for (int i = 0; i < count; i++)
+                {
+                    var clip = ambience.GetDetailClip(i);
+                    options.Add(new TMP_Dropdown.OptionData(clip ? clip.name : "Fehlender Clip"));
+                }
+                detailClipDropdown.AddOptions(options);
+                detailClipDropdown.SetValueWithoutNotify(Mathf.Clamp(selected, 0, Mathf.Max(0, count - 1)));
+            }
+        }
+
+        bool available = detailAmbience && detailClipCount > 0;
+        detailClipDropdown.interactable = available;
+        detailVolumeInput.interactable = available;
+        detailPreviewButton.interactable = available;
+        if (available) detailVolumeInput.SetTextWithoutNotify((detailAmbience
+            .GetDetailVolumeMultiplier(detailClipDropdown.value) * 100f).ToString("0.##", CultureInfo.InvariantCulture));
+    }
+
+    bool ApplyDetailVolume()
+    {
+        if (!detailAmbience || !float.TryParse(detailVolumeInput.text.Replace(',', '.'), NumberStyles.Float,
+            CultureInfo.InvariantCulture, out float percent) || percent < 0f || percent > 100f)
+        {
+            items["Status"].GetComponent<TextMeshProUGUI>().text = "Detail-Lautstärke: bitte 0 bis 100 eingeben.";
+            RefreshDetailSettings();
+            return false;
+        }
+        detailAmbience.SetDetailVolumeMultiplier(detailClipDropdown.value, percent / 100f);
+        items["Status"].GetComponent<TextMeshProUGUI>().text = "";
+        RefreshDetailSettings();
+        return true;
+    }
+
+    void PreviewDetailClip()
+    {
+        if (ApplyDetailVolume()) detailAmbience.PlayDetailPreview(detailClipDropdown.value);
     }
 
     bool CanGiveItem(out int amount)
@@ -189,7 +327,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         giftItem.interactable = available;
         giftAmount.interactable = available;
         giftButton.interactable = CanGiveItem(out _);
-        if (!GameplayDebugPanel.IsOpen || IsTestTab) giftItem.Hide();
+        if ((!GameplayDebugPanel.IsOpen || IsTestTab) && giftItem.IsExpanded) giftItem.Hide();
     }
 
     void CreateTabs()
@@ -201,6 +339,8 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         CloneItem("Section", "TestSection", content, "TESTEINSTELLUNGEN");
         CloneItem("SpeedLabel", "TestLabel", content, "Abbau-Testfaktor (×)");
         testMultiplier = CloneItem("DiggingSpeed", "TestMultiplier", content).GetComponent<TMP_InputField>();
+        testMultiplier.contentType = TMP_InputField.ContentType.DecimalNumber;
+        DisableInputChildRaycasts(testMultiplier);
         testMultiplier.onEndEdit.AddListener(_ => ApplyTestInput());
         testStatus = CloneItem("Status", "TestStatus", content, "").GetComponent<TextMeshProUGUI>();
         CreateModeToggle("TestActive", "Testmodus aktiv", GameplayTestMode.Active, null);
@@ -307,7 +447,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
 
     void SetTab(bool tests)
     {
-        if (giftItem) giftItem.Hide();
+        if (giftItem && giftItem.IsExpanded) giftItem.Hide();
         HideTooltip(); IsTestTab = tests;
         foreach (var name in gameplayItems) items[name].gameObject.SetActive(!tests);
         foreach (var name in testItems) items[name].gameObject.SetActive(tests);
@@ -317,6 +457,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         items["GameplayTab"].GetComponent<Image>().color = tests ? new Color(.2f,.25f,.32f) : new Color(.55f,.35f,.12f);
         items["TestsTab"].GetComponent<Image>().color = tests ? new Color(.55f,.35f,.12f) : new Color(.2f,.25f,.32f);
         RefreshTest(); Layout(); scroll.verticalNormalizedPosition = 1;
+        if (!tests) { RefreshAudioSettings(); RefreshDetailSettings(); }
     }
 
     void RefreshTest()
@@ -334,6 +475,12 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         for (int i = 0; i < dayNightBackgrounds.Length; i++)
             dayNightBackgrounds[i].color = (int)selected == i
                 ? new Color(.55f, .35f, .12f) : new Color(.2f, .25f, .32f);
+    }
+
+    static void DisableInputChildRaycasts(TMP_InputField input)
+    {
+        foreach (var graphic in input.GetComponentsInChildren<Graphic>(true))
+            if (graphic != input.targetGraphic) graphic.raycastTarget = false;
     }
 
     public bool ApplyTestInput()
@@ -525,7 +672,23 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         Place("GiftItem",x,190,col-270,50);
         Place("GiftAmount",x+col-260,190,90,50);
         Place("GiftAdd",x+col-160,190,160,50);
-        float lx = columns ? x+col+32 : x, ly = columns ? 12 : 280;
+        float soundY = 280;
+        Place("AudioSection",x,soundY,col,36);
+        for (int i = 0; i < AudioSettings.Length; i++)
+        {
+            float y = soundY + 48 + i * 58;
+            Place("AudioLabel" + i,x,y,col-150,48);
+            Place("AudioInput" + i,x+col-140,y,140,48);
+        }
+        float detailY = soundY + 48 + AudioSettings.Length * 58 + 20;
+        Place("DetailSection",x,detailY,col,36);
+        Place("DetailClipLabel",x,detailY+48,col,40);
+        Place("DetailClipDropdown",x,detailY+92,col,50);
+        Place("DetailVolumeLabel",x,detailY+154,col-300,48);
+        Place("DetailVolumeInput",x+col-290,detailY+154,140,48);
+        Place("DetailPreview",x+col-140,detailY+154,140,48);
+        float detailEnd = detailY + 212;
+        float lx = columns ? x+col+32 : x, ly = columns ? 12 : detailEnd + 20;
         Place("LightingSection",lx,ly,col-170,36);
         Place("LightingInfo",lx+78,ly+6,27,27);
         Place("LightingEnabled",lx+col-150,ly,150,42);
@@ -535,7 +698,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             Place("LightInput"+i,lx+col-150,ly+56+i*58,150,48);
         }
         items["LightingHint"].gameObject.SetActive(false);
-        float footer = ly+420;
+        float footer = Mathf.Max(ly+420, detailEnd + 20);
 #if UNITY_EDITOR
         Place("KeepMap",x,footer,inner,64);
         footer += 80;

@@ -1,11 +1,14 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.Serialization;
+using System.Collections;
 using System.Collections.Generic;
 
 [RequireComponent(typeof(OreOverlayAppearance), typeof(DirtSurfaceAppearance))]
 public class MapGenerator : MonoBehaviour
 {
+    const int InitialGenerationRows = 128;
+    const int StreamingRowsPerFrame = 16;
     [Header("Map Size")]
     public int mapWidth = 100;
     public int mapHeight = 1000;
@@ -55,14 +58,62 @@ public class MapGenerator : MonoBehaviour
     public int GeneratedWidth => isGenerated ? generatedWidth : mapWidth;
     public int GeneratedHeight => isGenerated ? generatedHeight : mapHeight;
     public event System.Action Generated;
+    public event System.Action GenerationCompleted;
+    public bool IsGenerationStreaming { get; private set; }
+    Coroutine generationRoutine;
+    MapGenerationSnapshot pendingGeneration;
+    int pendingGenerationRow;
+
+    public sealed class MapGenerationSnapshot
+    {
+        public readonly int seed;
+        public readonly int width;
+        public readonly int height;
+        public readonly int offsetX;
+        public readonly TileBase[] terrainTiles;
+        public readonly TileBase[] oreTiles;
+
+        public MapGenerationSnapshot(int seed, int width, int height, int offsetX,
+            TileBase[] terrainTiles, TileBase[] oreTiles)
+        {
+            this.seed = seed;
+            this.width = width;
+            this.height = height;
+            this.offsetX = offsetX;
+            this.terrainTiles = terrainTiles;
+            this.oreTiles = oreTiles;
+        }
+    }
     SurfaceTrees surfaceTrees;
+    readonly List<Bounds> protectedSurfaceObjectBounds = new();
     public bool IsSurfaceCellProtected(Vector3Int cell)
     {
         if (!Application.isPlaying || cell.y != 0) return false;
         if (!surfaceTrees) surfaceTrees = FindFirstObjectByType<SurfaceTrees>();
-        return surfaceTrees && surfaceTrees.Protects(cell);
+        if (surfaceTrees && surfaceTrees.Protects(cell)) return true;
+
+        if (protectedSurfaceObjectBounds.Count == 0) CacheProtectedSurfaceObjectBounds();
+        float x = Terrain.GetCellCenterWorld(cell).x;
+        foreach (var bounds in protectedSurfaceObjectBounds)
+            if (x >= bounds.min.x && x <= bounds.max.x) return true;
+        return false;
+    }
+
+    void CacheProtectedSurfaceObjectBounds()
+    {
+        AddProtectedSurfaceObjectBounds<ShopBuilding>();
+        AddProtectedSurfaceObjectBounds<WorkbenchBuilding>();
+        AddProtectedSurfaceObjectBounds<EnergyMonolyth>();
+    }
+
+    void AddProtectedSurfaceObjectBounds<T>() where T : MonoBehaviour
+    {
+        foreach (var surfaceObject in FindObjectsByType<T>(FindObjectsSortMode.None))
+            foreach (var renderer in surfaceObject.GetComponentsInChildren<SpriteRenderer>(true))
+                if (renderer.bounds.size.x > 0f) protectedSurfaceObjectBounds.Add(renderer.bounds);
     }
 #if UNITY_EDITOR
+    public static event System.Action<MapGenerator, MapGenerationSnapshot> InitialMapPrepared;
     public static event System.Action<MapGenerator> InitialMapGenerated;
 #endif
 
@@ -126,7 +177,10 @@ public class MapGenerator : MonoBehaviour
 
     void Start()
     {
-        GenerateMap();
+        if (Application.isPlaying)
+            generationRoutine = StartCoroutine(GenerateMapInPlay());
+        else
+            GenerateMap();
     }
 
     void OnEnable() => Tilemap.tilemapTileChanged += TerrainChanged;
@@ -258,7 +312,74 @@ public class MapGenerator : MonoBehaviour
 
     public void GenerateMap(int? seedOverride = null)
     {
-        int usedSeed = seedOverride ?? ChooseGenerationSeed();
+        CancelStreamingGeneration();
+        var data = PrepareGeneratedMap(seedOverride ?? ChooseGenerationSeed());
+#if UNITY_EDITOR
+        InitialMapPrepared?.Invoke(this, data);
+#endif
+        BeginTileApplication();
+        ApplyTileRows(data, 0, data.height);
+        tilemap.CompressBounds();
+        oreOverlay.CompressBounds();
+        ActivateGeneratedMap(data);
+        FinishGeneration();
+    }
+
+    IEnumerator GenerateMapInPlay()
+    {
+        var data = PrepareGeneratedMap(ChooseGenerationSeed());
+#if UNITY_EDITOR
+        InitialMapPrepared?.Invoke(this, data);
+#endif
+        BeginTileApplication();
+        int initialRows = Mathf.Min(InitialGenerationRows, data.height);
+        ApplyTileRows(data, 0, initialRows);
+
+        IsGenerationStreaming = initialRows < data.height;
+        pendingGeneration = data;
+        pendingGenerationRow = initialRows;
+        ActivateGeneratedMap(data);
+
+        if (!IsGenerationStreaming)
+        {
+            FinishGeneration();
+            yield break;
+        }
+
+        yield return null;
+        while (IsGenerationStreaming && pendingGeneration == data && pendingGenerationRow < data.height)
+        {
+            int rows = Mathf.Min(StreamingRowsPerFrame, data.height - pendingGenerationRow);
+            ApplyTileRows(data, pendingGenerationRow, rows);
+            pendingGenerationRow += rows;
+            yield return null;
+        }
+
+        if (IsGenerationStreaming && pendingGeneration == data)
+            FinishGeneration();
+    }
+
+    public void CompleteStreamingGeneration()
+    {
+        if (!IsGenerationStreaming || pendingGeneration == null) return;
+        if (generationRoutine != null) StopCoroutine(generationRoutine);
+        generationRoutine = null;
+        ApplyTileRows(pendingGeneration, pendingGenerationRow, pendingGeneration.height - pendingGenerationRow);
+        pendingGenerationRow = pendingGeneration.height;
+        FinishGeneration();
+    }
+
+    void CancelStreamingGeneration()
+    {
+        if (generationRoutine != null) StopCoroutine(generationRoutine);
+        generationRoutine = null;
+        pendingGeneration = null;
+        pendingGenerationRow = 0;
+        IsGenerationStreaming = false;
+    }
+
+    MapGenerationSnapshot PrepareGeneratedMap(int usedSeed)
+    {
         MigrateOreDensitySettings();
         if (!registry || mapWidth <= 0 || mapHeight <= 0)
             throw new System.InvalidOperationException("Map generation requires a registry and positive dimensions.");
@@ -321,36 +442,77 @@ public class MapGenerator : MonoBehaviour
             (previousVariants, currentVariants) = (currentVariants, previousVariants);
             System.Array.Clear(currentBlocks, 0, currentBlocks.Length);
         }
-        var bounds = new BoundsInt(offsetX, 1 - mapHeight, 0, mapWidth, mapHeight, 1);
+
+        return new MapGenerationSnapshot(usedSeed, mapWidth, mapHeight, offsetX, terrainTiles, oreTiles);
+    }
+
+    void BeginTileApplication()
+    {
         isGenerated = false;
         oreOverlay.ClearAllTiles();
         tilemap.ClearAllTiles();
-        tilemap.SetTilesBlock(bounds, terrainTiles);
-        oreOverlay.SetTilesBlock(bounds, oreTiles);
-        for (int y = 0; y < mapHeight; y++)
-            for (int x = 0; x < mapWidth; x++)
+    }
+
+    void ApplyTileRows(MapGenerationSnapshot data, int firstRow, int rowCount)
+    {
+        if (rowCount <= 0) return;
+        TileBase[] terrain = data.terrainTiles;
+        TileBase[] ores = data.oreTiles;
+        BoundsInt bounds;
+        if (firstRow == 0 && rowCount == data.height)
+        {
+            bounds = new BoundsInt(data.offsetX, 1 - data.height, 0, data.width, data.height, 1);
+        }
+        else
+        {
+            int count = checked(data.width * rowCount);
+            int sourceOffset = checked((data.height - firstRow - rowCount) * data.width);
+            terrain = new TileBase[count];
+            ores = new TileBase[count];
+            System.Array.Copy(data.terrainTiles, sourceOffset, terrain, 0, count);
+            System.Array.Copy(data.oreTiles, sourceOffset, ores, 0, count);
+            bounds = new BoundsInt(data.offsetX, 1 - firstRow - rowCount, 0, data.width, rowCount, 1);
+        }
+        tilemap.SetTilesBlock(bounds, terrain);
+        oreOverlay.SetTilesBlock(bounds, ores);
+        for (int y = firstRow; y < firstRow + rowCount; y++)
+            for (int x = 0; x < data.width; x++)
             {
-                if (!oreTiles[(mapHeight - 1 - y) * mapWidth + x]) continue;
-                var cell = new Vector3Int(x + offsetX, -y, 0);
-                int turns = (int)(OreVeins.Hash(usedSeed, x, y, 0x9abcu) % 4);
+                var ore = data.oreTiles[(data.height - 1 - y) * data.width + x] as OreTile;
+                if (!ore) continue;
+                var cell = new Vector3Int(x + data.offsetX, -y, 0);
+                int turns = (int)(OreVeins.Hash(data.seed, x, y, 0x9abcu) % 4);
                 oreOverlay.SetTileFlags(cell, TileFlags.None);
-                var ore = (OreTile)oreTiles[(mapHeight - 1 - y) * mapWidth + x];
                 oreOverlay.SetTransformMatrix(cell, Matrix4x4.Rotate(Quaternion.Euler(0, 0, turns * 90)) * ore.transform);
             }
+    }
 
-        tilemap.CompressBounds();
-        oreOverlay.CompressBounds();
-        generatedSeed = usedSeed;
-        generatedWidth = mapWidth;
-        generatedHeight = mapHeight;
+    void ActivateGeneratedMap(MapGenerationSnapshot data)
+    {
+        generatedSeed = data.seed;
+        generatedWidth = data.width;
+        generatedHeight = data.height;
         isGenerated = true;
         SyncGrassFromTerrain();
-        GetComponent<DirtSurfaceAppearance>()?.Apply();
+        GetComponent<DirtSurfaceAppearance>()?.Apply(!IsGenerationStreaming);
 
+        Generated?.Invoke();
+    }
+
+    void FinishGeneration()
+    {
+        bool streamed = IsGenerationStreaming;
+        tilemap.CompressBounds();
+        oreOverlay.CompressBounds();
+        IsGenerationStreaming = false;
+        generationRoutine = null;
+        pendingGeneration = null;
+        pendingGenerationRow = 0;
+        if (streamed) GetComponent<DirtSurfaceAppearance>()?.Apply();
 #if UNITY_EDITOR
         InitialMapGenerated?.Invoke(this);
 #endif
-        Generated?.Invoke();
+        GenerationCompleted?.Invoke();
     }
 
 #if UNITY_EDITOR

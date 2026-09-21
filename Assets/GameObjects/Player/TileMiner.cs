@@ -29,6 +29,7 @@ public class TileMiner : MonoBehaviour
     private bool treeCursorActive;
 
     public static Action<Vector2, int> OnBlockMined;
+    public static Action<Vector2> OnBlockHit;
     public static Action<Vector2, int, ItemSO> OnMiningPoints;
 
     private bool mining;
@@ -146,6 +147,7 @@ public class TileMiner : MonoBehaviour
             }
 
             AudioManager.Instance.Play(hit, true);
+            OnBlockHit?.Invoke(tilemap.GetCellCenterWorld(targetCell));
             nextMiningSoundTime = Time.time + miningSoundInterval;
         }
     }

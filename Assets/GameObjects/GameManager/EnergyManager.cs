@@ -11,6 +11,7 @@ public class EnergyManager : MonoBehaviour
     public TextMeshProUGUI energyText;
 
     public float idleConsumtion = 1f;
+    [Min(0f)] public float consumptionMultiplier = 1f;
     public float moveConsumption = 2f;
     public float diggingConsumption = 3f;
 
@@ -30,6 +31,7 @@ public class EnergyManager : MonoBehaviour
         float consumption = idleConsumtion;
         if (playerMovement.IsMoving) consumption += moveConsumption;
         if (tileMiner.IsMingin) consumption += diggingConsumption;
+        consumption *= consumptionMultiplier;
 
         if (!GameplayTestSettings.NoEnergyConsume)
             energy = Mathf.Max(energy - consumption * Time.deltaTime, 0f);

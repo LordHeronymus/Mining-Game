@@ -5,8 +5,8 @@ public sealed class SurfaceAmbience : MonoBehaviour
 {
     [SerializeField] AudioClip clip;
     [SerializeField, Range(0f, 1f)] float volume = .5f;
-    [SerializeField] float fadeOutY = -40f;
-    [SerializeField, Min(.01f)] float fadeSeconds = 2f;
+    [SerializeField, Min(0)] int fadeStartDepth = 12;
+    [SerializeField, Min(0)] int fadeEndDepth = 20;
     [SerializeField, Min(.01f)] float crossfadeSeconds = 3f;
 
     readonly AudioSource[] sources = new AudioSource[2];
@@ -14,6 +14,7 @@ public sealed class SurfaceAmbience : MonoBehaviour
     bool running, transitioning;
     double nextStart, transitionStart;
     float gain;
+    MapGenerator map;
     float Crossfade => clip ? Mathf.Min(crossfadeSeconds, clip.length * .25f) : .01f;
 
     void Awake()
@@ -31,8 +32,9 @@ public sealed class SurfaceAmbience : MonoBehaviour
 
     void Update()
     {
-        float target = clip && transform.position.y > fadeOutY ? 1f : 0f;
-        gain = Mathf.MoveTowards(gain, target, Time.unscaledDeltaTime / Mathf.Max(.01f, fadeSeconds));
+        float target = clip ? 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(
+            fadeStartDepth, Mathf.Max(fadeStartDepth + 1, fadeEndDepth), GetDepth())) : 0f;
+        gain = target;
         if (gain <= 0f) { StopPlayback(); return; }
         double now = AudioSettings.dspTime;
         if (!running)
@@ -62,6 +64,12 @@ public sealed class SurfaceAmbience : MonoBehaviour
             nextStart = transitionStart + clip.length - Crossfade;
             sources[1 - current].PlayScheduled(nextStart);
         }
+    }
+
+    int GetDepth()
+    {
+        if (!map) map = FindFirstObjectByType<MapGenerator>();
+        return map && map.Terrain ? Mathf.Max(0, -map.Terrain.WorldToCell(transform.position).y) : 0;
     }
 
     void StopPlayback()

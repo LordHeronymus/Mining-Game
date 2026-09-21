@@ -22,6 +22,7 @@ public sealed class SkyController : MonoBehaviour
     Sprite edgeSource, nightEdge;
     readonly Dictionary<SpriteRenderer, SpriteRenderer> companions = new Dictionary<SpriteRenderer, SpriteRenderer>();
     readonly List<SpriteRenderer> stale = new List<SpriteRenderer>();
+    MaterialPropertyBlock skyProperties;
 
     void OnEnable()
     {
@@ -144,6 +145,9 @@ public sealed class SkyController : MonoBehaviour
                 night.transform.position = new Vector3(panorama.center.x, panorama.min.y, day.transform.position.z);
             }
             night.sharedMaterial = day.sharedMaterial;
+            if (skyProperties == null) skyProperties = new MaterialPropertyBlock();
+            day.GetPropertyBlock(skyProperties);
+            night.SetPropertyBlock(skyProperties);
             night.sortingLayerID = day.sortingLayerID;
             night.sortingOrder = day.sortingOrder + 1;
             night.gameObject.layer = day.gameObject.layer;
