@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 801ff0317a01f6541b9b45f9473f4378, type: 3}
   m_Name: Eisen_05_rich
   m_EditorClassIdentifier: 
-  m_Sprite: {fileID: 21300000, guid: 6564d0746e8988f47af6ba29e2c72b80, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 463f5a78ada43a844a998e5f01e56828, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1

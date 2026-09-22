@@ -78,9 +78,9 @@ public static class OreOverlayChecks
         {
             int total=0;
             for(int i=0;i<10000;i++)total+=OreTile.DropCount(r,(i+.5f)/10000);
-            Check(total == (r==OreRichness.Small?5000:r==OreRichness.Medium?10000:15000),"Incorrect richness drop expectation");
+            Check(total == (r==OreRichness.Small?10000:r==OreRichness.Medium?15000:20000),"Incorrect richness drop expectation");
         }
-        Check(OreTile.DropCount(OreRichness.Small,.5f)==0 && OreTile.DropCount(OreRichness.Rich,.5f)==1,"50% boundary incorrect");
+        Check(OreTile.DropCount(OreRichness.Medium,.5f)==1,"50% boundary incorrect");
 
         var previous = SceneManager.GetActiveScene();
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
@@ -118,7 +118,7 @@ public static class OreOverlayChecks
                 Check(Mathf.Abs(angle/90-Mathf.Round(angle/90))<.001f,"Rotation is not a quarter-turn");
                 Check(Mathf.Abs(m.MultiplyVector(Vector3.right).magnitude-1)<.001f,"Overlay scale differs from stone");
             }
-            Check(oreCount>100 && oreArt.Count==7 && baseArt.Count>=stone.variants.Length && angles.Count==4,"Generation missed art or rotation variants");
+            Check(oreCount>100 && oreArt.Count==7 && baseArt.Count>=stone.variants.Length && angles.Count==1 && angles.Contains(0),"Generation missed art variants or rotated ores");
             for(int i=0;i<100;i++)UnityEngine.Random.value.ToString();
             map.GenerateMap();
             var terrainAfter=map.Terrain.GetTilesBlock(bounds);var oreAfter=map.OreOverlay.GetTilesBlock(bounds);
@@ -206,7 +206,7 @@ public static class OreOverlayChecks
                 Check(shop.CanSell(oreBlock.itemDrop,3) && shop.GetSellValue(oreBlock.itemDrop,3)==9,"Mined coal cannot be sold for 3 per unit");
                 UnityEngine.Object.DestroyImmediate(shopObject);
             }
-            Check(Math.Abs(totals[0]-500)<65 && totals[1]==1000 && Math.Abs(totals[2]-1500)<65,"Inventory drop distribution incorrect");
+            Check(totals[0]==1000 && Math.Abs(totals[1]-1500)<65 && totals[2]==2000,"Inventory drop distribution incorrect");
             return new { success=true, oreType=oreType.ToString(), oreCount, sprites=oreArt.Count, stones=baseArt.Count, rotations=angles.Count,
                 minedPerTier=1000, smallDrops=totals[0], mediumDrops=totals[1], richDrops=totals[2],
                 checks="transparent imports, vein gradient, deterministic graphics, legacy ores, inventory, atomic removal, persistence, shared lighting" };

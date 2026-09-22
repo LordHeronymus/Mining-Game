@@ -13,6 +13,8 @@ public sealed class TerrainColliderChunks : MonoBehaviour
     Tilemap[,] chunks;
     BoundsInt sourceBounds;
     PlayerMovement player;
+    TerrainCollisionShape shapes;
+    UniformStoneAppearance appearance;
     int loadedCenterX = -1;
     int loadedCenterY = -1;
 
@@ -21,6 +23,7 @@ public sealed class TerrainColliderChunks : MonoBehaviour
         map = GetComponent<MapGenerator>();
         sourceCollider = GetComponent<TilemapCollider2D>();
         sourceComposite = GetComponent<CompositeCollider2D>();
+        appearance=GetComponent<UniformStoneAppearance>();
     }
 
     void OnEnable()
@@ -36,7 +39,9 @@ public sealed class TerrainColliderChunks : MonoBehaviour
     void Update()
     {
         if (!Application.isPlaying || chunks == null) return;
-        EnsureChunksAroundPlayer();
+        bool masked=appearance&&appearance.useTerrainMasks;
+        if(masked!=(shapes!=null)||(shapes!=null&&!shapes.Matches)){Rebuild();return;}
+        if (!EnsureChunksAroundPlayer()) BuildOneNeighborChunk();
     }
 
     void OnDisable()
@@ -66,6 +71,7 @@ public sealed class TerrainColliderChunks : MonoBehaviour
         ClearChunks();
 
         var source = map.Terrain;
+        if(appearance&&appearance.useTerrainMasks)shapes=new TerrainCollisionShape(appearance,source);
         sourceBounds = new BoundsInt(-map.GeneratedWidth / 2, 1 - map.GeneratedHeight, 0,
             map.GeneratedWidth, map.GeneratedHeight, 1);
         int columns = Mathf.CeilToInt(sourceBounds.size.x / (float)ChunkSize);
@@ -80,7 +86,7 @@ public sealed class TerrainColliderChunks : MonoBehaviour
         if (sourceComposite) sourceComposite.enabled = false;
     }
 
-    void EnsureChunksAroundPlayer()
+    bool EnsureChunksAroundPlayer()
     {
         if (!player) player = FindFirstObjectByType<PlayerMovement>();
 
@@ -92,17 +98,28 @@ public sealed class TerrainColliderChunks : MonoBehaviour
 
         int centerX = Mathf.Clamp((cell.x - sourceBounds.xMin) / ChunkSize, 0, chunks.GetLength(0) - 1);
         int centerY = Mathf.Clamp((cell.y - sourceBounds.yMin) / ChunkSize, 0, chunks.GetLength(1) - 1);
-        if (centerX == loadedCenterX && centerY == loadedCenterY) return;
+        if (centerX == loadedCenterX && centerY == loadedCenterY) return false;
 
         loadedCenterX = centerX;
         loadedCenterY = centerY;
-        int minX = Mathf.Max(0, centerX - ChunkRadius);
-        int maxX = Mathf.Min(chunks.GetLength(0) - 1, centerX + ChunkRadius);
-        int minY = Mathf.Max(0, centerY - ChunkRadius);
-        int maxY = Mathf.Min(chunks.GetLength(1) - 1, centerY + ChunkRadius);
+        EnsureChunk(centerX, centerY);
+        return true;
+    }
+
+    void BuildOneNeighborChunk()
+    {
+        if (loadedCenterX < 0 || loadedCenterY < 0) return;
+        int minX = Mathf.Max(0, loadedCenterX - ChunkRadius);
+        int maxX = Mathf.Min(chunks.GetLength(0) - 1, loadedCenterX + ChunkRadius);
+        int minY = Mathf.Max(0, loadedCenterY - ChunkRadius);
+        int maxY = Mathf.Min(chunks.GetLength(1) - 1, loadedCenterY + ChunkRadius);
         for (int y = minY; y <= maxY; y++)
         for (int x = minX; x <= maxX; x++)
-            EnsureChunk(x, y);
+            if (!chunks[x, y])
+            {
+                EnsureChunk(x, y);
+                return;
+            }
     }
 
     void EnsureChunk(int x, int y)
@@ -147,30 +164,49 @@ public sealed class TerrainColliderChunks : MonoBehaviour
         collider.extrusionFactor = sourceCollider.extrusionFactor;
         collider.maximumTileChangeCount = 256;
 
-        var area = new BoundsInt(left, bottom, 0, width, height, 1);
-        tilemap.SetTilesBlock(area, source.GetTilesBlock(area));
+        PopulateChunk(tilemap);
+    }
+
+    void PopulateChunk(Tilemap chunk)
+    {
+        var area=sourceBounds;
+        // Resolve the chunk bounds from the owning grid, never from object names.
+        int cx=0,cy=0;
+        for(int y=0;y<chunks.GetLength(1);y++)for(int x=0;x<chunks.GetLength(0);x++)if(chunks[x,y]==chunk){cx=x;cy=y;}
+        int left=sourceBounds.xMin+cx*ChunkSize,bottom=sourceBounds.yMin+cy*ChunkSize;
+        area=new BoundsInt(left,bottom,0,Mathf.Min(ChunkSize,sourceBounds.xMax-left),Mathf.Min(ChunkSize,sourceBounds.yMax-bottom),1);
+        var tiles=map.Terrain.GetTilesBlock(area);
+        var paths=new System.Collections.Generic.List<Vector2[]>();
+        for(int i=0;i<tiles.Length;i++)
+        {
+            var cell=new Vector3Int(left+i%area.size.x,bottom+i/area.size.x,0);
+            var outline=shapes?.Get(cell,tiles[i]);if(outline==null)continue;
+            var path=new Vector2[outline.Length];
+            for(int j=0;j<path.Length;j++)path[j]=chunk.transform.InverseTransformPoint(map.Terrain.CellToWorld(cell)+Vector3.Scale(outline[j],map.Terrain.layoutGrid.cellSize));
+            paths.Add(path);tiles[i]=null;
+        }
+        var polygon=chunk.GetComponent<PolygonCollider2D>();
+        if(!polygon){polygon=chunk.gameObject.AddComponent<PolygonCollider2D>();polygon.compositeOperation=Collider2D.CompositeOperation.Merge;polygon.sharedMaterial=sourceCollider.sharedMaterial;polygon.isTrigger=sourceCollider.isTrigger;}
+        polygon.pathCount=paths.Count;for(int i=0;i<paths.Count;i++)polygon.SetPath(i,paths[i]);
+        chunk.SetTilesBlock(area,tiles);chunk.GetComponent<TilemapCollider2D>().ProcessTilemapChanges();
     }
 
     void OnTilesChanged(Tilemap source, Tilemap.SyncTile[] changes)
     {
-        if (chunks == null || source != map.Terrain || changes == null) return;
-        foreach (var change in changes)
+        if(chunks==null||source!=map.Terrain||changes==null)return;
+        var dirty=new System.Collections.Generic.HashSet<Tilemap>();
+        foreach(var change in changes)for(int dy=-1;dy<=1;dy++)for(int dx=-1;dx<=1;dx++)
         {
-            var cell = change.position;
-            int x = (cell.x - sourceBounds.xMin) / ChunkSize;
-            int y = (cell.y - sourceBounds.yMin) / ChunkSize;
-            if (cell.x < sourceBounds.xMin || cell.y < sourceBounds.yMin ||
-                x < 0 || y < 0 || x >= chunks.GetLength(0) || y >= chunks.GetLength(1)) continue;
-            var chunk = chunks[x, y];
-            if (!chunk) continue;
-            var tile = source.GetTile(cell);
-            if (chunk.GetTile(cell) != tile) chunk.SetTile(cell, tile);
+            var cell=change.position+new Vector3Int(dx,dy,0);
+            if(!sourceBounds.Contains(cell))continue;
+            var chunk=chunks[(cell.x-sourceBounds.xMin)/ChunkSize,(cell.y-sourceBounds.yMin)/ChunkSize];
+            if(chunk)dirty.Add(chunk);
         }
+        foreach(var chunk in dirty)PopulateChunk(chunk);
     }
-
     void ClearChunks()
     {
-        if (chunks == null) return;
+        if (chunks == null) {shapes?.Dispose();shapes=null;return;}
         foreach (var chunk in chunks)
             if (chunk)
             {
@@ -180,5 +216,8 @@ public sealed class TerrainColliderChunks : MonoBehaviour
         chunks = null;
         loadedCenterX = -1;
         loadedCenterY = -1;
+        shapes?.Dispose();shapes=null;
     }
 }
+
+

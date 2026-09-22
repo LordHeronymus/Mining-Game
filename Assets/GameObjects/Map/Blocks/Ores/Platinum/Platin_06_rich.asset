@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 801ff0317a01f6541b9b45f9473f4378, type: 3}
   m_Name: Platin_06_rich
   m_EditorClassIdentifier: 
-  m_Sprite: {fileID: 21300000, guid: 033a81d7d8b29de4fae0ccca42611a08, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 12fce90e3ecef8c4a825603279002ea2, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1

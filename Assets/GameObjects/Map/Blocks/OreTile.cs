@@ -14,21 +14,21 @@ public sealed class OreTile : Tile
     {
         switch (richness)
         {
-            case OreRichness.Small: return roll < .5f ? 1 : 0;
-            case OreRichness.Medium: return 1;
-            case OreRichness.Rich: return roll < .5f ? 2 : 1;
+            case OreRichness.Small: return 1;
+            case OreRichness.Medium: return roll < .5f ? 2 : 1;
+            case OreRichness.Rich: return 2;
             default: throw new System.ArgumentOutOfRangeException(nameof(richness));
         }
     }
 
-    // Expected drop count in half-item units: 0.5, 1 and 1.5 items.
+    // Expected drop count in half-item units: 1, 1.5 and 2 items.
     public static int ExpectedDropHalfUnits(OreRichness richness)
     {
         switch (richness)
         {
-            case OreRichness.Small: return 1;
-            case OreRichness.Medium: return 2;
-            case OreRichness.Rich: return 3;
+            case OreRichness.Small: return 2;
+            case OreRichness.Medium: return 3;
+            case OreRichness.Rich: return 4;
             default: throw new System.ArgumentOutOfRangeException(nameof(richness));
         }
     }

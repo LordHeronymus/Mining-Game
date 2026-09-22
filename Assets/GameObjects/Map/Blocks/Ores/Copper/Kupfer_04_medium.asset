@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 801ff0317a01f6541b9b45f9473f4378, type: 3}
   m_Name: Kupfer_04_medium
   m_EditorClassIdentifier: 
-  m_Sprite: {fileID: 21300000, guid: bfe1c5f69c1abc944adc341ddfbe8fa9, type: 3}
+  m_Sprite: {fileID: 21300000, guid: a28aebed569c8f14fa1a09e948018fcf, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1

@@ -36,7 +36,7 @@ public class BlockRegistry : ScriptableObject
         => _idToBlock != null && _idToBlock.TryGetValue(id, out var b) ? b : null;
 
     public Block FromTile(TileBase tile)
-        => tile is OreTile ore ? ore.block :
+        => tile is StoneTestTile testStone ? testStone.block : tile is OreTile ore ? ore.block :
             tile && _tileToBlock != null && _tileToBlock.TryGetValue(tile, out var b) ? b : null;
 
     public TileBase GetRandomVariant(Block block)

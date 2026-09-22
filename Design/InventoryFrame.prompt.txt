@@ -1,0 +1,5 @@
+Generated with built-in image_gen, using Design/InventoryConcept_01_Grid.png as edit target.
+
+Edit target: the selected inventory concept. Extract its exact outer carved wooden frame, metal corner plates and centered raised title plaque as a reusable EMPTY game UI panel asset. Keep original full image canvas 1672x941 aspect ratio and same frame placement/size. Remove ALL UI content: title text, X button, tabs, all item grid cells, all item icons and quantity badges, footer and sorting button. Entire inside of frame must be one continuous smooth dark cocoa brown subtle gradient with NO divisions or lines. Raised top plaque blank wood. Outside the outer frame and title plaque must be genuinely transparent alpha, absolutely no landscape, no shadow background rectangle, no checkerboard baked in. Preserve beautiful detailed timber, metal corners and original proportions. This is just empty decorative panel skin for Unity UI. No lettering, no icons.
+
+Asset: Assets/UI/Inventory/InventoryFrame.png

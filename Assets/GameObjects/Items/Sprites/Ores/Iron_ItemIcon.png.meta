@@ -1,13 +1,10 @@
 fileFormatVersion: 2
-guid: eae50201e35353a4bb13d9c450fbc89a
+guid: aee6a79a558077a43b6bf9a8ee837b16
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -635062716973652319
-    second: Iron Ore_0
-  - first:
-      213: -4715271034120432018
-    second: Iron Ore_1
+      213: -392437846086216689
+    second: Iron_ItemIcon_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -49,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 0
   alignment: 0
@@ -116,45 +113,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Iron Ore_0
+      name: Iron_ItemIcon
       rect:
         serializedVersion: 2
-        x: 32
-        y: 21
-        width: 461
-        height: 464
+        x: 85
+        y: 132
+        width: 1105
+        height: 973
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1a6e0b8d2ddcf27f0800000000000000
-      internalID: -635062716973652319
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Iron Ore_1
-      rect:
-        serializedVersion: 2
-        x: 489
-        y: 66
-        width: 8
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e66109f1afdff8eb0800000000000000
-      internalID: -4715271034120432018
+      spriteID: f049c93bbd7cd8af0800000000000000
+      internalID: -392437846086216689
       vertices: []
       indices: 
       edges: []
@@ -173,8 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Iron Ore_0: -635062716973652319
-      Iron Ore_1: -4715271034120432018
+      Iron_ItemIcon: -392437846086216689
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

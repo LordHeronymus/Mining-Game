@@ -106,7 +106,38 @@ public sealed class MapLighting : MonoBehaviour
     static float Valid(float value, float fallback, float min)
         => float.IsNaN(value) || float.IsInfinity(value) ? fallback : Mathf.Clamp(value, min, 1f);
 
-    void RequestRebuild() => rebuild = true;
+    bool preparedForStreamingGeneration;
+
+    void RequestRebuild()
+    {
+        if (preparedForStreamingGeneration)
+        {
+            preparedForStreamingGeneration = false;
+            return;
+        }
+        rebuild = true;
+    }
+
+    // Uses the already generated tile data, so the darkness mask is complete before
+    // the visible Tilemap is streamed into the scene.
+    public void PrepareForStreamingGeneration(MapGenerator.MapGenerationSnapshot snapshot)
+    {
+        if (!lightingEnabled || snapshot == null) return;
+        if (!map) map = GetComponent<MapGenerator>();
+        if (!tiles) tiles = GetComponent<Tilemap>();
+        Initialize(snapshot.width, snapshot.height, snapshot.terrainTiles);
+        if (field == null) return;
+        while (field.HasPendingWork) field.Process(16384);
+        if (textureDirty)
+        {
+            texture.SetPixels32(pixels);
+            texture.Apply(false, false);
+            textureDirty = false;
+        }
+        overlay.SetActive(true);
+        UpdateHeadlamp();
+        preparedForStreamingGeneration = true;
+    }
 
     public void NotifyTileChanged(Vector3Int cell)
     {
@@ -115,7 +146,8 @@ public sealed class MapLighting : MonoBehaviour
 
     void TilesChanged(Tilemap source, Tilemap.SyncTile[] changes)
     {
-        if (source != tiles || field == null || rebuild || changes == null) return;
+        if (source != tiles || field == null || rebuild || changes == null ||
+            !map || !map.IsGenerated || map.IsGenerationStreaming) return;
         foreach (var change in changes) changed.Add(change.position);
     }
 
@@ -169,9 +201,17 @@ public sealed class MapLighting : MonoBehaviour
 
     void Initialize()
     {
+        int mapWidth = map.GeneratedWidth;
+        int mapHeight = map.GeneratedHeight;
+        var allTiles = tiles.GetTilesBlock(new BoundsInt(-mapWidth / 2, 1 - mapHeight, 0, mapWidth, mapHeight, 1));
+        Initialize(mapWidth, mapHeight, allTiles);
+    }
+
+    void Initialize(int mapWidth, int mapHeight, TileBase[] allTiles)
+    {
         ReleaseResources();
-        width = map.mapWidth;
-        height = map.mapHeight;
+        width = mapWidth;
+        height = mapHeight;
         if (width <= 0 || height <= 0 || width > SystemInfo.maxTextureSize || height > SystemInfo.maxTextureSize)
         {
             UnityEngine.Debug.LogError("Map lighting: map dimensions exceed the supported texture size.", this);
@@ -185,7 +225,12 @@ public sealed class MapLighting : MonoBehaviour
             enabled = false;
             return;
         }
-        var allTiles = tiles.GetTilesBlock(new BoundsInt(-width / 2, 1 - height, 0, width, height, 1));
+        if (allTiles == null || allTiles.Length != width * height)
+        {
+            UnityEngine.Debug.LogError("Map lighting: generated tile data is incomplete.", this);
+            enabled = false;
+            return;
+        }
         var solid = new bool[width * height];
         pixels = new Color32[solid.Length];
         byte dark = (byte)Mathf.RoundToInt(255f * (1f - ambientBrightness));

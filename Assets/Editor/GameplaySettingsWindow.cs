@@ -528,6 +528,21 @@ public class GameplaySettingsWindow : EditorWindow
             EditorGUILayout.Slider(data.FindProperty("grassYOffset"), -.5f, .5f,
                 new GUIContent("Gras Y-Versatz (Welteinheiten)"));
         }, false);
+        Section("Blockränder", map ? map.GetComponent<UniformStoneAppearance>() : null, data =>
+        {
+            EditorGUILayout.Slider(data.FindProperty("edgeDepth"),0f,2f,new GUIContent("Ausfransungstiefe (×)"));
+            EditorGUILayout.Slider(data.FindProperty("edgeIrregularity"),0f,2f,new GUIContent("Unregelmäßigkeit (×)"));
+            EditorGUILayout.Slider(data.FindProperty("edgeRounding"),0f,2f,new GUIContent("Eckenrundung (×)"));
+        }, false);
+        Section("Wandkrümel", map ? map.GetComponent<UniformStoneAppearance>() : null, data =>
+        {
+            EditorGUILayout.Slider(data.FindProperty("rubbleAmount"),0f,8f,new GUIContent("Menge pro Blockkante"));
+            EditorGUILayout.Slider(data.FindProperty("rubbleMinSize"),.02f,.6f,new GUIContent("Min. Größe (Kacheln)"));
+            EditorGUILayout.Slider(data.FindProperty("rubbleMaxSize"),.02f,.6f,new GUIContent("Max. Größe (Kacheln)"));
+            var min=data.FindProperty("rubbleMinSize");var max=data.FindProperty("rubbleMaxSize");
+            if(max.floatValue<min.floatValue)max.floatValue=min.floatValue;
+            EditorGUILayout.Slider(data.FindProperty("rubbleProtrusionPercent"),0f,100f,new GUIContent("Überstand (%)"));
+        }, false);
         Section("Erzverteilung", map, data =>
         {
             EditorGUILayout.CurveField(data.FindProperty("oreDensityCurve"), Color.cyan,

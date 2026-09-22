@@ -1,19 +1,31 @@
 fileFormatVersion: 2
-guid: b102bc43024130341ab9b5de60bfe971
+guid: 73ac4a7e9477a6f45916794897906227
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4046863110663203442
-    second: Silver Ore_0
+      213: 4269060138340661380
+    second: Silver_ItemIcon_0
   - first:
-      213: -8799746502898206915
-    second: Silver Ore_1
+      213: 2853055199059031365
+    second: Silver_ItemIcon_1
   - first:
-      213: -7431800982949311350
-    second: Silver Ore_2
+      213: -5792402770960523898
+    second: Silver_ItemIcon_2
   - first:
-      213: -344318926169120866
-    second: Silver Ore_3
+      213: 4700645258738132097
+    second: Silver_ItemIcon_3
+  - first:
+      213: 7721190484409202479
+    second: Silver_ItemIcon_4
+  - first:
+      213: -2771377730095759076
+    second: Silver_ItemIcon_5
+  - first:
+      213: -2293407911182349492
+    second: Silver_ItemIcon_6
+  - first:
+      213: 6625102311893538219
+    second: Silver_ItemIcon_7
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -55,7 +67,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 0
   alignment: 0
@@ -122,89 +134,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Silver Ore_0
+      name: Silver_ItemIcon
       rect:
         serializedVersion: 2
-        x: 0
-        y: 16
-        width: 487
-        height: 480
+        x: 88
+        y: 128
+        width: 1106
+        height: 948
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 27a66b5de88592830800000000000000
-      internalID: 4046863110663203442
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Silver Ore_1
-      rect:
-        serializedVersion: 2
-        x: 486
-        y: 384
-        width: 7
-        height: 10
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: d37344dbd2501e580800000000000000
-      internalID: -8799746502898206915
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Silver Ore_2
-      rect:
-        serializedVersion: 2
-        x: 489
-        y: 66
-        width: 8
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: a8c48e1a160fcd890800000000000000
-      internalID: -7431800982949311350
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Silver Ore_3
-      rect:
-        serializedVersion: 2
-        x: 84
-        y: 6
-        width: 10
-        height: 13
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e9fde3cc2cbb83bf0800000000000000
-      internalID: -344318926169120866
+      spriteID: 488339ec39fbe3b30800000000000000
+      internalID: 4269060138340661380
       vertices: []
       indices: 
       edges: []
@@ -223,10 +169,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Silver Ore_0: 4046863110663203442
-      Silver Ore_1: -8799746502898206915
-      Silver Ore_2: -7431800982949311350
-      Silver Ore_3: -344318926169120866
+      Silver_ItemIcon: 4269060138340661380
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

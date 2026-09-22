@@ -1,16 +1,19 @@
 fileFormatVersion: 2
-guid: d1b367754e3f46b409d425cd071cd25d
+guid: ece8438e5ce3a0d4c92d90033d725ad4
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2751329911699802574
-    second: Platinum Ore_0
+      213: -3125485211914961693
+    second: Platinum_ItemIcon_0
   - first:
-      213: -127441210650130962
-    second: Platinum Ore_1
+      213: -42774262976053185
+    second: Platinum_ItemIcon_1
   - first:
-      213: 3779797104939913155
-    second: Platinum Ore_2
+      213: -7345277524491847189
+    second: Platinum_ItemIcon_2
+  - first:
+      213: 6991756516993407314
+    second: Platinum_ItemIcon_3
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -52,7 +55,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 0
   alignment: 0
@@ -119,67 +122,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Platinum Ore_0
+      name: Platinum_ItemIcon
       rect:
         serializedVersion: 2
-        x: 36
-        y: 26
-        width: 12
-        height: 11
+        x: 63
+        y: 101
+        width: 1142
+        height: 999
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 236f931c50051d9d0800000000000000
-      internalID: -2751329911699802574
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Platinum Ore_1
-      rect:
-        serializedVersion: 2
-        x: 50
-        y: 20
-        width: 454
-        height: 455
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: ee50475e4ec3b3ef0800000000000000
-      internalID: -127441210650130962
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Platinum Ore_2
-      rect:
-        serializedVersion: 2
-        x: 138
-        y: 0
-        width: 28
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 3cf4ef2d079847430800000000000000
-      internalID: 3779797104939913155
+      spriteID: 3ec721162cb00a4d0800000000000000
+      internalID: -3125485211914961693
       vertices: []
       indices: 
       edges: []
@@ -198,9 +157,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Platinum Ore_0: -2751329911699802574
-      Platinum Ore_1: -127441210650130962
-      Platinum Ore_2: 3779797104939913155
+      Platinum_ItemIcon: -3125485211914961693
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

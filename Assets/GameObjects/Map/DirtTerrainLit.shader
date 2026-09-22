@@ -2,6 +2,17 @@ Shader "Mining Game/Dirt Terrain Lit"
 {
     Properties
     {
+        _TestStoneTex("Test Stone", 2D) = "white" {}
+        _SurfaceDirtTex("Surface Dirt", 2D) = "white" {}
+        _LayerOneTex("Layer One Rock", 2D) = "white" {}
+        _LayerThreeTex("Layer Three Deep Stone", 2D) = "white" {}
+        _TestOccupancy("Test Occupancy", 2D) = "white" {}
+        _FrayedInset("Frayed edge inset", Float) = 0
+        _UseTerrainMasks("Use terrain masks", Float) = 0
+        _TerrainEdgeTuning("Terrain edge tuning", Vector) = (1,1,1,0)
+        _TerrainEdgeMasks("Terrain edge masks", 2DArray) = "" {}
+        _UniformStone("Uniform Stone", Vector) = (0,0,0,0)
+        _TestBounds("Test Bounds", Vector) = (0,0,0,0)
         _StoneTex("Transition Stone", 2D) = "white" {}
         _DirtTex("Transition Dirt", 2D) = "white" {}
         _DirtMask("Surface Mask", 2D) = "white" {}
@@ -88,12 +99,18 @@ Shader "Mining Game/Dirt Terrain Lit"
             // NOTE: Do not ifdef the properties here as SRP batcher can not handle different layouts.
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
+                float4 _UniformStone;
+                float _FrayedInset;
+                float _UseTerrainMasks;
+                float4 _TerrainEdgeTuning;
+                float4 _TestBounds;
                 float4 _DirtSurface;
                 float4 _DirtMaskBounds;
                 float4 _DeepSurface;
                 float4 _DeepMaskBounds;
                 float4 _VariantCounts;
             CBUFFER_END
+            #define TERRAIN_FRAYED_TERRAIN 1
             #include "Assets/GameObjects/Map/DirtSurfaceBlend.hlsl"
 
             #if USE_SHAPE_LIGHT_TYPE_0
@@ -128,8 +145,8 @@ Shader "Mining Game/Dirt Terrain Lit"
                 o.uv = v.uv;
                 o.lightingUV = half2(ComputeScreenPos(o.positionCS / o.positionCS.w).xy);
 
-                o.dirtData = float3(v.positionOS.xy, v.color.a);
-                if (abs(v.color.a - 0.5) < 0.01) v.color.a = 1;
+                o.dirtData = float3(_UniformStone.x>0 ? TransformObjectToWorld(v.positionOS).xy : v.positionOS.xy, v.color.a);
+                if (abs(v.color.a - 0.5) < 0.01 || abs(v.color.a - 0.25) < 0.01) v.color.a = 1;
                 o.color = v.color * _Color * unity_SpriteColor;
                 return o;
             }
@@ -201,12 +218,18 @@ Shader "Mining Game/Dirt Terrain Lit"
             // NOTE: Do not ifdef the properties here as SRP batcher can not handle different layouts.
             CBUFFER_START( UnityPerMaterial )
                 half4 _Color;
+                float4 _UniformStone;
+                float _FrayedInset;
+                float _UseTerrainMasks;
+                float4 _TerrainEdgeTuning;
+                float4 _TestBounds;
                 float4 _DirtSurface;
                 float4 _DirtMaskBounds;
                 float4 _DeepSurface;
                 float4 _DeepMaskBounds;
                 float4 _VariantCounts;
             CBUFFER_END
+            #define TERRAIN_FRAYED_TERRAIN 1
             #include "Assets/GameObjects/Map/DirtSurfaceBlend.hlsl"
 
             Varyings NormalsRenderingVertex(Attributes attributes)
@@ -220,8 +243,8 @@ Shader "Mining Game/Dirt Terrain Lit"
                 attributes.positionOS = UnityFlipSprite(attributes.positionOS, unity_SpriteProps.xy);
                 o.positionCS = TransformObjectToHClip(attributes.positionOS);
                 o.uv = attributes.uv;
-                o.dirtData = float3(attributes.positionOS.xy, attributes.color.a);
-                if (abs(attributes.color.a - 0.5) < 0.01) attributes.color.a = 1;
+                o.dirtData = float3(_UniformStone.x>0 ? TransformObjectToWorld(attributes.positionOS).xy : attributes.positionOS.xy, attributes.color.a);
+                if (abs(attributes.color.a - 0.5) < 0.01 || abs(attributes.color.a - 0.25) < 0.01) attributes.color.a = 1;
                 o.color = attributes.color * _Color * unity_SpriteColor;
                 o.normalWS = -GetViewForwardDir();
                 o.tangentWS = TransformObjectToWorldDir(attributes.tangent.xyz);
@@ -289,12 +312,18 @@ Shader "Mining Game/Dirt Terrain Lit"
             // NOTE: Do not ifdef the properties here as SRP batcher can not handle different layouts.
             CBUFFER_START( UnityPerMaterial )
                 half4 _Color;
+                float4 _UniformStone;
+                float _FrayedInset;
+                float _UseTerrainMasks;
+                float4 _TerrainEdgeTuning;
+                float4 _TestBounds;
                 float4 _DirtSurface;
                 float4 _DirtMaskBounds;
                 float4 _DeepSurface;
                 float4 _DeepMaskBounds;
                 float4 _VariantCounts;
             CBUFFER_END
+            #define TERRAIN_FRAYED_TERRAIN 1
             #include "Assets/GameObjects/Map/DirtSurfaceBlend.hlsl"
 
             Varyings UnlitVertex(Attributes attributes)
@@ -311,8 +340,8 @@ Shader "Mining Game/Dirt Terrain Lit"
                 o.positionWS = TransformObjectToWorld(attributes.positionOS);
                 #endif
                 o.uv = attributes.uv;
-                o.dirtData = float3(attributes.positionOS.xy, attributes.color.a);
-                if (abs(attributes.color.a - 0.5) < 0.01) attributes.color.a = 1;
+                o.dirtData = float3(_UniformStone.x>0 ? TransformObjectToWorld(attributes.positionOS).xy : attributes.positionOS.xy, attributes.color.a);
+                if (abs(attributes.color.a - 0.5) < 0.01 || abs(attributes.color.a - 0.25) < 0.01) attributes.color.a = 1;
                 o.color = attributes.color * _Color * unity_SpriteColor;
                 return o;
             }
@@ -342,3 +371,5 @@ Shader "Mining Game/Dirt Terrain Lit"
         }
     }
 }
+
+

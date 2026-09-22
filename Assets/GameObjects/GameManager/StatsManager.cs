@@ -60,7 +60,9 @@ public class StatsManager : MonoBehaviour
     void Reset()
     {
         Points = 0;
-        Money = 0;
+        Money = 100;
+        HUDPoints.Instance?.UpdatePoints(Money, PointType.Money);
+        OnMoneyChanged?.Invoke(Money);
 
         MoveSpeed = baseStats.moveSpeed;
         JumpForce = baseStats.jumpForce;

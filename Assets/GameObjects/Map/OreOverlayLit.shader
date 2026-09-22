@@ -5,7 +5,8 @@ Shader "Mining Game/Ore Overlay Lit"
     {
         _OreScale("Ore Size", Range(0.5, 3)) = 1
         _ReflectionStrength("Reflection Strength", Range(0, 6)) = 2.5
-        _ShimmerStrength("Shimmer Strength", Range(0, 3)) = 1.4
+        _ShimmerStrength("Shimmer Strength", Range(0, 3)) = 0.12
+        _EmbeddingStrength("Rock Embedding", Range(0, 1)) = 1
         _ShimmerRadius("Shimmer Radius", Range(0.005, 0.15)) = 0.045
         _MainTex("Diffuse", 2D) = "white" {}
         _MaskTex("Mask", 2D) = "white" {}
@@ -59,9 +60,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 half4   color       : COLOR;
                 float2  uv          : TEXCOORD0;
                 half2   lightingUV  : TEXCOORD1;
-                #if defined(DEBUG_DISPLAY)
                 float3  positionWS  : TEXCOORD2;
-                #endif
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -82,6 +81,9 @@ Shader "Mining Game/Ore Overlay Lit"
                 float _ReflectionStrength;
                 float _ShimmerStrength;
                 float _ShimmerRadius;
+                float _EmbeddingStrength;
+                float4 _UniformStone;
+                float4 _TestBounds;
             CBUFFER_END
 
             #if USE_SHAPE_LIGHT_TYPE_0
@@ -110,9 +112,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 SetUpSpriteInstanceProperties();
                 v.positionOS = UnityFlipSprite(v.positionOS, unity_SpriteProps.xy);
                 o.positionCS = TransformObjectToHClip(v.positionOS);
-                #if defined(DEBUG_DISPLAY)
                 o.positionWS = TransformObjectToWorld(v.positionOS);
-                #endif
                 o.uv = (v.uv - 0.5) / max(_OreScale, 0.01) + 0.5;
                 o.lightingUV = half2(ComputeScreenPos(o.positionCS / o.positionCS.w).xy);
 
@@ -121,6 +121,8 @@ Shader "Mining Game/Ore Overlay Lit"
             }
 
             #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/CombinedShapeLightShared.hlsl"
+
+            #include "TerrainMaterialSample.hlsl"
 
             half3 RichColor(half3 color)
             {
@@ -143,25 +145,37 @@ Shader "Mining Game/Ore Overlay Lit"
                 SurfaceData2D surfaceData;
                 InputData2D inputData;
 
-                // Blur premultiplied artwork into transparent space around the ore.
-                // Both the surface and this halo go through the same URP lighting.
+                // Alpha neighbourhood supplies contact depth and irregular stone lips.
+                float2 cell = (i.positionWS.xy - _UniformStone.zw) / max(_UniformStone.x,.001);
+                float chips = .5 + .25*sin(cell.x*37 + sin(cell.y*29)) + .25*sin(cell.y*43 + cell.x*17);
+                float radius = lerp(.018,.052,smoothstep(.35,.8,chips)) / max(_OreScale,.5);
+                half inner = main.a, outer = main.a;
                 half4 shimmer = 0;
                 [unroll] for (int n = 0; n < 8; n++)
                 {
                     float angle = n * (TWO_PI / 8);
-                    float2 offset = float2(cos(angle), sin(angle)) * _ShimmerRadius;
-                    shimmer += ShimmerSample(i.uv + offset) * 0.04h;
-                    shimmer += ShimmerSample(i.uv + offset * 0.45) * 0.085h;
+                    float2 direction = float2(cos(angle),sin(angle));
+                    half4 nearby = ShimmerSample(i.uv + direction * radius);
+                    inner = min(inner,nearby.a*i.color.a);
+                    outer = max(outer,nearby.a*i.color.a);
+                    shimmer += ShimmerSample(i.uv + direction * _ShimmerRadius) * .125h;
                 }
+                half embedded = _UniformStone.x > 0 ? _EmbeddingStrength : 0;
+                half lip = (main.a-inner) * smoothstep(.28,.7,chips) * embedded;
+                half contact = (outer-main.a) * .65h * embedded;
                 half haloAlpha = saturate(shimmer.a * _ShimmerStrength) * i.color.a;
-                half alpha = main.a + haloAlpha * (1 - main.a);
-                half peak = max(main.r, max(main.g, main.b));
-                half facets = pow(smoothstep(0.15h, 0.85h, peak), 3.0h);
-                half3 reflectionTint = RichColor(main.rgb);
-                half3 reflectiveSurface = main.rgb + reflectionTint * facets * _ReflectionStrength;
-                half3 haloColor = shimmer.rgb / max(shimmer.a, 0.0001h) * i.color.rgb;
-                half3 combined = (reflectiveSurface * main.a + haloColor *
-                    (1 + _ReflectionStrength) * haloAlpha * (1 - main.a)) / max(alpha, 0.0001h);
+                half outerAlpha = max(contact,haloAlpha);
+                half alpha = main.a + outerAlpha * (1-main.a);
+                half peak = max(main.r,max(main.g,main.b));
+                half facets = pow(smoothstep(.15h,.85h,peak),3.0h);
+                half3 reflectiveSurface = main.rgb + RichColor(main.rgb)*facets*_ReflectionStrength;
+                reflectiveSurface *= 1-(main.a-inner)*embedded*.42h;
+                half3 rock = 0;
+                if(embedded>0) rock=TerrainMaterialSample(i.positionWS.xy).rgb*i.color.rgb;
+                reflectiveSurface=lerp(reflectiveSurface,rock,lip);
+                half3 haloColor=shimmer.rgb/max(shimmer.a,.0001h)*i.color.rgb;
+                half3 outside=lerp(haloColor,rock*.34h,saturate(contact/max(outerAlpha,.0001h)));
+                half3 combined=(reflectiveSurface*main.a+outside*outerAlpha*(1-main.a))/max(alpha,.0001h);
                 InitializeSurfaceData(combined, alpha, mask, surfaceData);
                 InitializeInputData(i.uv, i.lightingUV, inputData);
 
@@ -229,6 +243,9 @@ Shader "Mining Game/Ore Overlay Lit"
                 float _ReflectionStrength;
                 float _ShimmerStrength;
                 float _ShimmerRadius;
+                float _EmbeddingStrength;
+                float4 _UniformStone;
+                float4 _TestBounds;
             CBUFFER_END
 
             Varyings NormalsRenderingVertex(Attributes attributes)
@@ -312,6 +329,9 @@ Shader "Mining Game/Ore Overlay Lit"
                 float _ReflectionStrength;
                 float _ShimmerStrength;
                 float _ShimmerRadius;
+                float _EmbeddingStrength;
+                float4 _UniformStone;
+                float4 _TestBounds;
             CBUFFER_END
 
             Varyings UnlitVertex(Attributes attributes)

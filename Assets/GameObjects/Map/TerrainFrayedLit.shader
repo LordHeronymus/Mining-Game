@@ -1,0 +1,361 @@
+Shader "Mining Game/Frayed Terrain Edge Lit"
+{
+    Properties
+    {
+        _TestStoneTex("Test Stone", 2D) = "white" {}
+        _SurfaceDirtTex("Surface Dirt", 2D) = "white" {}
+        _LayerOneTex("Layer One Rock", 2D) = "white" {}
+        _LayerThreeTex("Layer Three Deep Stone", 2D) = "white" {}
+        _TestOccupancy("Test Occupancy", 2D) = "white" {}
+        _UniformStone("Uniform Stone", Vector) = (0,0,0,0)
+        _TestBounds("Test Bounds", Vector) = (0,0,0,0)
+        _StoneTex("Transition Stone", 2D) = "white" {}
+        _DirtTex("Transition Dirt", 2D) = "white" {}
+        _DirtMask("Surface Mask", 2D) = "white" {}
+        _DirtMaskBounds("Mask Bounds", Vector) = (0,0,0,0)
+        _DirtSurface("Surface", Vector) = (0,20,15,0)
+        _DeepStoneTex("Layer 2 Stone", 2D) = "white" {}
+        _DeepMask("Layer 2 Mask", 2D) = "white" {}
+        _DeepMaskBounds("Layer 2 Mask Bounds", Vector) = (0,0,0,0)
+        _DeepSurface("Layer 2 Surface", Vector) = (0,0,0,0)
+        [HideInInspector] _DirtVariants("Dirt Variants", 2DArray) = "" {}
+        [HideInInspector] _StoneVariants("Transition Variants", 2DArray) = "" {}
+        [HideInInspector] _DeepVariants("Layer 2 Variants", 2DArray) = "" {}
+        [HideInInspector] _VariantCounts("Variant Counts", Vector) = (0,0,0,0)
+        _FrayedTex("Frayed edge", 2D) = "white" {}
+        _MainTex("Diffuse", 2D) = "white" {}
+        _MaskTex("Mask", 2D) = "white" {}
+        _NormalMap("Normal Map", 2D) = "bump" {}
+        [MaterialToggle] _ZWrite("ZWrite", Float) = 0
+
+        // Legacy properties. They're here so that materials using this shader can gracefully fallback to the legacy sprite shader.
+        [HideInInspector] _Color("Tint", Color) = (1,1,1,1)
+        [HideInInspector] _RendererColor("RendererColor", Color) = (1,1,1,1)
+        [HideInInspector] _AlphaTex("External Alpha", 2D) = "white" {}
+        [HideInInspector] _EnableExternalAlpha("Enable External Alpha", Float) = 0
+    }
+
+    SubShader
+    {
+        Tags {"Queue" = "Transparent" "RenderType" = "Transparent" "RenderPipeline" = "UniversalPipeline" }
+
+        Blend SrcAlpha OneMinusSrcAlpha, One OneMinusSrcAlpha
+        Cull Off
+        ZWrite [_ZWrite]
+
+        Pass
+        {
+            Tags { "LightMode" = "Universal2D" }
+
+            HLSLPROGRAM
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
+
+            #pragma vertex CombinedShapeLightVertex
+            #pragma fragment CombinedShapeLightFragment
+            #pragma target 3.5
+
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/ShapeLightShared.hlsl"
+
+            // GPU Instancing
+            #pragma multi_compile_instancing
+            #pragma multi_compile _ DEBUG_DISPLAY SKINNED_SPRITE
+
+            struct Attributes
+            {
+                float3 positionOS   : POSITION;
+                float4 color        : COLOR;
+                float2 uv           : TEXCOORD0;
+                float4 edgeAnchor   : TEXCOORD1;
+                UNITY_SKINNED_VERTEX_INPUTS
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4  positionCS  : SV_POSITION;
+                half4   color       : COLOR;
+                float2  uv          : TEXCOORD0;
+                half2   lightingUV  : TEXCOORD1;
+                #if defined(DEBUG_DISPLAY)
+                float3  positionWS  : TEXCOORD2;
+                #endif
+                float3 dirtData : TEXCOORD4;
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/LightingUtility.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
+
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
+            UNITY_TEXTURE_STREAMING_DEBUG_VARS_FOR_TEX(_MainTex);
+
+            TEXTURE2D(_MaskTex);
+            SAMPLER(sampler_MaskTex);
+
+            // NOTE: Do not ifdef the properties here as SRP batcher can not handle different layouts.
+            CBUFFER_START(UnityPerMaterial)
+                half4 _Color;
+                float4 _UniformStone;
+                float4 _TestBounds;
+                float4 _DirtSurface;
+                float4 _DirtMaskBounds;
+                float4 _DeepSurface;
+                float4 _DeepMaskBounds;
+                float4 _VariantCounts;
+            CBUFFER_END
+            #define TERRAIN_FRAYED_EDGE 1
+            #include "Assets/GameObjects/Map/DirtSurfaceBlend.hlsl"
+
+            #if USE_SHAPE_LIGHT_TYPE_0
+            SHAPE_LIGHT(0)
+            #endif
+
+            #if USE_SHAPE_LIGHT_TYPE_1
+            SHAPE_LIGHT(1)
+            #endif
+
+            #if USE_SHAPE_LIGHT_TYPE_2
+            SHAPE_LIGHT(2)
+            #endif
+
+            #if USE_SHAPE_LIGHT_TYPE_3
+            SHAPE_LIGHT(3)
+            #endif
+
+            Varyings CombinedShapeLightVertex(Attributes v)
+            {
+                Varyings o = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(v);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+                UNITY_SKINNED_VERTEX_COMPUTE(v);
+
+                v.positionOS = TerrainRubblePosition(v.positionOS, v.edgeAnchor);
+                o.positionCS = TransformObjectToHClip(v.positionOS);
+                #if defined(DEBUG_DISPLAY)
+                o.positionWS = TransformObjectToWorld(v.positionOS);
+                #endif
+                o.uv = v.uv;
+                o.lightingUV = half2(ComputeScreenPos(o.positionCS / o.positionCS.w).xy);
+
+                o.dirtData = float3(_UniformStone.x>0 ? TransformObjectToWorld(v.positionOS).xy : v.positionOS.xy, v.color.a);
+                if (abs(v.color.a - 0.5) < 0.01 || abs(v.color.a - 0.25) < 0.01) v.color.a = 1;
+                o.color = half4(1,1,1,v.color.r) * _Color;
+                return o;
+            }
+
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/CombinedShapeLightShared.hlsl"
+
+            half4 CombinedShapeLightFragment(Varyings i) : SV_Target
+            {
+                const half4 main = i.color * DirtSurfaceBlend(SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv), i.uv, i.dirtData);
+                const half4 mask = SAMPLE_TEXTURE2D(_MaskTex, sampler_MaskTex, i.uv);
+                SurfaceData2D surfaceData;
+                InputData2D inputData;
+
+                InitializeSurfaceData(main.rgb, main.a, mask, surfaceData);
+                InitializeInputData(i.uv, i.lightingUV, inputData);
+
+                SETUP_DEBUG_TEXTURE_DATA_2D_NO_TS(inputData, i.positionWS, i.positionCS, _MainTex);
+
+                return CombinedShapeLightShared(surfaceData, inputData);
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            ZWrite Off
+
+            Tags { "LightMode" = "NormalsRendering"}
+
+            HLSLPROGRAM
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
+
+            #pragma vertex NormalsRenderingVertex
+            #pragma fragment NormalsRenderingFragment
+            #pragma target 3.5
+
+            // GPU Instancing
+            #pragma multi_compile_instancing
+            #pragma multi_compile _ SKINNED_SPRITE
+
+            struct Attributes
+            {
+                float3 positionOS   : POSITION;
+                float4 color        : COLOR;
+                float2 uv           : TEXCOORD0;
+                float4 edgeAnchor   : TEXCOORD1;
+                float4 tangent      : TANGENT;
+                UNITY_SKINNED_VERTEX_INPUTS
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4  positionCS      : SV_POSITION;
+                half4   color           : COLOR;
+                float2  uv              : TEXCOORD0;
+                half3   normalWS        : TEXCOORD1;
+                half3   tangentWS       : TEXCOORD2;
+                half3   bitangentWS     : TEXCOORD3;
+                float3 dirtData : TEXCOORD4;
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
+            TEXTURE2D(_NormalMap);
+            SAMPLER(sampler_NormalMap);
+
+            // NOTE: Do not ifdef the properties here as SRP batcher can not handle different layouts.
+            CBUFFER_START( UnityPerMaterial )
+                half4 _Color;
+                float4 _UniformStone;
+                float4 _TestBounds;
+                float4 _DirtSurface;
+                float4 _DirtMaskBounds;
+                float4 _DeepSurface;
+                float4 _DeepMaskBounds;
+                float4 _VariantCounts;
+            CBUFFER_END
+            #define TERRAIN_FRAYED_EDGE 1
+            #include "Assets/GameObjects/Map/DirtSurfaceBlend.hlsl"
+
+            Varyings NormalsRenderingVertex(Attributes attributes)
+            {
+                Varyings o = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(attributes);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+                UNITY_SKINNED_VERTEX_COMPUTE(attributes);
+
+                attributes.positionOS = TerrainRubblePosition(attributes.positionOS, attributes.edgeAnchor);
+                o.positionCS = TransformObjectToHClip(attributes.positionOS);
+                o.uv = attributes.uv;
+                o.dirtData = float3(_UniformStone.x>0 ? TransformObjectToWorld(attributes.positionOS).xy : attributes.positionOS.xy, attributes.color.a);
+                if (abs(attributes.color.a - 0.5) < 0.01 || abs(attributes.color.a - 0.25) < 0.01) attributes.color.a = 1;
+                o.color = half4(1,1,1,attributes.color.r) * _Color;
+                o.normalWS = -GetViewForwardDir();
+                o.tangentWS = TransformObjectToWorldDir(attributes.tangent.xyz);
+                o.bitangentWS = cross(o.normalWS, o.tangentWS) * attributes.tangent.w;
+                return o;
+            }
+
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/NormalsRenderingShared.hlsl"
+
+            half4 NormalsRenderingFragment(Varyings i) : SV_Target
+            {
+                const half4 mainTex = i.color * DirtSurfaceBlend(SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv), i.uv, i.dirtData);
+                const half3 normalTS = UnpackNormal(SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, i.uv));
+
+                return NormalsRenderingShared(mainTex, normalTS, i.tangentWS.xyz, i.bitangentWS.xyz, i.normalWS.xyz);
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Tags { "LightMode" = "UniversalForward" "Queue"="Transparent" "RenderType"="Transparent"}
+
+            HLSLPROGRAM
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
+            #if defined(DEBUG_DISPLAY)
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Debug/Debugging2D.hlsl"
+            #endif
+
+            #pragma vertex UnlitVertex
+            #pragma fragment UnlitFragment
+            #pragma target 3.5
+
+            // GPU Instancing
+            #pragma multi_compile_instancing
+            #pragma multi_compile _ DEBUG_DISPLAY SKINNED_SPRITE
+
+            struct Attributes
+            {
+                float3 positionOS   : POSITION;
+                float4 color        : COLOR;
+                float2 uv           : TEXCOORD0;
+                float4 edgeAnchor   : TEXCOORD1;
+                UNITY_SKINNED_VERTEX_INPUTS
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4  positionCS      : SV_POSITION;
+                float4  color           : COLOR;
+                float2  uv              : TEXCOORD0;
+                #if defined(DEBUG_DISPLAY)
+                float3  positionWS  : TEXCOORD2;
+                #endif
+                float3 dirtData : TEXCOORD4;
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
+            UNITY_TEXTURE_STREAMING_DEBUG_VARS_FOR_TEX(_MainTex);
+
+            // NOTE: Do not ifdef the properties here as SRP batcher can not handle different layouts.
+            CBUFFER_START( UnityPerMaterial )
+                half4 _Color;
+                float4 _UniformStone;
+                float4 _TestBounds;
+                float4 _DirtSurface;
+                float4 _DirtMaskBounds;
+                float4 _DeepSurface;
+                float4 _DeepMaskBounds;
+                float4 _VariantCounts;
+            CBUFFER_END
+            #define TERRAIN_FRAYED_EDGE 1
+            #include "Assets/GameObjects/Map/DirtSurfaceBlend.hlsl"
+
+            Varyings UnlitVertex(Attributes attributes)
+            {
+                Varyings o = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(attributes);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+                UNITY_SKINNED_VERTEX_COMPUTE(attributes);
+
+                attributes.positionOS = TerrainRubblePosition(attributes.positionOS, attributes.edgeAnchor);
+                o.positionCS = TransformObjectToHClip(attributes.positionOS);
+                #if defined(DEBUG_DISPLAY)
+                o.positionWS = TransformObjectToWorld(attributes.positionOS);
+                #endif
+                o.uv = attributes.uv;
+                o.dirtData = float3(_UniformStone.x>0 ? TransformObjectToWorld(attributes.positionOS).xy : attributes.positionOS.xy, attributes.color.a);
+                if (abs(attributes.color.a - 0.5) < 0.01 || abs(attributes.color.a - 0.25) < 0.01) attributes.color.a = 1;
+                o.color = half4(1,1,1,attributes.color.r) * _Color;
+                return o;
+            }
+
+            float4 UnlitFragment(Varyings i) : SV_Target
+            {
+                float4 mainTex = i.color * DirtSurfaceBlend(SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv), i.uv, i.dirtData);
+
+                #if defined(DEBUG_DISPLAY)
+                SurfaceData2D surfaceData;
+                InputData2D inputData;
+                half4 debugColor = 0;
+
+                InitializeSurfaceData(mainTex.rgb, mainTex.a, surfaceData);
+                InitializeInputData(i.uv, inputData);
+                SETUP_DEBUG_TEXTURE_DATA_2D_NO_TS(inputData, i.positionWS, i.positionCS, _MainTex);
+
+                if(CanDebugOverrideOutputColor(surfaceData, inputData, debugColor))
+                {
+                    return debugColor;
+                }
+                #endif
+
+                return mainTex;
+            }
+            ENDHLSL
+        }
+    }
+}

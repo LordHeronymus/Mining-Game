@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 801ff0317a01f6541b9b45f9473f4378, type: 3}
   m_Name: Kohle_03_medium
   m_EditorClassIdentifier: 
-  m_Sprite: {fileID: 21300000, guid: 904587ca0bb375c46b1860f470cf2977, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 3153c0a14c14c8f4a861bca56354d064, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1

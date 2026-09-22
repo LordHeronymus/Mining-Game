@@ -25,6 +25,7 @@ public sealed class MinerPlayerVisual : MonoBehaviour
     PlayerMovement movement;
     TileMiner miner;
     float age, walkPhase, swingPhase, walking, airborne, miningWeight;
+    float climbPhase, climbing;
     float gaitStride = .34f, gaitDuty = .62f, running;
     int facing = 1;
     Vector2 footPosition, lampPosition;
@@ -61,11 +62,13 @@ public sealed class MinerPlayerVisual : MonoBehaviour
     void Animate(float dt, Vector2 velocity, bool grounded, bool flying, bool mining, Vector2 target)
     {
         age += dt;
+        climbing = Mathf.MoveTowards(climbing, movement && movement.IsClimbing ? 1 : 0, dt * 10);
+        if (movement && movement.IsClimbing) climbPhase += velocity.y * dt * Mathf.PI * 4;
         if (mining && Mathf.Abs(target.x - transform.position.x) > .05f) facing = target.x < transform.position.x ? -1 : 1;
         else if (Mathf.Abs(velocity.x) > .12f && (!movement || Mathf.Abs(movement.HorizontalInput) < .01f)) facing = velocity.x < 0 ? -1 : 1;
         float speed = Mathf.Abs(velocity.x);
         walking = Mathf.MoveTowards(walking, grounded && !flying ? Mathf.Clamp01(speed / .8f) : 0, dt * 9);
-        airborne = Mathf.MoveTowards(airborne, !grounded || flying ? 1 : 0, dt * 10);
+        airborne = Mathf.MoveTowards(airborne, ((!grounded || flying) && climbing < .5f) ? 1 : 0, dt * 10);
         miningWeight = Mathf.MoveTowards(miningWeight, mining ? 1 : 0, dt * 12);
         running = Mathf.MoveTowards(running, Mathf.InverseLerp(1.8f, 6, speed), dt * 4);
         gaitStride = Mathf.Lerp(.34f, .44f, running);
@@ -89,7 +92,7 @@ public sealed class MinerPlayerVisual : MonoBehaviour
         float brightness = Mathf.Lerp(1, .78f, night);
         Color tint = new Color(brightness, brightness, brightness, 1);
         geometry.Begin(footPosition, scale, facing, tint);
-        if (airborne < .5f) geometry.Ellipse(0, .01f, .26f, .022f, new Color(.015f, .025f, .04f, .25f));
+        if (airborne < .5f && climbing < .5f) geometry.Ellipse(0, .01f, .26f, .022f, new Color(.015f, .025f, .04f, .25f));
         float phase = walkPhase / (Mathf.PI * 2);
         float bobPhase = phase - Mathf.Lerp(.06f, .18f, running);
         float bob = (.5f - .5f * Mathf.Cos(bobPhase * Mathf.PI * 4)) * Mathf.Lerp(.012f, .027f, running) * walking
@@ -101,6 +104,9 @@ public sealed class MinerPlayerVisual : MonoBehaviour
         backFoot.ankle += new Vector2(-.05f, .13f) * airborne;
         frontFoot.ankle += new Vector2(.025f, .065f) * airborne;
         backFoot.angle *= walking; frontFoot.angle *= walking;
+        float climbCycle = Mathf.Sin(climbPhase);
+        backFoot.ankle = Vector2.Lerp(backFoot.ankle, new Vector2(-.10f, .16f + .09f * climbCycle), climbing);
+        frontFoot.ankle = Vector2.Lerp(frontFoot.ankle, new Vector2(.12f, .16f - .09f * climbCycle), climbing);
         float armSwing = Mathf.Cos(walkPhase - gaitDuty * Mathf.PI) * walking;
         Color darkCloth = Color.Lerp(clothingColor, new Color(.006f, .025f, .09f), .42f);
         Color lightCloth = Color.Lerp(clothingColor, new Color(.045f, .22f, .53f), .25f);
@@ -112,6 +118,7 @@ public sealed class MinerPlayerVisual : MonoBehaviour
         Leg(-.035f, backFoot, bob, darkCloth, leatherShade);
         Vector2 farShoulder = new Vector2(-.15f, .76f + bob);
         Vector2 farHand = new Vector2(-.16f + armSwing * .11f, .51f + bob + Mathf.Abs(armSwing) * .018f + airborne * .08f);
+        farHand = Vector2.Lerp(farHand, new Vector2(-.22f, .93f - .10f * climbCycle), climbing);
         Arm(farShoulder, new Vector2(-.24f + armSwing * .035f, .625f + bob), farHand, darkCloth, skinShade, leatherShade);
         geometry.ShadedEllipse(-.16f, .65f + bob, .10f, .18f, leatherShade, leatherColor, Color.Lerp(leatherColor, new Color(.58f, .30f, .13f), .22f), 8);
         geometry.ShadedEllipse(-.174f, .66f + bob, .067f, .14f, leatherShade, leatherColor, Color.Lerp(leatherColor, new Color(.70f, .36f, .16f), .24f), 8);
@@ -159,6 +166,7 @@ public sealed class MinerPlayerVisual : MonoBehaviour
 
         Vector2 shoulder = new Vector2(.16f, .77f + bob);
         Vector2 restHand = new Vector2(.27f - armSwing * .045f, .53f + bob + Mathf.Abs(armSwing) * .012f + airborne * .08f);
+        restHand = Vector2.Lerp(restHand, new Vector2(.25f, .93f + .10f * climbCycle), climbing);
         float strike = .5f - .5f * Mathf.Cos(swingPhase);
         Vector2 workHand = new Vector2(Mathf.Lerp(.11f, .39f, strike), Mathf.Lerp(.98f, .65f, strike) + bob);
         Vector2 hand = Vector2.Lerp(restHand, workHand, miningWeight);
@@ -173,7 +181,7 @@ public sealed class MinerPlayerVisual : MonoBehaviour
                 Mathf.Lerp(80f, aimAngle - 8f, strike), miningWeight);
             DrawAxe(hand, axeAngle, leatherShade);
         }
-        else DrawPickaxe(hand, angle, leatherShade);
+        else if (climbing < .5f || mining) DrawPickaxe(hand, angle, leatherShade);
         geometry.Ellipse(hand.x, hand.y, .054f, .049f, leatherColor);
         geometry.Stroke(hand.x - .018f, hand.y + .025f, hand.x + .025f, hand.y + .016f, .009f, Color.Lerp(leatherColor, skinColor, .45f));
         geometry.Upload();

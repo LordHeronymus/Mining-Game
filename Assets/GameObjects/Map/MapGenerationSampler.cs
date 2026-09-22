@@ -6,7 +6,7 @@ using UnityEngine;
 public sealed class MapGenerationSampler
 {
 
-    public const int SurfaceDirtRows = 20;
+    public const int SurfaceDirtRows = 15;
     public const int DefaultTransitionThickness = 15;
     const int Bins = 256;
     readonly Block stone, dirt;
@@ -213,6 +213,16 @@ public sealed class MapGenerationSampler
     public Block GetBaseBlock(int x, int depth)
     {
         if (IsDirtAt(x, depth)) return dirt;
+        int layer = LayerIndex(depth);
+        if (layer >= 2 && depth < layerStarts[layer] + transitionThickness)
+        {
+            float t = (depth - layerStarts[layer] + .5f) / transitionThickness;
+            float offset = (OreVeins.Hash(surfaceSeed, layer, 0, 0x5171u) & 0xffff) / 64f;
+            float clusters = Mathf.PerlinNoise(x * .18f + offset, depth * .24f + offset);
+            float chance = Mathf.Clamp01(1f - t + (clusters - .5f) * .8f * Mathf.Sin(t * Mathf.PI));
+            float sample = (OreVeins.Hash(surfaceSeed, x, depth, 0x5172u + (uint)layer) & 0xffffff) / 16777216f;
+            if (sample < chance) return layerStones[layer - 1];
+        }
         return IsFirstLayerStoneAt(x, depth) ? layerStones[0] : GetStone(depth);
     }
 

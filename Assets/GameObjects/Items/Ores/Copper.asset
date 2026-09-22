@@ -15,6 +15,6 @@ MonoBehaviour:
   item: 0
   category: 0
   displayName: Kupfer
-  icon: {fileID: 21300000, guid: 2319d23054a902044b0042bac1427c73, type: 3}
+  icon: {fileID: 21300000, guid: 2ecbb1d80dccdb3499b4f4173e232a11, type: 3}
   themeColor: {r: 0.9490196, g: 0.6509804, b: 0.43137255, a: 1}
   worth: 10

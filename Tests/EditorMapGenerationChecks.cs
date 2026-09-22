@@ -29,7 +29,7 @@ public static class EditorMapGenerationChecks
             var grassVariants=new TileBase[grassProperties.arraySize];
             for(int i=0;i<grassVariants.Length;i++)
                 grassVariants[i]=grassProperties.GetArrayElementAtIndex(i).objectReferenceValue as TileBase;
-            Check(grassVariants.Length==4,"Grass variants missing from the scene");
+            Check(grassVariants.Length==6,"Grass variants missing from the scene");
             map.SetGrassVariants(grassVariants);
             map.grassYOffset=.12f;
             map.oreDensityCurve=AnimationCurve.Constant(0,1,1);

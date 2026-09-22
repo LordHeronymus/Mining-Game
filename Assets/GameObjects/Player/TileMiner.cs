@@ -23,6 +23,7 @@ public class TileMiner : MonoBehaviour
     private Dictionary<Vector3Int, float> progress = new();
     private Camera _cam;
     private MapGenerator map;
+    private PlayerLadder ladder;
     private float nextMiningSoundTime = 0f;
     private float nextTreeHitTime;
     private Vector3Int? highlightedCell;
@@ -41,6 +42,7 @@ public class TileMiner : MonoBehaviour
     void Awake()
     {
         _cam = cam ? cam : Camera.main;
+        ladder = GetComponent<PlayerLadder>();
         map = tilemap ? tilemap.GetComponent<MapGenerator>() : null;
         if (highlightMap) highlightMap.ClearAllTiles();
     }
@@ -57,7 +59,8 @@ public class TileMiner : MonoBehaviour
     {
         mining = false;
         IsChoppingTree = false;
-        if (GameplayInputBlocker.IsBlocked)
+        if (GameplayInputBlocker.IsBlocked || (ladder && ladder.enabled && ladder.BuildMode) ||
+            (UnityEngine.EventSystems.EventSystem.current && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()))
         {
             mining = false;
             ClearHighlight();
@@ -208,7 +211,8 @@ public class TileMiner : MonoBehaviour
             tilemap.GetComponent<MapLighting>()?.NotifyTileChanged(cell);
         }
         progress.Remove(cell);
-        AudioManager.Instance?.Play(block ? block.breakSound : SoundType.BreakRock);
+        AudioManager.Instance?.Play(ore ? SoundType.BreakOre : block ? block.breakSound : SoundType.BreakRock,
+            ore != null);
         return true;
     }
 

@@ -47,6 +47,21 @@ public sealed class OreOverlayAppearance : MonoBehaviour
         target.SetPropertyBlock(properties);
     }
 
+    public void ApplyTerrain(MaterialPropertyBlock terrain)
+    {
+        if (!isActiveAndEnabled) return;
+        if (!target && map && map.OreOverlay) ApplyTo(map.OreOverlay.GetComponent<TilemapRenderer>());
+        if (!target) return;
+        properties ??= new MaterialPropertyBlock();
+        target.GetPropertyBlock(properties);
+        properties.SetVector("_UniformStone", terrain.GetVector("_UniformStone"));
+        properties.SetVector("_TestBounds", terrain.GetVector("_TestBounds"));
+        CopyTexture("_TestStoneTex"); CopyTexture("_SurfaceDirtTex");
+        CopyTexture("_LayerOneTex"); CopyTexture("_LayerThreeTex"); CopyTexture("_TestOccupancy");
+        target.SetPropertyBlock(properties);
+        void CopyTexture(string name) { var value = terrain.GetTexture(name); if(value) properties.SetTexture(name,value); }
+    }
+
     void OnDisable()
     {
         if (!target || !map) return;

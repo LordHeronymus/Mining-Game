@@ -286,9 +286,8 @@ public static class OreOverlaySetup
                 var stone = currentStone && (currentStone.IsStone || currentStone.id == BlockType.Dirt) ? currentStone : sampler.GetBaseBlock(x, y);
                 map.Terrain.SetTile(cell, stone.variants[OreVeins.Hash(map.ActiveSeed, x, y, 0x1234u) % (uint)stone.variants.Length]);
                 map.OreOverlay.SetTile(cell, ore);
-                int turns = (int)(OreVeins.Hash(map.ActiveSeed, x, y, 0x9abcu) % 4);
                 map.OreOverlay.SetTileFlags(cell, TileFlags.None);
-                map.OreOverlay.SetTransformMatrix(cell, Matrix4x4.Rotate(Quaternion.Euler(0, 0, turns * 90)) * ore.transform);
+                map.OreOverlay.SetTransformMatrix(cell, ore.transform);
                 changed++;
             }
         EditorUtility.SetDirty(map.Terrain);

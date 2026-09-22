@@ -1,13 +1,16 @@
 fileFormatVersion: 2
-guid: c4be618c57dc19349884303a5b17af8f
+guid: ce57277ab6890e7428463e7a16df0f4d
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8441750512376682436
-    second: Gold Ore_0
+      213: -4934433003987377266
+    second: Gold_ItemIcon_0
   - first:
-      213: -148223332926898363
-    second: Gold Ore_1
+      213: 6497828226222485056
+    second: Gold_ItemIcon_1
+  - first:
+      213: -5290802627440728202
+    second: Gold_ItemIcon_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -49,7 +52,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 0
   alignment: 0
@@ -116,45 +119,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Gold Ore_0
+      name: Gold_ItemIcon
       rect:
         serializedVersion: 2
-        x: 36
-        y: 22
-        width: 440
-        height: 469
+        x: 52
+        y: 111
+        width: 1157
+        height: 990
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 4c71fac5d5f172570800000000000000
-      internalID: 8441750512376682436
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Gold Ore_1
-      rect:
-        serializedVersion: 2
-        x: 489
-        y: 66
-        width: 8
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 54fb77df9a761fdf0800000000000000
-      internalID: -148223332926898363
+      spriteID: e836e5d935f558bb0800000000000000
+      internalID: -4934433003987377266
       vertices: []
       indices: 
       edges: []
@@ -173,8 +154,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Gold Ore_0: 8441750512376682436
-      Gold Ore_1: -148223332926898363
+      Gold_ItemIcon: -4934433003987377266
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

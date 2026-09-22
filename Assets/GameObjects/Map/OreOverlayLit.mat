@@ -45,7 +45,7 @@ Material:
     - _OreScale: 1
     - _ReflectionStrength: 2.5
     - _ShimmerRadius: 0.045
-    - _ShimmerStrength: 1.4
+    - _ShimmerStrength: 0.12
     - _ZWrite: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
