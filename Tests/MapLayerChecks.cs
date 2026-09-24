@@ -72,11 +72,11 @@ public static class MapLayerChecks
             var sampler = new MapGenerationSampler(registry, 42319, 192, layers, sourceMap.oreDensityCurve,
                 sourceMap.oreDensityMultiplierPercent, sourceMap.transitionThickness,
                 sourceMap.oreTransitionCurve, sourceMap.oreTransitionDepth, sourceMap.oreVeinSizeCurve,
-                surfaceRampDepth, surfaceRampCurve);
+                surfaceRampDepth, surfaceRampCurve, sourceMap.surfaceOreVeinSizePercent);
             var reordered = new MapGenerationSampler(registry, 42319, 192, reversed, sourceMap.oreDensityCurve,
                 sourceMap.oreDensityMultiplierPercent, sourceMap.transitionThickness,
                 sourceMap.oreTransitionCurve, sourceMap.oreTransitionDepth, sourceMap.oreVeinSizeCurve,
-                surfaceRampDepth, surfaceRampCurve);
+                surfaceRampDepth, surfaceRampCurve, sourceMap.surfaceOreVeinSizePercent);
             Check(sampler.GetStone(63) == layers[0].stone && sampler.GetStone(64) == layers[1].stone &&
                 sampler.GetStone(127) == layers[1].stone && sampler.GetStone(128) == layers[2].stone &&
                 sampler.GetStone(500) == layers[2].stone, "Stone layer boundary incorrect.");
@@ -109,6 +109,7 @@ public static class MapLayerChecks
             map.minimumOreVeinSize = sourceMap.minimumOreVeinSize;
             map.surfaceOreRampDepth = surfaceRampDepth;
             map.surfaceOreRampCurve = surfaceRampCurve;
+            map.surfaceOreVeinSizePercent = sourceMap.surfaceOreVeinSizePercent;
             map.GenerateMap();
             var found = new HashSet<BlockType>[3] {new HashSet<BlockType>(), new HashSet<BlockType>(), new HashSet<BlockType>()};
             Vector3Int oreCell = default; int ores = 0;

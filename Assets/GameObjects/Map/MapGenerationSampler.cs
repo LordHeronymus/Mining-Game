@@ -15,8 +15,8 @@ public sealed class MapGenerationSampler
     readonly float[][] noiseCdfs;
     readonly float[] scales, weights, densityByRow;
     readonly float[] transitionWeightsByRow;
-    readonly float[] transitionSizeByRow;
-    readonly float[][][] transitionNoiseCdfs;
+    readonly float[] veinSizeByRow;
+    readonly float[][][] sizeNoiseCdfs;
     readonly Vector2[] noiseOffsets;
     readonly int[] layerStarts;
     readonly Block[] layerStones;
@@ -28,7 +28,8 @@ public sealed class MapGenerationSampler
         AnimationCurve oreDensityCurve = null, float oreDensityMultiplierPercent = 50f,
         int transitionThickness = DefaultTransitionThickness, AnimationCurve oreTransitionCurve = null,
         int oreTransitionDepth = 100, AnimationCurve oreVeinSizeCurve = null,
-        int surfaceOreRampDepth = 10, AnimationCurve surfaceOreRampCurve = null)
+        int surfaceOreRampDepth = 10, AnimationCurve surfaceOreRampCurve = null,
+        float surfaceOreVeinSizePercent = 50f)
     {
         if (!registry) throw new ArgumentNullException(nameof(registry));
         if (mapHeight <= 0) throw new ArgumentOutOfRangeException(nameof(mapHeight));
@@ -74,6 +75,25 @@ public sealed class MapGenerationSampler
                 (OreVeins.Hash(seed, (int)block.id, block.noiseSeedOffset, 0x7253u) & 0xffff) / 32f + .731f);
             noiseCdfs[i] = BuildCdf(scales[i], noiseOffsets[i]);
         }
+        bool hasTransitionSize = oreVeinSizeCurve != null && oreVeinSizeCurve.length > 0;
+        float surfaceVeinSize = Mathf.Clamp(surfaceOreVeinSizePercent, 1f, 100f) / 100f;
+        if ((surfaceRampDepth > 0 && surfaceVeinSize < 1f) || hasTransitionSize)
+        {
+            veinSizeByRow = new float[mapHeight * noiseBlocks.Length];
+            for (int i = 0; i < veinSizeByRow.Length; i++) veinSizeByRow[i] = 1f;
+            for (int y = 0; y < Mathf.Min(surfaceRampDepth, mapHeight); y++)
+                for (int ore = 0; ore < noiseBlocks.Length; ore++)
+                    veinSizeByRow[y * noiseBlocks.Length + ore] = surfaceVeinSize;
+            sizeNoiseCdfs = new float[noiseBlocks.Length][][];
+            for (int i = 0; i < noiseBlocks.Length; i++)
+            {
+                var cdfs = new float[5][];
+                for (int step = 0; step < 4; step++)
+                    cdfs[step] = BuildCdf(scales[i], noiseOffsets[i], step / 4f);
+                cdfs[4] = noiseCdfs[i];
+                sizeNoiseCdfs[i] = cdfs;
+            }
+        }
         if (layers == null || layers.Length == 0) return;
         var ordered = (MapLayer[])layers.Clone();
         if (Array.Exists(ordered, layer => layer == null))
@@ -99,19 +119,6 @@ public sealed class MapGenerationSampler
         firstStoneBoundary = ordered.Length > 1 ? ordered[1].startDepth : -1;
         if (oreTransitionCurve == null || oreTransitionCurve.length == 0 || oreTransitionDepth <= 0) return;
         transitionWeightsByRow = new float[mapHeight * noiseBlocks.Length];
-        if (oreVeinSizeCurve != null && oreVeinSizeCurve.length > 0)
-        {
-            transitionSizeByRow = new float[transitionWeightsByRow.Length];
-            transitionNoiseCdfs = new float[noiseBlocks.Length][][];
-            for (int i = 0; i < noiseBlocks.Length; i++)
-            {
-                var cdfs = new float[5][];
-                for (int step = 0; step < 4; step++)
-                    cdfs[step] = BuildCdf(scales[i], noiseOffsets[i], step / 4f);
-                cdfs[4] = noiseCdfs[i];
-                transitionNoiseCdfs[i] = cdfs;
-            }
-        }
         for (int ore = 0; ore < noiseBlocks.Length; ore++)
         {
             int runStart = -1;
@@ -155,9 +162,10 @@ public sealed class MapGenerationSampler
                 width > 0f ? TransitionValue(curve, (end - 1 - y) / width) : 0f);
             int index = y * noiseBlocks.Length + ore;
             transitionWeightsByRow[index] = weights[ore] * factor;
-            if (transitionSizeByRow == null) continue;
+            if (veinSizeByRow == null || veinSizeCurve == null || veinSizeCurve.length == 0) continue;
             float size = veinSizeCurve.Evaluate(factor);
-            transitionSizeByRow[index] = float.IsNaN(size) ? 0f : Mathf.Clamp01(size);
+            veinSizeByRow[index] = Mathf.Min(veinSizeByRow[index],
+                float.IsNaN(size) ? 0f : Mathf.Clamp01(size));
         }
     }
 
@@ -247,15 +255,15 @@ public sealed class MapGenerationSampler
             if (weight <= 0f) continue;
             int rowIndex = Math.Min(y, densityByRow.Length - 1) * noiseBlocks.Length + i;
             float uniform;
-            if (transitionSizeByRow == null)
+            if (veinSizeByRow == null)
                 uniform = UniformNoise(SampleNoise(x, y, scales[i], noiseOffsets[i]), noiseCdfs[i]);
             else
             {
-                float size = transitionSizeByRow[rowIndex];
+                float size = veinSizeByRow[rowIndex];
                 float noise = BlendNoise(x, y, scales[i], noiseOffsets[i], size);
                 float step = size * 4f;
                 int lower = Mathf.Min((int)step, 3);
-                var cdfs = transitionNoiseCdfs[i];
+                var cdfs = sizeNoiseCdfs[i];
                 uniform = Mathf.Lerp(UniformNoise(noise, cdfs[lower]),
                     UniformNoise(noise, cdfs[lower + 1]), step - lower);
             }

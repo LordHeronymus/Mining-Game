@@ -175,7 +175,13 @@ public sealed class MinerPlayerVisual : MonoBehaviour
         Vector2 aim = target - (footPosition + new Vector2(0, .65f * scale)); aim.x *= facing;
         float aimAngle = Mathf.Clamp(Mathf.Atan2(aim.y, Mathf.Max(.02f, aim.x)) * Mathf.Rad2Deg, -75, 65);
         float angle = Mathf.Lerp(65 - armSwing * 3, Mathf.Lerp(140, aimAngle - 8, strike), miningWeight);
-        if (mining && miner && miner.IsChoppingTree)
+        if (mining && miner && miner.IsCuttingGrass)
+        {
+            float scytheAngle = Mathf.Lerp(65 - armSwing * 3,
+                Mathf.Lerp(105f, aimAngle - 15f, strike), miningWeight);
+            DrawScythe(hand, scytheAngle, leatherShade);
+        }
+        else if (mining && miner && miner.IsChoppingTree && miner.HasAxe)
         {
             float axeAngle = Mathf.Lerp(65 - armSwing * 3,
                 Mathf.Lerp(80f, aimAngle - 8f, strike), miningWeight);
@@ -267,6 +273,32 @@ public sealed class MinerPlayerVisual : MonoBehaviour
             Color.Lerp(steel, Color.white, .42f));
         geometry.ShadedEllipse(head.x, head.y, .04f, .046f,
             steelShadow, steel, Color.Lerp(steel, edge, .28f));
+    }
+
+    void DrawScythe(Vector2 hand, float degrees, Color dark)
+    {
+        float angle = degrees * Mathf.Deg2Rad;
+        Vector2 direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+        Vector2 side = new Vector2(direction.y, -direction.x);
+        Vector2 butt = hand - direction * .14f, head = hand + direction * .44f;
+        geometry.Stroke(butt.x, butt.y, head.x, head.y, .033f, dark);
+        geometry.Stroke(butt.x - .008f, butt.y + .005f, head.x - .008f, head.y + .005f,
+            .019f, new Color(.66f, .36f, .16f));
+        Vector2 grip = hand - direction * .025f + side * .12f;
+        geometry.Stroke(hand.x, hand.y, grip.x, grip.y, .025f, dark);
+        geometry.Stroke(hand.x, hand.y, grip.x, grip.y, .014f, new Color(.72f, .41f, .19f));
+        Vector2 root = head + side * .025f;
+        Vector2 arc1 = head + side * .18f + direction * .045f;
+        Vector2 arc2 = head + side * .35f - direction * .025f;
+        Vector2 tip = head + side * .46f - direction * .19f;
+        Color shadow = new Color(.16f, .18f, .20f);
+        Color steel = new Color(.59f, .65f, .68f);
+        geometry.Stroke(root.x, root.y, arc1.x, arc1.y, .061f, shadow);
+        geometry.Stroke(arc1.x, arc1.y, arc2.x, arc2.y, .052f, shadow);
+        geometry.Stroke(arc2.x, arc2.y, tip.x, tip.y, .028f, shadow);
+        geometry.Stroke(root.x, root.y, arc1.x, arc1.y, .033f, steel);
+        geometry.Stroke(arc1.x, arc1.y, arc2.x, arc2.y, .026f, steel);
+        geometry.Stroke(arc2.x, arc2.y, tip.x, tip.y, .012f, new Color(.89f, .94f, .94f));
     }
 
     void DrawPickaxe(Vector2 hand, float degrees, Color dark)

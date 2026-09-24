@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bd168b198ca49c4a82450a3ed868988, type: 3}
+  m_Name: IronPickaxe
+  m_EditorClassIdentifier: 
+  category: 0
+  persistentId: 685bbf0c6a365954b82cc3c0e442f5a5
+  customCardIconLayout: 1
+  cardIconLayout:
+    scale: {x: 1.2, y: 1.2}
+    offset: {x: 0, y: 0}
+    flipX: 0
+    flipY: 0
+  output: {fileID: 11400000, guid: 4251e602b7544f44cbf04e436fa792af, type: 2}
+  outputAmount: 1
+  pluralName: Eisenspitzhacken
+  ingredients:
+  - item: {fileID: 11400000, guid: 75e7eb8e62b50c64eb4dd8132de34314, type: 2}
+    amount: 3
+  - item: {fileID: 11400000, guid: 13a72d4a121bd0e499c2737ebc0b56ed, type: 2}
+    amount: 6
+  - item: {fileID: 11400000, guid: 7118deb47d14256439f8c99ab5625311, type: 2}
+    amount: 2

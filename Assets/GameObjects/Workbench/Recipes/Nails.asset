@@ -12,6 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bd168b198ca49c4a82450a3ed868988, type: 3}
   m_Name: Nails
   m_EditorClassIdentifier: 
+  category: 0
+  persistentId: 826fec754283c19468e1e81abcd8ef95
+  customCardIconLayout: 0
+  cardIconLayout:
+    scale: {x: 0, y: 0}
+    offset: {x: 0, y: 0}
+    flipX: 0
+    flipY: 0
   output: {fileID: 11400000, guid: 7118deb47d14256439f8c99ab5625311, type: 2}
   outputAmount: 4
   pluralName: "N\xE4gel"

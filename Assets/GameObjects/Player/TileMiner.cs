@@ -23,11 +23,18 @@ public class TileMiner : MonoBehaviour
     private Dictionary<Vector3Int, float> progress = new();
     private Camera _cam;
     private MapGenerator map;
-    private PlayerLadder ladder;
+    private SurfaceTallGrass tallGrass;
+    private SurfaceTrees surfaceTrees;
     private float nextMiningSoundTime = 0f;
     private float nextTreeHitTime;
+    private float nextGrassCutTime;
+    private float grassSwingUntil;
+    private bool grassClickConsumed;
     private Vector3Int? highlightedCell;
-    private bool treeCursorActive;
+    private Texture2D scytheCursorTexture;
+    private ToolCursor activeCursor;
+    static readonly List<UnityEngine.EventSystems.RaycastResult> uiRaycasts = new();
+    enum ToolCursor { None, Axe, Scythe }
 
     public static Action<Vector2, int> OnBlockMined;
     public static Action<Vector2> OnBlockHit;
@@ -37,13 +44,16 @@ public class TileMiner : MonoBehaviour
     public bool IsMingin => mining;
     public bool IsMining => mining;
     public bool IsChoppingTree { get; private set; }
+    public bool HasAxe => surfaceTrees && surfaceTrees.HasAxe;
+    public bool IsCuttingGrass { get; private set; }
     public Vector2 MiningTarget { get; private set; }
 
     void Awake()
     {
         _cam = cam ? cam : Camera.main;
-        ladder = GetComponent<PlayerLadder>();
         map = tilemap ? tilemap.GetComponent<MapGenerator>() : null;
+        tallGrass = map ? map.GetComponent<SurfaceTallGrass>() : null;
+        surfaceTrees = FindFirstObjectByType<SurfaceTrees>();
         if (highlightMap) highlightMap.ClearAllTiles();
     }
 
@@ -51,28 +61,72 @@ public class TileMiner : MonoBehaviour
     {
         ClearHighlight();
         ClearTreeGlow();
+        ClearGrassSelection();
         Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
-        treeCursorActive = false;
+        activeCursor = ToolCursor.None;
+        IsCuttingGrass = false;
+        grassSwingUntil = 0f;
+        grassClickConsumed = false;
+    }
+
+    void OnDestroy()
+    {
+        if (scytheCursorTexture) Destroy(scytheCursorTexture);
     }
 
     void Update()
     {
         mining = false;
         IsChoppingTree = false;
-        if (GameplayInputBlocker.IsBlocked || (ladder && ladder.enabled && ladder.BuildMode) ||
-            (UnityEngine.EventSystems.EventSystem.current && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()))
+        IsCuttingGrass = Time.time < grassSwingUntil;
+        if (!Input.GetMouseButton(0)) grassClickConsumed = false;
+        if (GameplayInputBlocker.IsBlocked || IsPointerOverUi(Input.mousePosition))
         {
             mining = false;
             ClearHighlight();
             ClearTreeGlow();
+            ClearGrassSelection();
             Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
-            treeCursorActive = false;
+            activeCursor = ToolCursor.None;
+            IsCuttingGrass = false;
+            grassSwingUntil = 0f;
             return;
         }
         if (!_cam || !tilemap) return;
 
         Vector3 mouseWorld = _cam.ScreenToWorldPoint(Input.mousePosition);
         mouseWorld.z = 0f;
+        if (grassClickConsumed)
+        {
+            ClearHighlight();
+            ClearTreeGlow();
+            ClearGrassSelection();
+            UpdateToolCursor(ToolCursor.None);
+            mining = IsCuttingGrass;
+            return;
+        }
+        if (!tallGrass && map) tallGrass = map.GetComponent<SurfaceTallGrass>();
+        var grass = tallGrass ? tallGrass.At(mouseWorld) : null;
+        bool grassReachable = grass && stats &&
+            Vector2.Distance(transform.position, grass.transform.position) <= stats.Reach;
+        if (tallGrass)
+        {
+            foreach (var patch in tallGrass.ActivePatches)
+            {
+                bool reachable = patch && stats &&
+                    Vector2.Distance(transform.position, patch.transform.position) <= stats.Reach;
+                patch?.SetReachGlow(reachable && patch == grass ? 2 : reachable ? 1 : 0);
+            }
+        }
+        if (grass)
+        {
+            ClearHighlight();
+            ClearTreeGlow();
+            UpdateToolCursor(grassReachable && tallGrass.HasScythe ? ToolCursor.Scythe : ToolCursor.None);
+            if (grassReachable && Input.GetMouseButton(0)) TryCutGrassAt(mouseWorld);
+            mining = IsCuttingGrass;
+            return;
+        }
         var tree = ChoppableTree.At(mouseWorld);
         bool hoverReachable = false;
         foreach (var candidate in ChoppableTree.ActiveTrees)
@@ -83,7 +137,8 @@ public class TileMiner : MonoBehaviour
             candidate?.SetReachGlow(hovered ? 2 : reachable ? 1 : 0);
             hoverReachable |= hovered;
         }
-        UpdateTreeCursor(hoverReachable);
+        if (!surfaceTrees) surfaceTrees = FindFirstObjectByType<SurfaceTrees>();
+        UpdateToolCursor(hoverReachable && surfaceTrees && surfaceTrees.HasAxe ? ToolCursor.Axe : ToolCursor.None);
         if (tree)
         {
             ClearHighlight();
@@ -155,6 +210,33 @@ public class TileMiner : MonoBehaviour
         }
     }
 
+    public static bool IsPointerOverUi(Vector2 screenPosition)
+    {
+        var eventSystem = UnityEngine.EventSystems.EventSystem.current;
+        if (!eventSystem) return false;
+        uiRaycasts.Clear();
+        eventSystem.RaycastAll(new UnityEngine.EventSystems.PointerEventData(eventSystem) { position = screenPosition }, uiRaycasts);
+        return uiRaycasts.Count > 0;
+    }
+
+    public bool TryCutGrassAt(Vector2 worldPoint)
+    {
+        if (GameplayInputBlocker.IsBlocked || !stats || Time.time < nextGrassCutTime) return false;
+        if (!tallGrass && map) tallGrass = map.GetComponent<SurfaceTallGrass>();
+        if (!tallGrass || !tallGrass.HasScythe) return false;
+        var patch = tallGrass ? tallGrass.At(worldPoint) : null;
+        if (!patch || Vector2.Distance(transform.position, patch.transform.position) > stats.Reach)
+            return false;
+        MiningTarget = patch.transform.position;
+        if (!patch.Cut()) return false;
+        AudioManager.Instance?.Play(SoundType.DryGrass);
+        IsCuttingGrass = mining = true;
+        grassClickConsumed = true;
+        grassSwingUntil = Time.time + .35f;
+        nextGrassCutTime = Time.time + .55f / Mathf.Max(.25f, stats.MiningSpeed);
+        return true;
+    }
+
     void ShowHighlight(Vector3Int cell)
     {
         if (!highlightMap || !highlightTile) return;
@@ -177,12 +259,38 @@ public class TileMiner : MonoBehaviour
         foreach (var tree in ChoppableTree.ActiveTrees) tree?.SetReachGlow(0);
     }
 
-    void UpdateTreeCursor(bool active)
+    void ClearGrassSelection()
     {
-        if (treeCursorActive == active) return;
-        treeCursorActive = active;
-        Cursor.SetCursor(active ? treeCursorTexture : null,
-            active ? new Vector2(9f, 25f) : Vector2.zero, CursorMode.Auto);
+        if (!tallGrass) return;
+        foreach (var patch in tallGrass.ActivePatches) patch?.SetReachGlow(0);
+    }
+
+    void UpdateToolCursor(ToolCursor cursor)
+    {
+        if (cursor == ToolCursor.Scythe && !scytheCursorTexture)
+            scytheCursorTexture = CreateScytheCursor(tallGrass ? tallGrass.ScytheIcon : null);
+        if (cursor == ToolCursor.Scythe && !scytheCursorTexture) cursor = ToolCursor.None;
+        if (activeCursor == cursor) return;
+        activeCursor = cursor;
+        var texture = cursor == ToolCursor.Axe ? treeCursorTexture :
+            cursor == ToolCursor.Scythe ? scytheCursorTexture : null;
+        Cursor.SetCursor(texture, texture ? new Vector2(9f, 25f) : Vector2.zero, CursorMode.Auto);
+    }
+
+    static Texture2D CreateScytheCursor(Sprite icon)
+    {
+        if (!icon) return null;
+        var source = icon.texture;
+        var render = RenderTexture.GetTemporary(48, 48, 0, RenderTextureFormat.ARGB32);
+        var previous = RenderTexture.active;
+        Graphics.Blit(source, render);
+        RenderTexture.active = render;
+        var cursor = new Texture2D(48, 48, TextureFormat.RGBA32, false);
+        cursor.ReadPixels(new Rect(0, 0, 48, 48), 0, 0);
+        cursor.Apply();
+        RenderTexture.active = previous;
+        RenderTexture.ReleaseTemporary(render);
+        return cursor;
     }
 
     Block GetBlock(Vector3Int cell)

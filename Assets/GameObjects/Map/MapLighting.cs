@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
@@ -9,6 +10,7 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(MapGenerator), typeof(Tilemap))]
 public sealed class MapLighting : MonoBehaviour
 {
+    const int TextureUploadChunkSize = 32;
     public bool lightingEnabled = true;
     [Range(0, 1)] public float daylightStrength = 1f;
     [Range(0.0001f, 1)] public float downwardLoss = 0.003f;
@@ -22,6 +24,10 @@ public sealed class MapLighting : MonoBehaviour
     static readonly int HeadlampOriginRange = Shader.PropertyToID("_HeadlampOriginRange");
     static readonly int HeadlampDirectionAngles = Shader.PropertyToID("_HeadlampDirectionAngles");
     static readonly int HeadlampInnerRadius = Shader.PropertyToID("_HeadlampInnerRadius");
+    static readonly int TorchSourcesId = Shader.PropertyToID("_TorchSources");
+    static readonly int TorchCountId = Shader.PropertyToID("_TorchCount");
+    const int MaximumTorchLights = 64;
+    readonly Vector4[] torchSources = new Vector4[MaximumTorchLights];
 
     MapGenerator map;
     Tilemap tiles;
@@ -30,9 +36,12 @@ public sealed class MapLighting : MonoBehaviour
     Material material;
     Mesh mesh;
     GameObject overlay;
+    Texture2D uploadPatch;
+    Color32[] uploadPatchPixels;
+    readonly HashSet<Vector2Int> dirtyTextureChunks = new HashSet<Vector2Int>();
     Color32[] pixels;
     int width, height;
-    bool rebuild = true, textureDirty;
+    bool rebuild = true, textureDirty, fullTextureUpload;
     readonly HashSet<Vector3Int> changed = new HashSet<Vector3Int>();
     readonly Stopwatch timer = new Stopwatch();
     public bool IsReady => field != null;
@@ -133,6 +142,8 @@ public sealed class MapLighting : MonoBehaviour
             texture.SetPixels32(pixels);
             texture.Apply(false, false);
             textureDirty = false;
+            fullTextureUpload = false;
+            dirtyTextureChunks.Clear();
         }
         overlay.SetActive(true);
         UpdateHeadlamp();
@@ -172,18 +183,14 @@ public sealed class MapLighting : MonoBehaviour
         while (field.HasPendingWork && processed < 8192 && timer.Elapsed.TotalMilliseconds < 2)
             processed += field.Process(256);
         timer.Stop();
-        if (textureDirty)
-        {
-            texture.SetPixels32(pixels);
-            texture.Apply(false, false);
-            textureDirty = false;
-        }
+        UploadLightingTexture();
         UpdateHeadlamp();
     }
 
     void UpdateHeadlamp()
     {
         if (!material) return;
+        UpdateTorchLights();
         if (!headlamp || !headlamp.isActiveAndEnabled || headlamp.intensity <= 0)
         {
             material.SetVector(HeadlampOriginRange, Vector4.zero);
@@ -197,6 +204,19 @@ public sealed class MapLighting : MonoBehaviour
             new Vector4(origin.x, origin.y, headlamp.pointLightOuterRadius, headlamp.intensity));
         material.SetVector(HeadlampDirectionAngles, new Vector4(direction.x, direction.y, inner, outer));
         material.SetFloat(HeadlampInnerRadius, headlamp.pointLightInnerRadius);
+    }
+
+    void UpdateTorchLights()
+    {
+        int count = 0;
+        foreach (var torch in PlacedTorch.Active)
+        {
+            if (!torch || torch.OwnerMap != map || count >= torchSources.Length) continue;
+            Vector2 position = torch.LightPosition;
+            torchSources[count++] = new Vector4(position.x, position.y, torch.Radius, torch.Intensity);
+        }
+        material.SetVectorArray(TorchSourcesId, torchSources);
+        material.SetInt(TorchCountId, count);
     }
 
     void Initialize()
@@ -272,6 +292,8 @@ public sealed class MapLighting : MonoBehaviour
         renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
         field.Reset();
         textureDirty = true;
+        fullTextureUpload = true;
+        dirtyTextureChunks.Clear();
         rebuild = false;
     }
 
@@ -282,6 +304,68 @@ public sealed class MapLighting : MonoBehaviour
         pixels[(height - 1 - y) * width + x] = new Color32(0, 0, 0,
             (byte)Mathf.RoundToInt(255f * (1f - brightness)));
         textureDirty = true;
+        int pixelY = height - 1 - y;
+        dirtyTextureChunks.Add(new Vector2Int(x / TextureUploadChunkSize, pixelY / TextureUploadChunkSize));
+    }
+
+    void UploadLightingTexture()
+    {
+        if (!textureDirty || !texture) return;
+        int minChunkX = int.MaxValue, minChunkY = int.MaxValue, maxChunkX = -1, maxChunkY = -1;
+        foreach (var chunk in dirtyTextureChunks)
+        {
+            minChunkX = Mathf.Min(minChunkX, chunk.x); minChunkY = Mathf.Min(minChunkY, chunk.y);
+            maxChunkX = Mathf.Max(maxChunkX, chunk.x); maxChunkY = Mathf.Max(maxChunkY, chunk.y);
+        }
+        int left = minChunkX * TextureUploadChunkSize, bottom = minChunkY * TextureUploadChunkSize;
+        int copyWidth = maxChunkX < 0 ? 0 : Mathf.Min(width, (maxChunkX + 1) * TextureUploadChunkSize) - left;
+        int copyHeight = maxChunkY < 0 ? 0 : Mathf.Min(height, (maxChunkY + 1) * TextureUploadChunkSize) - bottom;
+        long affectedPixels = (long)copyWidth * copyHeight;
+        int patchWidth = copyWidth > 0 ? Mathf.NextPowerOfTwo(copyWidth) : 0;
+        int patchHeight = copyHeight > 0 ? Mathf.NextPowerOfTwo(copyHeight) : 0;
+        long transferPixels = affectedPixels + (long)patchWidth * patchHeight;
+        if (fullTextureUpload ||
+            (SystemInfo.copyTextureSupport & CopyTextureSupport.Basic) == 0 ||
+            copyWidth <= 0 || copyHeight <= 0 ||
+            affectedPixels * 3 >= (long)width * height ||
+            transferPixels * 4 >= (long)width * height * 3)
+        {
+            texture.SetPixels32(pixels);
+            texture.Apply(false, false);
+            textureDirty = false;
+            fullTextureUpload = false;
+            dirtyTextureChunks.Clear();
+            return;
+        }
+
+        if (!uploadPatch || uploadPatch.width < patchWidth || uploadPatch.height < patchHeight)
+        {
+            if (uploadPatch) Destroy(uploadPatch);
+            uploadPatch = new Texture2D(patchWidth, patchHeight,
+                TextureFormat.RGBA32, false, true)
+            { name = "Daylight mask update", filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp,
+                hideFlags = HideFlags.HideAndDontSave };
+            uploadPatchPixels = new Color32[patchWidth * patchHeight];
+        }
+        try
+        {
+            Array.Clear(uploadPatchPixels, 0, uploadPatchPixels.Length);
+            for (int row = 0; row < copyHeight; row++)
+                Array.Copy(pixels, (bottom + row) * width + left, uploadPatchPixels, row * uploadPatch.width, copyWidth);
+            uploadPatch.SetPixels32(uploadPatchPixels);
+            uploadPatch.Apply(false, false);
+            Graphics.CopyTexture(uploadPatch, 0, 0, 0, 0, copyWidth, copyHeight,
+                texture, 0, 0, left, bottom);
+        }
+        catch (UnityException)
+        {
+            // Preserve the same pixel values on graphics backends that reject partial copies.
+            texture.SetPixels32(pixels);
+            texture.Apply(false, false);
+        }
+        textureDirty = false;
+        fullTextureUpload = false;
+        dirtyTextureChunks.Clear();
     }
 
     public float GetBrightness(Vector3Int cell)
@@ -293,9 +377,11 @@ public sealed class MapLighting : MonoBehaviour
             : field == null || x < 0 || x >= width || y >= height
             ? ambientBrightness
             : Mathf.Max(ambientBrightness, GridDaylight.VisibleLight(field[x, y]));
-        if (!headlamp || !headlamp.isActiveAndEnabled || headlamp.intensity <= 0 || !tiles)
-            return mapBrightness;
-        return Mathf.Max(mapBrightness, GetHeadlampBrightness(tiles.GetCellCenterWorld(cell)));
+        Vector2 worldPosition = tiles ? tiles.GetCellCenterWorld(cell) : Vector2.zero;
+        float brightness = Mathf.Max(mapBrightness, PlacedTorch.BrightnessAt(worldPosition, map));
+        if (headlamp && headlamp.isActiveAndEnabled && headlamp.intensity > 0 && tiles)
+            brightness = Mathf.Max(brightness, GetHeadlampBrightness(worldPosition));
+        return brightness;
     }
 
     float GetHeadlampBrightness(Vector2 worldPosition)
@@ -321,12 +407,16 @@ public sealed class MapLighting : MonoBehaviour
         if (texture) Destroy(texture);
         if (material) Destroy(material);
         if (mesh) Destroy(mesh);
+        if (uploadPatch) Destroy(uploadPatch);
         field = null;
         pixels = null;
         overlay = null;
         texture = null;
         material = null;
         mesh = null;
+        uploadPatch = null;
+        textureDirty = fullTextureUpload = false;
+        dirtyTextureChunks.Clear();
         changed.Clear();
     }
 }

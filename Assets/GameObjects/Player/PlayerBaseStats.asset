@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9ebc2d05e768344fb02daa247896ebb, type: 3}
   m_Name: PlayerBaseStats
   m_EditorClassIdentifier: 
-  moveSpeed: 7
-  jumpForce: 10
+  moveSpeed: 5
+  jumpHeightBlocks: 1.6
   miningSpeed: 1
-  reach: 2
+  reach: 2.5
   maxEnergy: 100

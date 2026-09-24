@@ -22,6 +22,10 @@ public enum SoundType
     DigStone = 13,
     DirtHit = 14,
     WoodChop = 15,
+    LadderPlace = 16,
+    ItemInBag = 17,
+    DryGrass = 18,
+    TreeFall = 19,
 }
 
 [System.Serializable]
@@ -102,6 +106,7 @@ public class AudioManager : MonoBehaviour
     Dictionary<SoundType, Sound> soundLookup = new Dictionary<SoundType, Sound>();
     AudioClip[] frogCroaks;
     AudioClip grassLanding;
+    AudioSource craftingSoundSource;
     readonly System.Random ambienceRandom = new System.Random();
 
     public AudioClip GetRandomFrogCroak()
@@ -158,6 +163,7 @@ public class AudioManager : MonoBehaviour
 
     public void Play(SoundType type, bool dispersion = false)
     {
+        if (type == SoundType.ItemInBag && craftingSoundSource && craftingSoundSource.isPlaying) return;
         if (soundLookup.TryGetValue(type, out Sound s))
         {
             var clip = s.variants != null && s.variants.Length > 0
@@ -174,6 +180,7 @@ public class AudioManager : MonoBehaviour
             sr.volume = s.volume * (IsDigSound(type) ? digSoundVolume : 1f);
             sr.panStereo = 0f;
             sr.Play();
+            if (type == SoundType.ItemInBag) craftingSoundSource = sr;
             return;
         }
         else Debug.LogWarning($"Sound '{type}' not found in AudioManager!");

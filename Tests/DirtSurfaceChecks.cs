@@ -46,7 +46,7 @@ public static class DirtSurfaceChecks
                     "Ore overlay disagrees with the pruned map at "+cell);
                 chosen=registry.FromTile(map.Terrain.GetTile(cell));
                 Check(chosen==sampler.GetBaseBlock(x,y),"Ore replaced its dirt/stone substrate");
-                Check(y<20 ? chosen==dirt : chosen==dirt || chosen.IsStone,"Invalid surface block type");
+                Check(y<MapGenerationSampler.SurfaceDirtRows ? chosen==dirt : chosen==dirt || chosen.IsStone,"Invalid surface block type");
                 Check(Mathf.Abs(map.Terrain.GetColor(cell).a-(chosen==dirt?.5f:1f))<.01f,"Surface tile shader tag invalid");
                 if(chosen==dirt)
                 {
@@ -58,10 +58,10 @@ public static class DirtSurfaceChecks
             var shares=new int[map.transitionThickness];int changedBySeed=0;
             var repeat=new MapGenerationSampler(registry,map.seed,40);
             var other=new MapGenerationSampler(registry,map.seed+1,40);
-            for(int y=20;y<sampler.DirtEndDepth;y++)for(int x=0;x<1024;x++)
+            for(int y=MapGenerationSampler.SurfaceDirtRows;y<sampler.DirtEndDepth;y++)for(int x=0;x<1024;x++)
             {
                 bool earth=sampler.IsDirtAt(x,y);
-                if(earth)shares[y-20]++;
+                if(earth)shares[y-MapGenerationSampler.SurfaceDirtRows]++;
                 Check(earth==repeat.IsDirtAt(x,y),"Boundary is not deterministic");
                 if(earth!=other.IsDirtAt(x,y))changedBySeed++;
             }
@@ -94,7 +94,7 @@ public static class DirtSurfaceChecks
             Check(opaque>450000,"Terrain contains translucent tiles");
             light.intensity=0;Render();int bright=0;foreach(var p in pixels.GetPixels32())if(p.r>8||p.g>8||p.b>8)bright++;
             Check(bright==0,"Dirt or transition is self illuminated");
-            return new{passed=true,pureDirtRows=20,transitionRows=map.transitionThickness,variants,dirtCountsPer1024Cells=shares,changedBySeed,opaquePixels=opaque,darkPixels=bright,mining=true,persistence=true};
+            return new{passed=true,pureDirtRows=MapGenerationSampler.SurfaceDirtRows,transitionRows=map.transitionThickness,variants,dirtCountsPer1024Cells=shares,changedBySeed,opaquePixels=opaque,darkPixels=bright,mining=true,persistence=true};
         }
         finally
         {

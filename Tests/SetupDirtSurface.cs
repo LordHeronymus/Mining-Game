@@ -78,7 +78,7 @@ public static class SetupDirtSurface
             if(!appearance)appearance=map.gameObject.AddComponent<DirtSurfaceAppearance>();
             appearance.TerrainMaterial=material;EditorUtility.SetDirty(appearance);
             map.EnsureOreOverlay();
-            var sampler=new MapGenerationSampler(map.registry,map.ActiveSeed,map.GeneratedHeight,map.layers,map.oreDensityCurve,map.oreDensityMultiplierPercent,map.transitionThickness,map.oreTransitionCurve,map.oreTransitionDepth, map.oreVeinSizeCurve, map.surfaceOreRampDepth, map.surfaceOreRampCurve);
+            var sampler=new MapGenerationSampler(map.registry,map.ActiveSeed,map.GeneratedHeight,map.layers,map.oreDensityCurve,map.oreDensityMultiplierPercent,map.transitionThickness,map.oreTransitionCurve,map.oreTransitionDepth, map.oreVeinSizeCurve, map.surfaceOreRampDepth, map.surfaceOreRampCurve, map.surfaceOreVeinSizePercent);
             thickness=sampler.TransitionThickness;
             var changes=new List<TileChangeData>();
             for(int y=0;y<Math.Min(map.GeneratedHeight,sampler.DirtEndDepth);y++)

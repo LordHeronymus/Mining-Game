@@ -10,6 +10,9 @@ public sealed class TerrainCollisionShape
     readonly UniformStoneAppearance appearance;
     readonly Tilemap source;
     readonly Vector3 tuning;
+    readonly float leftWallInset;
+    readonly float rightWallInset;
+    readonly float groundInset;
     public bool Ready {get;}
     public TerrainCollisionShape(UniformStoneAppearance appearance,Tilemap source)
     {
@@ -27,7 +30,29 @@ public sealed class TerrainCollisionShape
             }
             profiles[v*4+side]=p;
         }
+        leftWallInset=VerticalInset(0);
+        rightWallInset=VerticalInset(1);
+        groundInset=GroundInset();
         Ready=true;
+    }
+    float VerticalInset(int side)
+    {
+        float deepest=.005f;
+        float depth=Mathf.Clamp(tuning.x,0f,2f);
+        float irregularity=Mathf.Clamp(tuning.y,0f,2f);
+        for(int variant=0;variant<12;variant++)
+            foreach(float value in profiles[variant*4+side])
+                deepest=Mathf.Max(deepest,Mathf.Min(.32f,
+                    Mathf.Max(.005f,.065f+(value-.065f)*irregularity)*depth));
+        return deepest*.9f;
+    }
+    float GroundInset()
+    {
+        // Keep the player just inside the visible soil edge, with one shared
+        // height across variants so a walkable ledge cannot become wavy.
+        float profileInset=VerticalInset(3)/.9f;
+        float cornerInset=Mathf.Min(.20f,.12f*Mathf.Clamp(tuning.x,0f,2f));
+        return Mathf.Max(.08f,profileInset+.01f,cornerInset+.01f);
     }
     public bool Matches=>appearance&&tuning==new Vector3(appearance.edgeDepth,appearance.edgeIrregularity,appearance.edgeRounding);
     public static int Variant(Vector3Int cell)
@@ -50,6 +75,44 @@ public sealed class TerrainCollisionShape
         int variant=Variant(cell),key=bits|(variant<<8)|(cell.y==0?1<<12:0);
         if(!outlines.TryGetValue(key,out var points))outlines.Add(key,points=Outline(bits,variant,cell.y==0));
         return points;
+    }
+    static List<Vector2> ClipSide(List<Vector2> outline,float x,bool keepLeft)
+    {
+        var clipped=new List<Vector2>(outline.Count+2);
+        Vector2 previous=outline[outline.Count-1];
+        bool previousInside=keepLeft?previous.x<=x:previous.x>=x;
+        foreach(var current in outline)
+        {
+            bool currentInside=keepLeft?current.x<=x:current.x>=x;
+            if(currentInside!=previousInside)
+            {
+                float t=(x-previous.x)/(current.x-previous.x);
+                clipped.Add(Vector2.Lerp(previous,current,t));
+            }
+            if(currentInside)clipped.Add(current);
+            previous=current;
+            previousInside=currentInside;
+        }
+        return clipped;
+    }
+    static List<Vector2> ClipHorizontal(List<Vector2> outline,float y,bool keepBelow)
+    {
+        var clipped=new List<Vector2>(outline.Count+2);
+        Vector2 previous=outline[outline.Count-1];
+        bool previousInside=keepBelow?previous.y<=y:previous.y>=y;
+        foreach(var current in outline)
+        {
+            bool currentInside=keepBelow?current.y<=y:current.y>=y;
+            if(currentInside!=previousInside)
+            {
+                float t=(y-previous.y)/(current.y-previous.y);
+                clipped.Add(Vector2.Lerp(previous,current,t));
+            }
+            if(currentInside)clipped.Add(current);
+            previous=current;
+            previousInside=currentInside;
+        }
+        return clipped;
     }
     public Vector2[] Outline(int bits,int variant,bool surface)
     {
@@ -83,7 +146,24 @@ public sealed class TerrainCollisionShape
             }
             points=next;
         }
-        return points;
+        bool openLeft=(bits&1)!=0,openRight=(bits&2)!=0;
+        bool openGround=surface||(bits&8)!=0;
+        List<Vector2> outline=null;
+        if(openGround)
+        {
+            float groundY=1f-groundInset;
+            for(int i=48;i<72;i++)points[i].y=groundY;
+            outline=ClipHorizontal(new List<Vector2>(points),groundY,true);
+        }
+        // Preserve rounded open corners; only full-height wall faces are straightened.
+        if((!openLeft&&!openRight)||(bits&12)!=0)return outline?.ToArray()??points;
+        float left=openLeft?leftWallInset:0f,right=openRight?1f-rightWallInset:1f;
+        if(openRight)for(int i=24;i<48;i++)points[i].x=right;
+        if(openLeft)for(int i=72;i<96;i++)points[i].x=left;
+        outline??=new List<Vector2>(points);
+        if(openLeft)outline=ClipSide(outline,left,false);
+        if(openRight)outline=ClipSide(outline,right,true);
+        return outline.ToArray();
     }
     static Vector2 Corner(Vector2 f,int i)=>i==0?f:i==1?new Vector2(f.x,1-f.y):i==2?new Vector2(1-f.x,f.y):Vector2.one-f;
     static float Smooth(float a,float b,float t)=>Mathf.SmoothStep(0,1,Mathf.InverseLerp(a,b,t));

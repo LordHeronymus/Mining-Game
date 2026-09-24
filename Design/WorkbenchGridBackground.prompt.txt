@@ -1,0 +1,4 @@
+Built-in image_gen; reference: Design/WorkbenchGridConcept.png
+Output: Assets/UI/Workbench/WorkbenchGridBackground.png
+
+Edit target: attached crafting UI concept. Produce only its clean background plate for a real Unity UI. Preserve EXACT image composition, wooden workshop scenery, outer wood/iron frame, title plaque, dark wooden board, and vertical divider at 61 percent of image width. Remove ALL interface contents: ALL text including Werkbank, Rezepte and every other word, all icons, recipe cards, card outlines, stars, category tabs, search box, checkbox, material rows, buttons, separator lines, scrollbar. Inpaint these areas with continuous dark brown wooden board texture matching the existing surrounding wood. The plaque is empty wood. Both left and right panels completely blank and dark, ready for live UI overlay. No text, no icons, no UI controls, no additional ornaments. Keep same landscape aspect and border geometry.

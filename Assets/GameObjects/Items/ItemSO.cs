@@ -2,7 +2,7 @@ using UnityEngine;
 
 public enum Item
 {
-    //next 14
+    //next 24
 
     Coal = 3,
     Copper = 0,
@@ -19,6 +19,16 @@ public enum Item
     Rope = 11,
     Nails = 12,
     PlantFiber = 13,
+    CopperPickaxe = 14,
+    IronPickaxe = 15,
+    SteelPickaxe = 16,
+    TitaniumPickaxe = 17,
+    TungstenPickaxe = 18,
+    ObsidianPickaxe = 19,
+    MythrilPickaxe = 20,
+    DiamondPickaxe = 21,
+    Scythe = 22,
+    Axe = 23,
 }
 
 public enum ItemCategory
@@ -27,6 +37,7 @@ public enum ItemCategory
     Tool = 1, 
     Consumable = 2, 
     Misc = 3,
+    Powerup = 4,
 }
 
 [CreateAssetMenu(fileName = "Item", menuName = "Item")]

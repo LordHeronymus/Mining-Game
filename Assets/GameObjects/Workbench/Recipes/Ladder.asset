@@ -12,11 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bd168b198ca49c4a82450a3ed868988, type: 3}
   m_Name: Ladder
   m_EditorClassIdentifier: 
+  category: 0
+  persistentId: fb9e5d7e263b04f4e8850ffd36ca2346
+  customCardIconLayout: 1
+  cardIconLayout:
+    scale: {x: 1, y: 1}
+    offset: {x: 1, y: 1.74}
+    flipX: 1
+    flipY: 0
   output: {fileID: 11400000, guid: 7d243e70f0ce20241963c5cc6aacac2e, type: 2}
-  outputAmount: 1
+  outputAmount: 5
   pluralName: Leitern
   ingredients:
   - item: {fileID: 11400000, guid: 75e7eb8e62b50c64eb4dd8132de34314, type: 2}
-    amount: 4
+    amount: 3
   - item: {fileID: 11400000, guid: 760648c834dc0cd46b697d742b6e7447, type: 2}
     amount: 1
+  - item: {fileID: 11400000, guid: 7118deb47d14256439f8c99ab5625311, type: 2}
+    amount: 2

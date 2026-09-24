@@ -41,6 +41,7 @@ public sealed class MoonlightController : MonoBehaviour
     public void Refresh()
     {
         if (!sky || !background || !daylight || !moonlight) return;
+        daylight.enabled = GameplayTestSettings.GlobalLighting;
         float blend = sky.isActiveAndEnabled ? sky.NightBlend : 0f;
         daylight.intensity = Mathf.Lerp(dayIntensity, nightAmbient, blend);
         daylight.color = Color.Lerp(daylightColor, moonColor, blend);
@@ -124,7 +125,7 @@ public sealed class MoonlightController : MonoBehaviour
         halos.Clear();
         if (haloMesh) ReleaseHalo(haloMesh);
         haloMesh = null;
-        if (daylight) { daylight.intensity = dayIntensity; daylight.color = daylightColor; }
+        if (daylight) { daylight.enabled = true; daylight.intensity = dayIntensity; daylight.color = daylightColor; }
         if (moonlight) moonlight.intensity = 0f;
         if (background)
             foreach (var entry in background.layers)

@@ -9,11 +9,15 @@ public sealed class SurfaceTrees : MonoBehaviour
     [SerializeField] ItemSO wood;
     [SerializeField, Range(0, 20)] int maximumTrees = 12;
     [SerializeField, Min(1)] int hitsToFell = 10;
+    [SerializeField] ItemSO axePowerup;
+    [SerializeField, Min(1f)] float axeHitMultiplier = 4f;
     [SerializeField, Min(1)] int woodYieldMin = 15;
     [SerializeField, Min(1)] int woodYieldMax = 25;
     [SerializeField, Min(0)] int maximumBonusWood = 10;
     [SerializeField, Min(2)] float minimumTreeSpacing = 2f;
     [SerializeField, Min(1)] float treeHeight = 8.25f;
+    [SerializeField, Min(.1f)] float fallDurationSeconds = .9f;
+    [SerializeField] AnimationCurve fallRotationCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     [SerializeField, Min(0)] float growthSpeedPercentPerMinute = 10f;
     [SerializeField, Min(0)] float maximumSizeBonusPercent = 50f;
     [SerializeField] Vector2 regrowthSeconds = new Vector2(120, 180);
@@ -28,7 +32,15 @@ public sealed class SurfaceTrees : MonoBehaviour
     int targetPopulation;
 
     public int ActiveCount => trees.Count;
+    public MapGenerator Map => map;
     public int Capacity => targetPopulation;
+    public bool HasAxe => axePowerup && InventoryManager.Instance &&
+        InventoryManager.Instance.IsPowerupUnlocked(axePowerup);
+    public float HitDamage => HasAxe ? Mathf.Max(1f, axeHitMultiplier) : 1f;
+    public float FallDurationSeconds => Mathf.Clamp(fallDurationSeconds, .1f, 10f);
+    public float FallRotationProgress(float normalizedTime) => fallRotationCurve != null
+        ? Mathf.Clamp01(fallRotationCurve.Evaluate(Mathf.Clamp01(normalizedTime)))
+        : normalizedTime * normalizedTime;
     public bool Protects(Vector3Int cell)
     {
         if (cell.y != 0) return false;
@@ -126,6 +138,8 @@ public sealed class SurfaceTrees : MonoBehaviour
                 Mathf.Max(0f, maximumSizeBonusPercent),
                 Mathf.Max(0f, growthSpeedPercentPerMinute), mature);
             trees.Add(grown);
+            // Grass never vetoes a tree site, including during regrowth.
+            map.GetComponent<SurfaceTallGrass>()?.RemoveNear(cell.x, 1);
             return true;
         }
         return false;

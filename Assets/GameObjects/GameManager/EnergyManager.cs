@@ -24,6 +24,11 @@ public class EnergyManager : MonoBehaviour
     void Start()
     {
         energy = stats.MaxEnergy;
+        if (slider && slider.fillRect)
+        {
+            var fillGraphic = slider.fillRect.GetComponent<Graphic>();
+            if (fillGraphic) fillGraphic.enabled = false;
+        }
     }
 
     void Update()
@@ -36,7 +41,11 @@ public class EnergyManager : MonoBehaviour
         if (!GameplayTestSettings.NoEnergyConsume)
             energy = Mathf.Max(energy - consumption * Time.deltaTime, 0f);
 
-        slider.value = energy / stats.MaxEnergy;
-        energyText.text = $"{Mathf.CeilToInt(energy).ToString()} / {stats.MaxEnergy}";
+        // CompactHud owns the visible energy display. Updating the legacy Slider during
+        // the UI layout pass can enqueue a recursive rebuild of its Fill image.
+        if (slider && slider.gameObject.activeInHierarchy)
+            slider.SetValueWithoutNotify(energy / stats.MaxEnergy);
+        if (energyText && energyText.gameObject.activeInHierarchy)
+            energyText.text = $"{Mathf.CeilToInt(energy).ToString()} / {stats.MaxEnergy}";
     }
 }

@@ -30,7 +30,7 @@ public static class LayerTransitionChecks
         var source=UnityEngine.Object.FindFirstObjectByType<MapGenerator>();
         Check(source && source.layers.Length>1 && source.layers[0].stone==upper && source.layers[1].stone==lower,
             "Scene layer stones incorrect");
-        var preview=new MapGenerationSampler(source.registry,source.ActiveSeed,source.GeneratedHeight,source.layers,source.oreDensityCurve,source.oreDensityMultiplierPercent,source.transitionThickness,source.oreTransitionCurve,source.oreTransitionDepth, source.oreVeinSizeCurve, source.surfaceOreRampDepth, source.surfaceOreRampCurve);
+        var preview=new MapGenerationSampler(source.registry,source.ActiveSeed,source.GeneratedHeight,source.layers,source.oreDensityCurve,source.oreDensityMultiplierPercent,source.transitionThickness,source.oreTransitionCurve,source.oreTransitionDepth, source.oreVeinSizeCurve, source.surfaceOreRampDepth, source.surfaceOreRampCurve, source.surfaceOreVeinSizePercent);
         int checkedCells=0;
         for(int y=296;y<Math.Min(source.layers[1].startDepth+source.transitionThickness+2,source.GeneratedHeight);y++)for(int x=0;x<source.GeneratedWidth;x++){
             var cell=new Vector3Int(x-source.GeneratedWidth/2,-y,0);
@@ -84,7 +84,7 @@ public static class LayerTransitionChecks
                 (previousSprites,currentSprites)=(currentSprites,previousSprites);
             }
             Check(checkedPairs>1000,"Too few terrain pairs checked");
-            var sampler=new MapGenerationSampler(registry,map.seed,map.mapHeight,map.layers,map.oreDensityCurve,map.oreDensityMultiplierPercent,map.transitionThickness,map.oreTransitionCurve,map.oreTransitionDepth, map.oreVeinSizeCurve, map.surfaceOreRampDepth, map.surfaceOreRampCurve);
+            var sampler=new MapGenerationSampler(registry,map.seed,map.mapHeight,map.layers,map.oreDensityCurve,map.oreDensityMultiplierPercent,map.transitionThickness,map.oreTransitionCurve,map.oreTransitionDepth, map.oreVeinSizeCurve, map.surfaceOreRampDepth, map.surfaceOreRampCurve, map.surfaceOreVeinSizePercent);
             int[] shares=new int[map.transitionThickness];
             for(int y=40;y<40+map.transitionThickness;y++)for(int x=0;x<1024;x++)if(sampler.IsFirstLayerStoneAt(x,y))shares[y-40]++;
             for(int i=0;i<shares.Length;i++)Check(shares[i]>0 && shares[i]<1024,"Hard layer boundary row "+i);

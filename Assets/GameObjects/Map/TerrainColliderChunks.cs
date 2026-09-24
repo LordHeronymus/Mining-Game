@@ -1,16 +1,18 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(MapGenerator), typeof(TilemapCollider2D))]
 public sealed class TerrainColliderChunks : MonoBehaviour
 {
-    const int ChunkSize = 64;
+    const int ChunkSize = 16;
     const int ChunkRadius = 1;
 
     MapGenerator map;
     TilemapCollider2D sourceCollider;
     CompositeCollider2D sourceComposite;
     Tilemap[,] chunks;
+    readonly Dictionary<Tilemap, Vector2Int> chunkCoordinates = new Dictionary<Tilemap, Vector2Int>();
     BoundsInt sourceBounds;
     PlayerMovement player;
     TerrainCollisionShape shapes;
@@ -141,6 +143,7 @@ public sealed class TerrainColliderChunks : MonoBehaviour
 
         var tilemap = child.AddComponent<Tilemap>();
         chunks[x, y] = tilemap;
+        chunkCoordinates[tilemap] = new Vector2Int(x, y);
         tilemap.tileAnchor = source.tileAnchor;
         tilemap.orientation = source.orientation;
         tilemap.orientationMatrix = source.orientationMatrix;
@@ -169,12 +172,10 @@ public sealed class TerrainColliderChunks : MonoBehaviour
 
     void PopulateChunk(Tilemap chunk)
     {
-        var area=sourceBounds;
-        // Resolve the chunk bounds from the owning grid, never from object names.
-        int cx=0,cy=0;
-        for(int y=0;y<chunks.GetLength(1);y++)for(int x=0;x<chunks.GetLength(0);x++)if(chunks[x,y]==chunk){cx=x;cy=y;}
+        if (!chunkCoordinates.TryGetValue(chunk, out var coordinates)) return;
+        int cx=coordinates.x,cy=coordinates.y;
         int left=sourceBounds.xMin+cx*ChunkSize,bottom=sourceBounds.yMin+cy*ChunkSize;
-        area=new BoundsInt(left,bottom,0,Mathf.Min(ChunkSize,sourceBounds.xMax-left),Mathf.Min(ChunkSize,sourceBounds.yMax-bottom),1);
+        var area=new BoundsInt(left,bottom,0,Mathf.Min(ChunkSize,sourceBounds.xMax-left),Mathf.Min(ChunkSize,sourceBounds.yMax-bottom),1);
         var tiles=map.Terrain.GetTilesBlock(area);
         var paths=new System.Collections.Generic.List<Vector2[]>();
         for(int i=0;i<tiles.Length;i++)
@@ -214,6 +215,7 @@ public sealed class TerrainColliderChunks : MonoBehaviour
                 else DestroyImmediate(chunk.gameObject);
         }
         chunks = null;
+        chunkCoordinates.Clear();
         loadedCenterX = -1;
         loadedCenterY = -1;
         shapes?.Dispose();shapes=null;

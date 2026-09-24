@@ -161,7 +161,7 @@ public sealed class MapOverviewWindow : EditorWindow
             sampler = live ? null : new MapGenerationSampler(map.registry, seed, height, map.layers,
                 map.oreDensityCurve, map.oreDensityMultiplierPercent, map.transitionThickness,
                 map.oreTransitionCurve, map.oreTransitionDepth, map.oreVeinSizeCurve,
-                map.surfaceOreRampDepth, map.surfaceOreRampCurve);
+                map.surfaceOreRampDepth, map.surfaceOreRampCurve, map.surfaceOreVeinSizePercent);
             building = true;
         }
         catch (Exception ex)
@@ -312,10 +312,9 @@ public sealed class MapOverviewWindow : EditorWindow
             return;
         }
 
-        int legendColumns = Mathf.Max(1, Mathf.FloorToInt((position.width - 24 + 3) / 83));
-        float legendHeight = Mathf.CeilToInt(13f / legendColumns) * 18f;
-        float bottom = 40f + legendHeight;
-        var area = new Rect(12, GUILayoutUtility.GetLastRect().yMax + 8, position.width - 24, position.height - GUILayoutUtility.GetLastRect().yMax - bottom);
+        const float legendWidth = 95f;
+        float top = GUILayoutUtility.GetLastRect().yMax + 8;
+        var area = new Rect(12 + legendWidth, top, position.width - 24 - legendWidth, position.height - top - 32);
         if (area.width <= 0 || area.height <= 0) return;
         Vector2 center = view.center;
         view.size = ViewSize(area);
@@ -325,8 +324,8 @@ public sealed class MapOverviewWindow : EditorWindow
         HandleInput(area);
         DrawMap(area);
         DrawPlayerMarker(area);
-        DrawStatus(area, position.height - legendHeight - 24);
-        DrawLegend(new Rect(12, position.height - legendHeight - 2, position.width - 24, legendHeight));
+        DrawStatus(area, position.height - 24);
+        DrawLegend(new Rect(12, top, legendWidth, area.height));
     }
 
     Vector2 ViewSize(Rect area)
@@ -459,10 +458,9 @@ public sealed class MapOverviewWindow : EditorWindow
         float x = area.x;
         for (int i = 0; i < names.Length; i++)
         {
-            if (x + 80 > area.xMax) { x = area.x; area.y += 18; }
             EditorGUI.DrawRect(new Rect(x, area.y + 2, 11, 11), i == ids.Length ? Color.cyan : ColorFor(ids[i]));
             GUI.Label(new Rect(x + 15, area.y, 65, 17), names[i], EditorStyles.miniLabel);
-            x += 83;
+            area.y += 18;
         }
     }
 }

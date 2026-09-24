@@ -9,6 +9,7 @@ public static class DebugInputInteractionChecks
 {
     public static async Task<object> Main()
     {
+        float original = GameplayTestSettings.ConfiguredDiggingMultiplier;
         var panel = UnityEngine.Object.FindFirstObjectByType<GameplayDebugPanel>();
         if (!GameplayDebugPanel.IsOpen) panel.Toggle();
         panel.GetComponent<GameplayDebugWindow>().SwitchTab(true);
@@ -22,8 +23,11 @@ public static class DebugInputInteractionChecks
             saved = GameplayTestSettings.ConfiguredDiggingMultiplier, unsaved = GameplayTestSettings.HasUnsavedChanges,
             selectionLog = probe.selectionLog.ToArray() };
         UnityEngine.Object.Destroy(probe.gameObject);
-        if (!probe.afterClick || probe.afterType != "2" ||
-            GameplayTestSettings.ConfiguredDiggingMultiplier != 2f || GameplayTestSettings.HasUnsavedChanges)
+        bool passed = probe.afterClick && probe.afterType == "2" &&
+            GameplayTestSettings.ConfiguredDiggingMultiplier == 2f && !GameplayTestSettings.HasUnsavedChanges;
+        GameplayTestSettings.SetDiggingMultiplier(original);
+        GameplayTestSettings.Save(out _);
+        if (!passed)
             throw new Exception("Input interaction failed: " + string.Join(" | ", probe.selectionLog));
         return result;
     }
@@ -35,7 +39,8 @@ public static class DebugInputInteractionChecks
         panel.Toggle();
         panel.GetComponent<GameplayDebugWindow>().SwitchTab(true);
         string reopened = panel.transform.Find("Card/WindowViewport/WindowContent/TestMultiplier").GetComponent<TMP_InputField>().text;
-        if (reopened != "2" || GameplayTestSettings.ConfiguredDiggingMultiplier != 2f || GameplayTestSettings.HasUnsavedChanges)
+        string expected = GameplayTestSettings.ConfiguredDiggingMultiplier.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+        if (reopened != expected || GameplayTestSettings.HasUnsavedChanges)
             throw new Exception("Saved factor was not restored.");
         return new { reopened, saved = GameplayTestSettings.ConfiguredDiggingMultiplier };
     }

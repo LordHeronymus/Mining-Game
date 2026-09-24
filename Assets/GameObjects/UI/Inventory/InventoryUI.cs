@@ -121,7 +121,8 @@ public class InventoryUI : MonoBehaviour
     void Refresh()
     {
         if (!IsOpen || !content) return;
-        var items = inventory ? inventory.GetSnapshot().Where(p => p.Key && p.Value > 0 && (Filter == 0 || Category(p.Key) == Filter)).ToList()
+        var items = inventory ? inventory.GetSnapshot().Where(p => p.Key && p.Key.category != ItemCategory.Powerup &&
+            p.Value > 0 && (Filter == 0 || Category(p.Key) == Filter)).ToList()
             : new List<KeyValuePair<ItemSO, int>>();
         items = alphabetical ? items.OrderBy(p => p.Key.displayName).ToList()
             : items.OrderBy(p => Category(p.Key)).ThenBy(p => ItemOrder(p.Key)).ToList();

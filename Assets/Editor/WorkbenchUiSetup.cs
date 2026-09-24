@@ -21,8 +21,9 @@ public static class WorkbenchUiSetup
         var scene = SceneManager.GetActiveScene();
         if (scene.path != "Assets/Scenes/SampleScene.unity") throw new System.InvalidOperationException("Open SampleScene.");
         AssetDatabase.Refresh();
-        Import(Ui + "WorkbenchBackground.png");
+        Import(Ui + "WorkbenchGridBackground.png");
         Import(Icons + "PlantFiber.png");
+        Import(Icons + "Scythe.png");
         SliceIcons();
         MakePanelSprite("Row.png", new Color32(46, 29, 20, 235), new Color32(143, 104, 76, 255));
         MakePanelSprite("SelectedRow.png", new Color32(91, 44, 15, 245), new Color32(255, 177, 67, 255));
@@ -35,6 +36,8 @@ public static class WorkbenchUiSetup
         var bridge = ItemAsset("Tools/BridgePart", Item.BridgePart, "Brückenteil", sprites["BridgePart"], ItemCategory.Tool);
         var fibers = ItemAsset("Materials/PlantFiber", Item.PlantFiber, "Fasern",
             AssetDatabase.LoadAssetAtPath<Sprite>(Icons + "PlantFiber.png"), ItemCategory.Misc);
+        var scythe = ItemAsset("Tools/Scythe", Item.Scythe, "Sense",
+            AssetDatabase.LoadAssetAtPath<Sprite>(Icons + "Scythe.png"), ItemCategory.Powerup);
         var torch = LoadItem("Tools/Torche");
         var dynamite = LoadItem("Tools/Dynamite");
         var ladder = LoadItem("Tools/Ladder");
@@ -51,8 +54,9 @@ public static class WorkbenchUiSetup
             Recipe("BridgePart", bridge, 1, "Brückenteile", new(wood, 6), new(iron, 2), new(rope, 1)),
             Recipe("Ladder", ladder, 1, "Leitern", new(wood, 4), new(rope, 1)),
             Recipe("Rope", rope, 1, "Seile", new CraftingIngredient(fibers, 3)),
-            Recipe("Nails", nails, 4, "Nägel", new CraftingIngredient(iron, 1))
-        };
+            Recipe("Nails", nails, 4, "Nägel", new CraftingIngredient(iron, 1)),
+            Recipe("Scythe", scythe, 1, "Sensen", new(wood, 2), new(iron, 3))
+        }.Concat(PickaxeWorkbenchSetup.CreateRecipes()).Append(InstallAxePowerup.CreateRecipe()).ToArray();
 
         var shop = GameObject.Find("/UI/ScreenCanvas/Windows/ShopUI");
         var windows = shop.transform.parent;
@@ -65,7 +69,7 @@ public static class WorkbenchUiSetup
         rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
         rect.offsetMin = rect.offsetMax = Vector2.zero; rect.localScale = Vector3.one;
         var image = root.GetComponent<Image>();
-        image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(Ui + "WorkbenchBackground.png");
+        image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(Ui + "WorkbenchGridBackground.png");
         image.color = Color.white; image.raycastTarget = true;
         var group = root.GetComponent<CanvasGroup>();
         group.alpha = 0; group.interactable = group.blocksRaycasts = false;
@@ -83,7 +87,7 @@ public static class WorkbenchUiSetup
         AssetDatabase.SaveAssets();
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
-        return "Workbench installed: B / Escape, six recipes.";
+        return "Workbench installed with crafting and pickaxe recipes.";
     }
 
     static ItemSO LoadItem(string path) => AssetDatabase.LoadAssetAtPath<ItemSO>("Assets/GameObjects/Items/" + path + ".asset");

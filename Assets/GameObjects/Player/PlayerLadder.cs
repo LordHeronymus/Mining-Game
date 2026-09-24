@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 [DefaultExecutionOrder(-50), DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerMovement), typeof(Rigidbody2D))]
@@ -14,6 +13,7 @@ public sealed class PlayerLadder : MonoBehaviour
     Collider2D bodyCollider;
     Camera view;
     SpriteRenderer preview;
+    CompactHud hotbar;
     float gravity, reattachAt;
 
     void Awake()
@@ -21,26 +21,54 @@ public sealed class PlayerLadder : MonoBehaviour
         body = GetComponent<Rigidbody2D>();
         bodyCollider = GetComponent<Collider2D>();
         view = Camera.main;
+        hotbar = FindFirstObjectByType<CompactHud>();
     }
 
     void Update()
     {
         if (GameplayInputBlocker.IsBlocked) { HidePreview(); return; }
-        if (Input.GetKeyDown(KeyCode.L)) BuildMode = !BuildMode;
-        if (Input.GetKeyDown(KeyCode.Escape)) BuildMode = false;
-        if (!BuildMode || !ladders || !view || !stats ||
-            (EventSystem.current && EventSystem.current.IsPointerOverGameObject())) { HidePreview(); return; }
+        if (!hotbar) hotbar = FindFirstObjectByType<CompactHud>();
+        var selected = hotbar ? hotbar.SelectedItem : null;
+        if (Input.GetKeyDown(KeyCode.L) && hotbar)
+        {
+            int ladderSlot = System.Array.FindIndex(hotbar.slots, item => item && item.item == Item.Ladder) + 1;
+            if (ladderSlot > 0) hotbar.SelectSlot(hotbar.SelectedSlot == ladderSlot ? 0 : ladderSlot);
+            selected = hotbar.SelectedItem;
+        }
+        if (Input.GetKeyDown(KeyCode.Escape) && hotbar && selected && selected.item == Item.Ladder)
+        {
+            hotbar.SelectSlot(0);
+            selected = null;
+        }
+        if (!view || !stats || TileMiner.IsPointerOverUi(Input.mousePosition)) { HidePreview(); return; }
         Vector3 world = view.ScreenToWorldPoint(Input.mousePosition);
         world.z = 0;
-        var cell = ladders.Map.Terrain.WorldToCell(world);
-        bool reachable = ladders.InReach(cell, transform.position, stats.Reach);
-        bool occupied = ladders.Has(cell);
         var inventory = InventoryManager.Instance;
-        bool valid = reachable && ladders.CanPlace(cell) && inventory && inventory.GetCount(ladders.ladderItem) > 0;
-        ShowPreview(cell, valid ? new Color(.55f, 1, .55f, .65f) :
+        if (Input.GetMouseButtonDown(1) && selected)
+        {
+            if (selected.item == Item.Ladder && ladders)
+            {
+                var cell = ladders.Map.Terrain.WorldToCell(world);
+                if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+                    ladders.TryRemove(cell, inventory, transform.position, stats.Reach);
+                else
+                    ladders.TryPlace(cell, inventory, transform.position, stats.Reach);
+            }
+            else if (selected.item == Item.Torche)
+            {
+                var map = ladders ? ladders.Map : FindFirstObjectByType<MapGenerator>();
+                PlacedTorch.TryPlace(map, selected, world, transform.position, stats.Reach);
+            }
+        }
+
+        bool showLadderPreview = BuildMode && ladders && selected && selected.item == Item.Ladder;
+        if (!showLadderPreview) { HidePreview(); return; }
+        var previewCell = ladders.Map.Terrain.WorldToCell(world);
+        bool reachable = ladders.InReach(previewCell, transform.position, stats.Reach);
+        bool occupied = ladders.Has(previewCell);
+        bool valid = reachable && ladders.CanPlace(previewCell) && inventory && inventory.GetCount(ladders.ladderItem) > 0;
+        ShowPreview(previewCell, valid ? new Color(.55f, 1, .55f, .65f) :
             occupied && reachable ? new Color(1, .8f, .3f, .7f) : new Color(1, .25f, .25f, .5f));
-        if (Input.GetMouseButtonDown(0)) ladders.TryPlace(cell, inventory, transform.position, stats.Reach);
-        if (Input.GetMouseButtonDown(1)) ladders.TryRemove(cell, inventory, transform.position, stats.Reach);
     }
 
     public void SetBuildMode(bool value) { BuildMode = value; if (!value) HidePreview(); }
@@ -54,8 +82,8 @@ public sealed class PlayerLadder : MonoBehaviour
         if (IsClimbing && (jump || Mathf.Abs(horizontal) > .1f))
         {
             Detach();
-            body.linearVelocity = new Vector2(horizontal * stats.MoveSpeed, 0);
-            if (jump) body.AddForce(Vector2.up * stats.JumpForce, ForceMode2D.Impulse);
+            body.linearVelocity = new Vector2(horizontal * stats.EffectiveMoveSpeed, 0);
+            if (jump) GetComponent<PlayerMovement>().LaunchJump();
             return true;
         }
         if (!IsClimbing)
@@ -66,8 +94,10 @@ public sealed class PlayerLadder : MonoBehaviour
             IsClimbing = true;
         }
         var tiles = ladders.Tiles;
-        float vx = Mathf.Clamp((tiles.GetCellCenterWorld(cell).x - bodyCollider.bounds.center.x) / Time.fixedDeltaTime, -climbSpeed, climbSpeed);
-        float vy = vertical * climbSpeed;
+        float effectiveClimbSpeed = climbSpeed * GameplayTestSettings.MovementMultiplier;
+        float vx = Mathf.Clamp((tiles.GetCellCenterWorld(cell).x - bodyCollider.bounds.center.x) / Time.fixedDeltaTime,
+            -effectiveClimbSpeed, effectiveClimbSpeed);
+        float vy = vertical * effectiveClimbSpeed;
         if (vy > 0 && !ladders.Has(cell + Vector3Int.up))
         {
             // Feet can reach the last rung's top edge for a level sideways exit, without climbing into empty air.

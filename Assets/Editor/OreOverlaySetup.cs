@@ -260,7 +260,7 @@ public static class OreOverlaySetup
         var sampler = new MapGenerationSampler(map.registry, map.ActiveSeed, height, map.layers,
             map.oreDensityCurve, map.oreDensityMultiplierPercent, map.transitionThickness,
             map.oreTransitionCurve, map.oreTransitionDepth, map.oreVeinSizeCurve,
-            map.surfaceOreRampDepth, map.surfaceOreRampCurve);
+            map.surfaceOreRampDepth, map.surfaceOreRampCurve, map.surfaceOreVeinSizePercent);
         for (int y = 0; y < height; y++)
             for (int x = 0; x < width; x++)
             {

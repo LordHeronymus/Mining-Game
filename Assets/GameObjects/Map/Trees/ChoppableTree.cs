@@ -20,8 +20,10 @@ public sealed class ChoppableTree : MonoBehaviour
     SurfaceTrees owner;
     ItemSO wood;
     Sprite swaySprite;
+    Vector2[] pendingSwayVertices;
+    ushort[] pendingSwayTriangles;
     MaterialPropertyBlock swayProperties;
-    int health;
+    float health;
     int woodMin, woodMax, maximumBonusWood;
     float shake;
     float fullScale;
@@ -37,7 +39,7 @@ public sealed class ChoppableTree : MonoBehaviour
     int reachGlowLevel;
 
     public int SurfaceCellX { get; private set; }
-    public int Health => health;
+    public int Health => Mathf.CeilToInt(health);
     public bool CanChop => health > 0 && !falling && trunk && trunk.enabled;
     public Vector2 HitPoint => (Vector2)transform.position + Vector2.up;
     float Maturity => maximumSizeBonusRatio > 0f
@@ -92,7 +94,9 @@ public sealed class ChoppableTree : MonoBehaviour
 
     void SetupSwaySprite(Sprite source)
     {
-        swaySprite = Instantiate(source);
+        var pivot = new Vector2(source.pivot.x / source.rect.width, source.pivot.y / source.rect.height);
+        swaySprite = Sprite.Create(source.texture, source.rect, pivot, source.pixelsPerUnit, 0,
+            SpriteMeshType.FullRect, source.border);
         swaySprite.name = source.name + " Sway";
         const int rows = 16;
         var vertices = new Vector2[(rows + 1) * 2];
@@ -111,7 +115,8 @@ public sealed class ChoppableTree : MonoBehaviour
             triangles[index + 4] = (ushort)(vertex + 2);
             triangles[index + 5] = (ushort)(vertex + 3);
         }
-        swaySprite.OverrideGeometry(vertices, triangles);
+        pendingSwayVertices = vertices;
+        pendingSwayTriangles = triangles;
         visual.sprite = swaySprite;
         spriteHeight = source.rect.height / source.pixelsPerUnit;
         swayProperties = new MaterialPropertyBlock();
@@ -137,6 +142,12 @@ public sealed class ChoppableTree : MonoBehaviour
 
     void Update()
     {
+        if (pendingSwayVertices != null)
+        {
+            swaySprite.OverrideGeometry(pendingSwayVertices, pendingSwayTriangles);
+            pendingSwayVertices = null;
+            pendingSwayTriangles = null;
+        }
         AdvanceGrowth(Time.deltaTime);
     }
 
@@ -154,11 +165,11 @@ public sealed class ChoppableTree : MonoBehaviour
     public void Hit(Vector2 attackerPosition)
     {
         if (!CanChop) return;
-        health--;
+        health = Mathf.Max(0f, health - (owner ? owner.HitDamage : 1f));
         EmitSplinters();
         AudioManager.Instance?.Play(SoundType.WoodChop, true);
         shake = .13f;
-        if (health == 0) StartCoroutine(Fall(attackerPosition.x < transform.position.x ? -1 : 1));
+        if (health <= 0f) StartCoroutine(Fall(attackerPosition.x < transform.position.x ? -1 : 1));
     }
 
     void EmitSplinters()
@@ -216,6 +227,7 @@ public sealed class ChoppableTree : MonoBehaviour
     IEnumerator Fall(int direction)
     {
         falling = true;
+        AudioManager.Instance?.Play(SoundType.TreeFall);
         trunk.enabled = false;
         SetReachGlow(0);
         visual.transform.localRotation = Quaternion.identity;
@@ -232,13 +244,14 @@ public sealed class ChoppableTree : MonoBehaviour
             Destroy(leaves.gameObject, 4f);
             EmitLeaves(28);
         }
-        float elapsed = 0, duration = .9f;
+        float elapsed = 0, duration = owner ? owner.FallDurationSeconds : .9f;
         float nextLeaves = .08f;
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / duration);
-            transform.rotation = Quaternion.Euler(0, 0, direction * -82f * t * t);
+            float rotationProgress = owner ? owner.FallRotationProgress(t) : t * t;
+            transform.rotation = Quaternion.Euler(0, 0, direction * -82f * rotationProgress);
             if (elapsed >= nextLeaves)
             {
                 EmitLeaves(9);

@@ -10,7 +10,8 @@ public class StatsManager : MonoBehaviour
     public int Money { get; private set; } = 0;
 
     public float MoveSpeed;
-    public float JumpForce;
+    public float EffectiveMoveSpeed => MoveSpeed * GameplayTestSettings.MovementMultiplier;
+    public float JumpHeightBlocks => baseStats.jumpHeightBlocks;
     public float MiningSpeedMultiplier { get; set; } = 1f;
     public float MiningSpeed => GameplaySettings.BaseDiggingSpeed * MiningSpeedMultiplier * GameplayTestSettings.DiggingMultiplier;
     // Future damage handlers must respect this gate before applying damage.
@@ -35,6 +36,11 @@ public class StatsManager : MonoBehaviour
     {
         if (Instance && Instance != this) { Destroy(gameObject); return; }
         Instance = this; DontDestroyOnLoad(gameObject);
+        if (!baseStats)
+        {
+            enabled = false;
+            return;
+        }
         GameplaySettings.Initialize(baseStats.miningSpeed);
         HandlePoints(Vector2.zero, 0);
     }
@@ -42,6 +48,17 @@ public class StatsManager : MonoBehaviour
     void Start()
     {
         Reset();
+        var inventory = InventoryManager.Instance;
+        if (inventory)
+        {
+            inventory.ResetAll();
+            var resources = StartingResourcesSettings.Load();
+            foreach (var resource in resources.items)
+            {
+                var item = StartingResourcesSettings.Resolve(resource.itemId);
+                if (item && resource.amount > 0) inventory.Add(item, resource.amount);
+            }
+        }
     }
 
     void HandlePoints(Vector2 pos, int points)
@@ -60,12 +77,12 @@ public class StatsManager : MonoBehaviour
     void Reset()
     {
         Points = 0;
-        Money = 100;
+        Money = StartingResourcesSettings.Load().money;
         HUDPoints.Instance?.UpdatePoints(Money, PointType.Money);
         OnMoneyChanged?.Invoke(Money);
 
         MoveSpeed = baseStats.moveSpeed;
-        JumpForce = baseStats.jumpForce;
+
         MiningSpeedMultiplier = 1f;
         Reach = baseStats.reach;
         MaxEnergy = baseStats.maxEnergy;

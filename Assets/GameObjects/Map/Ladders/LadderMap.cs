@@ -52,6 +52,7 @@ public sealed class LadderMap : MonoBehaviour
         if (GameplayInputBlocker.IsBlocked || !inventory || !ladderItem || !CanPlace(cell) || !InReach(cell, player, reach)) return false;
         if (!inventory.TryRemove(ladderItem)) return false;
         EnsureTiles().SetTile(cell, segment);
+        AudioManager.Instance?.Play(SoundType.LadderPlace, true);
         return true;
     }
 

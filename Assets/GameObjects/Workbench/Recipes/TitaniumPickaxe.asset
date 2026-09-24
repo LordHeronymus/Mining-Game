@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bd168b198ca49c4a82450a3ed868988, type: 3}
+  m_Name: TitaniumPickaxe
+  m_EditorClassIdentifier: 
+  category: 0
+  persistentId: 7b2525d464feb3a4abd4500e63e8ceda
+  customCardIconLayout: 1
+  cardIconLayout:
+    scale: {x: 1.2, y: 1.15}
+    offset: {x: 0, y: 0}
+    flipX: 0
+    flipY: 0
+  output: {fileID: 11400000, guid: 5b87da1e006a0804c91e132d48768d5c, type: 2}
+  outputAmount: 1
+  pluralName: Titanspitzhacken
+  ingredients:
+  - item: {fileID: 11400000, guid: 75e7eb8e62b50c64eb4dd8132de34314, type: 2}
+    amount: 4
+  - item: {fileID: 11400000, guid: 13a72d4a121bd0e499c2737ebc0b56ed, type: 2}
+    amount: 6
+  - item: {fileID: 11400000, guid: fad75854b09df8c458950d7b96227137, type: 2}
+    amount: 4

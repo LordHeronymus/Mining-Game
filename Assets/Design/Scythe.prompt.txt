@@ -1,0 +1,3 @@
+Built-in image generation, using Assets/GameObjects/Items/Sprites/Crafting/ToolIcons.png only as a style reference.
+
+Create one isolated inventory icon of a hand scythe for the 2D mining game's Workbench: long warm-brown wooden shaft with a small side grip, one sharp crescent-shaped dark steel blade with pale silver highlights. Richly painted storybook-game illustration, readable at 64 px, diagonal from lower-left handle to upper-right curved blade. Fully visible on a genuinely transparent background, with no ground, label, other object, or colored alpha fringe.

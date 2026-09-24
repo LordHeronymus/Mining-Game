@@ -1,0 +1,5 @@
+Built-in image generation, editing the existing TallGrass.png sprite as the reference.
+
+Variant 02: Same vivid emerald/yellow-green painterly cartoon grass species and transparent standalone sprite. Narrower and taller silhouette, seed plumes leaning left, two arching blades on the right, fewer small seed heads; root centered at the bottom. No soil, scenery, text or colored alpha fringe.
+
+Variant 03: Same species, palette and transparent rendering. Wider and slightly lower silhouette, strong central arch of long blades, seed plumes leaning right at staggered heights, extra leaves at the left edge; root centered at the bottom. No soil, scenery, text or colored alpha fringe.

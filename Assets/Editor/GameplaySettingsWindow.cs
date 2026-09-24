@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 // into a second configuration asset that could drift out of sync.
 public class GameplaySettingsWindow : EditorWindow
 {
-    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Partikel", "Blöcke & Beute", "Debug", "Licht", "Werkbank", "Audio", "Bäume", "Tiere" };
+    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Partikel", "Blöcke & Beute", "Debug", "Licht", "Werkbank", "Audio", "Pflanzen", "Tiere" };
     [SerializeField] int tab;
     [SerializeField] int selectedBlock;
     [SerializeField] StatsManager stats;
@@ -24,8 +24,10 @@ public class GameplaySettingsWindow : EditorWindow
     [SerializeField] MapLighting lighting;
     [SerializeField] OreSparkles oreSparkles;
     [SerializeField] BlockBreakParticles blockBreakParticles;
+    [SerializeField] ItemFeed itemFeed;
     [SerializeField] SurfaceBirds birds;
     [SerializeField] SurfaceTrees trees;
+    [SerializeField] SurfaceTallGrass tallGrass;
     [SerializeField] SurfaceRabbit rabbit;
     [SerializeField] SurfaceRabbitSpawner rabbitSpawner;
     [SerializeField] SurfaceCritters frogs;
@@ -91,8 +93,10 @@ public class GameplaySettingsWindow : EditorWindow
         lighting = Resolve(lighting);
         oreSparkles = Resolve(oreSparkles);
         blockBreakParticles = Resolve(blockBreakParticles);
+        itemFeed = Resolve(itemFeed);
         birds = Resolve(birds);
         trees = Resolve(trees);
+        tallGrass = Resolve(tallGrass);
         rabbit = Resolve(rabbit);
         rabbitSpawner = Resolve(rabbitSpawner);
         frogs = sceneComponents.OfType<SurfaceCritters>().FirstOrDefault(group => group.species == SurfaceCritters.Species.Frog);
@@ -101,9 +105,8 @@ public class GameplaySettingsWindow : EditorWindow
         follow = Resolve(follow);
         items = AssetDatabase.FindAssets("t:ItemSO").Select(guid => AssetDatabase.LoadAssetAtPath<ItemSO>(AssetDatabase.GUIDToAssetPath(guid)))
             .Where(item => item).OrderBy(item => item.displayName).ToArray();
-        recipes = AssetDatabase.FindAssets("t:CraftingRecipe")
-            .Select(guid => AssetDatabase.LoadAssetAtPath<CraftingRecipe>(AssetDatabase.GUIDToAssetPath(guid)))
-            .Where(recipe => recipe).OrderBy(recipe => recipe.output ? recipe.output.displayName : recipe.name).ToArray();
+        recipes = SortCraftableRecipes(AssetDatabase.FindAssets("t:CraftingRecipe")
+            .Select(guid => AssetDatabase.LoadAssetAtPath<CraftingRecipe>(AssetDatabase.GUIDToAssetPath(guid))));
         if (!selectedRecipe || !recipes.Contains(selectedRecipe)) selectedRecipe = recipes.FirstOrDefault();
         ReadOverride();
         Repaint();
@@ -111,6 +114,37 @@ public class GameplaySettingsWindow : EditorWindow
 
     T Resolve<T>(T current) where T : Component => current && sceneComponents.Contains(current)
         ? current : sceneComponents.OfType<T>().FirstOrDefault();
+
+    public static CraftingRecipe[] SortCraftableRecipes(IEnumerable<CraftingRecipe> candidates)
+    {
+        return candidates
+            .Where(recipe => recipe && recipe.TryGetCosts(out _))
+            .OrderBy(recipe => RecipeCategoryOrder(recipe.Category))
+            .ThenBy(recipe => recipe.output.displayName, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(recipe => recipe.name, StringComparer.CurrentCultureIgnoreCase)
+            .ToArray();
+    }
+
+    public static string[] GetRecipeLabels(IEnumerable<CraftingRecipe> source)
+    {
+        return source.Select(recipe => RecipeCategoryLabel(recipe.Category) + " · " + recipe.output.displayName).ToArray();
+    }
+
+    static int RecipeCategoryOrder(CraftingRecipe.RecipeCategory category) => category switch
+    {
+        CraftingRecipe.RecipeCategory.Building => 0,
+        CraftingRecipe.RecipeCategory.Materials => 1,
+        CraftingRecipe.RecipeCategory.Tools => 2,
+        _ => 3
+    };
+
+    static string RecipeCategoryLabel(CraftingRecipe.RecipeCategory category) => category switch
+    {
+        CraftingRecipe.RecipeCategory.Building => "Bauen",
+        CraftingRecipe.RecipeCategory.Materials => "Materialien",
+        CraftingRecipe.RecipeCategory.Tools => "Werkzeuge",
+        _ => "Sonstiges"
+    };
 
     PlayerBaseStats BaseStats => stats ? new SerializedObject(stats).FindProperty("baseStats").objectReferenceValue as PlayerBaseStats : null;
     BlockRegistry Registry => map ? map.registry : null;
@@ -163,7 +197,7 @@ public class GameplaySettingsWindow : EditorWindow
                 case 6: DrawLighting(); break;
                 case 7: DrawWorkbench(); break;
                 case 8: DrawAudio(); break;
-                case 9: DrawTrees(); break;
+                case 9: DrawPlants(); break;
                 case 10: DrawAnimals(); break;
             }
         }
@@ -185,16 +219,15 @@ public class GameplaySettingsWindow : EditorWindow
                 int last = Mathf.Min(first + tabsPerRow, Tabs.Length);
                 for (int index = first; index < last; index++)
                     if (GUILayout.Toggle(tab == index, Tabs[index], EditorStyles.toolbarButton,
-                        GUILayout.Height(28), GUILayout.ExpandWidth(true))) selected = index;
+                        GUILayout.Height(28), GUILayout.ExpandWidth(true)) && index != tab) selected = index;
             }
         }
         return selected;
     }
 
-    void DrawTrees()
+    void DrawPlants()
     {
-        if (!trees) { Missing("Keine Oberflächenbäume in der aktiven Szene."); return; }
-        Section("Oberflächenbäume", trees, data =>
+        Section("Bäume", trees, data =>
         {
             Integer(data, "maximumTrees", "Maximale Anzahl", "", 0, 20);
             var spacing = data.FindProperty("minimumTreeSpacing");
@@ -204,6 +237,10 @@ public class GameplaySettingsWindow : EditorWindow
                 Mathf.RoundToInt(spacing.floatValue / cellWidth));
             if (EditorGUI.EndChangeCheck()) spacing.floatValue = Mathf.Max(4, tiles) * cellWidth;
             Integer(data, "hitsToFell", "Treffer zum Fällen", "", 1, 100);
+            Float(data, "fallDurationSeconds", "Fälldauer (s)", "", .1f, 10f);
+            EditorGUILayout.CurveField(data.FindProperty("fallRotationCurve"), new Color(.42f, .72f, .28f),
+                new Rect(0f, 0f, 1f, 1f), new GUIContent("Fallverlauf"));
+            Float(data, "axeHitMultiplier", "Axt-Multiplikator", "", 1f, 20f);
             Integer(data, "woodYieldMin", "Holz mindestens", "", 1, 9999);
             Integer(data, "woodYieldMax", "Holz höchstens", "", 1, 9999);
             var minimum = data.FindProperty("woodYieldMin");
@@ -221,6 +258,35 @@ public class GameplaySettingsWindow : EditorWindow
             {
                 earliest = Mathf.Clamp(earliest, 1f, 3600f);
                 interval.vector2Value = new Vector2(earliest, Mathf.Clamp(latest, earliest, 3600f));
+            }
+        }, false);
+
+        Section("Fasergras", tallGrass, data =>
+        {
+            Integer(data, "maximumPatches", "Menge", "", 0, 500);
+            Integer(data, "minimumSpacing", "Mindestabstand (Kacheln)", "", 1, 100);
+            var randomness = data.FindProperty("randomness");
+            EditorGUI.BeginChangeCheck();
+            float randomPercent = EditorGUILayout.FloatField("Zufälligkeit (%)", randomness.floatValue * 100f);
+            if (EditorGUI.EndChangeCheck() && Finite(randomPercent))
+                randomness.floatValue = Mathf.Clamp01(randomPercent / 100f);
+            Float(data, "spawnQuietRadius", "Spawnradius (m)", "", 0f, 1000f);
+            var nearDensity = data.FindProperty("nearSpawnDensity");
+            EditorGUI.BeginChangeCheck();
+            float nearPercent = EditorGUILayout.FloatField("Menge am Spawn (%)", nearDensity.floatValue * 100f);
+            if (EditorGUI.EndChangeCheck() && Finite(nearPercent))
+                nearDensity.floatValue = Mathf.Clamp01(nearPercent / 100f);
+            FloatRange(data, "respawnSeconds", "Respawnzeit (s)", .1f, 3600f);
+            var fiberYield = data.FindProperty("fiberYield");
+            Vector2Int yield = fiberYield.vector2IntValue;
+            EditorGUI.BeginChangeCheck();
+            int minimumFiber = EditorGUILayout.IntField("Fasern mindestens", yield.x);
+            int maximumFiber = EditorGUILayout.IntField("Fasern höchstens", yield.y);
+            if (EditorGUI.EndChangeCheck())
+            {
+                minimumFiber = Mathf.Clamp(minimumFiber, 1, 9999);
+                fiberYield.vector2IntValue = new Vector2Int(minimumFiber,
+                    Mathf.Clamp(maximumFiber, minimumFiber, 9999));
             }
         }, false);
     }
@@ -355,11 +421,13 @@ public class GameplaySettingsWindow : EditorWindow
             return;
         }
         int index = Mathf.Max(0, Array.IndexOf(recipes, selectedRecipe));
-        index = EditorGUILayout.Popup("Rezept", index,
-            recipes.Select(recipe => recipe.output ? recipe.output.displayName : recipe.name).ToArray());
+        index = EditorGUILayout.Popup("Rezept", index, GetRecipeLabels(recipes));
         selectedRecipe = recipes[index];
         Section("Rezept", selectedRecipe, data =>
         {
+            var category = data.FindProperty("category");
+            category.enumValueIndex = EditorGUILayout.Popup("Kategorie", category.enumValueIndex,
+                new[] { "Automatisch", "Werkzeuge", "Bauen", "Materialien" });
             Integer(data, "outputAmount", "Hergestellte Stückzahl", "", 1, int.MaxValue);
             EditorGUILayout.Space(8);
             using (new EditorGUILayout.HorizontalScope())
@@ -444,7 +512,7 @@ public class GameplaySettingsWindow : EditorWindow
             Section("Bewegung und Abbauen", BaseStats, data =>
             {
                 Float(data, "moveSpeed", "Laufgeschwindigkeit", "Welteinheiten pro Sekunde.", 0.01f);
-                Float(data, "jumpForce", "Sprungimpuls", "Impuls auf den Rigidbody. Auch Masse und Gravitation beeinflussen den Sprung.", 0);
+                Float(data, "jumpHeightBlocks", "Sprunghöhe (Blöcke)", "", 0, 100);
                 Float(data, "miningSpeed", "Basis-Abbaugeschwindigkeit", "Mehr = schneller. Zeit pro Block = Härte / Geschwindigkeit.", GameplaySettingsStore.MinDiggingSpeed, GameplaySettingsStore.MaxDiggingSpeed);
                 Float(data, "reach", "Abbau-Reichweite", "Maximale Entfernung vom Spieler zum Blockzentrum in Welteinheiten.", 0.01f);
             });
@@ -456,13 +524,14 @@ public class GameplaySettingsWindow : EditorWindow
         {
             Float(data, "accelTime", "Beschleunigungszeit (s)", "Zeit bis zum Maximaltempo in der Luft. Am Boden wirkt zusätzlich der Bodenfaktor.", 0.01f);
             Float(data, "decelTime", "Bremszeit (s)", "Zeit von Maximaltempo bis Stillstand in der Luft.", 0.01f);
+            Float(data, "directionChangeDecelTime", "Richtungswechsel-Bremszeit (s)", "Zeit zum Abbremsen bis Stillstand bei entgegengesetzter Eingabe.", 0.01f);
             Float(data, "groundedCoeff", "Beschleunigungsfaktor am Boden", "Multipliziert Beschleunigen und Bremsen am Boden. Kleiner = träger. In der Luft gilt Faktor 1.", 0.01f);
         });
         var body = movement ? movement.GetComponent<Rigidbody2D>() : null;
         Section("Sprungphysik", body, data =>
         {
             Float(data, "m_GravityScale", "Gravitationsfaktor", "Skaliert die globale 2D-Gravitation für den Spieler.", 0.01f);
-            Float(data, "m_Mass", "Spielermasse", "Höhere Masse reduziert die Wirkung des Sprungimpulses.", 0.01f);
+            Float(data, "m_Mass", "Spielermasse", "", 0.01f);
         });
 
         follow = Picker("Spielkamera", follow);
@@ -522,11 +591,20 @@ public class GameplaySettingsWindow : EditorWindow
             using (new EditorGUI.DisabledScope(randomSeed.boolValue))
                 Integer(data, "seed", "Seed", "", -10000000, 10000000);
         });
+        Section("Weltgrenzen", map ? map.GetComponent<MapWorldBorders>() : null, data =>
+        {
+            Integer(data, "sidePaddingCells", "Seitenabstand (Kacheln)", "Abstand zwischen Kartenrand und unsichtbarer Seitenwand.", 0, 10000);
+            Float(data, "topBorderY", "Obere Grenze (Welt-Y)", "Unsichtbare obere Wand und Kameragrenze.", -10000f);
+        }, false);
         Section("Oberfläche", map, data =>
         {
             Integer(data, "transitionThickness", "Übergangsdicke (Kacheln)", "", 1, 100);
             EditorGUILayout.Slider(data.FindProperty("grassYOffset"), -.5f, .5f,
                 new GUIContent("Gras Y-Versatz (Welteinheiten)"));
+        }, false);
+        Section("Untergrund-Hintergrund", UnityEngine.Object.FindFirstObjectByType<FixedUndergroundBackground>(), data =>
+        {
+            EditorGUILayout.PropertyField(data.FindProperty("yOffset"),new GUIContent("Y-Versatz (Welteinheiten)"));
         }, false);
         Section("Blockränder", map ? map.GetComponent<UniformStoneAppearance>() : null, data =>
         {
@@ -554,6 +632,8 @@ public class GameplaySettingsWindow : EditorWindow
             Integer(data, "surfaceOreRampDepth", "Höhe (Blöcke)", "", 0, 10000);
             EditorGUILayout.CurveField(data.FindProperty("surfaceOreRampCurve"), new Color(1f, .55f, .2f),
                 new Rect(0f, 0f, 1f, 1f), new GUIContent("Verteilung im Anfangsbereich"));
+            EditorGUILayout.Slider(data.FindProperty("surfaceOreVeinSizePercent"), 1f, 100f,
+                new GUIContent("Adergröße im Anfangsbereich (%)"));
         }, false);
         Section("Adern und Layer-Übergänge", map, data =>
         {
@@ -624,6 +704,16 @@ public class GameplaySettingsWindow : EditorWindow
 
     void DrawParticles()
     {
+        itemFeed = Picker("Item-Feed", itemFeed);
+        Section("Item-Feed", itemFeed, data =>
+        {
+            EditorGUILayout.IntSlider(data.FindProperty("sparkCount"), 0, 24, new GUIContent("Funkenanzahl"));
+            EditorGUILayout.Slider(data.FindProperty("sparkIntensity"), 0f, 3f, new GUIContent("Funkenintensität"));
+            EditorGUILayout.Slider(data.FindProperty("sparkRiseHeight"), 0f, 40f, new GUIContent("Funkenhöhe (px)"));
+            EditorGUILayout.Slider(data.FindProperty("sparkBrightness"), 0f, 5f, new GUIContent("Funkenhelligkeit"));
+            EditorGUILayout.Slider(data.FindProperty("lineBrightness"), 0f, 5f, new GUIContent("Strichhelligkeit"));
+            EditorGUILayout.Slider(data.FindProperty("backdropOpacity"), 0f, 1f, new GUIContent("Hintergrundabdunklung"));
+        }, false);
         blockBreakParticles = Picker("Blockabbau-Partikel", blockBreakParticles);
         Section("Blockabbau-Partikel", blockBreakParticles, data =>
         {
@@ -847,6 +937,7 @@ public class GameplaySettingsWindow : EditorWindow
         if (!data.ApplyModifiedProperties()) return;
         if (data.targetObject is Component component)
         {
+            if (component is SurfaceTallGrass grass && !Application.isPlaying) grass.Rebuild();
             PrefabUtility.RecordPrefabInstancePropertyModifications(component);
             EditorSceneManager.MarkSceneDirty(component.gameObject.scene);
         }

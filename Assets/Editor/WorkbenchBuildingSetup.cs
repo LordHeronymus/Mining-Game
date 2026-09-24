@@ -39,28 +39,36 @@ public static class WorkbenchBuildingSetup
         importer.SetTextureSettings(settings);
         importer.SaveAndReimport();
 
-        var existing = shop.transform.parent.Find("Workshop");
-        if (existing) throw new System.InvalidOperationException("Workshop already exists; edit the existing object.");
-        var root = new GameObject("Workshop");
-        Undo.RegisterCreatedObjectUndo(root, "Create workshop");
-        root.transform.SetParent(shop.transform.parent, false);
-        root.transform.position = new Vector3(13.5f, .45f, 0);
-        var visual = new GameObject("Sprite", typeof(SpriteRenderer));
-        visual.transform.SetParent(root.transform, false);
-        var sprite = visual.GetComponent<SpriteRenderer>();
-        var shopSprite = shop.transform.Find("Sprite").GetComponent<SpriteRenderer>();
-        sprite.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
-        sprite.sharedMaterial = shopSprite.sharedMaterial;
-        sprite.sortingLayerID = shopSprite.sortingLayerID;
-        sprite.sortingOrder = shopSprite.sortingOrder;
-        var trigger = root.AddComponent<BoxCollider2D>();
-        trigger.isTrigger = true;
-        trigger.size = new Vector2(5.8f, 4.5f);
-        trigger.offset = new Vector2(0, 2.1f);
-        var building = root.AddComponent<WorkbenchBuilding>();
-        var canvas = Object.Instantiate(shop.transform.Find("EnterButtonCanvas").gameObject, root.transform);
+        var root = shop.transform.parent.Find("Workshop");
+        bool created = !root;
+        if (created)
+        {
+            root = new GameObject("Workshop").transform;
+            Undo.RegisterCreatedObjectUndo(root.gameObject, "Create workshop");
+            root.SetParent(shop.transform.parent, false);
+            root.position = new Vector3(13.5f, .45f, 0);
+            var visual = new GameObject("Sprite", typeof(SpriteRenderer));
+            visual.transform.SetParent(root, false);
+            var sprite = visual.GetComponent<SpriteRenderer>();
+            var shopSprite = shop.transform.Find("Sprite").GetComponent<SpriteRenderer>();
+            sprite.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            sprite.sharedMaterial = shopSprite.sharedMaterial;
+            sprite.sortingLayerID = shopSprite.sortingLayerID;
+            sprite.sortingOrder = shopSprite.sortingOrder;
+            var trigger = root.gameObject.AddComponent<BoxCollider2D>();
+            trigger.isTrigger = true;
+            trigger.size = new Vector2(5.8f, 4.5f);
+            trigger.offset = new Vector2(0, 2.1f);
+            root.gameObject.AddComponent<WorkbenchBuilding>();
+        }
+        var building = root.GetComponent<WorkbenchBuilding>();
+        var shopCanvas = shop.transform.Find("EnterButtonCanvas");
+        var canvasTransform = root.Find("EnterButtonCanvas");
+        var canvas = canvasTransform ? canvasTransform.gameObject : Object.Instantiate(shopCanvas.gameObject, root);
         canvas.name = "EnterButtonCanvas";
-        canvas.transform.localPosition = new Vector3(0, .77f, 0);
+        var shopButtonWorld = shopCanvas.GetComponentInChildren<Button>(true).transform.position;
+        var workshopButtonWorld = new Vector3(root.position.x, shopButtonWorld.y, root.position.z);
+        canvas.transform.localPosition = root.InverseTransformPoint(workshopButtonWorld);
         canvas.GetComponent<Canvas>().sortingLayerName = "UI";
         canvas.GetComponent<Canvas>().worldCamera = Camera.main;
         var button = canvas.GetComponentInChildren<Button>(true);
@@ -75,11 +83,11 @@ public static class WorkbenchBuildingSetup
         Undo.RecordObject(panel, "Use workshop entrance");
         panel.allowKeyboardOpen = false;
         EditorUtility.SetDirty(panel);
-        PrefabUtility.SaveAsPrefabAssetAndConnect(root, Folder + "/Workshop.prefab", InteractionMode.AutomatedAction);
+        PrefabUtility.SaveAsPrefabAssetAndConnect(root.gameObject, Folder + "/Workshop.prefab", InteractionMode.AutomatedAction);
         AssetDatabase.SaveAssets();
-        EditorSceneManager.MarkSceneDirty(root.scene);
-        EditorSceneManager.SaveScene(root.scene);
-        Selection.activeGameObject = root;
-        return "Workshop installed at x=13.5 with proximity button and prefab.";
+        EditorSceneManager.MarkSceneDirty(root.gameObject.scene);
+        EditorSceneManager.SaveScene(root.gameObject.scene);
+        Selection.activeGameObject = root.gameObject;
+        return created ? "Workshop installed with a shop-aligned entrance button." : "Workshop entrance button aligned to the shop.";
     }
 }

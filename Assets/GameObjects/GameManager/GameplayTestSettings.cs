@@ -5,33 +5,39 @@ using UnityEngine;
 [Serializable]
 public sealed class GameplayTestSettingsData
 {
-    public int version = 1;
+    public int version = 3;
     public float diggingMultiplier = 1f;
-    public bool godMode, noEnergyConsume, flyMode;
+    public float movementMultiplier = 1f;
+    public bool godMode, noEnergyConsume, flyMode, noClip;
+    public bool globalLighting = true;
     public bool testModeDisabled;
     public bool discardPlayedMap;
     public GameplayDayNightMode dayNightMode;
 }
 
-public enum GameplayTestMode { God, NoEnergyConsume, Fly, Active, KeepMap }
+public enum GameplayTestMode { God, NoEnergyConsume, Fly, NoClip, GlobalLighting, Active, KeepMap }
 public enum GameplayDayNightMode { Automatic, Day, Night }
 
 // Deliberately separate from GameplaySettingsData and the editor defaults writer.
 public static class GameplayTestSettings
 {
     static bool loaded;
-    static float multiplier = 1f, saved = 1f;
-    static bool godMode, noEnergyConsume, flyMode, testModeDisabled, discardPlayedMap;
+    static float multiplier = 1f, saved = 1f, movementMultiplier = 1f, savedMovementMultiplier = 1f;
+    static bool godMode, noEnergyConsume, flyMode, noClip, testModeDisabled, discardPlayedMap;
+    static bool globalLighting = true;
     static GameplayDayNightMode dayNightMode;
     static string savedModes;
-    static string Modes => $"{godMode},{noEnergyConsume},{flyMode},{testModeDisabled},{discardPlayedMap},{dayNightMode}";
+    static string Modes => $"{godMode},{noEnergyConsume},{flyMode},{noClip},{globalLighting},{testModeDisabled},{discardPlayedMap},{dayNightMode}";
     // Editor preview preference is independent of gameplay cheats and their master switch.
     public static bool KeepMapInEditor => GetConfiguredMode(GameplayTestMode.KeepMap);
     public static bool IsActive => GetMode(GameplayTestMode.Active);
     public static float ConfiguredDiggingMultiplier { get { EnsureLoaded(); return multiplier; } }
+    public static float ConfiguredMovementMultiplier { get { EnsureLoaded(); return movementMultiplier; } }
     public static bool GodMode => GetMode(GameplayTestMode.God);
     public static bool NoEnergyConsume => GetMode(GameplayTestMode.NoEnergyConsume);
     public static bool FlyMode => GetMode(GameplayTestMode.Fly);
+    public static bool NoClipMode => GetMode(GameplayTestMode.NoClip);
+    public static bool GlobalLighting => !IsActive || GetConfiguredMode(GameplayTestMode.GlobalLighting);
     public static GameplayDayNightMode ConfiguredDayNightMode { get { EnsureLoaded(); return dayNightMode; } }
     public static GameplayDayNightMode EffectiveDayNightMode
     {
@@ -60,7 +66,11 @@ public static class GameplayTestSettings
         EnsureLoaded();
         if (mode == GameplayTestMode.Active) return !testModeDisabled;
         if (mode == GameplayTestMode.KeepMap) return !discardPlayedMap;
-        return mode == GameplayTestMode.God ? godMode : mode == GameplayTestMode.NoEnergyConsume ? noEnergyConsume : flyMode;
+        if (mode == GameplayTestMode.God) return godMode;
+        if (mode == GameplayTestMode.NoEnergyConsume) return noEnergyConsume;
+        if (mode == GameplayTestMode.Fly) return flyMode;
+        if (mode == GameplayTestMode.NoClip) return noClip;
+        return globalLighting;
     }
     public static string FilePath => Path.Combine(Application.persistentDataPath, "gameplay-test-settings.json");
     public static float DiggingMultiplier
@@ -74,11 +84,23 @@ public static class GameplayTestSettings
 #endif
         }
     }
-    public static bool HasUnsavedChanges { get { EnsureLoaded(); return multiplier != saved || Modes != savedModes; } }
+    public static float MovementMultiplier
+    {
+        get
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            EnsureLoaded(); return testModeDisabled ? 1f : movementMultiplier;
+#else
+            return 1f;
+#endif
+        }
+    }
+    public static bool HasUnsavedChanges { get { EnsureLoaded(); return multiplier != saved || movementMultiplier != savedMovementMultiplier || Modes != savedModes; } }
     public static bool IsValid(float value) => !float.IsNaN(value) && !float.IsInfinity(value) && value >= .1f && value <= 100f;
+    public static bool IsValidMovementMultiplier(float value) => !float.IsNaN(value) && !float.IsInfinity(value) && value >= .1f && value <= 20f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetSession() { loaded = false; multiplier = saved = 1f; Warning = null; godMode = noEnergyConsume = flyMode = testModeDisabled = discardPlayedMap = false; dayNightMode = GameplayDayNightMode.Automatic; savedModes = Modes; }
+    static void ResetSession() { loaded = false; multiplier = saved = movementMultiplier = savedMovementMultiplier = 1f; Warning = null; godMode = noEnergyConsume = flyMode = noClip = testModeDisabled = discardPlayedMap = false; globalLighting = true; dayNightMode = GameplayDayNightMode.Automatic; savedModes = Modes; }
 
     static void EnsureLoaded()
     {
@@ -90,19 +112,23 @@ public static class GameplayTestSettings
             if (File.Exists(FilePath))
             {
                 var data = JsonUtility.FromJson<GameplayTestSettingsData>(File.ReadAllText(FilePath));
-                if (data == null || data.version != 1 || !IsValid(data.diggingMultiplier))
-                    throw new FormatException("Ungültiger Test-Abbaufaktor.");
+                if (data == null || (data.version != 1 && data.version != 2 && data.version != 3) ||
+                    !IsValid(data.diggingMultiplier) || (data.version >= 3 && !IsValidMovementMultiplier(data.movementMultiplier)))
+                    throw new FormatException("Ungültiger Testfaktor.");
                 multiplier = data.diggingMultiplier; testModeDisabled = data.testModeDisabled;
+                movementMultiplier = data.version >= 3 ? data.movementMultiplier : 1f;
                 discardPlayedMap = data.discardPlayedMap;
                 godMode = data.godMode; noEnergyConsume = data.noEnergyConsume; flyMode = data.flyMode;
+                noClip = data.noClip; globalLighting = data.version < 2 || data.globalLighting;
                 dayNightMode = Enum.IsDefined(typeof(GameplayDayNightMode), data.dayNightMode)
                     ? data.dayNightMode : GameplayDayNightMode.Automatic;
             }
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is FormatException)
-        { Warning = "Testfaktor 1× geladen: " + ex.Message; multiplier = 1f; }
+        { Warning = "Testfaktor 1× geladen: " + ex.Message; multiplier = movementMultiplier = 1f; }
 #endif
         saved = multiplier;
+        savedMovementMultiplier = movementMultiplier;
         savedModes = Modes;
     }
 
@@ -134,13 +160,21 @@ public static class GameplayTestSettings
         else if (mode == GameplayTestMode.KeepMap) discardPlayedMap = !value;
         else if (mode == GameplayTestMode.God) godMode = value;
         else if (mode == GameplayTestMode.NoEnergyConsume) noEnergyConsume = value;
-        else flyMode = value;
+        else if (mode == GameplayTestMode.Fly) flyMode = value;
+        else if (mode == GameplayTestMode.NoClip) noClip = value;
+        else globalLighting = value;
     }
 
     public static bool SetDiggingMultiplier(float value)
     {
         if (!IsValid(value)) return false;
         EnsureLoaded(); multiplier = value; return true;
+    }
+
+    public static bool SetMovementMultiplier(float value)
+    {
+        if (!IsValidMovementMultiplier(value)) return false;
+        EnsureLoaded(); movementMultiplier = value; return true;
     }
 
     public static bool Save(out string error)
@@ -152,12 +186,14 @@ public static class GameplayTestSettings
             string temp = FilePath + ".tmp";
             File.WriteAllText(temp, JsonUtility.ToJson(new GameplayTestSettingsData {
                 discardPlayedMap = discardPlayedMap,
-                testModeDisabled = testModeDisabled, diggingMultiplier = multiplier, godMode = godMode, noEnergyConsume = noEnergyConsume, flyMode = flyMode,
+                testModeDisabled = testModeDisabled, diggingMultiplier = multiplier, movementMultiplier = movementMultiplier,
+                godMode = godMode, noEnergyConsume = noEnergyConsume, flyMode = flyMode,
+                noClip = noClip, globalLighting = globalLighting,
                 dayNightMode = dayNightMode
             }, true));
             if (File.Exists(FilePath)) File.Replace(temp, FilePath, null);
             else File.Move(temp, FilePath);
-            saved = multiplier; savedModes = Modes; Warning = null; return true;
+            saved = multiplier; savedMovementMultiplier = movementMultiplier; savedModes = Modes; Warning = null; return true;
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException)
         { error = "Testeinstellungen nicht gespeichert: " + ex.Message; return false; }

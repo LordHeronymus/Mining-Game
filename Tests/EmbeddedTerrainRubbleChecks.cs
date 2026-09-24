@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -70,11 +72,16 @@ public static class EmbeddedTerrainRubbleChecks
             camera.cullingMask=1<<31;camera.clearFlags=CameraClearFlags.SolidColor;camera.allowHDR=false;camera.targetTexture=target;
             var rubble=goMap.GetComponent<TerrainEdgeRubble>();if(!rubble)rubble=goMap.AddComponent<TerrainEdgeRubble>();
             rubble.enabled=true;rubble.Apply(props,camera);
-            var mesh=goMap.GetComponentInChildren<MeshFilter>().sharedMesh;
-            var meshRenderer=goMap.GetComponentInChildren<MeshRenderer>();
-            if(meshRenderer.sortingOrder>=tileRenderer.sortingOrder)throw new Exception("Rubble is not behind terrain");
-            if(mesh.vertexCount==0||mesh.vertexCount%13!=0)throw new Exception("Missing rubble geometry");
-            var vertices=mesh.vertices;float smallest=float.MaxValue,largest=0;
+            var meshFilters=rubble.GetComponentsInChildren<MeshFilter>();
+            var meshRenderers=rubble.GetComponentsInChildren<MeshRenderer>();
+            var mesh=meshFilters.Select(filter=>filter.sharedMesh).FirstOrDefault(candidate=>candidate&&candidate.vertexCount>0);
+            if(mesh==null||meshRenderers.Length==0)throw new Exception("Missing rubble geometry");
+            foreach(var meshRenderer in meshRenderers)
+                if(meshRenderer.sortingOrder>=tileRenderer.sortingOrder)throw new Exception("Rubble is not behind terrain");
+            int VertexCount()=>meshFilters.Sum(filter=>filter.sharedMesh?filter.sharedMesh.vertexCount:0);
+            Vector3[] AllVertices()=>meshFilters.Where(filter=>filter.sharedMesh).SelectMany(filter=>filter.sharedMesh.vertices).ToArray();
+            if(VertexCount()==0||VertexCount()%13!=0)throw new Exception("Missing rubble geometry");
+            var vertices=AllVertices();float smallest=float.MaxValue,largest=0;
             for(int i=0;i<vertices.Length;i+=13)
             {
                 float radius=0;for(int j=1;j<13;j++)radius=Mathf.Max(radius,Vector3.Distance(vertices[i],vertices[i+j]));
@@ -89,9 +96,9 @@ public static class EmbeddedTerrainRubbleChecks
             const string preview="Assets/Design/EmbeddedTerrainCrumbs-check.png";
             File.WriteAllBytes(preview,pixels.EncodeToPNG());AssetDatabase.ImportAsset(preview);
             camera.backgroundColor=Color.clear;
-            meshRenderer.enabled=false;var terrainPixels=Render();
+            foreach(var r in meshRenderers)r.enabled=false;var terrainPixels=Render();
             foreach(var r in terrain)r.enabled=false;
-            meshRenderer.enabled=true;var crumbPixels=Render();
+            foreach(var r in meshRenderers)r.enabled=true;var crumbPixels=Render();
             int crumbArea=0,buriedArea=0;
             for(int i=0;i<crumbPixels.Length;i++)if(crumbPixels[i].a>128)
             {crumbArea++;if(terrainPixels[i].a>128)buriedArea++;}
@@ -101,20 +108,45 @@ public static class EmbeddedTerrainRubbleChecks
             light.intensity=0;var dark=Render();
             foreach(var c in dark)if(c.r>1||c.g>1||c.b>1)throw new Exception("Terrain/rubble emits light");
             if(root.GetComponentsInChildren<Collider2D>().Length>0)throw new Exception("Decorative rubble has a collider");
-            if(ShaderUtil.ShaderHasError(material.shader)||ShaderUtil.ShaderHasError(meshRenderer.sharedMaterial.shader))throw new Exception("Shader error");
-            int originalCount=mesh.vertexCount;
+            if(ShaderUtil.ShaderHasError(material.shader)||meshRenderers.Any(r=>ShaderUtil.ShaderHasError(r.sharedMaterial.shader)))throw new Exception("Shader error");
+            int originalCount=VertexCount();
+
+            // A mined cell should update only dirty mesh chunks while producing the same
+            // pixels as rebuilding every currently visible chunk from the same seed.
+            camera.backgroundColor=new Color(.14f,.065f,.027f,1);
+            var minedCell=new Vector3Int(2,3,0);
+            map.Terrain.SetTile(minedCell,null);
+            rubble.Apply(props,camera);
+            var incrementalPixels=Render();
+            typeof(TerrainEdgeRubble).GetMethod("MarkAllChunksDirty",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(rubble,null);
+            rubble.Apply(props,camera);
+            var fullPixels=Render();
+            if(incrementalPixels.Where((pixel,index)=>!pixel.Equals(fullPixels[index])).Any())
+                throw new Exception("Incremental rubble update changed rendered pixels versus a full rebuild");
+            var originalCameraPosition=camera.transform.position;
+            camera.transform.position+=new Vector3(1.1f,-1.1f,0);
+            rubble.Apply(props,camera);
+            var movedIncrementalPixels=Render();
+            typeof(TerrainEdgeRubble).GetMethod("MarkAllChunksDirty",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(rubble,null);
+            rubble.Apply(props,camera);
+            var movedFullPixels=Render();
+            if(movedIncrementalPixels.Where((pixel,index)=>!pixel.Equals(movedFullPixels[index])).Any())
+                throw new Exception("Camera-bound incremental update changed rendered pixels versus a full rebuild");
+            camera.transform.position=originalCameraPosition;
+            rubble.Apply(props,camera);
+
             appearance.rubbleAmount=0;rubble.Apply(props,camera);
-            if(mesh.vertexCount!=0)throw new Exception("Zero amount must remove all crumbs");
-            appearance.rubbleAmount=1;rubble.Apply(props,camera);int sparse=mesh.vertexCount;
+            if(VertexCount()!=0)throw new Exception("Zero amount must remove all crumbs");
+            appearance.rubbleAmount=1;rubble.Apply(props,camera);int sparse=VertexCount();
             appearance.rubbleAmount=8;rubble.Apply(props,camera);
-            if(mesh.vertexCount<=sparse)throw new Exception("Amount does not increase density");
+            if(VertexCount()<=sparse)throw new Exception("Amount does not increase density");
             appearance.rubbleMinSize=appearance.rubbleMaxSize=.2f;rubble.Apply(props,camera);
-            var fixedSize=mesh.vertices;
+            var fixedSize=AllVertices();
             for(int i=0;i<fixedSize.Length;i+=13)
                 if(Mathf.Abs(Vector3.Distance(fixedSize[i+4],fixedSize[i+10])-.2f*1.1f*.85f)>.001f)
                     throw new Exception("Fixed diameter does not match size settings");
-            appearance.rubbleProtrusionPercent=0;rubble.Apply(props,camera);var buriedVertices=mesh.vertices;
-            appearance.rubbleProtrusionPercent=100;rubble.Apply(props,camera);var exposedVertices=mesh.vertices;
+            appearance.rubbleProtrusionPercent=0;rubble.Apply(props,camera);var buriedVertices=AllVertices();
+            appearance.rubbleProtrusionPercent=100;rubble.Apply(props,camera);var exposedVertices=AllVertices();
             for(int i=0;i<buriedVertices.Length;i+=13)
                 if(Mathf.Abs(Vector3.Distance(buriedVertices[i],exposedVertices[i])-.2f*1.1f*.85f)>.001f)
                     throw new Exception("Protrusion does not move the full normal diameter");

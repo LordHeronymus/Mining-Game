@@ -12,6 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bd168b198ca49c4a82450a3ed868988, type: 3}
   m_Name: Dynamite
   m_EditorClassIdentifier: 
+  category: 0
+  persistentId: ab11f3834c5351e46ae7e7365369fe66
+  customCardIconLayout: 1
+  cardIconLayout:
+    scale: {x: 1, y: 1}
+    offset: {x: 0, y: 2.27}
+    flipX: 1
+    flipY: 0
   output: {fileID: 11400000, guid: 8c38485e5162d9149b8eeeab7190ae52, type: 2}
   outputAmount: 1
   pluralName: Dynamit

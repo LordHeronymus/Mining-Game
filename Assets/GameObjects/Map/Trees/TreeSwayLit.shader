@@ -16,6 +16,7 @@ Shader "Mining Game/Tree Sway Lit"
         [HideInInspector] _SwayImpact("Sway Impact", Float) = 0
         [HideInInspector] _SwayStrength("Sway Strength", Float) = 1
         [HideInInspector] _ReachGlow("Reach Glow", Float) = 0
+        [HideInInspector] _ReachGlowColor("Reach Glow Color", Color) = (1,0.66,0.28,1)
     }
 
     SubShader
@@ -78,6 +79,7 @@ Shader "Mining Game/Tree Sway Lit"
                 float _SwayImpact;
                 float _SwayStrength;
                 float _ReachGlow;
+                half4 _ReachGlowColor;
             CBUFFER_END
 
             #if USE_SHAPE_LIGHT_TYPE_0
@@ -136,7 +138,7 @@ Shader "Mining Game/Tree Sway Lit"
                 half pulse = 0.82 + 0.18 * sin(_Time.y * 2.2 + _SwayPhase);
                 half trunk = 1 - smoothstep(0.18, 0.42, i.treeHeight);
                 half glow = saturate(_ReachGlow * 0.17 * pulse * trunk);
-                main.rgb = lerp(main.rgb, half3(1.0, 0.66, 0.28), glow);
+                main.rgb = lerp(main.rgb, _ReachGlowColor.rgb, glow);
                 const half4 mask = SAMPLE_TEXTURE2D(_MaskTex, sampler_MaskTex, i.uv);
                 SurfaceData2D surfaceData;
                 InputData2D inputData;
@@ -189,6 +191,7 @@ Shader "Mining Game/Tree Sway Lit"
                 float _SwayImpact;
                 float _SwayStrength;
                 float _ReachGlow;
+                half4 _ReachGlowColor;
             CBUFFER_END
 
             float3 BendTree(float3 positionOS)
@@ -228,7 +231,7 @@ Shader "Mining Game/Tree Sway Lit"
                 half pulse = 0.82 + 0.18 * sin(_Time.y * 2.2 + _SwayPhase);
                 half trunk = 1 - smoothstep(0.18, 0.42, i.treeHeight);
                 half glow = saturate(_ReachGlow * 0.17 * pulse * trunk);
-                main.rgb = lerp(main.rgb, half3(1.0, 0.66, 0.28), glow);
+                main.rgb = lerp(main.rgb, _ReachGlowColor.rgb, glow);
                 return main;
             }
             ENDHLSL

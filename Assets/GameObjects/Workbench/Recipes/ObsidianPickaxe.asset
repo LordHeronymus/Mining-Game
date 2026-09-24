@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bd168b198ca49c4a82450a3ed868988, type: 3}
+  m_Name: ObsidianPickaxe
+  m_EditorClassIdentifier: 
+  category: 0
+  persistentId: 64a39261157d57e48bbe5642a5bf1a21
+  customCardIconLayout: 1
+  cardIconLayout:
+    scale: {x: 1.2, y: 1.1}
+    offset: {x: 0, y: 0}
+    flipX: 0
+    flipY: 0
+  output: {fileID: 11400000, guid: 368468b135811e144a2afb4caba0e63b, type: 2}
+  outputAmount: 1
+  pluralName: Obsidianspitzhacken
+  ingredients:
+  - item: {fileID: 11400000, guid: 75e7eb8e62b50c64eb4dd8132de34314, type: 2}
+    amount: 4
+  - item: {fileID: 11400000, guid: 2db8d69ab3b281f4bb7db704f45308c0, type: 2}
+    amount: 4
+  - item: {fileID: 11400000, guid: 13a72d4a121bd0e499c2737ebc0b56ed, type: 2}
+    amount: 4
+  - item: {fileID: 11400000, guid: 8ce50848319387b46b7171f0cf06cdc0, type: 2}
+    amount: 8

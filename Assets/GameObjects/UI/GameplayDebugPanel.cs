@@ -90,6 +90,9 @@ public class GameplayDebugPanel : MonoBehaviour
     {
         var window = GetComponent<GameplayDebugWindow>();
         if (window && window.IsTestTab) { if (!window.ApplyTestInput()) return; }
+        else if (window && window.IsIconTab) { if (!window.CommitIconInputs()) return; }
+        else if (window && window.IsRecipeTab) { if (!window.CommitRecipeInputs()) return; }
+        else if (window && window.IsStartingResourcesTab) { if (!window.CommitStartingResources()) return; }
         else if (!TryApplyAll()) return;
         var events = EventSystem.current;
         if (events && events.currentSelectedGameObject &&

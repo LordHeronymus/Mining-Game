@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bd168b198ca49c4a82450a3ed868988, type: 3}
   m_Name: Rope
   m_EditorClassIdentifier: 
+  category: 0
+  persistentId: 00743377502931846814d2a83c890f84
   output: {fileID: 11400000, guid: 760648c834dc0cd46b697d742b6e7447, type: 2}
   outputAmount: 1
   pluralName: Seile

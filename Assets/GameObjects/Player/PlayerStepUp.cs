@@ -47,17 +47,16 @@ public static class PlayerStepUp
             float height=hit.point.y-foot;
             if(height>maximumHeight+.001f)return false;
             if(height>-.04f)nearFloor=true;
-            if(height>.005f)lift=Mathf.Max(lift,height+Skin);
+            if(height>.005f&&hit.normal.y>.45f)lift=Mathf.Max(lift,height+Skin);
         }
-        // Box2D can catch a foot on a vertex within its contact margin even when
-        // that vertex is slightly below the visible collider bottom.
         if(lift<=0&&nearFloor)
         {
             int contactCount=shape.GetContacts(contacts);
             for(int i=0;i<contactCount;i++)
                 if(contacts[i].collider&&!contacts[i].collider.isTrigger&&
                     contacts[i].otherCollider&&!contacts[i].otherCollider.isTrigger&&
-                    contacts[i].normal.x*sign<-.1f&&contacts[i].point.y>=foot-.04f&&contacts[i].point.y<foot+maximumHeight&&
+                    contacts[i].normal.x*sign<-.1f&&contacts[i].normal.y>.35f&&
+                    contacts[i].point.y>=foot-.04f&&contacts[i].point.y<foot+maximumHeight&&
                     (ground.value&(1<<contacts[i].collider.gameObject.layer))!=0)
                     lift=Mathf.Min(.025f,maximumHeight);
         }

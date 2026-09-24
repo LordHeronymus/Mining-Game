@@ -1,0 +1,754 @@
+fileFormatVersion: 2
+guid: 14d8306f8a58bca4282b284b250e23bd
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 4364405832730731435
+    second: UpperClayLip_0
+  - first:
+      213: -6862200385895741737
+    second: UpperClayLip_1
+  - first:
+      213: 552293507767543935
+    second: UpperClayLip_2
+  - first:
+      213: 1655526815088554895
+    second: UpperClayLip_3
+  - first:
+      213: -408855601593015579
+    second: UpperClayLip_4
+  - first:
+      213: 4215775450254462556
+    second: UpperClayLip_5
+  - first:
+      213: -9047766113557080639
+    second: UpperClayLip_6
+  - first:
+      213: -3789185538367105475
+    second: UpperClayLip_7
+  - first:
+      213: -4240266947725723234
+    second: UpperClayLip_8
+  - first:
+      213: 9024193482801250739
+    second: UpperClayLip_9
+  - first:
+      213: 8361111494987663148
+    second: UpperClayLip_10
+  - first:
+      213: -8282756314215084341
+    second: UpperClayLip_11
+  - first:
+      213: -3219301684277700954
+    second: UpperClayLip_12
+  - first:
+      213: 216782056974008632
+    second: UpperClayLip_13
+  - first:
+      213: -323658170227970644
+    second: UpperClayLip_14
+  - first:
+      213: 6322741819609940377
+    second: UpperClayLip_15
+  - first:
+      213: -1056016256309271726
+    second: UpperClayLip_16
+  - first:
+      213: -1457306006853638860
+    second: UpperClayLip_17
+  - first:
+      213: 5187742915092159475
+    second: UpperClayLip_18
+  - first:
+      213: -5828560056191316045
+    second: UpperClayLip_19
+  - first:
+      213: -5614247154174152526
+    second: UpperClayLip_20
+  - first:
+      213: 716506203310639984
+    second: UpperClayLip_21
+  - first:
+      213: 3140230563330340399
+    second: UpperClayLip_22
+  - first:
+      213: -1482365169618648511
+    second: UpperClayLip_23
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 2
+    aniso: 1
+    mipBias: 0
+    wrapU: 2
+    wrapV: 2
+    wrapW: 2
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 0
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: UpperClayLip_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 2172
+        height: 632
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ba3ee833bfb719c30800000000000000
+      internalID: 4364405832730731435
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_1
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 566
+        width: 146
+        height: 138
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7d6c2254b1194c0a0800000000000000
+      internalID: -6862200385895741737
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_2
+      rect:
+        serializedVersion: 2
+        x: 1046
+        y: 596
+        width: 128
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f782d36e4042aa700800000000000000
+      internalID: 552293507767543935
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_3
+      rect:
+        serializedVersion: 2
+        x: 1247
+        y: 586
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f83bc71fddc99f610800000000000000
+      internalID: 1655526815088554895
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_4
+      rect:
+        serializedVersion: 2
+        x: 1466
+        y: 596
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e2ae9e1ff3735af0800000000000000
+      internalID: -408855601593015579
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_5
+      rect:
+        serializedVersion: 2
+        x: 1496
+        y: 594
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c5eca359f61718a30800000000000000
+      internalID: 4215775450254462556
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_6
+      rect:
+        serializedVersion: 2
+        x: 2067
+        y: 546
+        width: 56
+        height: 116
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c51d9628a0ef6280800000000000000
+      internalID: -9047766113557080639
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_7
+      rect:
+        serializedVersion: 2
+        x: 442
+        y: 586
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d36d49d24db1a6bc0800000000000000
+      internalID: -3789185538367105475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_8
+      rect:
+        serializedVersion: 2
+        x: 450
+        y: 580
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e997afb4dab8725c0800000000000000
+      internalID: -4240266947725723234
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_9
+      rect:
+        serializedVersion: 2
+        x: 909
+        y: 574
+        width: 7
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b183ce09206c3d70800000000000000
+      internalID: 9024193482801250739
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_10
+      rect:
+        serializedVersion: 2
+        x: 913
+        y: 578
+        width: 11
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c27cc2a0b92a80470800000000000000
+      internalID: 8361111494987663148
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_11
+      rect:
+        serializedVersion: 2
+        x: 923
+        y: 578
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bce0612240dbd0d80800000000000000
+      internalID: -8282756314215084341
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_12
+      rect:
+        serializedVersion: 2
+        x: 442
+        y: 546
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a69fcbbc2eb253d0800000000000000
+      internalID: -3219301684277700954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_13
+      rect:
+        serializedVersion: 2
+        x: 522
+        y: 536
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8314d9bd12a220300800000000000000
+      internalID: 216782056974008632
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_14
+      rect:
+        serializedVersion: 2
+        x: 1649
+        y: 546
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cada8e6eb92228bf0800000000000000
+      internalID: -323658170227970644
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_15
+      rect:
+        serializedVersion: 2
+        x: 1655
+        y: 545
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9918b548f24eeb750800000000000000
+      internalID: 6322741819609940377
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_16
+      rect:
+        serializedVersion: 2
+        x: 908
+        y: 518
+        width: 8
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 253e5a55fc64851f0800000000000000
+      internalID: -1056016256309271726
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_17
+      rect:
+        serializedVersion: 2
+        x: 561
+        y: 498
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 435227c68eb96cbe0800000000000000
+      internalID: -1457306006853638860
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_18
+      rect:
+        serializedVersion: 2
+        x: 1729
+        y: 468
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3fb1e1802b09ef740800000000000000
+      internalID: 5187742915092159475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_19
+      rect:
+        serializedVersion: 2
+        x: 483
+        y: 39
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3bf8faa828bcc1fa0800000000000000
+      internalID: -5828560056191316045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_20
+      rect:
+        serializedVersion: 2
+        x: 1078
+        y: 33
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b0b33675ff2612b0800000000000000
+      internalID: -5614247154174152526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_21
+      rect:
+        serializedVersion: 2
+        x: 1255
+        y: 29
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 07bc1bf789a81f900800000000000000
+      internalID: 716506203310639984
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_22
+      rect:
+        serializedVersion: 2
+        x: 1721
+        y: 31
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2631284f07549b20800000000000000
+      internalID: 3140230563330340399
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpperClayLip_23
+      rect:
+        serializedVersion: 2
+        x: 368
+        y: 23
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 142087d6bb49d6be0800000000000000
+      internalID: -1482365169618648511
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      UpperClayLip_0: 4364405832730731435
+      UpperClayLip_1: -6862200385895741737
+      UpperClayLip_10: 8361111494987663148
+      UpperClayLip_11: -8282756314215084341
+      UpperClayLip_12: -3219301684277700954
+      UpperClayLip_13: 216782056974008632
+      UpperClayLip_14: -323658170227970644
+      UpperClayLip_15: 6322741819609940377
+      UpperClayLip_16: -1056016256309271726
+      UpperClayLip_17: -1457306006853638860
+      UpperClayLip_18: 5187742915092159475
+      UpperClayLip_19: -5828560056191316045
+      UpperClayLip_2: 552293507767543935
+      UpperClayLip_20: -5614247154174152526
+      UpperClayLip_21: 716506203310639984
+      UpperClayLip_22: 3140230563330340399
+      UpperClayLip_23: -1482365169618648511
+      UpperClayLip_3: 1655526815088554895
+      UpperClayLip_4: -408855601593015579
+      UpperClayLip_5: 4215775450254462556
+      UpperClayLip_6: -9047766113557080639
+      UpperClayLip_7: -3789185538367105475
+      UpperClayLip_8: -4240266947725723234
+      UpperClayLip_9: 9024193482801250739
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

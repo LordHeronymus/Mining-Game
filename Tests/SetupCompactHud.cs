@@ -51,6 +51,16 @@ public static class SetupCompactHud
         hud.boltSprite=AssetDatabase.LoadAssetAtPath<Sprite>(Folder+"/Energy.png");
         hud.barSprite=AssetDatabase.LoadAssetAtPath<Sprite>(Folder+"/Bar.png");
         hud.coinSprite=AssetDatabase.LoadAssetAtPath<Sprite>("Assets/AB Sprites/Gold Coin.png");
+        string pickaxePath=Folder+"/Pickaxe.png";
+        AssetDatabase.ImportAsset(pickaxePath);
+        var pickaxeImporter=(TextureImporter)AssetImporter.GetAtPath(pickaxePath);
+        pickaxeImporter.textureType=TextureImporterType.Sprite;
+        pickaxeImporter.spriteImportMode=SpriteImportMode.Single;
+        pickaxeImporter.alphaIsTransparency=true;
+        pickaxeImporter.mipmapEnabled=false;
+        pickaxeImporter.textureCompression=TextureImporterCompression.Uncompressed;
+        pickaxeImporter.SaveAndReimport();
+        hud.pickaxeSprite=AssetDatabase.LoadAssetAtPath<Sprite>(pickaxePath);
         hud.energy=UnityEngine.Object.FindFirstObjectByType<EnergyManager>();
         hud.player=UnityEngine.Object.FindFirstObjectByType<PlayerMovement>();
         hud.map=UnityEngine.Object.FindFirstObjectByType<MapGenerator>();
@@ -58,7 +68,7 @@ public static class SetupCompactHud
         string[] names={"Tools/Torche","Tools/Dynamite","Tools/Ladder","Tools/BridgePart","Materials/Rope","Materials/Wood"};
         for(int i=0;i<names.Length;i++)hud.slots[i]=AssetDatabase.LoadAssetAtPath<ItemSO>("Assets/GameObjects/Items/"+names[i]+".asset");
         EditorUtility.SetDirty(hud);AssetDatabase.SaveAssets();EditorSceneManager.MarkSceneDirty(info.gameObject.scene);EditorSceneManager.SaveScene(info.gameObject.scene);
-        return "Compact HUD A installed; 880x56 status strip and 570x66 eight-slot hotbar on 1920x1080 reference.";
+        return "Compact HUD installed with a separate pickaxe slot 1 and item slots 2–9.";
     }
     static void MakeSymbol(string name,int kind)
     {

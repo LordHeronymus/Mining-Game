@@ -32,6 +32,8 @@ public class MapGenerator : MonoBehaviour
     public int surfaceOreRampDepth = 10;
     [InspectorName("Kurve Oberflächenanstieg")]
     public AnimationCurve surfaceOreRampCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
+    [Range(1f, 100f), InspectorName("Adergröße im Anfangsbereich (%)")]
+    public float surfaceOreVeinSizePercent = 50f;
     [InspectorName("Erz-Übergangskurve")]
     public AnimationCurve oreTransitionCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     [Min(1), InspectorName("Erz-Übergang (Blöcke)")]
@@ -398,7 +400,7 @@ public class MapGenerator : MonoBehaviour
             throw new System.InvalidOperationException("Map generation requires a registry and positive dimensions.");
         var sampler = new MapGenerationSampler(registry, usedSeed, mapHeight, layers, oreDensityCurve,
             oreDensityMultiplierPercent, transitionThickness, oreTransitionCurve, oreTransitionDepth,
-            oreVeinSizeCurve, surfaceOreRampDepth, surfaceOreRampCurve);
+            oreVeinSizeCurve, surfaceOreRampDepth, surfaceOreRampCurve, surfaceOreVeinSizePercent);
         for (int y = 0; y < mapHeight; y++)
         {
             var stone = sampler.GetStone(y);

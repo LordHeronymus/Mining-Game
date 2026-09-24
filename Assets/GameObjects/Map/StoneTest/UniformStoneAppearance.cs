@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Tilemaps;
 
 [ExecuteAlways, DisallowMultipleComponent, RequireComponent(typeof(MapGenerator))]
@@ -20,9 +21,11 @@ public sealed class UniformStoneAppearance : MonoBehaviour
     Texture2DArray edgeMasks;
     MapGenerator map;
     Texture2D occupancy;
+    Texture2D occupancyUpload;
     MaterialPropertyBlock properties;
-    bool rebuild = true, dirty;
+    bool rebuild = true, fullUpload, dirtyRegion;
     int left, bottom;
+    int dirtyMinX, dirtyMinY, dirtyMaxX, dirtyMaxY;
     void OnValidate()
     {
 #if UNITY_EDITOR
@@ -64,7 +67,17 @@ public sealed class UniformStoneAppearance : MonoBehaviour
                 color.a = (byte)Mathf.RoundToInt(previous.a * 255);
             }
             occupancy.SetPixel(x, y, color);
-            dirty = true;
+            if (!dirtyRegion)
+            {
+                dirtyMinX = dirtyMaxX = x;
+                dirtyMinY = dirtyMaxY = y;
+                dirtyRegion = true;
+            }
+            else
+            {
+                dirtyMinX = Mathf.Min(dirtyMinX, x); dirtyMaxX = Mathf.Max(dirtyMaxX, x);
+                dirtyMinY = Mathf.Min(dirtyMinY, y); dirtyMaxY = Mathf.Max(dirtyMaxY, y);
+            }
         }
     }
     void LateUpdate()
@@ -95,9 +108,15 @@ public sealed class UniformStoneAppearance : MonoBehaviour
                 }
             }
             occupancy.SetPixels32(colors);
-            rebuild = false; dirty = true;
+            rebuild = false; fullUpload = true; dirtyRegion = false;
         }
-        if (dirty) { occupancy.Apply(false, false); dirty = false; }
+        if (fullUpload)
+        {
+            occupancy.Apply(false, false);
+            fullUpload = false;
+            dirtyRegion = false;
+        }
+        else if (dirtyRegion) UploadOccupancyRegion();
         var renderer = GetComponent<TilemapRenderer>();
         properties ??= new MaterialPropertyBlock();
         renderer.GetPropertyBlock(properties);
@@ -130,6 +149,49 @@ public sealed class UniformStoneAppearance : MonoBehaviour
         new Color32(255, (byte)(map.registry.FromTile(tile)?.id == BlockType.Dirt ? 255 : 0),
             (byte)(map.layerOneTile && map.registry.FromTile(tile) == map.layerOneTile.block ? 255 : 0),
             (byte)(map.layerThreeTile && map.registry.FromTile(tile) == map.layerThreeTile.block ? 255 : 0));
+
+    void UploadOccupancyRegion()
+    {
+        int width = dirtyMaxX - dirtyMinX + 1, height = dirtyMaxY - dirtyMinY + 1;
+        if ((SystemInfo.copyTextureSupport & CopyTextureSupport.Basic) == 0)
+        {
+            occupancy.Apply(false, false);
+            dirtyRegion = false;
+            return;
+        }
+        if ((long)width * height * 2 >= (long)occupancy.width * occupancy.height)
+        {
+            occupancy.Apply(false, false);
+            dirtyRegion = false;
+            return;
+        }
+        if (!occupancyUpload || occupancyUpload.width != width || occupancyUpload.height != height)
+        {
+            if (occupancyUpload)
+            {
+                if (Application.isPlaying) Destroy(occupancyUpload); else DestroyImmediate(occupancyUpload);
+            }
+            occupancyUpload = new Texture2D(width, height, TextureFormat.RGBA32, false, true)
+            { name = "Terrain occupancy update", hideFlags = HideFlags.HideAndDontSave, filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+        }
+        try
+        {
+            var sourcePixels = occupancy.GetPixelData<Color32>(0);
+            var patchPixels = occupancyUpload.GetPixelData<Color32>(0);
+            for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+                patchPixels[y * width + x] = sourcePixels[(dirtyMinY + y) * occupancy.width + dirtyMinX + x];
+            occupancyUpload.Apply(false, false);
+            Graphics.CopyTexture(occupancyUpload, 0, 0, 0, 0, width, height,
+                occupancy, 0, 0, dirtyMinX, dirtyMinY);
+        }
+        catch (UnityException)
+        {
+            // The readable texture still contains the same edited pixels for the full upload path.
+            occupancy.Apply(false, false);
+        }
+        dirtyRegion = false;
+    }
     void OnDisable()
     {
         if (map) map.Generated -= Rebuild;
@@ -145,8 +207,16 @@ public sealed class UniformStoneAppearance : MonoBehaviour
     }
     void Release()
     {
-        if (!occupancy) return;
-        if (Application.isPlaying) Destroy(occupancy); else DestroyImmediate(occupancy);
-        occupancy = null;
+        if (occupancy)
+        {
+            if (Application.isPlaying) Destroy(occupancy); else DestroyImmediate(occupancy);
+            occupancy = null;
+        }
+        if (occupancyUpload)
+        {
+            if (Application.isPlaying) Destroy(occupancyUpload); else DestroyImmediate(occupancyUpload);
+            occupancyUpload = null;
+        }
+        fullUpload = dirtyRegion = false;
     }
 }

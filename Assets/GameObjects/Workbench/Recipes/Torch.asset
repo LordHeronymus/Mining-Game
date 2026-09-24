@@ -12,6 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bd168b198ca49c4a82450a3ed868988, type: 3}
   m_Name: Torch
   m_EditorClassIdentifier: 
+  category: 0
+  persistentId: 79ecac5000d7a944eae8be328f3a932c
+  customCardIconLayout: 1
+  cardIconLayout:
+    scale: {x: 1, y: 1}
+    offset: {x: 0, y: -3.21}
+    flipX: 1
+    flipY: 0
   output: {fileID: 11400000, guid: d3d9bb2429b0b084d9b4726f97258eb4, type: 2}
   outputAmount: 4
   pluralName: Fackeln
