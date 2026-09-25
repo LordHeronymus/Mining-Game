@@ -47,7 +47,14 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         ("Höhle (%)", AudioVolumeSetting.Cave),
         ("Abbausounds (%)", AudioVolumeSetting.DigSounds),
     };
+    static readonly (string label, AudioVolumeSetting setting, AudioTimeOffsetSetting offsetSetting, string tooltip)[] ConcreteAudioSettings =
+    {
+        ("Bling (%)", AudioVolumeSetting.DingLight, AudioTimeOffsetSetting.DingLight,
+            "Wird abgespielt, wenn ein Item eingesammelt wird. Ein positiver Versatz verzögert den Klang; ein negativer überspringt den Clipanfang."),
+    };
     readonly TMP_InputField[] audioInputs = new TMP_InputField[AudioSettings.Length];
+    readonly TMP_InputField[] concreteAudioInputs = new TMP_InputField[ConcreteAudioSettings.Length];
+    readonly TMP_InputField[] concreteAudioOffsetInputs = new TMP_InputField[ConcreteAudioSettings.Length];
     FirstLayerAmbience detailAmbience;
     TMP_Dropdown detailClipDropdown;
     TMP_InputField detailVolumeInput;
@@ -76,6 +83,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     Button startingResourceAdd;
     TextMeshProUGUI startingResourceStatus;
     readonly List<StartingResourceEditorRow> startingResourceRowsData = new List<StartingResourceEditorRow>();
+    int nextStartingResourceRowId;
     DebugTab currentTab;
     public bool IsTestTab => currentTab == DebugTab.Tests;
     public bool IsIconTab => currentTab == DebugTab.Icons;
@@ -86,6 +94,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     {
         public RectTransform rect;
         public TMP_Dropdown item;
+        public TextMeshProUGUI amountLabel;
         public TMP_InputField amount;
         public Button remove;
     }
@@ -94,6 +103,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     {
         public RectTransform rect;
         public TMP_Dropdown item;
+        public TextMeshProUGUI amountLabel;
         public TMP_InputField amount;
         public Button remove;
     }
@@ -211,7 +221,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
 
     void CreateStartingResourceRow(ItemSO selected, int amount, ItemSO[] choices)
     {
-        int index = startingResourceRowsData.Count;
+        int index = nextStartingResourceRowId++;
         var rowRect = MakeRect("StartingResourceRow_" + index, startingResourceRows);
         items[rowRect.name] = rowRect;
         startingResourceItems.Add(rowRect.name);
@@ -224,12 +234,21 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         row.item.onValueChanged.AddListener(_ => SaveStartingResources());
         startingResourceItems.Add(row.item.name);
 
+        row.amountLabel = CloneItem("SpeedLabel", "StartingResourceAmountLabel_" + index, rowRect, "Menge")
+            .GetComponent<TextMeshProUGUI>();
+        row.amountLabel.alignment = TextAlignmentOptions.MidlineRight;
+        row.amountLabel.fontSize = 22;
+        row.amountLabel.enableWordWrapping = false;
+        row.amountLabel.raycastTarget = false;
+        startingResourceItems.Add(row.amountLabel.name);
+
         row.amount = CloneItem("DiggingSpeed", "StartingResourceAmount_" + index, rowRect).GetComponent<TMP_InputField>();
         row.amount.onValueChanged = new TMP_InputField.OnChangeEvent();
         row.amount.onEndEdit = new TMP_InputField.SubmitEvent();
         row.amount.contentType = TMP_InputField.ContentType.IntegerNumber;
         row.amount.characterLimit = 10;
         DisableInputChildRaycasts(row.amount);
+        row.amount.targetGraphic.color = new Color(.2f, .25f, .32f);
         row.amount.SetTextWithoutNotify(Mathf.Max(1, amount).ToString(CultureInfo.InvariantCulture));
         row.amount.onEndEdit.AddListener(_ => SaveStartingResources());
         startingResourceItems.Add(row.amount.name);
@@ -244,7 +263,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     void RemoveStartingResourceRow(StartingResourceEditorRow row)
     {
         startingResourceRowsData.Remove(row);
-        foreach (var name in new[] { row.rect.name, row.item.name, row.amount.name, row.remove.name })
+        foreach (var name in new[] { row.rect.name, row.item.name, row.amountLabel.name, row.amount.name, row.remove.name })
         {
             startingResourceItems.Remove(name);
             items.Remove(name);
@@ -288,6 +307,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     {
         var rect = Instantiate(items[source], parent);
         rect.name = name; items[name] = rect;
+        rect.gameObject.SetActive(true);
         if (label != null) rect.GetComponentInChildren<TextMeshProUGUI>().text = label;
         var trigger = rect.GetComponent<GameplayButtonTooltip>();
         if (trigger) Destroy(trigger);
@@ -441,30 +461,81 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         CloneItem("Section", "AudioSection", content, "SOUND");
         for (int i = 0; i < AudioSettings.Length; i++)
         {
-            CloneItem("SpeedLabel", "AudioLabel" + i, content, AudioSettings[i].label);
-            var input = CloneItem("DiggingSpeed", "AudioInput" + i, content).GetComponent<TMP_InputField>();
-            input.onEndEdit = new TMP_InputField.SubmitEvent();
-            input.onValueChanged = new TMP_InputField.OnChangeEvent();
-            input.contentType = TMP_InputField.ContentType.DecimalNumber;
-            DisableInputChildRaycasts(input);
             int index = i;
-            input.onEndEdit.AddListener(_ => ApplyAudioInput(index));
-            audioInputs[i] = input;
+            CreateAudioSettingRow(AudioSettings[i].label, "AudioLabel" + i, "AudioInput" + i,
+                input => ApplyAudioInput(index, input), out audioInputs[i]);
+        }
+
+        CloneItem("Section", "ConcreteAudioSection", content, "KONKRETE SOUNDCLIPS");
+        for (int i = 0; i < ConcreteAudioSettings.Length; i++)
+        {
+            int index = i;
+            CreateAudioSettingRow(ConcreteAudioSettings[i].label, "ConcreteAudioLabel" + i,
+                "ConcreteAudioInput" + i, input => ApplyConcreteAudioInput(index, input),
+                out concreteAudioInputs[i]);
+            AttachTooltip("ConcreteAudioLabel" + i, ConcreteAudioSettings[i].tooltip);
+            var label = items["ConcreteAudioLabel" + i].GetComponentInChildren<TextMeshProUGUI>();
+            if (label) label.raycastTarget = true;
+            CloneItem("SpeedLabel", "ConcreteAudioOffsetLabel" + i, content, "Versatz (Sek.)");
+            var offsetInput = CloneItem("DiggingSpeed", "ConcreteAudioOffsetInput" + i, content)
+                .GetComponent<TMP_InputField>();
+            offsetInput.onEndEdit = new TMP_InputField.SubmitEvent();
+            offsetInput.onValueChanged = new TMP_InputField.OnChangeEvent();
+            offsetInput.contentType = TMP_InputField.ContentType.DecimalNumber;
+            DisableInputChildRaycasts(offsetInput);
+            int offsetIndex = i;
+            offsetInput.onEndEdit.AddListener(_ => ApplyConcreteAudioOffset(offsetIndex));
+            concreteAudioOffsetInputs[i] = offsetInput;
         }
         RefreshAudioSettings();
     }
 
-    void ApplyAudioInput(int index)
+    void CreateAudioSettingRow(string label, string labelName, string inputName,
+        System.Action<TMP_InputField> submit, out TMP_InputField input)
+    {
+        CloneItem("SpeedLabel", labelName, content, label);
+        var field = CloneItem("DiggingSpeed", inputName, content).GetComponent<TMP_InputField>();
+        field.onEndEdit = new TMP_InputField.SubmitEvent();
+        field.onValueChanged = new TMP_InputField.OnChangeEvent();
+        field.contentType = TMP_InputField.ContentType.DecimalNumber;
+        DisableInputChildRaycasts(field);
+        field.onEndEdit.AddListener(_ => submit(field));
+        input = field;
+    }
+
+    void ApplyAudioInput(int index, TMP_InputField input)
+        => ApplyAudioInput(input, AudioSettings[index].setting);
+
+    void ApplyConcreteAudioInput(int index, TMP_InputField input)
+        => ApplyAudioInput(input, ConcreteAudioSettings[index].setting);
+
+    void ApplyConcreteAudioOffset(int index)
     {
         var audio = AudioManager.Instance;
-        if (!audio || !float.TryParse(audioInputs[index].text.Replace(',', '.'), NumberStyles.Float,
+        var input = concreteAudioOffsetInputs[index];
+        if (!audio || !float.TryParse(input.text.Replace(',', '.'), NumberStyles.Float,
+            CultureInfo.InvariantCulture, out float seconds) || seconds < -10f || seconds > 10f)
+        {
+            items["Status"].GetComponent<TextMeshProUGUI>().text = "Zeitversatz: bitte einen Wert von -10 bis 10 Sekunden eingeben.";
+            RefreshAudioSettings();
+            return;
+        }
+        audio.SetTimeOffset(ConcreteAudioSettings[index].offsetSetting, seconds);
+        items["Status"].GetComponent<TextMeshProUGUI>().text = "";
+        RefreshAudioSettings();
+    }
+
+    void ApplyAudioInput(TMP_InputField input, AudioVolumeSetting setting)
+    {
+        var audio = AudioManager.Instance;
+        if (!audio || !float.TryParse(input.text.Replace(',', '.'), NumberStyles.Float,
             CultureInfo.InvariantCulture, out float percent) || percent < 0f || percent > 100f)
         {
             items["Status"].GetComponent<TextMeshProUGUI>().text = "Soundlautstärke: bitte 0 bis 100 eingeben.";
             RefreshAudioSettings();
             return;
         }
-        audio.SetVolume(AudioSettings[index].setting, percent / 100f);
+        audio.SetVolume(setting, percent / 100f);
         items["Status"].GetComponent<TextMeshProUGUI>().text = "";
         RefreshAudioSettings();
     }
@@ -477,6 +548,15 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             audioInputs[i].interactable = audio;
             if (audio) audioInputs[i].SetTextWithoutNotify((audio.GetVolume(AudioSettings[i].setting) * 100f)
                 .ToString("0.##", CultureInfo.InvariantCulture));
+        }
+        for (int i = 0; i < concreteAudioInputs.Length; i++)
+        {
+            concreteAudioInputs[i].interactable = audio;
+            concreteAudioOffsetInputs[i].interactable = audio;
+            if (audio) concreteAudioInputs[i].SetTextWithoutNotify(
+                (audio.GetVolume(ConcreteAudioSettings[i].setting) * 100f).ToString("0.##", CultureInfo.InvariantCulture));
+            if (audio) concreteAudioOffsetInputs[i].SetTextWithoutNotify(
+                audio.GetTimeOffset(ConcreteAudioSettings[i].offsetSetting).ToString("0.##", CultureInfo.InvariantCulture));
         }
     }
 
@@ -875,9 +955,11 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             recipeItems.Remove(row.rect.name);
             items.Remove(row.rect.name);
             recipeItems.Remove(row.item.name);
+            recipeItems.Remove(row.amountLabel.name);
             recipeItems.Remove(row.amount.name);
             recipeItems.Remove(row.remove.name);
             items.Remove(row.item.name);
+            items.Remove(row.amountLabel.name);
             items.Remove(row.amount.name);
             items.Remove(row.remove.name);
             Destroy(row.rect.gameObject);
@@ -900,11 +982,20 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         row.item.onValueChanged.AddListener(_ => ApplyRecipeEditor(true));
         recipeItems.Add(row.item.name);
 
+        row.amountLabel = CloneItem("SpeedLabel", "RecipeIngredientAmountLabel_" + index, rowRect, "Menge")
+            .GetComponent<TextMeshProUGUI>();
+        row.amountLabel.alignment = TextAlignmentOptions.MidlineRight;
+        row.amountLabel.fontSize = 22;
+        row.amountLabel.enableWordWrapping = false;
+        row.amountLabel.raycastTarget = false;
+        recipeItems.Add(row.amountLabel.name);
+
         row.amount = CloneItem("DiggingSpeed", "RecipeIngredientAmount_" + index, rowRect).GetComponent<TMP_InputField>();
         row.amount.onValueChanged = new TMP_InputField.OnChangeEvent();
         row.amount.onEndEdit = new TMP_InputField.SubmitEvent();
         row.amount.contentType = TMP_InputField.ContentType.IntegerNumber;
         DisableInputChildRaycasts(row.amount);
+        row.amount.targetGraphic.color = new Color(.2f, .25f, .32f);
         row.amount.SetTextWithoutNotify(ingredient.amount.ToString(CultureInfo.InvariantCulture));
         row.amount.onEndEdit.AddListener(_ => ApplyRecipeEditor(true));
         recipeItems.Add(row.amount.name);
@@ -1021,12 +1112,19 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             MoveToTab(giftingItems, section.header);
             MoveToTab(giftingItems, section.cards.ToArray());
         }
-        var audioNames = new List<string> { "AudioSection", "DetailSection", "DetailClipLabel", "DetailClipDropdown",
+        var audioNames = new List<string> { "AudioSection", "ConcreteAudioSection", "DetailSection", "DetailClipLabel", "DetailClipDropdown",
             "DetailVolumeLabel", "DetailVolumeInput", "DetailPreview" };
         for (int i = 0; i < AudioSettings.Length; i++)
         {
             audioNames.Add("AudioLabel" + i);
             audioNames.Add("AudioInput" + i);
+        }
+        for (int i = 0; i < ConcreteAudioSettings.Length; i++)
+        {
+            audioNames.Add("ConcreteAudioLabel" + i);
+            audioNames.Add("ConcreteAudioInput" + i);
+            audioNames.Add("ConcreteAudioOffsetLabel" + i);
+            audioNames.Add("ConcreteAudioOffsetInput" + i);
         }
         MoveToTab(audioItems, audioNames.ToArray());
         var lightingNames = new List<string> { "LightingSection", "LightingInfo", "LightingEnabled", "LightingHint" };
@@ -1429,7 +1527,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             startingResourceRows.pivot = new Vector2(0, 1);
             startingResourceRows.anchoredPosition = new Vector2(x, -126);
             startingResourceRows.sizeDelta = new Vector2(col, startingResourceRowsData.Count * 58);
-            float itemWidth = Mathf.Max(100, col - 172);
+            float itemWidth = Mathf.Max(100, col - 340);
             for (int i = 0; i < startingResourceRowsData.Count; i++)
             {
                 var row = startingResourceRowsData[i];
@@ -1438,8 +1536,9 @@ public sealed class GameplayDebugWindow : MonoBehaviour
                 row.rect.anchoredPosition = new Vector2(0, -i * 58);
                 row.rect.sizeDelta = new Vector2(col, 50);
                 Place(row.item.name, 0, 0, itemWidth, 48);
-                Place(row.amount.name, itemWidth + 8, 0, 104, 48);
-                Place(row.remove.name, itemWidth + 120, 0, 46, 48);
+                Place(row.amountLabel.name, itemWidth + 8, 0, 112, 48);
+                Place(row.amount.name, itemWidth + 128, 0, 150, 48);
+                Place(row.remove.name, itemWidth + 288, 0, 46, 48);
             }
             float addY = 136 + startingResourceRowsData.Count * 58;
             Place("StartingResourceAdd",x,addY,col,48);
@@ -1534,7 +1633,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             recipeIngredientRows.pivot = new Vector2(0, 1);
             recipeIngredientRows.anchoredPosition = new Vector2(x, -298);
             recipeIngredientRows.sizeDelta = new Vector2(col, recipeRows.Count * 58);
-            float ingredientWidth = Mathf.Max(100, col - 162);
+            float ingredientWidth = Mathf.Max(100, col - 340);
             for (int i = 0; i < recipeRows.Count; i++)
             {
                 var row = recipeRows[i];
@@ -1543,8 +1642,9 @@ public sealed class GameplayDebugWindow : MonoBehaviour
                 row.rect.anchoredPosition = new Vector2(0, -i * 58);
                 row.rect.sizeDelta = new Vector2(col, 50);
                 Place(row.item.name, 0, 0, ingredientWidth, 48);
-                Place(row.amount.name, ingredientWidth + 8, 0, 100, 48);
-                Place(row.remove.name, ingredientWidth + 116, 0, 46, 48);
+                Place(row.amountLabel.name, ingredientWidth + 8, 0, 112, 48);
+                Place(row.amount.name, ingredientWidth + 128, 0, 150, 48);
+                Place(row.remove.name, ingredientWidth + 288, 0, 46, 48);
                 row.remove.interactable = recipeRows.Count > 1;
             }
             float addY = 310 + recipeRows.Count * 58;
@@ -1562,7 +1662,17 @@ public sealed class GameplayDebugWindow : MonoBehaviour
                 Place("AudioLabel" + i,x,y,col-150,48);
                 Place("AudioInput" + i,x+col-140,y,140,48);
             }
-            float detailY = 60 + AudioSettings.Length * 58 + 20;
+            float concreteSectionY = 60 + AudioSettings.Length * 58;
+            Place("ConcreteAudioSection",x,concreteSectionY,col,36);
+            for (int i = 0; i < ConcreteAudioSettings.Length; i++)
+            {
+                float y = concreteSectionY + 48 + i * 116;
+                Place("ConcreteAudioLabel" + i,x,y,col-150,48);
+                Place("ConcreteAudioInput" + i,x+col-140,y,140,48);
+                Place("ConcreteAudioOffsetLabel" + i,x,y+58,col-150,48);
+                Place("ConcreteAudioOffsetInput" + i,x+col-140,y+58,140,48);
+            }
+            float detailY = concreteSectionY + 48 + ConcreteAudioSettings.Length * 116 + 20;
             Place("DetailSection",x,detailY,col,36);
             Place("DetailClipLabel",x,detailY+48,col,40);
             Place("DetailClipDropdown",x,detailY+92,col,50);

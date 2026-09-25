@@ -17,4 +17,4 @@ MonoBehaviour:
   displayName: Gold
   icon: {fileID: -4934433003987377266, guid: ce57277ab6890e7428463e7a16df0f4d, type: 3}
   themeColor: {r: 1, g: 0.827451, b: 0.41568628, a: 1}
-  worth: 100
+  worth: 50

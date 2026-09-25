@@ -64,7 +64,7 @@ public static class SetupTransitionStone
         foreach(var map in UnityEngine.Object.FindObjectsByType<MapGenerator>(FindObjectsInactive.Include,FindObjectsSortMode.None))
         {
             if(!map.registry || !map.Terrain.layoutGrid)continue;
-            var sampler=new MapGenerationSampler(map.registry,map.ActiveSeed,map.GeneratedHeight,map.layers,map.oreDensityCurve,map.oreDensityMultiplierPercent,map.transitionThickness,map.oreTransitionCurve,map.oreTransitionDepth, map.oreVeinSizeCurve, map.surfaceOreRampDepth, map.surfaceOreRampCurve, map.surfaceOreVeinSizePercent);
+            var sampler=new MapGenerationSampler(map.registry,map.ActiveSeed,map.GeneratedHeight,map.layers,map.oreDensityCurve,map.oreDensityMultiplierPercent,map.transitionThickness);
             int boundary=sampler.FirstStoneBoundary;
             int end=Mathf.Min(map.GeneratedHeight,boundary>0?boundary+sampler.TransitionThickness:map.GeneratedHeight);
             var changes=new List<TileChangeData>();

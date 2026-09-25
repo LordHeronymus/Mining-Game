@@ -25,12 +25,27 @@ public sealed class DirtSurfaceAppearance : MonoBehaviour
         var renderer=GetComponent<TilemapRenderer>();
         if(!map || !map.registry || !renderer || !terrainMaterial || !map.Terrain.layoutGrid)return;
         int thickness=Mathf.Clamp(map.transitionThickness,1,100);
-        int width=map.GeneratedWidth,height=Mathf.Min(map.GeneratedHeight,MapGenerationSampler.SurfaceDirtRows+thickness+2);
+        bool explicitSurface=map.layers!=null && map.layers.Length>1 && map.layers[0]!=null &&
+            map.layers[0].stone && map.layers[0].stone.id==BlockType.Dirt;
+        int dirtWidth=explicitSurface?Mathf.Min(Mathf.Max(0,map.layers[1].transitionWidth),map.layers[1].startDepth):thickness;
+        int dirtStart=explicitSurface?map.layers[1].startDepth-dirtWidth:MapGenerationSampler.SurfaceDirtRows;
+        int width=map.GeneratedWidth,height=Mathf.Min(map.GeneratedHeight,dirtStart+dirtWidth+2);
         if(width<=0 || height<=0)return;
         appliedSeed=map.ActiveSeed;
         int boundary=-1;
         Block upper=null,lower=null;
-        if(map.layers!=null)
+        if(explicitSurface)
+        {
+            upper=map.layers[1].stone;
+            if(map.layers.Length>2 && map.layers[2]!=null)
+            {
+                var next=map.layers[2];
+                boundary=next.startDepth-Mathf.Min(Mathf.Max(0,next.transitionWidth),
+                    next.startDepth-map.layers[1].startDepth);
+                lower=next.stone;
+            }
+        }
+        else if(map.layers!=null)
         {
             foreach(var layer in map.layers)
             {
@@ -92,11 +107,14 @@ public sealed class DirtSurfaceAppearance : MonoBehaviour
             stoneVariants ? stoneVariants.depth : 0,deepVariants ? deepVariants.depth : 0,0));
         properties.SetVector("_DirtMaskBounds",new Vector4(-width/2,0,1f/width,1f/height));
         properties.SetVector("_DirtSurface",new Vector4(map.Terrain.layoutGrid.cellSize.y,
-            MapGenerationSampler.SurfaceDirtRows,thickness,
+            dirtStart,dirtWidth,
             (OreVeins.Hash(appliedSeed,0,0,0xD17u)%10000u)*.01f));
+        int deepWidth=explicitSurface && map.layers.Length>2 ?
+            Mathf.Min(Mathf.Max(0,map.layers[2].transitionWidth),
+                map.layers[2].startDepth-map.layers[1].startDepth):thickness;
         int firstRow=Mathf.Max(0,boundary-2);
-        int deepHeight=Mathf.Min(map.GeneratedHeight,boundary+thickness+2)-firstRow;
-        if(includeDeepBoundary && boundary>0 && upper && lower && upper!=lower && deepHeight>0)
+        int deepHeight=Mathf.Min(map.GeneratedHeight,boundary+deepWidth+2)-firstRow;
+        if(includeDeepBoundary && boundary>0 && deepWidth>0 && upper && lower && upper!=lower && deepHeight>0)
         {
             var upperIndices=BuildIndices(appliedSeed,width,deepHeight,upper,firstRow);
             var lowerIndices=BuildIndices(appliedSeed,width,deepHeight,lower,firstRow);
@@ -138,7 +156,7 @@ public sealed class DirtSurfaceAppearance : MonoBehaviour
             properties.SetTexture("_DeepMask",deepMask);
             properties.SetVector("_DeepMaskBounds",new Vector4(-width/2,firstRow,1f/width,1f/deepHeight));
             properties.SetVector("_DeepSurface",new Vector4(map.Terrain.layoutGrid.cellSize.y,boundary,
-                thickness,0));
+                deepWidth,0));
         }
         else
         {

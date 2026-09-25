@@ -30,6 +30,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
     static readonly Color Muted = new Color32(224, 207, 187, 255);
     static readonly Color Enough = new Color32(150, 224, 109, 255);
     static readonly Color Missing = new Color32(232, 134, 101, 255);
+    const float CraftingPickupLeadTime = .3f;
     readonly List<RecipeRow> rows = new();
     readonly List<IngredientRow> ingredientRows = new();
     CanvasGroup group;
@@ -43,6 +44,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
     Button minus, plus, maximum, craft;
     InventoryManager inventory;
     CraftingRecipe renderedRecipe;
+    bool craftingPending;
 
     sealed class RecipeRow { public CraftingRecipe recipe; public RectTransform rect, icon; public Image image; public WorkbenchGlyph star; public bool favorite; }
     sealed class IngredientRow { public ItemSO item; public int amount; public TextMeshProUGUI count; }
@@ -185,10 +187,32 @@ public sealed class WorkbenchPanel : MonoBehaviour
 
     public bool CraftSelected()
     {
-        bool success = CraftingService.TryCraft(SelectedRecipe, inventory, Quantity);
-        if (success) AudioManager.Instance?.Play(SoundType.ItemInBag);
+        if (craftingPending || !SelectedRecipe || !inventory || Quantity <= 0 ||
+            CraftingService.GetMaxCraftable(SelectedRecipe, inventory) < Quantity) return false;
+        craftingPending = true;
+        StartCoroutine(CompleteCraftAfterSound(SelectedRecipe, Quantity));
         Refresh();
-        return success;
+        return true;
+    }
+
+    System.Collections.IEnumerator CompleteCraftAfterSound(CraftingRecipe recipe, int batches)
+    {
+        var audio = AudioManager.Instance;
+        if (audio && audio.HasSound(SoundType.ItemInBag))
+        {
+            AudioSource source = null;
+            while (audio && !source)
+            {
+                source = audio.TryPlayCraftingSound();
+                if (!source) yield return null;
+            }
+            while (source && source.isPlaying && source.clip &&
+                   source.clip.length - source.time > CraftingPickupLeadTime) yield return null;
+        }
+
+        if (inventory && recipe) CraftingService.TryCraft(recipe, inventory, batches);
+        craftingPending = false;
+        Refresh();
     }
 
     void Refresh()
@@ -269,7 +293,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
         minus.interactable = Quantity > 1;
         plus.interactable = Quantity < max;
         maximum.interactable = max > 0 && Quantity != max;
-        craft.interactable = max >= Quantity;
+        craft.interactable = !craftingPending && max >= Quantity;
     }
 
     void BuildView()

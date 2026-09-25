@@ -178,32 +178,59 @@ public sealed class ParallaxLayer : MonoBehaviour
                 x += width;
             }
         }
-        if (undergroundColor.a > 0f)
+        // The fixed background owns the underground when present; this layer then
+        // remains responsible only for the surface panorama.
+        bool fixedUnderground = controller.GetComponentInChildren<FixedUndergroundBackground>(true) is { isActiveAndEnabled: true };
+        if (undergroundColor.a > 0f && !fixedUnderground)
         {
-            float layer2Blend = undergroundLayer2Tile ? controller.GetLayer2Blend() : 0f;
-            float layer3Blend = undergroundLayer3Tile ? controller.GetLayer3Blend() : 0f;
-            if (layer3Blend < 1f)
+            var configured = controller.MapLayers;
+            bool useConfigured = undergroundTile && configured != null && configured.Length > 0;
+            if (useConfigured)
+                foreach (var layer in configured)
+                    if (layer == null || !layer.backgroundSprite) { useConfigured = false; break; }
+            if (useConfigured)
             {
-                if (undergroundTile && layer2Blend < 1f)
-                    DrawUnderground(undergroundTile, anchor, cycleWidth, worldHeight,
-                        scale, left, right, viewTop, viewBottom, undergroundColor, sortingOrder - 1,
-                        true, ref used);
-                if (undergroundLayer2Tile && layer2Blend > 0f)
+                int firstVisible = 0;
+                for (int i = 1; i < configured.Length; i++)
+                    if (controller.GetLayerBlend(i) >= 1f) firstVisible = i;
+                for (int i = firstVisible; i < configured.Length; i++)
                 {
-                    Color layer2Color = undergroundColor;
-                    layer2Color.a *= layer2Blend;
-                    DrawUnderground(undergroundLayer2Tile, anchor, cycleWidth, worldHeight,
-                        scale, left, right, viewTop, viewBottom, layer2Color, sortingOrder + 2,
-                        false, ref used);
+                    float blend = i == 0 ? 1f : controller.GetLayerBlend(i);
+                    if (blend <= 0f) continue;
+                    Color layerColor = undergroundColor;
+                    layerColor.a *= blend;
+                    DrawUnderground(configured[i].backgroundSprite, anchor, cycleWidth, worldHeight,
+                        scale, left, right, viewTop, viewBottom, layerColor,
+                        sortingOrder + i * 2 - 1, i == 0, ref used);
                 }
             }
-            if (undergroundLayer3Tile && layer3Blend > 0f)
+            else
             {
-                Color layer3Color = undergroundColor;
-                layer3Color.a *= layer3Blend;
-                DrawUnderground(undergroundLayer3Tile, anchor, cycleWidth, worldHeight,
-                    scale, left, right, viewTop, viewBottom, layer3Color, sortingOrder + 3,
-                    false, ref used);
+                float layer2Blend = undergroundLayer2Tile ? controller.GetLayer2Blend() : 0f;
+                float layer3Blend = undergroundLayer3Tile ? controller.GetLayer3Blend() : 0f;
+                if (layer3Blend < 1f)
+                {
+                    if (undergroundTile && layer2Blend < 1f)
+                        DrawUnderground(undergroundTile, anchor, cycleWidth, worldHeight,
+                            scale, left, right, viewTop, viewBottom, undergroundColor, sortingOrder - 1,
+                            true, ref used);
+                    if (undergroundLayer2Tile && layer2Blend > 0f)
+                    {
+                        Color layer2Color = undergroundColor;
+                        layer2Color.a *= layer2Blend;
+                        DrawUnderground(undergroundLayer2Tile, anchor, cycleWidth, worldHeight,
+                            scale, left, right, viewTop, viewBottom, layer2Color, sortingOrder + 2,
+                            false, ref used);
+                    }
+                }
+                if (undergroundLayer3Tile && layer3Blend > 0f)
+                {
+                    Color layer3Color = undergroundColor;
+                    layer3Color.a *= layer3Blend;
+                    DrawUnderground(undergroundLayer3Tile, anchor, cycleWidth, worldHeight,
+                        scale, left, right, viewTop, viewBottom, layer3Color, sortingOrder + 3,
+                        false, ref used);
+                }
             }
         }
         HideUnused(used);

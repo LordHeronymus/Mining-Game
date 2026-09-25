@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 // into a second configuration asset that could drift out of sync.
 public class GameplaySettingsWindow : EditorWindow
 {
-    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Partikel", "Blöcke & Beute", "Debug", "Licht", "Werkbank", "Audio", "Pflanzen", "Tiere" };
+    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Erzverteilung", "Partikel", "Blöcke & Beute", "Licht", "Werkbank", "Audio", "Pflanzen", "Tiere" };
     [SerializeField] int tab;
     [SerializeField] int selectedBlock;
     [SerializeField] StatsManager stats;
@@ -40,11 +40,18 @@ public class GameplaySettingsWindow : EditorWindow
     CraftingRecipe[] recipes = Array.Empty<CraftingRecipe>();
     [SerializeField] CraftingRecipe selectedRecipe;
     bool showOtherItems;
-    bool showSources;
     string notification;
     GameplaySettingsData savedOverride;
     string overrideWarning;
     bool overrideExists;
+    readonly HashSet<string> expandedMapSections = new HashSet<string>();
+    int draggingDensityKey = -1;
+    int densityCurveControl;
+    int panningCurveControl;
+    float draggingCurveMaximum;
+    string selectedCurvePath;
+    int selectedCurveKey = -1;
+    readonly Dictionary<string, Vector2> curveViews = new Dictionary<string, Vector2>();
 
     [MenuItem("Mining Game/Gameplay Settings")]
     public static void Open()
@@ -179,7 +186,7 @@ public class GameplaySettingsWindow : EditorWindow
         if (EditorApplication.isPlayingOrWillChangePlaymode)
             EditorGUILayout.HelpBox("Standardwerte sind im Play-Modus schreibgeschützt. Zum Ausprobieren F1 verwenden; für dauerhafte Änderungen den Play-Modus beenden.", MessageType.Info);
         else if (overrideExists)
-            EditorGUILayout.HelpBox(overrideWarning ?? $"JSON-Test-Override vorhanden: Abbaugeschwindigkeit {savedOverride.baseDiggingSpeed:g}{(savedOverride.hasLightingOverride ? " und Lichtwerte" : "")}. Diese Werte haben im Editor/Development Build Vorrang vor den Basiswerten. Verwaltung unter Debug.", overrideWarning == null ? MessageType.Warning : MessageType.Error);
+            EditorGUILayout.HelpBox(overrideWarning ?? $"F1-Test-Override aktiv: Abbaugeschwindigkeit {savedOverride.baseDiggingSpeed:g}{(savedOverride.hasLightingOverride ? " und Lichtwerte" : "")}. Im Editor und in Development Builds haben diese Werte Vorrang.", overrideWarning == null ? MessageType.Warning : MessageType.Error);
 
         int nextTab = DrawTabRows();
         if (nextTab != tab) { tab = nextTab; scroll = Vector2.zero; }
@@ -191,9 +198,9 @@ public class GameplaySettingsWindow : EditorWindow
                 case 0: DrawPlayer(); break;
                 case 1: DrawEnergy(); break;
                 case 2: DrawMap(); break;
-                case 3: DrawParticles(); break;
-                case 4: DrawBlocks(); break;
-                case 5: DrawDebug(); break;
+                case 3: DrawOreDistribution(); break;
+                case 4: DrawParticles(); break;
+                case 5: DrawBlocks(); break;
                 case 6: DrawLighting(); break;
                 case 7: DrawWorkbench(); break;
                 case 8: DrawAudio(); break;
@@ -375,14 +382,16 @@ public class GameplaySettingsWindow : EditorWindow
         {
             VolumeSlider(data, "digSoundVolume", "Lautstärke (%)");
         }, false);
-        Section("Layer 1 Details", sceneComponents.OfType<FirstLayerAmbience>().FirstOrDefault(), data =>
+        Section("Untergrund-Details", sceneComponents.OfType<FirstLayerAmbience>().FirstOrDefault(), data =>
         {
             Float(data, "detailsPerMinute", "Ereignisse pro Minute", "", 0f, 60f);
         }, false);
         Section("Höhlen-Tribal-Song", sceneComponents.OfType<SecondLayerAmbience>().FirstOrDefault(), data =>
         {
-            Float(data, "tribalSongLayer2MeanMinutes", "Ø Minuten in Layer 2", "", .01f, 120f);
-            Float(data, "tribalSongLayer3MeanMinutes", "Ø Minuten in Layer 3", "", .01f, 240f);
+            int offset = map && map.layers != null && map.layers.Length > 0 && map.layers[0] != null &&
+                map.layers[0].stone && map.layers[0].stone.id == BlockType.Dirt ? 1 : 0;
+            Float(data, "tribalSongLayer2MeanMinutes", "Ø Minuten in Layer " + (2 + offset), "", .01f, 120f);
+            Float(data, "tribalSongLayer3MeanMinutes", "Ø Minuten in Layer " + (3 + offset), "", .01f, 240f);
         }, false);
         Section("Geisterflüstern", sceneComponents.OfType<SecondLayerAmbience>().FirstOrDefault(), data =>
         {
@@ -582,7 +591,7 @@ public class GameplaySettingsWindow : EditorWindow
                 catch (Exception ex) { notification = "Generierung fehlgeschlagen: " + ex.Message; Debug.LogException(ex); }
                 GUIUtility.ExitGUI();
             }
-        Section("Kartengröße und Seed", map, data =>
+        CollapsibleSection("map-size", "Kartengröße und Seed", map, data =>
         {
             Integer(data, "mapWidth", "Breite (Zellen)", "Die Karte wird horizontal um X = 0 zentriert.", 1, 10000);
             Integer(data, "mapHeight", "Tiefe (Zellen)", "Die Karte wächst von Y = 0 nach unten.", 1, 10000);
@@ -591,28 +600,51 @@ public class GameplaySettingsWindow : EditorWindow
             using (new EditorGUI.DisabledScope(randomSeed.boolValue))
                 Integer(data, "seed", "Seed", "", -10000000, 10000000);
         });
-        Section("Weltgrenzen", map ? map.GetComponent<MapWorldBorders>() : null, data =>
+        CollapsibleSection("map-borders", "Weltgrenzen", map ? map.GetComponent<MapWorldBorders>() : null, data =>
         {
             Integer(data, "sidePaddingCells", "Seitenabstand (Kacheln)", "Abstand zwischen Kartenrand und unsichtbarer Seitenwand.", 0, 10000);
             Float(data, "topBorderY", "Obere Grenze (Welt-Y)", "Unsichtbare obere Wand und Kameragrenze.", -10000f);
         }, false);
-        Section("Oberfläche", map, data =>
+        CollapsibleSection("map-surface", "Oberfläche", map, data =>
         {
-            Integer(data, "transitionThickness", "Übergangsdicke (Kacheln)", "", 1, 100);
             EditorGUILayout.Slider(data.FindProperty("grassYOffset"), -.5f, .5f,
                 new GUIContent("Gras Y-Versatz (Welteinheiten)"));
         }, false);
-        Section("Untergrund-Hintergrund", UnityEngine.Object.FindFirstObjectByType<FixedUndergroundBackground>(), data =>
+        CollapsibleSection("map-layers", "Layer", map, data =>
+        {
+            var layers = data.FindProperty("layers");
+            for (int i = 0; i < layers.arraySize; i++)
+            {
+                var layer = layers.GetArrayElementAtIndex(i);
+                string label = layer.FindPropertyRelative("name").stringValue;
+                if (!Foldout("map-layer-" + i, string.IsNullOrWhiteSpace(label) ? "Layer " + (i + 1) : label)) continue;
+                EditorGUILayout.PropertyField(layer.FindPropertyRelative("name"), new GUIContent("Name"));
+                using (new EditorGUI.DisabledScope(i == 0))
+                    EditorGUILayout.PropertyField(layer.FindPropertyRelative("startDepth"), new GUIContent("Starttiefe (Blöcke)"));
+                if (i > 0)
+                    EditorGUILayout.PropertyField(layer.FindPropertyRelative("transitionWidth"), new GUIContent("Übergang (Blöcke)"));
+                EditorGUILayout.PropertyField(layer.FindPropertyRelative("backgroundSprite"), new GUIContent("Hintergrundsprite"));
+                var stoneProperty = layer.FindPropertyRelative("stone");
+                EditorGUILayout.PropertyField(stoneProperty, new GUIContent("Gesteinsart"));
+                var stone = stoneProperty.objectReferenceValue as Block;
+                var hardness = layer.FindPropertyRelative("stoneHardness");
+                EditorGUI.BeginChangeCheck();
+                float value = EditorGUILayout.FloatField("Gesteinshärte",
+                    hardness.floatValue > 0f ? hardness.floatValue : stone ? stone.hardness : 1f);
+                if (EditorGUI.EndChangeCheck() && Finite(value)) hardness.floatValue = Mathf.Max(.01f, value);
+            }
+        }, false);
+        CollapsibleSection("map-background", "Untergrund-Hintergrund", UnityEngine.Object.FindFirstObjectByType<FixedUndergroundBackground>(), data =>
         {
             EditorGUILayout.PropertyField(data.FindProperty("yOffset"),new GUIContent("Y-Versatz (Welteinheiten)"));
         }, false);
-        Section("Blockränder", map ? map.GetComponent<UniformStoneAppearance>() : null, data =>
+        CollapsibleSection("map-edges", "Blockränder", map ? map.GetComponent<UniformStoneAppearance>() : null, data =>
         {
             EditorGUILayout.Slider(data.FindProperty("edgeDepth"),0f,2f,new GUIContent("Ausfransungstiefe (×)"));
             EditorGUILayout.Slider(data.FindProperty("edgeIrregularity"),0f,2f,new GUIContent("Unregelmäßigkeit (×)"));
             EditorGUILayout.Slider(data.FindProperty("edgeRounding"),0f,2f,new GUIContent("Eckenrundung (×)"));
         }, false);
-        Section("Wandkrümel", map ? map.GetComponent<UniformStoneAppearance>() : null, data =>
+        CollapsibleSection("map-rubble", "Wandkrümel", map ? map.GetComponent<UniformStoneAppearance>() : null, data =>
         {
             EditorGUILayout.Slider(data.FindProperty("rubbleAmount"),0f,8f,new GUIContent("Menge pro Blockkante"));
             EditorGUILayout.Slider(data.FindProperty("rubbleMinSize"),.02f,.6f,new GUIContent("Min. Größe (Kacheln)"));
@@ -621,39 +653,14 @@ public class GameplaySettingsWindow : EditorWindow
             if(max.floatValue<min.floatValue)max.floatValue=min.floatValue;
             EditorGUILayout.Slider(data.FindProperty("rubbleProtrusionPercent"),0f,100f,new GUIContent("Überstand (%)"));
         }, false);
-        Section("Erzverteilung", map, data =>
-        {
-            EditorGUILayout.CurveField(data.FindProperty("oreDensityCurve"), Color.cyan,
-                new Rect(0f, 0f, 1f, 1f), new GUIContent("Erzverteilung nach Tiefe"));
-            EditorGUILayout.Slider(data.FindProperty("oreDensityMultiplierPercent"), 0f, 100f,
-                new GUIContent("Multiplikator (%)"));
-            EditorGUILayout.Space(6);
-            EditorGUILayout.LabelField("Oberflächenanstieg", EditorStyles.boldLabel);
-            Integer(data, "surfaceOreRampDepth", "Höhe (Blöcke)", "", 0, 10000);
-            EditorGUILayout.CurveField(data.FindProperty("surfaceOreRampCurve"), new Color(1f, .55f, .2f),
-                new Rect(0f, 0f, 1f, 1f), new GUIContent("Verteilung im Anfangsbereich"));
-            EditorGUILayout.Slider(data.FindProperty("surfaceOreVeinSizePercent"), 1f, 100f,
-                new GUIContent("Adergröße im Anfangsbereich (%)"));
-        }, false);
-        Section("Adern und Layer-Übergänge", map, data =>
-        {
-            EditorGUILayout.Slider(data.FindProperty("oreScale"), .5f, 3f, new GUIContent("Erzgröße (×)"));
-            Integer(data, "minimumOreVeinSize", "Minimale Adergröße (Blöcke)", "", 1, 10000);
-            EditorGUILayout.CurveField(data.FindProperty("oreTransitionCurve"), Color.yellow,
-                new Rect(0f, 0f, 1f, 1f), new GUIContent("Erz-Übergangskurve"));
-            Integer(data, "oreTransitionDepth", "Erz-Übergang (Blöcke)", "", 1, 10000);
-            EditorGUILayout.CurveField(data.FindProperty("oreVeinSizeCurve"), Color.green,
-                new Rect(0f, 0f, 1f, 1f), new GUIContent("Adergröße im Erz-Übergang"));
-        }, false);
         if (!map) return;
-        Section("Layers", map, data =>
-            EditorGUILayout.PropertyField(data.FindProperty("layers"), new GUIContent("Layers"), true), false);
         long cells = (long)map.mapWidth * map.mapHeight;
         EditorGUILayout.LabelField($"{cells:N0} Zellen", EditorStyles.miniLabel);
-        if (!Registry) { Missing("Dem Map-Generator fehlt ein BlockRegistry-Asset."); return; }
+        if (Registry && Foldout("map-catalog", "Blockkatalog")) DrawBlockCatalog();
+    }
 
-        EditorGUILayout.Space(8);
-        EditorGUILayout.LabelField("Blockkatalog", EditorStyles.boldLabel);
+    void DrawBlockCatalog()
+    {
         Source(Registry);
         var registryData = new SerializedObject(Registry);
         registryData.Update();
@@ -671,8 +678,429 @@ public class GameplaySettingsWindow : EditorWindow
             }
         }
         ValidateRegistry();
-        EditorGUILayout.Space(10);
-        DrawBlockGeneration();
+    }
+
+    void DrawOreDistribution()
+    {
+        map = Picker("Map-Generator", map);
+        CollapsibleSection("ore-density", "Globale Verteilung", map, data =>
+        {
+            var curve = data.FindProperty("oreDensityCurve");
+            EditorGUILayout.PropertyField(curve, new GUIContent("Tiefenkurve (×)"));
+            DrawDensityCurvePreview(curve, 0, map.mapHeight);
+            EditorGUILayout.Slider(data.FindProperty("oreDensityMultiplierPercent"), 0f, 100f,
+                new GUIContent("Basis-Erzdichte (%)"));
+        }, false);
+        CollapsibleSection("ore-veins", "Adern", map, data =>
+        {
+            EditorGUILayout.Slider(data.FindProperty("oreScale"), .5f, 3f, new GUIContent("Erzgröße (×)"));
+            Integer(data, "minimumOreVeinSize", "Minimale Adergröße (Blöcke)", "", 1, 10000);
+        }, false);
+        if (!map) return;
+        if (!Registry) { Missing("Dem Map-Generator fehlt ein BlockRegistry-Asset."); return; }
+        CollapsibleSection("ore-configurations", "Erze", map, DrawOreSettings, false);
+    }
+
+    internal static float DensityLayerX(int startDepth, int mapHeight) =>
+        CurveLayerX(startDepth, 0, mapHeight);
+
+    internal static float CurveLayerX(int depth, int startDepth, int endDepth) =>
+        Mathf.Clamp01((float)(depth - startDepth) / Mathf.Max(1, endDepth - startDepth - 1));
+
+    internal static int CurveDepthAtX(float x, int startDepth, int endDepth) =>
+        startDepth + Mathf.RoundToInt(Mathf.Clamp01(x) * Mathf.Max(0, endDepth - startDepth - 1));
+
+    internal static float CurveDepthValueAtX(float x, int startDepth, int endDepth) =>
+        startDepth + Mathf.Clamp01(x) * Mathf.Max(0, endDepth - startDepth - 1);
+
+    internal static int DepthTickStep(float visibleDepth, float plotWidth)
+    {
+        float target = visibleDepth / Mathf.Max(1f, plotWidth / 80f);
+        if (target <= 1f) return 1;
+        float power = Mathf.Pow(10f, Mathf.Floor(Mathf.Log10(target)));
+        float scaled = target / power;
+        float nice = scaled < 1.5f ? 1f : scaled < 3.5f ? 2f : scaled < 7.5f ? 5f : 10f;
+        return Mathf.Max(1, Mathf.RoundToInt(nice * power));
+    }
+
+    internal static int OreAbsenceAtX(float x, int rangeStart, int rangeEnd, MapLayer[] layers,
+        HashSet<int> selectedLayers, AnimationCurve weightCurve, float baseWeight)
+    {
+        if (layers == null || selectedLayers == null) return 0;
+        float depth = CurveDepthValueAtX(x, rangeStart, rangeEnd);
+        int layerIndex = -1;
+        int layerStart = int.MinValue;
+        for (int i = 0; i < layers.Length; i++)
+            if (layers[i] != null && layers[i].startDepth <= depth && layers[i].startDepth > layerStart)
+            {
+                layerIndex = i;
+                layerStart = layers[i].startDepth;
+            }
+        if (layerIndex < 0 || !selectedLayers.Contains(layerIndex)) return 1;
+        float factor = weightCurve == null || weightCurve.length == 0 ? 1f : weightCurve.Evaluate(x);
+        float weight = baseWeight * factor;
+        return !Finite(weight) || weight <= 0f ? 2 : 0;
+    }
+
+    internal static Vector2 ZoomCurveView(Vector2 view, float anchor, float factor, float minimumSpan)
+    {
+        float span = view.y - view.x;
+        float nextSpan = Mathf.Clamp(span * factor, minimumSpan, 1f);
+        float left = Mathf.Clamp(view.x + Mathf.Clamp01(anchor) * (span - nextSpan), 0f, 1f - nextSpan);
+        return new Vector2(left, left + nextSpan);
+    }
+
+    internal static Vector2 PanCurveView(Vector2 view, float movement)
+    {
+        float span = view.y - view.x;
+        float left = Mathf.Clamp(view.x + movement, 0f, 1f - span);
+        return new Vector2(left, left + span);
+    }
+
+    void DrawDensityCurvePreview(SerializedProperty property, int rangeStart, int rangeEnd,
+        HashSet<int> selectedLayers = null, AnimationCurve presenceCurve = null, float baseWeight = 1f)
+    {
+        var curve = property.animationCurveValue;
+        if (curve == null || curve.length == 0) curve = AnimationCurve.Constant(0f, 1f, 1f);
+        Rect outer = GUILayoutUtility.GetRect(10f, 288f, GUILayout.ExpandWidth(true));
+        Rect plot = new Rect(outer.x + 46f, outer.y + 35f, outer.width - 58f, 192f);
+        Rect strip = new Rect(plot.x, plot.yMax + 24f, plot.width, 24f);
+        string viewKey = property.serializedObject.targetObject.GetInstanceID() + ":" + property.propertyPath;
+        if (!curveViews.TryGetValue(viewKey, out Vector2 view)) view = new Vector2(0f, 1f);
+        float minimumSpan = Mathf.Min(1f, 4f / Mathf.Max(1, rangeEnd - rangeStart));
+        float maximum = 2f;
+        foreach (var key in curve.keys) if (Finite(key.value)) maximum = Mathf.Max(maximum, key.value * 1.2f);
+        for (int i = 0; i <= 32; i++)
+        {
+            float value = curve.Evaluate(i / 32f);
+            if (Finite(value)) maximum = Mathf.Max(maximum, value * 1.2f);
+        }
+        maximum = Mathf.Ceil(maximum * 2f) / 2f;
+        int control = GUIUtility.GetControlID(FocusType.Passive, plot);
+        if (GUIUtility.hotControl == control && densityCurveControl == control && draggingDensityKey >= 0)
+            maximum = draggingCurveMaximum;
+        Event evt = Event.current;
+
+        if (GUI.Button(new Rect(outer.xMax - 64f, outer.y, 64f, 20f), "Gesamt", EditorStyles.miniButton))
+        {
+            view = new Vector2(0f, 1f);
+            curveViews[viewKey] = view;
+            Repaint();
+        }
+        if (evt.type == EventType.ScrollWheel && (plot.Contains(evt.mousePosition) || strip.Contains(evt.mousePosition)))
+        {
+            float anchor = Mathf.Clamp01((evt.mousePosition.x - plot.x) / plot.width);
+            view = ZoomCurveView(view, anchor, Mathf.Pow(1.15f, evt.delta.y), minimumSpan);
+            curveViews[viewKey] = view;
+            evt.Use();
+            Repaint();
+        }
+        else if (evt.type == EventType.MouseDown && evt.button == 2 && plot.Contains(evt.mousePosition))
+        {
+            panningCurveControl = control;
+            GUIUtility.hotControl = control;
+            evt.Use();
+        }
+        else if (evt.type == EventType.MouseDrag && GUIUtility.hotControl == control &&
+            panningCurveControl == control)
+        {
+            view = PanCurveView(view, -evt.delta.x / plot.width * (view.y - view.x));
+            curveViews[viewKey] = view;
+            evt.Use();
+            Repaint();
+        }
+
+        if (evt.type == EventType.MouseDown && evt.button == 0 && plot.Contains(evt.mousePosition))
+        {
+            int nearest = -1;
+            float distance = 11f * 11f;
+            for (int i = 0; i < curve.length; i++)
+            {
+                if (curve.keys[i].time < view.x || curve.keys[i].time > view.y) continue;
+                Vector2 point = CurvePoint(plot, maximum, view, curve.keys[i].time, curve.keys[i].value);
+                float candidate = (point - evt.mousePosition).sqrMagnitude;
+                if (candidate >= distance) continue;
+                nearest = i;
+                distance = candidate;
+            }
+            if (nearest < 0 && evt.clickCount >= 2)
+            {
+                float x = Mathf.Lerp(view.x, view.y, Mathf.Clamp01((evt.mousePosition.x - plot.x) / plot.width));
+                float y = Mathf.Max(0f, (plot.yMax - evt.mousePosition.y) / plot.height * maximum);
+                nearest = curve.AddKey(new Keyframe(x, y));
+                if (nearest >= 0)
+                {
+                    AnimationUtility.SetKeyLeftTangentMode(curve, nearest, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyRightTangentMode(curve, nearest, AnimationUtility.TangentMode.Auto);
+                    property.animationCurveValue = curve;
+                }
+            }
+            if (nearest >= 0)
+            {
+                draggingDensityKey = nearest;
+                densityCurveControl = control;
+                draggingCurveMaximum = maximum;
+                selectedCurvePath = viewKey;
+                selectedCurveKey = nearest;
+                GUIUtility.hotControl = control;
+                evt.Use();
+                Repaint();
+            }
+            else if (selectedCurvePath == viewKey)
+            {
+                selectedCurveKey = -1;
+                Repaint();
+            }
+        }
+        else if (evt.type == EventType.MouseDown && evt.button == 1 && plot.Contains(evt.mousePosition) && curve.length > 2)
+        {
+            for (int i = 1; i < curve.length - 1; i++)
+            {
+                if (curve.keys[i].time < view.x || curve.keys[i].time > view.y ||
+                    (CurvePoint(plot, maximum, view, curve.keys[i].time, curve.keys[i].value) - evt.mousePosition).sqrMagnitude > 100f)
+                    continue;
+                curve.RemoveKey(i);
+                property.animationCurveValue = curve;
+                if (selectedCurvePath == viewKey) selectedCurveKey = -1;
+                evt.Use();
+                break;
+            }
+        }
+        else if (evt.type == EventType.MouseDrag && GUIUtility.hotControl == control &&
+            densityCurveControl == control && draggingDensityKey >= 0 && draggingDensityKey < curve.length)
+        {
+            var keys = curve.keys;
+            int index = draggingDensityKey;
+            float x = Mathf.Lerp(view.x, view.y, Mathf.Clamp01((evt.mousePosition.x - plot.x) / plot.width));
+            if (index == 0) x = 0f;
+            else if (index == keys.Length - 1) x = 1f;
+            else x = Mathf.Clamp(x, keys[index - 1].time + .001f, keys[index + 1].time - .001f);
+            float y = Mathf.Max(0f, (plot.yMax - evt.mousePosition.y) / plot.height * maximum);
+            var key = keys[index];
+            key.time = x;
+            key.value = y;
+            draggingDensityKey = curve.MoveKey(index, key);
+            selectedCurveKey = draggingDensityKey;
+            property.animationCurveValue = curve;
+            evt.Use();
+            Repaint();
+        }
+        else if (evt.type == EventType.MouseUp && GUIUtility.hotControl == control)
+        {
+            GUIUtility.hotControl = 0;
+            draggingDensityKey = -1;
+            panningCurveControl = 0;
+            evt.Use();
+        }
+
+        if (evt.type != EventType.Repaint) return;
+        EditorGUI.DrawRect(plot, new Color(.11f, .14f, .17f, 1f));
+        if (selectedLayers != null)
+            DrawOreAbsenceBands(plot, view, rangeStart, rangeEnd, selectedLayers, presenceCurve, baseWeight);
+        for (int i = 0; i <= 4; i++)
+        {
+            float y = Mathf.Lerp(plot.yMax, plot.y, i / 4f);
+            EditorGUI.DrawRect(new Rect(plot.x, y, plot.width, 1f), new Color(.35f, .4f, .45f, .35f));
+            GUI.Label(new Rect(outer.x, y - 8f, 40f, 16f), (maximum * i / 4f).ToString("0.##"), EditorStyles.miniLabel);
+        }
+        float depthSpan = Mathf.Max(0, rangeEnd - rangeStart - 1);
+        float firstDepth = rangeStart + view.x * depthSpan;
+        float lastDepth = rangeStart + view.y * depthSpan;
+        int tickStep = DepthTickStep(lastDepth - firstDepth, plot.width);
+        int firstTick = Mathf.CeilToInt(firstDepth / tickStep) * tickStep;
+        for (int depth = firstTick; depth <= lastDepth + .0001f; depth += tickStep)
+        {
+            float normalized = CurveLayerX(depth, rangeStart, rangeEnd);
+            float x = plot.x + plot.width * (normalized - view.x) / (view.y - view.x);
+            EditorGUI.DrawRect(new Rect(x, plot.y, 1f, plot.height), new Color(.35f, .4f, .45f, .25f));
+            GUI.Label(new Rect(Mathf.Clamp(x - 24f, plot.x, plot.xMax - 48f),
+                plot.yMax + 3f, 48f, 16f), depth.ToString(), EditorStyles.miniLabel);
+        }
+        if (map && map.layers != null)
+        {
+            var ordered = map.layers.Select((layer, index) => (layer, index))
+                .Where(item => item.layer != null && item.layer.startDepth < rangeEnd)
+                .OrderBy(item => item.layer.startDepth).ToArray();
+            Color[] colors = { new Color(.55f, .32f, .27f), new Color(.54f, .49f, .31f),
+                new Color(.31f, .43f, .54f), new Color(.45f, .33f, .53f) };
+            for (int i = 0; i < ordered.Length; i++)
+            {
+                if (ordered[i].layer.startDepth < rangeStart) continue;
+                float start = CurveLayerX(ordered[i].layer.startDepth, rangeStart, rangeEnd);
+                float end = i + 1 < ordered.Length ?
+                    CurveLayerX(ordered[i + 1].layer.startDepth, rangeStart, rangeEnd) : 1f;
+                if (end <= view.x || start >= view.y) continue;
+                float left = strip.x + strip.width * Mathf.Clamp01((start - view.x) / (view.y - view.x));
+                float right = strip.x + strip.width * Mathf.Clamp01((end - view.x) / (view.y - view.x));
+                Color color = selectedLayers == null || selectedLayers.Contains(ordered[i].index) ?
+                    colors[ordered[i].index % colors.Length] : new Color(.23f, .25f, .28f);
+                EditorGUI.DrawRect(new Rect(left, strip.y, Mathf.Max(0f, right - left), strip.height), color);
+                string name = string.IsNullOrWhiteSpace(ordered[i].layer.name) ?
+                    "Layer " + (ordered[i].index + 1) : ordered[i].layer.name;
+                if (right - left > 26f) GUI.Label(new Rect(left + 4f, strip.y + 3f, right - left - 7f, 18f),
+                    right - left > 86f ? name : "L" + (ordered[i].index + 1), EditorStyles.whiteMiniLabel);
+                if (start < view.x || start > view.y) continue;
+                float marker = left;
+                EditorGUI.DrawRect(new Rect(marker, plot.y, 1.5f, plot.height), new Color(1f, .72f, .24f, .75f));
+                float labelX = Mathf.Clamp(marker + 3f, plot.x, plot.xMax - 105f);
+                float previous = i > 0 ? CurveLayerX(ordered[i - 1].layer.startDepth, rangeStart, rangeEnd) : -1f;
+                float labelY = outer.y + (i > 0 && start - previous < .11f * (view.y - view.x) ? 15f : 0f);
+                GUI.Label(new Rect(labelX, labelY, 105f, 16f), name + " · " + ordered[i].layer.startDepth, EditorStyles.miniLabel);
+            }
+        }
+        var points = new Vector3[129];
+        for (int i = 0; i < points.Length; i++)
+        {
+            float x = Mathf.Lerp(view.x, view.y, i / 128f);
+            points[i] = CurvePoint(plot, maximum, view, x, curve.Evaluate(x));
+        }
+        Handles.BeginGUI();
+        for (int i = 0; i < points.Length - 1; i++)
+        {
+            int absence = selectedLayers == null ? 0 : OreAbsenceAtX(
+                Mathf.Lerp(view.x, view.y, (i + .5f) / (points.Length - 1)), rangeStart, rangeEnd,
+                map.layers, selectedLayers, presenceCurve, baseWeight);
+            Handles.color = absence == 1 ? new Color(.55f, .59f, .64f) :
+                absence == 2 ? new Color(.92f, .49f, .34f) : new Color(.18f, .84f, .91f);
+            Handles.DrawAAPolyLine(2.5f, points[i], points[i + 1]);
+        }
+        for (int i = 0; i < curve.length; i++)
+        {
+            var key = curve.keys[i];
+            if (key.time < view.x || key.time > view.y) continue;
+            int absence = selectedLayers == null ? 0 : OreAbsenceAtX(key.time, rangeStart,
+                rangeEnd, map.layers, selectedLayers, presenceCurve, baseWeight);
+            Handles.color = selectedCurvePath == viewKey && i == selectedCurveKey ? Color.white :
+                absence == 1 ? new Color(.7f, .74f, .78f) :
+                absence == 2 ? new Color(1f, .58f, .4f) : new Color(.2f, .93f, 1f);
+            Handles.DrawSolidDisc(CurvePoint(plot, maximum, view, key.time, key.value), Vector3.forward, 4.5f);
+        }
+        Handles.EndGUI();
+        if (selectedCurvePath == viewKey && selectedCurveKey >= 0 && selectedCurveKey < curve.length)
+        {
+            var key = curve.keys[selectedCurveKey];
+            if (key.time >= view.x && key.time <= view.y)
+            {
+                Vector2 point = CurvePoint(plot, maximum, view, key.time, key.value);
+                const float width = 170f;
+                float left = point.x + 10f;
+                if (left + width > plot.xMax) left = point.x - width - 10f;
+                Rect badge = new Rect(Mathf.Clamp(left, plot.x, plot.xMax - width),
+                    Mathf.Clamp(point.y - 28f, plot.y, plot.yMax - 23f), width, 22f);
+                EditorGUI.DrawRect(badge, new Color(.08f, .11f, .14f, .96f));
+                GUI.Label(new Rect(badge.x + 7f, badge.y + 2f, width - 12f, 18f),
+                    "X/Tiefe " + CurveDepthValueAtX(key.time, rangeStart, rangeEnd).ToString("0.##") +
+                    "   Y " + key.value.ToString("0.###"), EditorStyles.whiteMiniLabel);
+            }
+        }
+    }
+
+    static Vector2 CurvePoint(Rect plot, float maximum, Vector2 view, float x, float y) => new Vector2(
+        plot.x + plot.width * Mathf.Clamp01(Finite(x) ? (x - view.x) / (view.y - view.x) : 0f),
+        plot.yMax - plot.height * Mathf.Clamp01(Finite(y) ? y / maximum : 0f));
+
+    void DrawOreAbsenceBands(Rect plot, Vector2 view, int rangeStart, int rangeEnd,
+        HashSet<int> selectedLayers, AnimationCurve weightCurve, float baseWeight)
+    {
+        int columns = Mathf.Max(1, Mathf.CeilToInt(plot.width / 2f));
+        int previous = 0, runStart = 0;
+        for (int column = 0; column <= columns; column++)
+        {
+            int kind = column == columns ? 0 : OreAbsenceAtX(
+                Mathf.Lerp(view.x, view.y, (column + .5f) / columns), rangeStart, rangeEnd,
+                map.layers, selectedLayers, weightCurve, baseWeight);
+            if (kind == previous) continue;
+            if (previous != 0)
+            {
+                float left = plot.x + plot.width * runStart / columns;
+                float width = plot.width * (column - runStart) / columns;
+                EditorGUI.DrawRect(new Rect(left, plot.y, width, plot.height), previous == 1 ?
+                    new Color(.32f, .34f, .38f, .58f) : new Color(.48f, .23f, .16f, .52f));
+                if (width > 90f)
+                    GUI.Label(new Rect(left + 6f, plot.y + 5f, width - 12f, 18f),
+                        previous == 1 ? "Nicht in Layer" : "Gewicht 0", EditorStyles.whiteMiniLabel);
+            }
+            previous = kind;
+            runStart = column;
+        }
+    }
+
+    void DrawOreSettings(SerializedObject data)
+    {
+        var settings = data.FindProperty("oreSettings");
+        var ores = Registry.blocks == null ? Array.Empty<Block>() : Registry.blocks
+            .Where(block => block && block.HasOreOverlays)
+            .OrderBy(block => BlockPickerOrder(block)).ThenBy(block => block.displayName).ToArray();
+        foreach (var ore in ores)
+        {
+            int index = -1;
+            for (int i = 0; i < settings.arraySize; i++)
+                if (settings.GetArrayElementAtIndex(i).FindPropertyRelative("ore").intValue == (int)ore.id)
+                { index = i; break; }
+            if (!Foldout("ore-" + (int)ore.id, ore.displayName)) continue;
+            if (index < 0)
+            {
+                if (!GUILayout.Button("Konfigurieren")) continue;
+                index = settings.arraySize;
+                settings.InsertArrayElementAtIndex(index);
+                var created = settings.GetArrayElementAtIndex(index);
+                created.FindPropertyRelative("ore").intValue = (int)ore.id;
+                created.FindPropertyRelative("layerIndices").arraySize = 0;
+                created.FindPropertyRelative("baseWeight").floatValue = ore.OreWeight;
+                created.FindPropertyRelative("weightCurve").animationCurveValue = AnimationCurve.Constant(0f, 1f, 1f);
+                created.FindPropertyRelative("baseVeinSize").floatValue = ore.veinSizeIndex;
+                created.FindPropertyRelative("veinSizeCurve").animationCurveValue = AnimationCurve.Constant(0f, 1f, 1f);
+                data.FindProperty("useOreSettings").boolValue = true;
+            }
+            var entry = settings.GetArrayElementAtIndex(index);
+            var selectedLayers = entry.FindPropertyRelative("layerIndices");
+            var enabled = new List<int>();
+            for (int i = 0; i < selectedLayers.arraySize; i++) enabled.Add(selectedLayers.GetArrayElementAtIndex(i).intValue);
+            for (int i = 0; i < map.layers.Length; i++)
+            {
+                string name = map.layers[i] == null || string.IsNullOrWhiteSpace(map.layers[i].name) ?
+                    "Layer " + (i + 1) : map.layers[i].name;
+                bool selected = EditorGUILayout.ToggleLeft(name, enabled.Contains(i));
+                if (selected && !enabled.Contains(i)) enabled.Add(i);
+                else if (!selected) enabled.Remove(i);
+            }
+            enabled.Sort();
+            selectedLayers.arraySize = enabled.Count;
+            for (int i = 0; i < enabled.Count; i++) selectedLayers.GetArrayElementAtIndex(i).intValue = enabled[i];
+            if (enabled.Count == 0) EditorGUILayout.LabelField("In keinem Layer", EditorStyles.miniLabel);
+            var weight = entry.FindPropertyRelative("baseWeight");
+            EditorGUI.BeginChangeCheck();
+            float nextWeight = EditorGUILayout.FloatField("Basisgewicht", weight.floatValue);
+            if (EditorGUI.EndChangeCheck() && Finite(nextWeight)) weight.floatValue = Mathf.Max(0f, nextWeight);
+            var weightCurve = entry.FindPropertyRelative("weightCurve");
+            EditorGUILayout.PropertyField(weightCurve, new GUIContent("Gewichtungskurve"));
+            if (enabled.Count > 0)
+            {
+                int first = enabled.Min(layer => map.layers[layer].startDepth);
+                int last = enabled.Max(layer => map.layers[layer].startDepth);
+                int lastIndex = Array.FindIndex(map.layers, layer => layer != null && layer.startDepth == last);
+                int end = lastIndex + 1 < map.layers.Length ?
+                    Mathf.Min(map.layers[lastIndex + 1].startDepth, map.mapHeight) : map.mapHeight;
+                DrawDensityCurvePreview(weightCurve, first, end, new HashSet<int>(enabled),
+                    weightCurve.animationCurveValue, weight.floatValue);
+            }
+            var size = entry.FindPropertyRelative("baseVeinSize");
+            EditorGUI.BeginChangeCheck();
+            float nextSize = EditorGUILayout.FloatField("Basisadergröße (Index)", size.floatValue);
+            if (EditorGUI.EndChangeCheck() && Finite(nextSize)) size.floatValue = Mathf.Max(1f, nextSize);
+            var sizeCurve = entry.FindPropertyRelative("veinSizeCurve");
+            EditorGUILayout.PropertyField(sizeCurve, new GUIContent("Adergrößenkurve"));
+            if (enabled.Count > 0)
+            {
+                int first = enabled.Min(layer => map.layers[layer].startDepth);
+                int last = enabled.Max(layer => map.layers[layer].startDepth);
+                int lastIndex = Array.FindIndex(map.layers, layer => layer != null && layer.startDepth == last);
+                int end = lastIndex + 1 < map.layers.Length ?
+                    Mathf.Min(map.layers[lastIndex + 1].startDepth, map.mapHeight) : map.mapHeight;
+                DrawDensityCurvePreview(sizeCurve, first, end, new HashSet<int>(enabled),
+                    weightCurve.animationCurveValue, weight.floatValue);
+            }
+        }
     }
 
     Block BlockPicker()
@@ -771,18 +1199,6 @@ public class GameplaySettingsWindow : EditorWindow
         }
     }
 
-    void DrawBlockGeneration()
-    {
-        var block = BlockPicker();
-        Section("Erzverteilung", block, data =>
-        {
-            EditorGUILayout.PropertyField(data.FindProperty("spawnWithNoise"), new GUIContent("Vorkommen aktiv"));
-            if (!data.FindProperty("spawnWithNoise").boolValue) return;
-            EditorGUILayout.Slider(data.FindProperty("oreFrequencyPercent"), 0f, 100f, new GUIContent("Erzgewicht"));
-            EditorGUILayout.IntSlider(data.FindProperty("veinSizeIndex"), 1, 100, new GUIContent("Adergröße (Index)"));
-        });
-    }
-
     void DrawBlocks()
     {
         map = Picker("Map-Katalog aus", map);
@@ -820,28 +1236,6 @@ public class GameplaySettingsWindow : EditorWindow
         });
     }
 
-    void DrawDebug()
-    {
-        EditorGUILayout.Space(8);
-        EditorGUILayout.LabelField("Standardwerte und Test-Overrides", EditorStyles.boldLabel);
-        EditorGUILayout.HelpBox("Dieses Fenster bearbeitet die Standardwerte in Assets/Szene. Das F1-Panel schreibt eine separate JSON-Datei, die im Editor und in Development Builds Vorrang hat. Reguläre Builds ignorieren diese Datei.", MessageType.Info);
-        EditorGUILayout.LabelField("Basis-Abbaugeschwindigkeit", BaseStats ? BaseStats.miningSpeed.ToString("g") : "Kein Basiswerte-Asset");
-        EditorGUILayout.LabelField("Gespeicherter JSON-Override", !overrideExists ? "Keiner" : overrideWarning == null ? savedOverride.baseDiggingSpeed.ToString("g") : "Ungültig – Standardwerte werden verwendet");
-        EditorGUILayout.SelectableLabel(GameplaySettings.FilePath, EditorStyles.textField, GUILayout.Height(40));
-        using (new EditorGUILayout.HorizontalScope())
-        {
-            if (GUILayout.Button("Speicherordner öffnen")) EditorUtility.RevealInFinder(Application.persistentDataPath);
-            using (new EditorGUI.DisabledScope(!overrideExists))
-                if (GUILayout.Button("Test-Override zurücksetzen")) ResetOverride();
-        }
-        EditorGUILayout.HelpBox("Zurücksetzen verschiebt die JSON-Datei in eine Sicherung. Ab dem nächsten Spielstart gilt wieder das Basiswerte-Asset. Die Sicherung bleibt im selben Ordner.", MessageType.None);
-        if (GUILayout.Button("Gameplay-Analyse öffnen"))
-            Application.OpenURL(new Uri(Path.GetFullPath("Docs/Gameplay-Einstellungen.md")).AbsoluteUri);
-        showSources = EditorGUILayout.Foldout(showSources, "Verwendete Quellen", true);
-        if (showSources)
-            foreach (var source in new Object[] { BaseStats, movement, energy, station, map, Registry, follow }) if (source) Source(source);
-    }
-
     void ValidateRegistry()
     {
         if (!Registry || Registry.blocks == null) return;
@@ -871,6 +1265,30 @@ public class GameplaySettingsWindow : EditorWindow
     }
 
     static string HierarchyPath(Transform transform) => transform.parent ? HierarchyPath(transform.parent) + "/" + transform.name : transform.name;
+
+    bool Foldout(string key, string title)
+    {
+        bool expanded = expandedMapSections.Contains(key);
+        bool next = EditorGUILayout.Foldout(expanded, title, true, EditorStyles.foldoutHeader);
+        if (next) expandedMapSections.Add(key);
+        else expandedMapSections.Remove(key);
+        return next;
+    }
+
+    void CollapsibleSection(string key, string title, Object target, Action<SerializedObject> draw, bool showSource = true)
+    {
+        if (!target) return;
+        EditorGUILayout.Space(8);
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            if (!Foldout(key, title)) return;
+            if (showSource) Source(target);
+            var data = new SerializedObject(target);
+            data.Update();
+            draw(data);
+            Apply(data);
+        }
+    }
 
     static void Section(string title, Object target, Action<SerializedObject> draw, bool showSource = true)
     {
@@ -956,24 +1374,4 @@ public class GameplaySettingsWindow : EditorWindow
         Repaint();
     }
 
-    void ResetOverride()
-    {
-        try
-        {
-            ArchiveOverride(GameplaySettings.FilePath);
-            notification = "Test-Override zurückgesetzt. Standardwerte gelten ab dem nächsten Spielstart.";
-            ReadOverride();
-        }
-        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
-        {
-            notification = "Zurücksetzen fehlgeschlagen: " + ex.Message;
-        }
-    }
-
-    internal static string ArchiveOverride(string path)
-    {
-        string backup = path + "." + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff") + "." + Guid.NewGuid().ToString("N").Substring(0, 8) + ".bak";
-        File.Move(path, backup);
-        return backup;
-    }
 }

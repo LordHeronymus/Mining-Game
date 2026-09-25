@@ -16,7 +16,7 @@ public static class SetTransitionThickness
             if(!map.registry || !map.Terrain || !map.IsGenerated)continue;
             map.transitionThickness=15;
             var sampler=new MapGenerationSampler(map.registry,map.ActiveSeed,map.GeneratedHeight,map.layers,
-                map.oreDensityCurve,map.oreDensityMultiplierPercent,map.transitionThickness,map.oreTransitionCurve,map.oreTransitionDepth, map.oreVeinSizeCurve, map.surfaceOreRampDepth, map.surfaceOreRampCurve, map.surfaceOreVeinSizePercent);
+                map.oreDensityCurve,map.oreDensityMultiplierPercent,map.transitionThickness);
             var edits=new List<TileChangeData>();
             void UpdateRows(int start,int end)
             {

@@ -110,9 +110,13 @@ public sealed class FirstLayerAmbience : MonoBehaviour
     float GetLowerBoundaryY()
     {
         if (!map) map = FindFirstObjectByType<MapGenerator>();
-        if (!map || map.layers == null || map.layers.Length < 2 || !map.Terrain) return lowerBoundaryY;
-        return -map.layers[1].startDepth * map.Terrain.layoutGrid.cellSize.y;
+        int boundary = NextCaveLayer;
+        if (!map || map.layers == null || map.layers.Length <= boundary || !map.Terrain) return lowerBoundaryY;
+        return -map.layers[boundary].startDepth * map.Terrain.layoutGrid.cellSize.y;
     }
+
+    int NextCaveLayer => map && map.layers != null && map.layers.Length > 0 &&
+        map.layers[0] != null && map.layers[0].stone && map.layers[0].stone.id == BlockType.Dirt ? 2 : 1;
 
     float GetLayerGain()
     {
@@ -121,7 +125,9 @@ public sealed class FirstLayerAmbience : MonoBehaviour
             return transform.position.y > lowerBoundaryY ? 1f : 0f;
 
         int depth = Mathf.Max(0, -map.Terrain.WorldToCell(transform.position).y);
-        int layerTwoDepth = map.layers != null && map.layers.Length > 1 ? map.layers[1].startDepth : int.MaxValue;
+        int boundary = NextCaveLayer;
+        int layerTwoDepth = map.layers != null && map.layers.Length > boundary ?
+            map.layers[boundary].startDepth : int.MaxValue;
         if (depth >= layerTwoDepth) return 0f;
         float fadeIn = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(
             fadeInStartDepth, Mathf.Max(fadeInStartDepth + 1, fadeInEndDepth), depth));

@@ -9,6 +9,7 @@ public sealed class FixedUndergroundBackground : MonoBehaviour
     public float topY=1;
     public float yOffset;
     [Min(.1f)] public float textureHeight=11;
+    [Min(.01f)] public float fadeDepthBlocks=10;
     [Range(0,1)] public float fadeStart=.3333333f;
     [Range(0,1)] public float fadeEnd=.6666667f;
     Mesh mesh;
@@ -38,7 +39,15 @@ public sealed class FixedUndergroundBackground : MonoBehaviour
             if(map&&map.layers!=null)
             {
                 end=map.GeneratedHeight;
-                foreach(var layer in map.layers)if(layer!=null&&layer.startDepth>0)end=Mathf.Min(end,layer.startDepth);
+                int skipped=0;
+                bool surfaceLayer=map.layers.Length>0 && map.layers[0]!=null && map.layers[0].stone &&
+                    map.layers[0].stone.id==BlockType.Dirt;
+                foreach(var layer in map.layers)
+                    if(layer!=null&&layer.startDepth>0)
+                    {
+                        if(surfaceLayer && skipped++==0)continue;
+                        end=Mathf.Min(end,layer.startDepth);
+                    }
             }
             float height=end*(map&&map.Terrain?map.Terrain.layoutGrid.cellSize.y:1.1f);
             return new Vector2(height*fadeStart,height*Mathf.Max(fadeStart+.001f,fadeEnd));
@@ -48,7 +57,8 @@ public sealed class FixedUndergroundBackground : MonoBehaviour
     public void Refresh(Camera view=null)
     {
         var camera=view?view:Camera.main;
-        if(!material||!camera||!camera.orthographic){if(visual)visual.SetActive(false);return;}
+        if(!material||!camera||!camera.orthographic||!map||map.layers==null||map.layers.Length==0)
+        {if(visual)visual.SetActive(false);return;}
         if(!visual)
         {
             visual=new GameObject("Fixed underground (generated)",typeof(MeshFilter),typeof(MeshRenderer));
@@ -73,7 +83,22 @@ public sealed class FixedUndergroundBackground : MonoBehaviour
         properties??=new MaterialPropertyBlock();
         properties.SetFloat("_TopY",topY+yOffset);
         properties.SetVector("_RepeatSize",new Vector4(textureHeight*1.5f,textureHeight,0,0));
-        var fade=FadeDepths;properties.SetVector("_FadeDepth",new Vector4(fade.x,fade.y,0,0));
+        float cellHeight=map.Terrain?map.Terrain.transform.TransformVector(
+            Vector3.up*map.Terrain.layoutGrid.cellSize.y).magnitude:1.1f;
+        float surfaceY=map.Terrain?map.Terrain.CellToWorld(new Vector3Int(0,1,0)).y:topY;
+        properties.SetFloat("_SurfaceY",surfaceY);
+        properties.SetFloat("_LayerFadeWorld",Mathf.Max(.01f,fadeDepthBlocks)*cellHeight);
+        var starts=new Vector4(1e9f,1e9f,1e9f,1e9f);
+        for(int i=0;i<Mathf.Min(4,map.layers.Length);i++)
+        {
+            var layer=map.layers[i];
+            if(layer==null||!layer.backgroundSprite)continue;
+            properties.SetTexture("_Layer"+i+"Tex",layer.backgroundSprite.texture);
+            if(i==1)starts.x=layer.startDepth*cellHeight;
+            if(i==2)starts.y=layer.startDepth*cellHeight;
+            if(i==3)starts.z=layer.startDepth*cellHeight;
+        }
+        properties.SetVector("_LayerStarts",starts);
         meshRenderer.SetPropertyBlock(properties);
     }
     void OnDisable()

@@ -34,8 +34,6 @@ public static class EditorMapGenerationChecks
             map.grassYOffset=.12f;
             map.oreDensityCurve=AnimationCurve.Constant(0,1,1);
             map.oreDensityMultiplierPercent=100;
-            map.oreTransitionCurve=AnimationCurve.Constant(0,1,1);
-            map.oreTransitionDepth=1;
             var stone=source.registry.GetById(BlockType.Stone);
             var deep=source.registry.GetById(BlockType.StoneLayer2);
             map.layers=new[]{new MapLayer{name="First",startDepth=0,stone=stone,ores=new[]{BlockType.CopperOre}},

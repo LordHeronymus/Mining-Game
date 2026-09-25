@@ -26,7 +26,7 @@ public static class TransitionThicknessChecks
    foreach(int width in new[]{5,15,30})
    {
     map.transitionThickness=width;map.GenerateMap();
-    var sampler=new MapGenerationSampler(registry,map.seed,map.mapHeight,map.layers,map.oreDensityCurve,map.oreDensityMultiplierPercent,width,map.oreTransitionCurve,map.oreTransitionDepth, map.oreVeinSizeCurve, map.surfaceOreRampDepth, map.surfaceOreRampCurve, map.surfaceOreVeinSizePercent);
+    var sampler=new MapGenerationSampler(registry,map.seed,map.mapHeight,map.layers,map.oreDensityCurve,map.oreDensityMultiplierPercent,width);
     Check(sampler.DirtEndDepth==20+width,"Dirt width ignored");
     int dirt=0,upper=0;
     for(int y=0;y<map.mapHeight;y++)for(int x=0;x<map.mapWidth;x++)

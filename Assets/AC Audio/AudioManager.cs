@@ -2,7 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public enum AmbienceType { Surface, Rain, Thunderstorm, Underground, Cave, Birds, Frogs }
-public enum AudioVolumeSetting { Ambience, Surface, Rain, Thunderstorm, Underground, Cave, DigSounds }
+public enum AudioVolumeSetting { Ambience, Surface, Rain, Thunderstorm, Underground, Cave, DigSounds, DingLight }
+public enum AudioTimeOffsetSetting { DingLight }
 
 public enum SoundType
 {
@@ -52,6 +53,8 @@ public class AudioManager : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float undergroundVolume = 1f;
     [SerializeField, Range(0f, 1f)] float caveVolume = 1f;
     [SerializeField, Range(0f, 1f)] float digSoundVolume = 1f;
+    [SerializeField, Range(0f, 1f)] float dingLightVolume = 1f;
+    [SerializeField, Range(-10f, 10f)] float dingLightOffsetSeconds;
 
     [SerializeField, Range(-1f, 1f)] float grassLandingOffset = -.08f;
 
@@ -81,6 +84,7 @@ public class AudioManager : MonoBehaviour
         AudioVolumeSetting.Underground => undergroundVolume,
         AudioVolumeSetting.Cave => caveVolume,
         AudioVolumeSetting.DigSounds => digSoundVolume,
+        AudioVolumeSetting.DingLight => dingLightVolume,
         _ => 1f
     };
 
@@ -96,17 +100,33 @@ public class AudioManager : MonoBehaviour
             case AudioVolumeSetting.Underground: undergroundVolume = value; break;
             case AudioVolumeSetting.Cave: caveVolume = value; break;
             case AudioVolumeSetting.DigSounds: digSoundVolume = value; break;
+            case AudioVolumeSetting.DingLight: dingLightVolume = value; break;
+        }
+    }
+
+    public float GetTimeOffset(AudioTimeOffsetSetting setting) => setting switch
+    {
+        AudioTimeOffsetSetting.DingLight => dingLightOffsetSeconds,
+        _ => 0f
+    };
+
+    public void SetTimeOffset(AudioTimeOffsetSetting setting, float seconds)
+    {
+        seconds = Mathf.Clamp(seconds, -10f, 10f);
+        switch (setting)
+        {
+            case AudioTimeOffsetSetting.DingLight: dingLightOffsetSeconds = seconds; break;
         }
     }
 
     [HideInInspector] public static AudioManager Instance;
 
     List<AudioSource> pool = new();
+    readonly List<(AudioSource source, AudioClip clip)> activeCraftingSounds = new();
     readonly Dictionary<AudioSource, (float volume, AmbienceType type)> ambienceSources = new();
     Dictionary<SoundType, Sound> soundLookup = new Dictionary<SoundType, Sound>();
     AudioClip[] frogCroaks;
     AudioClip grassLanding;
-    AudioSource craftingSoundSource;
     readonly System.Random ambienceRandom = new System.Random();
 
     public AudioClip GetRandomFrogCroak()
@@ -155,15 +175,73 @@ public class AudioManager : MonoBehaviour
         foreach (var sr in pool) if (!sr.isPlaying) return sr;
         if (pool.Count < maxPoolSize) { ExtendPool(); return pool[^1]; }
 
-        AudioSource oldest = pool[0]; // terminiert älteste
-        float t = oldest.time;
-        foreach (var sr in pool) if (sr.time > t) { oldest = sr; t = sr.time; }
+        AudioSource oldest = null;
+        float t = float.MinValue;
+        foreach (var sr in pool)
+        {
+            bool crafting = false;
+            foreach (var active in activeCraftingSounds)
+                if (active.source == sr && sr.isPlaying && sr.clip == active.clip) { crafting = true; break; }
+            if (!crafting && sr.time > t) { oldest = sr; t = sr.time; }
+        }
+        if (!oldest) oldest = pool[0];
         oldest.Stop(); return oldest;
+    }
+
+    bool CanPlayCraftingSound()
+    {
+        for (int i = activeCraftingSounds.Count - 1; i >= 0; i--)
+        {
+            var active = activeCraftingSounds[i];
+            if (!active.source || !active.source.isPlaying || active.source.clip != active.clip)
+                activeCraftingSounds.RemoveAt(i);
+        }
+
+        if (activeCraftingSounds.Count >= 2) return false;
+        if (activeCraftingSounds.Count == 0) return true;
+
+        var current = activeCraftingSounds[activeCraftingSounds.Count - 1].source;
+        return current.clip && current.clip.length > 0f && current.time >= current.clip.length * .6f;
+    }
+
+    public bool HasSound(SoundType type)
+    {
+        if (!soundLookup.TryGetValue(type, out var sound)) return false;
+        if (sound.variants != null && sound.variants.Length > 0)
+        {
+            foreach (var variant in sound.variants) if (variant) return true;
+            return false;
+        }
+        return sound.clip;
+    }
+
+    public AudioSource TryPlayCraftingSound(bool dispersion = false)
+    {
+        if (!CanPlayCraftingSound() || !soundLookup.TryGetValue(SoundType.ItemInBag, out var sound)) return null;
+        var clip = sound.variants != null && sound.variants.Length > 0
+            ? sound.variants[ambienceRandom.Next(sound.variants.Length)] : sound.clip;
+        if (!clip) return null;
+        var source = GetFreeSource();
+        if (!source) return null;
+        ambienceSources.Remove(source);
+        source.pitch = dispersion
+            ? sound.pitch + Random.Range(-dispersionAmount, dispersionAmount)
+            : sound.pitch;
+        source.clip = clip;
+        source.volume = sound.volume;
+        source.panStereo = 0f;
+        source.Play();
+        activeCraftingSounds.Add((source, clip));
+        return source;
     }
 
     public void Play(SoundType type, bool dispersion = false)
     {
-        if (type == SoundType.ItemInBag && craftingSoundSource && craftingSoundSource.isPlaying) return;
+        if (type == SoundType.ItemInBag)
+        {
+            TryPlayCraftingSound(dispersion);
+            return;
+        }
         if (soundLookup.TryGetValue(type, out Sound s))
         {
             var clip = s.variants != null && s.variants.Length > 0
@@ -180,19 +258,40 @@ public class AudioManager : MonoBehaviour
             sr.volume = s.volume * (IsDigSound(type) ? digSoundVolume : 1f);
             sr.panStereo = 0f;
             sr.Play();
-            if (type == SoundType.ItemInBag) craftingSoundSource = sr;
             return;
         }
         else Debug.LogWarning($"Sound '{type}' not found in AudioManager!");
     }
 
-    public void PlayClip(AudioClip clip, float volume, float pan, float pitch = 1f, bool ambience = false, AmbienceType ambienceType = AmbienceType.Surface)
+    public void PlayClipWithOffset(AudioClip clip, float volume, float pan, float timeOffsetSeconds)
+    {
+        if (!clip || volume <= 0f) return;
+        if (timeOffsetSeconds > 0f)
+            StartCoroutine(PlayClipAfterDelay(clip, volume, pan, timeOffsetSeconds));
+        else
+            PlayClip(clip, volume, pan, startTimeSeconds: -timeOffsetSeconds);
+    }
+
+    System.Collections.IEnumerator PlayClipAfterDelay(AudioClip clip, float volume, float pan, float delay)
+    {
+        yield return new WaitForSecondsRealtime(delay);
+        PlayClip(clip, volume, pan);
+    }
+
+    public void PlayClip(AudioClip clip, float volume, float pan, float pitch = 1f, bool ambience = false,
+        AmbienceType ambienceType = AmbienceType.Surface, float startTimeSeconds = 0f)
     {
         if (!clip || volume <= 0f) return;
         var source = GetFreeSource();
         if (!source) return;
         source.clip = clip;
         ambienceSources.Remove(source);
+        if (startTimeSeconds > 0f)
+        {
+            int startSample = Mathf.RoundToInt(startTimeSeconds * clip.frequency);
+            if (startSample >= clip.samples) return;
+            source.timeSamples = Mathf.Clamp(startSample, 0, clip.samples - 1);
+        }
         if (ambience) ambienceSources[source] = (Mathf.Clamp01(volume), ambienceType);
         source.volume = Mathf.Clamp01(volume) * (ambience ? GetAmbienceVolume(ambienceType) : 1f);
         source.panStereo = Mathf.Clamp(pan, -1f, 1f);

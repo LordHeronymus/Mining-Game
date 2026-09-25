@@ -118,14 +118,19 @@ public sealed class SecondLayerAmbience : MonoBehaviour
         if (!map || !map.Terrain || map.layers == null || map.layers.Length < 2) return 0f;
 
         int depth = Mathf.Max(0, -map.Terrain.WorldToCell(transform.position).y);
-        int start = map.layers[1].startDepth;
-        int end = map.layers.Length > 2 ? map.layers[2].startDepth : int.MaxValue;
+        int firstCave = FirstCaveLayer;
+        if (map.layers.Length <= firstCave) return 0f;
+        int start = map.layers[firstCave].startDepth;
+        int end = map.layers.Length > firstCave + 1 ? map.layers[firstCave + 1].startDepth : int.MaxValue;
         float fadeIn = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(
             Mathf.Max(0, start - transitionDepth), start, depth));
         float fadeOut = end == int.MaxValue ? 1f : Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(
             end - transitionDepth, end, depth));
         return fadeIn * fadeOut;
     }
+
+    int FirstCaveLayer => map && map.layers != null && map.layers.Length > 0 &&
+        map.layers[0] != null && map.layers[0].stone && map.layers[0].stone.id == BlockType.Dirt ? 2 : 1;
 
     int GetCurrentLayerIndex()
     {
@@ -145,7 +150,8 @@ public sealed class SecondLayerAmbience : MonoBehaviour
     void UpdateTribalSong()
     {
         int layer = GetCurrentLayerIndex();
-        if (!tribalSongClip || layer < 1 || layer >= 3)
+        int firstCave = FirstCaveLayer;
+        if (!tribalSongClip || layer < firstCave || layer >= firstCave + 2)
         {
             tribalSongScheduledLayer = -1;
             tribalSongPlaying = false;
@@ -181,7 +187,7 @@ public sealed class SecondLayerAmbience : MonoBehaviour
 
     double NextTribalSongDelay(int layer)
     {
-        float meanMinutes = layer == 1 ? tribalSongLayer2MeanMinutes : tribalSongLayer3MeanMinutes;
+        float meanMinutes = layer == FirstCaveLayer ? tribalSongLayer2MeanMinutes : tribalSongLayer3MeanMinutes;
         return -System.Math.Log(1d - windRandom.NextDouble()) * meanMinutes * 60d;
     }
 

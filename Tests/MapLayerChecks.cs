@@ -19,11 +19,14 @@ public static class MapLayerChecks
         Check(!Application.isPlaying, "Run in Edit Mode.");
         var sourceMap = UnityEngine.Object.FindFirstObjectByType<MapGenerator>();
         var registry = sourceMap.registry;
-        Check(sourceMap.layers.Length == 3, "Three default layers missing.");
-        Check(sourceMap.layers[0].startDepth == 0 && sourceMap.layers[1].startDepth == 300 &&
-            sourceMap.layers[2].startDepth == 800, "Default layer boundaries incorrect.");
-        Check(sourceMap.layers.Select(layer => layer.stone).Distinct().Count() == 3, "Stone assets are shared.");
-        var layers = sourceMap.layers.Select((layer, i) => new MapLayer {
+        Check(sourceMap.layers.Length == 4, "Four default layers missing.");
+        Check(sourceMap.layers[0].startDepth == 0 &&
+            sourceMap.layers[1].startDepth > 0 &&
+            sourceMap.layers[2].startDepth > sourceMap.layers[1].startDepth &&
+            sourceMap.layers[3].startDepth > sourceMap.layers[2].startDepth,
+            "Layer boundaries are not increasing.");
+        Check(sourceMap.layers.Select(layer => layer.stone).Distinct().Count() == 4, "Stone assets are shared.");
+        var layers = sourceMap.layers.Skip(1).Select((layer, i) => new MapLayer {
             name = layer.name, startDepth = i * 64, stone = layer.stone, ores = (BlockType[])layer.ores.Clone()
         }).ToArray();
         Check(layers.All(layer => layer.ores != null && layer.ores.All(id =>
@@ -48,12 +51,10 @@ public static class MapLayerChecks
                 {
                     var layer = layers[y / 64];
                     var block = forced.GetBlock(7, y);
-                    if (!layer.ores.Contains(type) || y == 0)
+                    if (!layer.ores.Contains(type))
                         Check(block == forced.GetBaseBlock(7, y), "Ore crossed its layer boundary: " + type + " at " + y);
-                    else if (y >= 10)
-                        Check(block == ore, "Expected ore after surface ramp: " + type + " at " + y);
                     else
-                        Check(block == ore || block == forced.GetBaseBlock(7, y), "Unexpected surface block.");
+                        Check(block == ore, "Expected ore in its allowed layer: " + type + " at " + y);
                 }
             }
             var noOres = new[] { new MapLayer { name = "Empty", stone = layers[0].stone, ores = Array.Empty<BlockType>() } };
@@ -66,17 +67,12 @@ public static class MapLayerChecks
             Check(new MapGenerationSampler(registry, 1, 192, noOres).GetBlock(0, 100) == layers[0].stone,
                 "Missing diamond asset did not fall back to stone.");
             var reversed = layers.Reverse().ToArray();
-            const int surfaceRampDepth = 20;
-            var surfaceRampCurve = new AnimationCurve(new Keyframe(0f, 0f),
-                new Keyframe(.5f, .2f), new Keyframe(1f, 1f));
             var sampler = new MapGenerationSampler(registry, 42319, 192, layers, sourceMap.oreDensityCurve,
                 sourceMap.oreDensityMultiplierPercent, sourceMap.transitionThickness,
-                sourceMap.oreTransitionCurve, sourceMap.oreTransitionDepth, sourceMap.oreVeinSizeCurve,
-                surfaceRampDepth, surfaceRampCurve, sourceMap.surfaceOreVeinSizePercent);
+                null);
             var reordered = new MapGenerationSampler(registry, 42319, 192, reversed, sourceMap.oreDensityCurve,
                 sourceMap.oreDensityMultiplierPercent, sourceMap.transitionThickness,
-                sourceMap.oreTransitionCurve, sourceMap.oreTransitionDepth, sourceMap.oreVeinSizeCurve,
-                surfaceRampDepth, surfaceRampCurve, sourceMap.surfaceOreVeinSizePercent);
+                null);
             Check(sampler.GetStone(63) == layers[0].stone && sampler.GetStone(64) == layers[1].stone &&
                 sampler.GetStone(127) == layers[1].stone && sampler.GetStone(128) == layers[2].stone &&
                 sampler.GetStone(500) == layers[2].stone, "Stone layer boundary incorrect.");
@@ -103,13 +99,7 @@ public static class MapLayerChecks
             map.oreDensityCurve = sourceMap.oreDensityCurve;
             map.oreDensityMultiplierPercent = sourceMap.oreDensityMultiplierPercent;
             map.transitionThickness = sourceMap.transitionThickness;
-            map.oreTransitionCurve = sourceMap.oreTransitionCurve;
-            map.oreTransitionDepth = sourceMap.oreTransitionDepth;
-            map.oreVeinSizeCurve = sourceMap.oreVeinSizeCurve;
             map.minimumOreVeinSize = sourceMap.minimumOreVeinSize;
-            map.surfaceOreRampDepth = surfaceRampDepth;
-            map.surfaceOreRampCurve = surfaceRampCurve;
-            map.surfaceOreVeinSizePercent = sourceMap.surfaceOreVeinSizePercent;
             map.GenerateMap();
             var found = new HashSet<BlockType>[3] {new HashSet<BlockType>(), new HashSet<BlockType>(), new HashSet<BlockType>()};
             Vector3Int oreCell = default; int ores = 0;

@@ -24,22 +24,10 @@ public class MapGenerator : MonoBehaviour
     [SerializeField] TileBase[] grassVariants;
     [SerializeField] bool continuousGrassStrip;
 
-    [InspectorName("Erzverteilung nach Tiefe")]
+    [InspectorName("Tiefenkurve (×)")]
     public AnimationCurve oreDensityCurve = AnimationCurve.Linear(0f, .1f, 1f, 1f);
-    [Range(0f, 100f), InspectorName("Multiplikator (%)")]
+    [Range(0f, 100f), InspectorName("Basis-Erzdichte (%)")]
     public float oreDensityMultiplierPercent = 50f;
-    [Min(0), InspectorName("Oberflächenanstieg (Blöcke)")]
-    public int surfaceOreRampDepth = 10;
-    [InspectorName("Kurve Oberflächenanstieg")]
-    public AnimationCurve surfaceOreRampCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
-    [Range(1f, 100f), InspectorName("Adergröße im Anfangsbereich (%)")]
-    public float surfaceOreVeinSizePercent = 50f;
-    [InspectorName("Erz-Übergangskurve")]
-    public AnimationCurve oreTransitionCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-    [Min(1), InspectorName("Erz-Übergang (Blöcke)")]
-    public int oreTransitionDepth = 100;
-    [InspectorName("Adergröße im Erz-Übergang")]
-    public AnimationCurve oreVeinSizeCurve = AnimationCurve.Linear(0f, .5f, 1f, 1f);
     [Min(1), InspectorName("Minimale Adergröße (Blöcke)")]
     public int minimumOreVeinSize = 4;
     [SerializeField, HideInInspector, FormerlySerializedAs("oreDensityByDepth")]
@@ -47,6 +35,8 @@ public class MapGenerator : MonoBehaviour
 
     [Header("Layers")]
     public MapLayer[] layers;
+    [SerializeField, HideInInspector] public bool useOreSettings;
+    [SerializeField, HideInInspector] public OreDistributionSetting[] oreSettings;
     [Header("Terrain Test")]
     public Block uniformTestStone;
     public StoneTestTile uniformTestTile;
@@ -313,6 +303,26 @@ public class MapGenerator : MonoBehaviour
         return ore && ore.block ? ore.block : registry ? registry.FromTile(terrain) : null;
     }
 
+    public float GetHardnessAt(Vector3Int cell, Block block)
+    {
+        if (!block) return 1f;
+        if (block.HasOreOverlays || layers == null || layers.Length == 0)
+            return Mathf.Max(.01f, block.hardness <= 0f ? 1f : block.hardness);
+        int depth = Mathf.Max(0, -cell.y);
+        int active = 0;
+        for (int i = 1; i < layers.Length; i++)
+            if (layers[i] != null && depth >= layers[i].startDepth) active = i;
+        for (int offset = 0; offset < 3; offset++)
+        {
+            int index = active + (offset == 0 ? 0 : offset == 1 ? 1 : -1);
+            if (index < 0 || index >= layers.Length || layers[index] == null ||
+                layers[index].stone != block) continue;
+            float hardness = layers[index].stoneHardness;
+            return Mathf.Max(.01f, hardness > 0f ? hardness : block.hardness);
+        }
+        return Mathf.Max(.01f, block.hardness <= 0f ? 1f : block.hardness);
+    }
+
     public bool RemoveBlock(Vector3Int cell)
     {
         if (IsSurfaceCellProtected(cell)) return false;
@@ -399,8 +409,8 @@ public class MapGenerator : MonoBehaviour
         if (!registry || mapWidth <= 0 || mapHeight <= 0)
             throw new System.InvalidOperationException("Map generation requires a registry and positive dimensions.");
         var sampler = new MapGenerationSampler(registry, usedSeed, mapHeight, layers, oreDensityCurve,
-            oreDensityMultiplierPercent, transitionThickness, oreTransitionCurve, oreTransitionDepth,
-            oreVeinSizeCurve, surfaceOreRampDepth, surfaceOreRampCurve, surfaceOreVeinSizePercent);
+            oreDensityMultiplierPercent, transitionThickness,
+            useOreSettings ? oreSettings ?? System.Array.Empty<OreDistributionSetting>() : null);
         for (int y = 0; y < mapHeight; y++)
         {
             var stone = sampler.GetStone(y);

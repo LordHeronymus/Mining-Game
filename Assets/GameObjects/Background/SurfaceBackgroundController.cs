@@ -65,6 +65,14 @@ public sealed class SurfaceBackgroundController : MonoBehaviour
     public float fadeEndY = -20f;
 
     public Camera RenderCamera => targetCamera ? targetCamera : Camera.main;
+    public MapLayer[] MapLayers
+    {
+        get
+        {
+            if (!map) map = FindFirstObjectByType<MapGenerator>();
+            return map ? map.layers : null;
+        }
+    }
     public float EffectiveZoom => float.IsNaN(zoom) || float.IsInfinity(zoom) ? 1f : Mathf.Max(0.01f, zoom);
 
     public float GetParallaxInfluence()
@@ -80,6 +88,19 @@ public sealed class SurfaceBackgroundController : MonoBehaviour
 
     public float GetLayer3Blend()
         => GetUndergroundBlend(2, layer3FadeDepth);
+
+    public float GetLayerBlend(int layerIndex)
+    {
+        var configured = MapLayers;
+        if (!TryGetPlayerDepth(out float depth) || configured == null || layerIndex <= 0 ||
+            layerIndex >= configured.Length || configured[layerIndex] == null) return 0f;
+        int end = configured[layerIndex].startDepth;
+        int width = Mathf.Min(Mathf.Max(0, configured[layerIndex].transitionWidth),
+            end - configured[layerIndex - 1].startDepth);
+        if (width == 0) return depth >= end ? 1f : 0f;
+        float blend = Mathf.InverseLerp(end - width, end, depth);
+        return Mathf.SmoothStep(0f, 1f, blend);
+    }
 
     public float GetUndergroundBackgroundBrightness(float depthInBlocks)
     {

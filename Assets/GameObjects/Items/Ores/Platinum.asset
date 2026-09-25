@@ -17,4 +17,4 @@ MonoBehaviour:
   displayName: Platin
   icon: {fileID: -3125485211914961693, guid: ece8438e5ce3a0d4c92d90033d725ad4, type: 3}
   themeColor: {r: 0.7882353, g: 0.7411765, b: 0.92156863, a: 1}
-  worth: 200
+  worth: 100

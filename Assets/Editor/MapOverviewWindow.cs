@@ -160,8 +160,7 @@ public sealed class MapOverviewWindow : EditorWindow
         {
             sampler = live ? null : new MapGenerationSampler(map.registry, seed, height, map.layers,
                 map.oreDensityCurve, map.oreDensityMultiplierPercent, map.transitionThickness,
-                map.oreTransitionCurve, map.oreTransitionDepth, map.oreVeinSizeCurve,
-                map.surfaceOreRampDepth, map.surfaceOreRampCurve, map.surfaceOreVeinSizePercent);
+                map.useOreSettings ? map.oreSettings ?? Array.Empty<OreDistributionSetting>() : null);
             building = true;
         }
         catch (Exception ex)

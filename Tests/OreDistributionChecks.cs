@@ -38,33 +38,24 @@ public static class OreDistributionChecks
                     if (percent == 0 || percent == 100)
                         for (int x = 0; x < 32; x++)
                         {
-                            Check(sample.GetBlock(x, 0) == stone, "Ore spawned at zero surface density.");
+                            Check(sample.GetBlock(x, 0) == (percent == 100 ? a : stone), "Surface density ignored the global curve.");
                             Check(sample.GetBlock(x, 10) == (percent == 100 ? a : stone),
-                                "Surface ramp did not reach the curve start at depth 10.");
+                                "Global curve was not applied at depth 10.");
                         }
                     if (percent == 20) coverage.Add(new { size, actual });
                 }
             }
 
             a.veinSizeIndex = 7;
-            var linearRamp = new MapGenerationSampler(registry, 42319, 80, null, Constant(1f), 100f);
-            var shapedRamp = new AnimationCurve(new Keyframe(0f, 0f),
-                new Keyframe(.5f, .2f), new Keyframe(1f, 1f));
-            var customRamp = new MapGenerationSampler(registry, 42319, 80, null, Constant(1f), 100f,
-                surfaceOreRampDepth: 20, surfaceOreRampCurve: shapedRamp);
-            var noRamp = new MapGenerationSampler(registry, 42319, 80, null, Constant(1f), 100f,
-                surfaceOreRampDepth: 0);
+            var flatDensity = new MapGenerationSampler(registry, 42319, 80, null, Constant(1f), 100f);
             float Share(MapGenerationSampler sample, int row)
             {
                 int ores = 0;
                 for (int x = 0; x < 4096; x++) if (sample.GetBlock(x * 37, row) == a) ores++;
                 return ores / 4096f;
             }
-            Check(Share(linearRamp, 0) == 0f && Mathf.Abs(Share(linearRamp, 5) - .5f) < .05f &&
-                Share(linearRamp, 10) == 1f, "Default surface ramp is not linear over 10 blocks.");
-            Check(Share(customRamp, 0) == 0f && Mathf.Abs(Share(customRamp, 10) - .2f) < .05f &&
-                Share(customRamp, 20) == 1f, "Surface ramp height or curve was ignored.");
-            Check(Share(noRamp, 0) == 1f, "Zero-height surface ramp did not disable the ramp.");
+            Check(Share(flatDensity, 0) == 1f && Share(flatDensity, 5) == 1f,
+                "Global density was reduced near the surface.");
 
             a.veinSizeIndex = 7; b.veinSizeIndex = 20;
             a.oreFrequencyPercent = 1; b.oreFrequencyPercent = 3;
@@ -95,8 +86,7 @@ public static class OreDistributionChecks
                 float expected = 0;
                 for (int y = first; y < last; y++)
                 {
-                    expected += (y < 10 ? curve.Evaluate(0f) * y / 10f :
-                        curve.Evaluate((y - 10f) / (1023f - 10f))) * 50f;
+                    expected += curve.Evaluate(y / 1023f) * 50f;
                     for (int x = 0; x < 1024; x++) if (rising.GetBlock(x * 17, y) != stone) count++;
                 }
                 expected /= last - first;
@@ -125,6 +115,12 @@ public static class OreDistributionChecks
             Check(shapedSample.GetBlock(10, 500) != stone && shapedSample.GetBlock(10, 1000) == stone, "Intermediate curve keys ignored.");
             Check(new MapGenerationSampler(registry, 1, 50, null, Constant(-.2f), 100f).GetBlock(4, 10) == stone, "Negative density not clamped.");
             Check(new MapGenerationSampler(registry, 1, 50, null, Constant(1.5f), 100f).GetBlock(4, 10) != stone, "High density not clamped.");
+            var doubled = new MapGenerationSampler(registry, 42319, 100, null, Constant(2f), 25f);
+            int doubledCount = 0;
+            for (int y = 0; y < 128; y++) for (int x = 0; x < 128; x++)
+                if (doubled.GetBlock(x * 37, y * 41) != stone) doubledCount++;
+            Check(Mathf.Abs(doubledCount / (128f * 128f) - .5f) < .025f,
+                "Global curve above 1 did not multiply the base density.");
 
             var original = new MapGenerationSampler(registry, 991, 1024, null, curve, 50f);
             registry.blocks = new[] { stone, b, a }; Index(registry);
@@ -171,9 +167,6 @@ public static class OreDistributionChecks
             try
             {
                 var map = mapObject.AddComponent<MapGenerator>();
-                Check(map.surfaceOreRampDepth == 10 &&
-                    Mathf.Approximately(map.surfaceOreRampCurve.Evaluate(.5f), .5f),
-                    "Default surface ramp settings are incorrect.");
                 var oldCurve = AnimationCurve.Linear(0f, 5f, 1f, 50f);
                 typeof(MapGenerator).GetField("legacyOreDensityByDepth", BindingFlags.Instance | BindingFlags.NonPublic)
                     .SetValue(map, oldCurve);
@@ -186,7 +179,7 @@ public static class OreDistributionChecks
             }
             finally { UnityEngine.Object.DestroyImmediate(mapObject); }
             return new { passed = true, coverage, depthBands,
-                checks = "density extremes, multiplier, 1:3 weights, curve keys, surface ramp, reorder/scale invariance, seeds, vein size, migration" };
+                checks = "density extremes, multiplier, 1:3 weights, curve keys, surface depth, reorder/scale invariance, seeds, vein size, migration" };
         }
         finally
         {

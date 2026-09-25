@@ -33,12 +33,17 @@ public sealed class ItemFeed : MonoBehaviour
     [SerializeField, Range(0f, 5f)] float sparkBrightness = 1f;
     [SerializeField, Range(0f, 5f)] float lineBrightness = 1f;
     [SerializeField, Range(0f, 1f)] float backdropOpacity = .7f;
+    [SerializeField] AudioClip collectBling;
     readonly List<Entry> entries = new();
     InventoryManager inventory;
     Coroutine binding;
+    Coroutine startupSoundDelay;
+    bool collectionSoundReady;
 
     void OnEnable()
     {
+        collectionSoundReady = false;
+        startupSoundDelay = StartCoroutine(EnableCollectionSoundAfterStartup());
         var canvas = GetComponentInParent<Canvas>();
         if (canvas && transform.parent != canvas.rootCanvas.transform)
         {
@@ -51,9 +56,19 @@ public sealed class ItemFeed : MonoBehaviour
     void OnDisable()
     {
         if (binding != null) StopCoroutine(binding);
+        if (startupSoundDelay != null) StopCoroutine(startupSoundDelay);
         binding = null;
+        startupSoundDelay = null;
+        collectionSoundReady = false;
         if (inventory) inventory.OnItemGained -= Show;
         inventory = null;
+    }
+
+    IEnumerator EnableCollectionSoundAfterStartup()
+    {
+        yield return null;
+        collectionSoundReady = true;
+        startupSoundDelay = null;
     }
 
     IEnumerator BindInventory()
@@ -68,6 +83,10 @@ public sealed class ItemFeed : MonoBehaviour
     {
         if (!item || amount <= 0) return;
         float now = Time.unscaledTime;
+        if (collectionSoundReady && collectBling && AudioManager.Instance)
+            AudioManager.Instance.PlayClipWithOffset(collectBling,
+                .6f * AudioManager.Instance.GetVolume(AudioVolumeSetting.DingLight), 0f,
+                AudioManager.Instance.GetTimeOffset(AudioTimeOffsetSetting.DingLight));
         var entry = entries.Find(row => row.item == item);
         if (entry != null)
         {

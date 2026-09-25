@@ -17,4 +17,4 @@ MonoBehaviour:
   displayName: Kohle
   icon: {fileID: 1168629145450343265, guid: 6483056d029a709438a6024872ea572a, type: 3}
   themeColor: {r: 0.7294118, g: 0.77254903, b: 0.81960785, a: 1}
-  worth: 3
+  worth: 5

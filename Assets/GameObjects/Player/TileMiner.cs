@@ -361,10 +361,11 @@ public class TileMiner : MonoBehaviour
     {
         float time = 1 / stats.MiningSpeed;
 
-        if (blockRegistry != null)
+        if (blockRegistry != null || map)
         {
             Block b = GetBlock(cell);
-            if (b != null) time *= Mathf.Max(0.01f, b.hardness <= 0 ? 1f : b.hardness);
+            if (b != null) time *= map ? map.GetHardnessAt(cell, b) :
+                Mathf.Max(0.01f, b.hardness <= 0 ? 1f : b.hardness);
         }
 
         return time;
