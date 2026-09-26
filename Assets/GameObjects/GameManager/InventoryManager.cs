@@ -7,11 +7,15 @@ public class InventoryManager : MonoBehaviour
     public static InventoryManager Instance { get; private set; }
 
     private readonly Dictionary<ItemSO, int> _counts = new();
+    private readonly HashSet<ItemSO> _ownedThisRun = new();
     private readonly HashSet<Item> _unlockedPowerups = new();
 
     public event Action<ItemSO, int> OnItemChanged;
     public event Action<ItemSO, int> OnItemGained;
     public event Action OnInventoryChanged;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => Instance = null;
 
     void Awake()
     {
@@ -20,10 +24,16 @@ public class InventoryManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
     public void Add(ItemSO item, int amount = 1)
     {
         if (!item || amount <= 0) return;
 
+        _ownedThisRun.Add(item);
         _counts[item] = _counts.TryGetValue(item, out var cur) ? cur + amount : amount;
         if (item.category == ItemCategory.Powerup) _unlockedPowerups.Add(item.item);
 
@@ -49,6 +59,8 @@ public class InventoryManager : MonoBehaviour
     public int GetCount(ItemSO item) =>
         (!item) ? 0 : (_counts.TryGetValue(item, out var cur) ? cur : 0);
 
+    public bool WasOwnedThisRun(ItemSO item) => item && _ownedThisRun.Contains(item);
+
     public bool IsPowerupUnlocked(ItemSO item) => item &&
         item.category == ItemCategory.Powerup && _unlockedPowerups.Contains(item.item);
 
@@ -71,6 +83,7 @@ public class InventoryManager : MonoBehaviour
             changed.Add(cost.Key);
         }
         _counts[output] = (int)finalOutput;
+        _ownedThisRun.Add(output);
         if (output.category == ItemCategory.Powerup) _unlockedPowerups.Add(output.item);
         changed.Add(output);
         foreach (var item in changed) OnItemChanged?.Invoke(item, GetCount(item));
@@ -84,6 +97,7 @@ public class InventoryManager : MonoBehaviour
     public void ResetAll()
     {
         _counts.Clear();
+        _ownedThisRun.Clear();
         _unlockedPowerups.Clear();
         OnInventoryChanged?.Invoke();
     }

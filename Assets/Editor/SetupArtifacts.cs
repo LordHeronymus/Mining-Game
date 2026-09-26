@@ -74,7 +74,8 @@ public static class SetupArtifacts
                 tile = tile,
                 layerIndices = Enumerable.Range(FirstLayer[i], Math.Max(0, map.layers.Length - FirstLayer[i])).ToArray(),
                 chancePercent = Chance[i],
-                cash = Cash[i]
+                cash = Cash[i],
+                artifactPoints = 1
             };
         }
         Undo.RecordObject(map, "Artefakte konfigurieren");

@@ -15,4 +15,10 @@ public static class RecipeUnlocks
         PlayerPrefs.SetInt(MedkitKey, 1);
         PlayerPrefs.Save();
     }
+
+    public static void ResetRun()
+    {
+        PlayerPrefs.DeleteKey(MedkitKey);
+        PlayerPrefs.Save();
+    }
 }

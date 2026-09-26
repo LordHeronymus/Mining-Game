@@ -18,6 +18,10 @@ public sealed class MapLighting : MonoBehaviour
     [Range(0, 1)] public float blockLoss = 0.28f;
     [Range(0.1f, 5f)] public float exponentialStrength = 1f;
     [Range(0, 1)] public float ambientBrightness = 0f;
+    [Range(0f, 1f)] public float ultroniumLightIntensity = 0.18f;
+    [Range(0, 120)] public int ultroniumPulsesPerMinute = 30;
+    public Color ultroniumLightColor = new Color(.42f, .22f, 1f, 1f);
+    public Color ultroniumParticleColor = new Color(.53f, .34f, 1f, 1f);
     [SerializeField] Shader darknessShader;
     [SerializeField] Light2D headlamp;
 
@@ -26,8 +30,16 @@ public sealed class MapLighting : MonoBehaviour
     static readonly int HeadlampInnerRadius = Shader.PropertyToID("_HeadlampInnerRadius");
     static readonly int TorchSourcesId = Shader.PropertyToID("_TorchSources");
     static readonly int TorchCountId = Shader.PropertyToID("_TorchCount");
+    static readonly int UltroniumSourcesId = Shader.PropertyToID("_UltroniumSources");
+    static readonly int UltroniumCountId = Shader.PropertyToID("_UltroniumCount");
     const int MaximumTorchLights = 64;
+    const int MaximumUltroniumLights = 32;
     readonly Vector4[] torchSources = new Vector4[MaximumTorchLights];
+    readonly Vector4[] ultroniumSources = new Vector4[MaximumUltroniumLights];
+    readonly List<Light2D> ultroniumLights = new List<Light2D>();
+    readonly List<Vector3Int> visibleUltronium = new List<Vector3Int>();
+    Vector3Int lastOreCameraCell = new Vector3Int(int.MinValue, int.MinValue, 0);
+    float nextOreRefresh;
 
     MapGenerator map;
     Tilemap tiles;
@@ -98,6 +110,7 @@ public sealed class MapLighting : MonoBehaviour
         if (map) map.GenerationCompleted -= RequestRebuild;
         Tilemap.tilemapTileChanged -= TilesChanged;
         ReleaseResources();
+        ReleaseUltroniumLights();
     }
 
     void OnValidate()
@@ -109,6 +122,8 @@ public sealed class MapLighting : MonoBehaviour
         exponentialStrength = float.IsNaN(exponentialStrength) || float.IsInfinity(exponentialStrength)
             ? 1f : Mathf.Clamp(exponentialStrength, 0.1f, 5f);
         ambientBrightness = Valid(ambientBrightness, 0f, 0f);
+        ultroniumLightIntensity = Valid(ultroniumLightIntensity, .18f, 0f);
+        ultroniumPulsesPerMinute = Mathf.Clamp(ultroniumPulsesPerMinute, 0, 120);
         rebuild = true;
     }
 
@@ -153,6 +168,7 @@ public sealed class MapLighting : MonoBehaviour
     public void NotifyTileChanged(Vector3Int cell)
     {
         if (field != null) changed.Add(cell);
+        nextOreRefresh = 0f;
     }
 
     void TilesChanged(Tilemap source, Tilemap.SyncTile[] changes)
@@ -160,6 +176,7 @@ public sealed class MapLighting : MonoBehaviour
         if (source != tiles || field == null || rebuild || changes == null ||
             !map || !map.IsGenerated || map.IsGenerationStreaming) return;
         foreach (var change in changes) changed.Add(change.position);
+        nextOreRefresh = 0f;
     }
 
     void LateUpdate()
@@ -167,6 +184,7 @@ public sealed class MapLighting : MonoBehaviour
         if (!lightingEnabled || GameplayTestSettings.GlobalLighting)
         {
             if (overlay) overlay.SetActive(false);
+            SetUltroniumLightsActive(false);
             return;
         }
         if (!map || !map.IsGenerated || map.IsGenerationStreaming) return;
@@ -191,6 +209,7 @@ public sealed class MapLighting : MonoBehaviour
     {
         if (!material) return;
         UpdateTorchLights();
+        UpdateUltroniumLights();
         if (!headlamp || !headlamp.isActiveAndEnabled || headlamp.intensity <= 0)
         {
             material.SetVector(HeadlampOriginRange, Vector4.zero);
@@ -204,6 +223,111 @@ public sealed class MapLighting : MonoBehaviour
             new Vector4(origin.x, origin.y, headlamp.pointLightOuterRadius, headlamp.intensity));
         material.SetVector(HeadlampDirectionAngles, new Vector4(direction.x, direction.y, inner, outer));
         material.SetFloat(HeadlampInnerRadius, headlamp.pointLightInnerRadius);
+    }
+
+    void SetUltroniumLightsActive(bool active)
+    {
+        foreach (var light in ultroniumLights)
+            if (light) light.gameObject.SetActive(active);
+        if (!active && material) material.SetInt(UltroniumCountId, 0);
+    }
+
+    void ReleaseUltroniumLights()
+    {
+        foreach (var light in ultroniumLights)
+            if (light)
+            {
+                if (Application.isPlaying) Destroy(light.gameObject);
+                else DestroyImmediate(light.gameObject);
+            }
+        ultroniumLights.Clear();
+        visibleUltronium.Clear();
+    }
+
+    void UpdateUltroniumLights()
+    {
+        if (!material || !map || !map.IsGenerated || !lightingEnabled ||
+            ultroniumLightIntensity <= 0f || !Camera.main)
+        {
+            SetUltroniumLightsActive(false);
+            return;
+        }
+        var camera = Camera.main;
+        Vector3Int cameraCell = tiles.WorldToCell(camera.transform.position);
+        if (cameraCell != lastOreCameraCell || Time.time >= nextOreRefresh)
+        {
+            lastOreCameraCell = cameraCell;
+            nextOreRefresh = Time.time + .2f;
+            visibleUltronium.Clear();
+            float distance = Vector3.Dot(tiles.transform.position - camera.transform.position, camera.transform.forward);
+            Vector3Int min = new Vector3Int(int.MaxValue, int.MaxValue, 0);
+            Vector3Int max = new Vector3Int(int.MinValue, int.MinValue, 0);
+            for (int corner = 0; corner < 4; corner++)
+            {
+                var cell = tiles.WorldToCell(camera.ViewportToWorldPoint(
+                    new Vector3(corner % 2, corner / 2, distance)));
+                min = Vector3Int.Min(min, cell);
+                max = Vector3Int.Max(max, cell);
+            }
+            // A small margin keeps lights steady when their source is just outside the view.
+            for (int y = min.y - 2; y <= max.y + 2; y++)
+                for (int x = min.x - 2; x <= max.x + 2; x++)
+                {
+                    var cell = new Vector3Int(x, y, 0);
+                    var ore = map.GetOreAt(cell);
+                    if (ore && ore.block && ore.block.id == BlockType.UltroniumOre)
+                        visibleUltronium.Add(cell);
+                }
+            visibleUltronium.Sort((a, b) =>
+            {
+                var center = cameraCell;
+                int da = (a.x-center.x)*(a.x-center.x)+(a.y-center.y)*(a.y-center.y);
+                int db = (b.x-center.x)*(b.x-center.x)+(b.y-center.y)*(b.y-center.y);
+                return da.CompareTo(db);
+            });
+        }
+        int count = Mathf.Min(MaximumUltroniumLights, visibleUltronium.Count);
+        float radius = Mathf.Max(1f, tiles.layoutGrid.cellSize.x * tiles.transform.lossyScale.x * 1.8f);
+        for (int i = 0; i < count; i++)
+        {
+            if (i >= ultroniumLights.Count)
+            {
+                var go = new GameObject("Ultronium light (generated)");
+                go.hideFlags = HideFlags.DontSave;
+                go.transform.SetParent(transform, false);
+                var light = go.AddComponent<Light2D>();
+                light.lightType = Light2D.LightType.Point;
+                light.shadowsEnabled = false;
+                ultroniumLights.Add(light);
+            }
+            var current = ultroniumLights[i];
+            var cell = visibleUltronium[i];
+            var position = tiles.GetCellCenterWorld(cell);
+            float intensity = ultroniumLightIntensity * UltroniumPulse(cell, Time.time, ultroniumPulsesPerMinute);
+            current.transform.position = position;
+            current.color = ultroniumLightColor;
+            current.intensity = intensity;
+            current.pointLightInnerRadius = radius * .2f;
+            current.pointLightOuterRadius = radius;
+            current.gameObject.SetActive(true);
+            ultroniumSources[i] = new Vector4(position.x, position.y, radius, intensity);
+        }
+        for (int i = count; i < ultroniumLights.Count; i++)
+            ultroniumLights[i].gameObject.SetActive(false);
+        material.SetVectorArray(UltroniumSourcesId, ultroniumSources);
+        material.SetInt(UltroniumCountId, count);
+    }
+
+    internal static float UltroniumPulse(Vector3Int cell, float time, int pulsesPerMinute)
+    {
+        if (pulsesPerMinute <= 0) return 1f;
+        float cycle = time * pulsesPerMinute / 60f;
+        float seed = cell.x * .6180339f + cell.y * .41421356f;
+        float phase = cycle + seed
+            + .18f * Mathf.Sin(2f * Mathf.PI * (cycle * .19f + seed * 1.7f))
+            + .07f * Mathf.Sin(2f * Mathf.PI * (cycle * .43f + seed * .4f));
+        float crest = .5f + .5f * Mathf.Cos(2f * Mathf.PI * phase);
+        return .55f + .65f * crest * crest;
     }
 
     void UpdateTorchLights()
@@ -234,6 +358,8 @@ public sealed class MapLighting : MonoBehaviour
         properties.SetFloat(HeadlampInnerRadius, material.GetFloat(HeadlampInnerRadius));
         properties.SetVectorArray(TorchSourcesId, torchSources);
         properties.SetInt(TorchCountId, material.GetInt(TorchCountId));
+        properties.SetVectorArray(UltroniumSourcesId, ultroniumSources);
+        properties.SetInt(UltroniumCountId, material.GetInt(UltroniumCountId));
     }
 
     void Initialize()

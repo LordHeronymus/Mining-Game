@@ -9,6 +9,7 @@ Shader "Mining Game/Ore Overlay Lit"
         _EmbeddingStrength("Rock Embedding", Range(0, 1)) = 1
         _ShimmerRadius("Shimmer Radius", Range(0.005, 0.15)) = 0.045
         _UltroniumGlow("Ultronium Glow", Range(0, 3)) = 1.15
+        _UltroniumPulsesPerMinute("Ultronium Pulses Per Minute", Range(0, 120)) = 30
         [HDR] _UltroniumGlowColor("Ultronium Glow Color", Color) = (0.24,0.12,1.2,1)
         _MainTex("Diffuse", 2D) = "white" {}
         _MaskTex("Mask", 2D) = "white" {}
@@ -37,6 +38,7 @@ Shader "Mining Game/Ore Overlay Lit"
             HLSLPROGRAM
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
+            #include "UltroniumPulse.hlsl"
 
             #pragma vertex CombinedShapeLightVertex
             #pragma fragment CombinedShapeLightFragment
@@ -86,6 +88,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 float _ShimmerRadius;
                 float _EmbeddingStrength;
                 float _UltroniumGlow;
+                float _UltroniumPulsesPerMinute;
                 half4 _UltroniumGlowColor;
                 float4 _UniformStone;
                 float4 _TestBounds;
@@ -201,7 +204,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 }
                 half contact = (outer-main.a) * .65h * embedded;
                 contact *= 1-i.ultronium;
-                half pulse = .88h + .12h * sin(_Time.y * 1.7h + i.positionWS.x * 3.1h + i.positionWS.y * 2.3h);
+                half pulse = UltroniumPulse(floor(cell), _Time.y, _UltroniumPulsesPerMinute);
                 half haloAlpha = saturate(shimmer.a * _ShimmerStrength) * i.color.a * (1-i.ultronium);
                 half outerAlpha = max(contact,haloAlpha);
                 half alpha = main.a + outerAlpha * (1-main.a);
@@ -291,6 +294,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 float _ShimmerRadius;
                 float _EmbeddingStrength;
                 float _UltroniumGlow;
+                float _UltroniumPulsesPerMinute;
                 half4 _UltroniumGlowColor;
                 float4 _UniformStone;
                 float4 _TestBounds;
@@ -339,6 +343,7 @@ Shader "Mining Game/Ore Overlay Lit"
             HLSLPROGRAM
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
+            #include "UltroniumPulse.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
             #if defined(DEBUG_DISPLAY)
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Debug/Debugging2D.hlsl"
@@ -366,9 +371,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 float4  color           : COLOR;
                 float2  uv              : TEXCOORD0;
                 half    ultronium       : TEXCOORD1;
-                #if defined(DEBUG_DISPLAY)
                 float3  positionWS  : TEXCOORD2;
-                #endif
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -385,6 +388,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 float _ShimmerRadius;
                 float _EmbeddingStrength;
                 float _UltroniumGlow;
+                float _UltroniumPulsesPerMinute;
                 half4 _UltroniumGlowColor;
                 float4 _UniformStone;
                 float4 _TestBounds;
@@ -400,9 +404,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 SetUpSpriteInstanceProperties();
                 attributes.positionOS = UnityFlipSprite( attributes.positionOS, unity_SpriteProps.xy);
                 o.positionCS = TransformObjectToHClip(attributes.positionOS);
-                #if defined(DEBUG_DISPLAY)
                 o.positionWS = TransformObjectToWorld(attributes.positionOS);
-                #endif
                 o.uv = (attributes.uv - 0.5) / max(_OreScale, 0.01) + 0.5;
                 o.ultronium = step(attributes.color.a, .99h);
                 o.color = attributes.color * _Color * unity_SpriteColor;
@@ -415,8 +417,12 @@ Shader "Mining Game/Ore Overlay Lit"
                 clip(min(min(i.uv.x, i.uv.y), min(1 - i.uv.x, 1 - i.uv.y)));
                 float4 mainTex = i.color * SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
                 mainTex.a = lerp(mainTex.a, smoothstep(.04h, .7h, mainTex.a), i.ultronium);
+                float2 cell = _UniformStone.x > 0
+                    ? floor((i.positionWS.xy - _UniformStone.zw) / _UniformStone.x)
+                    : floor(i.positionWS.xy);
+                float pulse = UltroniumPulse(cell, _Time.y, _UltroniumPulsesPerMinute);
                 mainTex.rgb += _UltroniumGlowColor.rgb * _UltroniumGlow * .32h *
-                    mainTex.a * i.ultronium;
+                    pulse * mainTex.a * i.ultronium;
 
                 #if defined(DEBUG_DISPLAY)
                 SurfaceData2D surfaceData;

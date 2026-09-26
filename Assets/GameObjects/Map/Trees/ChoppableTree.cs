@@ -18,6 +18,9 @@ public sealed class ChoppableTree : MonoBehaviour
     static readonly int LeafMaskTex = Shader.PropertyToID("_LeafMaskTex");
     static readonly int LeafAlpha = Shader.PropertyToID("_LeafAlpha");
     static readonly List<ChoppableTree> activeTrees = new();
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => activeTrees.Clear();
     public static IReadOnlyList<ChoppableTree> ActiveTrees => activeTrees;
     SurfaceTrees owner;
     ItemSO wood;

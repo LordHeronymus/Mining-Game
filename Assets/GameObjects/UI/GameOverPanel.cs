@@ -11,6 +11,9 @@ public sealed class GameOverPanel : MonoBehaviour
 {
     public static bool IsOpen { get; private set; }
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => IsOpen = false;
+
     public Sprite panelSprite;
     public TMP_FontAsset font;
     public Material fontMaterial;
@@ -20,6 +23,7 @@ public sealed class GameOverPanel : MonoBehaviour
     TextMeshProUGUI depthValue;
     TextMeshProUGUI pointsValue;
     TextMeshProUGUI moneyValue;
+    RectTransform moneyCoin;
     Button retryButton;
     StatsManager observedStats;
     Coroutine fade;
@@ -90,7 +94,23 @@ public sealed class GameOverPanel : MonoBehaviour
         var hud = FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include);
         depthValue.text = (hud ? hud.DepthMeters : 0).ToString("N0", German) + " m";
         pointsValue.text = (stats ? stats.Points : 0).ToString("N0", German);
-        moneyValue.text = (stats ? stats.Money : 0).ToString("N0", German);
+        string money = ShopMoneyFormatter.Format(stats ? stats.Money : 0);
+        if (moneyValue.text != money)
+        {
+            moneyValue.text = money;
+            LayoutMoney();
+        }
+    }
+
+    void LayoutMoney()
+    {
+        float textWidth = Mathf.Min(160f, Mathf.Ceil(moneyValue.GetPreferredValues(moneyValue.text, Mathf.Infinity, 62f).x) + 4f);
+        const float coinWidth = 44f;
+        const float gap = 9f;
+        float left = -(coinWidth + gap + textWidth) * .5f;
+        moneyCoin.anchoredPosition = new Vector2(left + coinWidth * .5f, 0f);
+        moneyValue.rectTransform.sizeDelta = new Vector2(textWidth, 62f);
+        moneyValue.rectTransform.anchoredPosition = new Vector2(left + coinWidth + gap + textWidth * .5f, 0f);
     }
 
     IEnumerator FadeIn()
@@ -170,13 +190,25 @@ public sealed class GameOverPanel : MonoBehaviour
         panel = CreateRect("Game Over Panel", root, Vector2.zero, new Vector2(1120f, 635f));
         panel.anchorMin = panel.anchorMax = panel.pivot = new Vector2(.5f, .5f);
         var panelImage = panel.gameObject.AddComponent<Image>();
-        panelImage.sprite = panelSprite;
+        panelImage.sprite = Resources.Load<Sprite>("GameOverPanelNoCoin") ?? panelSprite;
         panelImage.preserveAspect = true;
         panelImage.raycastTarget = false;
 
         depthValue = AddText("Depth Value", panel, new Vector2(-270f, -101f), new Vector2(230f, 62f), 43f, ValueColor);
         pointsValue = AddText("Points Value", panel, new Vector2(0f, -101f), new Vector2(230f, 62f), 43f, ValueColor);
-        moneyValue = AddText("Money Value", panel, new Vector2(298f, -101f), new Vector2(170f, 62f), 43f, ValueColor);
+        var moneyRow = CreateRect("Money Row", panel, new Vector2(275f, -101f), new Vector2(240f, 62f));
+        moneyRow.anchorMin = moneyRow.anchorMax = moneyRow.pivot = new Vector2(.5f, .5f);
+        moneyCoin = CreateRect("Money Coin", moneyRow, Vector2.zero, new Vector2(44f, 44f));
+        moneyCoin.anchorMin = moneyCoin.anchorMax = moneyCoin.pivot = new Vector2(.5f, .5f);
+        var coinSprites = Resources.LoadAll<Sprite>("GameOverCoin");
+        var coinImage = moneyCoin.gameObject.AddComponent<Image>();
+        coinImage.sprite = coinSprites.Length > 0 ? coinSprites[0] : null;
+        coinImage.preserveAspect = true;
+        coinImage.raycastTarget = false;
+        moneyValue = AddText("Money Value", moneyRow, Vector2.zero, new Vector2(150f, 62f), 43f, ValueColor);
+        moneyValue.enableAutoSizing = true;
+        moneyValue.fontSizeMin = 30f;
+        moneyValue.fontSizeMax = 43f;
 
         retryButton = AddButton("Retry", panel, new Vector2(-207f, -211f), new Vector2(384f, 78f), "Nochmal versuchen", Restart);
         AddButton("Main Menu", panel, new Vector2(207f, -211f), new Vector2(360f, 78f), "Zum Hauptmenü", ReturnToMainMenu);

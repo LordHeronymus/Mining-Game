@@ -75,7 +75,15 @@ public sealed class MapOverviewWindow : EditorWindow
         DisposeTexture();
     }
 
-    void OnPlayModeChanged(PlayModeStateChange state) => RequestBuild();
+    void OnPlayModeChanged(PlayModeStateChange state)
+    {
+        if (state == PlayModeStateChange.EnteredPlayMode)
+        {
+            TileMiner.OnBlockMined -= OnBlockMined;
+            TileMiner.OnBlockMined += OnBlockMined;
+        }
+        RequestBuild();
+    }
     void OnProjectChanged() { if (!EditorApplication.isPlaying) RequestBuild(); }
     void OnSceneChanged(Scene previous, Scene next) => RequestBuild();
     void RequestBuild() { pendingBuild = true; Repaint(); }

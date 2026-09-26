@@ -10,6 +10,9 @@ public sealed class PlacedTorch : MonoBehaviour
     const float LightIntensity = .85f;
     static readonly HashSet<PlacedTorch> active = new();
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => active.Clear();
+
     MapGenerator map;
     Vector3Int cell;
     ItemSO item;

@@ -281,6 +281,22 @@ public class GameplaySettingsWindow : EditorWindow
         {
             Integer(data, "maximumPatches", "Menge", "", 0, 500);
             Integer(data, "minimumSpacing", "Mindestabstand (Kacheln)", "", 1, 100);
+            var clusterPercent = data.FindProperty("clusterPercent");
+            EditorGUI.BeginChangeCheck();
+            float clustered = EditorGUILayout.FloatField("In Clustern (%)", clusterPercent.floatValue);
+            if (EditorGUI.EndChangeCheck() && Finite(clustered))
+                clusterPercent.floatValue = Mathf.Clamp(clustered, 0f, 100f);
+            var clusterSize = data.FindProperty("clusterSize");
+            Vector2Int sizes = clusterSize.vector2IntValue;
+            EditorGUI.BeginChangeCheck();
+            int minimumCluster = EditorGUILayout.IntField("Cluster mindestens", sizes.x);
+            int maximumCluster = EditorGUILayout.IntField("Cluster höchstens", sizes.y);
+            if (EditorGUI.EndChangeCheck())
+            {
+                minimumCluster = Mathf.Clamp(minimumCluster, 2, 100);
+                clusterSize.vector2IntValue = new Vector2Int(minimumCluster,
+                    Mathf.Clamp(maximumCluster, minimumCluster, 100));
+            }
             var randomness = data.FindProperty("randomness");
             EditorGUI.BeginChangeCheck();
             float randomPercent = EditorGUILayout.FloatField("Zufälligkeit (%)", randomness.floatValue * 100f);
@@ -410,7 +426,7 @@ public class GameplaySettingsWindow : EditorWindow
 
     void DrawAudio()
     {
-        Section("Ambience", sceneComponents.OfType<AudioManager>().FirstOrDefault(), data =>
+        CollapsibleSection("audio-ambience", "Ambience", sceneComponents.OfType<AudioManager>().FirstOrDefault(), data =>
         {
             VolumeSlider(data, "ambienceVolume", "Gesamtlautstärke (%)");
             VolumeSlider(data, "surfaceVolume", "Oberfläche (%)");
@@ -419,20 +435,20 @@ public class GameplaySettingsWindow : EditorWindow
             VolumeSlider(data, "undergroundVolume", "Untergrund (%)");
             VolumeSlider(data, "caveVolume", "Höhle (%)");
         }, false);
-        Section("Tier-Landungen", sceneComponents.OfType<AudioManager>().FirstOrDefault(), data =>
+        CollapsibleSection("audio-animal-landings", "Tier-Landungen", sceneComponents.OfType<AudioManager>().FirstOrDefault(), data =>
         {
             Float(data, "grassLandingOffset", "Zeitversatz (s)", "", -1f, 1f);
         }, false);
-        Section("Abbausounds", sceneComponents.OfType<AudioManager>().FirstOrDefault(), data =>
+        CollapsibleSection("audio-digging", "Abbausounds", sceneComponents.OfType<AudioManager>().FirstOrDefault(), data =>
         {
             VolumeSlider(data, "digSoundVolume", "Lautstärke (%)");
         }, false);
-        Section("Ding Light", sceneComponents.OfType<AudioManager>().FirstOrDefault(), data =>
+        CollapsibleSection("audio-ding-light", "Ding Light", sceneComponents.OfType<AudioManager>().FirstOrDefault(), data =>
         {
             VolumeSlider(data, "dingLightVolume", "Lautstärke (%)");
             Float(data, "dingLightOffsetSeconds", "Zeitversatz (s)", "", -10f, 10f);
         }, false);
-        Section("Untergrund-Details", sceneComponents.OfType<FirstLayerAmbience>().FirstOrDefault(), data =>
+        CollapsibleSection("audio-underground-details", "Untergrund-Details", sceneComponents.OfType<FirstLayerAmbience>().FirstOrDefault(), data =>
         {
             var layerRates = data.FindProperty("detailsPerMinuteByLayer");
             if (map && map.layers != null && map.layers.Length > 0 && layerRates != null)
@@ -487,25 +503,25 @@ public class GameplaySettingsWindow : EditorWindow
                 }
             }
         }, false);
-        Section("Höhlen-Tribal-Song", sceneComponents.OfType<SecondLayerAmbience>().FirstOrDefault(), data =>
+        CollapsibleSection("audio-cave-tribal", "Höhlen-Tribal-Song", sceneComponents.OfType<SecondLayerAmbience>().FirstOrDefault(), data =>
         {
             int offset = map && map.layers != null && map.layers.Length > 0 && map.layers[0] != null &&
                 map.layers[0].stone && map.layers[0].stone.id == BlockType.Dirt ? 1 : 0;
             Float(data, "tribalSongLayer2MeanMinutes", "Ø Minuten in Layer " + (2 + offset), "", .01f, 120f);
             Float(data, "tribalSongLayer3MeanMinutes", "Ø Minuten in Layer " + (3 + offset), "", .01f, 240f);
         }, false);
-        Section("Geisterflüstern", sceneComponents.OfType<SecondLayerAmbience>().FirstOrDefault(), data =>
+        CollapsibleSection("audio-ghost-whisper", "Geisterflüstern", sceneComponents.OfType<SecondLayerAmbience>().FirstOrDefault(), data =>
         {
             Float(data, "ghostWhisperMeanMinutes", "Ø Minuten", "", .01f, 120f);
         }, false);
-        Section("Vogelgezwitscher", birds, data =>
+        CollapsibleSection("audio-birds", "Vogelgezwitscher", birds, data =>
         {
             VolumeSlider(data, "chirpVolume", "Lautstärke (%)");
             Float(data, "chirpsPerMinute", "Rufe pro Minute", "", 0f, 120f);
             EditorGUILayout.Slider(data.FindProperty("chirpIrregularity"), 0f, 1f,
                 new GUIContent("Unregelmässigkeit"));
         }, false);
-        Section("Froschquaken", sceneComponents.OfType<SurfaceCritters>()
+        CollapsibleSection("audio-frogs", "Froschquaken", sceneComponents.OfType<SurfaceCritters>()
             .FirstOrDefault(group => group.species == SurfaceCritters.Species.Frog), data =>
         {
             VolumeSlider(data, "croakVolume", "Lautstärke (%)");
@@ -515,7 +531,7 @@ public class GameplaySettingsWindow : EditorWindow
         }, false);
 
         var layerMiningAudio = Resources.Load<LayerMiningAudioSettingsAsset>("Audio/LayerMiningAudioSettings");
-        if (layerMiningAudio) Section("Abbauclips pro Layer", layerMiningAudio, DrawLayerMiningAudioSettings);
+        if (layerMiningAudio) CollapsibleSection("audio-layer-mining", "Abbauclips pro Layer", layerMiningAudio, DrawLayerMiningAudioSettings);
     }
 
     void DrawLayerMiningAudioSettings(SerializedObject data)
@@ -707,6 +723,10 @@ public class GameplaySettingsWindow : EditorWindow
     void DrawPlayer()
     {
         stats = Picker("Spieler-Basiswerte", stats);
+        Section("Spielziel", stats, data =>
+        {
+            Integer(data, "ultroniumRequiredToWin", "Ultronium zum Gewinnen", "", 1, 1000000);
+        }, false);
         if (BaseStats)
         {
             CollapsibleSection("player-movement-mining", "Bewegung und Abbauen", BaseStats, data =>
@@ -1464,7 +1484,35 @@ public class GameplaySettingsWindow : EditorWindow
                     chance.floatValue), 0f, 100f);
                 var cash = entry.FindPropertyRelative("cash");
                 cash.intValue = Mathf.Max(0, EditorGUILayout.IntField("Geld ($)", cash.intValue));
+                var artifactPoints = entry.FindPropertyRelative("artifactPoints");
+                artifactPoints.intValue = Mathf.Max(0,
+                    EditorGUILayout.IntField("Artefaktpunkte", artifactPoints.intValue));
             }
+        }, false);
+        CollapsibleSection("artifact-animation", "Artefakt-Animation", map, data =>
+        {
+            var discoveryDuration = data.FindProperty("artifactDiscoveryDurationSeconds");
+            discoveryDuration.floatValue = EditorGUILayout.Slider("Dauer (s)", discoveryDuration.floatValue, .5f, 10f);
+            var artifactYOffset = data.FindProperty("artifactDiscoveryArtifactYOffset");
+            artifactYOffset.floatValue = EditorGUILayout.Slider("Artefakt Y-Versatz",
+                artifactYOffset.floatValue, -300f, 300f);
+            var iconFrequency = data.FindProperty("artifactDiscoveryIconRotationFrequency");
+            iconFrequency.floatValue = EditorGUILayout.Slider("Artefakt-Drehfrequenz (Hz)",
+                iconFrequency.floatValue, 0f, 2f);
+            var iconAngle = data.FindProperty("artifactDiscoveryIconRotationAngle");
+            iconAngle.floatValue = EditorGUILayout.Slider("Artefakt-Drehwinkel (°)", iconAngle.floatValue, 0f, 15f);
+            var shardCount = data.FindProperty("artifactDiscoveryShardCount");
+            shardCount.intValue = EditorGUILayout.IntSlider("Splitter-Anzahl", shardCount.intValue, 0, 60);
+            var shardSizeMin = data.FindProperty("artifactDiscoveryShardSizeMin");
+            var shardSizeMax = data.FindProperty("artifactDiscoveryShardSizeMax");
+            shardSizeMin.floatValue = EditorGUILayout.Slider("Splittergröße min.", shardSizeMin.floatValue, 2f, 40f);
+            shardSizeMax.floatValue = EditorGUILayout.Slider("Splittergröße max.",
+                Mathf.Max(shardSizeMin.floatValue, shardSizeMax.floatValue), shardSizeMin.floatValue, 40f);
+            var shardFrequency = data.FindProperty("artifactDiscoveryShardRotationFrequency");
+            shardFrequency.floatValue = EditorGUILayout.Slider("Splitter-Drehfrequenz (Hz)",
+                shardFrequency.floatValue, 0f, 3f);
+            var shardAngle = data.FindProperty("artifactDiscoveryShardRotationAngle");
+            shardAngle.floatValue = EditorGUILayout.Slider("Splitter-Drehwinkel (°)", shardAngle.floatValue, 0f, 25f);
         }, false);
     }
 
@@ -1517,6 +1565,14 @@ public class GameplaySettingsWindow : EditorWindow
 
     void DrawParticles()
     {
+        Section("Ultronium", lighting, data =>
+        {
+            Float(data, "ultroniumLightIntensity", "Lichtintensität", "", 0f, 1f);
+            EditorGUILayout.IntSlider(data.FindProperty("ultroniumPulsesPerMinute"), 0, 120,
+                new GUIContent("Pulse pro Minute"));
+            EditorGUILayout.PropertyField(data.FindProperty("ultroniumLightColor"), new GUIContent("Lichtfarbe"));
+            EditorGUILayout.PropertyField(data.FindProperty("ultroniumParticleColor"), new GUIContent("Partikelfarbe"));
+        }, false);
         itemFeed = Picker("Item-Feed", itemFeed);
         Section("Item-Feed", itemFeed, data =>
         {

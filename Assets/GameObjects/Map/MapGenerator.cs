@@ -47,6 +47,15 @@ public class MapGenerator : MonoBehaviour
     [Min(1), InspectorName("Mindesttiefe Artefakte (Y)")] public int artifactMinimumDepth = 10;
     [Range(.1f, 5f)] public float artifactDropChanceMultiplier = 1f;
     [Range(.25f, 8f)] public float artifactOverviewIconScale = 4f;
+    [Range(.5f, 10f)] public float artifactDiscoveryDurationSeconds = 3f;
+    [Range(0, 60)] public int artifactDiscoveryShardCount = 16;
+    [Range(2f, 40f)] public float artifactDiscoveryShardSizeMin = 8f;
+    [Range(2f, 40f)] public float artifactDiscoveryShardSizeMax = 17f;
+    [Range(-300f, 300f)] public float artifactDiscoveryArtifactYOffset;
+    [Range(0f, 2f)] public float artifactDiscoveryIconRotationFrequency = .35f;
+    [Range(0f, 15f)] public float artifactDiscoveryIconRotationAngle = 3f;
+    [Range(0f, 3f)] public float artifactDiscoveryShardRotationFrequency = .6f;
+    [Range(0f, 25f)] public float artifactDiscoveryShardRotationAngle = 8f;
     [Header("Terrain Test")]
     public Block uniformTestStone;
     public StoneTestTile uniformTestTile;
@@ -457,6 +466,14 @@ public class MapGenerator : MonoBehaviour
         if (!tile || artifactSettings == null) return 0;
         foreach (var setting in artifactSettings)
             if (setting != null && setting.tile == tile) return Mathf.Max(0, setting.cash);
+        return 0;
+    }
+
+    public int GetArtifactPoints(ArtifactTile tile)
+    {
+        if (!tile || artifactSettings == null) return 0;
+        foreach (var setting in artifactSettings)
+            if (setting != null && setting.tile == tile) return Mathf.Max(0, setting.artifactPoints);
         return 0;
     }
 

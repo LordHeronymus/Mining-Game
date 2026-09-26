@@ -138,6 +138,14 @@ public class AudioManager : MonoBehaviour
 
     [HideInInspector] public static AudioManager Instance;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => Instance = null;
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
     List<AudioSource> pool = new();
     readonly List<(AudioSource source, AudioClip clip)> activeCraftingSounds = new();
     readonly Dictionary<AudioSource, (float volume, AmbienceType type)> ambienceSources = new();
@@ -145,6 +153,8 @@ public class AudioManager : MonoBehaviour
     Dictionary<SoundType, Sound> soundLookup = new Dictionary<SoundType, Sound>();
     AudioClip[] frogCroaks;
     AudioClip grassLanding;
+    AudioClip shopPaper;
+    AudioClip medkitCloth;
     AudioSource lowHealthHeartbeatSource;
     AudioSource gameOverMusicSource;
     Coroutine lowHealthHeartbeatFade;
@@ -195,6 +205,18 @@ public class AudioManager : MonoBehaviour
         PlayClip(grassLanding, volume, pan, ambience: true, ambienceType: AmbienceType.Surface);
     }
 
+    public void PlayShopPaperSound()
+    {
+        if (!shopPaper) shopPaper = Resources.Load<AudioClip>("Audio/Paper1");
+        if (shopPaper) PlayClip(shopPaper, 1f, 0f);
+    }
+
+    public void PlayMedkitUseSound()
+    {
+        if (!medkitCloth) medkitCloth = Resources.Load<AudioClip>("Audio/Cloth1");
+        if (medkitCloth) PlayClip(medkitCloth, 1f, 0f);
+    }
+
     void Awake()
     {
         if (Instance && Instance != this) { Destroy(gameObject); return; }
@@ -224,6 +246,17 @@ public class AudioManager : MonoBehaviour
         }
 
         foreach (var s in sounds) soundLookup[s.type] = s;
+        var oreBreakV3 = Resources.Load<AudioClip>("Audio/OreBreakV3");
+        if (oreBreakV3)
+        {
+            if (!soundLookup.TryGetValue(SoundType.BreakOre, out var oreBreakSound))
+            {
+                oreBreakSound = new Sound { type = SoundType.BreakOre, volume = 1f, pitch = 1f };
+                soundLookup[SoundType.BreakOre] = oreBreakSound;
+            }
+            oreBreakSound.clip = oreBreakV3;
+            oreBreakSound.variants = null;
+        }
         if (!soundLookup.ContainsKey(SoundType.BoneBreaking1))
         {
             var boneBreakingClip = Resources.Load<AudioClip>("Audio/BoneBreaking_01");

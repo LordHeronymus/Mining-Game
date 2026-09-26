@@ -35,3 +35,5 @@ MonoBehaviour:
   m_Flags: 1
   m_ColliderType: 0
   displayName: Jademaske
+  themeColor: {r: 0, g: 0, b: 0, a: 0}
+  discoveryIconYOffset: 0

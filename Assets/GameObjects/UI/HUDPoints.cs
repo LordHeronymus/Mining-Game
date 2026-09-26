@@ -12,6 +12,9 @@ public class HUDPoints : MonoBehaviour
 {
     public static HUDPoints Instance;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => Instance = null;
+
     [Header("Refs")]
     public TextMeshProUGUI pointsText;
     public TextMeshProUGUI moneyText;
@@ -30,6 +33,11 @@ public class HUDPoints : MonoBehaviour
         Instance = this;
         pointsText.text = "0";
         moneyText.text = "0";
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     public void UpdatePoints(int amount, PointType type)

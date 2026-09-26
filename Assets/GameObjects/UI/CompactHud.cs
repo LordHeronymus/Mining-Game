@@ -18,7 +18,7 @@ public sealed class CompactHud : MonoBehaviour
     public ItemSO[] slots = new ItemSO[8];
     public int SelectedSlot { get; private set; }
     public ItemSO SelectedItem => slots != null && SelectedSlot > 0 && SelectedSlot <= slots.Length &&
-        IsHotbarItem(slots[SelectedSlot - 1]) ? slots[SelectedSlot - 1] : null;
+        IsKnownHotbarItem(slots[SelectedSlot - 1]) ? slots[SelectedSlot - 1] : null;
     public int DepthMeters { get; private set; }
     const string HotbarIconVerticalOffsetKey = "workbench.hotbarIconVerticalOffset";
     public static float HotbarIconVerticalOffset
@@ -116,7 +116,7 @@ public sealed class CompactHud : MonoBehaviour
         {
             wasBuilding = ladder.BuildMode;
             if (wasBuilding)
-                for (int i = 0; i < 8; i++) if (slots[i] && slots[i].item == Item.Ladder) { SelectedSlot = i + 1; RefreshItems(); break; }
+                for (int i = 0; i < 8; i++) if (IsKnownHotbarItem(slots[i]) && slots[i].item == Item.Ladder) { SelectedSlot = i + 1; RefreshItems(); break; }
         }
     }
     void LateUpdate()
@@ -135,7 +135,7 @@ public sealed class CompactHud : MonoBehaviour
         }
         if (stats)
         {
-            if (stats.Money != lastMoney) { lastMoney = stats.Money; moneyValue.text = Format(stats.Money); }
+            if (stats.Money != lastMoney) { lastMoney = stats.Money; moneyValue.text = ShopMoneyFormatter.Format(stats.Money); }
             if (stats.Points != lastPoints) { lastPoints = stats.Points; pointsValue.text = "Punkte  " + Format(stats.Points); }
             healthFill.FillAmount = Mathf.Clamp01(stats.Health / Mathf.Max(1f, stats.MaxHealth));
             int currentHealth = Mathf.CeilToInt(stats.Health), maximumHealth = Mathf.CeilToInt(stats.MaxHealth);
@@ -234,6 +234,7 @@ public sealed class CompactHud : MonoBehaviour
     {
         if (index < 1 || index > 8) return;
         var item = slots[index - 1];
+        if (!IsKnownHotbarItem(item)) return;
         if (item && item.item == Item.Medkit)
         {
             bool inventoryOpen = inventoryPanel && inventoryPanel.IsOpen && !GameOverPanel.IsOpen;
@@ -246,7 +247,8 @@ public sealed class CompactHud : MonoBehaviour
     }
     public bool SelectSlot(int index)
     {
-        if (GameplayInputBlocker.IsBlocked || index < 0 || index >= 9) return false;
+        if (GameplayInputBlocker.IsBlocked || index < 0 || index >= 9 ||
+            (index > 0 && !IsKnownHotbarItem(slots[index - 1]))) return false;
         SelectedSlot = index;
         if (ladder) ladder.SetBuildMode(SelectedItem && SelectedItem.item == Item.Ladder);
         wasBuilding = ladder && ladder.BuildMode;
@@ -257,15 +259,17 @@ public sealed class CompactHud : MonoBehaviour
         if (index < 1 || index > 8) throw new ArgumentOutOfRangeException(nameof(index));
         if (item && !IsHotbarItem(item)) throw new ArgumentException("Item cannot be used from the hotbar.", nameof(item));
         slots[index - 1] = item;
-        if (SelectedSlot == index && ladder) ladder.SetBuildMode(item && item.item == Item.Ladder);
+        if (SelectedSlot == index && ladder) ladder.SetBuildMode(IsKnownHotbarItem(item) && item.item == Item.Ladder);
         SaveSlotLayout();
         RefreshItems();
     }
     public bool CanReorderSlot(int index) => !GameplayInputBlocker.IsBlocked && index >= 1 && index <= 8 &&
-        IsHotbarItem(slots[index - 1]);
+        IsKnownHotbarItem(slots[index - 1]);
     public static bool IsHotbarItem(ItemSO item) => item &&
         (item.item == Item.Torche || item.item == Item.Dynamite || item.item == Item.Ladder ||
          item.item == Item.BridgePart || item.item == Item.Medkit);
+    bool IsKnownHotbarItem(ItemSO item) => IsHotbarItem(item) && InventoryManager.Instance &&
+        (InventoryManager.Instance.GetCount(item) > 0 || InventoryManager.Instance.WasOwnedThisRun(item));
     public bool IsOverHotbar(Vector2 screenPosition) => hotbar &&
         RectTransformUtility.RectangleContainsScreenPoint(hotbar, screenPosition, HotbarEventCamera());
     public bool TryGetAssignableSlotAt(Vector2 screenPosition, out int index)
@@ -369,6 +373,12 @@ public sealed class CompactHud : MonoBehaviour
     static string Format(int value) => value < 1000000 ? value.ToString("N0", German) : ShopMoneyFormatter.Format(value);
     void RefreshItems()
     {
+        if (SelectedSlot > 0 && !IsKnownHotbarItem(slots[SelectedSlot - 1]))
+        {
+            SelectedSlot = 0;
+            if (ladder) ladder.SetBuildMode(false);
+            wasBuilding = false;
+        }
         selections[0].enabled = SelectedSlot == 0;
         if (pickaxeIcon)
         {
@@ -378,11 +388,11 @@ public sealed class CompactHud : MonoBehaviour
         for (int i = 0; i < 8; i++)
         {
             if (!icons[i]) continue;
-            var item = IsHotbarItem(slots[i]) ? slots[i] : null;
-            int amount = item && inventory ? inventory.GetCount(item) : 0;
+            var item = IsKnownHotbarItem(slots[i]) ? slots[i] : null;
+            int amount = item ? InventoryManager.Instance.GetCount(item) : 0;
             icons[i].sprite = item ? item.icon : null; icons[i].enabled = item;
             ApplyHotbarIconLayout(item, icons[i].rectTransform);
-            icons[i].color = amount > 0 ? Color.white : new Color(1,1,1,.3f);
+            icons[i].color = amount > 0 ? Color.white : new Color(1f, 1f, 1f, .3f);
             counts[i].text = item ? ShopMoneyFormatter.Format(amount) : "";
             var badge = (RectTransform)counts[i].transform.parent;
             badge.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal,
@@ -465,8 +475,8 @@ public sealed class CompactHud : MonoBehaviour
         healthFill=Bar("Health",11,heartSprite,new Color(.92f,.055f,.075f),"100 / 100",out healthValue);
         energyFill=Bar("Energy",30,boltSprite,new Color(1,.68f,.035f),"",out energyValue);
         foreach(float x in new[]{395.2f,577.2f,781.2f}) Image("Divider",top,x,12,2,32,null,new Color(.68f,.43f,.22f,.7f));
-        var coin=Image("Coin",top,423.2f,14,28,28,coinSprite,Color.white); coin.preserveAspect=true;
-        moneyValue=Text("Money",top,"",459.2f,8,100,40,21);
+        var coin=Image("Coin",top,423.2f,16,24,24,coinSprite,Color.white); coin.preserveAspect=true;
+        moneyValue=Text("Money",top,"",468f,8,100,40,21);
         pointsValue=Text("Points",top,"",593.2f,8,172,40,20);
         depthValue=Text("Depth",top,"",795.2f,8,154,40,20);
         hotbar=Rect("Hotbar",transform,0,0,658,66); hotbar.anchorMin=hotbar.anchorMax=hotbar.pivot=new Vector2(.5f,0);

@@ -9,7 +9,9 @@ public sealed class OreOverlayAppearance : MonoBehaviour
     TilemapRenderer target;
     MaterialPropertyBlock properties;
     float appliedScale = -1;
+    int appliedPulsesPerMinute = -1;
     static readonly int ScaleProperty = Shader.PropertyToID("_OreScale");
+    static readonly int PulseRateProperty = Shader.PropertyToID("_UltroniumPulsesPerMinute");
 
     public Material OverlayMaterial
     {
@@ -26,7 +28,10 @@ public sealed class OreOverlayAppearance : MonoBehaviour
         if (!map || !map.OreOverlay || !overlayMaterial) return;
         var renderer = map.OreOverlay.GetComponent<TilemapRenderer>();
         float scale = ValidScale(map.oreScale);
-        if (target != renderer || appliedScale != scale || renderer.sharedMaterial != overlayMaterial)
+        var lighting = GetComponent<MapLighting>();
+        int pulsesPerMinute = lighting ? Mathf.Clamp(lighting.ultroniumPulsesPerMinute, 0, 120) : 0;
+        if (target != renderer || appliedScale != scale || appliedPulsesPerMinute != pulsesPerMinute ||
+            renderer.sharedMaterial != overlayMaterial)
             ApplyTo(renderer);
     }
 
@@ -44,6 +49,9 @@ public sealed class OreOverlayAppearance : MonoBehaviour
         target.GetPropertyBlock(properties);
         appliedScale = ValidScale(map.oreScale);
         properties.SetFloat(ScaleProperty, appliedScale);
+        var lighting = GetComponent<MapLighting>();
+        appliedPulsesPerMinute = lighting ? Mathf.Clamp(lighting.ultroniumPulsesPerMinute, 0, 120) : 0;
+        properties.SetFloat(PulseRateProperty, appliedPulsesPerMinute);
         target.SetPropertyBlock(properties);
     }
 
@@ -68,5 +76,6 @@ public sealed class OreOverlayAppearance : MonoBehaviour
         var terrain = map.GetComponent<TilemapRenderer>();
         if (terrain) target.sharedMaterial = terrain.sharedMaterial;
         appliedScale = -1;
+        appliedPulsesPerMinute = -1;
     }
 }

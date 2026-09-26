@@ -6,6 +6,8 @@ float4 _HeadlampDirectionAngles;
 float _HeadlampInnerRadius;
 float4 _TorchSources[64];
 int _TorchCount;
+float4 _UltroniumSources[32];
+int _UltroniumCount;
 
 float MapLocalLight(float2 worldPos)
 {
@@ -33,6 +35,15 @@ float MapLocalLight(float2 worldPos)
             float glow = saturate(torch.w * (1 - smoothstep(0, torch.z, distance)));
             light = max(light, glow);
         }
+    }
+    [loop]
+    for (int index = 0; index < 32; index++)
+    {
+        if (index >= _UltroniumCount) break;
+        float4 ore = _UltroniumSources[index];
+        float distance = length(worldPos - ore.xy);
+        if (ore.z > 0 && distance < ore.z)
+            light = max(light, saturate(ore.w * (1 - smoothstep(0, ore.z, distance))));
     }
     return light;
 }

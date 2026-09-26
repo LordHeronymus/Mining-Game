@@ -6,11 +6,18 @@ public class StatsManager : MonoBehaviour
 {
     public const float LowHealthHeartbeatThresholdFraction = .25f;
     const float FastestHeartbeatHealthFraction = .01f;
+    const float MedkitDurationSeconds = 30f;
+    const float MedkitRegenMultiplier = 3f;
     [SerializeField] PlayerBaseStats baseStats;
     public static StatsManager Instance;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => Instance = null;
+
     public int Points { get; private set; } = 0;
     public int ArtifactPoints { get; private set; } = 0;
+    [Min(1)] public int ultroniumRequiredToWin = 50;
+    public bool HasWon { get; private set; }
     readonly HashSet<ArtifactTile> collectedArtifactTypes = new();
     AudioClip artifactCollectedSound;
     public int Money { get; private set; } = 0;
@@ -36,6 +43,8 @@ public class StatsManager : MonoBehaviour
     public float HeartbeatIntervalSeconds => CalculateHeartbeatIntervalSeconds(Health / MaxHealth, heartbeatFlashIntervalSeconds);
     public event Action<float, float> OnHealthChanged;
     float lastHealthDamageTime;
+    float medkitActiveUntil;
+    public bool IsMedkitActive => Health > 0f && Time.time < medkitActiveUntil;
     // Future damage handlers must respect this gate before applying damage.
     public bool IsInvulnerable => GameplayTestSettings.GodMode;
     public bool CanTakeDamage => !IsInvulnerable;
@@ -52,6 +61,11 @@ public class StatsManager : MonoBehaviour
     void OnDisable()
     {
         TileMiner.OnBlockMined -= HandlePoints;
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     void Awake()
@@ -74,6 +88,7 @@ public class StatsManager : MonoBehaviour
 
     public void ResetRun()
     {
+        RecipeUnlocks.ResetRun();
         Reset();
         var inventory = InventoryManager.Instance;
         if (inventory)
@@ -90,20 +105,41 @@ public class StatsManager : MonoBehaviour
 
     void Update()
     {
+        CheckUltroniumVictory();
         float healthFraction = Health / MaxHealth;
         bool heartbeatActive = Health > 0f && !GameOverPanel.IsOpen &&
             healthFraction <= LowHealthHeartbeatThresholdFraction;
         AudioManager.Instance?.SetLowHealthHeartbeat(heartbeatActive);
 
 
-        float regenerationLimit = MaxHealth * Mathf.Clamp01(healthRegenLimitFraction);
+        bool medkitActive = IsMedkitActive;
+        float regenerationLimit = medkitActive ? MaxHealth : MaxHealth * Mathf.Clamp01(healthRegenLimitFraction);
         if (healthRegenPerSecond <= 0f || Health >= regenerationLimit ||
-            Time.time - lastHealthDamageTime < Mathf.Max(0f, healthRegenDelay)) return;
+            (!medkitActive && Time.time - lastHealthDamageTime < Mathf.Max(0f, healthRegenDelay))) return;
 
-        float nextHealth = Mathf.Min(regenerationLimit, Health + healthRegenPerSecond * Time.deltaTime);
+        float speed = healthRegenPerSecond * (medkitActive ? MedkitRegenMultiplier : 1f);
+        float nextHealth = Mathf.Min(regenerationLimit, Health + speed * Time.deltaTime);
         if (Mathf.Approximately(nextHealth, Health)) return;
         Health = nextHealth;
         OnHealthChanged?.Invoke(Health, MaxHealth);
+    }
+
+    void CheckUltroniumVictory()
+    {
+        if (HasWon || GameOverPanel.IsOpen || Health <= 0f) return;
+        var inventory = InventoryManager.Instance;
+        if (!inventory) return;
+        int ultronium = 0;
+        foreach (var entry in inventory.GetSnapshot())
+            if (entry.Key && entry.Key.item == Item.Ultronium)
+            {
+                ultronium = entry.Value;
+                break;
+            }
+
+        if (ultronium < Mathf.Max(1, ultroniumRequiredToWin)) return;
+        HasWon = true;
+        GameVictoryPanel.Show();
     }
 
     public bool ApplyDamage(float amount)
@@ -122,7 +158,7 @@ public class StatsManager : MonoBehaviour
 
     public bool TryUseMedkit(ItemSO medkit = null)
     {
-        if (Health <= 0f || Health >= MaxHealth - 0.001f || GameOverPanel.IsOpen) return false;
+        if (Health <= 0f || Health >= MaxHealth - 0.001f || IsMedkitActive || GameOverPanel.IsOpen) return false;
         var inventory = InventoryManager.Instance;
         if (!inventory || (medkit && medkit.item != Item.Medkit)) return false;
         if (!medkit)
@@ -135,8 +171,8 @@ public class StatsManager : MonoBehaviour
                 }
         }
         if (!medkit || !inventory.TryRemove(medkit)) return false;
-        Health = MaxHealth;
-        OnHealthChanged?.Invoke(Health, MaxHealth);
+        medkitActiveUntil = Time.time + MedkitDurationSeconds;
+        AudioManager.Instance?.PlayMedkitUseSound();
         return true;
     }
 
@@ -177,15 +213,19 @@ public class StatsManager : MonoBehaviour
         OnMoneyChanged?.Invoke(Money); // für ShopUI
     }
 
-    public void CollectArtifact(ArtifactTile artifact, int cash)
+    public void CollectArtifact(ArtifactTile artifact, int cash, int artifactPoints)
     {
         if (!artifact) return;
-        ArtifactPoints++;
+        int pointReward = Mathf.Max(0, artifactPoints);
+        ArtifactPoints += pointReward;
+        ItemFeed.Instance?.ShowArtifactPoints(pointReward);
         HandlePoints(Vector2.zero, 1);
         int reward = Mathf.Max(0, cash);
         AddMoney(reward);
         ItemFeed.Instance?.ShowMoney(reward);
-        if (!collectedArtifactTypes.Add(artifact) || !AudioManager.Instance) return;
+        if (!collectedArtifactTypes.Add(artifact)) return;
+        ArtifactDiscoveryView.ShowArtifact(artifact);
+        if (!AudioManager.Instance) return;
         if (!artifactCollectedSound)
             artifactCollectedSound = Resources.Load<AudioClip>("Audio/ArtifactCollected");
         AudioManager.Instance.PlayClip(artifactCollectedSound,
@@ -196,6 +236,7 @@ public class StatsManager : MonoBehaviour
     {
         Points = 0;
         ArtifactPoints = 0;
+        HasWon = false;
         collectedArtifactTypes.Clear();
         Money = StartingResourcesSettings.Load().money;
         HUDPoints.Instance?.UpdatePoints(Money, PointType.Money);
@@ -207,6 +248,7 @@ public class StatsManager : MonoBehaviour
         Reach = baseStats.reach;
         MaxEnergy = baseStats.maxEnergy;
         Health = MaxHealth;
+        medkitActiveUntil = 0f;
         lastHealthDamageTime = Time.time;
         OnHealthChanged?.Invoke(Health, MaxHealth);
     }

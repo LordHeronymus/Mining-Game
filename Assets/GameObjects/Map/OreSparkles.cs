@@ -232,8 +232,10 @@ public sealed class OreSparkles : MonoBehaviour
             var localOffset = Vector3.Scale(tiles.layoutGrid.cellSize,
                 new Vector3((float)random.NextDouble() * .5f - .25f, (float)random.NextDouble() * .5f - .25f));
             Vector3 position = center + tiles.transform.TransformVector(localOffset);
-            Color oreColor = GetOreColor(block.id);
-            Color tint = Color.Lerp(Color.white, oreColor, oreColorStrength);
+            Color oreColor = block.id == BlockType.UltroniumOre && lighting
+                ? lighting.ultroniumParticleColor : GetOreColor(block.id);
+            Color tint = block.id == BlockType.UltroniumOre ? oreColor :
+                Color.Lerp(Color.white, oreColor, oreColorStrength);
             bool ultronium = block.id == BlockType.UltroniumOre;
             float brightness = lighting && lighting.isActiveAndEnabled && lighting.lightingEnabled
                 ? lighting.GetBrightness(cell) : 1f;

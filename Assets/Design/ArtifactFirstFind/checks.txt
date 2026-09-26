@@ -1,0 +1,13 @@
+Sonnenscheibe: sprite, theme and full title rendered; font size 116
+Alter Kompass: sprite, theme and full title rendered; font size 116
+Jademaske: sprite, theme and full title rendered; font size 116
+Bernsteinskarabäus: sprite, theme and full title rendered; font size 116
+Astrolabium: sprite, theme and full title rendered; font size 116
+Antike Vase: sprite, theme and full title rendered; font size 116
+Siegelring: sprite, theme and full title rendered; font size 116
+Fossile Spirale: sprite, theme and full title rendered; font size 116
+Kupfertafel: sprite, theme and full title rendered; font size 116
+Kristall-Sanduhr: sprite, theme and full title rendered; font size 116
+Actual CollectArtifact first discovery: 3.008 seconds; repeat suppressed; time and input restored.
+Simultaneous first discoveries queue without replacing the active reveal.
+PASS

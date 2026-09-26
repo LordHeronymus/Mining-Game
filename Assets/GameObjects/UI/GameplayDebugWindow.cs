@@ -19,6 +19,8 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     Vector2 resizeDirection;
     readonly List<string> gameplayItems = new List<string>();
     readonly List<string> testItems = new List<string>();
+    readonly List<ArtifactTile> artifactAnimationArtifacts = new List<ArtifactTile>();
+    readonly Dictionary<ArtifactTile, TMP_InputField> artifactYOffsetInputs = new Dictionary<ArtifactTile, TMP_InputField>();
     readonly List<string> miscItems = new List<string>();
     readonly List<string> giftingItems = new List<string>();
     readonly List<string> worldItems = new List<string>();
@@ -47,6 +49,9 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     readonly Image[] giftPresetBackgrounds = new Image[4];
     static readonly int[] GiftPresets = { 1, 10, 64, 999 };
     static string lastGiftAmount = "10";
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => lastGiftAmount = "10";
     TextMeshProUGUI testStatus;
     readonly Dictionary<GameplayTestMode, Toggle> modeToggles = new Dictionary<GameplayTestMode, Toggle>();
     [SerializeField] RectTransform[] dayNightButtons = new RectTransform[3];
@@ -61,7 +66,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     };
     static readonly (string label, AudioVolumeSetting setting, AudioTimeOffsetSetting offsetSetting, string tooltip)[] ConcreteAudioSettings =
     {
-        ("Bling (%)", AudioVolumeSetting.DingLight, AudioTimeOffsetSetting.DingLight,
+        ("Ding 4 (%)", AudioVolumeSetting.DingLight, AudioTimeOffsetSetting.DingLight,
             "Wird abgespielt, wenn ein Item eingesammelt wird. Ein positiver Versatz verzögert den Klang; ein negativer überspringt den Clipanfang."),
     };
     [SerializeField] TMP_InputField[] audioInputs = new TMP_InputField[AudioSettings.Length];
@@ -1446,6 +1451,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         var testEndScreen = CloneItem("Defaults", "TestEndScreen", content, "Endscreen testen").GetComponent<Button>();
         testEndScreen.onClick = new Button.ButtonClickedEvent();
         testEndScreen.onClick.AddListener(ShowTestEndScreen);
+        CreateArtifactAnimationTests();
         CreateDayNightSelector();
         testItems.AddRange(new[] {"TestSection", "MiningTestSection", "PlayerTestSection", "TimeTestSection",
             "TestLabel","TestMultiplier","MovementLabel","MovementMultiplier","TestStatus", "HealthTestSection",
@@ -1453,6 +1459,60 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             "HealthValueLabel", "HealthValueInput", "SetHealth",
             "DamageTest90", "DamageTest40", "DamageTest10", "DamageTest1", "TestEndScreen"});
         MoveToTab(miscItems, "MiscSection");
+    }
+
+    void CreateArtifactAnimationTests()
+    {
+        const string section = "ArtifactAnimationSection";
+        CloneItem("Section", section, content, "ARTEFAKT-ANIMATIONEN");
+        testItems.Add(section);
+        const string offsetHeader = "ArtifactAnimationYOffsetHeader";
+        var header = CloneItem("SpeedLabel", offsetHeader, content, "Y-Versatz")
+            .GetComponent<TextMeshProUGUI>();
+        header.fontSize = 18;
+        header.textWrappingMode = TextWrappingModes.NoWrap;
+        header.alignment = TextAlignmentOptions.Center;
+        testItems.Add(offsetHeader);
+        var map = FindFirstObjectByType<MapGenerator>();
+        if (!map || map.artifactSettings == null) return;
+        var artifacts = map.artifactSettings.Select(setting => setting?.tile)
+            .Where(tile => tile && tile.sprite).Distinct().ToArray();
+        for (int i = 0; i < artifacts.Length; i++)
+        {
+            var artifact = artifacts[i];
+            artifactAnimationArtifacts.Add(artifact);
+            string name = "ArtifactAnimation_" + i;
+            var button = CloneItem("Defaults", name, content, artifact.displayName).GetComponent<Button>();
+            var label = button.GetComponentInChildren<TextMeshProUGUI>();
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 17;
+            label.fontSizeMax = 24;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            button.onClick = new Button.ButtonClickedEvent();
+            button.onClick.AddListener(() => ArtifactDiscoveryView.ShowArtifact(artifact));
+            testItems.Add(name);
+            string offsetInputName = "ArtifactAnimationYOffsetInput_" + i;
+            var offsetInput = CloneItem("DiggingSpeed", offsetInputName, content).GetComponent<TMP_InputField>();
+            offsetInput.onValueChanged = new TMP_InputField.OnChangeEvent();
+            offsetInput.onEndEdit = new TMP_InputField.SubmitEvent();
+            offsetInput.contentType = TMP_InputField.ContentType.DecimalNumber;
+            DisableInputChildRaycasts(offsetInput);
+            offsetInput.SetTextWithoutNotify(artifact.DiscoveryIconYOffset.ToString("0.##", CultureInfo.InvariantCulture));
+            offsetInput.onEndEdit.AddListener(_ => CommitArtifactYOffset(artifact, offsetInput));
+            artifactYOffsetInputs.Add(artifact, offsetInput);
+            testItems.Add(offsetInputName);
+        }
+    }
+
+    void CommitArtifactYOffset(ArtifactTile artifact, TMP_InputField input)
+    {
+        if (float.TryParse(input.text.Replace(',', '.'), NumberStyles.Float,
+                CultureInfo.InvariantCulture, out float value) && !float.IsNaN(value) && !float.IsInfinity(value))
+        {
+            artifact.SetDiscoveryIconYOffset(value);
+            artifact.SaveDiscoveryIconYOffset();
+        }
+        input.SetTextWithoutNotify(artifact.DiscoveryIconYOffset.ToString("0.##", CultureInfo.InvariantCulture));
     }
 
     void CreateTab(string name, string label, DebugTab tab)
@@ -1636,6 +1696,8 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     void RefreshTest()
     {
         EnsureMiningHitOffsetControl();
+        foreach (var entry in artifactYOffsetInputs)
+            entry.Value.SetTextWithoutNotify(entry.Key.DiscoveryIconYOffset.ToString("0.##", CultureInfo.InvariantCulture));
         foreach (var entry in modeToggles) entry.Value.SetIsOnWithoutNotify(GameplayTestSettings.GetConfiguredMode(entry.Key));
         float factor = GameplayTestSettings.ConfiguredDiggingMultiplier;
         testMultiplier.SetTextWithoutNotify(factor.ToString("R", CultureInfo.InvariantCulture));
@@ -1978,7 +2040,16 @@ public sealed class GameplayDebugWindow : MonoBehaviour
                 Place("DamageTest" + damage, x + index * (damageButtonWidth + 10f), 838, damageButtonWidth, 48);
             }
             Place("TestEndScreen",x,906,col,48);
-            Place("TestStatus",x,966,col,70); content.sizeDelta = new Vector2(0,1048);
+            Place("TestStatus",x,966,col,70);
+            Place("ArtifactAnimationSection",x,1050,col,36);
+            Place("ArtifactAnimationYOffsetHeader",x+col-100,1050,100,36);
+            for (int i = 0; i < artifactAnimationArtifacts.Count; i++)
+            {
+                float rowY = 1098 + i * 56;
+                Place("ArtifactAnimation_" + i,x,rowY,col-100,48);
+                Place("ArtifactAnimationYOffsetInput_" + i,x+col-90,rowY,90,48);
+            }
+            content.sizeDelta = new Vector2(0, 1160 + artifactAnimationArtifacts.Count * 56);
             return;
         }
 

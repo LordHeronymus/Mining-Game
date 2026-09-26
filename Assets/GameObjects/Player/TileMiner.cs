@@ -54,6 +54,15 @@ public class TileMiner : MonoBehaviour
     public static Action<Vector2> OnBlockHit;
     public static Action<Vector2, int, ItemSO> OnMiningPoints;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState()
+    {
+        OnBlockMined = null;
+        OnBlockHit = null;
+        OnMiningPoints = null;
+        uiRaycasts.Clear();
+    }
+
     private bool mining;
     public bool IsMingin => mining;
     public bool IsMining => mining;
@@ -491,7 +500,8 @@ public class TileMiner : MonoBehaviour
         Vector2 minedPosition = tilemap.GetCellCenterWorld(cell);
         OnBlockMined?.Invoke(minedPosition, points);
         if (points > 0) OnMiningPoints?.Invoke(minedPosition, points, block.itemDrop);
-        if (artifact) StatsManager.Instance?.CollectArtifact(artifact, map.GetArtifactCash(artifact));
+        if (artifact) StatsManager.Instance?.CollectArtifact(artifact,
+            map.GetArtifactCash(artifact), map.GetArtifactPoints(artifact));
         if (map) map.RemoveBlock(cell);
         else
         {

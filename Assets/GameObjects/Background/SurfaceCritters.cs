@@ -32,6 +32,9 @@ public sealed partial class SurfaceCritters : MonoBehaviour
     }
     readonly List<Critter> animals = new List<Critter>();
     static readonly HashSet<SurfaceCritters> populations = new HashSet<SurfaceCritters>();
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => populations.Clear();
     static readonly Plane[] viewPlanes = new Plane[6];
     const int VisibleSpawnLimit = 2;
     readonly System.Random random = new System.Random();

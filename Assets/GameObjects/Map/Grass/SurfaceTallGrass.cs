@@ -17,6 +17,8 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     [SerializeField, Range(0f, 100f)] float healingHerbRarityPercent = 30f;
     [SerializeField, Min(0f)] float healingHerbSpawnAreaSize = 18f;
     [SerializeField, Min(1)] int minimumSpacing = 3;
+    [SerializeField, Range(0f, 100f)] float clusterPercent = 60f;
+    [SerializeField] Vector2Int clusterSize = new Vector2Int(3, 7);
     [SerializeField, Range(0f, 1f)] float randomness = .75f;
     [SerializeField, Min(0f)] float spawnQuietRadius = 18f;
     [SerializeField, Range(0f, 1f)] float nearSpawnDensity = .15f;
@@ -104,6 +106,9 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         healingHerbFiberYield.x = Mathf.Max(1, healingHerbFiberYield.x);
         healingHerbFiberYield.y = Mathf.Max(healingHerbFiberYield.x, healingHerbFiberYield.y);
         healingHerbSpawnAreaSize = Mathf.Max(0f, healingHerbSpawnAreaSize);
+        clusterPercent = Mathf.Clamp(clusterPercent, 0f, 100f);
+        clusterSize.x = Mathf.Max(2, clusterSize.x);
+        clusterSize.y = Mathf.Max(clusterSize.x, clusterSize.y);
         fiberSwayStrength = Mathf.Max(0f, fiberSwayStrength);
         fiberSwayFrequency = Mathf.Max(0f, fiberSwayFrequency);
         healingHerbSwayStrength = Mathf.Max(0f, healingHerbSwayStrength);
@@ -131,79 +136,69 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         respawnRandom = new System.Random(map.ActiveSeed ^ 0x6D925A1);
         var trees = FindTrees();
         var candidates = new List<int>();
-        int previous = int.MinValue / 2;
         int left = -width / 2;
-        float step = (float)width / maximumPatches;
         float spawnX = map.Terrain.GetCellCenterWorld(new Vector3Int(0, 0)).x;
-        for (int index = 0; index < maximumPatches; index++)
+        int clusteredCount = Mathf.RoundToInt(maximumPatches * clusterPercent / 100f);
+        var groupSizes = new List<int>();
+        int remainingClustered = clusteredCount;
+        int groupIndex = 0;
+        while (remainingClustered >= clusterSize.x)
         {
-            float jitter = (Hash01(index, 0xA41Fu) - .5f) * .9f * randomness;
-            int preferredX = Mathf.Clamp(left + Mathf.FloorToInt((index + .5f + jitter) * step),
-                left + 1, left + width - 2);
-            int slotStart = Mathf.Clamp(left + Mathf.FloorToInt(index * step), left + 1, left + width - 2);
-            int slotEnd = Mathf.Clamp(left + Mathf.FloorToInt((index + 1) * step) - 1,
-                slotStart, left + width - 2);
-            var slotCandidates = new List<int>(slotEnd - slotStart + 1);
-            for (int candidateX = slotStart; candidateX <= slotEnd; candidateX++) slotCandidates.Add(candidateX);
-            slotCandidates.Sort((a, b) =>
+            int maximum = Mathf.Min(clusterSize.y, remainingClustered);
+            int size = clusterSize.x + (int)(OreVeins.Hash(map.ActiveSeed, groupIndex++, 0, 0xC1A57u) %
+                (uint)(maximum - clusterSize.x + 1));
+            if (remainingClustered - size > 0 && remainingClustered - size < clusterSize.x)
             {
-                int distanceOrder = Mathf.Abs(a - preferredX).CompareTo(Mathf.Abs(b - preferredX));
-                if (distanceOrder != 0) return distanceOrder;
-                uint hashA = OreVeins.Hash(map.ActiveSeed, a, 0, 0xA41Fu);
-                uint hashB = OreVeins.Hash(map.ActiveSeed, b, 0, 0xA41Fu);
-                return hashA.CompareTo(hashB);
-            });
-
+                if (remainingClustered <= clusterSize.y) size = remainingClustered;
+                else if (remainingClustered - clusterSize.x >= clusterSize.x)
+                    size = remainingClustered - clusterSize.x;
+            }
+            groupSizes.Add(size);
+            remainingClustered -= size;
+        }
+        int singles = maximumPatches - clusteredCount + remainingClustered;
+        for (int i = 0; i < singles; i++) groupSizes.Add(1);
+        var layoutRandom = new System.Random(map.ActiveSeed ^ 0x31C057A);
+        for (int i = groupSizes.Count - 1; i > 0; i--)
+        {
+            int other = layoutRandom.Next(i + 1);
+            (groupSizes[i], groupSizes[other]) = (groupSizes[other], groupSizes[i]);
+        }
+        float step = (float)width / groupSizes.Count;
+        for (int index = 0; index < groupSizes.Count; index++)
+        {
+            int size = groupSizes[index];
+            float jitter = (Hash01(index, 0xA41Fu) - .5f) * .9f * randomness;
+            int preferredX = left + Mathf.FloorToInt((index + .5f + jitter) * step) - size / 2;
             int selectedX = int.MinValue;
             int fallbackX = int.MinValue;
-            foreach (int candidateX in slotCandidates)
+            for (int offset = 0; offset < width && selectedX == int.MinValue; offset++)
             {
-                var cell = new Vector3Int(candidateX, 0);
-                if (!map.Terrain.HasTile(cell) || !map.Terrain.HasTile(cell + Vector3Int.left) ||
-                    !map.Terrain.HasTile(cell + Vector3Int.right) || candidateX - previous < minimumSpacing)
-                    continue;
-                float worldX = map.Terrain.GetCellCenterWorld(cell).x;
-                if (NearBuilding(worldX) || (trees && trees.Protects(cell))) continue;
+                int candidateX = preferredX + (offset % 2 == 0 ? offset / 2 : -(offset + 1) / 2);
+                if (candidateX < left + 1 || candidateX + size > left + width - 1) continue;
+                bool valid = true;
+                for (int x = candidateX; x < candidateX + size && valid; x++)
+                {
+                    var cell = new Vector3Int(x, 0);
+                    if (!map.Terrain.HasTile(cell) || !map.Terrain.HasTile(cell + Vector3Int.left) ||
+                        !map.Terrain.HasTile(cell + Vector3Int.right) ||
+                        NearBuilding(map.Terrain.GetCellCenterWorld(cell).x) || (trees && trees.Protects(cell)))
+                        valid = false;
+                    foreach (int existingX in sites)
+                        if (Mathf.Abs(x - existingX) < Mathf.Max(2, minimumSpacing)) { valid = false; break; }
+                }
+                if (!valid) continue;
                 if (fallbackX == int.MinValue) fallbackX = candidateX;
-                float distance = Mathf.Abs(worldX - spawnX);
+                float worldX = map.Terrain.GetCellCenterWorld(new Vector3Int(candidateX, 0)).x;
                 float blend = spawnQuietRadius > 0f ? Mathf.SmoothStep(0f, 1f,
-                    Mathf.Clamp01(distance / spawnQuietRadius)) : 1f;
-                float chance = Mathf.Lerp(nearSpawnDensity, 1f, blend);
-                if (Hash01(index, 0xAD52u) < chance) { selectedX = candidateX; break; }
+                    Mathf.Clamp01(Mathf.Abs(worldX - spawnX) / spawnQuietRadius)) : 1f;
+                if (Hash01(index, 0xAD52u) < Mathf.Lerp(nearSpawnDensity, 1f, blend))
+                    selectedX = candidateX;
             }
             if (selectedX == int.MinValue) selectedX = fallbackX;
             if (selectedX == int.MinValue) continue;
-
-            sites.Add(selectedX);
-            candidates.Add(selectedX);
-            previous = selectedX;
-        }
-
-        if (sites.Count < maximumPatches)
-        {
-            var fallbackCandidates = new List<int>();
-            for (int candidateX = left + 1; candidateX < left + width - 1; candidateX++)
+            for (int x = selectedX; x < selectedX + size; x++)
             {
-                var cell = new Vector3Int(candidateX, 0);
-                if (!map.Terrain.HasTile(cell) || !map.Terrain.HasTile(cell + Vector3Int.left) ||
-                    !map.Terrain.HasTile(cell + Vector3Int.right)) continue;
-                float worldX = map.Terrain.GetCellCenterWorld(cell).x;
-                if (NearBuilding(worldX) || (trees && trees.Protects(cell))) continue;
-                bool tooClose = false;
-                foreach (int existingX in sites)
-                    if (Mathf.Abs(candidateX - existingX) < minimumSpacing) { tooClose = true; break; }
-                if (!tooClose) fallbackCandidates.Add(candidateX);
-            }
-            fallbackCandidates.Sort((a, b) =>
-            {
-                uint hashA = OreVeins.Hash(map.ActiveSeed, a, 0, 0xA41Fu);
-                uint hashB = OreVeins.Hash(map.ActiveSeed, b, 0, 0xA41Fu);
-                int order = hashA.CompareTo(hashB);
-                return order != 0 ? order : a.CompareTo(b);
-            });
-            foreach (int x in fallbackCandidates)
-            {
-                if (sites.Count >= maximumPatches) break;
                 sites.Add(x);
                 candidates.Add(x);
             }

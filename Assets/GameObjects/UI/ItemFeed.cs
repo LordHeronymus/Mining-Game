@@ -6,10 +6,19 @@ using UnityEngine.UI;
 
 public sealed class ItemFeed : MonoBehaviour
 {
+    struct Pickup
+    {
+        public ItemSO item;
+        public int amount;
+        public bool money;
+        public bool artifactPoints;
+    }
+
     sealed class Entry
     {
         public ItemSO item;
         public bool money;
+        public bool artifactPoints;
         public int amount;
         public RectTransform rect;
         public RectTransform iconRect;
@@ -25,6 +34,7 @@ public sealed class ItemFeed : MonoBehaviour
     }
 
     const int MaximumEntries = 4;
+    const float PickupInterval = .4f;
     const float Lifetime = 3.5f;
     const float IconHopDuration = .36f;
     const float IconHopHeight = 11f;
@@ -36,8 +46,14 @@ public sealed class ItemFeed : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float backdropOpacity = .7f;
     [SerializeField] AudioClip collectBling;
     [SerializeField] Sprite moneyIcon;
+    [SerializeField] Sprite artifactPointsIcon;
     public static ItemFeed Instance { get; private set; }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => Instance = null;
     readonly List<Entry> entries = new();
+    readonly Queue<Pickup> pending = new();
+    float nextPickupTime;
     InventoryManager inventory;
     Coroutine binding;
     Coroutine startupSoundDelay;
@@ -48,6 +64,8 @@ public sealed class ItemFeed : MonoBehaviour
         Instance = this;
         collectBling = Resources.Load<AudioClip>("Audio/Ding4");
         collectionSoundReady = false;
+        pending.Clear();
+        nextPickupTime = 0f;
         startupSoundDelay = StartCoroutine(EnableCollectionSoundAfterStartup());
         var canvas = GetComponentInParent<Canvas>();
         if (canvas && transform.parent != canvas.rootCanvas.transform)
@@ -66,6 +84,7 @@ public sealed class ItemFeed : MonoBehaviour
         binding = null;
         startupSoundDelay = null;
         collectionSoundReady = false;
+        pending.Clear();
         if (inventory) inventory.OnItemGained -= Show;
         inventory = null;
     }
@@ -88,6 +107,37 @@ public sealed class ItemFeed : MonoBehaviour
     void Show(ItemSO item, int amount)
     {
         if (!item || amount <= 0) return;
+        pending.Enqueue(new Pickup { item = item, amount = amount });
+        ShowNextPickup();
+    }
+
+    public void ShowMoney(int amount)
+    {
+        if (amount <= 0) return;
+        pending.Enqueue(new Pickup { amount = amount, money = true });
+        ShowNextPickup();
+    }
+
+    public void ShowArtifactPoints(int amount)
+    {
+        if (amount <= 0) return;
+        pending.Enqueue(new Pickup { amount = amount, artifactPoints = true });
+        ShowNextPickup();
+    }
+
+    void ShowNextPickup()
+    {
+        float now = Time.unscaledTime;
+        if (pending.Count == 0 || now < nextPickupTime) return;
+        var pickup = pending.Dequeue();
+        nextPickupTime = now + PickupInterval;
+        if (pickup.money) DisplayCounter(pickup.amount, true);
+        else if (pickup.artifactPoints) DisplayCounter(pickup.amount, false);
+        else DisplayItem(pickup.item, pickup.amount);
+    }
+
+    void DisplayItem(ItemSO item, int amount)
+    {
         float now = Time.unscaledTime;
         if (collectionSoundReady && collectBling && AudioManager.Instance)
             AudioManager.Instance.PlayClipWithOffset(collectBling,
@@ -102,8 +152,6 @@ public sealed class ItemFeed : MonoBehaviour
             entry.hopStartLift = Mathf.Max(0f, entry.iconRect.anchoredPosition.y + 4f);
             entry.hopBorn = now;
             SetContent(entry);
-            entries.Remove(entry);
-            entries.Insert(0, entry);
             return;
         }
 
@@ -119,11 +167,10 @@ public sealed class ItemFeed : MonoBehaviour
         }
     }
 
-    public void ShowMoney(int amount)
+    void DisplayCounter(int amount, bool money)
     {
-        if (amount <= 0) return;
         float now = Time.unscaledTime;
-        var entry = entries.Find(row => row.money);
+        var entry = entries.Find(row => row.money == money && row.artifactPoints == !money);
         if (entry != null)
         {
             entry.amount += amount;
@@ -131,12 +178,10 @@ public sealed class ItemFeed : MonoBehaviour
             entry.hopStartLift = Mathf.Max(0f, entry.iconRect.anchoredPosition.y + 4f);
             entry.hopBorn = now;
             SetContent(entry);
-            entries.Remove(entry);
-            entries.Insert(0, entry);
             return;
         }
 
-        entry = CreateEntry(null, amount, true);
+        entry = CreateEntry(null, amount, money, !money);
         entry.born = now;
         entry.hopBorn = now;
         entries.Insert(0, entry);
@@ -148,9 +193,10 @@ public sealed class ItemFeed : MonoBehaviour
         }
     }
 
-    Entry CreateEntry(ItemSO item, int amount, bool money = false)
+    Entry CreateEntry(ItemSO item, int amount, bool money = false, bool artifactPoints = false)
     {
-        var rect = MakeRect("Pickup " + (money ? "Money" : item.name), transform, 0f, 0f, 300f, 48f);
+        var title = money ? "Money" : artifactPoints ? "Artifact Points" : item.name;
+        var rect = MakeRect("Pickup " + title, transform, 0f, 0f, 300f, 48f);
         rect.anchorMin = rect.anchorMax = new Vector2(0f, .5f);
         rect.pivot = new Vector2(0f, .5f);
         rect.anchoredPosition = new Vector2(-20f, 84f);
@@ -168,7 +214,7 @@ public sealed class ItemFeed : MonoBehaviour
 
         var iconRect = MakeRect("Icon", rect, 0f, 4f, 40f, 40f);
         var icon = iconRect.gameObject.AddComponent<Image>();
-        icon.sprite = money ? moneyIcon : item.icon;
+        icon.sprite = money ? moneyIcon : artifactPoints ? artifactPointsIcon : item.icon;
         icon.preserveAspect = true;
         icon.raycastTarget = false;
         var iconOutline = iconRect.gameObject.AddComponent<Outline>();
@@ -195,12 +241,12 @@ public sealed class ItemFeed : MonoBehaviour
 
         var accentRect = MakeRect("Item Accent", rect, 0f, 37f, 300f, 16f);
         var accent = accentRect.gameObject.AddComponent<ItemFeedAccent>();
-        accent.color = money ? new Color(.96f, .68f, .18f) : item.themeColor;
+        accent.color = money || artifactPoints ? new Color(.96f, .68f, .18f) : item.themeColor;
         accent.Seed = item ? item.GetInstanceID() : GetInstanceID();
         accent.raycastTarget = false;
         accent.ConfigureSparks(sparkCount, sparkIntensity, sparkRiseHeight, sparkBrightness, lineBrightness);
 
-        var entry = new Entry { item = item, money = money, amount = amount, rect = rect, iconRect = iconRect, backdrop = backdrop, group = group,
+        var entry = new Entry { item = item, money = money, artifactPoints = artifactPoints, amount = amount, rect = rect, iconRect = iconRect, backdrop = backdrop, group = group,
             label = label, labelRect = textRect, accent = accent, effectBorn = Time.unscaledTime };
         SetContent(entry);
         return entry;
@@ -208,7 +254,9 @@ public sealed class ItemFeed : MonoBehaviour
 
     static void SetContent(Entry entry)
     {
-        entry.label.text = entry.money ? $"+${entry.amount}" : $"+{entry.amount}  {Name(entry.item)}";
+        entry.label.text = entry.money ? $"+${entry.amount}" : entry.artifactPoints
+            ? $"+{entry.amount}  {(entry.amount == 1 ? "Artefaktpunkt" : "Artefaktpunkte")}"
+            : $"+{entry.amount}  {Name(entry.item)}";
         float textWidth = Mathf.Min(286f, Mathf.Ceil(entry.label.preferredWidth) + 4f);
         entry.labelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, textWidth);
         entry.accent.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 52f + textWidth);
@@ -218,6 +266,7 @@ public sealed class ItemFeed : MonoBehaviour
 
     void Update()
     {
+        ShowNextPickup();
         float now = Time.unscaledTime;
         for (int i = entries.Count - 1; i >= 0; i--)
         {
@@ -245,7 +294,7 @@ public sealed class ItemFeed : MonoBehaviour
         }
     }
 
-    static string Name(ItemSO item) => string.IsNullOrWhiteSpace(item.displayName)
+    static string Name(ItemSO item) => !item ? string.Empty : string.IsNullOrWhiteSpace(item.displayName)
         ? item.name : item.displayName;
 
     static RectTransform MakeRect(string name, Transform parent, float x, float y, float width, float height)

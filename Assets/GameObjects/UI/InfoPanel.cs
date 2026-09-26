@@ -4,6 +4,9 @@ public class InfoPanel : MonoBehaviour
 {
     public static InfoPanel Instance;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => Instance = null;
+
     [SerializeField] CanvasGroup panel;
 
     void Awake()

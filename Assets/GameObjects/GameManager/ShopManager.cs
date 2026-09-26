@@ -10,13 +10,16 @@ public class ShopManager : MonoBehaviour
     public event Action<ItemSO, int, int> OnItemSold;
     public event Action<int> OnSellAll;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => Instance = null;
+
     public bool TryBuyMedkitRecipe()
     {
         var stats = StatsManager.Instance;
         if (!stats || RecipeUnlocks.IsMedkitUnlocked || stats.Money < RecipeUnlocks.MedkitPrice) return false;
         stats.AddMoney(-RecipeUnlocks.MedkitPrice);
         RecipeUnlocks.UnlockMedkit();
-        AudioManager.Instance?.Play(SoundType.UI_Click);
+        AudioManager.Instance?.PlayShopPaperSound();
         return true;
     }
 

@@ -141,6 +141,10 @@ public class InventoryUI : MonoBehaviour
                 draggedIcon.rectTransform.pivot = new Vector2(.5f, .5f);
             draggedIcon.preserveAspect = true;
         }
+        var canvas = GetComponentInParent<Canvas>();
+        var rootCanvas = canvas ? canvas.rootCanvas : null;
+        if (rootCanvas && draggedIcon.transform.parent != rootCanvas.transform)
+            draggedIcon.transform.SetParent(rootCanvas.transform, false);
         draggedIcon.sprite = item.icon;
         draggedIcon.color = new Color(1f, 1f, 1f, .9f);
         draggedIcon.gameObject.SetActive(true);
@@ -149,8 +153,13 @@ public class InventoryUI : MonoBehaviour
     }
     public void MoveDraggedIcon(Vector2 screenPosition)
     {
+        var canvas = GetComponentInParent<Canvas>();
+        var rootCanvas = canvas ? canvas.rootCanvas : null;
+        var coordinateRoot = rootCanvas ? (RectTransform)rootCanvas.transform : (RectTransform)transform;
+        Camera eventCamera = rootCanvas && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? rootCanvas.worldCamera : null;
         if (!draggedIcon || !RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                (RectTransform)transform, screenPosition, null, out var local)) return;
+                coordinateRoot, screenPosition, eventCamera, out var local)) return;
         draggedIcon.rectTransform.anchoredPosition = local;
     }
     public void EndItemDrag(Vector2 screenPosition)
