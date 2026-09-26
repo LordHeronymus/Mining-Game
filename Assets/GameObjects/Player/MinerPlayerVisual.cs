@@ -12,6 +12,7 @@ public sealed class MinerPlayerVisual : MonoBehaviour
     [Min(.3f), InspectorName("Figurenhöhe")] public float height = 1.06f;
     [Min(.1f), InspectorName("Laufanimation")] public float walkAnimationSpeed = 1;
     [Min(.1f), InspectorName("Abbauanimation (Schläge/s)")] public float miningSwingsPerSecond = 2;
+    [Range(-500f, 500f), InspectorName("Treffer-Versatz (ms)")] public float miningHitOffsetMs = 0f;
     [InspectorName("Helmfarbe")] public Color helmetColor = new Color(.84f, .33f, .011f);
     [InspectorName("Arbeitsgewand")] public Color clothingColor = new Color(.009f, .085f, .29f);
     [InspectorName("Hautfarbe")] public Color skinColor = new Color(.90f, .34f, .10f);
@@ -35,6 +36,8 @@ public sealed class MinerPlayerVisual : MonoBehaviour
         CritterMesh.RemoveGenerated(transform, GeneratedName);
         body = GetComponent<Rigidbody2D>(); bodyCollider = GetComponent<Collider2D>();
         movement = GetComponent<PlayerMovement>(); miner = GetComponent<TileMiner>();
+        if (Application.isPlaying && GameplayTestSettings.HasMiningHitOffsetOverride)
+            miningHitOffsetMs = GameplayTestSettings.ConfiguredMiningHitOffsetMs;
         age = walkPhase = swingPhase = walking = airborne = miningWeight = running = 0; gaitStride = .34f; gaitDuty = .62f;
         Refresh();
     }
@@ -167,7 +170,8 @@ public sealed class MinerPlayerVisual : MonoBehaviour
         Vector2 shoulder = new Vector2(.16f, .77f + bob);
         Vector2 restHand = new Vector2(.27f - armSwing * .045f, .53f + bob + Mathf.Abs(armSwing) * .012f + airborne * .08f);
         restHand = Vector2.Lerp(restHand, new Vector2(.25f, .93f + .10f * climbCycle), climbing);
-        float strike = .5f - .5f * Mathf.Cos(swingPhase);
+        float animationOffset = miningHitOffsetMs * .001f * Mathf.Max(.1f, miningSwingsPerSecond) * 2f * Mathf.PI;
+        float strike = .5f - .5f * Mathf.Cos(swingPhase - animationOffset);
         Vector2 workHand = new Vector2(Mathf.Lerp(.11f, .39f, strike), Mathf.Lerp(.98f, .65f, strike) + bob);
         Vector2 hand = Vector2.Lerp(restHand, workHand, miningWeight);
         Vector2 elbow = Vector2.Lerp(new Vector2(.245f, .645f + bob), new Vector2(.26f, .83f + bob), miningWeight);

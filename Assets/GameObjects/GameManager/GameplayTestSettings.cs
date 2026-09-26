@@ -5,9 +5,11 @@ using UnityEngine;
 [Serializable]
 public sealed class GameplayTestSettingsData
 {
-    public int version = 3;
+    public int version = 4;
     public float diggingMultiplier = 1f;
     public float movementMultiplier = 1f;
+    public bool hasMiningHitOffsetOverride;
+    public float miningHitOffsetMs;
     public bool godMode, noEnergyConsume, flyMode, noClip;
     public bool globalLighting = true;
     public bool testModeDisabled;
@@ -23,6 +25,10 @@ public static class GameplayTestSettings
 {
     static bool loaded;
     static float multiplier = 1f, saved = 1f, movementMultiplier = 1f, savedMovementMultiplier = 1f;
+    static bool hasMiningHitOffsetOverride;
+    static float miningHitOffsetMs;
+    static bool savedHasMiningHitOffsetOverride;
+    static float savedMiningHitOffsetMs;
     static bool godMode, noEnergyConsume, flyMode, noClip, testModeDisabled, discardPlayedMap;
     static bool globalLighting = true;
     static GameplayDayNightMode dayNightMode;
@@ -33,11 +39,13 @@ public static class GameplayTestSettings
     public static bool IsActive => GetMode(GameplayTestMode.Active);
     public static float ConfiguredDiggingMultiplier { get { EnsureLoaded(); return multiplier; } }
     public static float ConfiguredMovementMultiplier { get { EnsureLoaded(); return movementMultiplier; } }
+    public static bool HasMiningHitOffsetOverride { get { EnsureLoaded(); return hasMiningHitOffsetOverride; } }
+    public static float ConfiguredMiningHitOffsetMs { get { EnsureLoaded(); return miningHitOffsetMs; } }
     public static bool GodMode => GetMode(GameplayTestMode.God);
     public static bool NoEnergyConsume => GetMode(GameplayTestMode.NoEnergyConsume);
     public static bool FlyMode => GetMode(GameplayTestMode.Fly);
     public static bool NoClipMode => GetMode(GameplayTestMode.NoClip);
-    public static bool GlobalLighting => !IsActive || GetConfiguredMode(GameplayTestMode.GlobalLighting);
+    public static bool GlobalLighting => IsActive && GetConfiguredMode(GameplayTestMode.GlobalLighting);
     public static GameplayDayNightMode ConfiguredDayNightMode { get { EnsureLoaded(); return dayNightMode; } }
     public static GameplayDayNightMode EffectiveDayNightMode
     {
@@ -95,12 +103,13 @@ public static class GameplayTestSettings
 #endif
         }
     }
-    public static bool HasUnsavedChanges { get { EnsureLoaded(); return multiplier != saved || movementMultiplier != savedMovementMultiplier || Modes != savedModes; } }
+    public static bool HasUnsavedChanges { get { EnsureLoaded(); return multiplier != saved || movementMultiplier != savedMovementMultiplier || hasMiningHitOffsetOverride != savedHasMiningHitOffsetOverride || miningHitOffsetMs != savedMiningHitOffsetMs || Modes != savedModes; } }
     public static bool IsValid(float value) => !float.IsNaN(value) && !float.IsInfinity(value) && value >= .1f && value <= 100f;
     public static bool IsValidMovementMultiplier(float value) => !float.IsNaN(value) && !float.IsInfinity(value) && value >= .1f && value <= 20f;
+    public static bool IsValidMiningHitOffset(float value) => !float.IsNaN(value) && !float.IsInfinity(value) && value >= -500f && value <= 500f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetSession() { loaded = false; multiplier = saved = movementMultiplier = savedMovementMultiplier = 1f; Warning = null; godMode = noEnergyConsume = flyMode = noClip = testModeDisabled = discardPlayedMap = false; globalLighting = true; dayNightMode = GameplayDayNightMode.Automatic; savedModes = Modes; }
+    static void ResetSession() { loaded = false; multiplier = saved = movementMultiplier = savedMovementMultiplier = 1f; hasMiningHitOffsetOverride = savedHasMiningHitOffsetOverride = false; miningHitOffsetMs = savedMiningHitOffsetMs = 0f; Warning = null; godMode = noEnergyConsume = flyMode = noClip = testModeDisabled = discardPlayedMap = false; globalLighting = true; dayNightMode = GameplayDayNightMode.Automatic; savedModes = Modes; }
 
     static void EnsureLoaded()
     {
@@ -112,11 +121,14 @@ public static class GameplayTestSettings
             if (File.Exists(FilePath))
             {
                 var data = JsonUtility.FromJson<GameplayTestSettingsData>(File.ReadAllText(FilePath));
-                if (data == null || (data.version != 1 && data.version != 2 && data.version != 3) ||
-                    !IsValid(data.diggingMultiplier) || (data.version >= 3 && !IsValidMovementMultiplier(data.movementMultiplier)))
+                if (data == null || data.version < 1 || data.version > 4 ||
+                    !IsValid(data.diggingMultiplier) || (data.version >= 3 && !IsValidMovementMultiplier(data.movementMultiplier)) ||
+                    (data.version >= 4 && data.hasMiningHitOffsetOverride && !IsValidMiningHitOffset(data.miningHitOffsetMs)))
                     throw new FormatException("Ungültiger Testfaktor.");
                 multiplier = data.diggingMultiplier; testModeDisabled = data.testModeDisabled;
                 movementMultiplier = data.version >= 3 ? data.movementMultiplier : 1f;
+                hasMiningHitOffsetOverride = data.version >= 4 && data.hasMiningHitOffsetOverride;
+                miningHitOffsetMs = hasMiningHitOffsetOverride ? data.miningHitOffsetMs : 0f;
                 discardPlayedMap = data.discardPlayedMap;
                 godMode = data.godMode; noEnergyConsume = data.noEnergyConsume; flyMode = data.flyMode;
                 noClip = data.noClip; globalLighting = data.version < 2 || data.globalLighting;
@@ -129,6 +141,8 @@ public static class GameplayTestSettings
 #endif
         saved = multiplier;
         savedMovementMultiplier = movementMultiplier;
+        savedHasMiningHitOffsetOverride = hasMiningHitOffsetOverride;
+        savedMiningHitOffsetMs = miningHitOffsetMs;
         savedModes = Modes;
     }
 
@@ -177,6 +191,12 @@ public static class GameplayTestSettings
         EnsureLoaded(); movementMultiplier = value; return true;
     }
 
+    public static bool SetMiningHitOffset(float value)
+    {
+        if (!IsValidMiningHitOffset(value)) return false;
+        EnsureLoaded(); hasMiningHitOffsetOverride = true; miningHitOffsetMs = value; return true;
+    }
+
     public static bool Save(out string error)
     {
         EnsureLoaded(); error = null;
@@ -185,15 +205,17 @@ public static class GameplayTestSettings
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
             string temp = FilePath + ".tmp";
             File.WriteAllText(temp, JsonUtility.ToJson(new GameplayTestSettingsData {
+                version = 4,
                 discardPlayedMap = discardPlayedMap,
                 testModeDisabled = testModeDisabled, diggingMultiplier = multiplier, movementMultiplier = movementMultiplier,
+                hasMiningHitOffsetOverride = hasMiningHitOffsetOverride, miningHitOffsetMs = miningHitOffsetMs,
                 godMode = godMode, noEnergyConsume = noEnergyConsume, flyMode = flyMode,
                 noClip = noClip, globalLighting = globalLighting,
                 dayNightMode = dayNightMode
             }, true));
             if (File.Exists(FilePath)) File.Replace(temp, FilePath, null);
             else File.Move(temp, FilePath);
-            saved = multiplier; savedMovementMultiplier = movementMultiplier; savedModes = Modes; Warning = null; return true;
+            saved = multiplier; savedMovementMultiplier = movementMultiplier; savedHasMiningHitOffsetOverride = hasMiningHitOffsetOverride; savedMiningHitOffsetMs = miningHitOffsetMs; savedModes = Modes; Warning = null; return true;
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException)
         { error = "Testeinstellungen nicht gespeichert: " + ex.Message; return false; }

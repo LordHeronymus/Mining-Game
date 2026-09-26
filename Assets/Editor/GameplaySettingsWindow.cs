@@ -12,12 +12,14 @@ using Object = UnityEngine.Object;
 // into a second configuration asset that could drift out of sync.
 public class GameplaySettingsWindow : EditorWindow
 {
-    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Erzverteilung", "Partikel", "Blöcke & Beute", "Licht", "Werkbank", "Audio", "Pflanzen", "Tiere" };
+    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Erzverteilung", "Partikel", "Blöcke & Beute", "Licht", "Werkbank", "Audio", "Pflanzen", "Tiere", "Health" };
     [SerializeField] int tab;
     [SerializeField] int selectedBlock;
     [SerializeField] StatsManager stats;
     [SerializeField] PlayerMovement movement;
+    [SerializeField] PlayerLadder ladder;
     [SerializeField] TileMiner miner;
+    [SerializeField] MinerPlayerVisual minerVisual;
     [SerializeField] EnergyManager energy;
     [SerializeField] EnergyMonolyth station;
     [SerializeField] MapGenerator map;
@@ -44,7 +46,7 @@ public class GameplaySettingsWindow : EditorWindow
     GameplaySettingsData savedOverride;
     string overrideWarning;
     bool overrideExists;
-    readonly HashSet<string> expandedMapSections = new HashSet<string>();
+    readonly HashSet<string> expandedSections = new HashSet<string>();
     int draggingDensityKey = -1;
     int densityCurveControl;
     int panningCurveControl;
@@ -93,7 +95,9 @@ public class GameplaySettingsWindow : EditorWindow
             : Array.Empty<Component>();
         stats = Resolve(stats);
         movement = Resolve(movement);
+        ladder = Resolve(ladder);
         miner = Resolve(miner);
+        minerVisual = Resolve(minerVisual);
         energy = Resolve(energy);
         station = Resolve(station);
         map = Resolve(map);
@@ -206,6 +210,7 @@ public class GameplaySettingsWindow : EditorWindow
                 case 8: DrawAudio(); break;
                 case 9: DrawPlants(); break;
                 case 10: DrawAnimals(); break;
+                case 11: DrawHealth(); break;
             }
         }
         EditorGUILayout.Space(12);
@@ -236,6 +241,9 @@ public class GameplaySettingsWindow : EditorWindow
     {
         Section("Bäume", trees, data =>
         {
+            var leafAlpha = data.FindProperty("leafAlpha");
+            leafAlpha.floatValue = EditorGUILayout.Slider("Blatt-Alpha (%)",
+                leafAlpha.floatValue * 100f, 0f, 100f) / 100f;
             Integer(data, "maximumTrees", "Maximale Anzahl", "", 0, 20);
             var spacing = data.FindProperty("minimumTreeSpacing");
             float cellWidth = map && map.Terrain ? map.Terrain.layoutGrid.cellSize.x : .5f;
@@ -295,12 +303,37 @@ public class GameplaySettingsWindow : EditorWindow
                 fiberYield.vector2IntValue = new Vector2Int(minimumFiber,
                     Mathf.Clamp(maximumFiber, minimumFiber, 9999));
             }
+            SwayMultiplier(data, "fiberSwayStrength", "Schwankstärke (%)");
+            SwayMultiplier(data, "fiberSwayFrequency", "Frequenz (%)");
+        }, false);
+
+        Section("Heilkraut", tallGrass, data =>
+        {
+            var herbRarity = data.FindProperty("healingHerbRarityPercent");
+            EditorGUI.BeginChangeCheck();
+            float herbPercent = EditorGUILayout.FloatField("Seltenheit (%)", herbRarity.floatValue);
+            if (EditorGUI.EndChangeCheck() && Finite(herbPercent))
+                herbRarity.floatValue = Mathf.Clamp(herbPercent, 0f, 100f);
+            Float(data, "healingHerbSpawnAreaSize", "Spawn Area Size (m)", "", 0f, 1000f);
+            var herbYield = data.FindProperty("healingHerbYield");
+            Vector2Int herbAmount = herbYield.vector2IntValue;
+            EditorGUI.BeginChangeCheck();
+            int minimumHerbs = EditorGUILayout.IntField("Drop mindestens", herbAmount.x);
+            int maximumHerbs = EditorGUILayout.IntField("Drop höchstens", herbAmount.y);
+            if (EditorGUI.EndChangeCheck())
+            {
+                minimumHerbs = Mathf.Clamp(minimumHerbs, 1, 9999);
+                herbYield.vector2IntValue = new Vector2Int(minimumHerbs,
+                    Mathf.Clamp(maximumHerbs, minimumHerbs, 9999));
+            }
+            SwayMultiplier(data, "healingHerbSwayStrength", "Schwankstärke (%)");
+            SwayMultiplier(data, "healingHerbSwayFrequency", "Frequenz (%)");
         }, false);
     }
 
     void DrawAnimals()
     {
-        Section("Vögel", birds, data =>
+        CollapsibleSection("animals-birds", "Vögel", birds, data =>
         {
             Float(data, "size", "Größe", "", .1f, 10f);
             FloatRange(data, "flockInterval", "Schwarmintervall (s)", .1f, 3600f);
@@ -311,14 +344,14 @@ public class GameplaySettingsWindow : EditorWindow
             Float(data, "nightOffscreenDespawnDelay", "Nacht-Despawn (s)", "", .1f, 3600f);
         }, false);
 
-        Section("Häschen", rabbitSpawner, data =>
+        CollapsibleSection("animals-rabbits", "Häschen", rabbitSpawner, data =>
         {
             FloatRange(data, "spawnInterval", "Spawnintervall (s)", .1f, 3600f);
             Integer(data, "maxRabbits", "Maximale Anzahl", "", 1, 20);
             Float(data, "despawnDistance", "Despawn-Abstand", "", 1f, 10000f);
             Float(data, "despawnDelay", "Despawn-Verzögerung (s)", "", .1f, 3600f);
         }, false);
-        Section("Häschen-Bewegung", rabbit, data =>
+        CollapsibleSection("animals-rabbit-movement", "Häschen-Bewegung", rabbit, data =>
         {
             Float(data, "roamRadius", "Bewegungsradius", "", 1f, 1000f);
             Float(data, "hopHeight", "Hüpfhöhe", "", .1f, 100f);
@@ -329,10 +362,10 @@ public class GameplaySettingsWindow : EditorWindow
             FloatRange(data, "restInterval", "Abstand zwischen Ruhephasen (s)", .1f, 3600f);
         }, false);
 
-        DrawCritterBehavior("Frösche", frogs, true);
-        DrawCritterBehavior("Schnecken", snails, false);
+        DrawCritterBehavior("animals-frogs", "Frösche", frogs, true);
+        DrawCritterBehavior("animals-snails", "Schnecken", snails, false);
 
-        Section("Glühwürmchen", fireflies, data =>
+        CollapsibleSection("animals-fireflies", "Glühwürmchen", fireflies, data =>
         {
             Integer(data, "count", "Anzahl", "", 0, 80);
             Float(data, "cameraMargin", "Abstand ausserhalb der Kamera", "", 0f, 1000f);
@@ -343,9 +376,9 @@ public class GameplaySettingsWindow : EditorWindow
         }, false);
     }
 
-    void DrawCritterBehavior(string title, SurfaceCritters critter, bool frog)
+    void DrawCritterBehavior(string key, string title, SurfaceCritters critter, bool frog)
     {
-        Section(title, critter, data =>
+        CollapsibleSection(key, title, critter, data =>
         {
             Integer(data, "maxCount", "Maximale Anzahl", "", 0, 12);
             FloatRange(data, "spawnInterval", "Spawnintervall (s)", .1f, 3600f);
@@ -382,9 +415,65 @@ public class GameplaySettingsWindow : EditorWindow
         {
             VolumeSlider(data, "digSoundVolume", "Lautstärke (%)");
         }, false);
+        Section("Ding Light", sceneComponents.OfType<AudioManager>().FirstOrDefault(), data =>
+        {
+            VolumeSlider(data, "dingLightVolume", "Lautstärke (%)");
+            Float(data, "dingLightOffsetSeconds", "Zeitversatz (s)", "", -10f, 10f);
+        }, false);
         Section("Untergrund-Details", sceneComponents.OfType<FirstLayerAmbience>().FirstOrDefault(), data =>
         {
-            Float(data, "detailsPerMinute", "Ereignisse pro Minute", "", 0f, 60f);
+            var layerRates = data.FindProperty("detailsPerMinuteByLayer");
+            if (map && map.layers != null && map.layers.Length > 0 && layerRates != null)
+            {
+                var fallbackRate = data.FindProperty("detailsPerMinute");
+                if (layerRates.arraySize != map.layers.Length)
+                {
+                    int oldSize = layerRates.arraySize;
+                    layerRates.arraySize = map.layers.Length;
+                    for (int i = oldSize; i < layerRates.arraySize; i++)
+                        layerRates.GetArrayElementAtIndex(i).floatValue = fallbackRate != null
+                            ? fallbackRate.floatValue : 0f;
+                }
+
+                for (int i = 0; i < map.layers.Length; i++)
+                {
+                    var layer = map.layers[i];
+                    string label = layer != null && !string.IsNullOrWhiteSpace(layer.name)
+                        ? layer.name : "Layer " + (i + 1);
+                    var rate = layerRates.GetArrayElementAtIndex(i);
+                    EditorGUI.BeginChangeCheck();
+                    float value = EditorGUILayout.FloatField(label + " · Ereignisse pro Minute", rate.floatValue);
+                    if (EditorGUI.EndChangeCheck() && Finite(value))
+                        rate.floatValue = Mathf.Clamp(value, 0f, 60f);
+                }
+            }
+            else Float(data, "detailsPerMinute", "Ereignisse pro Minute", "", 0f, 60f);
+            Integer(data, "detailsStartDepth", "Ab Tiefe (Blöcke)", "", 0,
+                map ? Mathf.Max(0, map.mapHeight - 1) : 100000);
+            var detailClips = data.FindProperty("detailClips");
+            var detailVolumes = data.FindProperty("detailVolumeMultipliers");
+            if (detailClips != null && detailVolumes != null)
+            {
+                EditorGUILayout.Space(6);
+                EditorGUILayout.LabelField("Detailclip-Lautstärke", EditorStyles.boldLabel);
+                for (int i = 0; i < detailClips.arraySize; i++)
+                {
+                    var clip = detailClips.GetArrayElementAtIndex(i).objectReferenceValue as AudioClip;
+                    string label = clip ? clip.name : "Fehlender Clip " + (i + 1);
+                    float current = i < detailVolumes.arraySize
+                        ? detailVolumes.GetArrayElementAtIndex(i).floatValue : 1f;
+                    EditorGUI.BeginChangeCheck();
+                    float percent = EditorGUILayout.Slider(label, current * 100f, 0f, 100f);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        int oldSize = detailVolumes.arraySize;
+                        detailVolumes.arraySize = Mathf.Max(detailClips.arraySize, oldSize);
+                        for (int j = oldSize; j < detailVolumes.arraySize; j++)
+                            detailVolumes.GetArrayElementAtIndex(j).floatValue = 1f;
+                        detailVolumes.GetArrayElementAtIndex(i).floatValue = percent / 100f;
+                    }
+                }
+            }
         }, false);
         Section("Höhlen-Tribal-Song", sceneComponents.OfType<SecondLayerAmbience>().FirstOrDefault(), data =>
         {
@@ -412,6 +501,56 @@ public class GameplaySettingsWindow : EditorWindow
             EditorGUILayout.Slider(data.FindProperty("croakIrregularity"), 0f, 1f,
                 new GUIContent("Unregelmäßigkeit"));
         }, false);
+
+        var layerMiningAudio = Resources.Load<LayerMiningAudioSettingsAsset>("Audio/LayerMiningAudioSettings");
+        if (layerMiningAudio) Section("Abbauclips pro Layer", layerMiningAudio, DrawLayerMiningAudioSettings);
+    }
+
+    void DrawLayerMiningAudioSettings(SerializedObject data)
+    {
+        var entries = data.FindProperty("entries");
+        if (entries == null) return;
+        var audio = sceneComponents.OfType<AudioManager>().FirstOrDefault();
+        for (int i = 0; i < entries.arraySize; i++)
+        {
+            var entry = entries.GetArrayElementAtIndex(i);
+            var layer = entry.FindPropertyRelative("layerIndex");
+            var breaking = entry.FindPropertyRelative("breaking");
+            var soundType = entry.FindPropertyRelative("soundType");
+            var clipIndex = entry.FindPropertyRelative("clipIndex");
+            var tuning = entry.FindPropertyRelative("tuning");
+            if (layer == null || breaking == null || soundType == null || clipIndex == null || tuning == null) continue;
+
+            string layerName = map && map.layers != null && layer.intValue >= 0 && layer.intValue < map.layers.Length &&
+                map.layers[layer.intValue] != null ? map.layers[layer.intValue].name : "Layer " + (layer.intValue + 1);
+            string actionName = breaking.boolValue ? "Bruch" : "Hieb";
+            var sound = (SoundType)soundType.enumValueIndex;
+            var clip = audio ? audio.GetSoundClip(sound, clipIndex.intValue) : null;
+            string clipName = clip ? clip.name : sound + " " + (clipIndex.intValue + 1);
+            EditorGUILayout.LabelField(layerName + " · " + actionName + " · " + clipName, EditorStyles.miniBoldLabel);
+            var volume = tuning.FindPropertyRelative("volume");
+            var pitch = tuning.FindPropertyRelative("pitch");
+            var spread = tuning.FindPropertyRelative("pitchSpread");
+            if (volume != null)
+            {
+                EditorGUI.BeginChangeCheck();
+                float value = EditorGUILayout.Slider("Lautstärke (%)", volume.floatValue * 100f, 0f, 100f);
+                if (EditorGUI.EndChangeCheck()) volume.floatValue = value / 100f;
+            }
+            if (pitch != null)
+            {
+                EditorGUI.BeginChangeCheck();
+                float value = EditorGUILayout.Slider("Pitch (%)", pitch.floatValue * 100f, 50f, 200f);
+                if (EditorGUI.EndChangeCheck()) pitch.floatValue = value / 100f;
+            }
+            if (spread != null)
+            {
+                EditorGUI.BeginChangeCheck();
+                float value = EditorGUILayout.Slider("Pitch Spread (%)", spread.floatValue * 100f, 0f, 50f);
+                if (EditorGUI.EndChangeCheck()) spread.floatValue = value / 100f;
+            }
+            if (i < entries.arraySize - 1) EditorGUILayout.Space(4);
+        }
     }
 
     static void VolumeSlider(SerializedObject data, string field, string label)
@@ -476,7 +615,47 @@ public class GameplaySettingsWindow : EditorWindow
                     ingredient.FindPropertyRelative("item").objectReferenceValue = choices.FirstOrDefault();
                     ingredient.FindPropertyRelative("amount").intValue = 1;
                 }
+
+            EditorGUILayout.Space(8);
+            var customIcon = data.FindProperty("customCardIconLayout");
+            var iconLayout = data.FindProperty("cardIconLayout");
+            if (customIcon != null && iconLayout != null)
+            {
+                EditorGUILayout.PropertyField(customIcon, new GUIContent("Eigenes Rezept-Iconlayout"));
+                if (customIcon.boolValue)
+                {
+                    var scale = iconLayout.FindPropertyRelative("scale");
+                    var offset = iconLayout.FindPropertyRelative("offset");
+                    var flipX = iconLayout.FindPropertyRelative("flipX");
+                    var flipY = iconLayout.FindPropertyRelative("flipY");
+                    if (scale != null)
+                    {
+                        EditorGUI.BeginChangeCheck();
+                        Vector2 value = EditorGUILayout.Vector2Field("Icon-Skalierung X/Y", scale.vector2Value);
+                        if (EditorGUI.EndChangeCheck() && Finite(value.x) && Finite(value.y))
+                            scale.vector2Value = new Vector2(Mathf.Clamp(value.x, .1f, 4f), Mathf.Clamp(value.y, .1f, 4f));
+                    }
+                    if (offset != null)
+                    {
+                        EditorGUI.BeginChangeCheck();
+                        Vector2 value = EditorGUILayout.Vector2Field("Icon-Versatz X/Y", offset.vector2Value);
+                        if (EditorGUI.EndChangeCheck() && Finite(value.x) && Finite(value.y))
+                            offset.vector2Value = new Vector2(Mathf.Clamp(value.x, -200f, 200f), Mathf.Clamp(value.y, -200f, 200f));
+                    }
+                    if (flipX != null) EditorGUILayout.PropertyField(flipX, new GUIContent("X spiegeln"));
+                    if (flipY != null) EditorGUILayout.PropertyField(flipY, new GUIContent("Y spiegeln"));
+                }
+            }
         }, false);
+
+        EditorGUILayout.Space(10);
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            EditorGUILayout.LabelField("Hotbar-Icon", EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            float offset = EditorGUILayout.Slider("Vertikaler Versatz", CompactHud.HotbarIconVerticalOffset, -48f, 48f);
+            if (EditorGUI.EndChangeCheck()) CompactHud.HotbarIconVerticalOffset = offset;
+        }
     }
 
     void DrawLighting()
@@ -518,7 +697,7 @@ public class GameplaySettingsWindow : EditorWindow
         stats = Picker("Spieler-Basiswerte", stats);
         if (BaseStats)
         {
-            Section("Bewegung und Abbauen", BaseStats, data =>
+            CollapsibleSection("player-movement-mining", "Bewegung und Abbauen", BaseStats, data =>
             {
                 Float(data, "moveSpeed", "Laufgeschwindigkeit", "Welteinheiten pro Sekunde.", 0.01f);
                 Float(data, "jumpHeightBlocks", "Sprunghöhe (Blöcke)", "", 0, 100);
@@ -529,22 +708,38 @@ public class GameplaySettingsWindow : EditorWindow
         else Missing("Kein PlayerBaseStats-Asset am StatsManager zugewiesen.");
 
         movement = Picker("Bewegungssteuerung", movement);
-        Section("Bewegungsgefühl", movement, data =>
+        CollapsibleSection("player-movement-feel", "Bewegungsgefühl", movement, data =>
         {
             Float(data, "accelTime", "Beschleunigungszeit (s)", "Zeit bis zum Maximaltempo in der Luft. Am Boden wirkt zusätzlich der Bodenfaktor.", 0.01f);
             Float(data, "decelTime", "Bremszeit (s)", "Zeit von Maximaltempo bis Stillstand in der Luft.", 0.01f);
             Float(data, "directionChangeDecelTime", "Richtungswechsel-Bremszeit (s)", "Zeit zum Abbremsen bis Stillstand bei entgegengesetzter Eingabe.", 0.01f);
             Float(data, "groundedCoeff", "Beschleunigungsfaktor am Boden", "Multipliziert Beschleunigen und Bremsen am Boden. Kleiner = träger. In der Luft gilt Faktor 1.", 0.01f);
         });
+        CollapsibleSection("player-cursor-pulse", "Cursor", miner, data =>
+        {
+            Float(data, "cursorPulseInterval", "Intervall (s)", "", .05f, 10f);
+            FloatRange(data, "cursorPulseAlphaRange", "Alpha-Bereich", 0f, 1f);
+            Float(data, "cursorPulseSize", "Größe (Faktor)", "", 1f, 1.5f);
+            Float(data, "cursorGlowStrength", "Leuchtstärke", "", 0f, 3f);
+        });
+        CollapsibleSection("player-pickaxe", "Spitzhacke", minerVisual, data =>
+        {
+            Float(data, "miningSwingsPerSecond", "Schläge pro Sekunde", "", .1f, 8f);
+            MiningHitOffset(data);
+        });
+        CollapsibleSection("player-ladder", "Leiter", ladder, data =>
+        {
+            Float(data, "horizontalExitUpwardImpulse", "Aufwärtsimpuls beim seitlichen Verlassen", "", 0, 10);
+        });
         var body = movement ? movement.GetComponent<Rigidbody2D>() : null;
-        Section("Sprungphysik", body, data =>
+        CollapsibleSection("player-jump-physics", "Sprungphysik", body, data =>
         {
             Float(data, "m_GravityScale", "Gravitationsfaktor", "Skaliert die globale 2D-Gravitation für den Spieler.", 0.01f);
             Float(data, "m_Mass", "Spielermasse", "", 0.01f);
         });
 
         follow = Picker("Spielkamera", follow);
-        Section("Kamera", follow, data =>
+        CollapsibleSection("player-camera", "Kamera", follow, data =>
         {
             Float(data, "smoothSpeed", "Nachführgeschwindigkeit", "Höher = Kamera folgt schneller.", 0.01f);
             var property = data.FindProperty("offset");
@@ -555,9 +750,109 @@ public class GameplaySettingsWindow : EditorWindow
         });
         var camera = follow ? follow.GetComponent<Camera>() : null;
         if (camera && camera.orthographic)
-            Section("Sichtweite", camera, data => Float(data, "orthographic size", "Halbe sichtbare Höhe", "Orthographic Size: größere Werte zeigen mehr von der Welt.", 0.1f));
+            CollapsibleSection("player-camera-visibility", "Sichtweite", camera, data => Float(data, "orthographic size", "Halbe sichtbare Höhe", "Orthographic Size: größere Werte zeigen mehr von der Welt.", 0.1f));
+        DrawStartingResources();
     }
 
+    void DrawStartingResources()
+    {
+        var settings = StartingResourcesSettings.Load();
+        var choices = items.Where(item => item).OrderBy(item => item.displayName,
+            StringComparer.CurrentCultureIgnoreCase).ToArray();
+        string[] names = choices.Select(item => item.displayName).ToArray();
+        int money = settings.money;
+        var entries = (settings.items ?? Array.Empty<StartingItemAmount>())
+            .Select(entry => (item: StartingResourcesSettings.Resolve(entry.itemId), amount: entry.amount))
+            .Where(entry => entry.item).ToList();
+
+        EditorGUILayout.Space(8);
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            EditorGUILayout.LabelField("Startressourcen", EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            int nextMoney = Mathf.Max(0, EditorGUILayout.IntField("Startgeld", money));
+            bool changed = EditorGUI.EndChangeCheck();
+            if (changed) money = nextMoney;
+
+            int remove = -1;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (choices.Length > 0)
+                    {
+                        int selected = Array.IndexOf(choices, entries[i].item);
+                        EditorGUI.BeginChangeCheck();
+                        int next = EditorGUILayout.Popup(Mathf.Max(0, selected), names);
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            entries[i] = (choices[next], entries[i].amount);
+                            changed = true;
+                        }
+                    }
+                    EditorGUI.BeginChangeCheck();
+                    int amount = Mathf.Max(1, EditorGUILayout.IntField(entries[i].amount, GUILayout.Width(90)));
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        entries[i] = (entries[i].item, amount);
+                        changed = true;
+                    }
+                    if (GUILayout.Button("−", GUILayout.Width(24))) remove = i;
+                }
+            }
+            if (remove >= 0)
+            {
+                entries.RemoveAt(remove);
+                changed = true;
+            }
+            using (new EditorGUI.DisabledScope(choices.Length == 0))
+            {
+                if (GUILayout.Button("Start-Item hinzufügen"))
+                {
+                    entries.Add((choices[0], 1));
+                    changed = true;
+                }
+            }
+
+            if (changed)
+                StartingResourcesSettings.Save(money, entries.Select(entry =>
+                    new StartingItemAmount((int)entry.item.item, entry.amount)).ToArray());
+        }
+    }
+
+    void DrawHealth()
+    {
+        stats = Picker("Spieler-Basiswerte", stats);
+        Section("Gesundheit und Fallschaden", stats, data =>
+        {
+            Float(data, "initialHealth", "Initiale Gesundheit (HP)", "", 1f, 999999f);
+            Float(data, "fallDamageHeightBlocks", "Schaden ab Fallhöhe (Blöcke)", "", 0f, 1000f);
+            Float(data, "fallDamageBase", "Basisschaden (+1 Block)", "", 0f, 999999f);
+            Float(data, "fallDamageExponent", "Fallschaden Exponent", "", 1f, 5f);
+        });
+        Section("Regeneration", stats, data =>
+        {
+            Float(data, "healthRegenPerSecond", "Regeneration (HP/s)", "", 0f, 1000f);
+            Float(data, "healthRegenDelay", "Verzögerung nach Schaden (s)", "", 0f, 600f);
+            var limit = data.FindProperty("healthRegenLimitFraction");
+            if (limit != null)
+            {
+                EditorGUI.BeginChangeCheck();
+                float percent = EditorGUILayout.Slider("Regeneration bis (%)", limit.floatValue * 100f, 0f, 100f);
+                if (EditorGUI.EndChangeCheck()) limit.floatValue = percent / 100f;
+            }
+        });
+        Section("Bildschirm-Effekt", stats, data =>
+        {
+            var intensity = data.FindProperty("bloodEdgeIntensity");
+            if (intensity == null) return;
+            EditorGUI.BeginChangeCheck();
+            float percent = EditorGUILayout.Slider("Blutrand-Intensität (%)", intensity.floatValue * 100f, 0f, 100f);
+            if (EditorGUI.EndChangeCheck()) intensity.floatValue = percent / 100f;
+            Float(data, "heartbeatFlashIntervalSeconds", "Herzschlag-Intervall (s)", "", .1f, 5f);
+            Float(data, "heartbeatFlashOffsetSeconds", "Herzschlag-Versatz (s)", "", -1f, 1f);
+        });
+    }
     void DrawEnergy()
     {
         stats = Picker("Spieler-Basiswerte", stats);
@@ -636,6 +931,8 @@ public class GameplaySettingsWindow : EditorWindow
         }, false);
         CollapsibleSection("map-background", "Untergrund-Hintergrund", UnityEngine.Object.FindFirstObjectByType<FixedUndergroundBackground>(), data =>
         {
+            EditorGUILayout.Slider(data.FindProperty("nightBrightnessMultiplier"), 0f, 3f,
+                new GUIContent("Nacht-Helligkeitsfaktor"));
             EditorGUILayout.PropertyField(data.FindProperty("yOffset"),new GUIContent("Y-Versatz (Welteinheiten)"));
         }, false);
         CollapsibleSection("map-edges", "Blockränder", map ? map.GetComponent<UniformStoneAppearance>() : null, data =>
@@ -643,6 +940,7 @@ public class GameplaySettingsWindow : EditorWindow
             EditorGUILayout.Slider(data.FindProperty("edgeDepth"),0f,2f,new GUIContent("Ausfransungstiefe (×)"));
             EditorGUILayout.Slider(data.FindProperty("edgeIrregularity"),0f,2f,new GUIContent("Unregelmäßigkeit (×)"));
             EditorGUILayout.Slider(data.FindProperty("edgeRounding"),0f,2f,new GUIContent("Eckenrundung (×)"));
+            EditorGUILayout.Slider(data.FindProperty("colliderInset"),0f,.3f,new GUIContent("Collider-Einzug (Kacheln)"));
         }, false);
         CollapsibleSection("map-rubble", "Wandkrümel", map ? map.GetComponent<UniformStoneAppearance>() : null, data =>
         {
@@ -1181,6 +1479,7 @@ public class GameplaySettingsWindow : EditorWindow
             case BlockType.GoldOre: return 14;
             case BlockType.PlatinumOre: return 15;
             case BlockType.DiamondOre: return 16;
+            case BlockType.UltroniumOre: return 17;
             default: return 90;
         }
     }
@@ -1268,10 +1567,10 @@ public class GameplaySettingsWindow : EditorWindow
 
     bool Foldout(string key, string title)
     {
-        bool expanded = expandedMapSections.Contains(key);
+        bool expanded = expandedSections.Contains(key);
         bool next = EditorGUILayout.Foldout(expanded, title, true, EditorStyles.foldoutHeader);
-        if (next) expandedMapSections.Add(key);
-        else expandedMapSections.Remove(key);
+        if (next) expandedSections.Add(key);
+        else expandedSections.Remove(key);
         return next;
     }
 
@@ -1327,6 +1626,16 @@ public class GameplaySettingsWindow : EditorWindow
         if (EditorGUI.EndChangeCheck() && Finite(value)) property.floatValue = Mathf.Clamp(value, min, max);
     }
 
+    static void SwayMultiplier(SerializedObject data, string name, string label)
+    {
+        var property = data.FindProperty(name);
+        if (property == null) { Missing("Feld nicht gefunden: " + name); return; }
+        EditorGUI.BeginChangeCheck();
+        float value = EditorGUILayout.FloatField(label, property.floatValue * 100f);
+        if (EditorGUI.EndChangeCheck() && Finite(value))
+            property.floatValue = Mathf.Clamp(value / 100f, 0f, 10f);
+    }
+
     static void Integer(SerializedObject data, string name, string label, string tooltip, int min, int max)
     {
         var property = data.FindProperty(name);
@@ -1350,6 +1659,30 @@ public class GameplaySettingsWindow : EditorWindow
 
     static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
+    void MiningHitOffset(SerializedObject data)
+    {
+        var property = data.FindProperty("miningHitOffsetMs");
+        if (property == null) { Missing("Feld nicht gefunden: miningHitOffsetMs"); return; }
+
+        bool hasDebugOverride = GameplayTestSettings.HasMiningHitOffsetOverride;
+        float effectiveValue = hasDebugOverride
+            ? GameplayTestSettings.ConfiguredMiningHitOffsetMs
+            : property.floatValue;
+        EditorGUI.BeginChangeCheck();
+        float value = EditorGUILayout.FloatField("Treffer-Versatz (ms)", effectiveValue);
+        bool changed = EditorGUI.EndChangeCheck();
+
+        if (hasDebugOverride && !EditorApplication.isPlayingOrWillChangePlaymode && property.floatValue != effectiveValue)
+            property.floatValue = effectiveValue;
+
+        if (!changed || !Finite(value)) return;
+        value = Mathf.Clamp(value, -500f, 500f);
+        property.floatValue = value;
+        GameplayTestSettings.SetMiningHitOffset(value);
+        if (!GameplayTestSettings.Save(out string error)) notification = error;
+        else notification = "Treffer-Versatz für Debug und Szene gespeichert.";
+    }
+
     static void Apply(SerializedObject data)
     {
         if (!data.ApplyModifiedProperties()) return;
@@ -1358,6 +1691,13 @@ public class GameplaySettingsWindow : EditorWindow
             if (component is SurfaceTallGrass grass && !Application.isPlaying) grass.Rebuild();
             PrefabUtility.RecordPrefabInstancePropertyModifications(component);
             EditorSceneManager.MarkSceneDirty(component.gameObject.scene);
+            if (component is SkyController sky)
+            {
+                var mode = sky.automaticCycle ? GameplayDayNightMode.Automatic :
+                    sky.IsNight ? GameplayDayNightMode.Night : GameplayDayNightMode.Day;
+                if (!GameplayTestSettings.SetDayNightMode(mode, out string error))
+                    Debug.LogError("Tag-/Nachtmodus konnte nicht mit dem F1-Debugwert synchronisiert werden: " + error, sky);
+            }
         }
     }
 

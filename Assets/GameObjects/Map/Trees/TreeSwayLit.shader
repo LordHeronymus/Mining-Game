@@ -4,6 +4,8 @@ Shader "Mining Game/Tree Sway Lit"
     {
         _MainTex("Diffuse", 2D) = "white" {}
         _MaskTex("Mask", 2D) = "white" {}
+        [HideInInspector] _LeafMaskTex("Leaf Mask", 2D) = "black" {}
+        [HideInInspector] _LeafAlpha("Leaf Alpha", Range(0,1)) = 1
         [MaterialToggle] _ZWrite("ZWrite", Float) = 0
         [HideInInspector] _Color("Tint", Color) = (1,1,1,1)
         [HideInInspector] _RendererColor("RendererColor", Color) = (1,1,1,1)
@@ -69,6 +71,8 @@ Shader "Mining Game/Tree Sway Lit"
             UNITY_TEXTURE_STREAMING_DEBUG_VARS_FOR_TEX(_MainTex);
             TEXTURE2D(_MaskTex);
             SAMPLER(sampler_MaskTex);
+            TEXTURE2D(_LeafMaskTex);
+            SAMPLER(sampler_LeafMaskTex);
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
@@ -79,6 +83,7 @@ Shader "Mining Game/Tree Sway Lit"
                 float _SwayImpact;
                 float _SwayStrength;
                 float _ReachGlow;
+                float _LeafAlpha;
                 half4 _ReachGlowColor;
             CBUFFER_END
 
@@ -135,6 +140,10 @@ Shader "Mining Game/Tree Sway Lit"
             half4 TreeFragment(Varyings i) : SV_Target
             {
                 half4 main = i.color * SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+                half2 leafMask = SAMPLE_TEXTURE2D(_LeafMaskTex, sampler_LeafMaskTex, i.uv).rg;
+                half innerAlpha = pow(saturate(_LeafAlpha), 0.35);
+                half crownAlpha = lerp(innerAlpha, saturate(_LeafAlpha), saturate(leafMask.g));
+                main.a *= lerp(1, crownAlpha, saturate(leafMask.r));
                 half pulse = 0.82 + 0.18 * sin(_Time.y * 2.2 + _SwayPhase);
                 half trunk = 1 - smoothstep(0.18, 0.42, i.treeHeight);
                 half glow = saturate(_ReachGlow * 0.17 * pulse * trunk);
@@ -181,6 +190,8 @@ Shader "Mining Game/Tree Sway Lit"
 
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
+            TEXTURE2D(_LeafMaskTex);
+            SAMPLER(sampler_LeafMaskTex);
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
@@ -191,6 +202,7 @@ Shader "Mining Game/Tree Sway Lit"
                 float _SwayImpact;
                 float _SwayStrength;
                 float _ReachGlow;
+                float _LeafAlpha;
                 half4 _ReachGlowColor;
             CBUFFER_END
 
@@ -228,6 +240,10 @@ Shader "Mining Game/Tree Sway Lit"
             half4 ForwardFragment(Varyings i) : SV_Target
             {
                 half4 main = i.color * SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+                half2 leafMask = SAMPLE_TEXTURE2D(_LeafMaskTex, sampler_LeafMaskTex, i.uv).rg;
+                half innerAlpha = pow(saturate(_LeafAlpha), 0.35);
+                half crownAlpha = lerp(innerAlpha, saturate(_LeafAlpha), saturate(leafMask.g));
+                main.a *= lerp(1, crownAlpha, saturate(leafMask.r));
                 half pulse = 0.82 + 0.18 * sin(_Time.y * 2.2 + _SwayPhase);
                 half trunk = 1 - smoothstep(0.18, 0.42, i.treeHeight);
                 half glow = saturate(_ReachGlow * 0.17 * pulse * trunk);

@@ -41,10 +41,11 @@ public sealed class MoonlightController : MonoBehaviour
     public void Refresh()
     {
         if (!sky || !background || !daylight || !moonlight) return;
-        daylight.enabled = GameplayTestSettings.GlobalLighting;
-        float blend = sky.isActiveAndEnabled ? sky.NightBlend : 0f;
-        daylight.intensity = Mathf.Lerp(dayIntensity, nightAmbient, blend);
-        daylight.color = Color.Lerp(daylightColor, moonColor, blend);
+        bool fullGlobalLighting = GameplayTestSettings.GlobalLighting;
+        float blend = fullGlobalLighting ? 0f : sky.isActiveAndEnabled ? sky.NightBlend : 0f;
+        daylight.enabled = true;
+        daylight.intensity = fullGlobalLighting ? 1f : Mathf.Lerp(dayIntensity, nightAmbient, blend);
+        daylight.color = fullGlobalLighting ? Color.white : Color.Lerp(daylightColor, moonColor, blend);
         moonlight.intensity = 0f;
         staleHalos.Clear();
         foreach (var pair in halos)
@@ -53,6 +54,13 @@ public sealed class MoonlightController : MonoBehaviour
             pair.Value.enabled = false;
         }
         foreach (var key in staleHalos) halos.Remove(key);
+        if (fullGlobalLighting)
+        {
+            foreach (var entry in background.layers)
+                if (entry.layer && entry.layer != skyLayer)
+                    entry.layer.LightingTint = Color.white;
+            return;
+        }
         float closest = float.PositiveInfinity;
         Camera camera = background.RenderCamera;
         foreach (var day in skyLayer.Renderers)

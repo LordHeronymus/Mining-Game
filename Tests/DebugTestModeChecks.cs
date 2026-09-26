@@ -17,7 +17,8 @@ public static class DebugTestModeChecks
         var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement>();
         var collider = player.GetComponent<Collider2D>();
         var lighting = UnityEngine.Object.FindFirstObjectByType<MoonlightController>();
-        Check(player && collider && lighting && lighting.daylight, "Player or global light is missing.");
+        var mapLighting = UnityEngine.Object.FindFirstObjectByType<MapLighting>();
+        Check(player && collider && lighting && lighting.daylight && mapLighting, "Player or global light is missing.");
 
         try
         {
@@ -28,14 +29,17 @@ public static class DebugTestModeChecks
             lighting.Refresh();
             Check(!collider.enabled, "No Clip did not disable the player collider.");
             Check(player.IsFlying, "No Clip did not enable free movement.");
-            Check(!lighting.daylight.enabled, "Global Lighting did not disable the global light.");
+            Check(lighting.daylight.enabled, "Disabling Global Lighting unexpectedly disabled the scene light.");
 
             Check(GameplayTestSettings.SetMode(GameplayTestMode.NoClip, false, out error), error);
             Check(GameplayTestSettings.SetMode(GameplayTestMode.GlobalLighting, true, out error), error);
             await WaitFrames(3);
             lighting.Refresh();
             Check(collider.enabled, "Player collider was not restored.");
-            Check(lighting.daylight.enabled, "Global light was not restored.");
+            Check(lighting.daylight.enabled && Mathf.Approximately(lighting.daylight.intensity, 1f),
+                "Global Lighting did not set the scene light to full intensity.");
+            Check(mapLighting.GetBrightness(Vector3Int.zero) >= 1f,
+                "Global Lighting did not fully illuminate every map cell.");
             return new { passed = true, noClip = true, globalLighting = true, persisted = !GameplayTestSettings.HasUnsavedChanges };
         }
         finally

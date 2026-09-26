@@ -27,6 +27,13 @@ public enum SoundType
     ItemInBag = 17,
     DryGrass = 18,
     TreeFall = 19,
+    DigDeepStone = 21,
+    LadderRemove = 20,
+    StoneBreak = 22,
+    ClayBreak = 23,
+    Hurt = 24,
+    BoneBreaking1 = 25,
+    Death = 26,
 }
 
 [System.Serializable]
@@ -37,6 +44,14 @@ public class Sound
     public AudioClip[] variants;
     [Range(0f, 1f)] public float volume = 1f;
     [Range(0f, 3f)] public float pitch = 1f;
+}
+
+[System.Serializable]
+public sealed class LayerMiningClipTuning
+{
+    [Range(0f, 1f)] public float volume = 1f;
+    [Range(.5f, 2f)] public float pitch = 1f;
+    [Range(0f, .5f)] public float pitchSpread = .05f;
 }
 
 public class AudioManager : MonoBehaviour
@@ -54,7 +69,9 @@ public class AudioManager : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float caveVolume = 1f;
     [SerializeField, Range(0f, 1f)] float digSoundVolume = 1f;
     [SerializeField, Range(0f, 1f)] float dingLightVolume = 1f;
+    [SerializeField, Range(0f, 1f)] float lowHealthHeartbeatVolume = 0.65f;
     [SerializeField, Range(-10f, 10f)] float dingLightOffsetSeconds;
+    [SerializeField] LayerMiningAudioSettingsAsset layerMiningSettings;
 
     [SerializeField, Range(-1f, 1f)] float grassLandingOffset = -.08f;
 
@@ -124,10 +141,26 @@ public class AudioManager : MonoBehaviour
     List<AudioSource> pool = new();
     readonly List<(AudioSource source, AudioClip clip)> activeCraftingSounds = new();
     readonly Dictionary<AudioSource, (float volume, AmbienceType type)> ambienceSources = new();
+    readonly Dictionary<string, LayerMiningClipTuning> layerMiningTuning = new();
     Dictionary<SoundType, Sound> soundLookup = new Dictionary<SoundType, Sound>();
     AudioClip[] frogCroaks;
     AudioClip grassLanding;
+    AudioSource lowHealthHeartbeatSource;
+    Coroutine lowHealthHeartbeatFade;
+    bool lowHealthHeartbeatRequested;
+    float nextLowHealthHeartbeatTime;
+    const float LowHealthHeartbeatPitchSpread = .02f;
     readonly System.Random ambienceRandom = new System.Random();
+
+    LayerMiningAudioSettingsAsset LayerMiningSettings
+    {
+        get
+        {
+            if (!layerMiningSettings)
+                layerMiningSettings = Resources.Load<LayerMiningAudioSettingsAsset>("Audio/LayerMiningAudioSettings");
+            return layerMiningSettings;
+        }
+    }
 
     public AudioClip GetRandomFrogCroak()
     {
@@ -167,7 +200,106 @@ public class AudioManager : MonoBehaviour
         Instance = this; DontDestroyOnLoad(gameObject);
         for (int i = 0; i < initialPoolSize; i++) ExtendPool();
 
+        var heartbeatClip = Resources.Load<AudioClip>("Audio/SingleHeartBeat");
+        if (heartbeatClip)
+        {
+            lowHealthHeartbeatSource = gameObject.AddComponent<AudioSource>();
+            lowHealthHeartbeatSource.playOnAwake = false;
+            lowHealthHeartbeatSource.loop = false;
+            lowHealthHeartbeatSource.spatialBlend = 0f;
+            lowHealthHeartbeatSource.volume = Mathf.Clamp01(lowHealthHeartbeatVolume);
+            lowHealthHeartbeatSource.clip = heartbeatClip;
+        }
+
         foreach (var s in sounds) soundLookup[s.type] = s;
+        if (!soundLookup.ContainsKey(SoundType.BoneBreaking1))
+        {
+            var boneBreakingClip = Resources.Load<AudioClip>("Audio/BoneBreaking_01");
+            if (boneBreakingClip)
+                soundLookup[SoundType.BoneBreaking1] = new Sound
+                {
+                    type = SoundType.BoneBreaking1,
+                    clip = boneBreakingClip,
+                    volume = 1f,
+                    pitch = 1f
+                };
+        }
+        if (!soundLookup.ContainsKey(SoundType.Death))
+        {
+            var deathClip = Resources.Load<AudioClip>("Audio/Hurt2");
+            if (deathClip)
+                soundLookup[SoundType.Death] = new Sound
+                {
+                    type = SoundType.Death,
+                    clip = deathClip,
+                    volume = 1f,
+                    pitch = 1f
+                };
+        }
+    }
+
+    public bool TryGetLowHealthHeartbeatPlayback(out float positionSeconds, out float durationSeconds)
+    {
+        positionSeconds = durationSeconds = 0f;
+        if (!lowHealthHeartbeatRequested || !lowHealthHeartbeatSource ||
+            !lowHealthHeartbeatSource.isPlaying || !lowHealthHeartbeatSource.clip) return false;
+        var clip = lowHealthHeartbeatSource.clip;
+        positionSeconds = lowHealthHeartbeatSource.timeSamples / (float)clip.frequency;
+        durationSeconds = clip.length;
+        return true;
+    }
+
+    public void SetLowHealthHeartbeat(bool playing)
+    {
+        if (!lowHealthHeartbeatSource) return;
+        if (playing)
+        {
+            if (!lowHealthHeartbeatRequested) nextLowHealthHeartbeatTime = Time.unscaledTime;
+            lowHealthHeartbeatRequested = true;
+            if (lowHealthHeartbeatFade != null)
+            {
+                StopCoroutine(lowHealthHeartbeatFade);
+                lowHealthHeartbeatFade = null;
+            }
+            lowHealthHeartbeatSource.volume = Mathf.Clamp01(lowHealthHeartbeatVolume);
+            if (Time.unscaledTime >= nextLowHealthHeartbeatTime)
+            {
+                lowHealthHeartbeatSource.Stop();
+                lowHealthHeartbeatSource.pitch = Random.Range(
+                    1f - LowHealthHeartbeatPitchSpread, 1f + LowHealthHeartbeatPitchSpread);
+                lowHealthHeartbeatSource.Play();
+                float interval = StatsManager.Instance
+                    ? Mathf.Clamp(StatsManager.Instance.heartbeatFlashIntervalSeconds, .1f, 5f)
+                    : 1.2f;
+                nextLowHealthHeartbeatTime = Time.unscaledTime + interval;
+            }
+        }
+        else if (lowHealthHeartbeatRequested)
+        {
+            lowHealthHeartbeatRequested = false;
+            if (lowHealthHeartbeatFade != null) StopCoroutine(lowHealthHeartbeatFade);
+            lowHealthHeartbeatFade = StartCoroutine(FadeOutLowHealthHeartbeat());
+        }
+    }
+
+    System.Collections.IEnumerator FadeOutLowHealthHeartbeat()
+    {
+        float startVolume = lowHealthHeartbeatSource.volume;
+        const float fadeDuration = 1f;
+        float elapsed = 0f;
+        while (elapsed < fadeDuration && lowHealthHeartbeatSource && !lowHealthHeartbeatRequested)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            lowHealthHeartbeatSource.volume = startVolume * (1f - Mathf.Clamp01(elapsed / fadeDuration));
+            yield return null;
+        }
+
+        if (lowHealthHeartbeatSource && !lowHealthHeartbeatRequested)
+        {
+            lowHealthHeartbeatSource.Stop();
+            lowHealthHeartbeatSource.volume = Mathf.Clamp01(lowHealthHeartbeatVolume);
+        }
+        lowHealthHeartbeatFade = null;
     }
 
     AudioSource GetFreeSource()
@@ -213,6 +345,77 @@ public class AudioManager : MonoBehaviour
             return false;
         }
         return sound.clip;
+    }
+
+    public int GetSoundClipCount(SoundType type)
+    {
+        if (!soundLookup.TryGetValue(type, out var sound)) return 0;
+        return sound.variants != null && sound.variants.Length > 0 ? sound.variants.Length : 1;
+    }
+
+    public AudioClip GetSoundClip(SoundType type, int clipIndex)
+    {
+        if (!soundLookup.TryGetValue(type, out var sound)) return null;
+        if (sound.variants != null && sound.variants.Length > 0)
+            return clipIndex >= 0 && clipIndex < sound.variants.Length ? sound.variants[clipIndex] : null;
+        return clipIndex == 0 ? sound.clip : null;
+    }
+
+    public LayerMiningClipTuning GetLayerMiningClipTuning(int layerIndex, bool breaking,
+        SoundType type, int clipIndex)
+    {
+        var settings = LayerMiningSettings;
+        if (settings) return settings.GetOrCreate(layerIndex, breaking, type, clipIndex);
+
+        string key = $"{layerIndex}:{(breaking ? 1 : 0)}:{(int)type}:{clipIndex}";
+        if (!layerMiningTuning.TryGetValue(key, out var tuning))
+        {
+            tuning = new LayerMiningClipTuning();
+            layerMiningTuning.Add(key, tuning);
+        }
+        return tuning;
+    }
+
+    public void SetLayerMiningClipTuning(int layerIndex, bool breaking, SoundType type, int clipIndex,
+        float volume, float pitch, float pitchSpread)
+    {
+        var tuning = GetLayerMiningClipTuning(layerIndex, breaking, type, clipIndex);
+        tuning.volume = Mathf.Clamp01(volume);
+        tuning.pitch = Mathf.Clamp(pitch, .5f, 2f);
+        tuning.pitchSpread = Mathf.Clamp(pitchSpread, 0f, .5f);
+
+#if UNITY_EDITOR
+        var settings = LayerMiningSettings;
+        if (settings)
+        {
+            UnityEditor.EditorUtility.SetDirty(settings);
+            UnityEditor.AssetDatabase.SaveAssetIfDirty(settings);
+        }
+#endif
+    }
+
+    public void PlayLayerMiningSound(int layerIndex, SoundType type, bool breaking)
+    {
+        if (!soundLookup.TryGetValue(type, out var sound)) return;
+        int clipCount = GetSoundClipCount(type);
+        if (clipCount <= 0) return;
+
+        int clipIndex = clipCount == 1 ? 0 : Random.Range(0, clipCount);
+        AudioClip clip = GetSoundClip(type, clipIndex);
+        if (!clip) return;
+
+        var tuning = GetLayerMiningClipTuning(layerIndex, breaking, type, clipIndex);
+        var source = GetFreeSource();
+        if (!source) return;
+        ambienceSources.Remove(source);
+        float pitch = Mathf.Max(.01f, sound.pitch) * Mathf.Clamp(tuning.pitch, .5f, 2f);
+        float spread = Mathf.Clamp01(tuning.pitchSpread);
+        source.pitch = Mathf.Clamp(pitch * Random.Range(1f - spread, 1f + spread), .1f, 3f);
+        source.clip = clip;
+        source.volume = sound.volume * Mathf.Clamp01(tuning.volume) *
+            (IsDigSound(type) ? digSoundVolume : 1f);
+        source.panStereo = 0f;
+        source.Play();
     }
 
     public AudioSource TryPlayCraftingSound(bool dispersion = false)
@@ -319,6 +522,6 @@ public class AudioManager : MonoBehaviour
         return type is SoundType.DigSoft or SoundType.DigMedium or SoundType.DigHard or
             SoundType.DigOre or SoundType.BreakRock or SoundType.BreakOre or
             SoundType.DigDirt or SoundType.DigTransitionStone or SoundType.DigStone or
-            SoundType.DirtHit;
+            SoundType.DirtHit or SoundType.DigDeepStone or SoundType.StoneBreak or SoundType.ClayBreak;
     }
 }

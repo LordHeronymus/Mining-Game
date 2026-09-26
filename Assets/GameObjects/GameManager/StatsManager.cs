@@ -14,6 +14,22 @@ public class StatsManager : MonoBehaviour
     public float JumpHeightBlocks => baseStats.jumpHeightBlocks;
     public float MiningSpeedMultiplier { get; set; } = 1f;
     public float MiningSpeed => GameplaySettings.BaseDiggingSpeed * MiningSpeedMultiplier * GameplayTestSettings.DiggingMultiplier;
+    [Header("Health")]
+    [Min(1f)] public float initialHealth = 100f;
+    [Min(0f)] public float fallDamageHeightBlocks = 3f;
+    [Min(0f)] public float fallDamageBase = 5f;
+    [Min(1f)] public float fallDamageExponent = 1.5f;
+    [Min(0f)] public float healthRegenPerSecond = 2f;
+    [Min(0f)] public float healthRegenDelay = 3f;
+    [Range(0f, 1f)] public float healthRegenLimitFraction = 0.5f;
+    [Range(0f, 1f)] public float bloodEdgeIntensity = 1f;
+    [Min(.1f)] public float heartbeatFlashIntervalSeconds = 1.2f;
+    [Range(-1f, 1f)] public float heartbeatFlashOffsetSeconds = .12f;
+    public float MaxHealth => Mathf.Max(1f, initialHealth);
+    public float Health { get; private set; }
+    public event Action<float, float> OnHealthChanged;
+    float lastHealthDamageTime;
+    bool lowHealthHeartbeatActive;
     // Future damage handlers must respect this gate before applying damage.
     public bool IsInvulnerable => GameplayTestSettings.GodMode;
     public bool CanTakeDamage => !IsInvulnerable;
@@ -47,6 +63,11 @@ public class StatsManager : MonoBehaviour
 
     void Start()
     {
+        ResetRun();
+    }
+
+    public void ResetRun()
+    {
         Reset();
         var inventory = InventoryManager.Instance;
         if (inventory)
@@ -61,6 +82,55 @@ public class StatsManager : MonoBehaviour
         }
     }
 
+    void Update()
+    {
+        float healthFraction = Health / MaxHealth;
+        if (healthFraction < 0.2f) lowHealthHeartbeatActive = true;
+        else if (healthFraction > 0.2f) lowHealthHeartbeatActive = false;
+        AudioManager.Instance?.SetLowHealthHeartbeat(lowHealthHeartbeatActive);
+
+
+        float regenerationLimit = MaxHealth * Mathf.Clamp01(healthRegenLimitFraction);
+        if (healthRegenPerSecond <= 0f || Health >= regenerationLimit ||
+            Time.time - lastHealthDamageTime < Mathf.Max(0f, healthRegenDelay)) return;
+
+        float nextHealth = Mathf.Min(regenerationLimit, Health + healthRegenPerSecond * Time.deltaTime);
+        if (Mathf.Approximately(nextHealth, Health)) return;
+        Health = nextHealth;
+        OnHealthChanged?.Invoke(Health, MaxHealth);
+    }
+
+    public bool ApplyDamage(float amount)
+    {
+        if (!CanTakeDamage || Health <= 0f || !(amount > 0f) || float.IsNaN(amount) || float.IsInfinity(amount))
+            return false;
+
+        float nextHealth = Mathf.Max(0f, Health - amount);
+        if (Mathf.Approximately(nextHealth, Health)) return false;
+        Health = nextHealth;
+        lastHealthDamageTime = Time.time;
+        AudioManager.Instance?.Play(Health <= 0f ? SoundType.Death : SoundType.Hurt);
+        OnHealthChanged?.Invoke(Health, MaxHealth);
+        return true;
+    }
+
+    public void SetHealthForDebug(float value)
+    {
+        if (float.IsNaN(value) || float.IsInfinity(value)) return;
+        float nextHealth = Mathf.Clamp(value, 0f, MaxHealth);
+        if (Mathf.Approximately(nextHealth, Health)) return;
+        if (nextHealth < Health) lastHealthDamageTime = Time.time;
+        Health = nextHealth;
+        OnHealthChanged?.Invoke(Health, MaxHealth);
+    }
+
+    public static float CalculateFallDamage(float fallHeightBlocks, float damageHeightBlocks,
+        float baseDamage, float exponent)
+    {
+        float excessHeight = Mathf.Max(0f, fallHeightBlocks - Mathf.Max(0f, damageHeightBlocks));
+        if (excessHeight <= 0f || baseDamage <= 0f) return 0f;
+        return baseDamage * Mathf.Pow(excessHeight, Mathf.Max(1f, exponent));
+    }
     void HandlePoints(Vector2 pos, int points)
     {
         Points += points;
@@ -86,5 +156,8 @@ public class StatsManager : MonoBehaviour
         MiningSpeedMultiplier = 1f;
         Reach = baseStats.reach;
         MaxEnergy = baseStats.maxEnergy;
+        Health = MaxHealth;
+        lastHealthDamageTime = Time.time;
+        OnHealthChanged?.Invoke(Health, MaxHealth);
     }
 }

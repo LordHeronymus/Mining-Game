@@ -120,7 +120,12 @@ public sealed class OreSparkles : MonoBehaviour
     float SparkleLightFactor(Vector3Int cell)
     {
         if (!lighting || !lighting.isActiveAndEnabled || !lighting.lightingEnabled) return 1f;
-        return Mathf.Clamp01(lighting.GetBrightness(cell) / .7f);
+        float brightest = Mathf.Max(
+            lighting.GetBrightness(cell + Vector3Int.up),
+            lighting.GetBrightness(cell + Vector3Int.down));
+        brightest = Mathf.Max(brightest, lighting.GetBrightness(cell + Vector3Int.left));
+        brightest = Mathf.Max(brightest, lighting.GetBrightness(cell + Vector3Int.right));
+        return Mathf.Clamp01(brightest / .7f);
     }
 
     bool CanSparkle(Vector3Int cell) => IsOre(map.GetBlockAt(cell));
@@ -138,8 +143,14 @@ public sealed class OreSparkles : MonoBehaviour
         appliedBrightness = value;
     }
 
-    float IntervalFor(Vector3Int cell) => Mathf.Max(lifetime + .15f, intervalPerBlock) *
-        Mathf.Lerp(Mathf.Max(1f, darkIntervalMultiplier), 1f, SparkleLightFactor(cell));
+    float IntervalFor(Vector3Int cell)
+    {
+        var block = map.GetBlockAt(cell);
+        if (block && block.id == BlockType.UltroniumOre)
+            return Mathf.Max(.15f, intervalPerBlock * .22f);
+        return Mathf.Max(.1f, intervalPerBlock) *
+            Mathf.Lerp(Mathf.Max(1f, darkIntervalMultiplier), 1f, SparkleLightFactor(cell));
+    }
 
     public static bool IsOre(Block block) => block && (block.HasOreOverlays || block.id == BlockType.IronOre ||
         block.id == BlockType.CopperOre || block.id == BlockType.SilverOre || block.id == BlockType.GoldOre ||
@@ -147,6 +158,7 @@ public sealed class OreSparkles : MonoBehaviour
 
     public static Color GetOreColor(BlockType type) =>
         type == BlockType.DiamondOre ? new Color(.49f, .91f, .95f) :
+        type == BlockType.UltroniumOre ? new Color(.45f, .28f, 1f) :
         type == BlockType.Coal ? new Color(.22f, .23f, .25f) :
         type == BlockType.PlatinumOre ? new Color(.88f, .85f, .75f) :
         type == BlockType.GoldOre ? new Color(1f, .76f, .16f) :
@@ -209,7 +221,7 @@ public sealed class OreSparkles : MonoBehaviour
             queue.Remove(item);
             EmitCell(cell, block);
             free--;
-            item.due = now + Mathf.Max(lifetime + .15f, IntervalFor(cell) * (.8f + (float)random.NextDouble() * .4f));
+            item.due = now + IntervalFor(cell);
             queue.Add(item);
         }
     }
@@ -222,17 +234,23 @@ public sealed class OreSparkles : MonoBehaviour
             Vector3 position = center + tiles.transform.TransformVector(localOffset);
             Color oreColor = GetOreColor(block.id);
             Color tint = Color.Lerp(Color.white, oreColor, oreColorStrength);
+            bool ultronium = block.id == BlockType.UltroniumOre;
             float brightness = lighting && lighting.isActiveAndEnabled && lighting.lightingEnabled
                 ? lighting.GetBrightness(cell) : 1f;
             // A small self-visible glint remains even when the terrain is completely black.
-            tint.a = opacity * Mathf.Sqrt(Mathf.Lerp(.12f, 1f, Mathf.Clamp01(brightness)));
+            tint.a = ultronium ? opacity :
+                opacity * Mathf.Sqrt(Mathf.Lerp(.12f, 1f, Mathf.Clamp01(brightness)));
             float cellSize = Mathf.Min(
                 tiles.transform.TransformVector(Vector3.right * tiles.layoutGrid.cellSize.x).magnitude,
                 tiles.transform.TransformVector(Vector3.up * tiles.layoutGrid.cellSize.y).magnitude);
             particles.Emit(new ParticleSystem.EmitParams {
-                position = position, startColor = tint, startLifetime = Mathf.Max(.1f, lifetime),
-                startSize = size * cellSize * (.75f + (float)random.NextDouble() * .5f),
-                rotation = (float)random.NextDouble() * 40f - 20f, velocity = Vector3.zero
+                position = position, startColor = tint,
+                startLifetime = Mathf.Max(.1f, lifetime * (ultronium ? 1.45f : 1f)),
+                startSize = size * cellSize * (ultronium ? .18f + (float)random.NextDouble() * .16f :
+                    .75f + (float)random.NextDouble() * .5f),
+                rotation = (float)random.NextDouble() * 40f - 20f,
+                velocity = ultronium ? new Vector3(((float)random.NextDouble()-.5f)*.035f,
+                    .025f+(float)random.NextDouble()*.045f,0) : Vector3.zero
             }, 1);
     }
 

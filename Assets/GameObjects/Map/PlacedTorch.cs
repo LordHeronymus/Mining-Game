@@ -12,6 +12,7 @@ public sealed class PlacedTorch : MonoBehaviour
 
     MapGenerator map;
     Vector3Int cell;
+    ItemSO item;
     public static IEnumerable<PlacedTorch> Active => active;
     public MapGenerator OwnerMap => map;
     public Vector2 LightPosition => transform.position + new Vector3(.18f, .65f, 0f);
@@ -45,6 +46,27 @@ public sealed class PlacedTorch : MonoBehaviour
     }
 
     void OnMapGenerated() => Destroy(gameObject);
+
+    public static bool TryRemoveAt(Vector2 worldPoint, Vector2 playerPosition, float reach)
+    {
+        var inventory = InventoryManager.Instance;
+        if (!Application.isPlaying || GameplayInputBlocker.IsBlocked || !inventory) return false;
+        foreach (var torch in active)
+        {
+            if (!torch || !torch.map || !torch.item) continue;
+            var renderer = torch.GetComponent<SpriteRenderer>();
+            if (!renderer) continue;
+            var bounds = renderer.bounds;
+            if (worldPoint.x < bounds.min.x || worldPoint.x > bounds.max.x ||
+                worldPoint.y < bounds.min.y || worldPoint.y > bounds.max.y ||
+                Vector2.Distance(playerPosition, torch.map.Terrain.GetCellCenterWorld(torch.cell)) > reach ||
+                inventory.GetCount(torch.item) == int.MaxValue) continue;
+            inventory.Add(torch.item);
+            Destroy(torch.gameObject);
+            return true;
+        }
+        return false;
+    }
 
     public static bool TryPlace(MapGenerator map, ItemSO item, Vector2 worldPoint, Vector2 playerPosition, float reach)
     {
@@ -85,6 +107,7 @@ public sealed class PlacedTorch : MonoBehaviour
         var torch = instance.AddComponent<PlacedTorch>();
         torch.map = map;
         torch.cell = target;
+        torch.item = item;
         var light = instance.AddComponent<Light2D>();
         light.lightType = Light2D.LightType.Point;
         light.color = new Color(1f, .58f, .24f, 1f);

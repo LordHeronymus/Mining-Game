@@ -18,6 +18,11 @@ public static class OreVeins
         {
             var ore = blocks[start];
             if (visited[start] || !ore || !ore.HasOreOverlays || (onlyOre && ore != onlyOre)) continue;
+            if (ore.id == BlockType.UltroniumOre)
+            {
+                visited[start] = true;
+                continue;
+            }
             int head = 0, tail = 0;
             queue[tail++] = start;
             visited[start] = true;

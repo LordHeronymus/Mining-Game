@@ -89,7 +89,7 @@ public class GameplayDebugPanel : MonoBehaviour
     public void Close()
     {
         var window = GetComponent<GameplayDebugWindow>();
-        if (window && window.IsTestTab) { if (!window.ApplyTestInput()) return; }
+        if (window && (window.IsTestTab || window.IsMiscTab)) { if (!window.ApplyTestInput()) return; }
         else if (window && window.IsIconTab) { if (!window.CommitIconInputs()) return; }
         else if (window && window.IsRecipeTab) { if (!window.CommitRecipeInputs()) return; }
         else if (window && window.IsStartingResourcesTab) { if (!window.CommitStartingResources()) return; }
@@ -164,6 +164,19 @@ public class GameplayDebugPanel : MonoBehaviour
             statusText.text = error;
             return false;
         }
+#if UNITY_EDITOR
+        string syncMessage = null;
+        if (Application.isPlaying && !GameplayDebugDefaults.QueueCurrent(out syncMessage))
+        {
+            statusText.text = syncMessage;
+            return false;
+        }
+        if (Application.isPlaying)
+        {
+            statusText.text = syncMessage;
+            return true;
+        }
+#endif
         statusText.text = GameplaySettings.LoadWarning ?? "";
         return true;
     }

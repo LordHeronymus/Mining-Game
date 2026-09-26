@@ -1,0 +1,7 @@
+Built-in ImageGen, transparent_background=true.
+
+Reference images: GrassCarpetSeamless.png for the existing painterly green foliage; the user's approved V2 edge concept for leaves that curl over the lip and hang down along the dirt wall.
+
+Generate one narrow vertical spray of individually readable green grass blades for the lip of a 2D cliff. Roots gather at the top of the sprite and long blades descend close to the same vertical line. Preserve the bright and deep green painterly style of the carpet. No clover, dirt, wall, scenery, glow or text. The non-leaf area should be transparent.
+
+Tests/InstallGrassEdgeDrop.cs removes residual low-alpha glow, creates GrassEdgeDrop.png, and installs mirrored left/right tiles. Both tiles use the same sprite and sit behind the existing carpet ends.

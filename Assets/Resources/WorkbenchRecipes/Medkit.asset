@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bd168b198ca49c4a82450a3ed868988, type: 3}
+  m_Name: Medkit
+  m_EditorClassIdentifier: 
+  category: 0
+  persistentId: 28895b05b2c365a41a0484da53675476
+  customCardIconLayout: 0
+  cardIconLayout:
+    scale: {x: 0, y: 0}
+    offset: {x: 0, y: 0}
+    flipX: 0
+    flipY: 0
+  output: {fileID: 11400000, guid: 1bcf1d7eb0479b7479685d533a3cb247, type: 2}
+  outputAmount: 1
+  pluralName: 
+  ingredients:
+  - item: {fileID: 11400000, guid: 78d75bc9805c4c7583d1240c6d325211, type: 2}
+    amount: 5
+  - item: {fileID: 11400000, guid: dd533ba7e1dad994b85859e613d42480, type: 2}
+    amount: 2

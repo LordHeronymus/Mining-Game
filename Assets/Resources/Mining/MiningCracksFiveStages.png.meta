@@ -1,0 +1,1180 @@
+fileFormatVersion: 2
+guid: 1740717f0fdf91741852aa34d3348c72
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3689002143695016729
+    second: MiningCracksFiveStages_0
+  - first:
+      213: 8537085914014772680
+    second: MiningCracksFiveStages_1
+  - first:
+      213: -6094746348017679669
+    second: MiningCracksFiveStages_2
+  - first:
+      213: -1529835486844218159
+    second: MiningCracksFiveStages_3
+  - first:
+      213: 3767082555548955680
+    second: MiningCracksFiveStages_4
+  - first:
+      213: 6230991172586687730
+    second: MiningCracksFiveStages_5
+  - first:
+      213: 2995108196322601389
+    second: MiningCracksFiveStages_6
+  - first:
+      213: 5505018605085943839
+    second: MiningCracksFiveStages_7
+  - first:
+      213: 5673356733283273702
+    second: MiningCracksFiveStages_8
+  - first:
+      213: 1260550438046313298
+    second: MiningCracksFiveStages_9
+  - first:
+      213: -7786999724692181212
+    second: MiningCracksFiveStages_10
+  - first:
+      213: -5882880473882024673
+    second: MiningCracksFiveStages_11
+  - first:
+      213: 1637732469488727256
+    second: MiningCracksFiveStages_12
+  - first:
+      213: 1708333101084188961
+    second: MiningCracksFiveStages_13
+  - first:
+      213: 2160178491956262858
+    second: MiningCracksFiveStages_14
+  - first:
+      213: -3564241455590969955
+    second: MiningCracksFiveStages_15
+  - first:
+      213: -535843080381672188
+    second: MiningCracksFiveStages_16
+  - first:
+      213: -2529993306942785379
+    second: MiningCracksFiveStages_17
+  - first:
+      213: -2485497754894454151
+    second: MiningCracksFiveStages_18
+  - first:
+      213: -3890546521313804217
+    second: MiningCracksFiveStages_19
+  - first:
+      213: -2314870434254372976
+    second: MiningCracksFiveStages_20
+  - first:
+      213: 8980189550584495097
+    second: MiningCracksFiveStages_21
+  - first:
+      213: 8481634723720472029
+    second: MiningCracksFiveStages_22
+  - first:
+      213: 5616917999747045556
+    second: MiningCracksFiveStages_23
+  - first:
+      213: 7497788406556893140
+    second: MiningCracksFiveStages_24
+  - first:
+      213: 3645262587987256224
+    second: MiningCracksFiveStages_25
+  - first:
+      213: -7763117500554518733
+    second: MiningCracksFiveStages_26
+  - first:
+      213: -7540582148039266899
+    second: MiningCracksFiveStages_27
+  - first:
+      213: 7898641725078297573
+    second: MiningCracksFiveStages_28
+  - first:
+      213: -6731435804419236086
+    second: MiningCracksFiveStages_29
+  - first:
+      213: -660388960332528535
+    second: MiningCracksFiveStages_30
+  - first:
+      213: 6470882639699630923
+    second: MiningCracksFiveStages_31
+  - first:
+      213: -3331259865544882860
+    second: MiningCracksFiveStages_32
+  - first:
+      213: 6124238585944039737
+    second: MiningCracksFiveStages_33
+  - first:
+      213: 4680342671836014828
+    second: MiningCracksFiveStages_34
+  - first:
+      213: 1764696810221884235
+    second: MiningCracksFiveStages_35
+  - first:
+      213: 8271876118487871787
+    second: MiningCracksFiveStages_36
+  - first:
+      213: -4156425371714464275
+    second: MiningCracksFiveStages_37
+  - first:
+      213: -1469827908156450852
+    second: MiningCracksFiveStages_38
+  - first:
+      213: -121737509859646237
+    second: MiningCracksFiveStages_39
+  - first:
+      213: 6562405697264165162
+    second: MiningCracksFiveStages_40
+  - first:
+      213: 357591835293560015
+    second: MiningCracksFiveStages_41
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_0
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 961
+        width: 23
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 913989e87e7f13330800000000000000
+      internalID: 3689002143695016729
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_1
+      rect:
+        serializedVersion: 2
+        x: 246
+        y: 931
+        width: 11
+        height: 39
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8cd67d94862d97670800000000000000
+      internalID: 8537085914014772680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_2
+      rect:
+        serializedVersion: 2
+        x: 254
+        y: 959
+        width: 17
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc20c42ec7c1b6ba0800000000000000
+      internalID: -6094746348017679669
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_3
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 905
+        width: 97
+        height: 53
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d41dd9eabee4cae0800000000000000
+      internalID: -1529835486844218159
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_4
+      rect:
+        serializedVersion: 2
+        x: 736
+        y: 957
+        width: 92
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 024f01b10ad574430800000000000000
+      internalID: 3767082555548955680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_5
+      rect:
+        serializedVersion: 2
+        x: 820
+        y: 929
+        width: 97
+        height: 81
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2fccf90557de87650800000000000000
+      internalID: 6230991172586687730
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_6
+      rect:
+        serializedVersion: 2
+        x: 823
+        y: 946
+        width: 12
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da96ba92903c09920800000000000000
+      internalID: 2995108196322601389
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_7
+      rect:
+        serializedVersion: 2
+        x: 826
+        y: 961
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f1860162141c56c40800000000000000
+      internalID: 5505018605085943839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_8
+      rect:
+        serializedVersion: 2
+        x: 928
+        y: 53
+        width: 595
+        height: 941
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6eb8b63e3efcbbe40800000000000000
+      internalID: 5673356733283273702
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_9
+      rect:
+        serializedVersion: 2
+        x: 950
+        y: 791
+        width: 93
+        height: 195
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 25ba639d1ff5e7110800000000000000
+      internalID: 1260550438046313298
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_10
+      rect:
+        serializedVersion: 2
+        x: 826
+        y: 945
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 42f68a7f1050fe390800000000000000
+      internalID: -7786999724692181212
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_11
+      rect:
+        serializedVersion: 2
+        x: 444
+        y: 527
+        width: 471
+        height: 403
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f152e2ab06fcb5ea0800000000000000
+      internalID: -5882880473882024673
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_12
+      rect:
+        serializedVersion: 2
+        x: 970
+        y: 923
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d4bff001056ab610800000000000000
+      internalID: 1637732469488727256
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_13
+      rect:
+        serializedVersion: 2
+        x: 62
+        y: 482
+        width: 397
+        height: 426
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1212a2087e735b710800000000000000
+      internalID: 1708333101084188961
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_14
+      rect:
+        serializedVersion: 2
+        x: 918
+        y: 861
+        width: 29
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ac7fd70b4ee7afd10800000000000000
+      internalID: 2160178491956262858
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_15
+      rect:
+        serializedVersion: 2
+        x: 926
+        y: 879
+        width: 11
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d9d67c1c745498ec0800000000000000
+      internalID: -3564241455590969955
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_16
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 865
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 405df72be8d4098f0800000000000000
+      internalID: -535843080381672188
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_17
+      rect:
+        serializedVersion: 2
+        x: 462
+        y: 777
+        width: 21
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d983f87ed78a3ecd0800000000000000
+      internalID: -2529993306942785379
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_18
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 699
+        width: 19
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9723c7de5fcb18dd0800000000000000
+      internalID: -2485497754894454151
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_19
+      rect:
+        serializedVersion: 2
+        x: 473
+        y: 707
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 74085f64d80020ac0800000000000000
+      internalID: -3890546521313804217
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_20
+      rect:
+        serializedVersion: 2
+        x: 966
+        y: 703
+        width: 43
+        height: 67
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 09fb631da9defdfd0800000000000000
+      internalID: -2314870434254372976
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_21
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 639
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9fb734231da00ac70800000000000000
+      internalID: 8980189550584495097
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_22
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 623
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd52af5f7d1d4b570800000000000000
+      internalID: 8481634723720472029
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_23
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 599
+        width: 33
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b89b6b392d43fd40800000000000000
+      internalID: 5616917999747045556
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_24
+      rect:
+        serializedVersion: 2
+        x: 141
+        y: 591
+        width: 12
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4df9ddda4de7d0860800000000000000
+      internalID: 7497788406556893140
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_25
+      rect:
+        serializedVersion: 2
+        x: 152
+        y: 591
+        width: 19
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a36006a203969230800000000000000
+      internalID: 3645262587987256224
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_26
+      rect:
+        serializedVersion: 2
+        x: 420
+        y: 565
+        width: 29
+        height: 39
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33f54d593cdd34490800000000000000
+      internalID: -7763117500554518733
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_27
+      rect:
+        serializedVersion: 2
+        x: 178
+        y: 579
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dada772fc787a5790800000000000000
+      internalID: -7540582148039266899
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_28
+      rect:
+        serializedVersion: 2
+        x: 296
+        y: 541
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ebde57dccc9d9d60800000000000000
+      internalID: 7898641725078297573
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_29
+      rect:
+        serializedVersion: 2
+        x: 424
+        y: 542
+        width: 29
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a0fde31fcc22592a0800000000000000
+      internalID: -6731435804419236086
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_30
+      rect:
+        serializedVersion: 2
+        x: 520
+        y: 16
+        width: 519
+        height: 498
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9644acd4db3d5d6f0800000000000000
+      internalID: -660388960332528535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_31
+      rect:
+        serializedVersion: 2
+        x: 1060
+        y: 493
+        width: 19
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4bd9820a713dc950800000000000000
+      internalID: 6470882639699630923
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_32
+      rect:
+        serializedVersion: 2
+        x: 1064
+        y: 510
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4558ea35dccf4c1d0800000000000000
+      internalID: -3331259865544882860
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_33
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 31
+        width: 479
+        height: 443
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9316feadb8aadf450800000000000000
+      internalID: 6124238585944039737
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_34
+      rect:
+        serializedVersion: 2
+        x: 1126
+        y: 451
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ce863edccdae3f040800000000000000
+      internalID: 4680342671836014828
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_35
+      rect:
+        serializedVersion: 2
+        x: 1152
+        y: 465
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b435a8d26667d7810800000000000000
+      internalID: 1764696810221884235
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_36
+      rect:
+        serializedVersion: 2
+        x: 1186
+        y: 449
+        width: 13
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b21b184e08b9bc270800000000000000
+      internalID: 8271876118487871787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_37
+      rect:
+        serializedVersion: 2
+        x: 1226
+        y: 455
+        width: 13
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de5d98765296156c0800000000000000
+      internalID: -4156425371714464275
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_38
+      rect:
+        serializedVersion: 2
+        x: 1238
+        y: 461
+        width: 9
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd711651e4f1a9be0800000000000000
+      internalID: -1469827908156450852
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_39
+      rect:
+        serializedVersion: 2
+        x: 1110
+        y: 437
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e4a9f831608f4ef0800000000000000
+      internalID: -121737509859646237
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_40
+      rect:
+        serializedVersion: 2
+        x: 1206
+        y: 449
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a212e696639521b50800000000000000
+      internalID: 6562405697264165162
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiningCracksFiveStages_41
+      rect:
+        serializedVersion: 2
+        x: 1072
+        y: 71
+        width: 57
+        height: 67
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fcca04d21eb66f400800000000000000
+      internalID: 357591835293560015
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable: {}
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

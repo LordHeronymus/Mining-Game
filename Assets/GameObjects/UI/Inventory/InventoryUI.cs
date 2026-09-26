@@ -108,8 +108,8 @@ public class InventoryUI : MonoBehaviour
     {
         Item.Coal => 0, Item.Iron => 1, Item.Copper => 2, Item.Silver => 3,
         Item.Gold => 4, Item.Platinum => 5, Item.Wood => 6, Item.PlantFiber => 7,
-        Item.Rope => 8, Item.Nails => 9, Item.Torche => 10, Item.Dynamite => 11,
-        Item.Ladder => 12, Item.BridgePart => 13, _ => 14 + (int)item.item
+        Item.HealingHerbs => 8, Item.Rope => 9, Item.Nails => 10, Item.Torche => 11,
+        Item.Dynamite => 12, Item.Ladder => 13, Item.BridgePart => 14, _ => 15 + (int)item.item
     };
     static string Count(int amount)
     {

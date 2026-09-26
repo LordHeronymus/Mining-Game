@@ -15,6 +15,8 @@ public sealed class ChoppableTree : MonoBehaviour
     static readonly int SwayImpact = Shader.PropertyToID("_SwayImpact");
     static readonly int SwayStrength = Shader.PropertyToID("_SwayStrength");
     static readonly int ReachGlow = Shader.PropertyToID("_ReachGlow");
+    static readonly int LeafMaskTex = Shader.PropertyToID("_LeafMaskTex");
+    static readonly int LeafAlpha = Shader.PropertyToID("_LeafAlpha");
     static readonly List<ChoppableTree> activeTrees = new();
     public static IReadOnlyList<ChoppableTree> ActiveTrees => activeTrees;
     SurfaceTrees owner;
@@ -30,6 +32,7 @@ public sealed class ChoppableTree : MonoBehaviour
     float fullHeight;
     float spriteHeight;
     float lastImpact;
+    float lastLeafAlpha;
     float sizeBonusRatio;
     float maximumSizeBonusRatio;
     float growthRatioPerSecond;
@@ -132,6 +135,9 @@ public sealed class ChoppableTree : MonoBehaviour
         swayProperties.SetFloat(SwayImpact, 0f);
         swayProperties.SetFloat(SwayStrength, 1f);
         swayProperties.SetFloat(ReachGlow, 0f);
+        swayProperties.SetTexture(LeafMaskTex, Resources.Load<Texture2D>("TreeLeafMasks/" + source.name));
+        lastLeafAlpha = owner ? owner.LeafAlpha : 1f;
+        swayProperties.SetFloat(LeafAlpha, lastLeafAlpha);
         visual.SetPropertyBlock(swayProperties);
     }
 
@@ -201,9 +207,12 @@ public sealed class ChoppableTree : MonoBehaviour
             shake = Mathf.Max(0f, shake - Time.deltaTime);
             impact = Mathf.Sin((.13f - shake) * 75f) * (shake / .13f) * spriteHeight * .045f;
         }
-        if (Mathf.Approximately(lastImpact, impact)) return;
+        float leafAlpha = owner ? owner.LeafAlpha : 1f;
+        if (Mathf.Approximately(lastImpact, impact) && Mathf.Approximately(lastLeafAlpha, leafAlpha)) return;
         lastImpact = impact;
+        lastLeafAlpha = leafAlpha;
         swayProperties.SetFloat(SwayImpact, impact);
+        swayProperties.SetFloat(LeafAlpha, leafAlpha);
         visual.SetPropertyBlock(swayProperties);
     }
 

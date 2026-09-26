@@ -121,12 +121,8 @@ public sealed class SecondLayerAmbience : MonoBehaviour
         int firstCave = FirstCaveLayer;
         if (map.layers.Length <= firstCave) return 0f;
         int start = map.layers[firstCave].startDepth;
-        int end = map.layers.Length > firstCave + 1 ? map.layers[firstCave + 1].startDepth : int.MaxValue;
-        float fadeIn = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(
+        return Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(
             Mathf.Max(0, start - transitionDepth), start, depth));
-        float fadeOut = end == int.MaxValue ? 1f : Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(
-            end - transitionDepth, end, depth));
-        return fadeIn * fadeOut;
     }
 
     int FirstCaveLayer => map && map.layers != null && map.layers.Length > 0 &&

@@ -23,6 +23,11 @@ public class MapGenerator : MonoBehaviour
     [Range(-.5f, .5f), InspectorName("Gras Y-Versatz (Welteinheiten)")] public float grassYOffset;
     [SerializeField] TileBase[] grassVariants;
     [SerializeField] bool continuousGrassStrip;
+    [SerializeField] TileBase grassLeftEnd;
+    [SerializeField] TileBase grassRightEnd;
+    [SerializeField] TileBase grassSingle;
+    [SerializeField] TileBase grassHangLeft;
+    [SerializeField] TileBase grassHangRight;
 
     [InspectorName("Tiefenkurve (×)")]
     public AnimationCurve oreDensityCurve = AnimationCurve.Linear(0f, .1f, 1f, 1f);
@@ -47,9 +52,13 @@ public class MapGenerator : MonoBehaviour
     private Tilemap tilemap;
     [SerializeField] Tilemap oreOverlay;
     [SerializeField] Tilemap grassOverlay;
+    [SerializeField] Tilemap grassHangLeftOverlay;
+    [SerializeField] Tilemap grassHangRightOverlay;
     public Tilemap Terrain => tilemap ? tilemap : tilemap = GetComponent<Tilemap>();
     public Tilemap OreOverlay => oreOverlay;
     public Tilemap GrassOverlay => grassOverlay;
+    public Tilemap GrassHangLeftOverlay => grassHangLeftOverlay;
+    public Tilemap GrassHangRightOverlay => grassHangRightOverlay;
     [SerializeField, HideInInspector] bool isGenerated;
     [SerializeField, HideInInspector] int generatedSeed, generatedWidth, generatedHeight;
     public bool IsGenerated => isGenerated;
@@ -64,6 +73,7 @@ public class MapGenerator : MonoBehaviour
     int pendingGenerationRow;
     TileBase[] streamedTerrainRows;
     TileBase[] streamedOreRows;
+    bool applyingGeneratedTiles;
 
     public sealed class MapGenerationSnapshot
     {
@@ -191,11 +201,18 @@ public class MapGenerator : MonoBehaviour
     {
         if (source != Terrain || changes == null) return;
         foreach (var change in changes)
+        {
             if (!source.HasTile(change.position))
             {
                 if (oreOverlay) oreOverlay.SetTile(change.position, null);
-                if (grassOverlay && change.position.y == 0) grassOverlay.SetTile(change.position, null);
             }
+            if (!applyingGeneratedTiles && grassOverlay && change.position.y == 0)
+            {
+                RefreshGrassAt(change.position.x - 1);
+                RefreshGrassAt(change.position.x);
+                RefreshGrassAt(change.position.x + 1);
+            }
+        }
     }
 
     public Tilemap EnsureOreOverlay()
@@ -261,35 +278,133 @@ public class MapGenerator : MonoBehaviour
         return grassOverlay;
     }
 
+    public void EnsureGrassHangOverlays()
+    {
+        if (!grassHangLeft && !grassHangRight) return;
+        var baseOverlay = EnsureGrassOverlay();
+        grassHangLeftOverlay = EnsureGrassHangOverlay(grassHangLeftOverlay, "Grass Hang Left", baseOverlay);
+        grassHangRightOverlay = EnsureGrassHangOverlay(grassHangRightOverlay, "Grass Hang Right", baseOverlay);
+        UpdateGrassOffset();
+    }
+
+    Tilemap EnsureGrassHangOverlay(Tilemap overlay, string name, Tilemap baseOverlay)
+    {
+        if (!overlay)
+        {
+            var existing = transform.Find(name);
+            if (existing) overlay = existing.GetComponent<Tilemap>();
+            if (!overlay)
+            {
+                var child = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
+                child.transform.SetParent(transform, false);
+                overlay = child.GetComponent<Tilemap>();
+            }
+        }
+        overlay.gameObject.layer = gameObject.layer;
+        overlay.tileAnchor = Terrain.tileAnchor;
+        overlay.orientation = Terrain.orientation;
+        overlay.orientationMatrix = Terrain.orientationMatrix;
+        var source = baseOverlay.GetComponent<TilemapRenderer>();
+        var target = overlay.GetComponent<TilemapRenderer>();
+        target.sharedMaterial = source.sharedMaterial;
+        target.sortingLayerID = source.sortingLayerID;
+        target.sortingOrder = source.sortingOrder - 1;
+        target.mode = source.mode;
+        target.sortOrder = source.sortOrder;
+        return overlay;
+    }
+
     void UpdateGrassOffset()
     {
-        if (!grassOverlay) return;
-        var position = grassOverlay.transform.localPosition;
+        SetGrassOffset(grassOverlay);
+        SetGrassOffset(grassHangLeftOverlay);
+        SetGrassOffset(grassHangRightOverlay);
+    }
+
+    void SetGrassOffset(Tilemap overlay)
+    {
+        if (!overlay) return;
+        var position = overlay.transform.localPosition;
         position.y = grassYOffset;
-        grassOverlay.transform.localPosition = position;
+        overlay.transform.localPosition = position;
     }
 
     public void SetGrassVariants(TileBase[] variants, bool continuousStrip = false)
     { grassVariants = variants; continuousGrassStrip = continuousStrip; }
 
+    public void SetGrassEdgeTiles(TileBase leftEnd, TileBase rightEnd, TileBase single)
+    { grassLeftEnd = leftEnd; grassRightEnd = rightEnd; grassSingle = single; }
+
+    public void SetGrassHangTiles(TileBase left, TileBase right)
+    { grassHangLeft = left; grassHangRight = right; }
+
+    TileBase GrassTileAt(int x)
+    {
+        var cell = new Vector3Int(x, 0, 0);
+        if (!Terrain.HasTile(cell) || grassVariants == null || grassVariants.Length == 0) return null;
+        bool hasLeft = Terrain.HasTile(cell + Vector3Int.left);
+        bool hasRight = Terrain.HasTile(cell + Vector3Int.right);
+        if (!hasLeft && !hasRight && grassSingle) return grassSingle;
+        if (!hasLeft && grassLeftEnd) return grassLeftEnd;
+        if (!hasRight && grassRightEnd) return grassRightEnd;
+        int offset = continuousGrassStrip
+            ? (int)(OreVeins.Hash(ActiveSeed, 0, 0, 0x6A55u) % (uint)grassVariants.Length)
+            : (int)(OreVeins.Hash(ActiveSeed, x, 0, 0x6A55u) % (uint)grassVariants.Length);
+        return grassVariants[continuousGrassStrip
+            ? ((x % grassVariants.Length + grassVariants.Length + offset) % grassVariants.Length)
+            : offset];
+    }
+
+    void RefreshGrassAt(int x)
+    {
+        if (!grassOverlay) return;
+        var cell = new Vector3Int(x, 0, 0);
+        grassOverlay.SetTile(cell, GrassTileAt(x));
+        bool occupied = Terrain.HasTile(cell);
+        if (grassHangLeftOverlay)
+            grassHangLeftOverlay.SetTile(cell, occupied && !Terrain.HasTile(cell + Vector3Int.left)
+                ? grassHangLeft : null);
+        if (grassHangRightOverlay)
+            grassHangRightOverlay.SetTile(cell, occupied && !Terrain.HasTile(cell + Vector3Int.right)
+                ? grassHangRight : null);
+    }
+
     public void SyncGrassFromTerrain()
     {
         var overlay = EnsureGrassOverlay();
+        EnsureGrassHangOverlays();
         overlay.ClearAllTiles();
+        if (grassHangLeftOverlay) grassHangLeftOverlay.ClearAllTiles();
+        if (grassHangRightOverlay) grassHangRightOverlay.ClearAllTiles();
         int width = GeneratedWidth;
         if (width <= 0 || grassVariants == null || grassVariants.Length == 0) return;
         var tiles = new TileBase[width];
+        var leftHangTiles = grassHangLeftOverlay ? new TileBase[width] : null;
+        var rightHangTiles = grassHangRightOverlay ? new TileBase[width] : null;
         int left = -width / 2;
         for (int x = 0; x < width; x++)
         {
             var cell = new Vector3Int(left + x, 0, 0);
-            if (Terrain.HasTile(cell))
-                tiles[x] = grassVariants[continuousGrassStrip
-                    ? (x + (int)(OreVeins.Hash(ActiveSeed, 0, 0, 0x6A55u) % (uint)grassVariants.Length)) % grassVariants.Length
-                    : (int)(OreVeins.Hash(ActiveSeed, x, 0, 0x6A55u) % (uint)grassVariants.Length)];
+            tiles[x] = GrassTileAt(cell.x);
+            if (!Terrain.HasTile(cell)) continue;
+            if (leftHangTiles != null && !Terrain.HasTile(cell + Vector3Int.left))
+                leftHangTiles[x] = grassHangLeft;
+            if (rightHangTiles != null && !Terrain.HasTile(cell + Vector3Int.right))
+                rightHangTiles[x] = grassHangRight;
         }
-        overlay.SetTilesBlock(new BoundsInt(left, 0, 0, width, 1, 1), tiles);
+        var bounds = new BoundsInt(left, 0, 0, width, 1, 1);
+        overlay.SetTilesBlock(bounds, tiles);
         overlay.CompressBounds();
+        if (grassHangLeftOverlay)
+        {
+            grassHangLeftOverlay.SetTilesBlock(bounds, leftHangTiles);
+            grassHangLeftOverlay.CompressBounds();
+        }
+        if (grassHangRightOverlay)
+        {
+            grassHangRightOverlay.SetTilesBlock(bounds, rightHangTiles);
+            grassHangRightOverlay.CompressBounds();
+        }
     }
 
     public OreTile GetOreAt(Vector3Int cell) => Terrain.HasTile(cell) && oreOverlay
@@ -481,6 +596,7 @@ public class MapGenerator : MonoBehaviour
 
     void BeginTileApplication()
     {
+        applyingGeneratedTiles = true;
         GetComponent<LadderMap>()?.Clear();
         isGenerated = false;
         oreOverlay.ClearAllTiles();
@@ -531,6 +647,7 @@ public class MapGenerator : MonoBehaviour
         generatedWidth = data.width;
         generatedHeight = data.height;
         isGenerated = true;
+        applyingGeneratedTiles = false;
         SyncGrassFromTerrain();
         GetComponent<DirtSurfaceAppearance>()?.Apply(!IsGenerationStreaming);
 

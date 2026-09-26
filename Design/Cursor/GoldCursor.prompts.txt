@@ -1,0 +1,13 @@
+Generated with the built-in image_gen tool, 2026-09-26, transparent_background=true.
+Installed assets: Assets/Resources/Cursor/NormalCursorFrame.png and SmartCursorFrame.png.
+
+Shared prompt:
+Create a production 2D game selection sprite, square 1024x1024 transparent PNG. Only a centered yellow champagne gold selection outline, actual transparent empty center and transparent background. Frame outer geometry spans from x62 to962 and y62 to962, i.e. 900 pixel width square with generous transparent glow padding. Refined elegant minimal, thin 12px pale yellow-gold core stroke and a restrained narrow 18px soft amber halo with low alpha. No fill, no background, no texture, no text, no shadows beyond halo, no ornament or particles. Orthographic exact front-facing square, equal symmetric sides.
+
+Normal suffix:
+One continuous thin single square outline, subtly softened corners, tiny brighter corner highlights. NO double outlines, no metallic thick border.
+
+Smart suffix:
+Four isolated L-shaped corner brackets ONLY, each arm 200 pixels long, completely absent middle 500 pixels of every side. Equal stroke thickness, clean joins. No connecting lines.
+
+Actual returned resolution and outline margins may differ from the requested pixel geometry. Runtime sizing uses a measured approximate 85% width ratio, checked against the 1.1-unit cell in Unity.

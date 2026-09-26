@@ -24,7 +24,27 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _CapTex:
-        m_Texture: {fileID: 2800000, guid: 14d8306f8a58bca4282b284b250e23bd, type: 3}
+        m_Texture: {fileID: 2800000, guid: 06753e247992eb24da296da2769353b7, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DaylightTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Layer0Tex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Layer1Tex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Layer2Tex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Layer3Tex:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _LowerTex:
@@ -38,10 +58,17 @@ Material:
     m_Ints: []
     m_Floats:
     - _CapTopOffset: 1.15
+    - _GlobalLight: 1
+    - _LayerFadeWorld: 11
+    - _NightBrightnessMultiplier: 1
+    - _SurfaceY: 1
     - _TopY: 1
+    - _UseMapLighting: 0
     m_Colors:
     - _CapSize: {r: 9.6, g: 2.4, b: 0, a: 0}
     - _FadeDepth: {r: 110, g: 220, b: 0, a: 0}
+    - _GlobalLightColor: {r: 1, g: 1, b: 1, a: 1}
+    - _LayerStarts: {r: 33, g: 220, b: 660, a: 0}
     - _RepeatSize: {r: 16.5, g: 11, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

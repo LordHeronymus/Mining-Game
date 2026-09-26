@@ -1,0 +1,5 @@
+Built-in ImageGen. Reference: GrassHangV2Mockup.png (second of the two new V2 variants), GrassCarpetStrip.png.
+
+Generate one right-hand grass-edge cluster with long, slim hanging blades. Match the approved V2 variant's shapes and the existing carpet's painterly style. Keep a broad leafy root that can sit behind the existing grass edge. Isolate the foliage on a uniform magenta chroma key with no dirt, glow, scenery or text. The left counterpart is mirrored from the same cutout in Unity.
+
+The magenta key was converted to alpha by Tests/InstallGrassHangV2.cs; the resulting RGBA sprite is GrassHangV2.png.

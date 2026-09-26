@@ -15,7 +15,6 @@ public class PlayerMovement : MonoBehaviour
     public float decelTime = 2f;      // Zeit zum Abbremsen
     public float directionChangeDecelTime = .25f;
     public float groundedCoeff = 0.3f;
-    [Range(0f,.5f)] public float automaticStepHeight=.30f;
 
     Rigidbody2D rb;
     Collider2D col;
@@ -33,6 +32,9 @@ public class PlayerMovement : MonoBehaviour
     bool noClip;
     bool colliderWasEnabled;
     float previousRunVelocity;
+    bool hasGroundedForFall;
+    bool trackingFall;
+    float fallPeakY;
 
     private bool moving;
     public bool IsMoving => moving;
@@ -113,12 +115,14 @@ public class PlayerMovement : MonoBehaviour
             jumpRequested = false;
             jumpBufferRemaining = 0f;
             jumpGraceRemaining = 0f;
+            PauseFallTrackingForLadder();
             return;
         }
         float targetVx = inputX * stats.EffectiveMoveSpeed;
 
         bool grounded=IsGrounded();
-        bool supported=grounded||(!flying&&rb.linearVelocity.y<=.1f&&PlayerStepUp.HasSupport(rb,col,groundLayer));
+        TrackLanding(grounded);
+        bool supported=grounded;
         if(supported&&rb.linearVelocity.y<=.1f)jumpGraceRemaining=JumpGraceDuration;
         else jumpGraceRemaining=Mathf.Max(0f,jumpGraceRemaining-Time.fixedDeltaTime);
         bool jumpBuffered=jumpBufferRemaining>0f;
@@ -143,11 +147,6 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        if(supported&&!jumpBuffered&&!GameplayInputBlocker.IsBlocked&&Mathf.Abs(inputX)>.01f&&
-            newVx*inputX>0&&rb.linearVelocity.y<=.1f)
-        {
-            PlayerStepUp.TryStep(rb,col,inputX,newVx,automaticStepHeight,groundLayer);
-        }
         previousRunVelocity=rb.linearVelocity.x;
 
         // Jump
@@ -217,6 +216,64 @@ public class PlayerMovement : MonoBehaviour
         return rise;
     }
 
+    void TrackLanding(bool grounded)
+    {
+        if (flying || noClip || !col || !col.enabled)
+        {
+            ResetFallTracking();
+            return;
+        }
+
+        if (grounded)
+        {
+            if (trackingFall && stats)
+            {
+                float fallHeightWorld = Mathf.Max(0f, fallPeakY - col.bounds.min.y);
+                float blockHeight = GetBlockHeightWorld();
+                float fallHeightBlocks = fallHeightWorld / blockHeight;
+                float damage = StatsManager.CalculateFallDamage(fallHeightBlocks,
+                    stats.fallDamageHeightBlocks, stats.fallDamageBase, stats.fallDamageExponent);
+                if (damage > 0f)
+                {
+                    float healthBeforeDamage = stats.Health;
+                    if (stats.ApplyDamage(damage) && healthBeforeDamage - stats.Health > 30f)
+                        AudioManager.Instance?.Play(SoundType.BoneBreaking1);
+                }
+            }
+
+            trackingFall = false;
+            hasGroundedForFall = true;
+            return;
+        }
+
+        if (!hasGroundedForFall) return;
+        float feetY = col.bounds.min.y;
+        if (!trackingFall)
+        {
+            trackingFall = true;
+            fallPeakY = feetY;
+        }
+        else fallPeakY = Mathf.Max(fallPeakY, feetY);
+    }
+
+    float GetBlockHeightWorld()
+    {
+        if (!jumpMap) jumpMap = Object.FindFirstObjectByType<MapGenerator>();
+        if (!jumpMap || !jumpMap.Terrain) return 1f;
+        return Mathf.Max(0.0001f, Mathf.Abs((jumpMap.Terrain.CellToWorld(Vector3Int.up) -
+            jumpMap.Terrain.CellToWorld(Vector3Int.zero)).y));
+    }
+
+    void PauseFallTrackingForLadder()
+    {
+        trackingFall = false;
+        hasGroundedForFall = true;
+    }
+    void ResetFallTracking()
+    {
+        trackingFall = false;
+        hasGroundedForFall = false;
+    }
     void SyncFlyMode()
     {
         bool requestedNoClip = GameplayTestSettings.NoClipMode;
@@ -252,6 +309,7 @@ public class PlayerMovement : MonoBehaviour
         jumpBufferRemaining=0f;
         jumpGraceRemaining=0f;
         previousRunVelocity=0;
+        ResetFallTracking();
     }
 
     void OnDestroy()

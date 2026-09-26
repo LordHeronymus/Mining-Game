@@ -15,7 +15,8 @@ public enum BlockType
     StoneLayer2 = 9,
     StoneLayer3 = 10,
     Dirt = 11,
-    StoneLayer4 = 12
+    StoneLayer4 = 12,
+    UltroniumOre = 13
 }
 
 [CreateAssetMenu(fileName = "New BlockType", menuName = "Blocks/BlockType", order = 0)]

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bd168b198ca49c4a82450a3ed868988, type: 3}
+  m_Name: Fabric
+  m_EditorClassIdentifier: 
+  category: 3
+  persistentId: fbdfab66f1a34ba4f90bcb78ff8a1faf
+  customCardIconLayout: 0
+  cardIconLayout:
+    scale: {x: 0, y: 0}
+    offset: {x: 0, y: 0}
+    flipX: 0
+    flipY: 0
+  output: {fileID: 11400000, guid: dd533ba7e1dad994b85859e613d42480, type: 2}
+  outputAmount: 1
+  pluralName: Fabric
+  ingredients:
+  - item: {fileID: 11400000, guid: 751777c2e439dd44fa500306947ab2c6, type: 2}
+    amount: 2

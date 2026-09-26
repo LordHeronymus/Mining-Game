@@ -17,7 +17,9 @@ public static class MinimumVeinChecks
         var dirt = registry.GetById(BlockType.Dirt);
         var copper = registry.GetById(BlockType.CopperOre);
         var gold = registry.GetById(BlockType.GoldOre);
-        Check(stone && dirt && copper && gold && copper.HasOreOverlays && gold.HasOreOverlays,
+        var ultronium = registry.GetById(BlockType.UltroniumOre);
+        Check(stone && dirt && copper && gold && ultronium && copper.HasOreOverlays &&
+            gold.HasOreOverlays && ultronium.HasOreOverlays,
             "Required ore or terrain asset missing.");
 
         const int width = 8, height = 6;
@@ -30,6 +32,7 @@ public static class MinimumVeinChecks
         Put(copper, 0, 0);
         Put(copper, 3, 0); Put(copper, 4, 0); Put(copper, 4, 1);
         Put(gold, 5, 0);
+        Put(ultronium, 2, 2);
         Put(copper, 0, 3); Put(copper, 1, 3); Put(copper, 1, 4); Put(copper, 1, 5);
         Put(gold, 5, 3); Put(gold, 6, 3); Put(gold, 6, 4); Put(gold, 7, 4);
 
@@ -43,6 +46,8 @@ public static class MinimumVeinChecks
         Check(removed == 5, "Wrong number of undersized vein blocks removed.");
         Check(blocks[0] == dirt && blocks[3] == stone && blocks[5] == stone,
             "Small veins did not reveal the original terrain.");
+        Check(blocks[2 * width + 2] == ultronium,
+            "An isolated Ultronium cell was removed by the global minimum vein size.");
         Check(blocks[3 * width] == copper && blocks[5 * width + 1] == copper &&
             blocks[3 * width + 5] == gold && blocks[4 * width + 7] == gold,
             "A four-block vein was removed at a map boundary.");

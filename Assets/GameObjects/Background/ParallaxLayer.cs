@@ -34,7 +34,6 @@ public sealed class ParallaxLayer : MonoBehaviour
     public Material material;
     [Tooltip("Extend the bottom pixel row down to the camera edge. Use for the sky to avoid a visible rectangular lower edge behind translucent scenery.")]
     public bool extendBottomToCamera;
-    public bool ignoreDepthFade;
 
     [Header("Untergrund")]
     public Sprite undergroundTile;
@@ -121,7 +120,7 @@ public sealed class ParallaxLayer : MonoBehaviour
         float worldHeight = imageHeight * scale.y;
         float globalOpacity = controller.isActiveAndEnabled ? Mathf.Clamp01(controller.opacity) : 0f;
         Color color = tint * LightingTint;
-        color.a *= Mathf.Clamp01(opacity) * (ignoreDepthFade ? globalOpacity : controller.GetOpacity(camera));
+        color.a *= Mathf.Clamp01(opacity) * controller.GetOpacity(camera);
         Color undergroundColor = tint * LightingTint;
         undergroundColor.a *= Mathf.Clamp01(opacity) * globalOpacity;
         if (color.a <= 0f && ((!undergroundTile && !undergroundLayer2Tile && !undergroundLayer3Tile) || undergroundColor.a <= 0f))
@@ -290,8 +289,8 @@ public sealed class ParallaxLayer : MonoBehaviour
         lightingProperties.Clear();
         lightingProperties.SetFloat("_LightBottomY", bounds.min.y);
         lightingProperties.SetFloat("_LightTopY", bounds.max.y);
-        lightingProperties.SetFloat("_LightBottom", controller.GetBackgroundBrightnessAtWorldY(bounds.min.y));
-        lightingProperties.SetFloat("_LightTop", controller.GetBackgroundBrightnessAtWorldY(bounds.max.y));
+        lightingProperties.SetFloat("_LightBottom", controller.GetSurfaceBackgroundBrightness());
+        lightingProperties.SetFloat("_LightTop", controller.GetSurfaceBackgroundBrightness());
         lightingProperties.SetFloat("_Contrast", Mathf.Clamp(controller.surfaceContrast, 0f, 2f));
         lightingProperties.SetFloat("_Saturation", Mathf.Clamp(controller.surfaceSaturation, 0f, 2f));
         renderer.SetPropertyBlock(lightingProperties);
@@ -304,8 +303,8 @@ public sealed class ParallaxLayer : MonoBehaviour
         lightingProperties.Clear();
         lightingProperties.SetFloat("_LightBottomY", bounds.min.y);
         lightingProperties.SetFloat("_LightTopY", bounds.max.y);
-        lightingProperties.SetFloat("_LightBottom", controller.GetBackgroundBrightnessAtWorldY(bounds.min.y));
-        lightingProperties.SetFloat("_LightTop", controller.GetBackgroundBrightnessAtWorldY(bounds.max.y));
+        lightingProperties.SetFloat("_LightBottom", 1f);
+        lightingProperties.SetFloat("_LightTop", 1f);
         lightingProperties.SetFloat("_Contrast", useSurfaceColorAdjustment ? Mathf.Clamp(controller.surfaceContrast, 0f, 2f) : 1f);
         lightingProperties.SetFloat("_Saturation", useSurfaceColorAdjustment ? Mathf.Clamp(controller.surfaceSaturation, 0f, 2f) : 1f);
         renderer.SetPropertyBlock(lightingProperties);

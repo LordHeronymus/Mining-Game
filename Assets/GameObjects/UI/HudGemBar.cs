@@ -6,6 +6,19 @@ public sealed class HudGemBar : MaskableGraphic
 {
     [SerializeField, Range(0f, 1f)] float fillAmount = 1f;
     [SerializeField] Color gemColor = new Color(.95f, .08f, .11f);
+    float flashAmount;
+
+    public float FlashAmount
+    {
+        get => flashAmount;
+        set
+        {
+            value = Mathf.Clamp01(value);
+            if (Mathf.Approximately(flashAmount, value)) return;
+            flashAmount = value;
+            SetVerticesDirty();
+        }
+    }
 
     public float FillAmount
     {
@@ -70,7 +83,7 @@ public sealed class HudGemBar : MaskableGraphic
                 mesh.AddTriangle(start, start + 1 + i, start + 1 + (i + 1) % points.Length);
         }
 
-        var bronze = new Color(.67f, .37f, .12f);
+        var bronze = Color.Lerp(new Color(.67f, .37f, .12f), new Color(1f, .84f, .58f), flashAmount);
         var dark = new Color(.085f, .045f, .035f);
         Quad(12, 0, 160, 17, bronze, new Color(.23f, .11f, .045f));
         Quad(13, 1, 159, 16, dark, new Color(.035f, .019f, .017f));
@@ -79,7 +92,7 @@ public sealed class HudGemBar : MaskableGraphic
             float x = 15 + i * 18f;
             float strength = Mathf.Clamp01(fillAmount * 8f - i);
             Quad(x, 2, x + 16, 15, new Color(.40f, .22f, .10f), new Color(.17f, .09f, .055f));
-            Facet(x + 1, 3, 14, 11, gemColor, strength);
+            Facet(x + 1, 3, 14, 11, Color.Lerp(gemColor, Color.white, flashAmount * .85f), strength);
             if (strength > 0f)
                 Quad(x + 4, 11, x + 11, 12, new Color(1f, .94f, .70f, .65f * strength),
                     new Color(1f, .94f, .70f, .12f * strength));

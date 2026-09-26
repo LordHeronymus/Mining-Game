@@ -1,0 +1,1378 @@
+fileFormatVersion: 2
+guid: 84849c2d6af187444a3c7a0c3f6f2332
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3304560702903865238
+    second: GrassCarpetStrip_0
+  - first:
+      213: 7018710607788209630
+    second: GrassCarpetStrip_1
+  - first:
+      213: 2409604627443843992
+    second: GrassCarpetStrip_2
+  - first:
+      213: 422860072330039738
+    second: GrassCarpetStrip_3
+  - first:
+      213: 4590636195493999734
+    second: GrassCarpetStrip_4
+  - first:
+      213: -3366609721942742504
+    second: GrassCarpetStrip_5
+  - first:
+      213: 2785573385231075296
+    second: GrassCarpetStrip_6
+  - first:
+      213: -5824617338442959760
+    second: GrassCarpetStrip_7
+  - first:
+      213: 4793730530365030509
+    second: GrassCarpetStrip_8
+  - first:
+      213: 201624640032498875
+    second: GrassCarpetStrip_9
+  - first:
+      213: 7886260568675884355
+    second: GrassCarpetStrip_10
+  - first:
+      213: -5869034426334553093
+    second: GrassCarpetStrip_11
+  - first:
+      213: 6531364655390955216
+    second: GrassCarpetStrip_12
+  - first:
+      213: 8440904082459940695
+    second: GrassCarpetStrip_13
+  - first:
+      213: 9084479995464977765
+    second: GrassCarpetStrip_14
+  - first:
+      213: -993798454983716278
+    second: GrassCarpetStrip_15
+  - first:
+      213: -5285974500751442699
+    second: GrassCarpetStrip_16
+  - first:
+      213: 3059771785039017497
+    second: GrassCarpetStrip_17
+  - first:
+      213: 845119835111218573
+    second: GrassCarpetStrip_18
+  - first:
+      213: -1306716069765617077
+    second: GrassCarpetStrip_19
+  - first:
+      213: -2049298154437384749
+    second: GrassCarpetStrip_20
+  - first:
+      213: -445948036755005124
+    second: GrassCarpetStrip_21
+  - first:
+      213: -4387416166208425107
+    second: GrassCarpetStrip_22
+  - first:
+      213: 6264838873746913697
+    second: GrassCarpetStrip_23
+  - first:
+      213: -6981522772481983933
+    second: GrassCarpetStrip_24
+  - first:
+      213: -6808246635521748861
+    second: GrassCarpetStrip_25
+  - first:
+      213: -2410781792350447108
+    second: GrassCarpetStrip_26
+  - first:
+      213: 5397370637105871153
+    second: GrassCarpetStrip_27
+  - first:
+      213: -4924889598448496358
+    second: GrassCarpetStrip_28
+  - first:
+      213: -7859790526379908399
+    second: GrassCarpetStrip_29
+  - first:
+      213: -7208715310459581596
+    second: GrassCarpetStrip_30
+  - first:
+      213: -7991837703346755489
+    second: GrassCarpetStrip_31
+  - first:
+      213: -6143848075060017764
+    second: GrassCarpetStrip_32
+  - first:
+      213: -6654327367579088925
+    second: GrassCarpetStrip_33
+  - first:
+      213: 4189379189556732814
+    second: GrassCarpetStrip_34
+  - first:
+      213: -1134701922579796794
+    second: GrassCarpetStrip_35
+  - first:
+      213: -2283325555296354567
+    second: GrassCarpetStrip_36
+  - first:
+      213: -2390326083700149912
+    second: GrassCarpetStrip_37
+  - first:
+      213: 6883705619393432067
+    second: GrassCarpetStrip_38
+  - first:
+      213: 2730925920991931594
+    second: GrassCarpetStrip_39
+  - first:
+      213: -7763737034016050977
+    second: GrassCarpetStrip_40
+  - first:
+      213: 2501291169730767453
+    second: GrassCarpetStrip_41
+  - first:
+      213: -7996719393591190541
+    second: GrassCarpetStrip_42
+  - first:
+      213: -2244912015436026838
+    second: GrassCarpetStrip_43
+  - first:
+      213: 6268297928773131310
+    second: GrassCarpetStrip_44
+  - first:
+      213: -5088729577803750422
+    second: GrassCarpetStrip_45
+  - first:
+      213: 6579025852416084177
+    second: GrassCarpetStrip_46
+  - first:
+      213: -2869037867405421116
+    second: GrassCarpetStrip_47
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 1
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 2
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: GrassCarpetStrip_0
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 0
+        width: 2112
+        height: 712
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a6033bc8c87d322d0800000000000000
+      internalID: -3304560702903865238
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_1
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 680
+        width: 25
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed57b7e6c18776160800000000000000
+      internalID: 7018710607788209630
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_2
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 697
+        width: 25
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8938deb54a2a07120800000000000000
+      internalID: 2409604627443843992
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_3
+      rect:
+        serializedVersion: 2
+        x: 394
+        y: 698
+        width: 45
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab19de0defc4ed500800000000000000
+      internalID: 422860072330039738
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_4
+      rect:
+        serializedVersion: 2
+        x: 1248
+        y: 697
+        width: 24
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 674787d2c4735bf30800000000000000
+      internalID: 4590636195493999734
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_5
+      rect:
+        serializedVersion: 2
+        x: 1271
+        y: 697
+        width: 6
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 81ae9328b466741d0800000000000000
+      internalID: -3366609721942742504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_6
+      rect:
+        serializedVersion: 2
+        x: 582
+        y: 670
+        width: 7
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0e70b7a3c3858a620800000000000000
+      internalID: 2785573385231075296
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_7
+      rect:
+        serializedVersion: 2
+        x: 748
+        y: 682
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 074b68d046dca2fa0800000000000000
+      internalID: -5824617338442959760
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_8
+      rect:
+        serializedVersion: 2
+        x: 760
+        y: 678
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d604a53e480c68240800000000000000
+      internalID: 4793730530365030509
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_9
+      rect:
+        serializedVersion: 2
+        x: 1497
+        y: 677
+        width: 7
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb46a17ba805cc200800000000000000
+      internalID: 201624640032498875
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_10
+      rect:
+        serializedVersion: 2
+        x: 1503
+        y: 678
+        width: 9
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34d981a3430a17d60800000000000000
+      internalID: 7886260568675884355
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_11
+      rect:
+        serializedVersion: 2
+        x: 513
+        y: 674
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bfb5ac3e8400d8ea0800000000000000
+      internalID: -5869034426334553093
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_12
+      rect:
+        serializedVersion: 2
+        x: 542
+        y: 646
+        width: 19
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d69e17ac8114aa50800000000000000
+      internalID: 6531364655390955216
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_13
+      rect:
+        serializedVersion: 2
+        x: 616
+        y: 648
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7575b2a8a8d142570800000000000000
+      internalID: 8440904082459940695
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_14
+      rect:
+        serializedVersion: 2
+        x: 1220
+        y: 604
+        width: 14
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 56d05da9c6e821e70800000000000000
+      internalID: 9084479995464977765
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_15
+      rect:
+        serializedVersion: 2
+        x: 1240
+        y: 600
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a421d5012915532f0800000000000000
+      internalID: -993798454983716278
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_16
+      rect:
+        serializedVersion: 2
+        x: 1240
+        y: 590
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5fcffe6a23274a6b0800000000000000
+      internalID: -5285974500751442699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_17
+      rect:
+        serializedVersion: 2
+        x: 1278
+        y: 145
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91673052a3e767a20800000000000000
+      internalID: 3059771785039017497
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_18
+      rect:
+        serializedVersion: 2
+        x: 522
+        y: 84
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8dd07c23087abb00800000000000000
+      internalID: 845119835111218573
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_19
+      rect:
+        serializedVersion: 2
+        x: 752
+        y: 84
+        width: 7
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4a635768ac9ddde0800000000000000
+      internalID: -1306716069765617077
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_20
+      rect:
+        serializedVersion: 2
+        x: 770
+        y: 84
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d565e9af2e6f83e0800000000000000
+      internalID: -2049298154437384749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_21
+      rect:
+        serializedVersion: 2
+        x: 774
+        y: 82
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c316fe09f9cafc9f0800000000000000
+      internalID: -445948036755005124
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_22
+      rect:
+        serializedVersion: 2
+        x: 782
+        y: 74
+        width: 17
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d63375b0e34cc13c0800000000000000
+      internalID: -4387416166208425107
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_23
+      rect:
+        serializedVersion: 2
+        x: 458
+        y: 56
+        width: 13
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a93ebc53cd21f650800000000000000
+      internalID: 6264838873746913697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_24
+      rect:
+        serializedVersion: 2
+        x: 470
+        y: 68
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34a39e23706ac1f90800000000000000
+      internalID: -6981522772481983933
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_25
+      rect:
+        serializedVersion: 2
+        x: 473
+        y: 66
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3805a72b1cf3481a0800000000000000
+      internalID: -6808246635521748861
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_26
+      rect:
+        serializedVersion: 2
+        x: 504
+        y: 66
+        width: 9
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf9d8f39bbe2b8ed0800000000000000
+      internalID: -2410781792350447108
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_27
+      rect:
+        serializedVersion: 2
+        x: 888
+        y: 49
+        width: 10
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 139b1d97fff47ea40800000000000000
+      internalID: 5397370637105871153
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_28
+      rect:
+        serializedVersion: 2
+        x: 1052
+        y: 54
+        width: 22
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a11167ed00747abb0800000000000000
+      internalID: -4924889598448496358
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_29
+      rect:
+        serializedVersion: 2
+        x: 1064
+        y: 72
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d22522c82a6ce290800000000000000
+      internalID: -7859790526379908399
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_30
+      rect:
+        serializedVersion: 2
+        x: 1271
+        y: 62
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46b03295e9f75fb90800000000000000
+      internalID: -7208715310459581596
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_31
+      rect:
+        serializedVersion: 2
+        x: 1375
+        y: 72
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f58617d83f9471190800000000000000
+      internalID: -7991837703346755489
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_32
+      rect:
+        serializedVersion: 2
+        x: 1833
+        y: 66
+        width: 7
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c95841c2abaacbaa0800000000000000
+      internalID: -6143848075060017764
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_33
+      rect:
+        serializedVersion: 2
+        x: 1871
+        y: 56
+        width: 9
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e7c94ce38417a3a0800000000000000
+      internalID: -6654327367579088925
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_34
+      rect:
+        serializedVersion: 2
+        x: 504
+        y: 56
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e8361f63d2aa32a30800000000000000
+      internalID: 4189379189556732814
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_35
+      rect:
+        serializedVersion: 2
+        x: 510
+        y: 39
+        width: 21
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ccada20d9ab040f0800000000000000
+      internalID: -1134701922579796794
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_36
+      rect:
+        serializedVersion: 2
+        x: 894
+        y: 51
+        width: 12
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9fe3df9418fff40e0800000000000000
+      internalID: -2283325555296354567
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_37
+      rect:
+        serializedVersion: 2
+        x: 903
+        y: 49
+        width: 23
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 861b3b3671bd3ded0800000000000000
+      internalID: -2390326083700149912
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_38
+      rect:
+        serializedVersion: 2
+        x: 1032
+        y: 50
+        width: 10
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30a4e461ac5d78f50800000000000000
+      internalID: 6883705619393432067
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_39
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 35
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: acc61a4f7a236e520800000000000000
+      internalID: 2730925920991931594
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_40
+      rect:
+        serializedVersion: 2
+        x: 1066
+        y: 49
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd0bde53d4aa14490800000000000000
+      internalID: -7763737034016050977
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_41
+      rect:
+        serializedVersion: 2
+        x: 1270
+        y: 35
+        width: 16
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d5aaf93011f56b220800000000000000
+      internalID: 2501291169730767453
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_42
+      rect:
+        serializedVersion: 2
+        x: 1289
+        y: 43
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3fb15887412f50190800000000000000
+      internalID: -7996719393591190541
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_43
+      rect:
+        serializedVersion: 2
+        x: 1032
+        y: 35
+        width: 18
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a2cedef7a6878d0e0800000000000000
+      internalID: -2244912015436026838
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_44
+      rect:
+        serializedVersion: 2
+        x: 1206
+        y: 39
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e2cd6de51c77df650800000000000000
+      internalID: 6268297928773131310
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_45
+      rect:
+        serializedVersion: 2
+        x: 1246
+        y: 25
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae3ebf409633169b0800000000000000
+      internalID: -5088729577803750422
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_46
+      rect:
+        serializedVersion: 2
+        x: 1936
+        y: 31
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d84f55d7256d4b50800000000000000
+      internalID: 6579025852416084177
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GrassCarpetStrip_47
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 15
+        width: 9
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c5d72aa2412f28d0800000000000000
+      internalID: -2869037867405421116
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      GrassCarpetStrip_0: -3304560702903865238
+      GrassCarpetStrip_1: 7018710607788209630
+      GrassCarpetStrip_10: 7886260568675884355
+      GrassCarpetStrip_11: -5869034426334553093
+      GrassCarpetStrip_12: 6531364655390955216
+      GrassCarpetStrip_13: 8440904082459940695
+      GrassCarpetStrip_14: 9084479995464977765
+      GrassCarpetStrip_15: -993798454983716278
+      GrassCarpetStrip_16: -5285974500751442699
+      GrassCarpetStrip_17: 3059771785039017497
+      GrassCarpetStrip_18: 845119835111218573
+      GrassCarpetStrip_19: -1306716069765617077
+      GrassCarpetStrip_2: 2409604627443843992
+      GrassCarpetStrip_20: -2049298154437384749
+      GrassCarpetStrip_21: -445948036755005124
+      GrassCarpetStrip_22: -4387416166208425107
+      GrassCarpetStrip_23: 6264838873746913697
+      GrassCarpetStrip_24: -6981522772481983933
+      GrassCarpetStrip_25: -6808246635521748861
+      GrassCarpetStrip_26: -2410781792350447108
+      GrassCarpetStrip_27: 5397370637105871153
+      GrassCarpetStrip_28: -4924889598448496358
+      GrassCarpetStrip_29: -7859790526379908399
+      GrassCarpetStrip_3: 422860072330039738
+      GrassCarpetStrip_30: -7208715310459581596
+      GrassCarpetStrip_31: -7991837703346755489
+      GrassCarpetStrip_32: -6143848075060017764
+      GrassCarpetStrip_33: -6654327367579088925
+      GrassCarpetStrip_34: 4189379189556732814
+      GrassCarpetStrip_35: -1134701922579796794
+      GrassCarpetStrip_36: -2283325555296354567
+      GrassCarpetStrip_37: -2390326083700149912
+      GrassCarpetStrip_38: 6883705619393432067
+      GrassCarpetStrip_39: 2730925920991931594
+      GrassCarpetStrip_4: 4590636195493999734
+      GrassCarpetStrip_40: -7763737034016050977
+      GrassCarpetStrip_41: 2501291169730767453
+      GrassCarpetStrip_42: -7996719393591190541
+      GrassCarpetStrip_43: -2244912015436026838
+      GrassCarpetStrip_44: 6268297928773131310
+      GrassCarpetStrip_45: -5088729577803750422
+      GrassCarpetStrip_46: 6579025852416084177
+      GrassCarpetStrip_47: -2869037867405421116
+      GrassCarpetStrip_5: -3366609721942742504
+      GrassCarpetStrip_6: 2785573385231075296
+      GrassCarpetStrip_7: -5824617338442959760
+      GrassCarpetStrip_8: 4793730530365030509
+      GrassCarpetStrip_9: 201624640032498875
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

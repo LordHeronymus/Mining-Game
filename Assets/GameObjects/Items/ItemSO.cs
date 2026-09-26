@@ -2,7 +2,7 @@ using UnityEngine;
 
 public enum Item
 {
-    //next 24
+    //next 28
 
     Coal = 3,
     Copper = 0,
@@ -29,6 +29,10 @@ public enum Item
     DiamondPickaxe = 21,
     Scythe = 22,
     Axe = 23,
+    Ultronium = 24,
+    Medkit = 25,
+    Fabric = 26,
+    HealingHerbs = 27,
 }
 
 public enum ItemCategory

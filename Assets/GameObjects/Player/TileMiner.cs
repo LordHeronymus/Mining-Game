@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
 using System;
 
@@ -11,7 +12,6 @@ public class TileMiner : MonoBehaviour
     [SerializeField] StatsManager stats;
     [SerializeField] Tilemap tilemap;
     [SerializeField] Tilemap highlightMap;
-    [SerializeField] TileBase highlightTile;
     [SerializeField] BlockRegistry blockRegistry;
     [SerializeField] Camera cam;
     [SerializeField] Texture2D treeCursorTexture;
@@ -19,18 +19,32 @@ public class TileMiner : MonoBehaviour
     [Header("Mining")]
     public int searchRadiusCells = 2;
     public float miningSoundInterval = 0.5f;
+    [Min(.05f)] public float cursorPulseInterval = .9f;
+    public Vector2 cursorPulseAlphaRange = new(.76f, 1f);
+    [Min(1f)] public float cursorPulseSize = 1.05f;
+    [FormerlySerializedAs("cursorBrightness"), Range(0f, 3f)] public float cursorGlowStrength = 1f;
 
     private Dictionary<Vector3Int, float> progress = new();
+    private MiningCrackVisual miningCracks;
     private Camera _cam;
     private MapGenerator map;
+    private CompactHud hotbar;
     private SurfaceTallGrass tallGrass;
     private SurfaceTrees surfaceTrees;
     private float nextMiningSoundTime = 0f;
+    private bool miningBlockActive;
+    private MinerPlayerVisual minerVisual;
     private float nextTreeHitTime;
     private float nextGrassCutTime;
     private float grassSwingUntil;
     private bool grassClickConsumed;
+    private bool smartCursor = true;
     private Vector3Int? highlightedCell;
+    private Vector3Int? highlightedPointerCell;
+    private bool highlightedSmartCursor;
+    private readonly List<Vector3Int> highlightedCells = new();
+    private Tile normalHighlightTile, smartHighlightTile;
+    private Material highlightMaterial, originalHighlightMaterial;
     private Texture2D scytheCursorTexture;
     private ToolCursor activeCursor;
     static readonly List<UnityEngine.EventSystems.RaycastResult> uiRaycasts = new();
@@ -52,9 +66,13 @@ public class TileMiner : MonoBehaviour
     {
         _cam = cam ? cam : Camera.main;
         map = tilemap ? tilemap.GetComponent<MapGenerator>() : null;
+        if (map) map.Generated += ClearMiningProgress;
+        hotbar = FindFirstObjectByType<CompactHud>();
         tallGrass = map ? map.GetComponent<SurfaceTallGrass>() : null;
         surfaceTrees = FindFirstObjectByType<SurfaceTrees>();
+        minerVisual = GetComponent<MinerPlayerVisual>();
         if (highlightMap) highlightMap.ClearAllTiles();
+        CreateHighlightTiles();
     }
 
     void OnDisable()
@@ -71,16 +89,30 @@ public class TileMiner : MonoBehaviour
 
     void OnDestroy()
     {
+        if (map) map.Generated -= ClearMiningProgress;
+        miningCracks?.Dispose();
         if (scytheCursorTexture) Destroy(scytheCursorTexture);
+        if (highlightMaterial)
+        {
+            var renderer = highlightMap ? highlightMap.GetComponent<TilemapRenderer>() : null;
+            if (renderer) renderer.sharedMaterial = originalHighlightMaterial;
+            Destroy(highlightMaterial);
+        }
+        DestroyHighlightTile(normalHighlightTile);
+        DestroyHighlightTile(smartHighlightTile);
     }
 
     void Update()
     {
+        miningCracks?.Refresh(progress);
+        bool continuedBlockMining = miningBlockActive;
+        miningBlockActive = false;
         mining = false;
         IsChoppingTree = false;
         IsCuttingGrass = Time.time < grassSwingUntil;
         if (!Input.GetMouseButton(0)) grassClickConsumed = false;
-        if (GameplayInputBlocker.IsBlocked || IsPointerOverUi(Input.mousePosition))
+        if (!hotbar) hotbar = FindFirstObjectByType<CompactHud>();
+        if (GameplayInputBlocker.IsBlocked || IsPointerOverUi(Input.mousePosition) || (hotbar && hotbar.SelectedSlot != 0))
         {
             mining = false;
             ClearHighlight();
@@ -92,6 +124,8 @@ public class TileMiner : MonoBehaviour
             grassSwingUntil = 0f;
             return;
         }
+        if (Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.RightControl) || Input.GetMouseButtonDown(2))
+            smartCursor = !smartCursor;
         if (!_cam || !tilemap) return;
 
         Vector3 mouseWorld = _cam.ScreenToWorldPoint(Input.mousePosition);
@@ -155,7 +189,9 @@ public class TileMiner : MonoBehaviour
             }
             return;
         }
-        Vector3Int? nearest = FindNearestExistingCell(mouseWorld, searchRadiusCells);
+        Vector3Int? nearest = smartCursor
+            ? FindNearestExistingCell(mouseWorld, searchRadiusCells)
+            : tilemap.WorldToCell(mouseWorld);
 
         if (nearest == null)
         {
@@ -163,7 +199,17 @@ public class TileMiner : MonoBehaviour
             return;
         }
 
-        Vector3Int targetCell = GetReachLimitedCell(nearest.Value);
+        Vector3Int targetCell;
+        if (smartCursor) targetCell = GetReachLimitedCell(nearest.Value);
+        else
+        {
+            targetCell = nearest.Value;
+            if (!stats || Vector2.Distance(tilemap.GetCellCenterWorld(targetCell), transform.position) > stats.Reach)
+            {
+                ClearHighlight();
+                return;
+            }
+        }
 
         if (map && map.IsSurfaceCellProtected(targetCell))
         {
@@ -172,7 +218,7 @@ public class TileMiner : MonoBehaviour
             return;
         }
 
-        ShowHighlight(targetCell);
+        ShowHighlight(targetCell, tilemap.WorldToCell(mouseWorld));
 
         if (!Input.GetMouseButton(0))
         {
@@ -182,32 +228,60 @@ public class TileMiner : MonoBehaviour
         TileBase t = tilemap.GetTile(targetCell);
         if (!t) return;
         mining = true;
+        miningBlockActive = true;
         MiningTarget = tilemap.GetCellCenterWorld(targetCell);
+        float hitInterval = GetMiningHitInterval();
+        if (!continuedBlockMining) nextMiningSoundTime = Time.time + hitInterval * .5f;
+        if (Time.time < nextMiningSoundTime) return;
+        nextMiningSoundTime = Time.time + hitInterval;
+        ApplyMiningHit(targetCell, hitInterval);
+    }
 
-        float p = progress.TryGetValue(targetCell, out var cur) ? cur : 0f;
-        float targetTime = GetTargetMineTime(targetCell);
-        p += Time.deltaTime / Mathf.Max(0.0001f, targetTime);
-        progress[targetCell] = p;
+    float GetMiningHitInterval()
+    {
+        if (!minerVisual) minerVisual = GetComponent<MinerPlayerVisual>();
+        return minerVisual && minerVisual.enabled
+            ? 1f / Mathf.Max(.1f, minerVisual.miningSwingsPerSecond)
+            : Mathf.Max(.05f, miningSoundInterval);
+    }
 
-        if (p >= 1f)
+    void ApplyMiningHit(Vector3Int cell, float hitInterval)
+    {
+        float p = progress.TryGetValue(cell, out var current) ? current : 0f;
+        p += hitInterval / Mathf.Max(.0001f, GetTargetMineTime(cell));
+        if (p >= 1f) { CompleteMining(cell); return; }
+        progress[cell] = p;
+        miningCracks ??= new MiningCrackVisual(tilemap);
+        miningCracks.Show(cell, p);
+
+        PlayMiningHitSound(GetBlock(cell));
+        OnBlockHit?.Invoke(tilemap.GetCellCenterWorld(cell));
+    }
+
+    void PlayMiningHitSound(Block block)
+    {
+        SoundType hit = SoundType.DigMedium;
+        int hitLayer = -1;
+        if (block != null)
         {
-            CompleteMining(targetCell);
-            return;
+            hitLayer = GetTerrainLayerIndex(block);
+            hit = hitLayer >= 2 ? SoundType.DigDeepStone : block.digSound;
         }
+        if (hitLayer >= 0) AudioManager.Instance?.PlayLayerMiningSound(hitLayer, hit, false);
+        else AudioManager.Instance?.Play(hit, true);
+    }
 
-        if (Time.time >= nextMiningSoundTime)
-        {
-            SoundType hit = SoundType.DigMedium; // Fallback
-            if (blockRegistry != null)
-            {
-                Block curBlock = GetBlock(targetCell);
-                if (curBlock != null) hit = curBlock.digSound;
-            }
+    void ShowMiningCracks(Vector3Int cell, float amount)
+    {
+        miningCracks ??= new MiningCrackVisual(tilemap);
+        miningCracks.Show(cell, amount);
+    }
 
-            AudioManager.Instance.Play(hit, true);
-            OnBlockHit?.Invoke(tilemap.GetCellCenterWorld(targetCell));
-            nextMiningSoundTime = Time.time + miningSoundInterval;
-        }
+    void ClearMiningProgress()
+    {
+        progress.Clear();
+        miningCracks?.Dispose();
+        miningCracks = null;
     }
 
     public static bool IsPointerOverUi(Vector2 screenPosition)
@@ -237,21 +311,107 @@ public class TileMiner : MonoBehaviour
         return true;
     }
 
-    void ShowHighlight(Vector3Int cell)
+    void ShowHighlight(Vector3Int cell, Vector3Int pointerCell)
     {
-        if (!highlightMap || !highlightTile) return;
-        if (!tilemap.HasTile(cell)) { ClearHighlight(); return; }
-        if (highlightedCell == cell && highlightMap.GetTile(cell) == highlightTile) return;
+        if (!highlightMap || !normalHighlightTile || !tilemap.HasTile(cell)) { ClearHighlight(); return; }
+        if (highlightedCell == cell && highlightedPointerCell == pointerCell &&
+            highlightedSmartCursor == smartCursor)
+        {
+            UpdateHighlightPulse();
+            return;
+        }
         ClearHighlight();
-        highlightMap.SetTile(cell, highlightTile);
+        highlightMap.SetTile(cell, smartCursor ? smartHighlightTile : normalHighlightTile);
+        highlightMap.SetColor(cell, Color.white);
+        highlightMap.SetTransformMatrix(cell, Matrix4x4.identity);
+        highlightedCells.Add(cell);
         highlightedCell = cell;
+        highlightedPointerCell = pointerCell;
+        highlightedSmartCursor = smartCursor;
+        UpdateHighlightPulse();
+    }
+
+    void UpdateHighlightPulse()
+    {
+        if (!highlightMap || !highlightedCell.HasValue) return;
+        float glowStrength = Mathf.Clamp(cursorGlowStrength, 0f, 3f);
+        if (highlightMaterial && highlightMaterial.HasProperty("_Color"))
+            highlightMaterial.SetColor("_Color", Color.white * glowStrength);
+        float interval = Mathf.Max(.05f, cursorPulseInterval);
+        float pulse = .5f + .5f * Mathf.Sin(Time.unscaledTime * (Mathf.PI * 2f / interval));
+        float minAlpha = Mathf.Clamp01(Mathf.Min(cursorPulseAlphaRange.x, cursorPulseAlphaRange.y));
+        float maxAlpha = Mathf.Clamp01(Mathf.Max(cursorPulseAlphaRange.x, cursorPulseAlphaRange.y));
+        float alpha = Mathf.Lerp(minAlpha, maxAlpha, pulse);
+        float size = Mathf.Lerp(1f, Mathf.Clamp(cursorPulseSize, 1f, 1.5f), pulse);
+        highlightMap.SetColor(highlightedCell.Value,
+            new Color(1f, 1f, 1f, alpha * Mathf.Lerp(.3f, 1f, Mathf.Clamp01(glowStrength))));
+        highlightMap.SetTransformMatrix(highlightedCell.Value, Matrix4x4.Scale(new Vector3(size, size, 1f)));
     }
 
     void ClearHighlight()
     {
-        if (!highlightMap || !highlightedCell.HasValue) return;
-        highlightMap.SetTile(highlightedCell.Value, null);
+        if (highlightMap)
+            foreach (var cell in highlightedCells)
+            {
+                highlightMap.SetColor(cell, Color.white);
+                highlightMap.SetTransformMatrix(cell, Matrix4x4.identity);
+                highlightMap.SetTile(cell, null);
+            }
+        highlightedCells.Clear();
         highlightedCell = null;
+        highlightedPointerCell = null;
+    }
+
+    void CreateHighlightTiles()
+    {
+        if (!highlightMap) return;
+        var renderer = highlightMap.GetComponent<TilemapRenderer>();
+        var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+        if (renderer && shader)
+        {
+            originalHighlightMaterial = renderer.sharedMaterial;
+            highlightMaterial = new Material(shader)
+            {
+                name = "Cursor Highlight Unlit",
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            renderer.sharedMaterial = highlightMaterial;
+        }
+        float orientationScale = Mathf.Abs(highlightMap.orientationMatrix.lossyScale.x);
+        float frameScale = orientationScale / Mathf.Max(.001f, highlightMap.cellSize.x);
+        normalHighlightTile = CreateAssetHighlightTile("Normal Cursor", "Cursor/NormalCursorFrame", frameScale);
+        smartHighlightTile = CreateAssetHighlightTile("Smart Cursor", "Cursor/SmartCursorFrame", frameScale);
+    }
+
+    static Tile CreateAssetHighlightTile(string name, string resourcePath, float frameScale)
+    {
+        var texture = Resources.Load<Texture2D>(resourcePath);
+        if (!texture) return null;
+        texture.filterMode = FilterMode.Trilinear;
+        texture.wrapMode = TextureWrapMode.Clamp;
+        // The gold outline spans 85% of the texture; the remaining space holds its soft halo.
+        float pixelsPerUnit = texture.width * .85f * frameScale;
+        var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
+            new Vector2(.5f, .5f), pixelsPerUnit, 0, SpriteMeshType.FullRect);
+        sprite.name = name;
+        sprite.hideFlags = HideFlags.HideAndDontSave;
+        var tile = ScriptableObject.CreateInstance<Tile>();
+        tile.name = name;
+        tile.sprite = sprite;
+        tile.colliderType = Tile.ColliderType.None;
+        tile.flags = TileFlags.None;
+        tile.hideFlags = HideFlags.HideAndDontSave;
+        return tile;
+    }
+
+    static void DestroyHighlightTile(Tile tile)
+    {
+        if (!tile) return;
+        if (tile.sprite)
+        {
+            Destroy(tile.sprite);
+        }
+        Destroy(tile);
     }
 
     static void ClearTreeGlow()
@@ -299,6 +459,19 @@ public class TileMiner : MonoBehaviour
         return map ? map.GetBlockAt(cell) : blockRegistry ? blockRegistry.FromTile(tilemap.GetTile(cell)) : null;
     }
 
+    int GetTerrainLayerIndex(Block block)
+    {
+        if (!block || !map || map.layers == null) return -1;
+
+        // Transition bands can contain stones from an incoming layer before its start depth.
+        // Identify the source layer from the actual block so sound and tuning follow its material.
+        for (int i = 0; i < map.layers.Length; i++)
+            if (map.layers[i] != null && map.layers[i].stone == block)
+                return i;
+
+        return -1;
+    }
+
     // One transaction for rewards, effects and both render layers. Effects read the cell before removal.
     public bool CompleteMining(Vector3Int cell)
     {
@@ -319,8 +492,14 @@ public class TileMiner : MonoBehaviour
             tilemap.GetComponent<MapLighting>()?.NotifyTileChanged(cell);
         }
         progress.Remove(cell);
-        AudioManager.Instance?.Play(ore ? SoundType.BreakOre : block ? block.breakSound : SoundType.BreakRock,
-            ore != null);
+        miningCracks?.Hide(cell);
+        int terrainLayer = !ore ? GetTerrainLayerIndex(block) : -1;
+        SoundType breakSound = ore ? SoundType.BreakOre : block ? block.breakSound : SoundType.BreakRock;
+        if (terrainLayer >= 2) breakSound = SoundType.StoneBreak;
+        else if (terrainLayer >= 0) breakSound = SoundType.ClayBreak;
+        PlayMiningHitSound(block);
+        if (terrainLayer >= 0) AudioManager.Instance?.PlayLayerMiningSound(terrainLayer, breakSound, true);
+        else AudioManager.Instance?.Play(breakSound, ore != null);
         return true;
     }
 

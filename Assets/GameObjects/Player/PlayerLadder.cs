@@ -7,6 +7,7 @@ public sealed class PlayerLadder : MonoBehaviour
     public LadderMap ladders;
     public StatsManager stats;
     [Min(.1f)] public float climbSpeed = 2f;
+    [Min(0f)] public float horizontalExitUpwardImpulse = .7f;
     public bool IsClimbing { get; private set; }
     public bool BuildMode { get; private set; }
     Rigidbody2D body;
@@ -44,15 +45,18 @@ public sealed class PlayerLadder : MonoBehaviour
         Vector3 world = view.ScreenToWorldPoint(Input.mousePosition);
         world.z = 0;
         var inventory = InventoryManager.Instance;
-        if (Input.GetMouseButtonDown(1) && selected)
+        if (Input.GetMouseButtonDown(1))
+        {
+            if (PlacedTorch.TryRemoveAt(world, transform.position, stats.Reach)) return;
+            if (ladders)
+                ladders.TryRemove(ladders.Map.Terrain.WorldToCell(world), inventory, transform.position, stats.Reach);
+        }
+        if (Input.GetMouseButtonDown(0) && selected)
         {
             if (selected.item == Item.Ladder && ladders)
             {
                 var cell = ladders.Map.Terrain.WorldToCell(world);
-                if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
-                    ladders.TryRemove(cell, inventory, transform.position, stats.Reach);
-                else
-                    ladders.TryPlace(cell, inventory, transform.position, stats.Reach);
+                ladders.TryPlace(cell, inventory, transform.position, stats.Reach);
             }
             else if (selected.item == Item.Torche)
             {
@@ -81,9 +85,13 @@ public sealed class PlayerLadder : MonoBehaviour
         if (!ladders.FindContact(bodyCollider.bounds, out var cell)) { Detach(); return false; }
         if (IsClimbing && (jump || Mathf.Abs(horizontal) > .1f))
         {
+            bool leavingHorizontally = Mathf.Abs(horizontal) > .1f;
             Detach();
             body.linearVelocity = new Vector2(horizontal * stats.EffectiveMoveSpeed, 0);
-            if (jump) GetComponent<PlayerMovement>().LaunchJump();
+            if (jump)
+                GetComponent<PlayerMovement>().LaunchJump();
+            else if (leavingHorizontally)
+                body.linearVelocity = new Vector2(body.linearVelocity.x, horizontalExitUpwardImpulse);
             return true;
         }
         if (!IsClimbing)

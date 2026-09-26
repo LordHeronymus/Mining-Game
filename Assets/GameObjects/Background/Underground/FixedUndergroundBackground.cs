@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[ExecuteAlways,DisallowMultipleComponent]
+[ExecuteAlways,DisallowMultipleComponent,DefaultExecutionOrder(1450)]
 public sealed class FixedUndergroundBackground : MonoBehaviour
 {
     public MapGenerator map;
@@ -12,10 +12,14 @@ public sealed class FixedUndergroundBackground : MonoBehaviour
     [Min(.01f)] public float fadeDepthBlocks=10;
     [Range(0,1)] public float fadeStart=.3333333f;
     [Range(0,1)] public float fadeEnd=.6666667f;
+    [Range(0f,3f)] public float nightBrightnessMultiplier=1.2f;
     Mesh mesh;
     GameObject visual;
     MeshRenderer meshRenderer;
     MaterialPropertyBlock properties;
+    MapLighting mapLighting;
+    MoonlightController moonlight;
+    SkyController sky;
     readonly Vector3[] corners=new Vector3[4];
     void OnEnable()
     {
@@ -99,6 +103,20 @@ public sealed class FixedUndergroundBackground : MonoBehaviour
             if(i==3)starts.z=layer.startDepth*cellHeight;
         }
         properties.SetVector("_LayerStarts",starts);
+        if (!mapLighting) mapLighting=map.GetComponent<MapLighting>();
+        if (!moonlight) moonlight=FindFirstObjectByType<MoonlightController>();
+        if (!sky) sky=moonlight?moonlight.GetComponent<SkyController>():FindFirstObjectByType<SkyController>();
+        float globalLight=moonlight && moonlight.daylight ? moonlight.daylight.intensity : 1f;
+        Color globalColor=moonlight && moonlight.daylight ? moonlight.daylight.color : Color.white;
+        bool fullGlobalLighting=GameplayTestSettings.GlobalLighting;
+        if (fullGlobalLighting) { globalLight=1f; globalColor=Color.white; }
+        properties.SetFloat("_GlobalLight",globalLight);
+        properties.SetColor("_GlobalLightColor",globalColor);
+        float nightBlend=!fullGlobalLighting&&sky&&sky.isActiveAndEnabled?sky.NightBlend:0f;
+        properties.SetFloat("_NightBrightnessMultiplier",
+            Mathf.Lerp(1f,Mathf.Clamp(nightBrightnessMultiplier,0f,3f),nightBlend));
+        if (mapLighting) mapLighting.ApplyBackgroundLighting(properties);
+        else properties.SetFloat("_UseMapLighting",0f);
         meshRenderer.SetPropertyBlock(properties);
     }
     void OnDisable()

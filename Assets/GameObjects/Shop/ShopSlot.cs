@@ -30,7 +30,7 @@ public class ShopSlot : MonoBehaviour
         if (button)
         {
             button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => shop.SelectItem(Item));
+            button.onClick.AddListener(() => shop.HandleItemClick(Item));
         }
 
         SetSelected(false);

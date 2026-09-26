@@ -131,7 +131,7 @@ public sealed class MapLighting : MonoBehaviour
     // the visible Tilemap is streamed into the scene.
     public void PrepareForStreamingGeneration(MapGenerator.MapGenerationSnapshot snapshot)
     {
-        if (!lightingEnabled || snapshot == null) return;
+        if (!lightingEnabled || GameplayTestSettings.GlobalLighting || snapshot == null) return;
         if (!map) map = GetComponent<MapGenerator>();
         if (!tiles) tiles = GetComponent<Tilemap>();
         Initialize(snapshot.width, snapshot.height, snapshot.terrainTiles);
@@ -164,7 +164,7 @@ public sealed class MapLighting : MonoBehaviour
 
     void LateUpdate()
     {
-        if (!lightingEnabled)
+        if (!lightingEnabled || GameplayTestSettings.GlobalLighting)
         {
             if (overlay) overlay.SetActive(false);
             return;
@@ -217,6 +217,23 @@ public sealed class MapLighting : MonoBehaviour
         }
         material.SetVectorArray(TorchSourcesId, torchSources);
         material.SetInt(TorchCountId, count);
+    }
+
+    public void ApplyBackgroundLighting(MaterialPropertyBlock properties)
+    {
+        bool active = lightingEnabled && !GameplayTestSettings.GlobalLighting &&
+            texture && overlay && overlay.activeInHierarchy && material;
+        properties.SetFloat("_UseMapLighting", active ? 1f : 0f);
+        if (!active) return;
+        var bounds = overlay.GetComponent<MeshRenderer>().bounds;
+        properties.SetTexture("_DaylightTex", texture);
+        properties.SetVector("_DaylightRect", new Vector4(bounds.min.x, bounds.min.y,
+            1f / Mathf.Max(bounds.size.x, .001f), 1f / Mathf.Max(bounds.size.y, .001f)));
+        properties.SetVector(HeadlampOriginRange, material.GetVector(HeadlampOriginRange));
+        properties.SetVector(HeadlampDirectionAngles, material.GetVector(HeadlampDirectionAngles));
+        properties.SetFloat(HeadlampInnerRadius, material.GetFloat(HeadlampInnerRadius));
+        properties.SetVectorArray(TorchSourcesId, torchSources);
+        properties.SetInt(TorchCountId, material.GetInt(TorchCountId));
     }
 
     void Initialize()
@@ -370,6 +387,7 @@ public sealed class MapLighting : MonoBehaviour
 
     public float GetBrightness(Vector3Int cell)
     {
+        if (GameplayTestSettings.GlobalLighting) return 1f;
         if (!lightingEnabled) return Mathf.Max(ambientBrightness, daylightStrength);
         int x = cell.x + width / 2, y = -cell.y;
         float mapBrightness = cell.y > 0

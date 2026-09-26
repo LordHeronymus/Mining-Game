@@ -36,7 +36,7 @@ public class SellPage : MonoBehaviour
     {
         if (sell1Button) sell1Button.onClick.AddListener(() => Sell(1));
         if (sell10Button) sell10Button.onClick.AddListener(() => Sell(10));
-        if (sellMaxButton) sellMaxButton.onClick.AddListener(SellMax);
+        if (sellMaxButton) sellMaxButton.onClick.AddListener(SellWithCurrentModifier);
         if (sellAllButton) sellAllButton.onClick.AddListener(SellAll);
 
         gameObject.SetActive(true);
@@ -52,6 +52,12 @@ public class SellPage : MonoBehaviour
     {
         if (InventoryManager.Instance) InventoryManager.Instance.OnInventoryChanged -= OnInvChanged;
         if (StatsManager.Instance) StatsManager.Instance.OnMoneyChanged -= HandleMoney;
+    }
+
+    void Update()
+    {
+        if (!panel || panel.alpha <= 0f) return;
+        UpdateSellActionButton();
     }
     void OnInvChanged()
     {
@@ -179,6 +185,28 @@ public class SellPage : MonoBehaviour
         UpdateButtons();
     }
 
+    public void HandleItemClick(ItemSO item)
+    {
+        bool controlHeld = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+        bool shiftHeld = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+
+        if (!controlHeld && !shiftHeld)
+        {
+            SelectItem(item);
+            return;
+        }
+
+        _selected = item;
+        ApplySelectionHighlight();
+        UpdateDetails();
+        UpdateButtons();
+
+        if (controlHeld)
+            SellMax();
+        else
+            Sell(10);
+    }
+
     private void ApplySelectionHighlight()
     {
         for (int i = 0; i < content.childCount; i++)
@@ -228,12 +256,7 @@ public class SellPage : MonoBehaviour
 
         if (sell1Button) sell1Button.interactable = canSellSelected && count >= 1;
         if (sell10Button) sell10Button.interactable = canSellSelected && count >= 10;
-        if (sellMaxButton) sellMaxButton.interactable = canSellSelected && count >= 1;
-        if (sellMaxButton)
-        {
-            var label = sellMaxButton.GetComponentInChildren<TextMeshProUGUI>();
-            if (label) label.text = canSellSelected ? $"{count} {_selected.displayName} verkaufen" : "Erz verkaufen";
-        }
+        UpdateSellActionButton();
 
         // ---- Sell All: nur aktiv, wenn es IRGENDEIN verkaufbares Ore gibt ----
         bool canSellAny = false;
@@ -254,6 +277,47 @@ public class SellPage : MonoBehaviour
         }
 
         if (sellAllButton) sellAllButton.interactable = canSellAny;
+    }
+
+    private void UpdateSellActionButton()
+    {
+        if (!sellMaxButton) return;
+
+        int count = (_selected && InventoryManager.Instance)
+            ? InventoryManager.Instance.GetCount(_selected)
+            : 0;
+        bool controlHeld = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+        bool shiftHeld = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        bool canSellSelected = _selected && _selected.worth > 0 && count > 0;
+        bool canSellCurrentQuantity = canSellSelected && (!shiftHeld || controlHeld || count >= 10);
+
+        string labelText = "Erz verkaufen";
+        if (_selected)
+        {
+            if (controlHeld)
+                labelText = $"Alles {_selected.displayName} verkaufen";
+            else if (shiftHeld)
+                labelText = $"10 {_selected.displayName} verkaufen";
+            else
+                labelText = $"1 {_selected.displayName} verkaufen";
+        }
+
+        var label = sellMaxButton.GetComponentInChildren<TextMeshProUGUI>();
+        if (label && label.text != labelText) label.text = labelText;
+        sellMaxButton.interactable = canSellCurrentQuantity;
+    }
+
+    private void SellWithCurrentModifier()
+    {
+        bool controlHeld = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+        bool shiftHeld = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+
+        if (controlHeld)
+            SellMax();
+        else if (shiftHeld)
+            Sell(10);
+        else
+            Sell(1);
     }
 
     private void Sell(int qty)

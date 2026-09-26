@@ -8,24 +8,38 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     [SerializeField] MapGenerator map;
     [SerializeField] Sprite sprite;
     [SerializeField] Sprite[] variants;
+    [SerializeField] Sprite[] medicinalHerbVariants;
     [SerializeField] Material material;
     [SerializeField] ItemSO fiber;
+    [SerializeField] ItemSO healingHerbs;
     [SerializeField] ItemSO scythePowerup;
     [SerializeField, Min(0)] int maximumPatches = 60;
+    [SerializeField, Range(0f, 100f)] float healingHerbRarityPercent = 30f;
+    [SerializeField, Min(0f)] float healingHerbSpawnAreaSize = 18f;
     [SerializeField, Min(1)] int minimumSpacing = 3;
     [SerializeField, Range(0f, 1f)] float randomness = .75f;
     [SerializeField, Min(0f)] float spawnQuietRadius = 18f;
     [SerializeField, Range(0f, 1f)] float nearSpawnDensity = .15f;
     [SerializeField] Vector2 respawnSeconds = new Vector2(90f, 180f);
     [SerializeField] Vector2Int fiberYield = new Vector2Int(2, 5);
+    [SerializeField] Vector2Int healingHerbYield = new Vector2Int(1, 3);
+    [SerializeField, Min(0f)] float fiberSwayStrength = 2f;
+    [SerializeField, Min(0f)] float fiberSwayFrequency = 1.5f;
+    [SerializeField, Min(0f)] float healingHerbSwayStrength = 2f;
+    [SerializeField, Min(0f)] float healingHerbSwayFrequency = 1.5f;
     [SerializeField] Vector2 heightRange = new Vector2(1.55f, 2.05f);
 
     readonly Dictionary<int, TallGrassPatch> patches = new();
     readonly List<int> sites = new();
+    readonly HashSet<int> healingHerbSites = new();
     Transform generatedRoot;
     System.Random respawnRandom;
     float nextRespawn;
     bool rebuildPending;
+    float appliedFiberSwayStrength = float.NaN;
+    float appliedFiberSwayFrequency = float.NaN;
+    float appliedHealingHerbSwayStrength = float.NaN;
+    float appliedHealingHerbSwayFrequency = float.NaN;
 
     public int PatchCount => patches.Count;
     public int Capacity => sites.Count;
@@ -84,6 +98,13 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         respawnSeconds.y = Mathf.Max(respawnSeconds.x, respawnSeconds.y);
         fiberYield.x = Mathf.Max(1, fiberYield.x);
         fiberYield.y = Mathf.Max(fiberYield.x, fiberYield.y);
+        healingHerbYield.x = Mathf.Max(1, healingHerbYield.x);
+        healingHerbYield.y = Mathf.Max(healingHerbYield.x, healingHerbYield.y);
+        healingHerbSpawnAreaSize = Mathf.Max(0f, healingHerbSpawnAreaSize);
+        fiberSwayStrength = Mathf.Max(0f, fiberSwayStrength);
+        fiberSwayFrequency = Mathf.Max(0f, fiberSwayFrequency);
+        healingHerbSwayStrength = Mathf.Max(0f, healingHerbSwayStrength);
+        healingHerbSwayFrequency = Mathf.Max(0f, healingHerbSwayFrequency);
     }
 
     void OnTilesChanged(Tilemap source, Tilemap.SyncTile[] changes)
@@ -99,12 +120,14 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         rebuildPending = false;
         Clear();
         sites.Clear();
+        healingHerbSites.Clear();
         if (!map || !map.Terrain || (!sprite && (variants == null || variants.Length == 0))) return;
 
         int width = map.GeneratedWidth;
         if (width <= 0 || maximumPatches <= 0) return;
         respawnRandom = new System.Random(map.ActiveSeed ^ 0x6D925A1);
         var trees = FindTrees();
+        var candidates = new List<int>();
         int previous = int.MinValue / 2;
         int left = -width / 2;
         float step = (float)width / maximumPatches;
@@ -112,27 +135,102 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         for (int index = 0; index < maximumPatches; index++)
         {
             float jitter = (Hash01(index, 0xA41Fu) - .5f) * .9f * randomness;
-            int x = Mathf.Clamp(left + Mathf.FloorToInt((index + .5f + jitter) * step),
+            int preferredX = Mathf.Clamp(left + Mathf.FloorToInt((index + .5f + jitter) * step),
                 left + 1, left + width - 2);
-            var cell = new Vector3Int(x, 0);
-            if (!map.Terrain.HasTile(cell) || !map.Terrain.HasTile(cell + Vector3Int.left) ||
-                !map.Terrain.HasTile(cell + Vector3Int.right) || x - previous < minimumSpacing)
-                continue;
-            float worldX = map.Terrain.GetCellCenterWorld(cell).x;
-            float distance = Mathf.Abs(worldX - spawnX);
-            float blend = spawnQuietRadius > 0f ? Mathf.SmoothStep(0f, 1f,
-                Mathf.Clamp01(distance / spawnQuietRadius)) : 1f;
-            float chance = Mathf.Lerp(nearSpawnDensity, 1f, blend);
-            if (Hash01(index, 0xAD52u) >= chance || NearBuilding(worldX)) continue;
-            sites.Add(x);
-            previous = x;
-            if (trees && trees.Protects(cell)) continue;
-            Spawn(x, worldX);
+            int slotStart = Mathf.Clamp(left + Mathf.FloorToInt(index * step), left + 1, left + width - 2);
+            int slotEnd = Mathf.Clamp(left + Mathf.FloorToInt((index + 1) * step) - 1,
+                slotStart, left + width - 2);
+            var slotCandidates = new List<int>(slotEnd - slotStart + 1);
+            for (int candidateX = slotStart; candidateX <= slotEnd; candidateX++) slotCandidates.Add(candidateX);
+            slotCandidates.Sort((a, b) =>
+            {
+                int distanceOrder = Mathf.Abs(a - preferredX).CompareTo(Mathf.Abs(b - preferredX));
+                if (distanceOrder != 0) return distanceOrder;
+                uint hashA = OreVeins.Hash(map.ActiveSeed, a, 0, 0xA41Fu);
+                uint hashB = OreVeins.Hash(map.ActiveSeed, b, 0, 0xA41Fu);
+                return hashA.CompareTo(hashB);
+            });
+
+            int selectedX = int.MinValue;
+            int fallbackX = int.MinValue;
+            foreach (int candidateX in slotCandidates)
+            {
+                var cell = new Vector3Int(candidateX, 0);
+                if (!map.Terrain.HasTile(cell) || !map.Terrain.HasTile(cell + Vector3Int.left) ||
+                    !map.Terrain.HasTile(cell + Vector3Int.right) || candidateX - previous < minimumSpacing)
+                    continue;
+                float worldX = map.Terrain.GetCellCenterWorld(cell).x;
+                if (NearBuilding(worldX) || (trees && trees.Protects(cell))) continue;
+                if (fallbackX == int.MinValue) fallbackX = candidateX;
+                float distance = Mathf.Abs(worldX - spawnX);
+                float blend = spawnQuietRadius > 0f ? Mathf.SmoothStep(0f, 1f,
+                    Mathf.Clamp01(distance / spawnQuietRadius)) : 1f;
+                float chance = Mathf.Lerp(nearSpawnDensity, 1f, blend);
+                if (Hash01(index, 0xAD52u) < chance) { selectedX = candidateX; break; }
+            }
+            if (selectedX == int.MinValue) selectedX = fallbackX;
+            if (selectedX == int.MinValue) continue;
+
+            sites.Add(selectedX);
+            candidates.Add(selectedX);
+            previous = selectedX;
         }
+
+        if (sites.Count < maximumPatches)
+        {
+            var fallbackCandidates = new List<int>();
+            for (int candidateX = left + 1; candidateX < left + width - 1; candidateX++)
+            {
+                var cell = new Vector3Int(candidateX, 0);
+                if (!map.Terrain.HasTile(cell) || !map.Terrain.HasTile(cell + Vector3Int.left) ||
+                    !map.Terrain.HasTile(cell + Vector3Int.right)) continue;
+                float worldX = map.Terrain.GetCellCenterWorld(cell).x;
+                if (NearBuilding(worldX) || (trees && trees.Protects(cell))) continue;
+                bool tooClose = false;
+                foreach (int existingX in sites)
+                    if (Mathf.Abs(candidateX - existingX) < minimumSpacing) { tooClose = true; break; }
+                if (!tooClose) fallbackCandidates.Add(candidateX);
+            }
+            fallbackCandidates.Sort((a, b) =>
+            {
+                uint hashA = OreVeins.Hash(map.ActiveSeed, a, 0, 0xA41Fu);
+                uint hashB = OreVeins.Hash(map.ActiveSeed, b, 0, 0xA41Fu);
+                int order = hashA.CompareTo(hashB);
+                return order != 0 ? order : a.CompareTo(b);
+            });
+            foreach (int x in fallbackCandidates)
+            {
+                if (sites.Count >= maximumPatches) break;
+                sites.Add(x);
+                candidates.Add(x);
+            }
+        }
+
+        var eligibleHerbSites = new List<int>();
+        foreach (int x in candidates)
+        {
+            float worldX = map.Terrain.GetCellCenterWorld(new Vector3Int(x, 0)).x;
+            if (Mathf.Abs(worldX - spawnX) >= healingHerbSpawnAreaSize)
+                eligibleHerbSites.Add(x);
+        }
+        int herbCount = Mathf.Min(eligibleHerbSites.Count,
+            Mathf.RoundToInt(maximumPatches * Mathf.Clamp(healingHerbRarityPercent, 0f, 100f) / 100f));
+        var ranked = eligibleHerbSites;
+        ranked.Sort((a, b) =>
+        {
+            uint hashA = OreVeins.Hash(map.ActiveSeed, a, 0, 0x4D4544u);
+            uint hashB = OreVeins.Hash(map.ActiveSeed, b, 0, 0x4D4544u);
+            int order = hashA.CompareTo(hashB);
+            return order != 0 ? order : a.CompareTo(b);
+        });
+        for (int i = 0; i < herbCount; i++) healingHerbSites.Add(ranked[i]);
+        foreach (int x in candidates)
+            Spawn(x, map.Terrain.GetCellCenterWorld(new Vector3Int(x, 0)).x);
     }
 
     void Update()
     {
+        RefreshSwaySettings();
         if (rebuildPending)
         {
             if (map && map.IsGenerated) Rebuild();
@@ -156,6 +254,27 @@ public sealed class SurfaceTallGrass : MonoBehaviour
             break;
         }
         ScheduleRespawn();
+    }
+
+    void RefreshSwaySettings()
+    {
+        if (appliedFiberSwayStrength == fiberSwayStrength &&
+            appliedFiberSwayFrequency == fiberSwayFrequency &&
+            appliedHealingHerbSwayStrength == healingHerbSwayStrength &&
+            appliedHealingHerbSwayFrequency == healingHerbSwayFrequency) return;
+        foreach (var patch in patches.Values)
+            if (patch) ApplySwaySettings(patch);
+        appliedFiberSwayStrength = fiberSwayStrength;
+        appliedFiberSwayFrequency = fiberSwayFrequency;
+        appliedHealingHerbSwayStrength = healingHerbSwayStrength;
+        appliedHealingHerbSwayFrequency = healingHerbSwayFrequency;
+    }
+
+    public void ApplySwaySettings(TallGrassPatch patch)
+    {
+        bool herb = patch.IsHealingHerb;
+        patch.SetSwaySettings(herb ? healingHerbSwayStrength : fiberSwayStrength,
+            herb ? healingHerbSwayFrequency : fiberSwayFrequency);
     }
 
     void ScheduleRespawn()
@@ -194,14 +313,16 @@ public sealed class SurfaceTallGrass : MonoBehaviour
             height, 1f);
 
         var renderer = go.GetComponent<SpriteRenderer>();
-        renderer.sprite = variants != null && variants.Length > 0
-            ? variants[(int)(OreVeins.Hash(map.ActiveSeed, x, 0, 0xB192u) % (uint)variants.Length)]
+        bool isHealingHerb = healingHerbSites.Contains(x) && medicinalHerbVariants != null && medicinalHerbVariants.Length > 0;
+        Sprite[] visualVariants = isHealingHerb ? medicinalHerbVariants : variants;
+        renderer.sprite = visualVariants != null && visualVariants.Length > 0
+            ? visualVariants[(int)(OreVeins.Hash(map.ActiveSeed, x, 0, isHealingHerb ? 0x4D5641u : 0xB192u) % (uint)visualVariants.Length)]
             : sprite;
         if (material) renderer.sharedMaterial = material;
         renderer.sortingLayerName = "Grass";
         renderer.sortingOrder = 1;
         var patch = go.GetComponent<TallGrassPatch>();
-        patch.Initialize(this, x);
+        patch.Initialize(this, x, isHealingHerb);
         patches.Add(x, patch);
     }
 
@@ -215,10 +336,15 @@ public sealed class SurfaceTallGrass : MonoBehaviour
             particles.Burst(patch.GetComponent<SpriteRenderer>().bounds);
         }
         RemovePatch(surfaceCellX);
-        if (Application.isPlaying && fiber && InventoryManager.Instance)
-            InventoryManager.Instance.Add(fiber, respawnRandom != null
+        if (Application.isPlaying && InventoryManager.Instance)
+        {
+            if (patch.IsHealingHerb && healingHerbs) InventoryManager.Instance.Add(healingHerbs, respawnRandom != null
+                ? respawnRandom.Next(Mathf.Max(1, healingHerbYield.x), Mathf.Max(healingHerbYield.x, healingHerbYield.y) + 1)
+                : Mathf.Max(1, healingHerbYield.x));
+            else if (fiber) InventoryManager.Instance.Add(fiber, respawnRandom != null
                 ? respawnRandom.Next(Mathf.Max(1, fiberYield.x), Mathf.Max(fiberYield.x, fiberYield.y) + 1)
                 : Mathf.Max(1, fiberYield.x));
+        }
         return true;
     }
 

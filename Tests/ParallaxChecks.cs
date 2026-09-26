@@ -50,7 +50,6 @@ public static class ParallaxChecks
             var controller = root.AddComponent<SurfaceBackgroundController>();
             controller.targetCamera = camera;
             controller.cameraReferencePosition = Vector2.zero;
-            controller.fadeWithDepth = false;
             var child = new GameObject("Layer");
             child.transform.SetParent(root.transform, false);
             var layer = child.AddComponent<ParallaxLayer>();
@@ -132,25 +131,21 @@ public static class ParallaxChecks
             layer.verticalOffset += 5f;
             layer.Refresh();
             Assert(Mathf.Abs(Visible(layer)[0].bounds.center.y - fixedWorld.y - 10f) < 0.001f, "Live offset edits failed.");
-            controller.fadeWithDepth = true;
-            controller.fadeStartY = 0f;
-            controller.fadeEndY = -10f;
             controller.opacity = 0.8f;
             camera.transform.position = new Vector3(0f, -5f, -10f);
             layer.Refresh();
-            Assert(Mathf.Abs(Visible(layer)[0].color.a - 0.4f) < 0.001f, "Depth fade is wrong.");
+            Assert(Mathf.Abs(Visible(layer)[0].color.a - 0.8f) < 0.001f, "Global opacity must stay independent of depth.");
             layer.opacity = 0.5f;
             layer.Refresh();
-            Assert(Mathf.Abs(Visible(layer)[0].color.a - 0.2f) < 0.001f,
-                "Layer opacity must multiply global opacity and depth fade.");
+            Assert(Mathf.Abs(Visible(layer)[0].color.a - 0.4f) < 0.001f,
+                "Layer opacity must multiply global opacity.");
             layer.opacity = 0f;
             layer.Refresh();
             Assert(Visible(layer).Length == 0, "Zero layer opacity must hide the layer.");
             layer.opacity = 1f;
             camera.transform.position = new Vector3(0f, -11f, -10f);
             layer.Refresh();
-            Assert(Visible(layer).Length == 0, "Background must disappear below the fade range.");
-            controller.fadeWithDepth = false;
+            Assert(Visible(layer).Length > 0, "Background visibility must stay independent of depth.");
             controller.enabled = false;
             layer.Refresh();
             Assert(Visible(layer).Length == 0, "Disabling the controller must hide its set.");
@@ -233,7 +228,6 @@ public static class ParallaxChecks
             layer.opacity = 1f;
             controller.zoom = 1f;
             controller.opacity = 1f;
-            controller.fadeWithDepth = false;
             camera.transform.position = new Vector3(0f, -10f, -10f);
             layer.Refresh();
             var surface = Visible(layer).Where(r => r.sprite != underground).ToArray();
@@ -260,17 +254,13 @@ public static class ParallaxChecks
             Assert(earth.Length > 0 && earth.Min(r => r.bounds.min.y) <= -110f &&
                 earth.Max(r => r.bounds.max.y) >= -90f,
                 "Underground must repeat vertically at depth.");
-            controller.fadeWithDepth = true;
-            controller.fadeStartY = 0f;
-            controller.fadeEndY = -10f;
-            layer.ignoreDepthFade = true;
             layer.Refresh();
             Assert(Visible(layer).Where(r => r.sprite != underground).All(r => Mathf.Abs(r.color.a - 1f) < 0.001f),
                 "NearHills must keep full opacity below the depth fade range.");
             Assert(Visible(layer).Where(r => r.sprite == underground).All(r => Mathf.Abs(r.color.a - 1f) < 0.001f),
                 "Underground must keep full opacity below the depth fade range.");
 
-            return "PASS: coverage, segment seams, underground X/Y repetition, one-pixel overlap, full NearHills opacity, zoom, parallax, depth fade and lifecycle.";
+            return "PASS: coverage, segment seams, underground X/Y repetition, one-pixel overlap, full NearHills opacity, zoom, parallax and lifecycle.";
         }
         finally
         {

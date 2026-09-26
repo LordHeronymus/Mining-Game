@@ -20,28 +20,7 @@ public static class SurfaceBackgroundLightingChecks
         var controller = UnityEngine.Object.FindFirstObjectByType<SurfaceBackgroundController>();
         Check(controller, "SurfaceBackgroundController missing");
 
-        float surface = Mathf.Clamp(controller.surfaceBrightness, 0f, 2f);
-        float underground = Mathf.Clamp(controller.undergroundBrightness, 0f, 2f);
-        float transition = Mathf.Max(0.01f, controller.undergroundBrightnessTransitionDepth);
-        Check(Near(controller.GetUndergroundBackgroundBrightness(0f), surface),
-            "Underground brightness does not start at surface brightness");
-        Check(Near(controller.GetUndergroundBackgroundBrightness(transition * 0.5f),
-            Mathf.Lerp(surface, underground, 0.5f)), "Midpoint brightness is not linear");
-        Check(Near(controller.GetUndergroundBackgroundBrightness(transition), underground),
-            "Underground brightness does not reach its target at the configured depth");
-        Check(Near(controller.GetUndergroundBackgroundBrightness(transition * 2f), underground),
-            "Underground brightness changes below the configured transition");
-
-        float maxStep = 0f;
-        float previous = controller.GetUndergroundBackgroundBrightness(0f);
-        for (int i = 1; i <= 120; i++)
-        {
-            float value = controller.GetUndergroundBackgroundBrightness(transition * i / 120f);
-            maxStep = Mathf.Max(maxStep, Mathf.Abs(value - previous));
-            previous = value;
-        }
-        Check(maxStep <= Mathf.Abs(surface - underground) / 120f + 0.0001f,
-            "Underground brightness contains a discontinuity");
+        float surface = controller.GetSurfaceBackgroundBrightness();
 
         var layer = UnityEngine.Object.FindObjectsByType<ParallaxLayer>(FindObjectsSortMode.None)
             .FirstOrDefault(candidate => candidate.undergroundTile);
@@ -90,27 +69,20 @@ public static class SurfaceBackgroundLightingChecks
 
             var properties = new MaterialPropertyBlock();
             surfaceRenderer.GetPropertyBlock(properties);
-            Check(Near(properties.GetFloat("_LightTop"),
-                controller.GetBackgroundBrightnessAtWorldY(surfaceRenderer.bounds.max.y)),
-                "Surface renderer does not use spatial background brightness");
-            Check(Near(properties.GetFloat("_LightBottom"),
-                controller.GetBackgroundBrightnessAtWorldY(surfaceRenderer.bounds.min.y)),
-                "Surface renderer lower edge does not darken by map depth");
+            Check(Near(properties.GetFloat("_LightTop"), surface) &&
+                Near(properties.GetFloat("_LightBottom"), surface),
+                "Surface renderer should use its configured brightness uniformly");
 
             properties.Clear();
             undergroundRenderer.GetPropertyBlock(properties);
-            Check(Near(properties.GetFloat("_LightTop"),
-                controller.GetBackgroundBrightnessAtWorldY(undergroundRenderer.bounds.max.y)),
-                "Layer-1 renderer does not use spatial underground brightness");
+            Check(Near(properties.GetFloat("_LightTop"), 1f) &&
+                Near(properties.GetFloat("_LightBottom"), 1f),
+                "Underground renderer should no longer apply a background brightness curve");
 
             result = new
             {
                 passed = true,
                 surfaceBrightness = surface,
-                midpointBrightness = controller.GetUndergroundBackgroundBrightness(transition * 0.5f),
-                undergroundBrightness = underground,
-                transitionDepth = transition,
-                maxSampleStep = maxStep,
                 seamOverlapPixels = seamOverlap / oneSourcePixel,
                 layer1TopWorldY = undergroundRenderer.bounds.max.y,
                 layer1TopBrightness = properties.GetFloat("_LightTop")

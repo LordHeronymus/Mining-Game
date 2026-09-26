@@ -14,6 +14,11 @@ Shader "Mining Game/Fixed Underground"
         _LayerFadeWorld("Layer fade",Float)=11
         _CapSize("Soil lip size",Vector)=(9.6,2.4,0,0)
         _CapTopOffset("Soil lip top offset",Float)=1.15
+        [HideInInspector] _DaylightTex("Daylight mask",2D)="black"{}
+        [HideInInspector] _UseMapLighting("Use map lighting",Float)=0
+        [HideInInspector] _GlobalLight("Global light",Float)=1
+        [HideInInspector] _GlobalLightColor("Global light color",Color)=(1,1,1,1)
+        [HideInInspector] _NightBrightnessMultiplier("Night background multiplier",Float)=1
     }
     SubShader
     {
@@ -27,12 +32,15 @@ Shader "Mining Game/Fixed Underground"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag
+            #pragma target 3.0
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "../../Map/MapLightVisibility.hlsl"
             TEXTURE2D(_Layer0Tex); SAMPLER(sampler_Layer0Tex);
             TEXTURE2D(_Layer1Tex); SAMPLER(sampler_Layer1Tex);
             TEXTURE2D(_Layer2Tex); SAMPLER(sampler_Layer2Tex);
             TEXTURE2D(_Layer3Tex); SAMPLER(sampler_Layer3Tex);
             TEXTURE2D(_CapTex); SAMPLER(sampler_CapTex);
+            TEXTURE2D(_DaylightTex); SAMPLER(sampler_DaylightTex);
             CBUFFER_START(UnityPerMaterial)
             float _TopY;
             float4 _RepeatSize;
@@ -41,6 +49,11 @@ Shader "Mining Game/Fixed Underground"
             float _LayerFadeWorld;
             float4 _CapSize;
             float _CapTopOffset;
+            float4 _DaylightRect;
+            float _UseMapLighting;
+            float _GlobalLight;
+            float4 _GlobalLightColor;
+            float _NightBrightnessMultiplier;
             CBUFFER_END
             struct Input {float3 positionOS:POSITION;};
             struct Output {float4 positionCS:SV_POSITION;float2 world:TEXCOORD0;};
@@ -80,15 +93,31 @@ Shader "Mining Game/Fixed Underground"
                     underground=lerp(next,underground,upperAlpha);
                 }
                 half baseAlpha=step(input.world.y,_TopY);
-                float2 capUV=float2(input.world.x/_CapSize.x,
+                // The lip's lower pixels contain the L1 painting at these same
+                // world-space UVs, so both textures meet without color correction.
+                float2 capUV=float2(uv.x,
                     (input.world.y-(_TopY+_CapTopOffset-_CapSize.y))/_CapSize.y);
                 half4 cap=half4(0,0,0,0);
-                if (input.world.y >= _TopY - 1.0 &&
-                    capUV.y >= 0.0 && capUV.y <= 1.0)
+                if (capUV.y >= 0.0 && capUV.y <= 1.0)
                     cap=SAMPLE_TEXTURE2D(_CapTex,sampler_CapTex,capUV);
                 half alpha=saturate(baseAlpha+cap.a*(1-baseAlpha));
                 clip(alpha-.01h);
-                return half4(lerp(underground,cap.rgb,cap.a),alpha);
+                half3 color=lerp(underground,cap.rgb,cap.a);
+                float globalLight=max(0,_GlobalLight);
+                float localLight=0;
+                if(_UseMapLighting>0.5)
+                {
+                    float2 lightUV=(input.world-_DaylightRect.xy)*_DaylightRect.zw;
+                    if(all(lightUV>=0) && all(lightUV<=1))
+                    {
+                        float daylight=1-SAMPLE_TEXTURE2D(_DaylightTex,sampler_DaylightTex,lightUV).a;
+                        globalLight*=daylight;
+                        localLight=MapLocalLight(input.world);
+                    }
+                }
+                half3 lighting=max(globalLight*_GlobalLightColor.rgb,localLight.xxx);
+                lighting*=_NightBrightnessMultiplier;
+                return half4(color*lighting,alpha);
             }
             ENDHLSL
         }

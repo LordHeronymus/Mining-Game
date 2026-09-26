@@ -1,0 +1,159 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75c948b8802a6bb43b97d827413f15a1, type: 3}
+  m_Name: LayerMiningAudioSettings
+  m_EditorClassIdentifier: 
+  entries:
+  - layerIndex: 0
+    breaking: 0
+    soundType: 14
+    clipIndex: 0
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 0
+    breaking: 0
+    soundType: 14
+    clipIndex: 1
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 0
+    breaking: 0
+    soundType: 14
+    clipIndex: 2
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 0
+    breaking: 0
+    soundType: 14
+    clipIndex: 3
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 0
+    breaking: 0
+    soundType: 14
+    clipIndex: 4
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 0
+    breaking: 0
+    soundType: 14
+    clipIndex: 5
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 0
+    breaking: 1
+    soundType: 23
+    clipIndex: 0
+    tuning:
+      volume: 1
+      pitch: 1.2
+      pitchSpread: 0.05
+  - layerIndex: 1
+    breaking: 0
+    soundType: 14
+    clipIndex: 0
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 1
+    breaking: 0
+    soundType: 14
+    clipIndex: 1
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 1
+    breaking: 0
+    soundType: 14
+    clipIndex: 2
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 1
+    breaking: 0
+    soundType: 14
+    clipIndex: 3
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 1
+    breaking: 0
+    soundType: 14
+    clipIndex: 4
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 1
+    breaking: 0
+    soundType: 14
+    clipIndex: 5
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 1
+    breaking: 1
+    soundType: 23
+    clipIndex: 0
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 2
+    breaking: 0
+    soundType: 21
+    clipIndex: 0
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 2
+    breaking: 1
+    soundType: 22
+    clipIndex: 0
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 3
+    breaking: 0
+    soundType: 21
+    clipIndex: 0
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05
+  - layerIndex: 3
+    breaking: 1
+    soundType: 22
+    clipIndex: 0
+    tuning:
+      volume: 1
+      pitch: 1
+      pitchSpread: 0.05

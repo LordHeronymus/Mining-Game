@@ -50,11 +50,10 @@ public static class SurfaceBackgroundSetup
             if (layer.name == "NearHills") found = true;
             if (layer.name != "NearHills" ||
                 (layer.undergroundTile && layer.undergroundLayer2Tile &&
-                 layer.undergroundLayer3Tile && layer.ignoreDepthFade)) continue;
+                 layer.undergroundLayer3Tile)) continue;
             if (!layer.undergroundTile) layer.undergroundTile = underground;
             if (!layer.undergroundLayer2Tile) layer.undergroundLayer2Tile = undergroundLayer2;
             if (!layer.undergroundLayer3Tile) layer.undergroundLayer3Tile = undergroundLayer3;
-            layer.ignoreDepthFade = true;
             EditorUtility.SetDirty(layer);
             EditorSceneManager.MarkSceneDirty(scene);
             layer.Refresh();
@@ -100,7 +99,6 @@ public static class SurfaceBackgroundSetup
         var controller = Undo.AddComponent<SurfaceBackgroundController>(root);
         controller.targetCamera = Camera.main;
         controller.CaptureCameraReference();
-        controller.fadeWithDepth = true;
 
         string[] names = { "Sky", "Mountains", "WoodedCliffs", "NearHills" };
         float[] factors = { 0f, 0.08f, 0.25f, 0.5f };
@@ -126,7 +124,6 @@ public static class SurfaceBackgroundSetup
                 layer.undergroundTile = underground;
                 layer.undergroundLayer2Tile = undergroundLayer2;
                 layer.undergroundLayer3Tile = undergroundLayer3;
-                layer.ignoreDepthFade = true;
             }
             layer.Refresh();
         }

@@ -235,6 +235,7 @@ public sealed class MapOverviewWindow : EditorWindow
             case BlockType.GoldOre: return new Color32(246, 192, 58, 255);
             case BlockType.PlatinumOre: return new Color32(210, 204, 184, 255);
             case BlockType.Coal: return new Color32(38, 40, 45, 255);
+            case BlockType.UltroniumOre: return new Color32(123, 62, 221, 255);
             case BlockType.Empty: return EmptyColor;
             default: return UnknownColor;
         }
@@ -450,10 +451,10 @@ public sealed class MapOverviewWindow : EditorWindow
 
     void DrawLegend(Rect area)
     {
-        string[] names = { "Erde", "Übergang", "Stein", "Tiefstein 1", "Tiefstein 2", "Kohle", "Eisen", "Kupfer", "Silber", "Gold", "Platin", "Diamant", "Leer", "Spieler" };
+        string[] names = { "Erde", "Übergang", "Stein", "Tiefstein 1", "Tiefstein 2", "Kohle", "Eisen", "Kupfer", "Silber", "Gold", "Platin", "Diamant", "Ultronium", "Leer", "Spieler" };
         BlockType[] ids = { BlockType.Dirt, BlockType.Stone, BlockType.StoneLayer2, BlockType.StoneLayer3, BlockType.StoneLayer4,
             BlockType.Coal, BlockType.IronOre, BlockType.CopperOre,
-            BlockType.SilverOre, BlockType.GoldOre, BlockType.PlatinumOre, BlockType.DiamondOre, BlockType.Empty };
+            BlockType.SilverOre, BlockType.GoldOre, BlockType.PlatinumOre, BlockType.DiamondOre, BlockType.UltroniumOre, BlockType.Empty };
         float x = area.x;
         for (int i = 0; i < names.Length; i++)
         {

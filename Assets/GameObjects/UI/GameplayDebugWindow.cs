@@ -9,7 +9,7 @@ using UnityEngine.UI;
 // Runtime debug controls are assembled from the existing canvas styles.
 public sealed class GameplayDebugWindow : MonoBehaviour
 {
-    enum DebugTab { Gameplay, Tests, StartingResources, Items, World, Audio, Icons, Recipes }
+    enum DebugTab { Gameplay, Tests, Misc, StartingResources, Items, World, Audio, Icons, Recipes }
 
     RectTransform window, bounds, content, tooltip;
     TextMeshProUGUI tooltipLabel;
@@ -19,15 +19,25 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     Vector2 resizeDirection;
     readonly List<string> gameplayItems = new List<string>();
     readonly List<string> testItems = new List<string>();
+    readonly List<string> miscItems = new List<string>();
     readonly List<string> giftingItems = new List<string>();
     readonly List<string> worldItems = new List<string>();
     readonly List<string> audioItems = new List<string>();
     readonly List<string> iconItems = new List<string>();
     readonly List<string> recipeItems = new List<string>();
     readonly List<string> startingResourceItems = new List<string>();
+    readonly List<string> layerStoneAudioItems = new List<string>();
+    readonly List<LayerStoneAudioControl> layerStoneAudioControls = new List<LayerStoneAudioControl>();
+    readonly Dictionary<int, string> layerStoneAudioLayerHeaders = new Dictionary<int, string>();
+    readonly Dictionary<int, string> layerStoneAudioActionHeaders = new Dictionary<int, string>();
+    bool layerStoneAudioControlsBuilt;
     readonly Dictionary<DebugTab, string> tabNames = new Dictionary<DebugTab, string>();
     TMP_InputField testMultiplier;
     TMP_InputField movementMultiplier;
+    TMP_InputField healthInput;
+    TMP_InputField miningHitOffsetInput;
+    MinerPlayerVisual minerVisual;
+    bool miningHitOffsetListenerBound;
     TMP_InputField giftAmount;
     ItemSO[] giftItems = System.Array.Empty<ItemSO>();
     readonly List<(string header, List<string> cards)> giftSections = new List<(string, List<string>)>();
@@ -37,8 +47,8 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     static string lastGiftAmount = "10";
     TextMeshProUGUI testStatus;
     readonly Dictionary<GameplayTestMode, Toggle> modeToggles = new Dictionary<GameplayTestMode, Toggle>();
-    readonly RectTransform[] dayNightButtons = new RectTransform[3];
-    readonly Image[] dayNightBackgrounds = new Image[3];
+    [SerializeField] RectTransform[] dayNightButtons = new RectTransform[3];
+    [SerializeField] Image[] dayNightBackgrounds = new Image[3];
     static readonly (string label, AudioVolumeSetting setting)[] AudioSettings =
     {
         ("Gesamt-Ambience (%)", AudioVolumeSetting.Ambience),
@@ -52,9 +62,10 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         ("Bling (%)", AudioVolumeSetting.DingLight, AudioTimeOffsetSetting.DingLight,
             "Wird abgespielt, wenn ein Item eingesammelt wird. Ein positiver Versatz verzögert den Klang; ein negativer überspringt den Clipanfang."),
     };
-    readonly TMP_InputField[] audioInputs = new TMP_InputField[AudioSettings.Length];
-    readonly TMP_InputField[] concreteAudioInputs = new TMP_InputField[ConcreteAudioSettings.Length];
-    readonly TMP_InputField[] concreteAudioOffsetInputs = new TMP_InputField[ConcreteAudioSettings.Length];
+    [SerializeField] TMP_InputField[] audioInputs = new TMP_InputField[AudioSettings.Length];
+    [SerializeField] TMP_InputField[] concreteAudioInputs = new TMP_InputField[ConcreteAudioSettings.Length];
+    [SerializeField] TMP_InputField[] concreteAudioOffsetInputs = new TMP_InputField[ConcreteAudioSettings.Length];
+    MapGenerator layerStoneAudioMap;
     FirstLayerAmbience detailAmbience;
     TMP_Dropdown detailClipDropdown;
     TMP_InputField detailVolumeInput;
@@ -86,6 +97,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     int nextStartingResourceRowId;
     DebugTab currentTab;
     public bool IsTestTab => currentTab == DebugTab.Tests;
+    public bool IsMiscTab => currentTab == DebugTab.Misc;
     public bool IsIconTab => currentTab == DebugTab.Icons;
     public bool IsRecipeTab => currentTab == DebugTab.Recipes;
     public bool IsStartingResourcesTab => currentTab == DebugTab.StartingResources;
@@ -106,6 +118,16 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         public TextMeshProUGUI amountLabel;
         public TMP_InputField amount;
         public Button remove;
+    }
+
+    sealed class LayerStoneAudioControl
+    {
+        public int layerIndex;
+        public bool breaking;
+        public SoundType soundType;
+        public int clipIndex;
+        public string labelName;
+        public TMP_InputField volume, pitch, pitchSpread;
     }
 
     void Awake()
@@ -487,7 +509,178 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             offsetInput.onEndEdit.AddListener(_ => ApplyConcreteAudioOffset(offsetIndex));
             concreteAudioOffsetInputs[i] = offsetInput;
         }
+        CreateLayerStoneAudioControls();
         RefreshAudioSettings();
+    }
+
+    void CreateLayerStoneAudioControls()
+    {
+        if (!items.ContainsKey("LayerStoneAudioSection"))
+        {
+            var backdrop = MakeRect("LayerStoneAudioBackdrop", content);
+            items[backdrop.name] = backdrop;
+            var backdropImage = backdrop.gameObject.AddComponent<Image>();
+            backdropImage.color = new Color(.045f, .06f, .09f, .82f);
+            backdropImage.raycastTarget = false;
+            backdrop.SetAsFirstSibling();
+            StyleLayerAudioLabel(CloneItem("Section", "LayerStoneAudioSection", content,
+                "ABBAU · HIEB & BRUCH"), 25);
+            StyleLayerAudioLabel(CloneItem("SpeedLabel", "LayerStoneAudioHeaderVolume", content,
+                "Lautstärke %"), 23);
+            StyleLayerAudioLabel(CloneItem("SpeedLabel", "LayerStoneAudioHeaderPitch", content,
+                "Pitch %"), 23);
+            StyleLayerAudioLabel(CloneItem("SpeedLabel", "LayerStoneAudioHeaderSpread", content,
+                "Spread ± %"), 23);
+        }
+        if (layerStoneAudioControlsBuilt) return;
+
+        layerStoneAudioMap = UnityEngine.Object.FindFirstObjectByType<MapGenerator>();
+        var layers = layerStoneAudioMap ? layerStoneAudioMap.layers : null;
+        var audio = AudioManager.Instance;
+        if (layers == null || !audio) return;
+
+        for (int layerIndex = 0; layerIndex < layers.Length; layerIndex++)
+        {
+            var layer = layers[layerIndex];
+            if (layer == null || !layer.stone) continue;
+
+            SoundType hitType = layerIndex >= 2 ? SoundType.DigDeepStone : layer.stone.digSound;
+            SoundType breakType = layerIndex >= 2 ? SoundType.StoneBreak : SoundType.ClayBreak;
+            int firstRow = layerStoneAudioControls.Count;
+            AddLayerStoneAudioRows(audio, layerIndex, false, hitType);
+            AddLayerStoneAudioRows(audio, layerIndex, true, breakType);
+            if (layerStoneAudioControls.Count == firstRow) continue;
+            string headerName = "LayerStoneAudioLayer" + layerIndex;
+            var header = CloneItem("Section", headerName, content, layer.name.ToUpperInvariant());
+            StyleLayerAudioLabel(header, 25);
+            layerStoneAudioLayerHeaders.Add(layerIndex, headerName);
+            layerStoneAudioItems.Add(headerName);
+        }
+        layerStoneAudioControlsBuilt = true;
+        foreach (string name in layerStoneAudioItems)
+        {
+            gameplayItems.Remove(name);
+            if (!audioItems.Contains(name)) audioItems.Add(name);
+            if (items.TryGetValue(name, out var rect)) rect.gameObject.SetActive(currentTab == DebugTab.Audio);
+        }
+    }
+
+    void AddLayerStoneAudioRows(AudioManager audio, int layerIndex, bool breaking, SoundType soundType)
+    {
+        int count = audio.GetSoundClipCount(soundType);
+        for (int clipIndex = 0; clipIndex < count; clipIndex++)
+        {
+            var clip = audio.GetSoundClip(soundType, clipIndex);
+            if (!clip) continue;
+
+            int actionKey = layerIndex * 2 + (breaking ? 1 : 0);
+            if (!layerStoneAudioActionHeaders.ContainsKey(actionKey))
+            {
+                string actionHeaderName = "LayerStoneAudioAction" + actionKey;
+                var actionHeader = CloneItem("SpeedLabel", actionHeaderName, content,
+                    breaking ? "BRUCH" : "HIEB");
+                StyleLayerAudioLabel(actionHeader, 21);
+                var actionText = actionHeader.GetComponentInChildren<TextMeshProUGUI>();
+                if (actionText) actionText.color = new Color(.86f, .7f, .42f);
+                layerStoneAudioActionHeaders.Add(actionKey, actionHeaderName);
+                layerStoneAudioItems.Add(actionHeaderName);
+            }
+
+            string rowId = layerStoneAudioControls.Count.ToString(CultureInfo.InvariantCulture);
+            var control = new LayerStoneAudioControl
+            {
+                layerIndex = layerIndex,
+                breaking = breaking,
+                soundType = soundType,
+                clipIndex = clipIndex,
+                labelName = "LayerStoneAudioLabel" + rowId
+            };
+            StyleLayerAudioLabel(CloneItem("SpeedLabel", control.labelName, content,
+                clip.name), 25);
+            control.volume = CreateLayerStoneAudioInput("LayerStoneAudioVolume" + rowId,
+                value => ApplyLayerStoneAudioValue(control, value, 0));
+            control.pitch = CreateLayerStoneAudioInput("LayerStoneAudioPitch" + rowId,
+                value => ApplyLayerStoneAudioValue(control, value, 1));
+            control.pitchSpread = CreateLayerStoneAudioInput("LayerStoneAudioSpread" + rowId,
+                value => ApplyLayerStoneAudioValue(control, value, 2));
+            layerStoneAudioControls.Add(control);
+            layerStoneAudioItems.Add(control.labelName);
+            layerStoneAudioItems.Add(control.volume.name);
+            layerStoneAudioItems.Add(control.pitch.name);
+            layerStoneAudioItems.Add(control.pitchSpread.name);
+        }
+    }
+
+    TMP_InputField CreateLayerStoneAudioInput(string name, System.Action<TMP_InputField> submit)
+    {
+        var input = CloneItem("DiggingSpeed", name, content).GetComponent<TMP_InputField>();
+        input.onEndEdit = new TMP_InputField.SubmitEvent();
+        input.onValueChanged = new TMP_InputField.OnChangeEvent();
+        input.contentType = TMP_InputField.ContentType.DecimalNumber;
+        input.textComponent.fontSize = 26;
+        input.textComponent.alignment = TextAlignmentOptions.Center;
+        if (input.targetGraphic is Image background)
+            background.color = new Color(.12f, .16f, .22f, .95f);
+        DisableInputChildRaycasts(input);
+        input.onEndEdit.AddListener(_ => submit(input));
+        return input;
+    }
+
+    static void StyleLayerAudioLabel(RectTransform rect, float fontSize)
+    {
+        var label = rect.GetComponentInChildren<TextMeshProUGUI>();
+        if (!label) return;
+        label.fontSize = fontSize;
+        label.enableWordWrapping = false;
+        label.overflowMode = TextOverflowModes.Ellipsis;
+    }
+
+    void ApplyLayerStoneAudioValue(LayerStoneAudioControl control, TMP_InputField input, int field)
+    {
+        if (!AudioManager.Instance || !float.TryParse(input.text.Replace(',', '.'), NumberStyles.Float,
+            CultureInfo.InvariantCulture, out float value))
+        {
+            items["Status"].GetComponent<TextMeshProUGUI>().text = "Audio: ungültiger Zahlenwert.";
+            RefreshLayerStoneAudioSettings();
+            return;
+        }
+
+        var tuning = AudioManager.Instance.GetLayerMiningClipTuning(control.layerIndex,
+            control.breaking, control.soundType, control.clipIndex);
+        float volume = tuning.volume;
+        float pitch = tuning.pitch;
+        float pitchSpread = tuning.pitchSpread;
+        if (field == 0 && value >= 0f && value <= 100f) volume = value / 100f;
+        else if (field == 1 && value >= 50f && value <= 200f) pitch = value / 100f;
+        else if (field == 2 && value >= 0f && value <= 50f) pitchSpread = value / 100f;
+        else
+        {
+            string range = field == 0 ? "0 bis 100" : field == 1 ? "50 bis 200" : "0 bis 50";
+            items["Status"].GetComponent<TextMeshProUGUI>().text = $"Audio: bitte {range} eingeben.";
+            RefreshLayerStoneAudioSettings();
+            return;
+        }
+
+        AudioManager.Instance.SetLayerMiningClipTuning(control.layerIndex, control.breaking,
+            control.soundType, control.clipIndex, volume, pitch, pitchSpread);
+        items["Status"].GetComponent<TextMeshProUGUI>().text = "";
+        RefreshLayerStoneAudioSettings();
+    }
+
+    void RefreshLayerStoneAudioSettings()
+    {
+        var audio = AudioManager.Instance;
+        foreach (var control in layerStoneAudioControls)
+        {
+            if (!control.volume || !control.pitch || !control.pitchSpread) continue;
+            control.volume.interactable = control.pitch.interactable = control.pitchSpread.interactable = audio;
+            if (!audio) continue;
+            var tuning = audio.GetLayerMiningClipTuning(control.layerIndex, control.breaking,
+                control.soundType, control.clipIndex);
+            control.volume.SetTextWithoutNotify((tuning.volume * 100f).ToString("0.##", CultureInfo.InvariantCulture));
+            control.pitch.SetTextWithoutNotify((tuning.pitch * 100f).ToString("0.##", CultureInfo.InvariantCulture));
+            control.pitchSpread.SetTextWithoutNotify((tuning.pitchSpread * 100f).ToString("0.##", CultureInfo.InvariantCulture));
+        }
     }
 
     void CreateAudioSettingRow(string label, string labelName, string inputName,
@@ -523,6 +716,9 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         audio.SetTimeOffset(ConcreteAudioSettings[index].offsetSetting, seconds);
         items["Status"].GetComponent<TextMeshProUGUI>().text = "";
         RefreshAudioSettings();
+#if UNITY_EDITOR
+        QueueGpsDefault(audio, "dingLightOffsetSeconds");
+#endif
     }
 
     void ApplyAudioInput(TMP_InputField input, AudioVolumeSetting setting)
@@ -538,19 +734,53 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         audio.SetVolume(setting, percent / 100f);
         items["Status"].GetComponent<TextMeshProUGUI>().text = "";
         RefreshAudioSettings();
+#if UNITY_EDITOR
+        QueueGpsDefault(audio, AudioVolumeProperty(setting));
+#endif
+    }
+
+    static string AudioVolumeProperty(AudioVolumeSetting setting) => setting switch
+    {
+        AudioVolumeSetting.Ambience => "ambienceVolume",
+        AudioVolumeSetting.Surface => "surfaceVolume",
+        AudioVolumeSetting.Rain => "rainVolume",
+        AudioVolumeSetting.Thunderstorm => "thunderstormVolume",
+        AudioVolumeSetting.Underground => "undergroundVolume",
+        AudioVolumeSetting.Cave => "caveVolume",
+        AudioVolumeSetting.DigSounds => "digSoundVolume",
+        AudioVolumeSetting.DingLight => "dingLightVolume",
+        _ => null
+    };
+
+    void QueueGpsDefault(Component component, string propertyPath)
+    {
+#if UNITY_EDITOR
+        if (!Application.isPlaying || string.IsNullOrEmpty(propertyPath)) return;
+        if (!GameplayDebugDefaults.QueueComponentValue(component, propertyPath, out string error))
+        {
+            string message = "GPS-Synchronisierung fehlgeschlagen: " + error;
+            if (items.TryGetValue("Status", out var status) && status)
+                status.GetComponent<TextMeshProUGUI>().text = message;
+            Debug.LogWarning(message, component);
+        }
+#endif
     }
 
     void RefreshAudioSettings()
     {
         var audio = AudioManager.Instance;
+        if (audioInputs == null) return;
         for (int i = 0; i < audioInputs.Length; i++)
         {
+            if (!audioInputs[i]) continue;
             audioInputs[i].interactable = audio;
             if (audio) audioInputs[i].SetTextWithoutNotify((audio.GetVolume(AudioSettings[i].setting) * 100f)
                 .ToString("0.##", CultureInfo.InvariantCulture));
         }
+        if (concreteAudioInputs == null || concreteAudioOffsetInputs == null) return;
         for (int i = 0; i < concreteAudioInputs.Length; i++)
         {
+            if (!concreteAudioInputs[i] || i >= concreteAudioOffsetInputs.Length || !concreteAudioOffsetInputs[i]) continue;
             concreteAudioInputs[i].interactable = audio;
             concreteAudioOffsetInputs[i].interactable = audio;
             if (audio) concreteAudioInputs[i].SetTextWithoutNotify(
@@ -588,6 +818,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
 
     void RefreshDetailSettings()
     {
+        if (!detailClipDropdown || !detailVolumeInput || !detailPreviewButton) return;
         var ambience = UnityEngine.Object.FindFirstObjectByType<FirstLayerAmbience>();
         int count = ambience ? ambience.DetailClipCount : 0;
         if (ambience != detailAmbience || count != detailClipCount)
@@ -629,6 +860,9 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         detailAmbience.SetDetailVolumeMultiplier(detailClipDropdown.value, percent / 100f);
         items["Status"].GetComponent<TextMeshProUGUI>().text = "";
         RefreshDetailSettings();
+#if UNITY_EDITOR
+        QueueGpsDefault(detailAmbience, "detailVolumeMultipliers");
+#endif
         return true;
     }
 
@@ -1091,6 +1325,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     {
         CreateTab("GameplayTab", "Gameplay", DebugTab.Gameplay);
         CreateTab("TestsTab", "Testeinstellungen", DebugTab.Tests);
+        CreateTab("MiscTab", "Misc", DebugTab.Misc);
         CreateTab("StartingResourcesTab", "Spielstart", DebugTab.StartingResources);
         CreateTab("ItemsTab", "Items", DebugTab.Items);
         CreateTab("WorldTab", "Welt", DebugTab.World);
@@ -1112,7 +1347,9 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             MoveToTab(giftingItems, section.header);
             MoveToTab(giftingItems, section.cards.ToArray());
         }
-        var audioNames = new List<string> { "AudioSection", "ConcreteAudioSection", "DetailSection", "DetailClipLabel", "DetailClipDropdown",
+        var audioNames = new List<string> { "AudioSection", "ConcreteAudioSection", "LayerStoneAudioBackdrop", "LayerStoneAudioSection",
+            "LayerStoneAudioHeaderVolume", "LayerStoneAudioHeaderPitch", "LayerStoneAudioHeaderSpread",
+            "DetailSection", "DetailClipLabel", "DetailClipDropdown",
             "DetailVolumeLabel", "DetailVolumeInput", "DetailPreview" };
         for (int i = 0; i < AudioSettings.Length; i++)
         {
@@ -1126,6 +1363,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             audioNames.Add("ConcreteAudioOffsetLabel" + i);
             audioNames.Add("ConcreteAudioOffsetInput" + i);
         }
+        audioNames.AddRange(layerStoneAudioItems);
         MoveToTab(audioItems, audioNames.ToArray());
         var lightingNames = new List<string> { "LightingSection", "LightingInfo", "LightingEnabled", "LightingHint" };
         for (int i = 0; i < 6; i++)
@@ -1138,12 +1376,14 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         CloneItem("Section", "TestSection", content, "TESTMODUS");
         CloneItem("Section", "MiningTestSection", content, "ABBAU");
         CloneItem("Section", "PlayerTestSection", content, "SPIELER");
-        CloneItem("Section", "TimeTestSection", content, "ZEIT UND LICHT");
+        CloneItem("Section", "TimeTestSection", content, "LICHT");
+        CloneItem("Section", "MiscSection", content, "MISC");
         CloneItem("SpeedLabel", "TestLabel", content, "Abbau-Testfaktor (×)");
         testMultiplier = CloneItem("DiggingSpeed", "TestMultiplier", content).GetComponent<TMP_InputField>();
         testMultiplier.contentType = TMP_InputField.ContentType.DecimalNumber;
         DisableInputChildRaycasts(testMultiplier);
         testMultiplier.onEndEdit.AddListener(_ => ApplyTestInput());
+        EnsureMiningHitOffsetControl();
         CloneItem("SpeedLabel", "MovementLabel", content, "Bewegungsfaktor (×)");
         movementMultiplier = CloneItem("DiggingSpeed", "MovementMultiplier", content).GetComponent<TMP_InputField>();
         movementMultiplier.contentType = TMP_InputField.ContentType.DecimalNumber;
@@ -1157,16 +1397,38 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         gameplayItems.Add("KeepMap");
 #endif
         CreateModeToggle("GodMode", "God Mode", GameplayTestMode.God,
-            "Unverwundbarkeit für spätere Schadensmechaniken. Aktuell besitzt das Spiel noch kein Schadenssystem.");
+            "Schaden wird ignoriert.");
         CreateModeToggle("NoEnergy", "Kein Energieverbrauch", GameplayTestMode.NoEnergyConsume,
             "Verhindert Energieverbrauch im Stand, beim Bewegen und beim Abbauen.");
         CreateModeToggle("FlyMode", "Fly Mode", GameplayTestMode.Fly,
             "Gravitation aus. W/S: aufwärts/abwärts. A/D: seitwärts. Ohne Taste schweben. Kollisionen bleiben aktiv.");
         CreateModeToggle("NoClip", "No Clip", GameplayTestMode.NoClip, null);
         CreateModeToggle("GlobalLighting", "Global Lighting", GameplayTestMode.GlobalLighting, null);
+        CloneItem("Section", "HealthTestSection", content, "GESUNDHEIT");
+        CloneItem("SpeedLabel", "HealthValueLabel", content, "Aktuelle HP");
+        healthInput = CloneItem("DiggingSpeed", "HealthValueInput", content).GetComponent<TMP_InputField>();
+        healthInput.contentType = TMP_InputField.ContentType.DecimalNumber;
+        DisableInputChildRaycasts(healthInput);
+        var setHealth = CloneItem("Defaults", "SetHealth", content, "Setzen").GetComponent<Button>();
+        setHealth.onClick = new Button.ButtonClickedEvent();
+        setHealth.onClick.AddListener(ApplyHealthInput);
+        foreach (int damage in new[] { 90, 40, 10, 1 })
+        {
+            string name = "DamageTest" + damage;
+            var button = CloneItem("Defaults", name, content, damage + " Schaden").GetComponent<Button>();
+            button.onClick = new Button.ButtonClickedEvent();
+            int amount = damage;
+            button.onClick.AddListener(() => StatsManager.Instance?.ApplyDamage(amount));
+        }
+        var testEndScreen = CloneItem("Defaults", "TestEndScreen", content, "Endscreen testen").GetComponent<Button>();
+        testEndScreen.onClick = new Button.ButtonClickedEvent();
+        testEndScreen.onClick.AddListener(ShowTestEndScreen);
         CreateDayNightSelector();
         testItems.AddRange(new[] {"TestSection", "MiningTestSection", "PlayerTestSection", "TimeTestSection",
-            "TestLabel","TestMultiplier","MovementLabel","MovementMultiplier","TestStatus"});
+            "TestLabel","TestMultiplier","MovementLabel","MovementMultiplier","TestStatus", "HealthTestSection",
+            "HealthValueLabel", "HealthValueInput", "SetHealth",
+            "DamageTest90", "DamageTest40", "DamageTest10", "DamageTest1", "TestEndScreen"});
+        MoveToTab(miscItems, "MiscSection");
     }
 
     void CreateTab(string name, string label, DebugTab tab)
@@ -1192,7 +1454,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     {
         var row = MakeRect("DayNightRow", content);
         items[row.name] = row;
-        testItems.Add(row.name);
+        gameplayItems.Add(row.name);
         var caption = MakeRect("Label", row);
         caption.anchorMin = Vector2.zero; caption.anchorMax = Vector2.up;
         caption.offsetMin = Vector2.zero; caption.offsetMax = new Vector2(150, 0);
@@ -1221,11 +1483,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             text.text = names[i]; text.alignment = TextAlignmentOptions.Center;
             text.raycastTarget = false;
             var selected = (GameplayDayNightMode)i;
-            button.onClick.AddListener(() => {
-                bool saved = GameplayTestSettings.SetDayNightMode(selected, out string error);
-                RefreshDayNight();
-                testStatus.text = saved ? "" : error;
-            });
+            button.onClick.AddListener(() => ApplyDayNightMode(selected));
         }
     }
 
@@ -1277,7 +1535,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     void SwitchTab(DebugTab tab)
     {
         if (tab == currentTab) return;
-        if (IsTestTab) { if (!ApplyTestInput()) return; }
+        if (IsTestTab || IsMiscTab) { if (!ApplyTestInput()) return; }
         else if (IsIconTab) { if (!CommitIconInputs()) return; }
         else if (IsRecipeTab) { if (!CommitRecipeInputs()) return; }
         else if (IsStartingResourcesTab) { if (!CommitStartingResources()) return; }
@@ -1298,6 +1556,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         HideTooltip(); currentTab = tab;
         SetActive(gameplayItems, tab == DebugTab.Gameplay);
         SetActive(testItems, tab == DebugTab.Tests);
+        SetActive(miscItems, tab == DebugTab.Misc);
         SetActive(giftingItems, tab == DebugTab.Items);
         SetActive(worldItems, tab == DebugTab.World);
         SetActive(audioItems, tab == DebugTab.Audio);
@@ -1311,7 +1570,12 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             items[entry.Value].GetComponent<Image>().color = entry.Key == tab
                 ? new Color(.64f,.38f,.1f) : new Color(.12f,.16f,.22f);
         RefreshTest(); Layout(); scroll.verticalNormalizedPosition = 1;
-        if (tab == DebugTab.Audio) { RefreshAudioSettings(); RefreshDetailSettings(); }
+        if (tab == DebugTab.Audio)
+        {
+            CreateLayerStoneAudioControls();
+            RefreshAudioSettings(); RefreshLayerStoneAudioSettings(); RefreshDetailSettings();
+            Layout();
+        }
         if (tab == DebugTab.Icons) RefreshIconEditor();
         if (tab == DebugTab.Recipes) RefreshRecipeEditor();
         if (tab == DebugTab.StartingResources) startingResourceStatus.text = "";
@@ -1325,20 +1589,105 @@ public sealed class GameplayDebugWindow : MonoBehaviour
 
     void RefreshTest()
     {
+        EnsureMiningHitOffsetControl();
         foreach (var entry in modeToggles) entry.Value.SetIsOnWithoutNotify(GameplayTestSettings.GetConfiguredMode(entry.Key));
         float factor = GameplayTestSettings.ConfiguredDiggingMultiplier;
         testMultiplier.SetTextWithoutNotify(factor.ToString("R", CultureInfo.InvariantCulture));
         movementMultiplier.SetTextWithoutNotify(GameplayTestSettings.ConfiguredMovementMultiplier.ToString("R", CultureInfo.InvariantCulture));
+        if (!minerVisual) minerVisual = FindFirstObjectByType<MinerPlayerVisual>();
+        if (GameplayTestSettings.HasMiningHitOffsetOverride && minerVisual)
+            minerVisual.miningHitOffsetMs = GameplayTestSettings.ConfiguredMiningHitOffsetMs;
+        float hitOffset = GameplayTestSettings.HasMiningHitOffsetOverride
+            ? GameplayTestSettings.ConfiguredMiningHitOffsetMs
+            : minerVisual ? minerVisual.miningHitOffsetMs : 0f;
+        miningHitOffsetInput.SetTextWithoutNotify(hitOffset.ToString("R", CultureInfo.InvariantCulture));
+        RefreshCurrentHealthInput();
         testStatus.text = GameplayTestSettings.Warning ?? "";
         RefreshDayNight();
     }
 
+    void RefreshCurrentHealthInput()
+    {
+        if (!healthInput || healthInput.isFocused || !StatsManager.Instance) return;
+        string value = StatsManager.Instance.Health.ToString("0.##", CultureInfo.InvariantCulture);
+        if (healthInput.text != value) healthInput.SetTextWithoutNotify(value);
+    }
+
+    void ApplyHealthInput()
+    {
+        var stats = StatsManager.Instance;
+        if (!stats) { testStatus.text = "Keine Gesundheitswerte verfügbar."; return; }
+        if (!float.TryParse(healthInput.text.Replace(',', '.'), NumberStyles.Float,
+                CultureInfo.InvariantCulture, out float health) || float.IsNaN(health) ||
+            float.IsInfinity(health) || health < 0f || health > stats.MaxHealth)
+        {
+            testStatus.text = "HP: bitte 0 bis " + stats.MaxHealth.ToString("0.##", CultureInfo.InvariantCulture) + " eingeben.";
+            return;
+        }
+        stats.SetHealthForDebug(health);
+        testStatus.text = "";
+    }
+
+    void ShowTestEndScreen()
+    {
+        var endScreen = FindFirstObjectByType<GameOverPanel>(FindObjectsInactive.Include);
+        if (!endScreen) return;
+        GetComponent<GameplayDebugPanel>()?.Close();
+        if (GameplayDebugPanel.IsOpen) return;
+        endScreen.Show();
+    }
+
+    void EnsureMiningHitOffsetControl()
+    {
+        if (!items.ContainsKey("MiningHitOffsetLabel"))
+            CloneItem("SpeedLabel", "MiningHitOffsetLabel", content, "Treffer-Versatz (ms)");
+        if (!items.TryGetValue("MiningHitOffsetInput", out var inputRect))
+            inputRect = CloneItem("DiggingSpeed", "MiningHitOffsetInput", content);
+        miningHitOffsetInput = inputRect.GetComponent<TMP_InputField>();
+        miningHitOffsetInput.contentType = TMP_InputField.ContentType.DecimalNumber;
+        DisableInputChildRaycasts(miningHitOffsetInput);
+        if (!miningHitOffsetListenerBound)
+        { miningHitOffsetInput.onEndEdit.AddListener(_ => ApplyTestInput()); miningHitOffsetListenerBound = true; }
+        if (!miscItems.Contains("MiningHitOffsetLabel")) miscItems.Add("MiningHitOffsetLabel");
+        if (!miscItems.Contains("MiningHitOffsetInput")) miscItems.Add("MiningHitOffsetInput");
+        inputRect.gameObject.SetActive(IsMiscTab);
+        items["MiningHitOffsetLabel"].gameObject.SetActive(IsMiscTab);
+    }
+
     void RefreshDayNight()
     {
+        if (dayNightBackgrounds == null) return;
         var selected = GameplayTestSettings.ConfiguredDayNightMode;
         for (int i = 0; i < dayNightBackgrounds.Length; i++)
+        {
+            if (!dayNightBackgrounds[i]) continue;
             dayNightBackgrounds[i].color = (int)selected == i
                 ? new Color(.55f, .35f, .12f) : new Color(.2f, .25f, .32f);
+        }
+    }
+
+    void ApplyDayNightMode(GameplayDayNightMode mode)
+    {
+        if (!GameplayTestSettings.SetDayNightMode(mode, out string error))
+        {
+            testStatus.text = error;
+            return;
+        }
+        var sky = UnityEngine.Object.FindFirstObjectByType<SkyController>();
+        if (!sky)
+        {
+            testStatus.text = "Tag-/Nachtmodus gespeichert; keine Himmelskomponente für GPS gefunden.";
+            return;
+        }
+
+        sky.automaticCycle = mode == GameplayDayNightMode.Automatic;
+        if (mode != GameplayDayNightMode.Automatic) sky.SetNight(mode == GameplayDayNightMode.Night);
+        RefreshDayNight();
+        testStatus.text = "";
+#if UNITY_EDITOR
+        QueueGpsDefault(sky, "automaticCycle");
+        QueueGpsDefault(sky, "isNight");
+#endif
     }
 
     static void DisableInputChildRaycasts(TMP_InputField input)
@@ -1355,11 +1704,21 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         if (!float.TryParse(movementMultiplier.text.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out float movement) ||
             !GameplayTestSettings.IsValidMovementMultiplier(movement))
         { testStatus.text = "Bewegungsfaktor: bitte 0,1 bis 20 eingeben."; return false; }
+        if (!float.TryParse(miningHitOffsetInput.text.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out float hitOffset) ||
+            !GameplayTestSettings.IsValidMiningHitOffset(hitOffset))
+        { testStatus.text = "Treffer-Versatz: bitte -500 bis 500 ms eingeben."; return false; }
         GameplayTestSettings.SetDiggingMultiplier(digging);
         GameplayTestSettings.SetMovementMultiplier(movement);
+        GameplayTestSettings.SetMiningHitOffset(hitOffset);
+        if (!minerVisual) minerVisual = FindFirstObjectByType<MinerPlayerVisual>();
+        if (minerVisual) minerVisual.miningHitOffsetMs = hitOffset;
         if (GameplayTestSettings.HasUnsavedChanges && !GameplayTestSettings.Save(out string error))
         { testStatus.text = error; return false; }
-        RefreshTest(); return true;
+        RefreshTest();
+#if UNITY_EDITOR
+        if (IsMiscTab && minerVisual) QueueGpsDefault(minerVisual, "miningHitOffsetMs");
+#endif
+        return true;
     }
 
     static RectTransform MakeRect(string name, Transform parent)
@@ -1476,6 +1835,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     void LateUpdate()
     {
         RefreshGifting();
+        if (currentTab == DebugTab.Tests) RefreshCurrentHealthInput();
         if (lastSize != window.rect.size || lastBounds != bounds.rect.size) Layout();
     }
 
@@ -1509,7 +1869,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         float w = lastSize.x;
         Place("Title", 28, 20, 230, 58); Place("Close", w-78, 20, 56, 56);
         Place("Accent", 0, 0, w, 5);
-        string[] tabs = { "GameplayTab", "TestsTab", "StartingResourcesTab", "ItemsTab", "WorldTab", "AudioTab", "IconsTab", "RecipesTab" };
+        string[] tabs = { "GameplayTab", "TestsTab", "MiscTab", "StartingResourcesTab", "ItemsTab", "WorldTab", "AudioTab", "IconsTab", "RecipesTab" };
         for (int i = 0; i < tabs.Length; i++) Place(tabs[i], 20, 104 + i * 62, 244, 50);
         float inner = Mathf.Max(340, w - 370);
         float col = Mathf.Min(inner, 940);
@@ -1552,20 +1912,34 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             Place("TestActive",x,56,col,44);
             Place("MiningTestSection",x,122,col,36);
             Place("TestLabel",x,166,col-170,50); Place("TestMultiplier",x+col-150,166,150,50);
-            Place("PlayerTestSection",x,238,col,36);
-            Place("MovementLabel",x,282,col-170,50); Place("MovementMultiplier",x+col-150,282,150,50);
-            Place("GodMode",x,354,col,44); Place("NoEnergy",x,406,col,44);
-            Place("FlyMode",x,458,col,44); Place("NoClip",x,510,col,44);
-            Place("TimeTestSection",x,578,col,36);
-            Place("GlobalLighting",x,622,col,44);
-            Place("DayNightRow",x,674,col,50);
-            float buttonWidth = (col - 165 - 16) / 3f;
-            for (int i = 0; i < dayNightButtons.Length; i++)
+            Place("MiningHitOffsetLabel",x,218,col-170,50); Place("MiningHitOffsetInput",x+col-150,218,150,50);
+            Place("PlayerTestSection",x,290,col,36);
+            Place("MovementLabel",x,334,col-170,50); Place("MovementMultiplier",x+col-150,334,150,50);
+            Place("GodMode",x,406,col,44); Place("NoEnergy",x,458,col,44);
+            Place("FlyMode",x,510,col,44); Place("NoClip",x,562,col,44);
+            Place("TimeTestSection",x,630,col,36);
+            Place("GlobalLighting",x,674,col,44);
+            Place("HealthTestSection",x,742,col,36);
+            Place("HealthValueLabel",x,786,col-300,48);
+            Place("HealthValueInput",x+col-280,786,140,48);
+            Place("SetHealth",x+col-130,786,130,48);
+            float damageButtonWidth = (col - 30f) / 4f;
+            foreach (int damage in new[] { 90, 40, 10, 1 })
             {
-                dayNightButtons[i].anchoredPosition = new Vector2(165 + i * (buttonWidth + 8), 0);
-                dayNightButtons[i].sizeDelta = new Vector2(buttonWidth, 42);
+                int index = System.Array.IndexOf(new[] { 90, 40, 10, 1 }, damage);
+                Place("DamageTest" + damage, x + index * (damageButtonWidth + 10f), 846, damageButtonWidth, 48);
             }
-            Place("TestStatus",x,746,col,70); content.sizeDelta = new Vector2(0,828);
+            Place("TestEndScreen",x,914,col,48);
+            Place("TestStatus",x,974,col,70); content.sizeDelta = new Vector2(0,1056);
+            return;
+        }
+
+        if (currentTab == DebugTab.Misc)
+        {
+            Place("MiscSection",x,12,col,36);
+            Place("MiningHitOffsetLabel",x,60,col-170,50);
+            Place("MiningHitOffsetInput",x+col-150,60,150,50);
+            content.sizeDelta = new Vector2(0,140);
             return;
         }
 
@@ -1672,7 +2046,45 @@ public sealed class GameplayDebugWindow : MonoBehaviour
                 Place("ConcreteAudioOffsetLabel" + i,x,y+58,col-150,48);
                 Place("ConcreteAudioOffsetInput" + i,x+col-140,y+58,140,48);
             }
-            float detailY = concreteSectionY + 48 + ConcreteAudioSettings.Length * 116 + 20;
+            float stoneSectionY = concreteSectionY + 48 + ConcreteAudioSettings.Length * 116 + 20;
+            Place("LayerStoneAudioSection", x, stoneSectionY, col, 36);
+            float labelWidth = col * .47f;
+            float settingWidth = (col - labelWidth) / 3f;
+            float stoneHeaderY = stoneSectionY + 40;
+            Place("LayerStoneAudioHeaderVolume", x + labelWidth, stoneHeaderY, settingWidth, 34);
+            Place("LayerStoneAudioHeaderPitch", x + labelWidth + settingWidth, stoneHeaderY, settingWidth, 34);
+            Place("LayerStoneAudioHeaderSpread", x + labelWidth + settingWidth * 2, stoneHeaderY, settingWidth, 34);
+            float stoneRowsY = stoneHeaderY + 36;
+            int previousLayer = -1;
+            int previousAction = -1;
+            for (int i = 0; i < layerStoneAudioControls.Count; i++)
+            {
+                var control = layerStoneAudioControls[i];
+                if (control.layerIndex != previousLayer)
+                {
+                    if (layerStoneAudioLayerHeaders.TryGetValue(control.layerIndex, out string headerName))
+                        Place(headerName, x, stoneRowsY, col, 30);
+                    stoneRowsY += 36;
+                    previousLayer = control.layerIndex;
+                    previousAction = -1;
+                }
+                int actionKey = control.layerIndex * 2 + (control.breaking ? 1 : 0);
+                if (actionKey != previousAction)
+                {
+                    if (layerStoneAudioActionHeaders.TryGetValue(actionKey, out string actionName))
+                        Place(actionName, x, stoneRowsY, labelWidth - 8, 24);
+                    stoneRowsY += 26;
+                    previousAction = actionKey;
+                }
+                Place(control.labelName, x, stoneRowsY, labelWidth - 8, 40);
+                Place(control.volume.name, x + labelWidth, stoneRowsY, settingWidth - 8, 40);
+                Place(control.pitch.name, x + labelWidth + settingWidth, stoneRowsY, settingWidth - 8, 40);
+                Place(control.pitchSpread.name, x + labelWidth + settingWidth * 2, stoneRowsY, settingWidth - 8, 40);
+                stoneRowsY += 44;
+            }
+            float detailY = stoneRowsY + 20;
+            Place("LayerStoneAudioBackdrop", x - 8, stoneSectionY - 8, col + 16,
+                detailY - stoneSectionY + 16);
             Place("DetailSection",x,detailY,col,36);
             Place("DetailClipLabel",x,detailY+48,col,40);
             Place("DetailClipDropdown",x,detailY+92,col,50);
@@ -1699,7 +2111,15 @@ public sealed class GameplayDebugWindow : MonoBehaviour
 
         Place("Section",x,12,col,36);
         Place("SpeedLabel",x,58,col-150,64); Place("DiggingSpeed",x+col-140,58,140,50);
-        float footer = 140;
+        Place("DayNightRow",x,136,col,50);
+        float buttonWidth = (col - 165 - 16) / 3f;
+        for (int i = 0; dayNightButtons != null && i < dayNightButtons.Length; i++)
+        {
+            if (!dayNightButtons[i]) continue;
+            dayNightButtons[i].anchoredPosition = new Vector2(165 + i * (buttonWidth + 8), 0);
+            dayNightButtons[i].sizeDelta = new Vector2(buttonWidth, 42);
+        }
+        float footer = 204;
 #if UNITY_EDITOR
         Place("KeepMap",x,footer,col,64);
         footer += 80;

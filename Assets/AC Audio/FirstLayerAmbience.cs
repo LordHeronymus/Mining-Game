@@ -8,6 +8,8 @@ public sealed class FirstLayerAmbience : MonoBehaviour
     [SerializeField] AudioClip[] detailClips;
     [SerializeField] float[] detailVolumeMultipliers;
     [SerializeField, Min(0f)] float detailsPerMinute = 3f;
+    [SerializeField, Min(0f)] float[] detailsPerMinuteByLayer;
+    [SerializeField, Min(0)] int detailsStartDepth = 14;
     [SerializeField, Min(0)] int fadeInStartDepth = 12;
     [SerializeField, Min(0)] int fadeInEndDepth = 20;
     [SerializeField, Min(1)] int fadeOutDepth = 20;
@@ -23,6 +25,7 @@ public sealed class FirstLayerAmbience : MonoBehaviour
     readonly System.Random detailRandom = new System.Random();
     double nextDetailTime;
     bool detailsActive;
+    int detailLayerIndex = -1;
     int lastDetailIndex = -1;
     int consecutiveDetailCount;
 
@@ -71,10 +74,10 @@ public sealed class FirstLayerAmbience : MonoBehaviour
 
     void Update()
     {
-        float target = clip ? GetLayerGain() : 0f;
-        bool inLayer = target > 0f;
+        int depth = GetCurrentDepth();
+        float target = clip ? GetLayerGain(depth) : 0f;
         gain = target;
-        UpdateDetails(inLayer);
+        UpdateDetails(depth);
         if (gain <= 0f) { StopPlayback(); return; }
 
         double now = AudioSettings.dspTime;
@@ -118,13 +121,48 @@ public sealed class FirstLayerAmbience : MonoBehaviour
     int NextCaveLayer => map && map.layers != null && map.layers.Length > 0 &&
         map.layers[0] != null && map.layers[0].stone && map.layers[0].stone.id == BlockType.Dirt ? 2 : 1;
 
-    float GetLayerGain()
+    int GetCurrentDepth()
     {
         if (!map) map = FindFirstObjectByType<MapGenerator>();
+        return map && map.Terrain
+            ? Mathf.Max(0, -map.Terrain.WorldToCell(transform.position).y)
+            : Mathf.Max(0, Mathf.FloorToInt(-transform.position.y));
+    }
+
+    bool ShouldPlayDetailsAtDepth(int depth)
+    {
+        if (depth < detailsStartDepth) return false;
+        if (!map) map = FindFirstObjectByType<MapGenerator>();
+        if (!map || !map.Terrain) return transform.position.y > lowerBoundaryY;
+        return depth < map.GeneratedHeight;
+    }
+
+    int GetCurrentLayerIndex(int depth)
+    {
+        if (!map) map = FindFirstObjectByType<MapGenerator>();
+        if (!map || map.layers == null || map.layers.Length == 0) return 0;
+
+        int layerIndex = 0;
+        for (int i = 1; i < map.layers.Length; i++)
+        {
+            var layer = map.layers[i];
+            if (layer == null) continue;
+            if (depth < layer.startDepth) break;
+            layerIndex = i;
+        }
+        return layerIndex;
+    }
+
+    float GetDetailsPerMinute(int layerIndex) => detailsPerMinuteByLayer != null &&
+        layerIndex >= 0 && layerIndex < detailsPerMinuteByLayer.Length
+            ? Mathf.Max(0f, detailsPerMinuteByLayer[layerIndex])
+            : Mathf.Max(0f, detailsPerMinute);
+
+    float GetLayerGain(int depth)
+    {
         if (!map || !map.Terrain)
             return transform.position.y > lowerBoundaryY ? 1f : 0f;
 
-        int depth = Mathf.Max(0, -map.Terrain.WorldToCell(transform.position).y);
         int boundary = NextCaveLayer;
         int layerTwoDepth = map.layers != null && map.layers.Length > boundary ?
             map.layers[boundary].startDepth : int.MaxValue;
@@ -136,19 +174,24 @@ public sealed class FirstLayerAmbience : MonoBehaviour
         return fadeIn * fadeOut;
     }
 
-    void UpdateDetails(bool inLayer)
+    void UpdateDetails(int depth)
     {
-        if (!inLayer || detailsPerMinute <= 0f || detailClips == null || detailClips.Length == 0)
+        int layerIndex = GetCurrentLayerIndex(depth);
+        float eventsPerMinute = GetDetailsPerMinute(layerIndex);
+        if (!ShouldPlayDetailsAtDepth(depth) || eventsPerMinute <= 0f ||
+            detailClips == null || detailClips.Length == 0)
         {
             detailsActive = false;
+            detailLayerIndex = -1;
             return;
         }
 
         double now = Time.unscaledTimeAsDouble;
-        if (!detailsActive)
+        if (!detailsActive || detailLayerIndex != layerIndex)
         {
             detailsActive = true;
-            nextDetailTime = now + NextDetailDelay();
+            detailLayerIndex = layerIndex;
+            nextDetailTime = now + NextDetailDelay(eventsPerMinute);
             return;
         }
         if (now < nextDetailTime) return;
@@ -159,13 +202,13 @@ public sealed class FirstLayerAmbience : MonoBehaviour
             ? Mathf.Clamp01(detailVolumeMultipliers[index]) : 1f;
         if (detail) AudioManager.Instance?.PlayClip(detail, volume * detailVolume, 0f, ambience: true,
             ambienceType: AmbienceType.Underground);
-        nextDetailTime = now + NextDetailDelay();
+        nextDetailTime = now + NextDetailDelay(eventsPerMinute);
     }
 
-    double NextDetailDelay()
+    double NextDetailDelay(float eventsPerMinute)
     {
         double random = 1d - detailRandom.NextDouble();
-        return Mathf.Max(3f, (float)(-System.Math.Log(random) * 60d / detailsPerMinute));
+        return Mathf.Max(3f, (float)(-System.Math.Log(random) * 60d / eventsPerMinute));
     }
 
     int GetNextDetailIndex()

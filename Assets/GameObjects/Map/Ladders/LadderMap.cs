@@ -62,6 +62,7 @@ public sealed class LadderMap : MonoBehaviour
             inventory.GetCount(ladderItem) == int.MaxValue) return false;
         tiles.SetTile(cell, null);
         inventory.Add(ladderItem);
+        AudioManager.Instance?.Play(SoundType.LadderRemove, true);
         return true;
     }
 
@@ -70,13 +71,23 @@ public sealed class LadderMap : MonoBehaviour
     {
         cell = default;
         if (!tiles || !isActiveAndEnabled) return false;
+        var left = tiles.WorldToCell(new Vector3(body.min.x, body.center.y));
+        var right = tiles.WorldToCell(new Vector3(body.max.x, body.center.y));
         var low = tiles.WorldToCell(new Vector3(body.center.x, body.min.y - .06f));
         var high = tiles.WorldToCell(new Vector3(body.center.x, body.center.y));
+        float closestDistance = float.PositiveInfinity;
         for (int y = high.y; y >= low.y; y--)
         {
-            var candidate = new Vector3Int(low.x, y, 0);
-            if (Has(candidate) && !Map.Terrain.HasTile(candidate)) { cell = candidate; return true; }
+            for (int x = left.x; x <= right.x; x++)
+            {
+                var candidate = new Vector3Int(x, y, 0);
+                if (!Has(candidate) || Map.Terrain.HasTile(candidate)) continue;
+                float distance = Mathf.Abs(tiles.GetCellCenterWorld(candidate).x - body.center.x);
+                if (distance >= closestDistance) continue;
+                closestDistance = distance;
+                cell = candidate;
+            }
         }
-        return false;
+        return !float.IsPositiveInfinity(closestDistance);
     }
 }

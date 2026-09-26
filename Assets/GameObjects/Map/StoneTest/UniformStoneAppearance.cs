@@ -14,6 +14,7 @@ public sealed class UniformStoneAppearance : MonoBehaviour
     [Range(0f,2f)] public float edgeDepth=1f;
     [Range(0f,2f)] public float edgeIrregularity=1f;
     [Range(0f,2f)] public float edgeRounding=1f;
+    [Range(0f,.3f)] public float colliderInset=.08f;
     [Range(0f,8f)] public float rubbleAmount=2f;
     [Range(.02f,.6f)] public float rubbleMinSize=.08f;
     [Range(.02f,.6f)] public float rubbleMaxSize=.24f;

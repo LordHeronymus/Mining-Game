@@ -17,6 +17,7 @@ public sealed class SurfaceTrees : MonoBehaviour
     [SerializeField, Min(2)] float minimumTreeSpacing = 2f;
     [SerializeField, Min(1)] float treeHeight = 8.25f;
     [SerializeField, Min(.1f)] float fallDurationSeconds = .9f;
+    [SerializeField, Range(0f, 1f)] float leafAlpha = 1f;
     [SerializeField] AnimationCurve fallRotationCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     [SerializeField, Min(0)] float growthSpeedPercentPerMinute = 10f;
     [SerializeField, Min(0)] float maximumSizeBonusPercent = 50f;
@@ -38,6 +39,7 @@ public sealed class SurfaceTrees : MonoBehaviour
         InventoryManager.Instance.IsPowerupUnlocked(axePowerup);
     public float HitDamage => HasAxe ? Mathf.Max(1f, axeHitMultiplier) : 1f;
     public float FallDurationSeconds => Mathf.Clamp(fallDurationSeconds, .1f, 10f);
+    public float LeafAlpha => Mathf.Clamp01(leafAlpha);
     public float FallRotationProgress(float normalizedTime) => fallRotationCurve != null
         ? Mathf.Clamp01(fallRotationCurve.Evaluate(Mathf.Clamp01(normalizedTime)))
         : normalizedTime * normalizedTime;

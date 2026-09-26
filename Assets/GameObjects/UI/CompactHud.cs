@@ -35,8 +35,16 @@ public sealed class CompactHud : MonoBehaviour
     }
     RectTransform top, hotbar;
     CanvasGroup visibility;
-    HudGemBar energyFill;
-    TextMeshProUGUI energyValue, moneyValue, pointsValue, depthValue;
+    HudGemBar healthFill, energyFill;
+    HealthDamageOverlay damageOverlay;
+    StatsManager observedStats;
+    float observedHealth, damagePulse, damagePulseTime, healthFlashTime;
+    float heartbeatPulseTime, lastHeartbeatPlaybackTime = -1f;
+    bool criticalHealth;
+    const float DamageFadeSeconds = 1.4f;
+    const float HealthFlashSeconds = .55f;
+    const float HeartbeatFadeSeconds = .32f;
+    TextMeshProUGUI healthValue, energyValue, moneyValue, pointsValue, depthValue;
     readonly Image[] icons = new Image[8], selections = new Image[9];
     readonly TextMeshProUGUI[] counts = new TextMeshProUGUI[8];
     readonly Button[] buttons = new Button[8];
@@ -48,7 +56,8 @@ public sealed class CompactHud : MonoBehaviour
     RectTransform pickaxeIcon;
     int draggedSlot = -1;
     bool wasBuilding;
-    int lastMoney = int.MinValue, lastPoints = int.MinValue, lastDepth = int.MinValue, lastEnergy = int.MinValue, lastMax = int.MinValue;
+    int lastMoney = int.MinValue, lastPoints = int.MinValue, lastDepth = int.MinValue,
+        lastHealth = int.MinValue, lastMaxHealth = int.MinValue, lastEnergy = int.MinValue, lastMax = int.MinValue;
     static readonly Color Cream = new Color32(255,245,229,255);
     static readonly CultureInfo German = CultureInfo.GetCultureInfo("de-DE");
 
@@ -61,12 +70,14 @@ public sealed class CompactHud : MonoBehaviour
         visibility = gameObject.AddComponent<CanvasGroup>();
         ladder = player ? player.GetComponent<PlayerLadder>() : null;
         workbench = UnityEngine.Object.FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include);
-        Build(); RefreshItems();
+        Build(); BuildDamageOverlay(); RefreshItems();
     }
     void OnDisable()
     {
         if (inventory) inventory.OnInventoryChanged -= RefreshItems;
         inventory = null;
+        if (observedStats) observedStats.OnHealthChanged -= OnHealthChanged;
+        observedStats = null;
     }
     void Update()
     {
@@ -78,13 +89,15 @@ public sealed class CompactHud : MonoBehaviour
             RefreshItems();
         }
         bool blocked = GameplayInputBlocker.IsBlocked;
-        visibility.alpha = blocked ? 0 : 1;
+        visibility.alpha = blocked && !GameplayDebugPanel.IsOpen && !GameOverPanel.IsOpen ? 0 : 1;
         visibility.blocksRaycasts = visibility.interactable = !blocked;
         if (blocked) return;
         var selected = EventSystem.current ? EventSystem.current.currentSelectedGameObject : null;
         if (selected && selected.GetComponent<TMP_InputField>()) return;
         for (int i = 0; i < 8; i++)
             if (Input.GetKeyDown((KeyCode)((int)KeyCode.Alpha1 + i)) || Input.GetKeyDown((KeyCode)((int)KeyCode.Keypad1 + i))) SelectSlot(i + 1);
+        if (Input.GetKeyDown(KeyCode.Q)) SelectSlot((SelectedSlot + 8) % 9);
+        if (Input.GetKeyDown(KeyCode.E)) SelectSlot((SelectedSlot + 1) % 9);
         if (ladder && ladder.BuildMode != wasBuilding)
         {
             wasBuilding = ladder.BuildMode;
@@ -96,11 +109,45 @@ public sealed class CompactHud : MonoBehaviour
     {
         if (draggedSlot > 0) MoveDraggedIcon(Input.mousePosition);
         var stats = StatsManager.Instance;
+        if (observedStats != stats)
+        {
+            if (observedStats) observedStats.OnHealthChanged -= OnHealthChanged;
+            observedStats = stats;
+            if (observedStats)
+            {
+                observedHealth = observedStats.Health;
+                observedStats.OnHealthChanged += OnHealthChanged;
+            }
+        }
         if (stats)
         {
             if (stats.Money != lastMoney) { lastMoney = stats.Money; moneyValue.text = Format(stats.Money); }
             if (stats.Points != lastPoints) { lastPoints = stats.Points; pointsValue.text = "Punkte  " + Format(stats.Points); }
+            healthFill.FillAmount = Mathf.Clamp01(stats.Health / Mathf.Max(1f, stats.MaxHealth));
+            int currentHealth = Mathf.CeilToInt(stats.Health), maximumHealth = Mathf.CeilToInt(stats.MaxHealth);
+            if (currentHealth != lastHealth || maximumHealth != lastMaxHealth)
+            {
+                lastHealth = currentHealth; lastMaxHealth = maximumHealth;
+                healthValue.text = Format(currentHealth) + " / " + Format(maximumHealth);
+            }
         }
+        damagePulseTime = Mathf.Max(0f, damagePulseTime - Time.unscaledDeltaTime);
+        healthFlashTime = Mathf.Max(0f, healthFlashTime - Time.unscaledDeltaTime);
+        heartbeatPulseTime = Mathf.Max(0f, heartbeatPulseTime - Time.unscaledDeltaTime);
+        float healthFraction = stats ? Mathf.Clamp01(stats.Health / Mathf.Max(1f, stats.MaxHealth)) : 1f;
+        if (healthFraction < .2f) criticalHealth = true;
+        else if (healthFraction > .2f || !stats) criticalHealth = false;
+        float critical = criticalHealth ? Mathf.Lerp(.42f, .24f, healthFraction / .2f) : 0f;
+        UpdateHeartbeatPulse(stats);
+        float pulse = damagePulse * Mathf.Pow(damagePulseTime / DamageFadeSeconds, 2f);
+        float directStrength = Mathf.Lerp(.48f, .95f, 1f - healthFraction);
+        float heartbeat = critical + .5f * Mathf.Max(0f, directStrength - critical) *
+            Mathf.Pow(heartbeatPulseTime / HeartbeatFadeSeconds, 2f);
+        if (damageOverlay) damageOverlay.Strength = Mathf.Max(critical, pulse, heartbeat) *
+            (stats ? Mathf.Clamp01(stats.bloodEdgeIntensity) : 1f) * 2f;
+        float flash = healthFlashTime / HealthFlashSeconds;
+        if (healthFill) healthFill.FlashAmount = flash;
+        if (healthValue) healthValue.color = Color.Lerp(Cream, Color.white, flash);
         if (energy && energy.stats)
         {
             float max = Mathf.Max(1, energy.stats.MaxEnergy);
@@ -113,6 +160,54 @@ public sealed class CompactHud : MonoBehaviour
         float surface = map && map.Terrain ? map.Terrain.CellToWorld(Vector3Int.up).y : 0;
         DepthMeters = player ? Mathf.Max(0, Mathf.FloorToInt(surface - player.transform.position.y)) : 0;
         if (DepthMeters != lastDepth) { lastDepth = DepthMeters; depthValue.text = "Tiefe  " + Format(DepthMeters) + " m"; }
+    }
+    void UpdateHeartbeatPulse(StatsManager stats)
+    {
+        var audio = AudioManager.Instance;
+        if (!criticalHealth || !stats || !audio ||
+            !audio.TryGetLowHealthHeartbeatPlayback(out float position, out float duration))
+        {
+            lastHeartbeatPlaybackTime = -1f;
+            heartbeatPulseTime = 0f;
+            return;
+        }
+
+        float interval = Mathf.Clamp(stats.heartbeatFlashIntervalSeconds, .1f, 5f);
+        float offset = Mathf.Repeat(stats.heartbeatFlashOffsetSeconds, interval);
+        bool crossed = lastHeartbeatPlaybackTime < 0f
+            ? BeatCrossed(-.0001f, position, interval, offset)
+            : position >= lastHeartbeatPlaybackTime
+                ? BeatCrossed(lastHeartbeatPlaybackTime, position, interval, offset)
+                : BeatCrossed(lastHeartbeatPlaybackTime, duration, interval, offset) ||
+                  BeatCrossed(-.0001f, position, interval, offset);
+        if (crossed) heartbeatPulseTime = HeartbeatFadeSeconds;
+        lastHeartbeatPlaybackTime = position;
+    }
+
+    static bool BeatCrossed(float previous, float current, float interval, float offset)
+        => Mathf.FloorToInt((current - offset) / interval) >
+           Mathf.FloorToInt((previous - offset) / interval);
+
+    void OnHealthChanged(float health, float maximum)
+    {
+        if (health < observedHealth - .001f)
+        {
+            float lostFraction = 1f - Mathf.Clamp01(health / Mathf.Max(1f, maximum));
+            damagePulse = Mathf.Lerp(.48f, .95f, lostFraction);
+            damagePulseTime = DamageFadeSeconds;
+            healthFlashTime = HealthFlashSeconds;
+        }
+        observedHealth = health;
+    }
+    void BuildDamageOverlay()
+    {
+        var overlay = Rect("Damage Overlay", transform, 0, 0, 0, 0);
+        overlay.anchorMin = Vector2.zero;
+        overlay.anchorMax = Vector2.one;
+        overlay.offsetMin = overlay.offsetMax = Vector2.zero;
+        overlay.SetAsFirstSibling();
+        damageOverlay = overlay.gameObject.AddComponent<HealthDamageOverlay>();
+        damageOverlay.raycastTarget = false;
     }
     public bool SelectSlot(int index)
     {
@@ -217,7 +312,7 @@ public sealed class CompactHud : MonoBehaviour
     static string Format(int value) => value < 1000000 ? value.ToString("N0", German) : ShopMoneyFormatter.Format(value);
     void RefreshItems()
     {
-        selections[0].enabled = true;
+        selections[0].enabled = SelectedSlot == 0;
         if (pickaxeIcon)
         {
             pickaxeIcon.anchorMin = pickaxeIcon.anchorMax = pickaxeIcon.pivot = new Vector2(.5f, .5f);
@@ -295,7 +390,7 @@ public sealed class CompactHud : MonoBehaviour
     {
         top=Rect("Status Strip",transform,0,12,971.2f,56); top.anchorMin=top.anchorMax=top.pivot=new Vector2(.5f,1);
         Image("Wood Frame",top,0,0,971.2f,56,stripSprite,Color.white).raycastTarget=true;
-        Bar("Health",11,heartSprite,new Color(.92f,.055f,.075f),"100 / 100",out _);
+        healthFill=Bar("Health",11,heartSprite,new Color(.92f,.055f,.075f),"100 / 100",out healthValue);
         energyFill=Bar("Energy",30,boltSprite,new Color(1,.68f,.035f),"",out energyValue);
         foreach(float x in new[]{395.2f,577.2f,781.2f}) Image("Divider",top,x,12,2,32,null,new Color(.68f,.43f,.22f,.7f));
         var coin=Image("Coin",top,423.2f,14,28,28,coinSprite,Color.white); coin.preserveAspect=true;

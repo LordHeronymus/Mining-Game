@@ -51,10 +51,22 @@ public sealed class WorkbenchPanel : MonoBehaviour
 
     void Awake()
     {
+        LoadResourceRecipes();
         group = GetComponent<CanvasGroup>();
         BuildView();
         group.alpha = 0;
         group.blocksRaycasts = group.interactable = false;
+    }
+
+    void LoadResourceRecipes()
+    {
+        var resourceRecipes = Resources.LoadAll<CraftingRecipe>("WorkbenchRecipes");
+        if (resourceRecipes.Length == 0) return;
+
+        var combined = new List<CraftingRecipe>(recipes ?? System.Array.Empty<CraftingRecipe>());
+        foreach (var recipe in resourceRecipes)
+            if (recipe && !combined.Contains(recipe)) combined.Add(recipe);
+        recipes = combined.ToArray();
     }
 
     void Update()
