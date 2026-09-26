@@ -184,7 +184,7 @@ public class TileMiner : MonoBehaviour
                 if (Time.time >= nextTreeHitTime)
                 {
                     tree.Hit(transform.position);
-                    nextTreeHitTime = Time.time + .55f / Mathf.Max(.25f, stats.MiningSpeed);
+                    nextTreeHitTime = Time.time + .55f / Mathf.Max(.25f, stats.MiningSpeed) / GameplayTestSettings.DiggingMultiplier;
                 }
             }
             return;
@@ -234,10 +234,15 @@ public class TileMiner : MonoBehaviour
         if (!continuedBlockMining) nextMiningSoundTime = Time.time + hitInterval * .5f;
         if (Time.time < nextMiningSoundTime) return;
         nextMiningSoundTime = Time.time + hitInterval;
-        ApplyMiningHit(targetCell, hitInterval);
+        ApplyMiningHit(targetCell, GetBaseMiningHitInterval());
     }
 
     float GetMiningHitInterval()
+    {
+        return GetBaseMiningHitInterval() / GameplayTestSettings.DiggingMultiplier;
+    }
+
+    float GetBaseMiningHitInterval()
     {
         if (!minerVisual) minerVisual = GetComponent<MinerPlayerVisual>();
         return minerVisual && minerVisual.enabled
@@ -245,10 +250,10 @@ public class TileMiner : MonoBehaviour
             : Mathf.Max(.05f, miningSoundInterval);
     }
 
-    void ApplyMiningHit(Vector3Int cell, float hitInterval)
+    void ApplyMiningHit(Vector3Int cell, float damageInterval)
     {
         float p = progress.TryGetValue(cell, out var current) ? current : 0f;
-        p += hitInterval / Mathf.Max(.0001f, GetTargetMineTime(cell));
+        p += damageInterval / Mathf.Max(.0001f, GetTargetMineTime(cell));
         if (p >= 1f) { CompleteMining(cell); return; }
         progress[cell] = p;
         miningCracks ??= new MiningCrackVisual(tilemap);
@@ -307,7 +312,7 @@ public class TileMiner : MonoBehaviour
         IsCuttingGrass = mining = true;
         grassClickConsumed = true;
         grassSwingUntil = Time.time + .35f;
-        nextGrassCutTime = Time.time + .55f / Mathf.Max(.25f, stats.MiningSpeed);
+        nextGrassCutTime = Time.time + .55f / Mathf.Max(.25f, stats.MiningSpeed) / GameplayTestSettings.DiggingMultiplier;
         return true;
     }
 
@@ -479,12 +484,14 @@ public class TileMiner : MonoBehaviour
         if (!tilemap || !tilemap.HasTile(cell)) return false;
         var block = GetBlock(cell);
         var ore = map ? map.GetOreAt(cell) : null;
+        var artifact = map ? map.GetArtifactAt(cell) : null;
         int amount = ore ? OreTile.DropCount(ore.richness, UnityEngine.Random.value) : 1;
         if (block && block.itemDrop && amount > 0) InventoryManager.Instance?.Add(block.itemDrop, amount);
         int points = BlockRegistry.GetPoints(block, ore);
         Vector2 minedPosition = tilemap.GetCellCenterWorld(cell);
         OnBlockMined?.Invoke(minedPosition, points);
         if (points > 0) OnMiningPoints?.Invoke(minedPosition, points, block.itemDrop);
+        if (artifact) StatsManager.Instance?.CollectArtifact(artifact, map.GetArtifactCash(artifact));
         if (map) map.RemoveBlock(cell);
         else
         {

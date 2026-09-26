@@ -3,6 +3,21 @@ using UnityEngine;
 
 public static class OreVeins
 {
+    public static bool HasVeinInNeighborhood(Block[] blocks, int width, int height, int x, int y)
+    {
+        if (blocks == null || width <= 0 || height <= 0 || blocks.Length != checked(width * height))
+            throw new ArgumentException("Invalid vein grid dimensions.");
+        for (int dy = -1; dy <= 1; dy++)
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                int nx = x + dx, ny = y + dy;
+                if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+                var block = blocks[ny * width + nx];
+                if (block && block.HasOreOverlays) return true;
+            }
+        return false;
+    }
+
     public static int PruneSmallVeins(Block[] blocks, int width, int height, int minimumSize,
         Func<int, int, Block> baseBlock, Block onlyOre = null)
     {

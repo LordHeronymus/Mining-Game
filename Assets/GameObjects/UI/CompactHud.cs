@@ -34,6 +34,8 @@ public sealed class CompactHud : MonoBehaviour
         }
     }
     RectTransform top, hotbar;
+    Transform hotbarOverlayParent;
+    InventoryUI inventoryPanel;
     CanvasGroup visibility;
     HudGemBar healthFill, energyFill;
     HealthDamageOverlay damageOverlay;
@@ -71,9 +73,16 @@ public sealed class CompactHud : MonoBehaviour
         ladder = player ? player.GetComponent<PlayerLadder>() : null;
         workbench = UnityEngine.Object.FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include);
         Build(); BuildDamageOverlay(); RefreshItems();
+        var canvas = GetComponentInParent<Canvas>();
+        hotbarOverlayParent = canvas ? canvas.rootCanvas.transform : null;
     }
     void OnDisable()
     {
+        if (hotbar && hotbar.parent != transform)
+        {
+            hotbar.SetParent(transform, false);
+            Fit();
+        }
         if (inventory) inventory.OnInventoryChanged -= RefreshItems;
         inventory = null;
         if (observedStats) observedStats.OnHealthChanged -= OnHealthChanged;
@@ -88,12 +97,17 @@ public sealed class CompactHud : MonoBehaviour
             if (inventory) inventory.OnInventoryChanged += RefreshItems;
             RefreshItems();
         }
+        if (!inventoryPanel) inventoryPanel = UnityEngine.Object.FindFirstObjectByType<InventoryUI>(FindObjectsInactive.Include);
+        bool inventoryOpen = inventoryPanel && inventoryPanel.IsOpen && !GameOverPanel.IsOpen;
         bool blocked = GameplayInputBlocker.IsBlocked;
-        visibility.alpha = blocked && !GameplayDebugPanel.IsOpen && !GameOverPanel.IsOpen ? 0 : 1;
-        visibility.blocksRaycasts = visibility.interactable = !blocked;
-        if (blocked) return;
+        SetInventoryHotbarVisible(inventoryOpen);
+        visibility.alpha = blocked && !GameplayDebugPanel.IsOpen && !GameOverPanel.IsOpen && !inventoryOpen ? 0 : 1;
+        visibility.blocksRaycasts = visibility.interactable = !blocked || inventoryOpen;
         var selected = EventSystem.current ? EventSystem.current.currentSelectedGameObject : null;
-        if (selected && selected.GetComponent<TMP_InputField>()) return;
+        bool typing = selected && selected.GetComponent<TMP_InputField>();
+        if (!typing && (!blocked || inventoryOpen) && Input.GetKeyDown(KeyCode.H))
+            StatsManager.Instance?.TryUseMedkit();
+        if (blocked || typing) return;
         for (int i = 0; i < 8; i++)
             if (Input.GetKeyDown((KeyCode)((int)KeyCode.Alpha1 + i)) || Input.GetKeyDown((KeyCode)((int)KeyCode.Keypad1 + i))) SelectSlot(i + 1);
         if (Input.GetKeyDown(KeyCode.Q)) SelectSlot((SelectedSlot + 8) % 9);
@@ -135,16 +149,26 @@ public sealed class CompactHud : MonoBehaviour
         healthFlashTime = Mathf.Max(0f, healthFlashTime - Time.unscaledDeltaTime);
         heartbeatPulseTime = Mathf.Max(0f, heartbeatPulseTime - Time.unscaledDeltaTime);
         float healthFraction = stats ? Mathf.Clamp01(stats.Health / Mathf.Max(1f, stats.MaxHealth)) : 1f;
-        if (healthFraction < .2f) criticalHealth = true;
-        else if (healthFraction > .2f || !stats) criticalHealth = false;
-        float critical = criticalHealth ? Mathf.Lerp(.42f, .24f, healthFraction / .2f) : 0f;
-        UpdateHeartbeatPulse(stats);
-        float pulse = damagePulse * Mathf.Pow(damagePulseTime / DamageFadeSeconds, 2f);
-        float directStrength = Mathf.Lerp(.48f, .95f, 1f - healthFraction);
-        float heartbeat = critical + .5f * Mathf.Max(0f, directStrength - critical) *
-            Mathf.Pow(heartbeatPulseTime / HeartbeatFadeSeconds, 2f);
-        if (damageOverlay) damageOverlay.Strength = Mathf.Max(critical, pulse, heartbeat) *
-            (stats ? Mathf.Clamp01(stats.bloodEdgeIntensity) : 1f) * 2f;
+        if (GameOverPanel.IsOpen || (stats && stats.Health <= 0f))
+        {
+            criticalHealth = false;
+            damagePulseTime = healthFlashTime = heartbeatPulseTime = 0f;
+            lastHeartbeatPlaybackTime = -1f;
+            if (damageOverlay) damageOverlay.Strength = 0f;
+        }
+        else
+        {
+            criticalHealth = stats && healthFraction <= StatsManager.LowHealthHeartbeatThresholdFraction;
+            float critical = criticalHealth ? Mathf.Lerp(.42f, .24f,
+                healthFraction / StatsManager.LowHealthHeartbeatThresholdFraction) : 0f;
+            UpdateHeartbeatPulse(stats);
+            float pulse = damagePulse * Mathf.Pow(damagePulseTime / DamageFadeSeconds, 2f);
+            float directStrength = Mathf.Lerp(.48f, .95f, 1f - healthFraction);
+            float heartbeat = critical + .5f * Mathf.Max(0f, directStrength - critical) *
+                Mathf.Pow(heartbeatPulseTime / HeartbeatFadeSeconds, 2f);
+            if (damageOverlay) damageOverlay.Strength = Mathf.Max(critical, pulse, heartbeat) *
+                (stats ? Mathf.Clamp01(stats.bloodEdgeIntensity) : 1f) * 2f;
+        }
         float flash = healthFlashTime / HealthFlashSeconds;
         if (healthFill) healthFill.FlashAmount = flash;
         if (healthValue) healthValue.color = Color.Lerp(Cream, Color.white, flash);
@@ -165,21 +189,18 @@ public sealed class CompactHud : MonoBehaviour
     {
         var audio = AudioManager.Instance;
         if (!criticalHealth || !stats || !audio ||
-            !audio.TryGetLowHealthHeartbeatPlayback(out float position, out float duration))
+            !audio.TryGetLowHealthHeartbeatPlayback(out float position, out _))
         {
             lastHeartbeatPlaybackTime = -1f;
             heartbeatPulseTime = 0f;
             return;
         }
 
-        float interval = Mathf.Clamp(stats.heartbeatFlashIntervalSeconds, .1f, 5f);
+        float interval = stats.HeartbeatIntervalSeconds;
         float offset = Mathf.Repeat(stats.heartbeatFlashOffsetSeconds, interval);
-        bool crossed = lastHeartbeatPlaybackTime < 0f
+        bool crossed = lastHeartbeatPlaybackTime < 0f || position < lastHeartbeatPlaybackTime
             ? BeatCrossed(-.0001f, position, interval, offset)
-            : position >= lastHeartbeatPlaybackTime
-                ? BeatCrossed(lastHeartbeatPlaybackTime, position, interval, offset)
-                : BeatCrossed(lastHeartbeatPlaybackTime, duration, interval, offset) ||
-                  BeatCrossed(-.0001f, position, interval, offset);
+            : BeatCrossed(lastHeartbeatPlaybackTime, position, interval, offset);
         if (crossed) heartbeatPulseTime = HeartbeatFadeSeconds;
         lastHeartbeatPlaybackTime = position;
     }
@@ -209,6 +230,20 @@ public sealed class CompactHud : MonoBehaviour
         damageOverlay = overlay.gameObject.AddComponent<HealthDamageOverlay>();
         damageOverlay.raycastTarget = false;
     }
+    void ActivateHotbarSlot(int index)
+    {
+        if (index < 1 || index > 8) return;
+        var item = slots[index - 1];
+        if (item && item.item == Item.Medkit)
+        {
+            bool inventoryOpen = inventoryPanel && inventoryPanel.IsOpen && !GameOverPanel.IsOpen;
+            if (GameplayInputBlocker.IsBlocked && !inventoryOpen) return;
+            if (!GameplayInputBlocker.IsBlocked) SelectSlot(index);
+            StatsManager.Instance?.TryUseMedkit(item);
+            return;
+        }
+        SelectSlot(index);
+    }
     public bool SelectSlot(int index)
     {
         if (GameplayInputBlocker.IsBlocked || index < 0 || index >= 9) return false;
@@ -220,15 +255,37 @@ public sealed class CompactHud : MonoBehaviour
     public void AssignSlot(int index, ItemSO item)
     {
         if (index < 1 || index > 8) throw new ArgumentOutOfRangeException(nameof(index));
-        if (item && !IsHotbarItem(item)) throw new ArgumentException("Only tools and consumables can be assigned to the hotbar.", nameof(item));
+        if (item && !IsHotbarItem(item)) throw new ArgumentException("Item cannot be used from the hotbar.", nameof(item));
         slots[index - 1] = item;
         if (SelectedSlot == index && ladder) ladder.SetBuildMode(item && item.item == Item.Ladder);
+        SaveSlotLayout();
         RefreshItems();
     }
     public bool CanReorderSlot(int index) => !GameplayInputBlocker.IsBlocked && index >= 1 && index <= 8 &&
         IsHotbarItem(slots[index - 1]);
     public static bool IsHotbarItem(ItemSO item) => item &&
-        (item.category == ItemCategory.Tool || item.category == ItemCategory.Consumable);
+        (item.item == Item.Torche || item.item == Item.Dynamite || item.item == Item.Ladder ||
+         item.item == Item.BridgePart || item.item == Item.Medkit);
+    public bool IsOverHotbar(Vector2 screenPosition) => hotbar &&
+        RectTransformUtility.RectangleContainsScreenPoint(hotbar, screenPosition, HotbarEventCamera());
+    public bool TryGetAssignableSlotAt(Vector2 screenPosition, out int index)
+    {
+        for (int i = 0; i < buttons.Length; i++)
+            if (buttons[i] && RectTransformUtility.RectangleContainsScreenPoint(
+                    (RectTransform)buttons[i].transform, screenPosition, HotbarEventCamera()))
+            {
+                index = i + 1;
+                return true;
+            }
+        index = -1;
+        return false;
+    }
+    Camera HotbarEventCamera()
+    {
+        var canvas = GetComponentInParent<Canvas>();
+        return canvas && canvas.rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? canvas.rootCanvas.worldCamera : null;
+    }
     public bool BeginHotbarDrag(int index, Vector2 screenPosition)
     {
         if (!CanReorderSlot(index)) return false;
@@ -335,6 +392,21 @@ public sealed class CompactHud : MonoBehaviour
         }
     }
     public void RefreshHotbarIconLayouts() => RefreshItems();
+    public void SetInventoryHotbarVisible(bool visible)
+    {
+        if (!hotbar) return;
+        if (visible && hotbarOverlayParent && hotbar.parent != hotbarOverlayParent)
+        {
+            hotbar.SetParent(hotbarOverlayParent, false);
+            hotbar.SetAsLastSibling();
+            Fit();
+        }
+        else if (!visible && hotbar.parent != transform)
+        {
+            hotbar.SetParent(transform, false);
+            Fit();
+        }
+    }
     void ApplyHotbarIconLayout(ItemSO item, RectTransform icon)
     {
         var recipe = item && workbench ? workbench.FindRecipeForOutput(item) : null;
@@ -412,7 +484,7 @@ public sealed class CompactHud : MonoBehaviour
             slotDrags[i] = bg.gameObject.AddComponent<HotbarSlotDrag>();
             slotDrags[i].hud = this; slotDrags[i].slotIndex = index;
             int slot = i;
-            buttons[i].onClick.AddListener(()=> { if (!slotDrags[slot].ConsumeClick()) SelectSlot(index); });
+            buttons[i].onClick.AddListener(()=> { if (!slotDrags[slot].ConsumeClick()) ActivateHotbarSlot(index); });
             selections[i+1]=Image("Selection",bg.transform,0,0,66,66,selectedSprite,Color.white);
             icons[i]=Image("Item",bg.transform,9,9,48,48,null,Color.white); icons[i].preserveAspect=true;
             Text("Key",bg.transform,(i+1).ToString(),7,5,15,17,15);

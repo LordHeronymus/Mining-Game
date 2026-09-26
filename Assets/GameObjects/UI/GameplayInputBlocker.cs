@@ -5,7 +5,14 @@ public static class GameplayInputBlocker
 {
     private static readonly HashSet<MonoBehaviour> OpenPanels = new();
 
-    public static bool IsBlocked => OpenPanels.Count > 0;
+    public static bool IsBlocked
+    {
+        get
+        {
+            OpenPanels.RemoveWhere(panel => !panel);
+            return OpenPanels.Count > 0;
+        }
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetSession() => OpenPanels.Clear();

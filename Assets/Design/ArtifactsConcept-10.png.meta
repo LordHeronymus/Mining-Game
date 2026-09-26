@@ -85,12 +85,12 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 792
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -152,309 +152,221 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ArtifactsConcept-10_0
+      name: Artifact_01
       rect:
         serializedVersion: 2
-        x: 22
-        y: 403
-        width: 340
-        height: 376
+        x: 0
+        y: 396
+        width: 396
+        height: 397
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a322a4f80e1d9fed0800000000000000
-      internalID: -2379640165681716678
+      spriteID: 65b1c065dbd6fada0800000000000000
+      internalID: -5931401524263773354
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ArtifactsConcept-10_1
+      name: Artifact_02
       rect:
         serializedVersion: 2
-        x: 326
-        y: 747
-        width: 6
-        height: 6
+        x: 396
+        y: 396
+        width: 397
+        height: 397
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 40589d0dcf9588790800000000000000
-      internalID: -7527667834779237116
+      spriteID: c8a2f6b06641ff8b0800000000000000
+      internalID: -5116348223158539636
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ArtifactsConcept-10_2
+      name: Artifact_03
       rect:
         serializedVersion: 2
-        x: 411
-        y: 381
-        width: 350
-        height: 380
+        x: 793
+        y: 396
+        width: 396
+        height: 397
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1b95c1fc1f8afb910800000000000000
-      internalID: 1855387328015260081
+      spriteID: e1733d0b871d1bb10800000000000000
+      internalID: 1995606426194753310
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ArtifactsConcept-10_3
+      name: Artifact_04
       rect:
         serializedVersion: 2
-        x: 828
-        y: 386
-        width: 338
-        height: 362
+        x: 1189
+        y: 396
+        width: 397
+        height: 397
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1786a084dbe4d70f0800000000000000
-      internalID: -1117650557653587855
+      spriteID: 8c084cb12969d2e30800000000000000
+      internalID: 4480402758578766024
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ArtifactsConcept-10_4
+      name: Artifact_05
       rect:
         serializedVersion: 2
-        x: 1272
-        y: 373
-        width: 291
-        height: 388
+        x: 1586
+        y: 396
+        width: 397
+        height: 397
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 36df5b0aee35bec40800000000000000
-      internalID: 5542616050773130595
+      spriteID: 15c94dd85032ef570800000000000000
+      internalID: 8502271653283404881
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ArtifactsConcept-10_5
+      name: Artifact_06
       rect:
         serializedVersion: 2
-        x: 1626
-        y: 401
-        width: 326
-        height: 362
+        x: 0
+        y: 0
+        width: 396
+        height: 396
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 469828603d17426c0800000000000000
-      internalID: -4169082203876980380
+      spriteID: ab51565ce2f4ee180800000000000000
+      internalID: -9084236336060885574
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ArtifactsConcept-10_6
+      name: Artifact_07
       rect:
         serializedVersion: 2
-        x: 760
-        y: 684
-        width: 15
-        height: 15
+        x: 396
+        y: 0
+        width: 397
+        height: 396
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bb726695cdf70f030800000000000000
-      internalID: 3526459092600498107
+      spriteID: d5ed0fc3283d1b490800000000000000
+      internalID: -7732166528896803235
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ArtifactsConcept-10_7
+      name: Artifact_08
       rect:
         serializedVersion: 2
-        x: 1241
-        y: 569
-        width: 18
-        height: 10
+        x: 793
+        y: 0
+        width: 396
+        height: 396
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ab013b17b6e238e40800000000000000
-      internalID: 5657416595911413946
+      spriteID: dc00f73d37b5546e0800000000000000
+      internalID: -1853975118565408563
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ArtifactsConcept-10_8
+      name: Artifact_09
       rect:
         serializedVersion: 2
-        x: 42
-        y: 31
-        width: 356
-        height: 348
+        x: 1189
+        y: 0
+        width: 397
+        height: 396
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a3f7051ae21784e60800000000000000
-      internalID: 7946725987584081722
+      spriteID: 674b1df9411a36d30800000000000000
+      internalID: 4423556368960697462
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ArtifactsConcept-10_9
+      name: Artifact_10
       rect:
         serializedVersion: 2
-        x: 447
-        y: 39
-        width: 298
-        height: 320
+        x: 1586
+        y: 0
+        width: 397
+        height: 396
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bc4a28f9a7156c5f0800000000000000
-      internalID: -736811901924498229
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ArtifactsConcept-10_10
-      rect:
-        serializedVersion: 2
-        x: 782
-        y: 42
-        width: 372
-        height: 334
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f6c85bf9db1067520800000000000000
-      internalID: 2699346940595113071
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ArtifactsConcept-10_11
-      rect:
-        serializedVersion: 2
-        x: 1191
-        y: 39
-        width: 450
-        height: 325
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 71152521167ebad00800000000000000
-      internalID: 985135347615813911
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ArtifactsConcept-10_12
-      rect:
-        serializedVersion: 2
-        x: 1671
-        y: 45
-        width: 228
-        height: 330
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: cdf864e3ea10329e0800000000000000
-      internalID: -1647471190806720548
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ArtifactsConcept-10_13
-      rect:
-        serializedVersion: 2
-        x: 756
-        y: 21
-        width: 15
-        height: 13
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 3382e33d872a575c0800000000000000
-      internalID: -4218286836138760141
+      spriteID: b9776a1ae95e95320800000000000000
+      internalID: 2547319533734360987
       vertices: []
       indices: 
       edges: []
@@ -472,7 +384,17 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Artifact_01: -5931401524263773354
+      Artifact_02: -5116348223158539636
+      Artifact_03: 1995606426194753310
+      Artifact_04: 4480402758578766024
+      Artifact_05: 8502271653283404881
+      Artifact_06: -9084236336060885574
+      Artifact_07: -7732166528896803235
+      Artifact_08: -1853975118565408563
+      Artifact_09: 4423556368960697462
+      Artifact_10: 2547319533734360987
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

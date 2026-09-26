@@ -99,11 +99,12 @@ public static class LastPlayedMap
         using (var stream = new GZipStream(File.Create(path), System.IO.Compression.CompressionLevel.Fastest))
         using (var writer = new BinaryWriter(stream))
         {
-            writer.Write(3);
+            writer.Write(4);
             writer.Write(GlobalObjectId.GetGlobalObjectIdSlow(map).ToString());
             writer.Write(map.ActiveSeed); writer.Write(map.GeneratedWidth); writer.Write(map.GeneratedHeight);
             WriteLayer(writer, map.GetComponent<Tilemap>());
             WriteLayer(writer, map.EnsureOreOverlay());
+            WriteLayer(writer, map.EnsureArtifactOverlay());
             var ladders = map.GetComponent<LadderMap>();
             writer.Write(ladders != null);
             if (ladders) WriteLayer(writer, ladders.EnsureTiles());
@@ -115,12 +116,13 @@ public static class LastPlayedMap
         using (var stream = new GZipStream(File.Create(path), System.IO.Compression.CompressionLevel.Fastest))
         using (var writer = new BinaryWriter(stream))
         {
-            writer.Write(3);
+            writer.Write(4);
             writer.Write(GlobalObjectId.GetGlobalObjectIdSlow(map).ToString());
             writer.Write(snapshot.seed); writer.Write(snapshot.width); writer.Write(snapshot.height);
             var bounds = new BoundsInt(snapshot.offsetX, 1 - snapshot.height, 0, snapshot.width, snapshot.height, 1);
             WriteGeneratedLayer(writer, bounds, snapshot.terrainTiles, snapshot.seed, false);
             WriteGeneratedLayer(writer, bounds, snapshot.oreTiles, snapshot.seed, true);
+            WriteGeneratedLayer(writer, bounds, snapshot.artifactTiles, snapshot.seed, false);
             writer.Write(false); // A freshly generated map has no player-built ladders.
         }
     }
@@ -225,7 +227,7 @@ public static class LastPlayedMap
         using (var reader = new BinaryReader(stream))
         {
             int version = reader.ReadInt32();
-            if(version < 1 || version > 3) throw new InvalidDataException("Unbekanntes Mapformat.");
+            if(version < 1 || version > 4) throw new InvalidDataException("Unbekanntes Mapformat.");
             GlobalObjectId.TryParse(reader.ReadString(), out var mapId);
             var map = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(mapId) as MapGenerator;
             if (!map) throw new InvalidOperationException("Map-Szene ist nicht geladen.");
@@ -234,6 +236,9 @@ public static class LastPlayedMap
             var overlay = map.EnsureOreOverlay();
             if (version >= 2) ReadLayer(reader, overlay);
             else overlay.ClearAllTiles();
+            var artifacts = map.EnsureArtifactOverlay();
+            if (version >= 4) ReadLayer(reader, artifacts);
+            else artifacts.ClearAllTiles();
             var ladders = map.GetComponent<LadderMap>();
             if (version >= 3 && reader.ReadBoolean())
             {

@@ -23,6 +23,12 @@ public class InventoryUI : MonoBehaviour
     InventoryManager inventory;
     Image footerIcon;
     TextMeshProUGUI footerName, footerCount;
+    TextMeshProUGUI hotbarWarning;
+    Image draggedIcon;
+    AudioClip hotbarErrorClip;
+    ItemSO draggedItem;
+    CompactHud hotbarHud;
+    float warningUntil;
     readonly List<Image> tabs = new();
     readonly List<Cell> cells = new();
     bool alphabetical;
@@ -46,11 +52,21 @@ public class InventoryUI : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Tab)) { if (IsOpen) HidePanel(); else ShowPanel(); }
         else if (IsOpen && Input.GetKeyDown(KeyCode.Escape)) HidePanel();
         if (IsOpen && inventory != InventoryManager.Instance) Subscribe();
+        if (draggedItem) MoveDraggedIcon(Input.mousePosition);
+        if (hotbarWarning)
+        {
+            float remaining = warningUntil - Time.unscaledTime;
+            hotbarWarning.alpha = remaining > 0f
+                ? Mathf.Clamp01(remaining / .4f) * (.72f + .28f * Mathf.Sin(Time.unscaledTime * 11f) * Mathf.Sin(Time.unscaledTime * 11f))
+                : 0f;
+        }
     }
     void OnDisable()
     {
+        FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include)?.SetInventoryHotbarVisible(false);
         if (inventory) inventory.OnInventoryChanged -= Refresh;
         inventory = null; GameplayInputBlocker.SetBlocked(this, false);
+        CancelItemDrag();
         if (IsOpen) InfoPanel.Instance?.ShowPanel(true);
         IsOpen = false;
         if (group) { group.alpha = 0; group.blocksRaycasts = group.interactable = false; }
@@ -73,6 +89,8 @@ public class InventoryUI : MonoBehaviour
     }
     public void HidePanel()
     {
+        CancelItemDrag();
+        warningUntil = 0f;
         if (fade != null) StopCoroutine(fade);
         fade = StartCoroutine(FadePanel(false));
     }
@@ -82,8 +100,11 @@ public class InventoryUI : MonoBehaviour
         if (show)
         {
             transform.SetAsLastSibling(); Subscribe();
-            GameplayInputBlocker.SetBlocked(this, true); InfoPanel.Instance?.ShowPanel(false);
+            GameplayInputBlocker.SetBlocked(this, true);
+            FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include)?.SetInventoryHotbarVisible(true);
+            InfoPanel.Instance?.ShowPanel(false);
         }
+        if (!show) FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include)?.SetInventoryHotbarVisible(false);
         group.blocksRaycasts = group.interactable = show;
         float start = group.alpha;
         for (float t = 0; t < .12f; t += Time.unscaledDeltaTime)
@@ -103,6 +124,60 @@ public class InventoryUI : MonoBehaviour
     public void SetFilter(int filter) { Filter = Mathf.Clamp(filter, 0, 3); scroll.verticalNormalizedPosition = 1; Refresh(); }
     public void SortItems() { alphabetical = !alphabetical; Refresh(); }
     public void SelectItem(ItemSO item) { SelectedItem = item; Refresh(); }
+    public bool TryUseMedkit(ItemSO item)
+    {
+        if (!IsOpen || !item || item.item != Item.Medkit) return false;
+        var stats = StatsManager.Instance;
+        return stats && stats.TryUseMedkit(item);
+    }
+    public void BeginItemDrag(ItemSO item, Vector2 screenPosition)
+    {
+        if (!IsOpen || !item) return;
+        draggedItem = item;
+        if (!draggedIcon)
+        {
+            draggedIcon = Panel("Dragged Item", transform, 0, 0, 72, 72, null);
+            draggedIcon.rectTransform.anchorMin = draggedIcon.rectTransform.anchorMax =
+                draggedIcon.rectTransform.pivot = new Vector2(.5f, .5f);
+            draggedIcon.preserveAspect = true;
+        }
+        draggedIcon.sprite = item.icon;
+        draggedIcon.color = new Color(1f, 1f, 1f, .9f);
+        draggedIcon.gameObject.SetActive(true);
+        draggedIcon.transform.SetAsLastSibling();
+        MoveDraggedIcon(screenPosition);
+    }
+    public void MoveDraggedIcon(Vector2 screenPosition)
+    {
+        if (!draggedIcon || !RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                (RectTransform)transform, screenPosition, null, out var local)) return;
+        draggedIcon.rectTransform.anchoredPosition = local;
+    }
+    public void EndItemDrag(Vector2 screenPosition)
+    {
+        if (!draggedItem) return;
+        if (!hotbarHud) hotbarHud = FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include);
+        if (hotbarHud && hotbarHud.IsOverHotbar(screenPosition))
+        {
+            if (!CompactHud.IsHotbarItem(draggedItem)) ShowHotbarWarning();
+            else if (inventory && inventory.GetCount(draggedItem) > 0 &&
+                     hotbarHud.TryGetAssignableSlotAt(screenPosition, out int slot))
+                hotbarHud.AssignSlot(slot, draggedItem);
+        }
+        CancelItemDrag();
+    }
+    public void CancelItemDrag()
+    {
+        draggedItem = null;
+        if (draggedIcon) draggedIcon.gameObject.SetActive(false);
+    }
+    void ShowHotbarWarning()
+    {
+        hotbarWarning.text = "Dieses Item kann nicht in die Hotbar gelegt werden.";
+        warningUntil = Time.unscaledTime + 2.4f;
+        if (!hotbarErrorClip) hotbarErrorClip = Resources.Load<AudioClip>("Audio/HotbarError");
+        if (hotbarErrorClip) AudioManager.Instance?.PlayClip(hotbarErrorClip, .7f, 0f);
+    }
     static int Category(ItemSO item) => item.category == ItemCategory.Ore ? 1 : item.category == ItemCategory.Misc ? 2 : 3;
     static int ItemOrder(ItemSO item) => item.item switch
     {
@@ -154,7 +229,15 @@ public class InventoryUI : MonoBehaviour
     {
         if (!layout) return;
         var size = ((RectTransform)transform).rect.size;
-        layout.localScale = Vector3.one * Mathf.Min(size.x / 1672f, size.y / 941f);
+        float screenScale = Mathf.Min(size.x / 1920f, size.y / 1080f);
+        layout.localScale = Vector3.one * Mathf.Min(size.x / 1672f, size.y / 941f) * .77f;
+        layout.anchoredPosition = new Vector2(0f, 60f * screenScale);
+        if (hotbarWarning)
+        {
+            hotbarWarning.rectTransform.anchoredPosition = new Vector2(0f, 130f * screenScale);
+            hotbarWarning.rectTransform.sizeDelta = new Vector2(1000f * screenScale, 48f * screenScale);
+            hotbarWarning.fontSize = 29f * screenScale;
+        }
     }
     RectTransform Rect(string name, Transform parent, float x, float y, float w, float h)
     {
@@ -213,6 +296,12 @@ public class InventoryUI : MonoBehaviour
         footerName = Label(footer.transform, "", 110, 0, 440, 96, 36);
         footerCount = Label(footer.transform, "", 590, 0, 300, 96, 30);
         var sort = Button("Sort", footer.transform, "Sortieren", 910, 14, 300, 68, SortItems); sort.GetComponent<Image>().sprite = actionSprite;
+        hotbarWarning = Label(transform, "", 0, 0, 1000, 48, 29, TextAlignmentOptions.Midline);
+        hotbarWarning.name = "Hotbar Warning";
+        hotbarWarning.rectTransform.anchorMin = hotbarWarning.rectTransform.anchorMax = new Vector2(.5f, 0f);
+        hotbarWarning.rectTransform.pivot = new Vector2(.5f, .5f);
+        hotbarWarning.color = new Color32(255, 104, 99, 255);
+        hotbarWarning.alpha = 0f;
         Fit();
     }
     Cell CreateCell(int index)
@@ -228,6 +317,9 @@ public class InventoryUI : MonoBehaviour
         c.count = Label(c.badge, "", 0, 0, 52, 40, 27, TextAlignmentOptions.Midline);
         c.count.rectTransform.anchorMin = Vector2.zero; c.count.rectTransform.anchorMax = Vector2.one;
         c.count.rectTransform.offsetMin = c.count.rectTransform.offsetMax = Vector2.zero;
+        var drag = c.rect.gameObject.AddComponent<InventoryCellDrag>();
+        drag.owner = this;
+        drag.item = () => c.item;
         button.onClick.AddListener(() => { if (c.item) SelectItem(c.item); }); return c;
     }
 }

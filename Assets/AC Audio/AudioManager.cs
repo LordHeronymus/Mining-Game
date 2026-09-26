@@ -146,9 +146,10 @@ public class AudioManager : MonoBehaviour
     AudioClip[] frogCroaks;
     AudioClip grassLanding;
     AudioSource lowHealthHeartbeatSource;
+    AudioSource gameOverMusicSource;
     Coroutine lowHealthHeartbeatFade;
     bool lowHealthHeartbeatRequested;
-    float nextLowHealthHeartbeatTime;
+    float lastLowHealthHeartbeatTime;
     const float LowHealthHeartbeatPitchSpread = .02f;
     readonly System.Random ambienceRandom = new System.Random();
 
@@ -200,6 +201,17 @@ public class AudioManager : MonoBehaviour
         Instance = this; DontDestroyOnLoad(gameObject);
         for (int i = 0; i < initialPoolSize; i++) ExtendPool();
 
+        var gameOverMusicClip = Resources.Load<AudioClip>("Audio/GameOverMusic");
+        if (gameOverMusicClip)
+        {
+            gameOverMusicSource = gameObject.AddComponent<AudioSource>();
+            gameOverMusicSource.playOnAwake = false;
+            gameOverMusicSource.loop = false;
+            gameOverMusicSource.spatialBlend = 0f;
+            gameOverMusicSource.volume = 1f;
+            gameOverMusicSource.clip = gameOverMusicClip;
+        }
+
         var heartbeatClip = Resources.Load<AudioClip>("Audio/SingleHeartBeat");
         if (heartbeatClip)
         {
@@ -249,12 +261,40 @@ public class AudioManager : MonoBehaviour
         return true;
     }
 
-    public void SetLowHealthHeartbeat(bool playing)
+    public void PlayGameOverMusic()
+    {
+        if (!gameOverMusicSource || gameOverMusicSource.isPlaying) return;
+        gameOverMusicSource.loop = false;
+        gameOverMusicSource.Play();
+    }
+
+    public void StopGameOverMusic()
+    {
+        if (gameOverMusicSource && gameOverMusicSource.isPlaying)
+            gameOverMusicSource.Stop();
+    }
+
+    public void SetLowHealthHeartbeat(bool playing, bool immediate = false)
     {
         if (!lowHealthHeartbeatSource) return;
+        if (!playing && immediate)
+        {
+            lowHealthHeartbeatRequested = false;
+            if (lowHealthHeartbeatFade != null)
+            {
+                StopCoroutine(lowHealthHeartbeatFade);
+                lowHealthHeartbeatFade = null;
+            }
+            lowHealthHeartbeatSource.Stop();
+            lowHealthHeartbeatSource.volume = Mathf.Clamp01(lowHealthHeartbeatVolume);
+            return;
+        }
         if (playing)
         {
-            if (!lowHealthHeartbeatRequested) nextLowHealthHeartbeatTime = Time.unscaledTime;
+            bool starting = !lowHealthHeartbeatRequested;
+            float interval = StatsManager.Instance
+                ? StatsManager.Instance.HeartbeatIntervalSeconds
+                : 1.2f;
             lowHealthHeartbeatRequested = true;
             if (lowHealthHeartbeatFade != null)
             {
@@ -262,16 +302,13 @@ public class AudioManager : MonoBehaviour
                 lowHealthHeartbeatFade = null;
             }
             lowHealthHeartbeatSource.volume = Mathf.Clamp01(lowHealthHeartbeatVolume);
-            if (Time.unscaledTime >= nextLowHealthHeartbeatTime)
+            if (starting || Time.unscaledTime - lastLowHealthHeartbeatTime >= interval)
             {
                 lowHealthHeartbeatSource.Stop();
                 lowHealthHeartbeatSource.pitch = Random.Range(
                     1f - LowHealthHeartbeatPitchSpread, 1f + LowHealthHeartbeatPitchSpread);
                 lowHealthHeartbeatSource.Play();
-                float interval = StatsManager.Instance
-                    ? Mathf.Clamp(StatsManager.Instance.heartbeatFlashIntervalSeconds, .1f, 5f)
-                    : 1.2f;
-                nextLowHealthHeartbeatTime = Time.unscaledTime + interval;
+                lastLowHealthHeartbeatTime = Time.unscaledTime;
             }
         }
         else if (lowHealthHeartbeatRequested)
@@ -466,19 +503,21 @@ public class AudioManager : MonoBehaviour
         else Debug.LogWarning($"Sound '{type}' not found in AudioManager!");
     }
 
-    public void PlayClipWithOffset(AudioClip clip, float volume, float pan, float timeOffsetSeconds)
+    public void PlayClipWithOffset(AudioClip clip, float volume, float pan, float timeOffsetSeconds,
+        float pitch = 1f)
     {
         if (!clip || volume <= 0f) return;
         if (timeOffsetSeconds > 0f)
-            StartCoroutine(PlayClipAfterDelay(clip, volume, pan, timeOffsetSeconds));
+            StartCoroutine(PlayClipAfterDelay(clip, volume, pan, timeOffsetSeconds, pitch));
         else
-            PlayClip(clip, volume, pan, startTimeSeconds: -timeOffsetSeconds);
+            PlayClip(clip, volume, pan, pitch: pitch, startTimeSeconds: -timeOffsetSeconds);
     }
 
-    System.Collections.IEnumerator PlayClipAfterDelay(AudioClip clip, float volume, float pan, float delay)
+    System.Collections.IEnumerator PlayClipAfterDelay(AudioClip clip, float volume, float pan,
+        float delay, float pitch)
     {
         yield return new WaitForSecondsRealtime(delay);
-        PlayClip(clip, volume, pan);
+        PlayClip(clip, volume, pan, pitch: pitch);
     }
 
     public void PlayClip(AudioClip clip, float volume, float pan, float pitch = 1f, bool ambience = false,

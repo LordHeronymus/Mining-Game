@@ -30,6 +30,7 @@ public sealed class MinerPlayerVisual : MonoBehaviour
     float gaitStride = .34f, gaitDuty = .62f, running;
     int facing = 1;
     Vector2 footPosition, lampPosition;
+    float EffectiveMiningSwingsPerSecond => Mathf.Max(.1f, miningSwingsPerSecond) * GameplayTestSettings.DiggingMultiplier;
 
     void OnEnable()
     {
@@ -80,7 +81,7 @@ public sealed class MinerPlayerVisual : MonoBehaviour
         float worldStride = gaitStride * Mathf.Max(.3f, height) / 1.29f;
         if (grounded && !flying && speed > .03f)
             walkPhase = Mathf.Repeat(walkPhase + dt * speed * gaitDuty / worldStride * Mathf.PI * 2 * Mathf.Max(.1f, walkAnimationSpeed), Mathf.PI * 2);
-        if (mining) swingPhase += dt * Mathf.Max(.1f, miningSwingsPerSecond) * Mathf.PI * 2;
+        if (mining) swingPhase += dt * EffectiveMiningSwingsPerSecond * Mathf.PI * 2;
         else swingPhase = 0;
         DrawPose(mining, target); UpdateLamp();
     }
@@ -170,7 +171,7 @@ public sealed class MinerPlayerVisual : MonoBehaviour
         Vector2 shoulder = new Vector2(.16f, .77f + bob);
         Vector2 restHand = new Vector2(.27f - armSwing * .045f, .53f + bob + Mathf.Abs(armSwing) * .012f + airborne * .08f);
         restHand = Vector2.Lerp(restHand, new Vector2(.25f, .93f + .10f * climbCycle), climbing);
-        float animationOffset = miningHitOffsetMs * .001f * Mathf.Max(.1f, miningSwingsPerSecond) * 2f * Mathf.PI;
+        float animationOffset = miningHitOffsetMs * .001f * EffectiveMiningSwingsPerSecond * 2f * Mathf.PI;
         float strike = .5f - .5f * Mathf.Cos(swingPhase - animationOffset);
         Vector2 workHand = new Vector2(Mathf.Lerp(.11f, .39f, strike), Mathf.Lerp(.98f, .65f, strike) + bob);
         Vector2 hand = Vector2.Lerp(restHand, workHand, miningWeight);

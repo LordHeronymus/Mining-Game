@@ -26,6 +26,7 @@ public static class TestModeChecks
         var content=panel.transform.Find("Card/WindowViewport/WindowContent");
         var god=content.Find("GodMode").GetComponent<Toggle>();
         var noEnergy=content.Find("NoEnergy").GetComponent<Toggle>();
+        var drainEnergy=content.Find("EnergyDrain10").GetComponent<Button>();
         var fly=content.Find("FlyMode").GetComponent<Toggle>();
         try
         {
@@ -34,6 +35,8 @@ public static class TestModeChecks
             Check(GameplayTestSettings.GodMode && GameplayTestSettings.NoEnergyConsume && GameplayTestSettings.FlyMode,"Toggles were not saved and reloaded.");
             Check(stats.IsInvulnerable && !stats.CanTakeDamage,"God-mode damage gate failed.");
             energy.energy=50;Call(energy,"Update");Check(energy.energy==50,"Energy consumed while disabled.");
+            drainEnergy.onClick.Invoke();
+            Check(Mathf.Approximately(energy.energy,50-stats.MaxEnergy*.1f),"The debug energy button did not drain 10 percentage points.");
             god.isOn=false;
             Check(!stats.IsInvulnerable && GameplayTestSettings.NoEnergyConsume && GameplayTestSettings.FlyMode,"Toggles are coupled.");
             float gravity=rb.gravityScale;

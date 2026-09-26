@@ -74,7 +74,8 @@ public sealed class GameOverPanel : MonoBehaviour
         IsOpen = true;
         transform.SetAsLastSibling();
         GameplayInputBlocker.SetBlocked(this, true);
-        AudioManager.Instance?.SetLowHealthHeartbeat(false);
+        AudioManager.Instance?.SetLowHealthHeartbeat(false, true);
+        AudioManager.Instance?.PlayGameOverMusic();
         Time.timeScale = 0f;
 
         group.blocksRaycasts = group.interactable = true;
@@ -111,8 +112,17 @@ public sealed class GameOverPanel : MonoBehaviour
     void Restart()
     {
         CloseForTransition();
-        StatsManager.Instance?.ResetRun();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        retryButton.interactable = false;
+        StartCoroutine(RestartRun());
+    }
+
+    IEnumerator RestartRun()
+    {
+        int sceneIndex = SceneManager.GetActiveScene().buildIndex;
+        var stats = StatsManager.Instance ? StatsManager.Instance : FindFirstObjectByType<StatsManager>();
+        if (stats) Destroy(stats.gameObject);
+        yield return null;
+        SceneManager.LoadScene(sceneIndex);
     }
 
     void ReturnToMainMenu()
@@ -136,6 +146,7 @@ public sealed class GameOverPanel : MonoBehaviour
     {
         IsOpen = false;
         GameplayInputBlocker.SetBlocked(this, false);
+        AudioManager.Instance?.StopGameOverMusic();
         Time.timeScale = 1f;
         group.blocksRaycasts = group.interactable = false;
     }
@@ -194,6 +205,7 @@ public sealed class GameOverPanel : MonoBehaviour
 
         var text = AddText("Label", rect, Vector2.zero, size, 34f, ButtonTextColor);
         text.text = label;
+        text.rectTransform.anchoredPosition = new Vector2(0f, 6f);
         text.raycastTarget = false;
         return button;
     }

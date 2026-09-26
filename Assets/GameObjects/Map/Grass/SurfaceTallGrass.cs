@@ -23,6 +23,7 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     [SerializeField] Vector2 respawnSeconds = new Vector2(90f, 180f);
     [SerializeField] Vector2Int fiberYield = new Vector2Int(2, 5);
     [SerializeField] Vector2Int healingHerbYield = new Vector2Int(1, 3);
+    [SerializeField] Vector2Int healingHerbFiberYield = new Vector2Int(1, 3);
     [SerializeField, Min(0f)] float fiberSwayStrength = 2f;
     [SerializeField, Min(0f)] float fiberSwayFrequency = 1.5f;
     [SerializeField, Min(0f)] float healingHerbSwayStrength = 2f;
@@ -100,6 +101,8 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         fiberYield.y = Mathf.Max(fiberYield.x, fiberYield.y);
         healingHerbYield.x = Mathf.Max(1, healingHerbYield.x);
         healingHerbYield.y = Mathf.Max(healingHerbYield.x, healingHerbYield.y);
+        healingHerbFiberYield.x = Mathf.Max(1, healingHerbFiberYield.x);
+        healingHerbFiberYield.y = Mathf.Max(healingHerbFiberYield.x, healingHerbFiberYield.y);
         healingHerbSpawnAreaSize = Mathf.Max(0f, healingHerbSpawnAreaSize);
         fiberSwayStrength = Mathf.Max(0f, fiberSwayStrength);
         fiberSwayFrequency = Mathf.Max(0f, fiberSwayFrequency);
@@ -338,9 +341,15 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         RemovePatch(surfaceCellX);
         if (Application.isPlaying && InventoryManager.Instance)
         {
-            if (patch.IsHealingHerb && healingHerbs) InventoryManager.Instance.Add(healingHerbs, respawnRandom != null
-                ? respawnRandom.Next(Mathf.Max(1, healingHerbYield.x), Mathf.Max(healingHerbYield.x, healingHerbYield.y) + 1)
-                : Mathf.Max(1, healingHerbYield.x));
+            if (patch.IsHealingHerb)
+            {
+                if (healingHerbs) InventoryManager.Instance.Add(healingHerbs, respawnRandom != null
+                    ? respawnRandom.Next(Mathf.Max(1, healingHerbYield.x), Mathf.Max(healingHerbYield.x, healingHerbYield.y) + 1)
+                    : Mathf.Max(1, healingHerbYield.x));
+                if (fiber) InventoryManager.Instance.Add(fiber, respawnRandom != null
+                    ? respawnRandom.Next(Mathf.Max(1, healingHerbFiberYield.x), Mathf.Max(healingHerbFiberYield.x, healingHerbFiberYield.y) + 1)
+                    : Mathf.Max(1, healingHerbFiberYield.x));
+            }
             else if (fiber) InventoryManager.Instance.Add(fiber, respawnRandom != null
                 ? respawnRandom.Next(Mathf.Max(1, fiberYield.x), Mathf.Max(fiberYield.x, fiberYield.y) + 1)
                 : Mathf.Max(1, fiberYield.x));

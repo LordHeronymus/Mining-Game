@@ -245,7 +245,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
             row.star.filled = row.favorite;
             row.star.color = row.favorite ? new Color32(255, 199, 70, 255) : Muted;
             row.star.SetVerticesDirty();
-            bool show = !CraftingService.IsOwnedPowerup(row.recipe, inventory)
+            bool show = RecipeUnlocks.IsUnlocked(row.recipe) && !CraftingService.IsOwnedPowerup(row.recipe, inventory)
                 && (SelectedCategory == CraftingRecipe.RecipeCategory.Automatic || row.recipe.Category == SelectedCategory)
                 && (!OnlyFavorites || row.favorite)
                 && (query.Length == 0 || CultureInfo.GetCultureInfo("de-DE").CompareInfo.IndexOf(

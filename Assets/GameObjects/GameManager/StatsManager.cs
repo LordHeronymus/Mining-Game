@@ -1,19 +1,25 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 
 public class StatsManager : MonoBehaviour
 {
+    public const float LowHealthHeartbeatThresholdFraction = .25f;
+    const float FastestHeartbeatHealthFraction = .01f;
     [SerializeField] PlayerBaseStats baseStats;
     public static StatsManager Instance;
 
     public int Points { get; private set; } = 0;
+    public int ArtifactPoints { get; private set; } = 0;
+    readonly HashSet<ArtifactTile> collectedArtifactTypes = new();
+    AudioClip artifactCollectedSound;
     public int Money { get; private set; } = 0;
 
     public float MoveSpeed;
     public float EffectiveMoveSpeed => MoveSpeed * GameplayTestSettings.MovementMultiplier;
     public float JumpHeightBlocks => baseStats.jumpHeightBlocks;
     public float MiningSpeedMultiplier { get; set; } = 1f;
-    public float MiningSpeed => GameplaySettings.BaseDiggingSpeed * MiningSpeedMultiplier * GameplayTestSettings.DiggingMultiplier;
+    public float MiningSpeed => GameplaySettings.BaseDiggingSpeed * MiningSpeedMultiplier;
     [Header("Health")]
     [Min(1f)] public float initialHealth = 100f;
     [Min(0f)] public float fallDamageHeightBlocks = 3f;
@@ -27,9 +33,9 @@ public class StatsManager : MonoBehaviour
     [Range(-1f, 1f)] public float heartbeatFlashOffsetSeconds = .12f;
     public float MaxHealth => Mathf.Max(1f, initialHealth);
     public float Health { get; private set; }
+    public float HeartbeatIntervalSeconds => CalculateHeartbeatIntervalSeconds(Health / MaxHealth, heartbeatFlashIntervalSeconds);
     public event Action<float, float> OnHealthChanged;
     float lastHealthDamageTime;
-    bool lowHealthHeartbeatActive;
     // Future damage handlers must respect this gate before applying damage.
     public bool IsInvulnerable => GameplayTestSettings.GodMode;
     public bool CanTakeDamage => !IsInvulnerable;
@@ -85,9 +91,9 @@ public class StatsManager : MonoBehaviour
     void Update()
     {
         float healthFraction = Health / MaxHealth;
-        if (healthFraction < 0.2f) lowHealthHeartbeatActive = true;
-        else if (healthFraction > 0.2f) lowHealthHeartbeatActive = false;
-        AudioManager.Instance?.SetLowHealthHeartbeat(lowHealthHeartbeatActive);
+        bool heartbeatActive = Health > 0f && !GameOverPanel.IsOpen &&
+            healthFraction <= LowHealthHeartbeatThresholdFraction;
+        AudioManager.Instance?.SetLowHealthHeartbeat(heartbeatActive);
 
 
         float regenerationLimit = MaxHealth * Mathf.Clamp01(healthRegenLimitFraction);
@@ -114,6 +120,26 @@ public class StatsManager : MonoBehaviour
         return true;
     }
 
+    public bool TryUseMedkit(ItemSO medkit = null)
+    {
+        if (Health <= 0f || Health >= MaxHealth - 0.001f || GameOverPanel.IsOpen) return false;
+        var inventory = InventoryManager.Instance;
+        if (!inventory || (medkit && medkit.item != Item.Medkit)) return false;
+        if (!medkit)
+        {
+            foreach (var entry in inventory.GetSnapshot())
+                if (entry.Key && entry.Key.item == Item.Medkit && entry.Value > 0)
+                {
+                    medkit = entry.Key;
+                    break;
+                }
+        }
+        if (!medkit || !inventory.TryRemove(medkit)) return false;
+        Health = MaxHealth;
+        OnHealthChanged?.Invoke(Health, MaxHealth);
+        return true;
+    }
+
     public void SetHealthForDebug(float value)
     {
         if (float.IsNaN(value) || float.IsInfinity(value)) return;
@@ -131,6 +157,13 @@ public class StatsManager : MonoBehaviour
         if (excessHeight <= 0f || baseDamage <= 0f) return 0f;
         return baseDamage * Mathf.Pow(excessHeight, Mathf.Max(1f, exponent));
     }
+
+    public static float CalculateHeartbeatIntervalSeconds(float healthFraction, float baseIntervalSeconds)
+    {
+        float progress = Mathf.Clamp01((LowHealthHeartbeatThresholdFraction - healthFraction) /
+            (LowHealthHeartbeatThresholdFraction - FastestHeartbeatHealthFraction));
+        return Mathf.Clamp(baseIntervalSeconds, .1f, 5f) / Mathf.Lerp(1f, 2f, progress);
+    }
     void HandlePoints(Vector2 pos, int points)
     {
         Points += points;
@@ -144,9 +177,26 @@ public class StatsManager : MonoBehaviour
         OnMoneyChanged?.Invoke(Money); // für ShopUI
     }
 
+    public void CollectArtifact(ArtifactTile artifact, int cash)
+    {
+        if (!artifact) return;
+        ArtifactPoints++;
+        HandlePoints(Vector2.zero, 1);
+        int reward = Mathf.Max(0, cash);
+        AddMoney(reward);
+        ItemFeed.Instance?.ShowMoney(reward);
+        if (!collectedArtifactTypes.Add(artifact) || !AudioManager.Instance) return;
+        if (!artifactCollectedSound)
+            artifactCollectedSound = Resources.Load<AudioClip>("Audio/ArtifactCollected");
+        AudioManager.Instance.PlayClip(artifactCollectedSound,
+            AudioManager.Instance.GetVolume(AudioVolumeSetting.DingLight), 0f);
+    }
+
     void Reset()
     {
         Points = 0;
+        ArtifactPoints = 0;
+        collectedArtifactTypes.Clear();
         Money = StartingResourcesSettings.Load().money;
         HUDPoints.Instance?.UpdatePoints(Money, PointType.Money);
         OnMoneyChanged?.Invoke(Money);

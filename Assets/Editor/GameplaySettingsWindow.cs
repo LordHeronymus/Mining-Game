@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 // into a second configuration asset that could drift out of sync.
 public class GameplaySettingsWindow : EditorWindow
 {
-    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Erzverteilung", "Partikel", "Blöcke & Beute", "Licht", "Werkbank", "Audio", "Pflanzen", "Tiere", "Health" };
+    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Erzverteilung", "Partikel", "Blöcke & Beute", "Licht", "Werkbank", "Audio", "Pflanzen", "Tiere", "Health", "Artefakte" };
     [SerializeField] int tab;
     [SerializeField] int selectedBlock;
     [SerializeField] StatsManager stats;
@@ -211,6 +211,7 @@ public class GameplaySettingsWindow : EditorWindow
                 case 9: DrawPlants(); break;
                 case 10: DrawAnimals(); break;
                 case 11: DrawHealth(); break;
+                case 12: DrawArtifacts(); break;
             }
         }
         EditorGUILayout.Space(12);
@@ -222,7 +223,7 @@ public class GameplaySettingsWindow : EditorWindow
 
     int DrawTabRows()
     {
-        const int tabsPerRow = 6;
+        const int tabsPerRow = 7;
         int selected = tab;
         for (int first = 0; first < Tabs.Length; first += tabsPerRow)
         {
@@ -325,6 +326,17 @@ public class GameplaySettingsWindow : EditorWindow
                 minimumHerbs = Mathf.Clamp(minimumHerbs, 1, 9999);
                 herbYield.vector2IntValue = new Vector2Int(minimumHerbs,
                     Mathf.Clamp(maximumHerbs, minimumHerbs, 9999));
+            }
+            var herbFiberYield = data.FindProperty("healingHerbFiberYield");
+            Vector2Int fiberAmount = herbFiberYield.vector2IntValue;
+            EditorGUI.BeginChangeCheck();
+            int minimumFiber = EditorGUILayout.IntField("Fasern mindestens", fiberAmount.x);
+            int maximumFiber = EditorGUILayout.IntField("Fasern höchstens", fiberAmount.y);
+            if (EditorGUI.EndChangeCheck())
+            {
+                minimumFiber = Mathf.Clamp(minimumFiber, 1, 9999);
+                herbFiberYield.vector2IntValue = new Vector2Int(minimumFiber,
+                    Mathf.Clamp(maximumFiber, minimumFiber, 9999));
             }
             SwayMultiplier(data, "healingHerbSwayStrength", "Schwankstärke (%)");
             SwayMultiplier(data, "healingHerbSwayFrequency", "Frequenz (%)");
@@ -849,7 +861,7 @@ public class GameplaySettingsWindow : EditorWindow
             EditorGUI.BeginChangeCheck();
             float percent = EditorGUILayout.Slider("Blutrand-Intensität (%)", intensity.floatValue * 100f, 0f, 100f);
             if (EditorGUI.EndChangeCheck()) intensity.floatValue = percent / 100f;
-            Float(data, "heartbeatFlashIntervalSeconds", "Herzschlag-Intervall (s)", "", .1f, 5f);
+            Float(data, "heartbeatFlashIntervalSeconds", "Herzschlag-Intervall bei 25 % (s)", "", .1f, 5f);
             Float(data, "heartbeatFlashOffsetSeconds", "Herzschlag-Versatz (s)", "", -1f, 1f);
         });
     }
@@ -904,6 +916,10 @@ public class GameplaySettingsWindow : EditorWindow
         {
             EditorGUILayout.Slider(data.FindProperty("grassYOffset"), -.5f, .5f,
                 new GUIContent("Gras Y-Versatz (Welteinheiten)"));
+        }, false);
+        CollapsibleSection("map-herb-spawn-area", "Heilkraut-Spawngebiet", tallGrass, data =>
+        {
+            Float(data, "healingHerbSpawnAreaSize", "Spawn Area Size (m)", "", 0f, 1000f);
         }, false);
         CollapsibleSection("map-layers", "Layer", map, data =>
         {
@@ -1399,6 +1415,77 @@ public class GameplaySettingsWindow : EditorWindow
                     weightCurve.animationCurveValue, weight.floatValue);
             }
         }
+    }
+
+    void DrawArtifacts()
+    {
+        map = Picker("Map-Generator", map);
+        CollapsibleSection("artifact-settings", "Artefakte", map, data =>
+        {
+            var minimumDepth = data.FindProperty("artifactMinimumDepth");
+            minimumDepth.intValue = EditorGUILayout.IntSlider("Mindesttiefe (Y)",
+                minimumDepth.intValue, 1, Mathf.Max(1, map.mapHeight - 1));
+            var dropChance = data.FindProperty("artifactDropChanceMultiplier");
+            dropChance.floatValue = EditorGUILayout.Slider("Drop-Chance-Multiplikator",
+                dropChance.floatValue, .1f, 5f);
+            var iconScale = data.FindProperty("artifactOverviewIconScale");
+            iconScale.floatValue = EditorGUILayout.Slider("Icon-Skalierung Übersicht",
+                iconScale.floatValue, .25f, 8f);
+            var settings = data.FindProperty("artifactSettings");
+            if (settings == null) return;
+            for (int index = 0; index < settings.arraySize; index++)
+            {
+                var entry = settings.GetArrayElementAtIndex(index);
+                var tile = entry.FindPropertyRelative("tile");
+                var artifact = tile.objectReferenceValue as ArtifactTile;
+                string name = artifact && !string.IsNullOrWhiteSpace(artifact.displayName)
+                    ? artifact.displayName : "Artefakt " + (index + 1);
+                if (!ArtifactFoldout("artifact-" + index, name, artifact ? artifact.sprite : null)) continue;
+                EditorGUILayout.PropertyField(tile, new GUIContent("Sprite-Tile"));
+                var selectedLayers = entry.FindPropertyRelative("layerIndices");
+                var enabled = new List<int>();
+                for (int i = 0; i < selectedLayers.arraySize; i++)
+                    enabled.Add(selectedLayers.GetArrayElementAtIndex(i).intValue);
+                if (map.layers != null)
+                    for (int i = 0; i < map.layers.Length; i++)
+                    {
+                        string layerName = map.layers[i] == null || string.IsNullOrWhiteSpace(map.layers[i].name)
+                            ? "Layer " + (i + 1) : map.layers[i].name;
+                        bool selected = EditorGUILayout.ToggleLeft(layerName, enabled.Contains(i));
+                        if (selected && !enabled.Contains(i)) enabled.Add(i);
+                        else if (!selected) enabled.Remove(i);
+                    }
+                enabled.Sort();
+                selectedLayers.arraySize = enabled.Count;
+                for (int i = 0; i < enabled.Count; i++)
+                    selectedLayers.GetArrayElementAtIndex(i).intValue = enabled[i];
+                var chance = entry.FindPropertyRelative("chancePercent");
+                chance.floatValue = Mathf.Clamp(EditorGUILayout.FloatField("Fundchance pro Zelle (%)",
+                    chance.floatValue), 0f, 100f);
+                var cash = entry.FindPropertyRelative("cash");
+                cash.intValue = Mathf.Max(0, EditorGUILayout.IntField("Geld ($)", cash.intValue));
+            }
+        }, false);
+    }
+
+    bool ArtifactFoldout(string key, string title, Sprite sprite)
+    {
+        bool expanded = expandedSections.Contains(key);
+        Rect row = EditorGUILayout.GetControlRect(false, 32f);
+        Rect foldout = new Rect(row.x + 34f, row.y, row.width - 34f, row.height);
+        bool next = EditorGUI.Foldout(foldout, expanded, title, true, EditorStyles.foldoutHeader);
+        if (sprite)
+        {
+            var texture = sprite.texture;
+            var source = sprite.textureRect;
+            var uv = new Rect(source.x / texture.width, source.y / texture.height,
+                source.width / texture.width, source.height / texture.height);
+            GUI.DrawTextureWithTexCoords(new Rect(row.x + 2f, row.y + 2f, 28f, 28f),
+                texture, uv, true);
+        }
+        if (next) expandedSections.Add(key);
+        else expandedSections.Remove(key);
+        return next;
     }
 
     Block BlockPicker()

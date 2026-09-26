@@ -34,6 +34,8 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     readonly Dictionary<DebugTab, string> tabNames = new Dictionary<DebugTab, string>();
     TMP_InputField testMultiplier;
     TMP_InputField movementMultiplier;
+    Toggle diggingMultiplierToggle;
+    Toggle movementMultiplierToggle;
     TMP_InputField healthInput;
     TMP_InputField miningHitOffsetInput;
     MinerPlayerVisual minerVisual;
@@ -1378,17 +1380,31 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         CloneItem("Section", "PlayerTestSection", content, "SPIELER");
         CloneItem("Section", "TimeTestSection", content, "LICHT");
         CloneItem("Section", "MiscSection", content, "MISC");
-        CloneItem("SpeedLabel", "TestLabel", content, "Abbau-Testfaktor (×)");
+        var testLabel = CloneItem("SpeedLabel", "TestLabel", content, "Abbaufaktor (×)");
         testMultiplier = CloneItem("DiggingSpeed", "TestMultiplier", content).GetComponent<TMP_InputField>();
         testMultiplier.contentType = TMP_InputField.ContentType.DecimalNumber;
         DisableInputChildRaycasts(testMultiplier);
         testMultiplier.onEndEdit.AddListener(_ => ApplyTestInput());
+        diggingMultiplierToggle = CreateFactorToggle("DiggingMultiplierToggle", testLabel, value =>
+        {
+            if (!ApplyTestInput()) { RefreshTest(); return; }
+            bool saved = GameplayTestSettings.SetDiggingMultiplierEnabled(value, out string error);
+            RefreshTest();
+            testStatus.text = saved ? "" : error;
+        });
         EnsureMiningHitOffsetControl();
-        CloneItem("SpeedLabel", "MovementLabel", content, "Bewegungsfaktor (×)");
+        var movementLabel = CloneItem("SpeedLabel", "MovementLabel", content, "Bewegungsfaktor (×)");
         movementMultiplier = CloneItem("DiggingSpeed", "MovementMultiplier", content).GetComponent<TMP_InputField>();
         movementMultiplier.contentType = TMP_InputField.ContentType.DecimalNumber;
         DisableInputChildRaycasts(movementMultiplier);
         movementMultiplier.onEndEdit.AddListener(_ => ApplyTestInput());
+        movementMultiplierToggle = CreateFactorToggle("MovementMultiplierToggle", movementLabel, value =>
+        {
+            if (!ApplyTestInput()) { RefreshTest(); return; }
+            bool saved = GameplayTestSettings.SetMovementMultiplierEnabled(value, out string error);
+            RefreshTest();
+            testStatus.text = saved ? "" : error;
+        });
         testStatus = CloneItem("Status", "TestStatus", content, "").GetComponent<TextMeshProUGUI>();
         CreateModeToggle("TestActive", "Testmodus aktiv", GameplayTestMode.Active, null);
 #if UNITY_EDITOR
@@ -1400,6 +1416,13 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             "Schaden wird ignoriert.");
         CreateModeToggle("NoEnergy", "Kein Energieverbrauch", GameplayTestMode.NoEnergyConsume,
             "Verhindert Energieverbrauch im Stand, beim Bewegen und beim Abbauen.");
+        var drainEnergy = CloneItem("Defaults", "EnergyDrain10", content, "10 % Energie abziehen").GetComponent<Button>();
+        drainEnergy.onClick = new Button.ButtonClickedEvent();
+        drainEnergy.onClick.AddListener(() =>
+        {
+            var energy = UnityEngine.Object.FindFirstObjectByType<EnergyManager>();
+            if (energy && energy.stats) energy.DrainEnergy(energy.stats.MaxEnergy * .1f);
+        });
         CreateModeToggle("FlyMode", "Fly Mode", GameplayTestMode.Fly,
             "Gravitation aus. W/S: aufwärts/abwärts. A/D: seitwärts. Ohne Taste schweben. Kollisionen bleiben aktiv.");
         CreateModeToggle("NoClip", "No Clip", GameplayTestMode.NoClip, null);
@@ -1426,6 +1449,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         CreateDayNightSelector();
         testItems.AddRange(new[] {"TestSection", "MiningTestSection", "PlayerTestSection", "TimeTestSection",
             "TestLabel","TestMultiplier","MovementLabel","MovementMultiplier","TestStatus", "HealthTestSection",
+            "EnergyDrain10",
             "HealthValueLabel", "HealthValueInput", "SetHealth",
             "DamageTest90", "DamageTest40", "DamageTest10", "DamageTest1", "TestEndScreen"});
         MoveToTab(miscItems, "MiscSection");
@@ -1524,6 +1548,28 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         if (hint != null) AttachTooltip(name, hint);
     }
 
+    Toggle CreateFactorToggle(string name, RectTransform labelRow, System.Action<bool> onChanged)
+    {
+        var label = labelRow.GetComponentInChildren<TextMeshProUGUI>();
+        label.margin = new Vector4(label.margin.x + 48f, label.margin.y, label.margin.z, label.margin.w);
+        var row = MakeRect(name, labelRow); items[name] = row;
+        row.anchorMin = row.anchorMax = new Vector2(0,.5f);
+        row.anchoredPosition = new Vector2(18,0); row.sizeDelta = new Vector2(38,38);
+        var hit = row.gameObject.AddComponent<Image>(); hit.color = Color.clear;
+        var box = MakeRect("Box", row);
+        box.anchorMin = box.anchorMax = new Vector2(.5f,.5f);
+        box.anchoredPosition = Vector2.zero; box.sizeDelta = new Vector2(30,30);
+        var boxImage = box.gameObject.AddComponent<Image>(); boxImage.color = new Color(.3f,.37f,.45f);
+        var check = MakeRect("Check", box);
+        check.anchorMin = Vector2.zero; check.anchorMax = Vector2.one;
+        check.offsetMin = new Vector2(6,6); check.offsetMax = new Vector2(-6,-6);
+        var checkImage = check.gameObject.AddComponent<Image>(); checkImage.color = new Color(1f,.65f,.2f);
+        var toggle = row.gameObject.AddComponent<Toggle>();
+        toggle.targetGraphic = boxImage; toggle.graphic = checkImage;
+        toggle.onValueChanged.AddListener(onChanged.Invoke);
+        return toggle;
+    }
+
     public void SwitchTab(bool tests)
         => SwitchTab(tests ? DebugTab.Tests : DebugTab.Gameplay);
 
@@ -1594,6 +1640,8 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         float factor = GameplayTestSettings.ConfiguredDiggingMultiplier;
         testMultiplier.SetTextWithoutNotify(factor.ToString("R", CultureInfo.InvariantCulture));
         movementMultiplier.SetTextWithoutNotify(GameplayTestSettings.ConfiguredMovementMultiplier.ToString("R", CultureInfo.InvariantCulture));
+        diggingMultiplierToggle.SetIsOnWithoutNotify(GameplayTestSettings.IsDiggingMultiplierEnabled);
+        movementMultiplierToggle.SetIsOnWithoutNotify(GameplayTestSettings.IsMovementMultiplierEnabled);
         if (!minerVisual) minerVisual = FindFirstObjectByType<MinerPlayerVisual>();
         if (GameplayTestSettings.HasMiningHitOffsetOverride && minerVisual)
             minerVisual.miningHitOffsetMs = GameplayTestSettings.ConfiguredMiningHitOffsetMs;
@@ -1912,25 +1960,25 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             Place("TestActive",x,56,col,44);
             Place("MiningTestSection",x,122,col,36);
             Place("TestLabel",x,166,col-170,50); Place("TestMultiplier",x+col-150,166,150,50);
-            Place("MiningHitOffsetLabel",x,218,col-170,50); Place("MiningHitOffsetInput",x+col-150,218,150,50);
-            Place("PlayerTestSection",x,290,col,36);
-            Place("MovementLabel",x,334,col-170,50); Place("MovementMultiplier",x+col-150,334,150,50);
-            Place("GodMode",x,406,col,44); Place("NoEnergy",x,458,col,44);
-            Place("FlyMode",x,510,col,44); Place("NoClip",x,562,col,44);
-            Place("TimeTestSection",x,630,col,36);
-            Place("GlobalLighting",x,674,col,44);
-            Place("HealthTestSection",x,742,col,36);
-            Place("HealthValueLabel",x,786,col-300,48);
-            Place("HealthValueInput",x+col-280,786,140,48);
-            Place("SetHealth",x+col-130,786,130,48);
+            Place("PlayerTestSection",x,246,col,36);
+            Place("MovementLabel",x,290,col-170,50); Place("MovementMultiplier",x+col-150,290,150,50);
+            Place("GodMode",x,350,col,44); Place("NoEnergy",x,402,col,44);
+            Place("EnergyDrain10",x,454,col,44);
+            Place("FlyMode",x,506,col,44); Place("NoClip",x,558,col,44);
+            Place("TimeTestSection",x,622,col,36);
+            Place("GlobalLighting",x,666,col,44);
+            Place("HealthTestSection",x,734,col,36);
+            Place("HealthValueLabel",x,778,col-300,48);
+            Place("HealthValueInput",x+col-280,778,140,48);
+            Place("SetHealth",x+col-130,778,130,48);
             float damageButtonWidth = (col - 30f) / 4f;
             foreach (int damage in new[] { 90, 40, 10, 1 })
             {
                 int index = System.Array.IndexOf(new[] { 90, 40, 10, 1 }, damage);
-                Place("DamageTest" + damage, x + index * (damageButtonWidth + 10f), 846, damageButtonWidth, 48);
+                Place("DamageTest" + damage, x + index * (damageButtonWidth + 10f), 838, damageButtonWidth, 48);
             }
-            Place("TestEndScreen",x,914,col,48);
-            Place("TestStatus",x,974,col,70); content.sizeDelta = new Vector2(0,1056);
+            Place("TestEndScreen",x,906,col,48);
+            Place("TestStatus",x,966,col,70); content.sizeDelta = new Vector2(0,1048);
             return;
         }
 

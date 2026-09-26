@@ -17,13 +17,14 @@ public static class MapEditorGeneration
 
         var terrain=map.Terrain;
         var overlay=map.EnsureOreOverlay();
+        var artifacts=map.EnsureArtifactOverlay();
         var grass=map.EnsureGrassOverlay();
         int usedSeed=map.ChooseGenerationSeed();
 
         Undo.IncrementCurrentGroup();
         int undoGroup=Undo.GetCurrentGroup();
         Undo.SetCurrentGroupName("Map im Editor generieren");
-        Undo.RegisterCompleteObjectUndo(new Object[]{map,terrain,overlay,grass},"Map im Editor generieren");
+        Undo.RegisterCompleteObjectUndo(new Object[]{map,terrain,overlay,artifacts,grass},"Map im Editor generieren");
         var ladders = map.GetComponent<LadderMap>();
         if (ladders && ladders.Tiles) Undo.RegisterCompleteObjectUndo(ladders.Tiles, "Map im Editor generieren");
         try
@@ -40,6 +41,7 @@ public static class MapEditorGeneration
         EditorUtility.SetDirty(map);
         EditorUtility.SetDirty(terrain);
         EditorUtility.SetDirty(overlay);
+        EditorUtility.SetDirty(artifacts);
         EditorUtility.SetDirty(grass);
         PrefabUtility.RecordPrefabInstancePropertyModifications(map);
         EditorSceneManager.MarkSceneDirty(map.gameObject.scene);

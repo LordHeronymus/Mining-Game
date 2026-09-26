@@ -42,6 +42,11 @@ public class MapGenerator : MonoBehaviour
     public MapLayer[] layers;
     [SerializeField, HideInInspector] public bool useOreSettings;
     [SerializeField, HideInInspector] public OreDistributionSetting[] oreSettings;
+    [Header("Artifacts")]
+    public ArtifactDistributionSetting[] artifactSettings = System.Array.Empty<ArtifactDistributionSetting>();
+    [Min(1), InspectorName("Mindesttiefe Artefakte (Y)")] public int artifactMinimumDepth = 10;
+    [Range(.1f, 5f)] public float artifactDropChanceMultiplier = 1f;
+    [Range(.25f, 8f)] public float artifactOverviewIconScale = 4f;
     [Header("Terrain Test")]
     public Block uniformTestStone;
     public StoneTestTile uniformTestTile;
@@ -51,11 +56,13 @@ public class MapGenerator : MonoBehaviour
 
     private Tilemap tilemap;
     [SerializeField] Tilemap oreOverlay;
+    [SerializeField] Tilemap artifactOverlay;
     [SerializeField] Tilemap grassOverlay;
     [SerializeField] Tilemap grassHangLeftOverlay;
     [SerializeField] Tilemap grassHangRightOverlay;
     public Tilemap Terrain => tilemap ? tilemap : tilemap = GetComponent<Tilemap>();
     public Tilemap OreOverlay => oreOverlay;
+    public Tilemap ArtifactOverlay => artifactOverlay;
     public Tilemap GrassOverlay => grassOverlay;
     public Tilemap GrassHangLeftOverlay => grassHangLeftOverlay;
     public Tilemap GrassHangRightOverlay => grassHangRightOverlay;
@@ -83,9 +90,10 @@ public class MapGenerator : MonoBehaviour
         public readonly int offsetX;
         public readonly TileBase[] terrainTiles;
         public readonly TileBase[] oreTiles;
+        public readonly TileBase[] artifactTiles;
 
         public MapGenerationSnapshot(int seed, int width, int height, int offsetX,
-            TileBase[] terrainTiles, TileBase[] oreTiles)
+            TileBase[] terrainTiles, TileBase[] oreTiles, TileBase[] artifactTiles)
         {
             this.seed = seed;
             this.width = width;
@@ -93,6 +101,7 @@ public class MapGenerator : MonoBehaviour
             this.offsetX = offsetX;
             this.terrainTiles = terrainTiles;
             this.oreTiles = oreTiles;
+            this.artifactTiles = artifactTiles;
         }
     }
     SurfaceTrees surfaceTrees;
@@ -205,6 +214,7 @@ public class MapGenerator : MonoBehaviour
             if (!source.HasTile(change.position))
             {
                 if (oreOverlay) oreOverlay.SetTile(change.position, null);
+                if (artifactOverlay) artifactOverlay.SetTile(change.position, null);
             }
             if (!applyingGeneratedTiles && grassOverlay && change.position.y == 0)
             {
@@ -245,6 +255,35 @@ public class MapGenerator : MonoBehaviour
             GetComponent<OreOverlayAppearance>()?.ApplyTo(target);
         }
         return oreOverlay;
+    }
+
+    public Tilemap EnsureArtifactOverlay()
+    {
+        if (!artifactOverlay)
+        {
+            var existing = transform.Find("Artifact Overlay");
+            if (existing) artifactOverlay = existing.GetComponent<Tilemap>();
+            if (!artifactOverlay)
+            {
+                var child = new GameObject("Artifact Overlay", typeof(Tilemap), typeof(TilemapRenderer));
+                child.transform.SetParent(transform, false);
+                artifactOverlay = child.GetComponent<Tilemap>();
+            }
+        }
+        artifactOverlay.gameObject.layer = gameObject.layer;
+        artifactOverlay.tileAnchor = Terrain.tileAnchor;
+        artifactOverlay.orientation = Terrain.orientation;
+        artifactOverlay.orientationMatrix = Terrain.orientationMatrix;
+        var source = GetComponent<TilemapRenderer>();
+        var target = artifactOverlay.GetComponent<TilemapRenderer>();
+        if (source && target)
+        {
+            target.sortingLayerID = source.sortingLayerID;
+            target.sortingOrder = source.sortingOrder + 2;
+            target.mode = source.mode;
+            target.sortOrder = source.sortOrder;
+        }
+        return artifactOverlay;
     }
 
     public Tilemap EnsureGrassOverlay()
@@ -410,6 +449,17 @@ public class MapGenerator : MonoBehaviour
     public OreTile GetOreAt(Vector3Int cell) => Terrain.HasTile(cell) && oreOverlay
         ? oreOverlay.GetTile<OreTile>(cell) : null;
 
+    public ArtifactTile GetArtifactAt(Vector3Int cell) => Terrain.HasTile(cell) && artifactOverlay
+        ? artifactOverlay.GetTile<ArtifactTile>(cell) : null;
+
+    public int GetArtifactCash(ArtifactTile tile)
+    {
+        if (!tile || artifactSettings == null) return 0;
+        foreach (var setting in artifactSettings)
+            if (setting != null && setting.tile == tile) return Mathf.Max(0, setting.cash);
+        return 0;
+    }
+
     public Block GetBlockAt(Vector3Int cell)
     {
         var terrain = Terrain.GetTile(cell);
@@ -443,6 +493,7 @@ public class MapGenerator : MonoBehaviour
         if (IsSurfaceCellProtected(cell)) return false;
         if (!Terrain.HasTile(cell)) return false;
         if (oreOverlay) oreOverlay.SetTile(cell, null);
+        if (artifactOverlay) artifactOverlay.SetTile(cell, null);
         if (grassOverlay && cell.y == 0) grassOverlay.SetTile(cell, null);
         Terrain.SetTile(cell, null);
         GetComponent<MapLighting>()?.NotifyTileChanged(cell);
@@ -460,6 +511,7 @@ public class MapGenerator : MonoBehaviour
         ApplyTileRows(data, 0, data.height);
         tilemap.CompressBounds();
         oreOverlay.CompressBounds();
+        artifactOverlay.CompressBounds();
         ActivateGeneratedMap(data);
         FinishGeneration();
     }
@@ -535,6 +587,7 @@ public class MapGenerator : MonoBehaviour
         }
         tilemap = Terrain;
         EnsureOreOverlay();
+        EnsureArtifactOverlay();
         EnsureGrassOverlay();
 
         int offsetX = -mapWidth / 2;
@@ -545,11 +598,13 @@ public class MapGenerator : MonoBehaviour
         var richness = OreVeins.Build(blocks, mapWidth, mapHeight, usedSeed);
         var terrainTiles = new TileBase[blocks.Length];
         var oreTiles = new TileBase[blocks.Length];
+        var artifactTiles = new TileBase[blocks.Length];
         var previousBlocks = new Block[mapWidth];
         var currentBlocks = new Block[mapWidth];
         var previousVariants = new int[mapWidth];
         var currentVariants = new int[mapWidth];
         var variantGroups = new Dictionary<Block,int[]>();
+        var placedArtifacts = new Dictionary<ArtifactTile, List<Vector2Int>>();
 
         for (int y = 0; y < mapHeight; y++)
         {
@@ -582,7 +637,16 @@ public class MapGenerator : MonoBehaviour
                 if (uniformTestStone && surfaceDirt) terrainTiles[tileIndex] = surfaceDirtTile;
                 if (uniformTestStone && firstLayerStone) terrainTiles[tileIndex] = layerOneTile;
                 if (uniformTestStone && thirdLayerStone) terrainTiles[tileIndex] = layerThreeTile;
-                if (!layered) continue;
+                if (!layered)
+                {
+                    if (!OreVeins.HasVeinInNeighborhood(blocks, mapWidth, mapHeight, x, y))
+                    {
+                        var artifact = SelectArtifact(usedSeed, x, y);
+                        if (ArtifactPlacement.TryPlace(placedArtifacts, artifact, x, y))
+                            artifactTiles[tileIndex] = artifact;
+                    }
+                    continue;
+                }
                 var overlays = chosen.GetOreVariants(richness[i]);
                 oreTiles[tileIndex] = overlays[OreVeins.Hash(usedSeed, x, y, 0x5678u) % (uint)overlays.Length];
             }
@@ -591,7 +655,28 @@ public class MapGenerator : MonoBehaviour
             System.Array.Clear(currentBlocks, 0, currentBlocks.Length);
         }
 
-        return new MapGenerationSnapshot(usedSeed, mapWidth, mapHeight, offsetX, terrainTiles, oreTiles);
+        return new MapGenerationSnapshot(usedSeed, mapWidth, mapHeight, offsetX, terrainTiles, oreTiles, artifactTiles);
+    }
+
+    public ArtifactTile SelectArtifact(int usedSeed, int x, int depth)
+    {
+        if (depth < Mathf.Max(1, artifactMinimumDepth) || artifactSettings == null || layers == null) return null;
+        int layer = -1;
+        for (int i = 0; i < layers.Length; i++)
+            if (layers[i] != null && depth >= layers[i].startDepth) layer = i;
+        if (layer < 0) return null;
+        double roll = OreVeins.Hash(usedSeed, x, depth, 0xA74Fu) / (double)uint.MaxValue * 100d;
+        double cumulative = 0d;
+        foreach (var setting in artifactSettings)
+        {
+            if (setting == null || !setting.tile || setting.layerIndices == null ||
+                System.Array.IndexOf(setting.layerIndices, layer) < 0 ||
+                float.IsNaN(setting.chancePercent) || float.IsInfinity(setting.chancePercent)) continue;
+            cumulative += Mathf.Clamp(setting.chancePercent, 0f, 100f) *
+                Mathf.Clamp(artifactDropChanceMultiplier, .1f, 5f);
+            if (roll < cumulative) return setting.tile;
+        }
+        return null;
     }
 
     void BeginTileApplication()
@@ -600,6 +685,7 @@ public class MapGenerator : MonoBehaviour
         GetComponent<LadderMap>()?.Clear();
         isGenerated = false;
         oreOverlay.ClearAllTiles();
+        artifactOverlay.ClearAllTiles();
         tilemap.ClearAllTiles();
     }
 
@@ -608,6 +694,7 @@ public class MapGenerator : MonoBehaviour
         if (rowCount <= 0) return;
         TileBase[] terrain = data.terrainTiles;
         TileBase[] ores = data.oreTiles;
+        TileBase[] artifacts = data.artifactTiles;
         BoundsInt bounds;
         if (firstRow == 0 && rowCount == data.height)
         {
@@ -624,12 +711,15 @@ public class MapGenerator : MonoBehaviour
             }
             terrain = streamedTerrainRows;
             ores = streamedOreRows;
+            artifacts = new TileBase[count];
             System.Array.Copy(data.terrainTiles, sourceOffset, terrain, 0, count);
             System.Array.Copy(data.oreTiles, sourceOffset, ores, 0, count);
+            System.Array.Copy(data.artifactTiles, sourceOffset, artifacts, 0, count);
             bounds = new BoundsInt(data.offsetX, 1 - firstRow - rowCount, 0, data.width, rowCount, 1);
         }
         tilemap.SetTilesBlock(bounds, terrain);
         oreOverlay.SetTilesBlock(bounds, ores);
+        artifactOverlay.SetTilesBlock(bounds, artifacts);
         for (int y = firstRow; y < firstRow + rowCount; y++)
             for (int x = 0; x < data.width; x++)
             {
@@ -659,6 +749,7 @@ public class MapGenerator : MonoBehaviour
         bool streamed = IsGenerationStreaming;
         tilemap.CompressBounds();
         oreOverlay.CompressBounds();
+        artifactOverlay.CompressBounds();
         IsGenerationStreaming = false;
         generationRoutine = null;
         pendingGeneration = null;

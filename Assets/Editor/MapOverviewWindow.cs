@@ -22,6 +22,7 @@ public sealed class MapOverviewWindow : EditorWindow
     Texture2D texture;
     Color32[] pixels;
     BlockType[] types;
+    readonly Dictionary<int, ArtifactTile> artifactCells = new();
     Block[] previewBlocks;
     MapGenerationSampler sampler;
     readonly HashSet<int> changedCells = new HashSet<int>();
@@ -147,6 +148,7 @@ public sealed class MapOverviewWindow : EditorWindow
         pendingBuild = false;
         error = null;
         changedCells.Clear();
+        artifactCells.Clear();
         DisposeTexture();
         live = useLive;
         sourceSeed = seed;
@@ -194,6 +196,23 @@ public sealed class MapOverviewWindow : EditorWindow
                 for (int x = 0; x < width; x++) SetCell(x, y, previewBlocks[y * width + x]);
         }
 
+        if (!live)
+        {
+            var placedArtifacts = new Dictionary<ArtifactTile, List<Vector2Int>>();
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                {
+                    var block = previewBlocks[y * width + x];
+                    if (block && !block.HasOreOverlays &&
+                        !OreVeins.HasVeinInNeighborhood(previewBlocks, width, height, x, y))
+                    {
+                        var artifact = map.SelectArtifact(sourceSeed, x, y);
+                        if (ArtifactPlacement.TryPlace(placedArtifacts, artifact, x, y))
+                            SetArtifact(x, y, artifact);
+                    }
+                }
+        }
+
         texture = new Texture2D(width, height, TextureFormat.RGBA32, false, true)
         {
             name = "Map Overview (editor only)",
@@ -214,9 +233,18 @@ public sealed class MapOverviewWindow : EditorWindow
         int index = y * width + x;
         BlockType type = block ? block.id : BlockType.Empty;
         types[index] = type;
+        SetArtifact(x, y, live && block
+            ? map.GetArtifactAt(new Vector3Int(x - width / 2, -y, 0)) : null);
         Color32 color = block ? ColorFor(type) : EmptyColor;
         pixels[(height - 1 - y) * width + x] = color;
         if (texture) texture.SetPixel(x, height - 1 - y, color);
+    }
+
+    void SetArtifact(int x, int y, ArtifactTile artifact)
+    {
+        int index = y * width + x;
+        if (artifact) artifactCells[index] = artifact;
+        else artifactCells.Remove(index);
     }
 
     static Color32 ColorFor(BlockType type)
@@ -323,6 +351,7 @@ public sealed class MapOverviewWindow : EditorWindow
         EditorGUI.DrawRect(new Rect(0, area.y - 2, position.width, position.height - area.y), new Color(0.12f, 0.13f, 0.15f));
         HandleInput(area);
         DrawMap(area);
+        DrawArtifactMarkers(area);
         DrawPlayerMarker(area);
         DrawStatus(area, position.height - 24);
         DrawLegend(new Rect(12, top, legendWidth, area.height));
@@ -350,6 +379,37 @@ public sealed class MapOverviewWindow : EditorWindow
             area.y + (view.yMax - uv.yMax) / view.height * area.height,
             uv.width / view.width * area.width, uv.height / view.height * area.height);
         GUI.DrawTextureWithTexCoords(visible, texture, uv, false);
+    }
+
+    void DrawArtifactMarkers(Rect area)
+    {
+        float cellPixels = Mathf.Min(area.width / width, area.height / height) * zoom;
+        float iconScale = Mathf.Clamp(map.artifactOverviewIconScale, .25f, 8f);
+        float iconSize = Mathf.Clamp(cellPixels * .85f, 5f, 22f) * iconScale;
+        float inset = Mathf.Min(iconScale, iconSize * .16f);
+        foreach (var entry in artifactCells)
+        {
+            var sprite = entry.Value ? entry.Value.sprite : null;
+            if (!sprite || !sprite.texture) continue;
+            int x = entry.Key % width;
+            int y = entry.Key / width;
+            float u = (x + .5f) / width;
+            float v = (height - y - .5f) / height;
+            float sx = area.x + (u - view.x) / view.width * area.width;
+            float sy = area.y + (view.yMax - v) / view.height * area.height;
+            if (!area.Contains(new Vector2(sx, sy))) continue;
+
+            var marker = new Rect(sx - iconSize * .5f, sy - iconSize * .5f, iconSize, iconSize);
+            var textureRect = sprite.textureRect;
+            var uv = new Rect(textureRect.x / sprite.texture.width, textureRect.y / sprite.texture.height,
+                textureRect.width / sprite.texture.width, textureRect.height / sprite.texture.height);
+            float contentSize = marker.width - inset * 2f;
+            float aspect = textureRect.width / Mathf.Max(1f, textureRect.height);
+            float imageWidth = aspect >= 1f ? contentSize : contentSize * aspect;
+            float imageHeight = aspect >= 1f ? contentSize / aspect : contentSize;
+            var image = new Rect(sx - imageWidth * .5f, sy - imageHeight * .5f, imageWidth, imageHeight);
+            GUI.DrawTextureWithTexCoords(image, sprite.texture, uv, true);
+        }
     }
 
     void HandleInput(Rect imageRect)
@@ -411,6 +471,9 @@ public sealed class MapOverviewWindow : EditorWindow
         {
             status = "X " + (x - width / 2) + "  •  Tiefe " + y + "  •  " + types[y * width + x]
                 + "  |  Mausrad: Zoom  •  Klick: Scene";
+            if (artifactCells.TryGetValue(y * width + x, out var artifact) && artifact)
+                status = "X " + (x - width / 2) + "  •  Tiefe " + y + "  •  " + artifact.displayName
+                    + "  |  Mausrad: Zoom  •  Klick: Scene";
         }
         GUI.Label(new Rect(12, statusY, position.width - 24, 20), status, EditorStyles.miniLabel);
     }
@@ -461,6 +524,17 @@ public sealed class MapOverviewWindow : EditorWindow
             EditorGUI.DrawRect(new Rect(x, area.y + 2, 11, 11), i == ids.Length ? Color.cyan : ColorFor(ids[i]));
             GUI.Label(new Rect(x + 15, area.y, 65, 17), names[i], EditorStyles.miniLabel);
             area.y += 18;
+        }
+        var artifact = map && map.artifactSettings != null
+            ? Array.Find(map.artifactSettings, setting => setting != null && setting.tile) : null;
+        if (artifact != null && artifact.tile.sprite)
+        {
+            var sprite = artifact.tile.sprite;
+            var source = sprite.textureRect;
+            var uv = new Rect(source.x / sprite.texture.width, source.y / sprite.texture.height,
+                source.width / sprite.texture.width, source.height / sprite.texture.height);
+            GUI.DrawTextureWithTexCoords(new Rect(x, area.y + 2, 13, 13), sprite.texture, uv, true);
+            GUI.Label(new Rect(x + 15, area.y, 75, 17), "Artefakt", EditorStyles.miniLabel);
         }
     }
 }

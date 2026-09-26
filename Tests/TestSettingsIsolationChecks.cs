@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -15,6 +16,7 @@ public static class TestSettingsIsolationChecks
         var p=UnityEngine.Object.FindFirstObjectByType<GameplayDebugPanel>();
         var w=p.GetComponent<GameplayDebugWindow>();
         var stats=UnityEngine.Object.FindFirstObjectByType<StatsManager>();
+        var miner=UnityEngine.Object.FindFirstObjectByType<TileMiner>();
         if(!GameplayDebugPanel.IsOpen)p.Toggle();
         float basis=GameplaySettings.BaseDiggingSpeed;
         string original=File.Exists(GameplaySettings.FilePath)?File.ReadAllText(GameplaySettings.FilePath):null;
@@ -24,9 +26,13 @@ public static class TestSettingsIsolationChecks
         var input=content.Find("TestMultiplier").GetComponent<TMP_InputField>();
         Check(input.GetComponentsInChildren<UnityEngine.UI.Graphic>(true).Where(g=>g && g!=input.targetGraphic).All(g=>!g.raycastTarget),"Input child intercepts clicks.");
         input.text="10";
-        input.onEndEdit.Invoke(input.text);
+        Check(GameplayTestSettings.SetDiggingMultiplierEnabled(true,out string error),error);
+        Check(w.ApplyTestInput(),"Test factor input could not be applied.");
         Check(GameplayTestSettings.DiggingMultiplier==10 && !GameplayTestSettings.HasUnsavedChanges,"Test save failed.");
-        Check(Mathf.Approximately(stats.MiningSpeed,basis*stats.MiningSpeedMultiplier*10),"Effective speed incorrect.");
+        Check(Mathf.Approximately(stats.MiningSpeed,basis*stats.MiningSpeedMultiplier),"Test factor changed per-hit mining strength.");
+        var baseInterval=(float)typeof(TileMiner).GetMethod("GetBaseMiningHitInterval",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(miner,null);
+        var actualInterval=(float)typeof(TileMiner).GetMethod("GetMiningHitInterval",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(miner,null);
+        Check(Mathf.Abs(actualInterval-baseInterval/10f)<.0001f,"Test factor did not shorten the interval between hits.");
         Check(GameplaySettings.BaseDiggingSpeed==basis,"Test factor changed base speed.");
         Check((File.Exists(GameplaySettings.FilePath)?File.ReadAllText(GameplaySettings.FilePath):null)==original,"Tests overwrote gameplay JSON.");
         var saved=JsonUtility.FromJson<GameplayTestSettingsData>(File.ReadAllText(GameplayTestSettings.FilePath));
@@ -46,7 +52,7 @@ public static class TestSettingsIsolationChecks
         }
         finally { SessionState.SetString("MiningGame.DebugDefaults.Pending",previous); }
         w.SwitchTab(true);
-        return new {passed=true,basis,effective=stats.MiningSpeed,testFactor=GameplayTestSettings.DiggingMultiplier};
+        return new {passed=true,basis,hitStrength=stats.MiningSpeed,baseHitInterval=baseInterval,actualHitInterval=actualInterval,testFactor=GameplayTestSettings.DiggingMultiplier};
     }
     [Serializable] class PendingSpeed { public float speed; }
 }

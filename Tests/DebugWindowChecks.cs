@@ -21,8 +21,10 @@ public static class DebugWindowChecks
         var content=card.Find("WindowViewport/WindowContent");
         window.SwitchTab("Gameplay");
         window.SwitchTab(true);
-        foreach(var name in new[]{"TestActive","TestMultiplier","MovementMultiplier","GodMode","NoEnergy","FlyMode","NoClip","GlobalLighting"})
+        foreach(var name in new[]{"TestActive","TestMultiplier","MovementMultiplier","GodMode","NoEnergy","EnergyDrain10","FlyMode","NoClip","GlobalLighting"})
             Check(content.Find(name) && content.Find(name).gameObject.activeInHierarchy,"Missing test control: "+name);
+        foreach(var name in new[]{"TestLabel/DiggingMultiplierToggle","MovementLabel/MovementMultiplierToggle"})
+            Check(content.Find(name) && content.Find(name).gameObject.activeInHierarchy,"Missing inline factor toggle: "+name);
         Check(!content.Find("MiningHitOffsetInput").gameObject.activeInHierarchy,"Hit offset is still on the test page.");
         window.SwitchTab("Misc");
         Check(content.Find("MiningHitOffsetInput") && content.Find("MiningHitOffsetInput").gameObject.activeInHierarchy,"Hit offset is missing from Misc.");

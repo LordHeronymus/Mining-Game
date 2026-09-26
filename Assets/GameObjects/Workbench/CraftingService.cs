@@ -9,7 +9,7 @@ public static class CraftingService
 
     public static int GetMaxCraftable(CraftingRecipe recipe, InventoryManager inventory)
     {
-        if (!recipe || !inventory || IsOwnedPowerup(recipe, inventory) ||
+        if (!recipe || !inventory || !RecipeUnlocks.IsUnlocked(recipe) || IsOwnedPowerup(recipe, inventory) ||
             !recipe.TryGetCosts(out var costs)) return 0;
         int maximum = (int.MaxValue - inventory.GetCount(recipe.output)) / recipe.outputAmount;
         if (recipe.output.category == ItemCategory.Powerup) maximum = Mathf.Min(maximum, 1);
