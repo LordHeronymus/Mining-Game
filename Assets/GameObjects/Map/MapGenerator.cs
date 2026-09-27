@@ -49,6 +49,7 @@ public class MapGenerator : MonoBehaviour
     [Range(.25f, 8f)] public float artifactOverviewIconScale = 4f;
     [Range(.5f, 10f)] public float artifactDiscoveryDurationSeconds = 3f;
     [Range(0, 60)] public int artifactDiscoveryShardCount = 16;
+    [Range(.25f, 2f)] public float artifactDiscoveryShardDistance = 1f;
     [Range(2f, 40f)] public float artifactDiscoveryShardSizeMin = 8f;
     [Range(2f, 40f)] public float artifactDiscoveryShardSizeMax = 17f;
     [Range(-300f, 300f)] public float artifactDiscoveryArtifactYOffset;

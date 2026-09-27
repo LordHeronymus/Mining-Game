@@ -112,9 +112,11 @@ public sealed class ArtifactDiscoveryView : MonoBehaviour
             previousTimeScale = Time.timeScale;
             Time.timeScale = 0f;
             GameplayInputBlocker.SetBlocked(this, true);
+            ItemFeed.Instance?.SetAboveArtifactDiscovery(true);
         }
         IsShowing = true;
         var map = FindFirstObjectByType<MapGenerator>();
+        particles.shardDistance = map ? Mathf.Clamp(map.artifactDiscoveryShardDistance, .25f, 2f) : 1f;
         DurationSeconds = map ? Mathf.Clamp(map.artifactDiscoveryDurationSeconds, .5f, 10f) : DefaultDurationSeconds;
         artifactYOffset = map ? Mathf.Clamp(map.artifactDiscoveryArtifactYOffset, -300f, 300f) : 0f;
         iconRotationFrequency = map ? Mathf.Clamp(map.artifactDiscoveryIconRotationFrequency, 0f, 2f) : .35f;
@@ -135,6 +137,7 @@ public sealed class ArtifactDiscoveryView : MonoBehaviour
         Texture tex = CurrentArtifact.sprite.texture;
         iconMaterial.SetVector("_SpriteRect", new Vector4(uv.x / tex.width, uv.y / tex.height, uv.width / tex.width, uv.height / tex.height));
         particles.theme = theme;
+        particles.secondaryTheme = CurrentArtifact.SecondaryThemeColor;
         SetVisible(true);
         SetPresentationTime(0f);
     }
@@ -208,6 +211,7 @@ public sealed class ArtifactDiscoveryView : MonoBehaviour
         auraMaterial.SetFloat("_RevealTime", seconds);
         iconMaterial.SetFloat("_RevealTime", seconds);
         particles.SetTime(seconds);
+        particles.shardCenter = icon.rectTransform.anchoredPosition;
     }
 
     void SetVisible(bool visible)
@@ -225,6 +229,7 @@ public sealed class ArtifactDiscoveryView : MonoBehaviour
         IsShowing = false;
         CurrentArtifact = null;
         GameplayInputBlocker.SetBlocked(this, false);
+        ItemFeed.Instance?.SetAboveArtifactDiscovery(false);
         SetVisible(false);
     }
 

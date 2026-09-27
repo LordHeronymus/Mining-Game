@@ -1503,6 +1503,9 @@ public class GameplaySettingsWindow : EditorWindow
             iconAngle.floatValue = EditorGUILayout.Slider("Artefakt-Drehwinkel (°)", iconAngle.floatValue, 0f, 15f);
             var shardCount = data.FindProperty("artifactDiscoveryShardCount");
             shardCount.intValue = EditorGUILayout.IntSlider("Splitter-Anzahl", shardCount.intValue, 0, 60);
+            var shardDistance = data.FindProperty("artifactDiscoveryShardDistance");
+            shardDistance.floatValue = EditorGUILayout.Slider("Splitter-Abstand (%)",
+                shardDistance.floatValue * 100f, 25f, 200f) / 100f;
             var shardSizeMin = data.FindProperty("artifactDiscoveryShardSizeMin");
             var shardSizeMax = data.FindProperty("artifactDiscoveryShardSizeMax");
             shardSizeMin.floatValue = EditorGUILayout.Slider("Splittergröße min.", shardSizeMin.floatValue, 2f, 40f);

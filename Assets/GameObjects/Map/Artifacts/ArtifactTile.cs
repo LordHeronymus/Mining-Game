@@ -8,6 +8,9 @@ public sealed class ArtifactTile : Tile
 {
     public string displayName;
     public Color themeColor;
+    public Color secondaryThemeColor;
+    public Color SecondaryThemeColor => secondaryThemeColor.a > 0f
+        ? secondaryThemeColor : new Color32(255, 190, 72, 255);
     [SerializeField, HideInInspector] float discoveryIconYOffset;
 
     public float DiscoveryIconYOffset

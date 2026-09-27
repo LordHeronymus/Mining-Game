@@ -58,9 +58,13 @@ public sealed class ItemFeed : MonoBehaviour
     Coroutine binding;
     Coroutine startupSoundDelay;
     bool collectionSoundReady;
+    Canvas feedCanvas;
 
     void OnEnable()
     {
+        if (!moneyIcon) moneyIcon = LoadSprite("GameOverCoin", "Gold Coin_0");
+        var sunIcon = LoadSprite("ArtifactPointMedallions", "ArtifactPoint_Sun");
+        if (sunIcon) artifactPointsIcon = sunIcon;
         Instance = this;
         collectBling = Resources.Load<AudioClip>("Audio/Ding4");
         collectionSoundReady = false;
@@ -73,6 +77,10 @@ public sealed class ItemFeed : MonoBehaviour
             transform.SetParent(canvas.rootCanvas.transform, false);
             transform.SetAsLastSibling();
         }
+        feedCanvas = gameObject.GetComponent<Canvas>();
+        if (!feedCanvas) feedCanvas = gameObject.AddComponent<Canvas>();
+        feedCanvas.overrideSorting = false;
+        feedCanvas.sortingOrder = 30001;
         binding = StartCoroutine(BindInventory());
     }
 
@@ -87,6 +95,14 @@ public sealed class ItemFeed : MonoBehaviour
         pending.Clear();
         if (inventory) inventory.OnItemGained -= Show;
         inventory = null;
+        if (feedCanvas) feedCanvas.overrideSorting = false;
+    }
+
+    public void SetAboveArtifactDiscovery(bool visible)
+    {
+        if (!feedCanvas) return;
+        feedCanvas.overrideSorting = visible;
+        if (visible) feedCanvas.sortingOrder = 30001;
     }
 
     IEnumerator EnableCollectionSoundAfterStartup()
@@ -139,17 +155,13 @@ public sealed class ItemFeed : MonoBehaviour
     void DisplayItem(ItemSO item, int amount)
     {
         float now = Time.unscaledTime;
-        if (collectionSoundReady && collectBling && AudioManager.Instance)
-            AudioManager.Instance.PlayClipWithOffset(collectBling,
-                .6f * AudioManager.Instance.GetVolume(AudioVolumeSetting.DingLight), 0f,
-                AudioManager.Instance.GetTimeOffset(AudioTimeOffsetSetting.DingLight),
-                Random.Range(.93f, 1.07f));
+        PlayCollectionBling();
         var entry = entries.Find(row => row.item == item);
         if (entry != null)
         {
             entry.amount += amount;
             entry.born = now;
-            entry.hopStartLift = Mathf.Max(0f, entry.iconRect.anchoredPosition.y + 4f);
+            entry.hopStartLift = Mathf.Max(0f, entry.iconRect.anchoredPosition.y - IconBaseY(entry));
             entry.hopBorn = now;
             SetContent(entry);
             return;
@@ -167,15 +179,25 @@ public sealed class ItemFeed : MonoBehaviour
         }
     }
 
+    void PlayCollectionBling()
+    {
+        if (collectionSoundReady && collectBling && AudioManager.Instance)
+            AudioManager.Instance.PlayClipWithOffset(collectBling,
+                .6f * AudioManager.Instance.GetVolume(AudioVolumeSetting.DingLight), 0f,
+                AudioManager.Instance.GetTimeOffset(AudioTimeOffsetSetting.DingLight),
+                Random.Range(.93f, 1.07f));
+    }
+
     void DisplayCounter(int amount, bool money)
     {
         float now = Time.unscaledTime;
+        if (!money) PlayCollectionBling();
         var entry = entries.Find(row => row.money == money && row.artifactPoints == !money);
         if (entry != null)
         {
             entry.amount += amount;
             entry.born = now;
-            entry.hopStartLift = Mathf.Max(0f, entry.iconRect.anchoredPosition.y + 4f);
+            entry.hopStartLift = Mathf.Max(0f, entry.iconRect.anchoredPosition.y - IconBaseY(entry));
             entry.hopBorn = now;
             SetContent(entry);
             return;
@@ -212,9 +234,10 @@ public sealed class ItemFeed : MonoBehaviour
         backdrop.SetOpacity(backdropOpacity);
         backdrop.raycastTarget = false;
 
-        var iconRect = MakeRect("Icon", rect, 0f, 4f, 40f, 40f);
+        var iconRect = MakeRect("Icon", rect, 0f, artifactPoints ? 0f : 4f, 40f, 40f);
         var icon = iconRect.gameObject.AddComponent<Image>();
         icon.sprite = money ? moneyIcon : artifactPoints ? artifactPointsIcon : item.icon;
+        icon.enabled = icon.sprite != null;
         icon.preserveAspect = true;
         icon.raycastTarget = false;
         var iconOutline = iconRect.gameObject.AddComponent<Outline>();
@@ -285,7 +308,7 @@ public sealed class ItemFeed : MonoBehaviour
             float hopProgress = Mathf.Clamp01((now - entry.hopBorn) / IconHopDuration);
             float lift = Mathf.Lerp(entry.hopStartLift, 0f, hopProgress)
                 + Mathf.Sin(hopProgress * Mathf.PI) * IconHopHeight;
-            entry.iconRect.anchoredPosition = new Vector2(0f, -4f + lift);
+            entry.iconRect.anchoredPosition = new Vector2(0f, IconBaseY(entry) + lift);
             entry.accent.ConfigureSparks(sparkCount, sparkIntensity, sparkRiseHeight, sparkBrightness, lineBrightness);
             entry.accent.SetAge(now - entry.effectBorn);
             Vector2 target = new Vector2(0f, 84f - i * 56f);
@@ -296,6 +319,15 @@ public sealed class ItemFeed : MonoBehaviour
 
     static string Name(ItemSO item) => !item ? string.Empty : string.IsNullOrWhiteSpace(item.displayName)
         ? item.name : item.displayName;
+
+    static float IconBaseY(Entry entry) => entry.artifactPoints ? 0f : -4f;
+
+    static Sprite LoadSprite(string path, string spriteName)
+    {
+        foreach (var sprite in Resources.LoadAll<Sprite>(path))
+            if (sprite && sprite.name == spriteName) return sprite;
+        return null;
+    }
 
     static RectTransform MakeRect(string name, Transform parent, float x, float y, float width, float height)
     {

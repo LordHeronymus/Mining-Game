@@ -7,7 +7,10 @@ public sealed class ArtifactDiscoveryGraphic : MaskableGraphic
     public enum Kind { Frame, Particles }
     public Kind kind;
     public Color theme;
+    public Color secondaryTheme = new Color32(255, 190, 72, 255);
     public int shardCount = 16;
+    public float shardDistance = 1f;
+    public Vector2 shardCenter;
     public float shardSizeMin = 8f;
     public float shardSizeMax = 17f;
     public float shardRotationFrequency = .6f;
@@ -59,6 +62,8 @@ public sealed class ArtifactDiscoveryGraphic : MaskableGraphic
             }
         }
 
+        DrawRoundSparks(mesh);
+
         for (int i = 0; i < shardCount; i++)
         {
             Vector2 origin;
@@ -74,6 +79,7 @@ public sealed class ArtifactDiscoveryGraphic : MaskableGraphic
                         (540f + Hash(i, 8) * 150f);
             }
             Vector2 p = origin + new Vector2(Mathf.Sin(age + i) * 5, Mathf.Sin(age * .8f + i * 2) * 8);
+            p = shardCenter + (p - shardCenter) * Mathf.Clamp(shardDistance, .25f, 2f);
             float size = Mathf.Lerp(shardSizeMin, shardSizeMax, Hash(i, 7));
             Glow(mesh, p, size * 2, theme, .07f);
             Vector2 top = p + new Vector2(-size * .2f, size * 1.3f), bottom = p + new Vector2(size * .27f, -size);
@@ -93,6 +99,30 @@ public sealed class ArtifactDiscoveryGraphic : MaskableGraphic
     }
 
     static float Hash(int i, int channel) => Mathf.Repeat(Mathf.Sin(i * 71.71f + channel * 113.13f + 1) * 43758.5453f, 1);
+
+    void DrawRoundSparks(VertexHelper mesh)
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            float interval = Mathf.Lerp(1.8f, 3.4f, Hash(i, 20));
+            float clock = age + Hash(i, 21) * interval;
+            int cycle = Mathf.FloorToInt(clock / interval);
+            float elapsed = clock - cycle * interval;
+            float lifetime = Mathf.Lerp(.65f, 1.15f, Hash(i, 22));
+            if (elapsed >= lifetime) continue;
+            float brightness = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / .1f)) *
+                (1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((elapsed - .1f) / (lifetime - .1f))));
+            int seed = i + cycle * 37;
+            float angle = Hash(seed, 23) * Mathf.PI * 2f;
+            float radius = Mathf.Lerp(320f, 570f, Hash(seed, 24));
+            Vector2 position = shardCenter + new Vector2(Mathf.Cos(angle) * radius,
+                Mathf.Sin(angle) * radius * .7f + elapsed * 12f);
+            float size = Mathf.Lerp(2.5f, 4.5f, Hash(seed, 25));
+            Glow(mesh, position, size * 8f, secondaryTheme, brightness * .2f);
+            Glow(mesh, position, size * 3f, secondaryTheme, brightness * .7f);
+            Glow(mesh, position, size, Color.Lerp(secondaryTheme, Color.white, .8f), brightness);
+        }
+    }
 
     static Vector2 RotateAround(Vector2 point, Vector2 center, float cosine, float sine)
     {
