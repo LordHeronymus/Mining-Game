@@ -15,7 +15,11 @@ public static class GameplayInputBlocker
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetSession() => OpenPanels.Clear();
+    private static void ResetSession()
+    {
+        OpenPanels.Clear();
+        Time.timeScale = 1f;
+    }
 
     public static void SetBlocked(MonoBehaviour panel, bool blocked)
     {

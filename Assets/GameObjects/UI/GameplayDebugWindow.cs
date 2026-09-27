@@ -7,27 +7,42 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 // Runtime debug controls are assembled from the existing canvas styles.
-public sealed class GameplayDebugWindow : MonoBehaviour
+public sealed partial class GameplayDebugWindow : MonoBehaviour
 {
-    enum DebugTab { Gameplay, Tests, Misc, StartingResources, Items, World, Audio, Icons, Recipes }
+    enum DebugTab { Gameplay, Items, Powerups, Recipes, Icons, World, Audio, Tests, Misc }
 
     RectTransform window, bounds, content, tooltip;
     TextMeshProUGUI tooltipLabel;
     ScrollRect scroll;
     readonly Dictionary<string, RectTransform> items = new Dictionary<string, RectTransform>();
+    readonly Dictionary<string, (string itemName, string title)> gameplaySectionHeaders =
+        new Dictionary<string, (string, string)>();
     Vector2 lastSize, lastBounds, startPointer, startPosition, startSize;
     Vector2 resizeDirection;
     readonly List<string> gameplayItems = new List<string>();
+    readonly List<string> gameplayCoreItems = new List<string>();
+    readonly List<string> worldLightingItems = new List<string>();
+    readonly List<string> torchSettingsItems = new List<string>();
     readonly List<string> testItems = new List<string>();
+    readonly List<string> testModeItems = new List<string>();
+    readonly List<string> healthTestItems = new List<string>();
+    readonly List<string> overlayTestItems = new List<string>();
+    readonly List<string> artifactAnimationItems = new List<string>();
     readonly List<ArtifactTile> artifactAnimationArtifacts = new List<ArtifactTile>();
     readonly Dictionary<ArtifactTile, TMP_InputField> artifactYOffsetInputs = new Dictionary<ArtifactTile, TMP_InputField>();
+    TMP_InputField artifactLeftColumnYOffsetInput, artifactRightColumnYOffsetInput;
+    float artifactLeftColumnYOffset, artifactRightColumnYOffset;
+    const string ArtifactLeftColumnYOffsetKey = "GameplayDebugPanel.ArtifactLeftColumnYOffset";
+    const string ArtifactRightColumnYOffsetKey = "GameplayDebugPanel.ArtifactRightColumnYOffset";
     readonly List<string> miscItems = new List<string>();
     readonly List<string> giftingItems = new List<string>();
+    readonly List<string> powerupItems = new List<string>();
     readonly List<string> worldItems = new List<string>();
     readonly List<string> audioItems = new List<string>();
     readonly List<string> iconItems = new List<string>();
     readonly List<string> recipeItems = new List<string>();
     readonly List<string> startingResourceItems = new List<string>();
+    readonly HashSet<string> expandedSections = new HashSet<string>();
     readonly List<string> layerStoneAudioItems = new List<string>();
     readonly List<LayerStoneAudioControl> layerStoneAudioControls = new List<LayerStoneAudioControl>();
     readonly Dictionary<int, string> layerStoneAudioLayerHeaders = new Dictionary<int, string>();
@@ -40,12 +55,30 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     Toggle movementMultiplierToggle;
     TMP_InputField healthInput;
     TMP_InputField miningHitOffsetInput;
+    TMP_InputField panelBackdropAlphaInput;
+    TMP_InputField panelElementAlphaInput;
+    const string PanelBackdropAlphaKey = "GameplayDebugPanel.BackdropAlpha";
+    const string PanelElementAlphaKey = "GameplayDebugPanel.ElementAlpha";
+    const float DefaultPanelBackdropAlpha = .55f;
+    float panelElementAlpha = 1f;
+    readonly List<Graphic> panelGraphics = new List<Graphic>();
+    TMP_InputField torchFlameOffsetXInput, torchFlameOffsetYInput;
+    TMP_InputField torchFlameSizeInput, torchFlameFrequencyInput, torchBrightnessInput;
+    TextMeshProUGUI torchSettingsStatus;
     MinerPlayerVisual minerVisual;
     bool miningHitOffsetListenerBound;
+    bool torchSettingsListenersBound;
     TMP_InputField giftAmount;
     ItemSO[] giftItems = System.Array.Empty<ItemSO>();
+    TMP_Dropdown weightItemDropdown;
+    readonly List<ItemSO> weightChoices = new List<ItemSO>();
+    TMP_InputField weightInput;
+    TextMeshProUGUI weightStatus;
     readonly List<(string header, List<string> cards)> giftSections = new List<(string, List<string>)>();
     readonly Dictionary<ItemSO, Button> giftCards = new Dictionary<ItemSO, Button>();
+    readonly List<(string header, List<string> cards)> powerupSections = new List<(string, List<string>)>();
+    readonly Dictionary<ItemSO, (Button button, Image background, TextMeshProUGUI status)> powerupCards =
+        new Dictionary<ItemSO, (Button, Image, TextMeshProUGUI)>();
     readonly Image[] giftPresetBackgrounds = new Image[4];
     static readonly int[] GiftPresets = { 1, 10, 64, 999 };
     static string lastGiftAmount = "10";
@@ -103,11 +136,13 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     readonly List<StartingResourceEditorRow> startingResourceRowsData = new List<StartingResourceEditorRow>();
     int nextStartingResourceRowId;
     DebugTab currentTab;
+    public bool IsGameplayTab => currentTab == DebugTab.Gameplay;
+    public bool IsWorldTab => currentTab == DebugTab.World;
     public bool IsTestTab => currentTab == DebugTab.Tests;
     public bool IsMiscTab => currentTab == DebugTab.Misc;
     public bool IsIconTab => currentTab == DebugTab.Icons;
     public bool IsRecipeTab => currentTab == DebugTab.Recipes;
-    public bool IsStartingResourcesTab => currentTab == DebugTab.StartingResources;
+    public bool IsItemsTab => currentTab == DebugTab.Items;
 
     sealed class RecipeIngredientEditorRow
     {
@@ -139,10 +174,16 @@ public sealed class GameplayDebugWindow : MonoBehaviour
 
     void Awake()
     {
+        panelElementAlpha = Mathf.Clamp01(PlayerPrefs.GetFloat(PanelElementAlphaKey, 1f));
         window = (RectTransform)transform.Find("Card");
         bounds = (RectTransform)transform;
         var backdrop = GetComponent<Image>();
-        if (backdrop) { backdrop.color = new Color(0f, 0f, 0f, .72f); backdrop.raycastTarget = true; }
+        if (backdrop)
+        {
+            float alpha = Mathf.Clamp01(PlayerPrefs.GetFloat(PanelBackdropAlphaKey, DefaultPanelBackdropAlpha));
+            backdrop.color = new Color(0f, 0f, 0f, alpha);
+            backdrop.raycastTarget = true;
+        }
         window.anchorMin = Vector2.zero; window.anchorMax = Vector2.one;
         window.offsetMin = window.offsetMax = Vector2.zero;
         window.pivot = new Vector2(.5f, .5f);
@@ -151,7 +192,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
 
         var viewport = MakeRect("WindowViewport", window);
         viewport.anchorMin = Vector2.zero; viewport.anchorMax = Vector2.one;
-        viewport.offsetMin = new Vector2(310, 34); viewport.offsetMax = new Vector2(-38, -104);
+        viewport.offsetMin = new Vector2(28, 34); viewport.offsetMax = new Vector2(-28, -120);
         viewport.gameObject.AddComponent<RectMask2D>();
         var background = viewport.gameObject.AddComponent<Image>(); background.color = Color.clear;
         content = MakeRect("WindowContent", viewport);
@@ -168,7 +209,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         var track = MakeRect("WindowScrollbar", window);
         track.anchorMin = new Vector2(1,0); track.anchorMax = Vector2.one;
         track.pivot = new Vector2(1,.5f);
-        track.offsetMin = new Vector2(-24,38); track.offsetMax = new Vector2(-16,-108);
+        track.offsetMin = new Vector2(-22,38); track.offsetMax = new Vector2(-14,-124);
         var trackImage = track.gameObject.AddComponent<Image>(); trackImage.color = new Color(.12f,.16f,.21f);
         var thumb = MakeRect("Thumb", track);
         thumb.anchorMin = Vector2.zero; thumb.anchorMax = Vector2.one; thumb.sizeDelta = Vector2.zero;
@@ -178,27 +219,32 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         scroll.verticalScrollbar = bar;
         scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
         items["Title"].GetComponent<TextMeshProUGUI>().raycastTarget = false;
-        items["Title"].GetComponent<TextMeshProUGUI>().text = "DEBUG PANEL";
+        items["Title"].GetComponent<TextMeshProUGUI>().text = "DEBUG SETTINGS";
         items["Close"].SetAsLastSibling();
         var sidebar = MakeRect("SidebarBackground", window);
         sidebar.anchorMin = Vector2.zero; sidebar.anchorMax = new Vector2(0, 1);
         sidebar.pivot = new Vector2(0, .5f); sidebar.sizeDelta = new Vector2(282, 0);
         sidebar.gameObject.AddComponent<Image>().color = new Color(.035f, .055f, .08f, .82f);
         sidebar.SetAsFirstSibling();
+        sidebar.gameObject.SetActive(false);
         var divider = MakeRect("SidebarDivider", window);
         divider.anchorMin = new Vector2(0, 0); divider.anchorMax = new Vector2(0, 1);
         divider.pivot = new Vector2(0, .5f); divider.anchoredPosition = new Vector2(282, 0);
         divider.sizeDelta = new Vector2(2, 0);
         divider.gameObject.AddComponent<Image>().color = new Color(.35f, .41f, .5f, .55f);
+        divider.gameObject.SetActive(false);
         CreateTooltip();
         AttachTooltip("MakeDefaults", "Übernimmt beide Sektionen nach dem Play-Stopp dauerhaft in die Gameplay Settings.");
         CreateLightingInfo();
         CreateItemGifting();
+        CreatePowerupEditor();
+        CreateItemWeightEditor();
         CreateStartingResourcesEditor();
         CreateIconEditor();
         CreateRecipeEditor();
         CreateAudioSettings();
         CreateLayer1DetailSettings();
+        CreateAudioBrowserShell();
         foreach (var entry in items) if (entry.Value.parent == content) gameplayItems.Add(entry.Key);
         CreateTabs();
         SetTab(false);
@@ -211,7 +257,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             .OrderBy(item => item.category == ItemCategory.Ore ? 0 : 1)
             .ThenBy(item => item.displayName, System.StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
-        CloneItem("Section", "StartingResourcesSection", content, "SPIELSTART");
+        CloneItem("Section", "StartSection", content, "Start");
         CloneItem("SpeedLabel", "StartingMoneyLabel", content, "Startgeld");
         startingMoneyInput = CloneItem("DiggingSpeed", "StartingMoneyInput", content).GetComponent<TMP_InputField>();
         startingMoneyInput.onValueChanged = new TMP_InputField.OnChangeEvent();
@@ -226,7 +272,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         startingResourceAdd.onClick = new Button.ButtonClickedEvent();
         startingResourceAdd.onClick.AddListener(AddStartingResourceRow);
         startingResourceStatus = CloneItem("Status", "StartingResourceStatus", content, "").GetComponent<TextMeshProUGUI>();
-        startingResourceItems.AddRange(new[] { "StartingResourcesSection", "StartingMoneyLabel", "StartingMoneyInput",
+        startingResourceItems.AddRange(new[] { "StartingMoneyLabel", "StartingMoneyInput",
             "StartingResourceRows", "StartingResourceAdd", "StartingResourceStatus" });
 
         var data = StartingResourcesSettings.Load();
@@ -372,9 +418,171 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         foreach (var category in preferred)
             AddGiftSection(GiftCategoryLabel(category), category);
         foreach (ItemCategory category in System.Enum.GetValues(typeof(ItemCategory)))
-            if (System.Array.IndexOf(preferred, category) < 0)
+            if (category != ItemCategory.Powerup && System.Array.IndexOf(preferred, category) < 0)
                 AddGiftSection(GiftCategoryLabel(category), category);
         RefreshGifting();
+    }
+
+    void CreatePowerupEditor()
+    {
+        AddPowerupSection("Spitzhacken", giftItems.Where(item =>
+            item.item >= Item.CopperPickaxe && item.item <= Item.DiamondPickaxe)
+            .OrderBy(item => (int)item.item).ToArray());
+        AddPowerupSection("Werkzeuge", giftItems.Where(item =>
+            item.item == Item.Axe || item.item == Item.Scythe)
+            .OrderBy(item => item.item == Item.Axe ? 0 : 1).ToArray());
+        RefreshPowerups();
+    }
+
+    void AddPowerupSection(string label, ItemSO[] matching)
+    {
+        if (matching.Length == 0) return;
+        string headerName = "PowerupSection" + powerupSections.Count;
+        CloneItem("Section", headerName, content, label.ToUpperInvariant());
+        var cards = new List<string>();
+        foreach (var item in matching)
+        {
+            string name = "PowerupCard" + (int)item.item;
+            var rect = MakeRect(name, content);
+            items[name] = rect;
+            cards.Add(name);
+            var background = rect.gameObject.AddComponent<Image>();
+            background.color = new Color(.12f, .17f, .23f, .92f);
+            var button = rect.gameObject.AddComponent<Button>();
+            button.targetGraphic = background;
+            button.onClick.AddListener(() => EquipPowerup(item));
+
+            var iconRect = MakeRect("Icon", rect);
+            iconRect.anchorMin = iconRect.anchorMax = new Vector2(0, .5f);
+            iconRect.pivot = new Vector2(0, .5f);
+            iconRect.anchoredPosition = new Vector2(12, 0);
+            iconRect.sizeDelta = new Vector2(52, 52);
+            var icon = iconRect.gameObject.AddComponent<Image>();
+            icon.sprite = item.icon;
+            icon.enabled = item.icon;
+            icon.preserveAspect = true;
+            icon.raycastTarget = false;
+
+            var labelRect = MakeRect("Label", rect);
+            labelRect.anchorMin = Vector2.zero; labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(72, 26);
+            labelRect.offsetMax = new Vector2(-8, -4);
+            var title = labelRect.gameObject.AddComponent<TextMeshProUGUI>();
+            title.font = items["Title"].GetComponent<TextMeshProUGUI>().font;
+            title.fontSize = 21;
+            title.color = Color.white;
+            title.text = string.IsNullOrWhiteSpace(item.displayName) ? item.name : item.displayName;
+            title.alignment = TextAlignmentOptions.MidlineLeft;
+            title.raycastTarget = false;
+
+            var statusRect = MakeRect("Status", rect);
+            statusRect.anchorMin = Vector2.zero; statusRect.anchorMax = Vector2.one;
+            statusRect.offsetMin = new Vector2(72, 4);
+            statusRect.offsetMax = new Vector2(-8, -48);
+            var status = statusRect.gameObject.AddComponent<TextMeshProUGUI>();
+            status.font = title.font;
+            status.fontSize = 16;
+            status.alignment = TextAlignmentOptions.MidlineLeft;
+            status.raycastTarget = false;
+            powerupCards[item] = (button, background, status);
+        }
+        powerupSections.Add((headerName, cards));
+    }
+
+    void EquipPowerup(ItemSO item)
+    {
+        var inventory = InventoryManager.Instance;
+        if (!inventory || !item) return;
+        if (!inventory.IsPowerupUnlocked(item)) inventory.Add(item);
+        RefreshPowerups();
+    }
+
+    void RefreshPowerups()
+    {
+        var inventory = InventoryManager.Instance;
+        foreach (var entry in powerupCards)
+        {
+            var item = entry.Key;
+            bool unlocked = inventory && inventory.IsPowerupUnlocked(item);
+            bool equipped = inventory && item.item >= Item.CopperPickaxe && item.item <= Item.DiamondPickaxe &&
+                inventory.EquippedPickaxe == item;
+            entry.Value.button.interactable = inventory && !unlocked;
+            entry.Value.background.color = equipped ? new Color(.28f, .2f, .09f, .98f)
+                : new Color(.12f, .17f, .23f, .92f);
+            entry.Value.status.text = equipped ? "Ausgerüstet" : unlocked ? "Freigeschaltet" : "Freischalten";
+            entry.Value.status.color = equipped ? new Color(1f, .78f, .38f) : new Color(.75f, .82f, .88f);
+        }
+    }
+
+    void CreateItemWeightEditor()
+    {
+        CloneItem("Section", "ItemWeightSection", content, "ITEMGEWICHT");
+        weightItemDropdown = CreateStyledDropdown("ItemWeightDropdown");
+        weightItemDropdown.ClearOptions();
+        var options = new List<TMP_Dropdown.OptionData>();
+        foreach (var category in new[] { ItemCategory.Ore, ItemCategory.Misc, ItemCategory.Tool,
+                     ItemCategory.Consumable, ItemCategory.Powerup })
+        {
+            var group = giftItems.Where(item => item.category == category && !item.HasFixedZeroWeight)
+                .OrderBy(item => item.displayName, System.StringComparer.CurrentCultureIgnoreCase).ToArray();
+            if (group.Length == 0) continue;
+            options.Add(new TMP_Dropdown.OptionData("── " + GiftCategoryLabel(category).ToUpperInvariant() + " ──"));
+            weightChoices.Add(null);
+            foreach (var item in group)
+            {
+                options.Add(new TMP_Dropdown.OptionData(item.displayName));
+                weightChoices.Add(item);
+            }
+        }
+        weightItemDropdown.AddOptions(options);
+        weightItemDropdown.interactable = weightChoices.Count > 0;
+        if (weightChoices.Count > 1) weightItemDropdown.SetValueWithoutNotify(1);
+        weightItemDropdown.onValueChanged = new TMP_Dropdown.DropdownEvent();
+        weightItemDropdown.onValueChanged.AddListener(_ => RefreshItemWeight());
+        CloneItem("SpeedLabel", "ItemWeightLabel", content, "Gewicht pro Stück");
+        weightInput = CloneItem("DiggingSpeed", "ItemWeightInput", content).GetComponent<TMP_InputField>();
+        weightInput.onValueChanged = new TMP_InputField.OnChangeEvent();
+        weightInput.onEndEdit = new TMP_InputField.SubmitEvent();
+        weightInput.contentType = TMP_InputField.ContentType.DecimalNumber;
+        DisableInputChildRaycasts(weightInput);
+        weightInput.onEndEdit.AddListener(_ => CommitItemWeight());
+        weightStatus = CloneItem("Status", "ItemWeightStatus", content, "").GetComponent<TextMeshProUGUI>();
+        RefreshItemWeight();
+    }
+
+    void RefreshItemWeight()
+    {
+        var item = SelectedWeightItem;
+        weightInput.interactable = item;
+        weightInput.SetTextWithoutNotify(item ? item.weight.ToString("R", CultureInfo.InvariantCulture) : "");
+        weightStatus.text = "";
+    }
+
+    ItemSO SelectedWeightItem => weightChoices.Count > 0
+        ? weightChoices[Mathf.Clamp(weightItemDropdown.value, 0, weightChoices.Count - 1)] : null;
+
+    public bool CommitItemWeight()
+    {
+        var item = SelectedWeightItem;
+        if (!item) return true;
+        if (!float.TryParse(weightInput.text.Replace(',', '.'), NumberStyles.Float,
+                CultureInfo.InvariantCulture, out float value) || float.IsNaN(value) ||
+            float.IsInfinity(value) || value < 0f)
+        {
+            weightStatus.text = "Gewicht muss mindestens 0 sein.";
+            return false;
+        }
+        if (!Mathf.Approximately(item.weight, value))
+        {
+            item.weight = value;
+            InventoryManager.Instance?.NotifyWeightChanged();
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(item);
+            UnityEditor.AssetDatabase.SaveAssets();
+#endif
+        }
+        weightStatus.text = "";
+        return true;
     }
 
     static string GiftCategoryLabel(ItemCategory category)
@@ -516,7 +724,6 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             offsetInput.onEndEdit.AddListener(_ => ApplyConcreteAudioOffset(offsetIndex));
             concreteAudioOffsetInputs[i] = offsetInput;
         }
-        CreateLayerStoneAudioControls();
         RefreshAudioSettings();
     }
 
@@ -801,6 +1008,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     {
         RefreshAudioSettings();
         RefreshDetailSettings();
+        RefreshAudioBrowserRows();
     }
 
     void CreateLayer1DetailSettings()
@@ -883,8 +1091,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         amount = 0;
         var inventory = InventoryManager.Instance;
         return inventory && item &&
-            int.TryParse(giftAmount.text, out amount) && amount > 0 &&
-            inventory.GetCount(item) <= int.MaxValue - amount;
+            int.TryParse(giftAmount.text, out amount) && inventory.CanAdd(item, amount);
     }
 
     void GiveItem(ItemSO item)
@@ -1331,28 +1538,59 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     void CreateTabs()
     {
         CreateTab("GameplayTab", "Gameplay", DebugTab.Gameplay);
-        CreateTab("TestsTab", "Testeinstellungen", DebugTab.Tests);
-        CreateTab("MiscTab", "Misc", DebugTab.Misc);
-        CreateTab("StartingResourcesTab", "Spielstart", DebugTab.StartingResources);
         CreateTab("ItemsTab", "Items", DebugTab.Items);
+        CreateTab("PowerupsTab", "Powerups", DebugTab.Powerups);
+        CreateTab("RecipesTab", "Rezepte", DebugTab.Recipes);
+        CreateTab("IconsTab", "Icons", DebugTab.Icons);
         CreateTab("WorldTab", "Welt", DebugTab.World);
         CreateTab("AudioTab", "Audio", DebugTab.Audio);
-        CreateTab("IconsTab", "Icons", DebugTab.Icons);
-        CreateTab("RecipesTab", "Rezepte", DebugTab.Recipes);
+        CreateTab("TestsTab", "Test", DebugTab.Tests);
+        CreateTab("MiscTab", "Misc", DebugTab.Misc);
 
-        MoveToTab(startingResourceItems, "StartingResourcesSection", "StartingMoneyLabel", "StartingMoneyInput",
-            "StartingResourceRows", "StartingResourceAdd", "StartingResourceStatus");
+        CloneItem("SpeedLabel", "PanelBackdropAlphaLabel", content, "Hintergrund-Alpha (0–1)");
+        panelBackdropAlphaInput = CloneItem("DiggingSpeed", "PanelBackdropAlphaInput", content)
+            .GetComponent<TMP_InputField>();
+        panelBackdropAlphaInput.onValueChanged = new TMP_InputField.OnChangeEvent();
+        panelBackdropAlphaInput.onEndEdit = new TMP_InputField.SubmitEvent();
+        panelBackdropAlphaInput.contentType = TMP_InputField.ContentType.DecimalNumber;
+        DisableInputChildRaycasts(panelBackdropAlphaInput);
+        panelBackdropAlphaInput.SetTextWithoutNotify(
+            Mathf.Clamp01(PlayerPrefs.GetFloat(PanelBackdropAlphaKey, DefaultPanelBackdropAlpha))
+                .ToString("0.###", CultureInfo.InvariantCulture));
+        panelBackdropAlphaInput.onValueChanged.AddListener(_ => ApplyPanelBackdropAlpha(false));
+        panelBackdropAlphaInput.onEndEdit.AddListener(_ => ApplyPanelBackdropAlpha(true));
+
+        CloneItem("SpeedLabel", "PanelElementAlphaLabel", content, "Elemente-Alpha (0–1)");
+        panelElementAlphaInput = CloneItem("DiggingSpeed", "PanelElementAlphaInput", content)
+            .GetComponent<TMP_InputField>();
+        panelElementAlphaInput.onValueChanged = new TMP_InputField.OnChangeEvent();
+        panelElementAlphaInput.onEndEdit = new TMP_InputField.SubmitEvent();
+        panelElementAlphaInput.contentType = TMP_InputField.ContentType.DecimalNumber;
+        DisableInputChildRaycasts(panelElementAlphaInput);
+        panelElementAlphaInput.SetTextWithoutNotify(panelElementAlpha.ToString("0.###", CultureInfo.InvariantCulture));
+        panelElementAlphaInput.onValueChanged.AddListener(_ => ApplyPanelElementAlpha(false));
+        panelElementAlphaInput.onEndEdit.AddListener(_ => ApplyPanelElementAlpha(true));
+
+        SetupCollapsibleSection("Section", "gameplay-main", "Gameplay", true);
+        SetupCollapsibleSection("StartSection", "gameplay-start", "Start", true);
+        gameplayCoreItems.AddRange(new[] { "SpeedLabel", "DiggingSpeed", "DayNightRow", "KeepMap", "CameraFollow" });
 
         MoveToTab(recipeItems, "RecipeEditorSection", "RecipeEditorDropdown", "RecipeCategoryLabel",
             "RecipeCategoryDropdown", "RecipeOutputLabel", "RecipeOutputAmount", "RecipeIngredientsSection",
             "RecipeIngredientRows", "RecipeAddIngredient", "RecipeEditorStatus");
 
-        MoveToTab(giftingItems, "ItemsSection", "GiftAmountLabel", "GiftAmount",
+        MoveToTab(giftingItems, "ItemWeightSection", "ItemWeightDropdown", "ItemWeightLabel", "ItemWeightInput", "ItemWeightStatus",
+            "ItemsSection", "GiftAmountLabel", "GiftAmount",
             "GiftPreset0", "GiftPreset1", "GiftPreset2", "GiftPreset3");
         foreach (var section in giftSections)
         {
             MoveToTab(giftingItems, section.header);
             MoveToTab(giftingItems, section.cards.ToArray());
+        }
+        foreach (var section in powerupSections)
+        {
+            MoveToTab(powerupItems, section.header);
+            MoveToTab(powerupItems, section.cards.ToArray());
         }
         var audioNames = new List<string> { "AudioSection", "ConcreteAudioSection", "LayerStoneAudioBackdrop", "LayerStoneAudioSection",
             "LayerStoneAudioHeaderVolume", "LayerStoneAudioHeaderPitch", "LayerStoneAudioHeaderSpread",
@@ -1372,6 +1610,8 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         }
         audioNames.AddRange(layerStoneAudioItems);
         MoveToTab(audioItems, audioNames.ToArray());
+        legacyAudioItems.AddRange(audioItems);
+        MoveToTab(audioItems, "AudioBrowserRoot");
         var lightingNames = new List<string> { "LightingSection", "LightingInfo", "LightingEnabled", "LightingHint" };
         for (int i = 0; i < 6; i++)
         {
@@ -1379,11 +1619,9 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             lightingNames.Add("LightInput" + i);
         }
         MoveToTab(worldItems, lightingNames.ToArray());
+        worldLightingItems.AddRange(lightingNames.Where(name => name != "LightingSection"));
 
-        CloneItem("Section", "TestSection", content, "TESTMODUS");
-        CloneItem("Section", "MiningTestSection", content, "ABBAU");
-        CloneItem("Section", "PlayerTestSection", content, "SPIELER");
-        CloneItem("Section", "TimeTestSection", content, "LICHT");
+        CloneItem("Section", "TestModeSection", content, "Testmodus");
         CloneItem("Section", "MiscSection", content, "MISC");
         var testLabel = CloneItem("SpeedLabel", "TestLabel", content, "Abbaufaktor (×)");
         testMultiplier = CloneItem("DiggingSpeed", "TestMultiplier", content).GetComponent<TMP_InputField>();
@@ -1398,6 +1636,9 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             testStatus.text = saved ? "" : error;
         });
         EnsureMiningHitOffsetControl();
+        EnsureTorchSettingsControls();
+        SetupCollapsibleSection("LightingSection", "world-lighting", "Beleuchtung", true);
+        SetupCollapsibleSection("TorchFlameSection", "world-torch", "Fackel", true);
         var movementLabel = CloneItem("SpeedLabel", "MovementLabel", content, "Bewegungsfaktor (×)");
         movementMultiplier = CloneItem("DiggingSpeed", "MovementMultiplier", content).GetComponent<TMP_InputField>();
         movementMultiplier.contentType = TMP_InputField.ContentType.DecimalNumber;
@@ -1417,6 +1658,9 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         testItems.Remove("KeepMap");
         gameplayItems.Add("KeepMap");
 #endif
+        CreateModeToggle("CameraFollow", "Camera Follow", GameplayTestMode.CameraFollow, null);
+        testItems.Remove("CameraFollow");
+        gameplayItems.Add("CameraFollow");
         CreateModeToggle("GodMode", "God Mode", GameplayTestMode.God,
             "Schaden wird ignoriert.");
         CreateModeToggle("NoEnergy", "Kein Energieverbrauch", GameplayTestMode.NoEnergyConsume,
@@ -1428,10 +1672,25 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             var energy = UnityEngine.Object.FindFirstObjectByType<EnergyManager>();
             if (energy && energy.stats) energy.DrainEnergy(energy.stats.MaxEnergy * .1f);
         });
+        var maxEnergy = CloneItem("Defaults", "EnergyMax", content, "Max Energy").GetComponent<Button>();
+        maxEnergy.onClick = new Button.ButtonClickedEvent();
+        maxEnergy.onClick.AddListener(() =>
+        {
+            var energy = UnityEngine.Object.FindFirstObjectByType<EnergyManager>();
+            if (energy && energy.stats) energy.energy = energy.stats.MaxEnergy;
+        });
         CreateModeToggle("FlyMode", "Fly Mode", GameplayTestMode.Fly,
             "Gravitation aus. W/S: aufwärts/abwärts. A/D: seitwärts. Ohne Taste schweben. Kollisionen bleiben aktiv.");
         CreateModeToggle("NoClip", "No Clip", GameplayTestMode.NoClip, null);
+        CreateModeToggle("NoWeight", "No weight", GameplayTestMode.NoWeight, null);
+        CreateModeToggle("InfiniteMoney", "Infinite Money", GameplayTestMode.InfiniteMoney, null);
         CreateModeToggle("GlobalLighting", "Global Lighting", GameplayTestMode.GlobalLighting, null);
+        var teleportToAltar = CloneItem("Defaults", "TeleportToUltroniumAltar", content, "Zum Altar").GetComponent<Button>();
+        teleportToAltar.onClick = new Button.ButtonClickedEvent();
+        teleportToAltar.onClick.AddListener(TeleportToUltroniumAltar);
+        var teleportToSpawn = CloneItem("Defaults", "TeleportToSpawn", content, "Zum Spawn").GetComponent<Button>();
+        teleportToSpawn.onClick = new Button.ButtonClickedEvent();
+        teleportToSpawn.onClick.AddListener(TeleportToSpawn);
         CloneItem("Section", "HealthTestSection", content, "GESUNDHEIT");
         CloneItem("SpeedLabel", "HealthValueLabel", content, "Aktuelle HP");
         healthInput = CloneItem("DiggingSpeed", "HealthValueInput", content).GetComponent<TMP_InputField>();
@@ -1451,14 +1710,131 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         var testEndScreen = CloneItem("Defaults", "TestEndScreen", content, "Endscreen testen").GetComponent<Button>();
         testEndScreen.onClick = new Button.ButtonClickedEvent();
         testEndScreen.onClick.AddListener(ShowTestEndScreen);
+        CloneItem("Section", "OverlayTestSection", content, "OVERLAYS");
         CreateArtifactAnimationTests();
         CreateDayNightSelector();
-        testItems.AddRange(new[] {"TestSection", "MiningTestSection", "PlayerTestSection", "TimeTestSection",
+        testItems.AddRange(new[] {"TestModeSection", "TeleportToUltroniumAltar", "TeleportToSpawn",
             "TestLabel","TestMultiplier","MovementLabel","MovementMultiplier","TestStatus", "HealthTestSection",
-            "EnergyDrain10",
-            "HealthValueLabel", "HealthValueInput", "SetHealth",
-            "DamageTest90", "DamageTest40", "DamageTest10", "DamageTest1", "TestEndScreen"});
-        MoveToTab(miscItems, "MiscSection");
+            "EnergyDrain10", "EnergyMax", "HealthValueLabel", "HealthValueInput", "SetHealth",
+            "DamageTest90", "DamageTest40", "DamageTest10", "DamageTest1", "OverlayTestSection"});
+        testModeItems.AddRange(new[] { "TestActive", "TestLabel", "TestMultiplier", "MovementLabel",
+            "MovementMultiplier", "GodMode", "NoEnergy", "FlyMode", "NoClip", "NoWeight", "InfiniteMoney", "GlobalLighting" });
+        healthTestItems.AddRange(new[] { "HealthValueLabel", "HealthValueInput", "SetHealth", "DamageTest90",
+            "DamageTest40", "DamageTest10", "DamageTest1", "EnergyDrain10", "EnergyMax" });
+        overlayTestItems.Add("TestEndScreen");
+        SetupCollapsibleSection("TestModeSection", "test-mode", "Testmodus", true);
+        SetupCollapsibleSection("HealthTestSection", "test-health", "HP", true);
+        SetupCollapsibleSection("OverlayTestSection", "test-overlays", "Overlays", true);
+        MoveToTab(miscItems, "MiscSection", "PanelBackdropAlphaLabel", "PanelBackdropAlphaInput",
+            "PanelElementAlphaLabel", "PanelElementAlphaInput");
+    }
+
+    void TeleportToUltroniumAltar()
+    {
+        var altar = UnityEngine.Object.FindFirstObjectByType<UltroniumAltarChamber>();
+        var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement>();
+        if (!altar || !player || !altar.Layout.valid) return;
+
+        TeleportPlayer(player, altar.AltarPosition + new Vector3(-altar.CellSize * 2.5f, altar.CellSize * .15f, 0f));
+    }
+
+    void TeleportToSpawn()
+    {
+        var map = UnityEngine.Object.FindFirstObjectByType<MapGenerator>();
+        var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement>();
+        if (!map || !player || !map.Terrain || !map.Terrain.layoutGrid) return;
+
+        var spawnCell = new Vector3Int(0, 0, 0);
+        var terrain = map.Terrain;
+        if (!terrain.HasTile(spawnCell)) return;
+
+        Vector3 cellCenter = terrain.GetCellCenterWorld(spawnCell);
+        float cellHeight = terrain.layoutGrid.transform.TransformVector(
+            Vector3.up * terrain.layoutGrid.cellSize.y).magnitude;
+        if (cellHeight <= 0f) return;
+
+        var collider = player.GetComponent<Collider2D>();
+        float halfHeight = collider && collider.enabled && collider.bounds.extents.y > 0f
+            ? collider.bounds.extents.y
+            : cellHeight * .3f;
+        float colliderOffsetY = collider
+            ? collider.transform.TransformVector((Vector3)collider.offset).y
+            : 0f;
+        float surfaceY = cellCenter.y + cellHeight * .5f;
+        TeleportPlayer(player, new Vector3(cellCenter.x, surfaceY + halfHeight - colliderOffsetY + .03f,
+            player.transform.position.z));
+    }
+
+    static void TeleportPlayer(PlayerMovement player, Vector3 position)
+    {
+        if (!player) return;
+        var body = player.GetComponent<Rigidbody2D>();
+        var ladder = player.GetComponent<PlayerLadder>();
+        if (ladder) ladder.Detach();
+        if (body) body.linearVelocity = Vector2.zero;
+        player.transform.position = position;
+    }
+
+    void ApplyPanelBackdropAlpha(bool normalizeInput)
+    {
+        if (!panelBackdropAlphaInput) return;
+        if (!float.TryParse(panelBackdropAlphaInput.text.Replace(',', '.'), NumberStyles.Float,
+                CultureInfo.InvariantCulture, out float alpha) || float.IsNaN(alpha) ||
+            float.IsInfinity(alpha) || alpha < 0f || alpha > 1f)
+        {
+            if (!normalizeInput) return;
+            alpha = Mathf.Clamp01(PlayerPrefs.GetFloat(PanelBackdropAlphaKey, DefaultPanelBackdropAlpha));
+        }
+
+        var backdrop = GetComponent<Image>();
+        if (backdrop) backdrop.color = new Color(0f, 0f, 0f, alpha);
+        PlayerPrefs.SetFloat(PanelBackdropAlphaKey, alpha);
+        PlayerPrefs.Save();
+        if (normalizeInput)
+            panelBackdropAlphaInput.SetTextWithoutNotify(alpha.ToString("0.###", CultureInfo.InvariantCulture));
+    }
+
+    void ApplyPanelElementAlpha(bool normalizeInput)
+    {
+        if (!panelElementAlphaInput) return;
+        if (!float.TryParse(panelElementAlphaInput.text.Replace(',', '.'), NumberStyles.Float,
+                CultureInfo.InvariantCulture, out float alpha) || float.IsNaN(alpha) ||
+            float.IsInfinity(alpha) || alpha < 0f || alpha > 1f)
+        {
+            if (!normalizeInput) return;
+            alpha = panelElementAlpha;
+        }
+
+        panelElementAlpha = alpha;
+        PlayerPrefs.SetFloat(PanelElementAlphaKey, alpha);
+        PlayerPrefs.Save();
+        RefreshPanelGraphicAlphas();
+        if (normalizeInput)
+            panelElementAlphaInput.SetTextWithoutNotify(alpha.ToString("0.###", CultureInfo.InvariantCulture));
+    }
+
+    void RefreshPanelGraphicAlphas()
+    {
+        panelGraphics.Clear();
+        GetComponentsInChildren(true, panelGraphics);
+        var backdrop = GetComponent<Image>();
+        foreach (var graphic in panelGraphics)
+        {
+            if (!graphic || graphic == backdrop) continue;
+            bool textGraphic = graphic is TMP_Text || graphic is TMP_SubMeshUI;
+            if (graphic.color.a > 0f && !Mathf.Approximately(graphic.color.a, 1f))
+            {
+                var color = graphic.color;
+                color.a = 1f;
+                graphic.color = color;
+            }
+            float alpha = textGraphic ? 1f : panelElementAlpha;
+            var toggle = graphic.GetComponentInParent<Toggle>(true);
+            if (toggle && toggle.graphic == graphic && !toggle.isOn)
+                alpha = 0f;
+            if (!Mathf.Approximately(graphic.canvasRenderer.GetAlpha(), alpha))
+                graphic.canvasRenderer.SetAlpha(alpha);
+        }
     }
 
     void CreateArtifactAnimationTests()
@@ -1466,6 +1842,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         const string section = "ArtifactAnimationSection";
         CloneItem("Section", section, content, "ARTEFAKT-ANIMATIONEN");
         testItems.Add(section);
+        SetupCollapsibleSection(section, "test-artifacts", "Artefakt-Animationen", true);
         const string offsetHeader = "ArtifactAnimationYOffsetHeader";
         var header = CloneItem("SpeedLabel", offsetHeader, content, "Y-Versatz")
             .GetComponent<TextMeshProUGUI>();
@@ -1473,6 +1850,13 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         header.textWrappingMode = TextWrappingModes.NoWrap;
         header.alignment = TextAlignmentOptions.Center;
         testItems.Add(offsetHeader);
+        artifactAnimationItems.Add(offsetHeader);
+        artifactLeftColumnYOffset = PlayerPrefs.GetFloat(ArtifactLeftColumnYOffsetKey, 0f);
+        artifactRightColumnYOffset = PlayerPrefs.GetFloat(ArtifactRightColumnYOffsetKey, 0f);
+        artifactLeftColumnYOffsetInput = CreateArtifactColumnYOffsetControl("ArtifactLeftColumnYOffset", "Y links",
+            artifactLeftColumnYOffset);
+        artifactRightColumnYOffsetInput = CreateArtifactColumnYOffsetControl("ArtifactRightColumnYOffset", "Y rechts",
+            artifactRightColumnYOffset);
         var map = FindFirstObjectByType<MapGenerator>();
         if (!map || map.artifactSettings == null) return;
         var artifacts = map.artifactSettings.Select(setting => setting?.tile)
@@ -1491,6 +1875,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             button.onClick = new Button.ButtonClickedEvent();
             button.onClick.AddListener(() => ArtifactDiscoveryView.ShowArtifact(artifact));
             testItems.Add(name);
+            artifactAnimationItems.Add(name);
             string offsetInputName = "ArtifactAnimationYOffsetInput_" + i;
             var offsetInput = CloneItem("DiggingSpeed", offsetInputName, content).GetComponent<TMP_InputField>();
             offsetInput.onValueChanged = new TMP_InputField.OnChangeEvent();
@@ -1501,7 +1886,49 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             offsetInput.onEndEdit.AddListener(_ => CommitArtifactYOffset(artifact, offsetInput));
             artifactYOffsetInputs.Add(artifact, offsetInput);
             testItems.Add(offsetInputName);
+            artifactAnimationItems.Add(offsetInputName);
         }
+    }
+
+    TMP_InputField CreateArtifactColumnYOffsetControl(string name, string labelText, float value)
+    {
+        var label = CloneItem("SpeedLabel", name + "Label", content, labelText).GetComponent<TextMeshProUGUI>();
+        label.fontSize = 18;
+        testItems.Add(name + "Label");
+        artifactAnimationItems.Add(name + "Label");
+        var input = CloneItem("DiggingSpeed", name, content).GetComponent<TMP_InputField>();
+        input.onValueChanged = new TMP_InputField.OnChangeEvent();
+        input.onEndEdit = new TMP_InputField.SubmitEvent();
+        input.contentType = TMP_InputField.ContentType.DecimalNumber;
+        DisableInputChildRaycasts(input);
+        input.SetTextWithoutNotify(value.ToString("0.##", CultureInfo.InvariantCulture));
+        input.onEndEdit.AddListener(text => CommitArtifactColumnYOffset(input, text, name == "ArtifactLeftColumnYOffset"));
+        testItems.Add(name);
+        artifactAnimationItems.Add(name);
+        return input;
+    }
+
+    void CommitArtifactColumnYOffset(TMP_InputField input, string text, bool left)
+    {
+        if (float.TryParse(text.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out float value) &&
+            !float.IsNaN(value) && !float.IsInfinity(value))
+        {
+            value = Mathf.Clamp(value, -300f, 300f);
+            if (left)
+            {
+                artifactLeftColumnYOffset = value;
+                PlayerPrefs.SetFloat(ArtifactLeftColumnYOffsetKey, value);
+            }
+            else
+            {
+                artifactRightColumnYOffset = value;
+                PlayerPrefs.SetFloat(ArtifactRightColumnYOffsetKey, value);
+            }
+            PlayerPrefs.Save();
+        }
+        input.SetTextWithoutNotify((left ? artifactLeftColumnYOffset : artifactRightColumnYOffset)
+            .ToString("0.##", CultureInfo.InvariantCulture));
+        Layout();
     }
 
     void CommitArtifactYOffset(ArtifactTile artifact, TMP_InputField input)
@@ -1522,6 +1949,54 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         button.onClick = new Button.ButtonClickedEvent();
         button.onClick.AddListener(() => SwitchTab(tab));
         tabNames[tab] = name;
+    }
+
+    void SetupCollapsibleSection(string itemName, string key, string title, bool expanded)
+    {
+        var rect = items[itemName];
+        var label = rect.GetComponentInChildren<TextMeshProUGUI>();
+        var button = rect.GetComponent<Button>() ?? rect.gameObject.AddComponent<Button>();
+        button.transition = Selectable.Transition.None;
+        button.targetGraphic = label;
+        button.onClick = new Button.ButtonClickedEvent();
+        button.onClick.AddListener(() => ToggleSection(key));
+        if (label) label.raycastTarget = true;
+        gameplaySectionHeaders[key] = (itemName, title);
+        if (expanded) expandedSections.Add(key);
+        RefreshGameplaySectionHeader(key);
+    }
+
+    void ToggleSection(string key)
+    {
+        if (!expandedSections.Remove(key)) expandedSections.Add(key);
+        RefreshGameplaySectionHeader(key);
+        if (key.StartsWith("gameplay-", System.StringComparison.Ordinal))
+        {
+            SetActive(gameplayCoreItems, expandedSections.Contains("gameplay-main"));
+            SetActive(startingResourceItems, expandedSections.Contains("gameplay-start"));
+        }
+        else if (key.StartsWith("world-", System.StringComparison.Ordinal))
+        {
+            SetActive(worldLightingItems, currentTab == DebugTab.World && expandedSections.Contains("world-lighting"));
+            SetActive(torchSettingsItems, currentTab == DebugTab.World && expandedSections.Contains("world-torch"));
+        }
+        else if (key == "test-mode")
+            SetActive(testModeItems, currentTab == DebugTab.Tests && expandedSections.Contains("test-mode"));
+        else if (key == "test-health")
+            SetActive(healthTestItems, currentTab == DebugTab.Tests && expandedSections.Contains("test-health"));
+        else if (key == "test-overlays")
+            SetActive(overlayTestItems, currentTab == DebugTab.Tests && expandedSections.Contains("test-overlays"));
+        else if (key == "test-artifacts")
+            SetActive(artifactAnimationItems, currentTab == DebugTab.Tests && expandedSections.Contains("test-artifacts"));
+        Layout();
+    }
+
+    void RefreshGameplaySectionHeader(string key)
+    {
+        if (!gameplaySectionHeaders.TryGetValue(key, out var header) || !items.TryGetValue(header.itemName, out var rect)) return;
+        var label = rect.GetComponentInChildren<TextMeshProUGUI>();
+        if (label)
+            label.text = (expandedSections.Contains(key) ? "▼ " : "▶ ") + header.title;
     }
 
     void MoveToTab(List<string> destination, params string[] names)
@@ -1593,10 +2068,10 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         toggle.targetGraphic = boxImage; toggle.graphic = checkImage;
         modeToggles[mode] = toggle;
         toggle.onValueChanged.AddListener(value => {
-            if (mode == GameplayTestMode.KeepMap)
+            if (mode == GameplayTestMode.KeepMap || mode == GameplayTestMode.CameraFollow)
             {
                 bool success = GameplayTestSettings.SetMode(mode, value, out string message);
-                toggle.SetIsOnWithoutNotify(GameplayTestSettings.KeepMapInEditor);
+                toggle.SetIsOnWithoutNotify(GameplayTestSettings.GetConfiguredMode(mode));
                 items["Status"].GetComponent<TextMeshProUGUI>().text = success ? "" : message;
                 return;
             }
@@ -1644,7 +2119,14 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         if (IsTestTab || IsMiscTab) { if (!ApplyTestInput()) return; }
         else if (IsIconTab) { if (!CommitIconInputs()) return; }
         else if (IsRecipeTab) { if (!CommitRecipeInputs()) return; }
-        else if (IsStartingResourcesTab) { if (!CommitStartingResources()) return; }
+        else if (IsGameplayTab)
+        {
+            if (!CommitStartingResources() || !GetComponent<GameplayDebugPanel>().TryApplyAll()) return;
+        }
+        else if (IsWorldTab)
+        {
+            if (!ApplyTorchSettings() || !GetComponent<GameplayDebugPanel>().TryApplyAll()) return;
+        }
         else if (!GetComponent<GameplayDebugPanel>().TryApplyAll()) return;
         SetTab(tab);
     }
@@ -1661,30 +2143,39 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         foreach (var row in startingResourceRowsData) if (row.item && row.item.IsExpanded) row.item.Hide();
         HideTooltip(); currentTab = tab;
         SetActive(gameplayItems, tab == DebugTab.Gameplay);
+        SetActive(gameplayCoreItems, tab == DebugTab.Gameplay && expandedSections.Contains("gameplay-main"));
+        SetActive(startingResourceItems, tab == DebugTab.Gameplay && expandedSections.Contains("gameplay-start"));
         SetActive(testItems, tab == DebugTab.Tests);
+        SetActive(testModeItems, tab == DebugTab.Tests && expandedSections.Contains("test-mode"));
+        SetActive(healthTestItems, tab == DebugTab.Tests && expandedSections.Contains("test-health"));
+        SetActive(overlayTestItems, tab == DebugTab.Tests && expandedSections.Contains("test-overlays"));
+        SetActive(artifactAnimationItems, tab == DebugTab.Tests && expandedSections.Contains("test-artifacts"));
         SetActive(miscItems, tab == DebugTab.Misc);
         SetActive(giftingItems, tab == DebugTab.Items);
+        SetActive(powerupItems, tab == DebugTab.Powerups);
         SetActive(worldItems, tab == DebugTab.World);
+        SetActive(worldLightingItems, tab == DebugTab.World && expandedSections.Contains("world-lighting"));
+        SetActive(torchSettingsItems, tab == DebugTab.World && expandedSections.Contains("world-torch"));
         SetActive(audioItems, tab == DebugTab.Audio);
+        SetActive(legacyAudioItems, false);
         SetActive(iconItems, tab == DebugTab.Icons);
         SetActive(recipeItems, tab == DebugTab.Recipes);
-        SetActive(startingResourceItems, tab == DebugTab.StartingResources);
 #if !UNITY_EDITOR
         items["MakeDefaults"].gameObject.SetActive(false);
 #endif
         foreach (var entry in tabNames)
             items[entry.Value].GetComponent<Image>().color = entry.Key == tab
-                ? new Color(.64f,.38f,.1f) : new Color(.12f,.16f,.22f);
-        RefreshTest(); Layout(); scroll.verticalNormalizedPosition = 1;
+                ? new Color(.28f,.2f,.09f,.98f) : new Color(.08f,.12f,.17f,.96f);
+        RefreshTest(); RefreshPowerups(); Layout(); scroll.verticalNormalizedPosition = 1;
         if (tab == DebugTab.Audio)
         {
-            CreateLayerStoneAudioControls();
-            RefreshAudioSettings(); RefreshLayerStoneAudioSettings(); RefreshDetailSettings();
+            BuildAudioBrowser();
+            RefreshAudioBrowserRows();
             Layout();
         }
         if (tab == DebugTab.Icons) RefreshIconEditor();
         if (tab == DebugTab.Recipes) RefreshRecipeEditor();
-        if (tab == DebugTab.StartingResources) startingResourceStatus.text = "";
+        if (tab == DebugTab.Gameplay) startingResourceStatus.text = "";
     }
 
     void SetActive(List<string> names, bool active)
@@ -1696,6 +2187,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     void RefreshTest()
     {
         EnsureMiningHitOffsetControl();
+        EnsureTorchSettingsControls();
         foreach (var entry in artifactYOffsetInputs)
             entry.Value.SetTextWithoutNotify(entry.Key.DiscoveryIconYOffset.ToString("0.##", CultureInfo.InvariantCulture));
         foreach (var entry in modeToggles) entry.Value.SetIsOnWithoutNotify(GameplayTestSettings.GetConfiguredMode(entry.Key));
@@ -1711,9 +2203,24 @@ public sealed class GameplayDebugWindow : MonoBehaviour
             ? GameplayTestSettings.ConfiguredMiningHitOffsetMs
             : minerVisual ? minerVisual.miningHitOffsetMs : 0f;
         miningHitOffsetInput.SetTextWithoutNotify(hitOffset.ToString("R", CultureInfo.InvariantCulture));
+        var torchMap = FindFirstObjectByType<MapGenerator>();
+        if (torchMap)
+        {
+            SetInputIfUnfocused(torchFlameOffsetXInput, torchMap.torchFlameOffsetX);
+            SetInputIfUnfocused(torchFlameOffsetYInput, torchMap.torchFlameOffsetY);
+            SetInputIfUnfocused(torchFlameSizeInput, torchMap.torchFlameSize);
+            SetInputIfUnfocused(torchFlameFrequencyInput, torchMap.torchFlameFrequency);
+            SetInputIfUnfocused(torchBrightnessInput, torchMap.torchBrightness * 100f);
+        }
         RefreshCurrentHealthInput();
         testStatus.text = GameplayTestSettings.Warning ?? "";
         RefreshDayNight();
+    }
+
+    static void SetInputIfUnfocused(TMP_InputField input, float value)
+    {
+        if (input && !input.isFocused)
+            input.SetTextWithoutNotify(value.ToString("0.##", CultureInfo.InvariantCulture));
     }
 
     void RefreshCurrentHealthInput()
@@ -1762,6 +2269,64 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         if (!miscItems.Contains("MiningHitOffsetInput")) miscItems.Add("MiningHitOffsetInput");
         inputRect.gameObject.SetActive(IsMiscTab);
         items["MiningHitOffsetLabel"].gameObject.SetActive(IsMiscTab);
+    }
+
+    void EnsureTorchSettingsControls()
+    {
+        if (!items.ContainsKey("TorchFlameSection"))
+            CloneItem("Section", "TorchFlameSection", content, "Fackel");
+        if (!worldItems.Contains("TorchFlameSection")) worldItems.Add("TorchFlameSection");
+        CreateTorchSettingInput("TorchFlameOffsetX", "Flammenversatz X", out torchFlameOffsetXInput);
+        CreateTorchSettingInput("TorchFlameOffsetY", "Flammenversatz Y", out torchFlameOffsetYInput);
+        CreateTorchSettingInput("TorchFlameSize", "Flammengröße (×)", out torchFlameSizeInput);
+        CreateTorchSettingInput("TorchFlameFrequency", "Frequenz (Partikel/s)", out torchFlameFrequencyInput);
+        CreateTorchSettingInput("TorchBrightness", "Helligkeit (%)", out torchBrightnessInput);
+        if (!items.ContainsKey("TorchSettingsStatus"))
+            torchSettingsStatus = CloneItem("Status", "TorchSettingsStatus", content, "")
+                .GetComponent<TextMeshProUGUI>();
+        else torchSettingsStatus = items["TorchSettingsStatus"].GetComponent<TextMeshProUGUI>();
+
+        foreach (string name in new[]
+        {
+            "TorchFlameOffsetXLabel", "TorchFlameOffsetXInput",
+            "TorchFlameOffsetYLabel", "TorchFlameOffsetYInput", "TorchFlameSizeLabel",
+            "TorchFlameSizeInput", "TorchFlameFrequencyLabel", "TorchFlameFrequencyInput",
+            "TorchBrightnessLabel", "TorchBrightnessInput", "TorchSettingsStatus"
+        })
+            if (!torchSettingsItems.Contains(name)) torchSettingsItems.Add(name);
+
+        if (!torchSettingsListenersBound)
+        {
+            foreach (var input in new[] { torchFlameOffsetXInput, torchFlameOffsetYInput,
+                         torchFlameSizeInput, torchFlameFrequencyInput, torchBrightnessInput })
+                input.onEndEdit.AddListener(_ => ApplyTorchSettings());
+            torchSettingsListenersBound = true;
+        }
+        var map = FindFirstObjectByType<MapGenerator>();
+        bool available = map;
+        foreach (var input in new[] { torchFlameOffsetXInput, torchFlameOffsetYInput,
+                     torchFlameSizeInput, torchFlameFrequencyInput, torchBrightnessInput })
+            input.interactable = available;
+        if (!available && torchSettingsStatus) torchSettingsStatus.text = "Keine Map verfügbar.";
+        else if (available && torchSettingsStatus && torchSettingsStatus.text == "Keine Map verfügbar.")
+            torchSettingsStatus.text = "";
+    }
+
+    void CreateTorchSettingInput(string id, string labelText, out TMP_InputField input)
+    {
+        string labelId = id + "Label";
+        string inputId = id + "Input";
+        if (!items.ContainsKey(labelId)) CloneItem("SpeedLabel", labelId, content, labelText);
+        else items[labelId].GetComponent<TextMeshProUGUI>().text = labelText;
+        RectTransform inputRect = items.TryGetValue(inputId, out var existing)
+            ? existing : CloneItem("DiggingSpeed", inputId, content);
+        input = inputRect.GetComponent<TMP_InputField>();
+        input.contentType = TMP_InputField.ContentType.Standard;
+        input.characterValidation = TMP_InputField.CharacterValidation.None;
+        DisableInputChildRaycasts(input);
+        bool visible = IsWorldTab && expandedSections.Contains("world-torch");
+        inputRect.gameObject.SetActive(visible);
+        items[labelId].gameObject.SetActive(visible);
     }
 
     void RefreshDayNight()
@@ -1829,6 +2394,48 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         if (IsMiscTab && minerVisual) QueueGpsDefault(minerVisual, "miningHitOffsetMs");
 #endif
         return true;
+    }
+
+    public bool ApplyTorchSettings()
+    {
+        EnsureTorchSettingsControls();
+        var map = FindFirstObjectByType<MapGenerator>();
+        if (!map) return true;
+        if (!ParseMiscValue(torchFlameOffsetXInput, -2f, 2f, "Flammenversatz X", out float flameX) ||
+            !ParseMiscValue(torchFlameOffsetYInput, -2f, 2f, "Flammenversatz Y", out float flameY) ||
+            !ParseMiscValue(torchFlameSizeInput, .1f, 3f, "Flammengröße", out float flameSize) ||
+            !ParseMiscValue(torchFlameFrequencyInput, 0f, 120f, "Partikelfrequenz", out float flameFrequency) ||
+            !ParseMiscValue(torchBrightnessInput, 0f, 200f, "Fackelhelligkeit", out float brightnessPercent))
+            return false;
+
+        map.torchFlameOffsetX = flameX;
+        map.torchFlameOffsetY = flameY;
+        map.torchFlameSize = flameSize;
+        map.torchFlameFrequency = flameFrequency;
+        map.torchBrightness = brightnessPercent / 100f;
+        PlacedTorch.ApplySettings(map);
+        if (torchSettingsStatus) torchSettingsStatus.text = "";
+#if UNITY_EDITOR
+        QueueGpsDefault(map, nameof(MapGenerator.torchFlameOffsetX));
+        QueueGpsDefault(map, nameof(MapGenerator.torchFlameOffsetY));
+        QueueGpsDefault(map, nameof(MapGenerator.torchFlameSize));
+        QueueGpsDefault(map, nameof(MapGenerator.torchFlameFrequency));
+        QueueGpsDefault(map, nameof(MapGenerator.torchBrightness));
+#endif
+        return true;
+    }
+
+    bool ParseMiscValue(TMP_InputField input, float minimum, float maximum, string label, out float value)
+    {
+        if (input && float.TryParse(input.text.Replace(',', '.'), NumberStyles.Float,
+                CultureInfo.InvariantCulture, out value) && !float.IsNaN(value) &&
+            !float.IsInfinity(value) && value >= minimum && value <= maximum)
+            return true;
+        if (torchSettingsStatus)
+            torchSettingsStatus.text = label + ": bitte " + minimum.ToString("0.##", CultureInfo.InvariantCulture) +
+                " bis " + maximum.ToString("0.##", CultureInfo.InvariantCulture) + " eingeben.";
+        value = 0f;
+        return false;
     }
 
     static RectTransform MakeRect(string name, Transform parent)
@@ -1944,9 +2551,16 @@ public sealed class GameplayDebugWindow : MonoBehaviour
 
     void LateUpdate()
     {
+        if (currentTab == DebugTab.Audio && audioBrowserGroups.Count == 0)
+        {
+            BuildAudioBrowser();
+            if (audioBrowserGroups.Count > 0) Layout();
+        }
         RefreshGifting();
+        if (currentTab == DebugTab.Powerups) RefreshPowerups();
         if (currentTab == DebugTab.Tests) RefreshCurrentHealthInput();
         if (lastSize != window.rect.size || lastBounds != bounds.rect.size) Layout();
+        if (GameplayDebugPanel.IsOpen) RefreshPanelGraphicAlphas();
     }
 
     void ClampWindow()
@@ -1966,7 +2580,7 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         rect.anchorMin = rect.anchorMax = new Vector2(0, 1); rect.pivot = new Vector2(0, 1);
         rect.anchoredPosition = new Vector2(x, -y); rect.sizeDelta = new Vector2(width, height);
         var label = rect.GetComponentInChildren<TextMeshProUGUI>();
-        if (rect.GetComponent<Button>() && label)
+        if (rect.GetComponent<Button>() && label && label.rectTransform != rect)
         {
             label.rectTransform.anchorMin = Vector2.zero; label.rectTransform.anchorMax = Vector2.one;
             label.rectTransform.offsetMin = new Vector2(8, 0); label.rectTransform.offsetMax = new Vector2(-8, 0);
@@ -1977,100 +2591,221 @@ public sealed class GameplayDebugWindow : MonoBehaviour
     {
         lastSize = window.rect.size; lastBounds = bounds.rect.size;
         float w = lastSize.x;
-        Place("Title", 28, 20, 230, 58); Place("Close", w-78, 20, 56, 56);
+        Place("Title", 24, 16, 270, 58); Place("Close", w-70, 18, 48, 48);
         Place("Accent", 0, 0, w, 5);
-        string[] tabs = { "GameplayTab", "TestsTab", "MiscTab", "StartingResourcesTab", "ItemsTab", "WorldTab", "AudioTab", "IconsTab", "RecipesTab" };
-        for (int i = 0; i < tabs.Length; i++) Place(tabs[i], 20, 104 + i * 62, 244, 50);
-        float inner = Mathf.Max(340, w - 370);
-        float col = Mathf.Min(inner, 940);
+        string[] tabs = { "GameplayTab", "ItemsTab", "PowerupsTab", "RecipesTab", "IconsTab", "WorldTab", "AudioTab", "TestsTab", "MiscTab" };
+        bool compactTabs = w < 1280f;
+        var viewportRect = scroll.viewport;
+        viewportRect.offsetMax = new Vector2(-28f, compactTabs ? -184f : -120f);
+        var track = window.Find("WindowScrollbar") as RectTransform;
+        if (track) track.offsetMax = new Vector2(-14f, compactTabs ? -188f : -124f);
+        float tabStart = compactTabs ? 22f : 302f;
+        float tabWidth = compactTabs ? (w - 66f) / 5f : (w - tabStart - 82f - (tabs.Length - 1) * 6f) / tabs.Length;
+        tabWidth = Mathf.Max(74f, tabWidth);
+        for (int i = 0; i < tabs.Length; i++)
+        {
+            int column = compactTabs ? i % 5 : i;
+            int row = compactTabs ? i / 5 : 0;
+            Place(tabs[i], tabStart + column * (tabWidth + 6f),
+                compactTabs ? 77f + row * 51f : 24f, tabWidth, 44f);
+            var caption = items.TryGetValue(tabs[i], out var tabRect)
+                ? tabRect.GetComponentInChildren<TextMeshProUGUI>() : null;
+            if (caption) { caption.fontSize = 18f; caption.alignment = TextAlignmentOptions.Center; }
+        }
+        float col = Mathf.Max(340f, w - 100f);
         float x = 18;
         items["Hint"].gameObject.SetActive(false);
         items["SpeedHint"].gameObject.SetActive(false);
         items["LightingHint"].gameObject.SetActive(false);
         items["Save"].gameObject.SetActive(false);
-        if (currentTab == DebugTab.StartingResources)
+        if (currentTab == DebugTab.Gameplay)
         {
-            Place("StartingResourcesSection",x,12,col,36);
-            Place("StartingMoneyLabel",x,60,col-150,48);
-            Place("StartingMoneyInput",x+col-140,58,140,50);
-            startingResourceRows.anchorMin = startingResourceRows.anchorMax = new Vector2(0, 1);
-            startingResourceRows.pivot = new Vector2(0, 1);
-            startingResourceRows.anchoredPosition = new Vector2(x, -126);
-            startingResourceRows.sizeDelta = new Vector2(col, startingResourceRowsData.Count * 58);
-            float itemWidth = Mathf.Max(100, col - 340);
-            for (int i = 0; i < startingResourceRowsData.Count; i++)
+            float y = 12;
+            Place("Section", x, y, col, 36);
+            y += 48;
+            if (expandedSections.Contains("gameplay-main"))
             {
-                var row = startingResourceRowsData[i];
-                row.rect.anchorMin = row.rect.anchorMax = new Vector2(0, 1);
-                row.rect.pivot = new Vector2(0, 1);
-                row.rect.anchoredPosition = new Vector2(0, -i * 58);
-                row.rect.sizeDelta = new Vector2(col, 50);
-                Place(row.item.name, 0, 0, itemWidth, 48);
-                Place(row.amountLabel.name, itemWidth + 8, 0, 112, 48);
-                Place(row.amount.name, itemWidth + 128, 0, 150, 48);
-                Place(row.remove.name, itemWidth + 288, 0, 46, 48);
+                Place("SpeedLabel", x, y, col - 150, 56);
+                Place("DiggingSpeed", x + col - 140, y + 2, 140, 50);
+                y += 64;
+                Place("DayNightRow", x, y, col, 50);
+                float buttonWidth = (col - 165 - 16) / 3f;
+                for (int i = 0; dayNightButtons != null && i < dayNightButtons.Length; i++)
+                {
+                    if (!dayNightButtons[i]) continue;
+                    dayNightButtons[i].anchoredPosition = new Vector2(165 + i * (buttonWidth + 8), 0);
+                    dayNightButtons[i].sizeDelta = new Vector2(buttonWidth, 42);
+                }
+                y += 60;
+#if UNITY_EDITOR
+                Place("KeepMap", x, y, col, 64);
+                y += 76;
+#endif
+                Place("CameraFollow", x, y, col, 64);
+                y += 76;
             }
-            float addY = 136 + startingResourceRowsData.Count * 58;
-            Place("StartingResourceAdd",x,addY,col,48);
-            Place("StartingResourceStatus",x,addY+58,col,44);
-            content.sizeDelta = new Vector2(0, addY+120);
+
+            y += 12;
+            Place("StartSection", x, y, col, 36);
+            y += 48;
+            if (expandedSections.Contains("gameplay-start"))
+            {
+                Place("StartingMoneyLabel", x, y, col - 150, 48);
+                Place("StartingMoneyInput", x + col - 140, y, 140, 50);
+                y += 58;
+                startingResourceRows.anchorMin = startingResourceRows.anchorMax = new Vector2(0, 1);
+                startingResourceRows.pivot = new Vector2(0, 1);
+                startingResourceRows.anchoredPosition = new Vector2(x, -y);
+                startingResourceRows.sizeDelta = new Vector2(col, startingResourceRowsData.Count * 58);
+                float itemWidth = Mathf.Max(100, col - 340);
+                for (int i = 0; i < startingResourceRowsData.Count; i++)
+                {
+                    var row = startingResourceRowsData[i];
+                    row.rect.anchorMin = row.rect.anchorMax = new Vector2(0, 1);
+                    row.rect.pivot = new Vector2(0, 1);
+                    row.rect.anchoredPosition = new Vector2(0, -i * 58);
+                    row.rect.sizeDelta = new Vector2(col, 50);
+                    Place(row.item.name, 0, 0, itemWidth, 48);
+                    Place(row.amountLabel.name, itemWidth + 8, 0, 112, 48);
+                    Place(row.amount.name, itemWidth + 128, 0, 150, 48);
+                    Place(row.remove.name, itemWidth + 288, 0, 46, 48);
+                }
+                y += startingResourceRowsData.Count * 58 + 8;
+                Place("StartingResourceAdd", x, y, col, 48);
+                y += 54;
+                Place("StartingResourceStatus", x, y, col, 40);
+                y += 46;
+            }
+
+            y += 16;
+            Place("Defaults", x, y, 270, 62);
+            Place("MakeDefaults", x + 290, y, col - 290, 62);
+            y += 78;
+            Place("Status", x, y, col, 72);
+            content.sizeDelta = new Vector2(0, y + 92);
             return;
         }
         if (currentTab == DebugTab.Tests)
         {
-            Place("TestSection",x,12,col,36);
-            Place("TestActive",x,56,col,44);
-            Place("MiningTestSection",x,122,col,36);
-            Place("TestLabel",x,166,col-170,50); Place("TestMultiplier",x+col-150,166,150,50);
-            Place("PlayerTestSection",x,246,col,36);
-            Place("MovementLabel",x,290,col-170,50); Place("MovementMultiplier",x+col-150,290,150,50);
-            Place("GodMode",x,350,col,44); Place("NoEnergy",x,402,col,44);
-            Place("EnergyDrain10",x,454,col,44);
-            Place("FlyMode",x,506,col,44); Place("NoClip",x,558,col,44);
-            Place("TimeTestSection",x,622,col,36);
-            Place("GlobalLighting",x,666,col,44);
-            Place("HealthTestSection",x,734,col,36);
-            Place("HealthValueLabel",x,778,col-300,48);
-            Place("HealthValueInput",x+col-280,778,140,48);
-            Place("SetHealth",x+col-130,778,130,48);
-            float damageButtonWidth = (col - 30f) / 4f;
-            foreach (int damage in new[] { 90, 40, 10, 1 })
+            float y = 12;
+            Place("TestModeSection",x,y,col,36);
+            y += 48;
+            if (expandedSections.Contains("test-mode"))
             {
-                int index = System.Array.IndexOf(new[] { 90, 40, 10, 1 }, damage);
-                Place("DamageTest" + damage, x + index * (damageButtonWidth + 10f), 838, damageButtonWidth, 48);
+                Place("TestActive",x,y,col,44);
+                y += 52;
+                Place("TestLabel",x,y,col-170,50);
+                Place("TestMultiplier",x+col-150,y,150,50);
+                y += 58;
+                Place("MovementLabel",x,y,col-170,50);
+                Place("MovementMultiplier",x+col-150,y,150,50);
+                y += 58;
+                foreach (string name in new[] { "GodMode", "NoEnergy", "FlyMode", "NoClip", "NoWeight", "InfiniteMoney", "GlobalLighting" })
+                {
+                    Place(name,x,y,col,44);
+                    y += 50;
+                }
             }
-            Place("TestEndScreen",x,906,col,48);
-            Place("TestStatus",x,966,col,70);
-            Place("ArtifactAnimationSection",x,1050,col,36);
-            Place("ArtifactAnimationYOffsetHeader",x+col-100,1050,100,36);
-            for (int i = 0; i < artifactAnimationArtifacts.Count; i++)
+
+            y += 16;
+            float teleportGap = 12f;
+            float teleportWidth = (col - teleportGap) * .5f;
+            Place("TeleportToUltroniumAltar",x,y,teleportWidth,44);
+            Place("TeleportToSpawn",x+teleportWidth+teleportGap,y,teleportWidth,44);
+            y += 52;
+            Place("HealthTestSection",x,y,col,36);
+            y += 48;
+            if (expandedSections.Contains("test-health"))
             {
-                float rowY = 1098 + i * 56;
-                Place("ArtifactAnimation_" + i,x,rowY,col-100,48);
-                Place("ArtifactAnimationYOffsetInput_" + i,x+col-90,rowY,90,48);
+                Place("HealthValueLabel",x,y,col-300,48);
+                Place("HealthValueInput",x+col-280,y,140,48);
+                Place("SetHealth",x+col-130,y,130,48);
+                y += 58;
+                float damageButtonWidth = (col - 30f) / 4f;
+                foreach (int damage in new[] { 90, 40, 10, 1 })
+                {
+                    int index = System.Array.IndexOf(new[] { 90, 40, 10, 1 }, damage);
+                    Place("DamageTest" + damage, x + index * (damageButtonWidth + 10f), y, damageButtonWidth, 48);
+                }
+                y += 58;
+                float energyButtonGap = 12f;
+                float energyButtonWidth = (col - energyButtonGap) * .5f;
+                Place("EnergyDrain10",x,y,energyButtonWidth,44);
+                Place("EnergyMax",x+energyButtonWidth+energyButtonGap,y,energyButtonWidth,44);
+                y += 50;
             }
-            content.sizeDelta = new Vector2(0, 1160 + artifactAnimationArtifacts.Count * 56);
+            y += 8;
+            Place("OverlayTestSection",x,y,col,36);
+            y += 48;
+            if (expandedSections.Contains("test-overlays"))
+            {
+                Place("TestEndScreen",x,y,col,48);
+                y += 58;
+            }
+            y += 8;
+            Place("TestStatus",x,y,col,70);
+            y += 86;
+            Place("ArtifactAnimationSection",x,y,col,36);
+            y += 48;
+            if (expandedSections.Contains("test-artifacts"))
+            {
+                float columnGap = 16f;
+                float columnWidth = (col - columnGap) * .5f;
+                float offsetLabelWidth = 100f;
+                float offsetInputWidth = 100f;
+                Place("ArtifactLeftColumnYOffsetLabel",x,y,columnWidth-offsetLabelWidth-offsetInputWidth,40);
+                Place("ArtifactLeftColumnYOffset",x+columnWidth-offsetInputWidth,y,offsetInputWidth,40);
+                Place("ArtifactRightColumnYOffsetLabel",x+columnWidth+columnGap,y,
+                    columnWidth-offsetLabelWidth-offsetInputWidth,40);
+                Place("ArtifactRightColumnYOffset",x+columnWidth+columnGap+columnWidth-offsetInputWidth,y,
+                    offsetInputWidth,40);
+                y += 44;
+                Place("ArtifactAnimationYOffsetHeader",x+col-100,y,100,36);
+                y += 40;
+                int rows = (artifactAnimationArtifacts.Count + 1) / 2;
+                for (int i = 0; i < artifactAnimationArtifacts.Count; i++)
+                {
+                    int column = i / rows;
+                    int row = i % rows;
+                    float columnX = x + column * (columnWidth + columnGap);
+                    float columnYOffset = column == 0 ? artifactLeftColumnYOffset : artifactRightColumnYOffset;
+                    float rowY = y + row * 56 + columnYOffset;
+                    Place("ArtifactAnimation_" + i,columnX,rowY,columnWidth-100,48);
+                    Place("ArtifactAnimationYOffsetInput_" + i,columnX+columnWidth-90,rowY,90,48);
+                }
+                y += rows * 56 + Mathf.Max(0f, artifactLeftColumnYOffset, artifactRightColumnYOffset);
+            }
+            content.sizeDelta = new Vector2(0, y + 20);
             return;
         }
 
         if (currentTab == DebugTab.Misc)
         {
             Place("MiscSection",x,12,col,36);
-            Place("MiningHitOffsetLabel",x,60,col-170,50);
-            Place("MiningHitOffsetInput",x+col-150,60,150,50);
-            content.sizeDelta = new Vector2(0,140);
+            Place("PanelBackdropAlphaLabel",x,60,col-170,50);
+            Place("PanelBackdropAlphaInput",x+col-150,60,150,50);
+            Place("PanelElementAlphaLabel",x,118,col-170,50);
+            Place("PanelElementAlphaInput",x+col-150,118,150,50);
+            Place("MiningHitOffsetLabel",x,176,col-170,50);
+            Place("MiningHitOffsetInput",x+col-150,176,150,50);
+            content.sizeDelta = new Vector2(0, 244);
             return;
         }
 
         if (currentTab == DebugTab.Items)
         {
-            Place("ItemsSection",x,12,col,36);
-            Place("GiftAmountLabel",x,64,95,48);
-            Place("GiftAmount",x+100,62,120,50);
+            Place("ItemWeightSection",x,12,col,36);
+            Place("ItemWeightDropdown",x,58,col,50);
+            Place("ItemWeightLabel",x,120,col-170,48);
+            Place("ItemWeightInput",x+col-150,120,150,48);
+            Place("ItemWeightStatus",x,174,col,38);
+            Place("ItemsSection",x,224,col,36);
+            Place("GiftAmountLabel",x,276,95,48);
+            Place("GiftAmount",x+100,274,120,50);
             float presetWidth = Mathf.Min(90, (col - 250 - 3 * 10) / 4f);
             for (int i = 0; i < GiftPresets.Length; i++)
-                Place("GiftPreset" + i,x+244+i*(presetWidth+10),62,presetWidth,50);
-            float y = 146;
+                Place("GiftPreset" + i,x+244+i*(presetWidth+10),274,presetWidth,50);
+            float y = 358;
             int columns = Mathf.Clamp(Mathf.FloorToInt((col + 12) / 232f), 2, 4);
             float cardWidth = (col - (columns-1)*12) / columns;
             foreach (var section in giftSections)
@@ -2088,6 +2823,29 @@ public sealed class GameplayDebugWindow : MonoBehaviour
                 y += Mathf.CeilToInt(section.cards.Count/(float)columns)*90+24;
             }
             content.sizeDelta = new Vector2(0,y+16);
+            return;
+        }
+
+        if (currentTab == DebugTab.Powerups)
+        {
+            float y = 12;
+            int columns = Mathf.Clamp(Mathf.FloorToInt((col + 12) / 232f), 2, 4);
+            float cardWidth = (col - (columns - 1) * 12) / columns;
+            foreach (var section in powerupSections)
+            {
+                Place(section.header, x, y, col, 36);
+                y += 48;
+                for (int i = 0; i < section.cards.Count; i++)
+                {
+                    var card = items[section.cards[i]];
+                    card.anchorMin = card.anchorMax = new Vector2(0, 1);
+                    card.pivot = new Vector2(0, 1);
+                    card.anchoredPosition = new Vector2(x + (i % columns) * (cardWidth + 12), -y - (i / columns) * 90);
+                    card.sizeDelta = new Vector2(cardWidth, 78);
+                }
+                y += Mathf.CeilToInt(section.cards.Count / (float)columns) * 90 + 24;
+            }
+            content.sizeDelta = new Vector2(0, y + 16);
             return;
         }
 
@@ -2148,106 +2906,47 @@ public sealed class GameplayDebugWindow : MonoBehaviour
         }
         if (currentTab == DebugTab.Audio)
         {
-            Place("AudioSection",x,12,col,36);
-            for (int i = 0; i < AudioSettings.Length; i++)
-            {
-                float y = 60 + i * 58;
-                Place("AudioLabel" + i,x,y,col-150,48);
-                Place("AudioInput" + i,x+col-140,y,140,48);
-            }
-            float concreteSectionY = 60 + AudioSettings.Length * 58;
-            Place("ConcreteAudioSection",x,concreteSectionY,col,36);
-            for (int i = 0; i < ConcreteAudioSettings.Length; i++)
-            {
-                float y = concreteSectionY + 48 + i * 116;
-                Place("ConcreteAudioLabel" + i,x,y,col-150,48);
-                Place("ConcreteAudioInput" + i,x+col-140,y,140,48);
-                Place("ConcreteAudioOffsetLabel" + i,x,y+58,col-150,48);
-                Place("ConcreteAudioOffsetInput" + i,x+col-140,y+58,140,48);
-            }
-            float stoneSectionY = concreteSectionY + 48 + ConcreteAudioSettings.Length * 116 + 20;
-            Place("LayerStoneAudioSection", x, stoneSectionY, col, 36);
-            float labelWidth = col * .47f;
-            float settingWidth = (col - labelWidth) / 3f;
-            float stoneHeaderY = stoneSectionY + 40;
-            Place("LayerStoneAudioHeaderVolume", x + labelWidth, stoneHeaderY, settingWidth, 34);
-            Place("LayerStoneAudioHeaderPitch", x + labelWidth + settingWidth, stoneHeaderY, settingWidth, 34);
-            Place("LayerStoneAudioHeaderSpread", x + labelWidth + settingWidth * 2, stoneHeaderY, settingWidth, 34);
-            float stoneRowsY = stoneHeaderY + 36;
-            int previousLayer = -1;
-            int previousAction = -1;
-            for (int i = 0; i < layerStoneAudioControls.Count; i++)
-            {
-                var control = layerStoneAudioControls[i];
-                if (control.layerIndex != previousLayer)
-                {
-                    if (layerStoneAudioLayerHeaders.TryGetValue(control.layerIndex, out string headerName))
-                        Place(headerName, x, stoneRowsY, col, 30);
-                    stoneRowsY += 36;
-                    previousLayer = control.layerIndex;
-                    previousAction = -1;
-                }
-                int actionKey = control.layerIndex * 2 + (control.breaking ? 1 : 0);
-                if (actionKey != previousAction)
-                {
-                    if (layerStoneAudioActionHeaders.TryGetValue(actionKey, out string actionName))
-                        Place(actionName, x, stoneRowsY, labelWidth - 8, 24);
-                    stoneRowsY += 26;
-                    previousAction = actionKey;
-                }
-                Place(control.labelName, x, stoneRowsY, labelWidth - 8, 40);
-                Place(control.volume.name, x + labelWidth, stoneRowsY, settingWidth - 8, 40);
-                Place(control.pitch.name, x + labelWidth + settingWidth, stoneRowsY, settingWidth - 8, 40);
-                Place(control.pitchSpread.name, x + labelWidth + settingWidth * 2, stoneRowsY, settingWidth - 8, 40);
-                stoneRowsY += 44;
-            }
-            float detailY = stoneRowsY + 20;
-            Place("LayerStoneAudioBackdrop", x - 8, stoneSectionY - 8, col + 16,
-                detailY - stoneSectionY + 16);
-            Place("DetailSection",x,detailY,col,36);
-            Place("DetailClipLabel",x,detailY+48,col,40);
-            Place("DetailClipDropdown",x,detailY+92,col,50);
-            Place("DetailVolumeLabel",x,detailY+154,col-300,48);
-            Place("DetailVolumeInput",x+col-290,detailY+154,140,48);
-            Place("DetailPreview",x+col-140,detailY+154,140,48);
-            content.sizeDelta = new Vector2(0,detailY+220);
+            LayoutAudioBrowser(x, col);
             return;
         }
 
         if (currentTab == DebugTab.World)
         {
-            Place("LightingSection",x,12,col-170,36);
-            Place("LightingInfo",x+78,18,27,27);
-            Place("LightingEnabled",x+col-150,12,150,42);
-            for (int i=0;i<6;i++)
+            float y = 12;
+            Place("LightingSection",x,y,col-170,36);
+            if (expandedSections.Contains("world-lighting"))
             {
-                Place("LightLabel"+i,x,68+i*58,col-170,48);
-                Place("LightInput"+i,x+col-150,68+i*58,150,48);
+                Place("LightingInfo",x+78,y+6,27,27);
+                Place("LightingEnabled",x+col-150,y,150,42);
+                y += 52;
+                for (int i=0;i<6;i++)
+                {
+                    Place("LightLabel"+i,x,y+i*58,col-170,48);
+                    Place("LightInput"+i,x+col-150,y+i*58,150,48);
+                }
+                y += 6 * 58;
             }
-            content.sizeDelta = new Vector2(0,440);
+            y += 12;
+            Place("TorchFlameSection",x,y,col,36);
+            y += 48;
+            if (expandedSections.Contains("world-torch"))
+            {
+                string[] settings = { "TorchFlameOffsetX", "TorchFlameOffsetY", "TorchFlameSize",
+                    "TorchFlameFrequency", "TorchBrightness" };
+                for (int i = 0; i < settings.Length; i++)
+                {
+                    Place(settings[i] + "Label",x,y+i*54,col-170,48);
+                    Place(settings[i] + "Input",x+col-150,y+i*54,150,48);
+                }
+                y += settings.Length * 54;
+                Place("TorchSettingsStatus",x,y,col,44);
+                y += 48;
+            }
+            content.sizeDelta = new Vector2(0,y+24);
             return;
         }
 
-        Place("Section",x,12,col,36);
-        Place("SpeedLabel",x,58,col-150,64); Place("DiggingSpeed",x+col-140,58,140,50);
-        Place("DayNightRow",x,136,col,50);
-        float buttonWidth = (col - 165 - 16) / 3f;
-        for (int i = 0; dayNightButtons != null && i < dayNightButtons.Length; i++)
-        {
-            if (!dayNightButtons[i]) continue;
-            dayNightButtons[i].anchoredPosition = new Vector2(165 + i * (buttonWidth + 8), 0);
-            dayNightButtons[i].sizeDelta = new Vector2(buttonWidth, 42);
-        }
-        float footer = 204;
-#if UNITY_EDITOR
-        Place("KeepMap",x,footer,col,64);
-        footer += 80;
-#endif
-        Place("Defaults",x,footer,270,62);
-        Place("MakeDefaults",x+290,footer,col-290,62);
-        footer += 78;
-        Place("Status",x,footer,col,72);
-        content.sizeDelta = new Vector2(0,footer+86);
+        content.sizeDelta = new Vector2(0, 0);
     }
 }
 

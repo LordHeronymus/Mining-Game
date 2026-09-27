@@ -22,6 +22,7 @@ MonoBehaviour:
     flipY: 0
   output: {fileID: 11400000, guid: 3c124a6c47da4424e8e04f09f01bad2f, type: 2}
   outputAmount: 1
+  shopPrice: 600
   pluralName: Stahlspitzhacken
   ingredients:
   - item: {fileID: 11400000, guid: 75e7eb8e62b50c64eb4dd8132de34314, type: 2}

@@ -1,6 +1,20 @@
 Shader "Mining Game/Map Darkness"
 {
-    Properties { _MainTex ("Daylight mask", 2D) = "black" {} }
+    Properties
+    {
+        _MainTex ("Daylight mask", 2D) = "black" {}
+        [HideInInspector] _TerrainOcclusionTex ("Terrain occlusion", 2D) = "black" {}
+        [HideInInspector] _TerrainOcclusionRect ("Terrain occlusion rect", Vector) = (0,0,0,0)
+        [HideInInspector] _TerrainOcclusionSize ("Terrain occlusion size", Vector) = (0,0,0,0)
+        [HideInInspector] _HeadlampOriginRange ("Headlamp origin and range", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _HeadlampDirectionAngles ("Headlamp direction and angles", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _HeadlampInnerRadius ("Headlamp inner radius", Float) = 0
+        [HideInInspector] _UltroniumCount ("Ultronium count", Int) = 0
+        [HideInInspector] _AltarSource ("Altar light", Vector) = (0,0,0,0)
+        [HideInInspector] _AltarMask ("Altar visibility", 2D) = "black" {}
+        [HideInInspector] _AltarRect ("Altar bounds", Vector) = (0,0,0,0)
+        [HideInInspector] _AltarMaskSize ("Altar mask size", Vector) = (0,0,0,0)
+    }
     SubShader
     {
         Tags { "Queue"="Transparent" "RenderType"="Transparent" "RenderPipeline"="UniversalPipeline" }

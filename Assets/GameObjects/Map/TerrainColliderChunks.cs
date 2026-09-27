@@ -7,16 +7,19 @@ public sealed class TerrainColliderChunks : MonoBehaviour
 {
     const int ChunkSize = 16;
     const int ChunkRadius = 1;
+    const float AnimalBodyRefreshInterval = .25f;
 
     MapGenerator map;
     TilemapCollider2D sourceCollider;
     CompositeCollider2D sourceComposite;
     Tilemap[,] chunks;
     readonly Dictionary<Tilemap, Vector2Int> chunkCoordinates = new Dictionary<Tilemap, Vector2Int>();
+    readonly List<Rigidbody2D> animalBodies = new List<Rigidbody2D>();
     BoundsInt sourceBounds;
     PlayerMovement player;
     UniformStoneAppearance appearance;
     float appliedInset = -1f;
+    float animalBodyRefreshTimer;
     int loadedCenterX = -1;
     int loadedCenterY = -1;
 
@@ -43,6 +46,21 @@ public sealed class TerrainColliderChunks : MonoBehaviour
         if (!Application.isPlaying || chunks == null) return;
         if (!Mathf.Approximately(appliedInset, CurrentInset)) { Rebuild(); return; }
         if (!EnsureChunksAroundPlayer()) BuildOneNeighborChunk();
+    }
+
+    void FixedUpdate()
+    {
+        if (!Application.isPlaying || chunks == null) return;
+        animalBodyRefreshTimer -= Time.fixedDeltaTime;
+        if (animalBodyRefreshTimer <= 0f)
+        {
+            RefreshAnimalBodies();
+            animalBodyRefreshTimer = AnimalBodyRefreshInterval;
+        }
+
+        foreach (var body in animalBodies)
+            if (body && body.gameObject.activeInHierarchy)
+                EnsureChunksAroundPosition(body.position);
     }
 
     void OnDisable()
@@ -123,6 +141,42 @@ public sealed class TerrainColliderChunks : MonoBehaviour
             }
     }
 
+    void RefreshAnimalBodies()
+    {
+        animalBodies.Clear();
+        int animalLayer = LayerMask.NameToLayer("Player");
+        if (animalLayer < 0) return;
+
+        foreach (var body in FindObjectsByType<Rigidbody2D>(FindObjectsSortMode.None))
+        {
+            if (!body || body.bodyType != RigidbodyType2D.Dynamic || body.gameObject.layer != animalLayer) continue;
+
+            var critters = body.GetComponentInParent<SurfaceCritters>();
+            if (critters)
+            {
+                if (critters.map == map) animalBodies.Add(body);
+                continue;
+            }
+
+            var rabbit = body.GetComponent<SurfaceRabbit>();
+            if (rabbit && rabbit.map == map) animalBodies.Add(body);
+        }
+    }
+
+    void EnsureChunksAroundPosition(Vector2 worldPosition)
+    {
+        var cell = map.Terrain.WorldToCell(worldPosition);
+        int centerX = Mathf.Clamp((cell.x - sourceBounds.xMin) / ChunkSize, 0, chunks.GetLength(0) - 1);
+        int centerY = Mathf.Clamp((cell.y - sourceBounds.yMin) / ChunkSize, 0, chunks.GetLength(1) - 1);
+        int minX = Mathf.Max(0, centerX - ChunkRadius);
+        int maxX = Mathf.Min(chunks.GetLength(0) - 1, centerX + ChunkRadius);
+        int minY = Mathf.Max(0, centerY - ChunkRadius);
+        int maxY = Mathf.Min(chunks.GetLength(1) - 1, centerY + ChunkRadius);
+        for (int y = minY; y <= maxY; y++)
+        for (int x = minX; x <= maxX; x++)
+            EnsureChunk(x, y);
+    }
+
     void EnsureChunk(int x, int y)
     {
         if (chunks[x, y]) return;
@@ -189,8 +243,9 @@ public sealed class TerrainColliderChunks : MonoBehaviour
                 bool openBottom=!source.HasTile(cell+Vector3Int.down);
                 bool openTop=cell.y!=0&&!source.HasTile(cell+Vector3Int.up);
                 if(!openLeft&&!openRight&&!openBottom&&!openTop)continue;
-                float x0=openLeft?appliedInset:0f,x1=openRight?1f-appliedInset:1f;
-                float y0=openBottom?appliedInset:0f,y1=openTop?1f-appliedInset:1f;
+                float inset=map.AltarChamber && map.AltarChamber.Protects(cell)?0f:appliedInset;
+                float x0=openLeft?inset:0f,x1=openRight?1f-inset:1f;
+                float y0=openBottom?inset:0f,y1=openTop?1f-inset:1f;
                 var corners=new[]{new Vector2(x0,y0),new Vector2(x1,y0),new Vector2(x1,y1),new Vector2(x0,y1)};
                 var path=new Vector2[4];
                 for(int j=0;j<4;j++)
@@ -241,6 +296,8 @@ public sealed class TerrainColliderChunks : MonoBehaviour
         }
         chunks = null;
         chunkCoordinates.Clear();
+        animalBodies.Clear();
+        animalBodyRefreshTimer = 0f;
         loadedCenterX = -1;
         loadedCenterY = -1;
     }

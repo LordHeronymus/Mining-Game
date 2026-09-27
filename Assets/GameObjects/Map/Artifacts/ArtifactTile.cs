@@ -65,11 +65,8 @@ public sealed class ArtifactDistributionSetting
 
 public static class ArtifactPlacement
 {
-    const int MinimumSameTypeDistance = 10;
-    const int MinimumSameTypeDistanceSquared = MinimumSameTypeDistance * MinimumSameTypeDistance;
-
     public static bool TryPlace(Dictionary<ArtifactTile, List<Vector2Int>> placements,
-        ArtifactTile artifact, int x, int depth)
+        ArtifactTile artifact, int x, int depth, int minimumSameTypeDistance)
     {
         if (placements == null) throw new ArgumentNullException(nameof(placements));
         if (!artifact) return false;
@@ -80,8 +77,10 @@ public static class ArtifactPlacement
         }
 
         var candidate = new Vector2Int(x, depth);
+        int minimumDistance = Mathf.Max(0, minimumSameTypeDistance);
+        int minimumDistanceSquared = minimumDistance * minimumDistance;
         foreach (var position in positions)
-            if ((candidate - position).sqrMagnitude < MinimumSameTypeDistanceSquared)
+            if ((candidate - position).sqrMagnitude < minimumDistanceSquared)
                 return false;
 
         positions.Add(candidate);

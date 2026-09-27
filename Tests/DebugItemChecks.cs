@@ -22,6 +22,15 @@ public static class DebugItemChecks
         Check(catalog.items.Count(i => i.category == ItemCategory.Ore) >= 6, "Ore entries missing");
         Check(content.Find("GiftSectionOre") && content.Find("GiftSectionMisc") && content.Find("GiftSectionTool"),
             "Creative item sections missing");
+        Check(!content.Find("GiftSectionPowerup"), "Powerups are still listed in the Items tab.");
+        var giftableItems = catalog.items.Where(item => item.category != ItemCategory.Powerup).ToArray();
+        window.SwitchTab("Powerups");
+        foreach (var powerup in catalog.items.Where(item => item.category == ItemCategory.Powerup))
+        {
+            var card = content.Find("PowerupCard" + (int)powerup.item);
+            Check(card && card.gameObject.activeInHierarchy, "Powerup missing from its dedicated tab: " + powerup.name);
+        }
+        window.SwitchTab("Items");
 
         string savedAmount = amount.text;
         int events = 0;
@@ -31,7 +40,7 @@ public static class DebugItemChecks
         {
             content.Find("GiftPreset2").GetComponent<Button>().onClick.Invoke();
             Check(amount.text == "64", "Stack preset did not set the amount");
-            foreach (var item in catalog.items)
+            foreach (var item in giftableItems)
             {
                 var card = content.Find("GiftCard" + (int)item.item).GetComponent<Button>();
                 Check(card && card.gameObject.activeInHierarchy, "Item card missing: " + item.name);
@@ -48,7 +57,7 @@ public static class DebugItemChecks
                 }
             }
 
-            var first = catalog.items[0];
+            var first = giftableItems[0];
             var firstCard = content.Find("GiftCard" + (int)first.item).GetComponent<Button>();
             int initial = inventory.GetCount(first);
             int fill = int.MaxValue - initial;
@@ -68,7 +77,7 @@ public static class DebugItemChecks
             Check(!firstCard.gameObject.activeInHierarchy, "Gift controls visible on tests tab");
             window.SwitchTab("Items");
             Check(firstCard.gameObject.activeInHierarchy, "Items tab did not restore the cards");
-            Check(events >= catalog.items.Length * 2, "Inventory events missing");
+            Check(events >= giftableItems.Length * 2, "Inventory events missing");
         }
         finally
         {

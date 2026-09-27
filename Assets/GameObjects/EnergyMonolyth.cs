@@ -39,7 +39,7 @@ public class EnergyMonolyth : MonoBehaviour
 
     public void Recharge()
     {
-        if (stats.Money <= 0)
+        if (!stats.HasInfiniteMoney && stats.Money <= 0)
         {
             AudioManager.Instance.Play(SoundType.UI_Alert);
             return;
@@ -48,9 +48,9 @@ public class EnergyMonolyth : MonoBehaviour
 
         float cost = energyManager.delta * rechargeCost;
 
-        if (cost <= stats.Money)
+        if (stats.HasInfiniteMoney || cost <= stats.Money)
         {
-            stats.AddMoney(-Mathf.FloorToInt(cost));
+            if (!stats.HasInfiniteMoney) stats.AddMoney(-Mathf.FloorToInt(cost));
             energyManager.energy = stats.MaxEnergy;
         }
         else

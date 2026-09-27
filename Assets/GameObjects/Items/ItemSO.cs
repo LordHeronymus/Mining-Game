@@ -2,7 +2,7 @@ using UnityEngine;
 
 public enum Item
 {
-    //next 28
+    //next 30
 
     Coal = 3,
     Copper = 0,
@@ -33,6 +33,8 @@ public enum Item
     Medkit = 25,
     Fabric = 26,
     HealingHerbs = 27,
+    Titanium = 28,
+    Tungsten = 29,
 }
 
 public enum ItemCategory
@@ -55,4 +57,19 @@ public class ItemSO : ScriptableObject
 
     [Header("Stats")]
     public int worth = 0;
+    [Min(0f)] public float weight = 1f;
+
+    public bool HasFixedZeroWeight => item == Item.Axe || item == Item.Scythe ||
+        item == Item.CopperPickaxe || item == Item.IronPickaxe || item == Item.SteelPickaxe ||
+        item == Item.TitaniumPickaxe || item == Item.TungstenPickaxe ||
+        item == Item.ObsidianPickaxe || item == Item.MythrilPickaxe || item == Item.DiamondPickaxe;
+
+    public float EffectiveWeight => HasFixedZeroWeight || float.IsNaN(weight) || float.IsInfinity(weight)
+        ? 0f : Mathf.Max(0f, weight);
+
+    void OnValidate()
+    {
+        if (HasFixedZeroWeight) weight = 0f;
+        else if (float.IsNaN(weight) || float.IsInfinity(weight) || weight < 0f) weight = 0f;
+    }
 }

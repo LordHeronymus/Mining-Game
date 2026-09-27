@@ -19,7 +19,7 @@ public static class OreOverlayChecks
         // Edit-mode gameplay checks must not call a stale audio singleton left by play mode.
         var audio = AudioManager.Instance;
         AudioManager.Instance = null;
-        try { return new[] { Run(BlockType.CopperOre), Run(BlockType.GoldOre), Run(BlockType.SilverOre), Run(BlockType.PlatinumOre), Run(BlockType.IronOre), Run(BlockType.Coal) }; }
+        try { return new[] { Run(BlockType.CopperOre), Run(BlockType.GoldOre), Run(BlockType.SilverOre), Run(BlockType.PlatinumOre), Run(BlockType.IronOre), Run(BlockType.Coal), Run(BlockType.TitaniumOre) }; }
         finally { AudioManager.Instance = audio; }
     }
 

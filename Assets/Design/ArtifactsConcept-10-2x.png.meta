@@ -1,0 +1,555 @@
+fileFormatVersion: 2
+guid: 272bc0e8ce689dd4699fd90f61151019
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1522282282286533517
+    second: ArtifactsConcept-10-2x_0
+  - first:
+      213: 1690179499985515896
+    second: ArtifactsConcept-10-2x_1
+  - first:
+      213: 8962490876812229891
+    second: ArtifactsConcept-10-2x_2
+  - first:
+      213: 4848858685984279604
+    second: ArtifactsConcept-10-2x_3
+  - first:
+      213: 1501002727196739424
+    second: ArtifactsConcept-10-2x_4
+  - first:
+      213: -7304336821199072135
+    second: ArtifactsConcept-10-2x_5
+  - first:
+      213: -884787473939543591
+    second: ArtifactsConcept-10-2x_6
+  - first:
+      213: -920703285058432253
+    second: ArtifactsConcept-10-2x_7
+  - first:
+      213: 1737355676852756874
+    second: ArtifactsConcept-10-2x_8
+  - first:
+      213: -620263775083485249
+    second: ArtifactsConcept-10-2x_9
+  - first:
+      213: -7929597346930773464
+    second: ArtifactsConcept-10-2x_10
+  - first:
+      213: -3837990927964512856
+    second: ArtifactsConcept-10-2x_11
+  - first:
+      213: -3904623598491854105
+    second: ArtifactsConcept-10-2x_12
+  - first:
+      213: 285863827340241460
+    second: ArtifactsConcept-10-2x_13
+  - first:
+      213: -5810458724134967915
+    second: ArtifactsConcept-10-2x_14
+  - first:
+      213: -6217569664020360868
+    second: ArtifactsConcept-10-2x_15
+  - first:
+      213: 466764355223469381
+    second: ArtifactsConcept-10-2x_16
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_0
+      rect:
+        serializedVersion: 2
+        x: 43
+        y: 804
+        width: 696
+        height: 685
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8b4f8b9bab302510800000000000000
+      internalID: 1522282282286533517
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_1
+      rect:
+        serializedVersion: 2
+        x: 871
+        y: 814
+        width: 646
+        height: 711
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 875b84fdc49b47710800000000000000
+      internalID: 1690179499985515896
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_2
+      rect:
+        serializedVersion: 2
+        x: 1099
+        y: 803
+        width: 257
+        height: 39
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30d721797f9216c70800000000000000
+      internalID: 8962490876812229891
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_3
+      rect:
+        serializedVersion: 2
+        x: 1645
+        y: 771
+        width: 682
+        height: 729
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43c0928d84b9a4340800000000000000
+      internalID: 4848858685984279604
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_4
+      rect:
+        serializedVersion: 2
+        x: 2545
+        y: 803
+        width: 518
+        height: 722
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06744791702a4d410800000000000000
+      internalID: 1501002727196739424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_5
+      rect:
+        serializedVersion: 2
+        x: 3252
+        y: 804
+        width: 651
+        height: 723
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9749f947c58c1aa90800000000000000
+      internalID: -7304336821199072135
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_6
+      rect:
+        serializedVersion: 2
+        x: 85
+        y: 80
+        width: 631
+        height: 672
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9d94e12fa7a98b3f0800000000000000
+      internalID: -884787473939543591
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_7
+      rect:
+        serializedVersion: 2
+        x: 267
+        y: 742
+        width: 298
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3039e868d310933f0800000000000000
+      internalID: -920703285058432253
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_8
+      rect:
+        serializedVersion: 2
+        x: 1617
+        y: 63
+        width: 702
+        height: 684
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a81215f78c35c1810800000000000000
+      internalID: 1737355676852756874
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_9
+      rect:
+        serializedVersion: 2
+        x: 3383
+        y: 89
+        width: 414
+        height: 660
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb72b1302616467f0800000000000000
+      internalID: -620263775083485249
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_10
+      rect:
+        serializedVersion: 2
+        x: 3498
+        y: 740
+        width: 49
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 822bf4cc93964f190800000000000000
+      internalID: -7929597346930773464
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_11
+      rect:
+        serializedVersion: 2
+        x: 3547
+        y: 744
+        width: 54
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8add087e597bcbac0800000000000000
+      internalID: -3837990927964512856
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_12
+      rect:
+        serializedVersion: 2
+        x: 891
+        y: 99
+        width: 598
+        height: 616
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ea1946568dffc9c0800000000000000
+      internalID: -3904623598491854105
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_13
+      rect:
+        serializedVersion: 2
+        x: 2477
+        y: 129
+        width: 712
+        height: 586
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43aafbae2a797f300800000000000000
+      internalID: 285863827340241460
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_14
+      rect:
+        serializedVersion: 2
+        x: 247
+        y: 63
+        width: 228
+        height: 57
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 595add5539a1d5fa0800000000000000
+      internalID: -5810458724134967915
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_15
+      rect:
+        serializedVersion: 2
+        x: 1355
+        y: 79
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c5152d92551c6b9a0800000000000000
+      internalID: -6217569664020360868
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArtifactsConcept-10-2x_16
+      rect:
+        serializedVersion: 2
+        x: 1515
+        y: 45
+        width: 22
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54db8e245b74a7600800000000000000
+      internalID: 466764355223469381
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable: {}
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

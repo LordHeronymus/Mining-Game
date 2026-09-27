@@ -29,21 +29,26 @@ public static class SetupArtifacts
 
         var importer = AssetImporter.GetAtPath(Sheet) as TextureImporter;
         if (!importer) throw new InvalidOperationException("Artefakt-Sheet fehlt: " + Sheet);
+        importer.GetSourceTextureWidthAndHeight(out int sheetWidth, out int sheetHeight);
+        float scaleX = sheetWidth / 1983f;
+        float scaleY = sheetHeight / 793f;
         importer.textureType = TextureImporterType.Sprite;
         importer.spriteImportMode = SpriteImportMode.Multiple;
-        importer.spritePixelsPerUnit = 792f;
+        importer.spritePixelsPerUnit = 792f * scaleY;
+        importer.maxTextureSize = Mathf.NextPowerOfTwo(Mathf.Max(sheetWidth, sheetHeight));
         importer.alphaIsTransparency = true;
         importer.mipmapEnabled = false;
         importer.filterMode = FilterMode.Bilinear;
         var slices = new SpriteMetaData[Names.Length];
+        int[] xBounds = { 0, 396, 793, 1189, 1586, 1983 };
         for (int i = 0; i < slices.Length; i++)
         {
             int column = i % 5;
             int row = i / 5;
-            int left = 1983 * column / 5;
-            int right = 1983 * (column + 1) / 5;
-            int bottom = row == 0 ? 396 : 0;
-            int top = row == 0 ? 793 : 396;
+            int left = Mathf.RoundToInt(xBounds[column] * scaleX);
+            int right = Mathf.RoundToInt(xBounds[column + 1] * scaleX);
+            int bottom = Mathf.RoundToInt((row == 0 ? 396 : 0) * scaleY);
+            int top = Mathf.RoundToInt((row == 0 ? 793 : 396) * scaleY);
             slices[i] = new SpriteMetaData
             {
                 name = "Artifact_" + (i + 1).ToString("00"),

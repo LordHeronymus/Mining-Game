@@ -55,7 +55,7 @@ public sealed class CompactHud : MonoBehaviour
     PlayerLadder ladder;
     WorkbenchPanel workbench;
     Image dragIcon;
-    RectTransform pickaxeIcon;
+    Image pickaxeIcon;
     int draggedSlot = -1;
     bool wasBuilding;
     int lastMoney = int.MinValue, lastPoints = int.MinValue, lastDepth = int.MinValue,
@@ -105,13 +105,13 @@ public sealed class CompactHud : MonoBehaviour
         visibility.blocksRaycasts = visibility.interactable = !blocked || inventoryOpen;
         var selected = EventSystem.current ? EventSystem.current.currentSelectedGameObject : null;
         bool typing = selected && selected.GetComponent<TMP_InputField>();
-        if (!typing && (!blocked || inventoryOpen) && Input.GetKeyDown(KeyCode.H))
+        if (!typing && (!blocked || inventoryOpen) && GameBindings.Down(GameAction.UseMedkit))
             StatsManager.Instance?.TryUseMedkit();
         if (blocked || typing) return;
         for (int i = 0; i < 8; i++)
-            if (Input.GetKeyDown((KeyCode)((int)KeyCode.Alpha1 + i)) || Input.GetKeyDown((KeyCode)((int)KeyCode.Keypad1 + i))) SelectSlot(i + 1);
-        if (Input.GetKeyDown(KeyCode.Q)) SelectSlot((SelectedSlot + 8) % 9);
-        if (Input.GetKeyDown(KeyCode.E)) SelectSlot((SelectedSlot + 1) % 9);
+            if (GameBindings.Down((GameAction)((int)GameAction.Slot1 + i))) SelectSlot(i + 1);
+        if (GameBindings.Down(GameAction.PreviousSlot)) SelectSlot((SelectedSlot + 8) % 9);
+        if (GameBindings.Down(GameAction.NextSlot)) SelectSlot((SelectedSlot + 1) % 9);
         if (ladder && ladder.BuildMode != wasBuilding)
         {
             wasBuilding = ladder.BuildMode;
@@ -149,7 +149,7 @@ public sealed class CompactHud : MonoBehaviour
         healthFlashTime = Mathf.Max(0f, healthFlashTime - Time.unscaledDeltaTime);
         heartbeatPulseTime = Mathf.Max(0f, heartbeatPulseTime - Time.unscaledDeltaTime);
         float healthFraction = stats ? Mathf.Clamp01(stats.Health / Mathf.Max(1f, stats.MaxHealth)) : 1f;
-        if (GameOverPanel.IsOpen || (stats && stats.Health <= 0f))
+        if (GameOverPanel.IsOpen || GameVictoryPanel.IsOpen || (stats && stats.Health <= 0f))
         {
             criticalHealth = false;
             damagePulseTime = healthFlashTime = heartbeatPulseTime = 0f;
@@ -380,10 +380,13 @@ public sealed class CompactHud : MonoBehaviour
             wasBuilding = false;
         }
         selections[0].enabled = SelectedSlot == 0;
+        var equippedPickaxe = InventoryManager.Instance ? InventoryManager.Instance.EquippedPickaxe : null;
         if (pickaxeIcon)
         {
-            pickaxeIcon.anchorMin = pickaxeIcon.anchorMax = pickaxeIcon.pivot = new Vector2(.5f, .5f);
-            pickaxeIcon.anchoredPosition = new Vector2(0f, HotbarIconVerticalOffset);
+            pickaxeIcon.sprite = equippedPickaxe && equippedPickaxe.icon ? equippedPickaxe.icon : pickaxeSprite;
+            var pickaxeRect = pickaxeIcon.rectTransform;
+            pickaxeRect.anchorMin = pickaxeRect.anchorMax = pickaxeRect.pivot = new Vector2(.5f, .5f);
+            pickaxeRect.anchoredPosition = new Vector2(0f, HotbarIconVerticalOffset);
         }
         for (int i = 0; i < 8; i++)
         {
@@ -485,7 +488,7 @@ public sealed class CompactHud : MonoBehaviour
         pickaxeButton.navigation=new Navigation {mode=Navigation.Mode.None}; pickaxeButton.onClick.AddListener(()=>SelectSlot(0));
         selections[0]=Image("Selection",pickaxe.transform,0,0,66,66,selectedSprite,Color.white);
         var pickaxeImage=Image("Pickaxe",pickaxe.transform,9,9,48,48,pickaxeSprite,Color.white); pickaxeImage.preserveAspect=true;
-        pickaxeIcon=pickaxeImage.rectTransform;
+        pickaxeIcon=pickaxeImage;
         for(int i=0;i<8;i++)
         {
             int index=i+1; var bg=Image("Slot "+(i+2),hotbar,86+i*72,0,66,66,slotSprite,Color.white); bg.raycastTarget=true;

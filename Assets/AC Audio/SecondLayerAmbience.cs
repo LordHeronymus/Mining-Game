@@ -43,6 +43,7 @@ public sealed class SecondLayerAmbience : MonoBehaviour
     double nextGhostWhisperTime;
 
     float Crossfade => clip ? Mathf.Min(crossfadeSeconds, clip.length * .25f) : .01f;
+    float SegmentDuration(AudioSource source) => clip.length / Mathf.Max(.1f, Mathf.Abs(source.pitch));
 
     void Awake()
     {
@@ -86,8 +87,10 @@ public sealed class SecondLayerAmbience : MonoBehaviour
         if (!running)
         {
             current = 0;
+            sources[current].pitch = AudioManager.TunedPitch(clip, 1f);
             sources[current].Play();
-            nextStart = now + clip.length - Crossfade;
+            nextStart = now + SegmentDuration(sources[current]) - Crossfade;
+            sources[1].pitch = AudioManager.TunedPitch(clip, 1f);
             sources[1].PlayScheduled(nextStart);
             running = true;
         }
@@ -99,7 +102,9 @@ public sealed class SecondLayerAmbience : MonoBehaviour
         }
         float blend = transitioning ? Mathf.SmoothStep(0f, 1f,
             Mathf.Clamp01((float)(now - transitionStart) / Mathf.Max(.01f, Crossfade))) : 0f;
-        float ambienceGain = volume * gain * AudioManager.GetAmbienceVolume(AmbienceType.Cave);
+        float ambienceGain = AudioManager.TunedAmbienceVolume(clip,
+            volume * gain * UltroniumAltarChamber.StandardLayerAmbienceGain *
+            AudioManager.GetAmbienceVolume(AmbienceType.Cave));
         sources[current].volume = ambienceGain * (1f - blend);
         sources[1 - current].volume = ambienceGain * blend;
         if (transitioning && blend >= 1f)
@@ -107,7 +112,8 @@ public sealed class SecondLayerAmbience : MonoBehaviour
             sources[current].Stop();
             current = 1 - current;
             transitioning = false;
-            nextStart = transitionStart + clip.length - Crossfade;
+            nextStart = transitionStart + SegmentDuration(sources[current]) - Crossfade;
+            sources[1 - current].pitch = AudioManager.TunedPitch(clip, 1f);
             sources[1 - current].PlayScheduled(nextStart);
         }
     }
@@ -159,7 +165,8 @@ public sealed class SecondLayerAmbience : MonoBehaviour
         if (tribalSongPlaying && tribalSongSource.isPlaying)
         {
             float fadeIn = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((float)(now - tribalSongStartTime) / 1.5f));
-            tribalSongSource.volume = tribalSongVolume * fadeIn * AudioManager.GetAmbienceVolume(AmbienceType.Cave);
+            tribalSongSource.volume = AudioManager.TunedAmbienceVolume(tribalSongClip,
+                tribalSongVolume * fadeIn * AudioManager.GetAmbienceVolume(AmbienceType.Cave));
             return;
         }
         if (tribalSongPlaying)
@@ -176,6 +183,7 @@ public sealed class SecondLayerAmbience : MonoBehaviour
 
         tribalSongSource.time = 0f;
         tribalSongSource.volume = 0f;
+        tribalSongSource.pitch = AudioManager.TunedPitch(tribalSongClip, 1f);
         tribalSongSource.Play();
         tribalSongPlaying = true;
         tribalSongStartTime = now;
@@ -200,7 +208,8 @@ public sealed class SecondLayerAmbience : MonoBehaviour
         double now = Time.unscaledTimeAsDouble;
         if (ghostWhisperPlaying && ghostWhisperSource.isPlaying)
         {
-            ghostWhisperSource.volume = ghostWhisperVolume * AudioManager.GetAmbienceVolume(AmbienceType.Cave);
+            ghostWhisperSource.volume = AudioManager.TunedAmbienceVolume(ghostWhisperSource.clip,
+                ghostWhisperVolume * AudioManager.GetAmbienceVolume(AmbienceType.Cave));
             return;
         }
         if (ghostWhisperPlaying)
@@ -218,7 +227,9 @@ public sealed class SecondLayerAmbience : MonoBehaviour
         var clip = ghostWhisperClips[windRandom.Next(ghostWhisperClips.Length)];
         if (!clip) return;
         ghostWhisperSource.clip = clip;
-        ghostWhisperSource.volume = ghostWhisperVolume * AudioManager.GetAmbienceVolume(AmbienceType.Cave);
+        ghostWhisperSource.volume = AudioManager.TunedAmbienceVolume(clip,
+            ghostWhisperVolume * AudioManager.GetAmbienceVolume(AmbienceType.Cave));
+        ghostWhisperSource.pitch = AudioManager.TunedPitch(clip, 1f);
         ghostWhisperSource.Play();
         ghostWhisperPlaying = true;
     }
@@ -274,13 +285,17 @@ public sealed class SecondLayerAmbience : MonoBehaviour
         {
             if (windSource.time >= windClip.length - .02f) windSource.time = 0f;
             windSource.UnPause();
-            if (!windSource.isPlaying) windSource.Play();
+            if (!windSource.isPlaying)
+            {
+                windSource.pitch = AudioManager.TunedPitch(windClip, 1f);
+                windSource.Play();
+            }
         }
         else if (!windActive && currentWindGain <= 0f && windSource.isPlaying)
             windSource.Pause();
 
-        windSource.volume = windVolume * currentWindGain * layerGain *
-            AudioManager.GetAmbienceVolume(AmbienceType.Cave);
+        windSource.volume = AudioManager.TunedAmbienceVolume(windClip,
+            windVolume * currentWindGain * layerGain * AudioManager.GetAmbienceVolume(AmbienceType.Cave));
     }
 
     float RandomRange(float min, float max)

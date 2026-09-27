@@ -1,51 +1,76 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering.Universal;
 
 [DisallowMultipleComponent]
 public sealed class PlacedTorch : MonoBehaviour
 {
-    const float SpriteScale = .12f;
-    const float LightRadius = 4.5f;
+    const float HolderScale = .07f;
+    const float LightAboveFlameEmitter = .13f;
+    const float LightCellInset = .03f;
+    public const float PropagationDistance = 2f;
     const float LightIntensity = .85f;
     static readonly HashSet<PlacedTorch> active = new();
+    public static event System.Action<MapGenerator> Changed;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStaticState() => active.Clear();
+    static void ResetStaticState()
+    {
+        active.Clear();
+        Changed = null;
+    }
 
     MapGenerator map;
     Vector3Int cell;
     ItemSO item;
     public static IEnumerable<PlacedTorch> Active => active;
     public MapGenerator OwnerMap => map;
-    public Vector2 LightPosition => transform.position + new Vector3(.18f, .65f, 0f);
-    public float Radius => LightRadius;
-    public float Intensity => LightIntensity;
-
-    public static float BrightnessAt(Vector2 worldPosition, MapGenerator map)
+    public Vector3 LightLocalPosition
     {
-        float brightness = 0f;
+        get
+        {
+            var offset = new Vector3(map ? map.torchFlameOffsetX : 0f,
+                map ? map.torchFlameOffsetY + LightAboveFlameEmitter : .42f, 0f);
+            if (!map || !map.Terrain) return offset;
+            var terrain = map.Terrain;
+            if (!terrain.HasTile(terrain.WorldToCell(transform.TransformPoint(offset)))) return offset;
+            Vector3 center = transform.InverseTransformPoint(terrain.GetCellCenterWorld(cell));
+            float halfWidth = terrain.transform.TransformVector(
+                Vector3.right * terrain.layoutGrid.cellSize.x).magnitude * .5f;
+            float halfHeight = terrain.transform.TransformVector(
+                Vector3.up * terrain.layoutGrid.cellSize.y).magnitude * .5f;
+            offset.x = Mathf.Clamp(offset.x, center.x - halfWidth + LightCellInset,
+                center.x + halfWidth - LightCellInset);
+            offset.y = Mathf.Clamp(offset.y, center.y - halfHeight + LightCellInset,
+                center.y + halfHeight - LightCellInset);
+            return offset;
+        }
+    }
+    public Vector2 LightPosition => transform.TransformPoint(LightLocalPosition);
+    public float Intensity => LightIntensity * (map ? Mathf.Clamp(map.torchBrightness, 0f, 2f) : 1f);
+
+    public static void ApplySettings(MapGenerator ownerMap)
+    {
+        if (!ownerMap) return;
         foreach (var torch in active)
         {
-            if (!torch || torch.map != map) continue;
-            float distance = Vector2.Distance(worldPosition, torch.LightPosition);
-            if (distance >= torch.Radius) continue;
-            float falloff = 1f - Mathf.SmoothStep(0f, 1f, distance / torch.Radius);
-            brightness = Mathf.Max(brightness, torch.Intensity * falloff);
+            if (!torch || torch.map != ownerMap) continue;
+            torch.GetComponent<TorchFlame>()?.ApplySettings();
         }
-        return Mathf.Clamp01(brightness);
+        Changed?.Invoke(ownerMap);
     }
 
     void OnEnable()
     {
         active.Add(this);
         if (map) map.Generated += OnMapGenerated;
+        Changed?.Invoke(map);
     }
 
     void OnDisable()
     {
         active.Remove(this);
         if (map) map.Generated -= OnMapGenerated;
+        Changed?.Invoke(map);
     }
 
     void OnMapGenerated() => Destroy(gameObject);
@@ -57,14 +82,15 @@ public sealed class PlacedTorch : MonoBehaviour
         foreach (var torch in active)
         {
             if (!torch || !torch.map || !torch.item) continue;
-            var renderer = torch.GetComponent<SpriteRenderer>();
+            var renderer = torch.GetComponentInChildren<SpriteRenderer>();
             if (!renderer) continue;
             var bounds = renderer.bounds;
             if (worldPoint.x < bounds.min.x || worldPoint.x > bounds.max.x ||
                 worldPoint.y < bounds.min.y || worldPoint.y > bounds.max.y ||
                 Vector2.Distance(playerPosition, torch.map.Terrain.GetCellCenterWorld(torch.cell)) > reach ||
-                inventory.GetCount(torch.item) == int.MaxValue) continue;
+                !inventory.CanAdd(torch.item)) continue;
             inventory.Add(torch.item);
+            AudioManager.Instance?.PlayTorchSound(false);
             Destroy(torch.gameObject);
             return true;
         }
@@ -82,14 +108,11 @@ public sealed class PlacedTorch : MonoBehaviour
         Vector2 targetCenter = terrain.GetCellCenterWorld(target);
         if (target.z != 0 || target.x < -map.GeneratedWidth / 2 ||
             target.x >= -map.GeneratedWidth / 2 + map.GeneratedWidth ||
-            target.y < 1 - map.GeneratedHeight || terrain.HasTile(target) ||
+            target.y < 1 - map.GeneratedHeight || target.y > 0 || terrain.HasTile(target) ||
             Vector2.Distance(playerPosition, targetCenter) > reach)
             return false;
 
-        bool supported = terrain.HasTile(target + Vector3Int.down) ||
-            terrain.HasTile(target + Vector3Int.left) || terrain.HasTile(target + Vector3Int.right);
-        if (!supported) return false;
-        var sprite = item.icon;
+        var sprite = Resources.Load<Sprite>("Torches/TorchHolderSprite");
         if (!sprite) return false;
         foreach (var placed in active)
             if (placed && placed.map == map && placed.cell == target) return false;
@@ -98,27 +121,23 @@ public sealed class PlacedTorch : MonoBehaviour
         var instance = new GameObject("Placed Torch");
         instance.SetActive(false);
         instance.transform.SetParent(map.transform, false);
-        instance.transform.localScale = Vector3.one * SpriteScale;
-        Vector3 cellBottom = terrain.CellToWorld(target);
-        instance.transform.position = new Vector3(
-            terrain.GetCellCenterWorld(target).x - sprite.bounds.size.x * SpriteScale * .5f,
-            cellBottom.y, 0f);
-        var renderer = instance.AddComponent<SpriteRenderer>();
+        instance.transform.position = new Vector3(targetCenter.x, targetCenter.y, 0f);
+        var holder = new GameObject("Torch Holder");
+        holder.transform.SetParent(instance.transform, false);
+        holder.transform.localScale = Vector3.one * HolderScale;
+        var renderer = holder.AddComponent<SpriteRenderer>();
         renderer.sprite = sprite;
         renderer.sortingLayerName = "Default";
-        renderer.sortingOrder = 10;
+        renderer.sortingOrder = -2;
         var torch = instance.AddComponent<PlacedTorch>();
         torch.map = map;
         torch.cell = target;
         torch.item = item;
-        var light = instance.AddComponent<Light2D>();
-        light.lightType = Light2D.LightType.Point;
-        light.color = new Color(1f, .58f, .24f, 1f);
-        light.intensity = 1.25f;
-        light.pointLightInnerRadius = 1f;
-        light.pointLightOuterRadius = LightRadius;
-        light.shadowsEnabled = false;
+        var flame = instance.AddComponent<TorchFlame>();
+        flame.Initialize(map);
         instance.SetActive(true);
+        flame.Play();
+        AudioManager.Instance?.PlayTorchSound(true);
         return true;
     }
 }

@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: ObsidianPickaxe
   m_EditorClassIdentifier: 
   item: 19
-  category: 1
+  category: 4
   displayName: Obsidianspitzhacke
   icon: {fileID: 21300000, guid: 5f1e736fe818a094a89a4f24a02b75cf, type: 3}
   themeColor: {r: 1, g: 0.86, b: 0.58, a: 1}
   worth: 0
+  weight: 0

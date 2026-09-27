@@ -15,6 +15,12 @@ public static class CraftingService
         if (recipe.output.category == ItemCategory.Powerup) maximum = Mathf.Min(maximum, 1);
         foreach (var cost in costs)
             maximum = Mathf.Min(maximum, inventory.GetCount(cost.Key) / cost.Value);
+        double weightPerBatch = recipe.output.EffectiveWeight * (double)recipe.outputAmount;
+        foreach (var cost in costs)
+            weightPerBatch -= cost.Key.EffectiveWeight * (double)cost.Value;
+        if (weightPerBatch > 0d && !GameplayTestSettings.NoWeight)
+            maximum = (int)System.Math.Min(maximum, System.Math.Max(0d,
+                System.Math.Floor((inventory.MaximumWeight - inventory.TotalWeight + 0.00001d) / weightPerBatch)));
         return Mathf.Max(0, maximum);
     }
 

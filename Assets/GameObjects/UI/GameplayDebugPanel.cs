@@ -29,7 +29,8 @@ public class GameplayDebugPanel : MonoBehaviour
     {
         SetVisible(false);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        gameObject.AddComponent<GameplayDebugWindow>();
+        if (!GetComponent<GameplayDebugWindow>())
+            gameObject.AddComponent<GameplayDebugWindow>();
         DisableInputChildRaycasts(diggingSpeedInput);
         diggingSpeedInput.onEndEdit.AddListener(ApplyInput);
         foreach (var input in lightInputs)
@@ -67,8 +68,8 @@ public class GameplayDebugPanel : MonoBehaviour
     void Update()
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (Input.GetKeyDown(KeyCode.F1)) Toggle();
-        else if (IsOpen && Input.GetKeyDown(KeyCode.Escape)) Close();
+        if (GameBindings.Down(GameAction.DebugPanel) && (!GameplayInputBlocker.IsBlocked || IsOpen)) Toggle();
+        else if (IsOpen && GameBindings.Down(GameAction.Settings)) Close();
 #endif
     }
 
@@ -92,7 +93,15 @@ public class GameplayDebugPanel : MonoBehaviour
         if (window && (window.IsTestTab || window.IsMiscTab)) { if (!window.ApplyTestInput()) return; }
         else if (window && window.IsIconTab) { if (!window.CommitIconInputs()) return; }
         else if (window && window.IsRecipeTab) { if (!window.CommitRecipeInputs()) return; }
-        else if (window && window.IsStartingResourcesTab) { if (!window.CommitStartingResources()) return; }
+        else if (window && window.IsGameplayTab)
+        {
+            if (!window.CommitStartingResources() || !TryApplyAll()) return;
+        }
+        else if (window && window.IsWorldTab)
+        {
+            if (!window.ApplyTorchSettings() || !TryApplyAll()) return;
+        }
+        else if (window && window.IsItemsTab) { if (!window.CommitItemWeight()) return; }
         else if (!TryApplyAll()) return;
         var events = EventSystem.current;
         if (events && events.currentSelectedGameObject &&

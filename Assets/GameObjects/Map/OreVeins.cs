@@ -3,6 +3,58 @@ using UnityEngine;
 
 public static class OreVeins
 {
+    public static int CompactThinTips(Block[] blocks, int width, int height,
+        Func<int, int, Block> baseBlock, Func<Block, int, bool> canPlace,
+        Func<int, int, bool> reserved = null, Block onlyOre = null)
+    {
+        if (blocks == null || width <= 0 || height <= 0 || blocks.Length != checked(width * height))
+            throw new ArgumentException("Invalid vein grid dimensions.");
+        if (baseBlock == null) throw new ArgumentNullException(nameof(baseBlock));
+        if (canPlace == null) throw new ArgumentNullException(nameof(canPlace));
+        int moved = 0;
+        for (int index = 0; index < blocks.Length; index++)
+        {
+            var ore = blocks[index];
+            if (!ore || !ore.HasOreOverlays || ore.id == BlockType.UltroniumOre ||
+                (onlyOre && ore != onlyOre)) continue;
+            int x = index % width, y = index / width;
+            if (SameNeighbors(x, y, ore, -1) != 1) continue;
+            int best = -1, bestScore = int.MinValue;
+            for (int dy = -2; dy <= 2; dy++)
+                for (int dx = -2; dx <= 2; dx++)
+                {
+                    int nx = x + dx, ny = y + dy;
+                    if (nx < 0 || nx >= width || ny < 0 || ny >= height ||
+                        dx * dx + dy * dy > 5 || !canPlace(ore, ny) ||
+                        (reserved != null && reserved(nx, ny))) continue;
+                    int candidate = ny * width + nx;
+                    var existing = blocks[candidate];
+                    if (!existing || (!existing.IsStone && existing.id != BlockType.Dirt)) continue;
+                    int contacts = SameNeighbors(nx, ny, ore, index);
+                    if (contacts < 2) continue;
+                    int score = contacts * 10 - dx * dx - dy * dy;
+                    if (score <= bestScore) continue;
+                    best = candidate;
+                    bestScore = score;
+                }
+            if (best < 0) continue;
+            blocks[best] = ore;
+            blocks[index] = baseBlock(x, y);
+            moved++;
+        }
+        return moved;
+
+        int SameNeighbors(int px, int py, Block target, int exclude)
+        {
+            int count = 0;
+            if (px > 0 && py * width + px - 1 != exclude && blocks[py * width + px - 1] == target) count++;
+            if (px + 1 < width && py * width + px + 1 != exclude && blocks[py * width + px + 1] == target) count++;
+            if (py > 0 && (py - 1) * width + px != exclude && blocks[(py - 1) * width + px] == target) count++;
+            if (py + 1 < height && (py + 1) * width + px != exclude && blocks[(py + 1) * width + px] == target) count++;
+            return count;
+        }
+    }
+
     public static bool HasVeinInNeighborhood(Block[] blocks, int width, int height, int x, int y)
     {
         if (blocks == null || width <= 0 || height <= 0 || blocks.Length != checked(width * height))

@@ -8,6 +8,7 @@ public sealed class GridDaylight
 {
     readonly int width, height;
     readonly bool[] solid;
+    readonly bool[] opaque;
     readonly float[] light;
     readonly bool[] queued;
     readonly Queue<int> queue = new Queue<int>();
@@ -23,13 +24,17 @@ public sealed class GridDaylight
     public float this[int x, int depth] => light[depth * width + x];
 
     public GridDaylight(int width, int height, bool[] solid, float daylight,
-        float downLoss, float sideLoss, float blockLoss, float exponentialStrength = 1f)
+        float downLoss, float sideLoss, float blockLoss, float exponentialStrength = 1f,
+        bool[] opaque = null)
     {
         if (width <= 0 || height <= 0 || solid == null || solid.Length != (long)width * height)
             throw new ArgumentException("Invalid daylight grid dimensions.");
         this.width = width;
         this.height = height;
         this.solid = (bool[])solid.Clone();
+        if (opaque != null && opaque.Length != solid.Length)
+            throw new ArgumentException("Invalid opaque grid dimensions.");
+        this.opaque = opaque != null ? (bool[])opaque.Clone() : new bool[solid.Length];
         light = new float[solid.Length];
         queued = new bool[solid.Length];
         this.daylight = Mathf.Clamp01(daylight);
@@ -84,6 +89,7 @@ public sealed class GridDaylight
             int x = i % width;
             int y = i / width;
             float value = light[i];
+            if (opaque[i]) { processed++; continue; }
             if (y + 1 < height) Spread(i + width, value * downFactor);
             if (y > 0) Spread(i - width, value * sideFactor);
             if (x > 0) Spread(i - 1, value * sideFactor);

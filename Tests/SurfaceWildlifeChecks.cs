@@ -56,6 +56,15 @@ public static class SurfaceWildlifeChecks
             }
             Tick(frogs, 0); Tick(snails, 0); Tick(flies, 3);
             Check(frogs.ActiveCount == 1 && snails.ActiveCount == 1, "Initial surface animals missing");
+            Check(map.Terrain.HasTile(Vector3Int.zero), "Fixture surface tile missing");
+            float probeX = map.Terrain.GetCellCenterWorld(Vector3Int.zero).x;
+            float probeFeetY = map.Terrain.CellToWorld(new Vector3Int(0, 1, 0)).y + .015f;
+            foreach (var group in new[] { frogs, snails })
+            {
+                bool hasGround = (bool)typeof(SurfaceCritters).GetMethod("HasGround", Private).Invoke(group,
+                    new object[] { probeX, probeX, .85f, probeFeetY });
+                Check(hasGround, "Collider contact offset made " + group.species + " mistake solid ground for a gap");
+            }
             Check(flies.ActiveCount == 0 && flies.Visibility == 0, "Fireflies visible during day");
             ((IList)typeof(SurfaceCritters).GetField("animals", Private).GetValue(snails)).Clear();
             typeof(SurfaceCritters).GetField("initialPopulation", Private).SetValue(snails, false);
@@ -142,6 +151,24 @@ public static class SurfaceWildlifeChecks
             camera.backgroundColor = new Color(.025f, .05f, .085f);
             camera.transform.position = new Vector3(0, 1.6f, -10); camera.orthographicSize = 2;
             Render(camera, target, ref capture, "SurfaceWildlife-Night.png");
+            var fallen = Animal(frogs);
+            Set(fallen, "falling", true); Set(fallen, "hasFallen", true); Set(fallen, "awaitingEntrance", false);
+            var fallenBody = Get<Rigidbody2D>(fallen, "body");
+            fallenBody.gravityScale = 0f; fallenBody.position = new Vector2(50, -20);
+            Tick(frogs, 0);
+            Check(frogs.ActiveCount == 2 && Get<bool>(Animal(frogs), "hasFallen"),
+                "Fallen animal blocked a replacement surface spawn or was removed");
+            typeof(SurfaceCritters).GetField("nextSpawn", Private).SetValue(frogs, 1000f);
+            fallenBody.position = new Vector2(0, 1f);
+            player.position = new Vector3(100, 1.6f, 0);
+            Tick(frogs, 13f);
+            Check(frogs.ActiveCount == 1, "Visible falling animal despawned before leaving the screen");
+            fallenBody.position = new Vector2(0, -20f);
+            Tick(frogs, 11.5f);
+            Check(frogs.ActiveCount == 1, "Off-screen falling animal ignored its normal despawn delay");
+            Tick(frogs, .6f);
+            Check(frogs.ActiveCount == 0, "Off-screen falling animal ignored normal distance despawn");
+            player.position = new Vector3(0, .5f, 0);
             map.RestorePreviewMetadata(3, 120, 1);
             Check(frogs.ActiveCount == 0 && snails.ActiveCount == 0 && flies.ActiveCount == 0, "Old map population retained");
             frogs.enabled = false; snails.enabled = false; flies.enabled = false;

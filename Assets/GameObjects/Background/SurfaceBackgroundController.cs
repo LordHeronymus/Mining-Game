@@ -29,14 +29,6 @@ public sealed class SurfaceBackgroundController : MonoBehaviour
     [Min(0.01f), InspectorName("Übergang (Blöcke)")]
     public float parallaxTransitionDepth = 5f;
 
-    [Header("Untergrund Layer 2")]
-    [Min(0.01f), InspectorName("Fade-Breite (Blöcke)")]
-    public float layer2FadeDepth = 20f;
-
-    [Header("Untergrund Layer 3")]
-    [Min(0.01f), InspectorName("Fade-Breite (Blöcke)")]
-    public float layer3FadeDepth = 20f;
-
     [Header("Oberflächen-Hintergrund")]
     [FormerlySerializedAs("backgroundBrightness")]
     [Range(0f, 2f), InspectorName("Helligkeit")]
@@ -52,14 +44,6 @@ public sealed class SurfaceBackgroundController : MonoBehaviour
     bool hasFrozenCameraDelta;
 
     public Camera RenderCamera => targetCamera ? targetCamera : Camera.main;
-    public MapLayer[] MapLayers
-    {
-        get
-        {
-            if (!map) map = FindFirstObjectByType<MapGenerator>();
-            return map ? map.layers : null;
-        }
-    }
     public float EffectiveZoom => float.IsNaN(zoom) || float.IsInfinity(zoom) ? 1f : Mathf.Max(0.01f, zoom);
 
     public float GetParallaxInfluence()
@@ -70,38 +54,9 @@ public sealed class SurfaceBackgroundController : MonoBehaviour
         return 1f - Mathf.SmoothStep(0f, 1f, blend);
     }
 
-    public float GetLayer2Blend()
-        => GetUndergroundBlend(1, layer2FadeDepth);
-
-    public float GetLayer3Blend()
-        => GetUndergroundBlend(2, layer3FadeDepth);
-
-    public float GetLayerBlend(int layerIndex)
-    {
-        var configured = MapLayers;
-        if (!TryGetPlayerDepth(out float depth) || configured == null || layerIndex <= 0 ||
-            layerIndex >= configured.Length || configured[layerIndex] == null) return 0f;
-        int end = configured[layerIndex].startDepth;
-        int width = Mathf.Min(Mathf.Max(0, configured[layerIndex].transitionWidth),
-            end - configured[layerIndex - 1].startDepth);
-        if (width == 0) return depth >= end ? 1f : 0f;
-        float blend = Mathf.InverseLerp(end - width, end, depth);
-        return Mathf.SmoothStep(0f, 1f, blend);
-    }
-
     public float GetSurfaceBackgroundBrightness()
         => Mathf.Clamp(surfaceBrightness, 0f, 2f);
 
-    float GetUndergroundBlend(int layerIndex, float fadeDepth)
-    {
-        if (!TryGetPlayerDepth(out float depth) || map.layers == null || map.layers.Length <= layerIndex ||
-            map.layers[layerIndex] == null)
-            return 0f;
-        float midpoint = map.layers[layerIndex].startDepth;
-        float halfWidth = Mathf.Max(0.01f, fadeDepth) * 0.5f;
-        float blend = Mathf.InverseLerp(midpoint - halfWidth, midpoint + halfWidth, depth);
-        return Mathf.SmoothStep(0f, 1f, blend);
-    }
     bool TryGetPlayerDepth(out float depth)
     {
         depth = 0f;

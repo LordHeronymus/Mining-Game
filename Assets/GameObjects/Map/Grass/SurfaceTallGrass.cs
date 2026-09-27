@@ -16,6 +16,8 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     [SerializeField, Min(0)] int maximumPatches = 60;
     [SerializeField, Range(0f, 100f)] float healingHerbRarityPercent = 30f;
     [SerializeField, Min(0f)] float healingHerbSpawnAreaSize = 18f;
+    [SerializeField, Range(0f, 100f)] float healingHerbConversionLimitPercent = 15f;
+    [SerializeField, Min(0f)] float healingHerbConversionFactor = .5f;
     [SerializeField, Min(1)] int minimumSpacing = 3;
     [SerializeField, Range(0f, 100f)] float clusterPercent = 60f;
     [SerializeField] Vector2Int clusterSize = new Vector2Int(3, 7);
@@ -38,6 +40,8 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     Transform generatedRoot;
     System.Random respawnRandom;
     float nextRespawn;
+    float nextConversion;
+    float scheduledConversionRate = float.NaN;
     bool rebuildPending;
     float appliedFiberSwayStrength = float.NaN;
     float appliedFiberSwayFrequency = float.NaN;
@@ -106,6 +110,8 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         healingHerbFiberYield.x = Mathf.Max(1, healingHerbFiberYield.x);
         healingHerbFiberYield.y = Mathf.Max(healingHerbFiberYield.x, healingHerbFiberYield.y);
         healingHerbSpawnAreaSize = Mathf.Max(0f, healingHerbSpawnAreaSize);
+        healingHerbConversionLimitPercent = Mathf.Clamp(healingHerbConversionLimitPercent, 0f, 100f);
+        healingHerbConversionFactor = Mathf.Max(0f, healingHerbConversionFactor);
         clusterPercent = Mathf.Clamp(clusterPercent, 0f, 100f);
         clusterSize.x = Mathf.Max(2, clusterSize.x);
         clusterSize.y = Mathf.Max(clusterSize.x, clusterSize.y);
@@ -134,6 +140,7 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         int width = map.GeneratedWidth;
         if (width <= 0 || maximumPatches <= 0) return;
         respawnRandom = new System.Random(map.ActiveSeed ^ 0x6D925A1);
+        ScheduleConversion();
         var trees = FindTrees();
         var candidates = new List<int>();
         int left = -width / 2;
@@ -234,8 +241,14 @@ public sealed class SurfaceTallGrass : MonoBehaviour
             if (map && map.IsGenerated) Rebuild();
             return;
         }
-        if (!Application.isPlaying || !map || !map.IsGenerated ||
-            patches.Count >= sites.Count || Time.time < nextRespawn || respawnRandom == null) return;
+        if (!Application.isPlaying || !map || !map.IsGenerated || respawnRandom == null) return;
+        if (scheduledConversionRate != ConversionRate) ScheduleConversion();
+        if (Time.time >= nextConversion)
+        {
+            ConvertOneGrass();
+            ScheduleConversion();
+        }
+        if (patches.Count >= sites.Count || Time.time < nextRespawn) return;
         int start = respawnRandom.Next(sites.Count);
         var trees = FindTrees();
         for (int i = 0; i < sites.Count; i++)
@@ -248,6 +261,11 @@ public sealed class SurfaceTallGrass : MonoBehaviour
             if (trees && trees.Protects(cell)) continue;
             float worldX = map.Terrain.GetCellCenterWorld(cell).x;
             if (NearBuilding(worldX)) continue;
+            if (Mathf.Abs(worldX - map.Terrain.GetCellCenterWorld(new Vector3Int(0, 0)).x) >= healingHerbSpawnAreaSize &&
+                medicinalHerbVariants != null && medicinalHerbVariants.Length > 0 &&
+                respawnRandom.NextDouble() < Mathf.Clamp01(healingHerbRarityPercent / 100f))
+                healingHerbSites.Add(x);
+            else healingHerbSites.Remove(x);
             Spawn(x, worldX);
             break;
         }
@@ -282,6 +300,51 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         float latest = Mathf.Max(earliest, respawnSeconds.y);
         nextRespawn = Time.time + Mathf.Lerp(earliest, latest,
             (float)respawnRandom.NextDouble());
+    }
+
+    float ConversionRate => Mathf.Clamp01(healingHerbRarityPercent / 100f) *
+        Mathf.Max(0f, healingHerbConversionFactor);
+
+    void ScheduleConversion()
+    {
+        scheduledConversionRate = ConversionRate;
+        if (respawnRandom == null || scheduledConversionRate <= 0f)
+        {
+            nextConversion = float.PositiveInfinity;
+            return;
+        }
+        float earliest = Mathf.Max(.1f, respawnSeconds.x);
+        float latest = Mathf.Max(earliest, respawnSeconds.y);
+        nextConversion = Time.time + Mathf.Lerp(earliest, latest,
+            (float)respawnRandom.NextDouble()) / scheduledConversionRate;
+    }
+
+    void ConvertOneGrass()
+    {
+        if (ConversionRate <= 0f || healingHerbConversionLimitPercent <= 0f ||
+            medicinalHerbVariants == null || medicinalHerbVariants.Length == 0 || patches.Count == 0) return;
+        int herbs = 0;
+        foreach (var patch in patches.Values)
+            if (patch && patch.IsHealingHerb) herbs++;
+        if (herbs >= Mathf.CeilToInt(patches.Count * healingHerbConversionLimitPercent / 100f)) return;
+
+        int selectedX = int.MinValue;
+        int eligible = 0;
+        float spawnX = map.Terrain.GetCellCenterWorld(new Vector3Int(0, 0)).x;
+        foreach (var pair in patches)
+        {
+            if (!pair.Value || pair.Value.IsHealingHerb) continue;
+            float worldX = map.Terrain.GetCellCenterWorld(new Vector3Int(pair.Key, 0)).x;
+            if (Mathf.Abs(worldX - spawnX) < healingHerbSpawnAreaSize) continue;
+            if (respawnRandom.Next(++eligible) == 0) selectedX = pair.Key;
+        }
+        if (selectedX == int.MinValue) return;
+        var target = patches[selectedX];
+        var renderer = target.GetComponent<SpriteRenderer>();
+        renderer.sprite = medicinalHerbVariants[(int)(OreVeins.Hash(map.ActiveSeed, selectedX, 0, 0x4D5641u) %
+            (uint)medicinalHerbVariants.Length)];
+        healingHerbSites.Add(selectedX);
+        target.Initialize(this, selectedX, true);
     }
 
     SurfaceTrees FindTrees()
@@ -327,6 +390,14 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     public bool CutAt(int surfaceCellX)
     {
         if (!HasScythe || !patches.TryGetValue(surfaceCellX, out var patch) || !patch) return false;
+        var inventory = InventoryManager.Instance;
+        int herbAmount = patch.IsHealingHerb && healingHerbs ? RollYield(healingHerbYield) : 0;
+        int fiberAmount = fiber ? RollYield(patch.IsHealingHerb ? healingHerbFiberYield : fiberYield) : 0;
+        double gainedWeight = (healingHerbs ? healingHerbs.EffectiveWeight * (double)herbAmount : 0d) +
+            (fiber ? fiber.EffectiveWeight * (double)fiberAmount : 0d);
+        if (!inventory || !inventory.CanFitWeight(gainedWeight) ||
+            (healingHerbs && herbAmount > 0 && inventory.GetCount(healingHerbs) > int.MaxValue - herbAmount) ||
+            (fiber && fiberAmount > 0 && inventory.GetCount(fiber) > int.MaxValue - fiberAmount)) return false;
         if (Application.isPlaying)
         {
             var particles = GetComponent<TallGrassCutParticles>();
@@ -334,23 +405,32 @@ public sealed class SurfaceTallGrass : MonoBehaviour
             particles.Burst(patch.GetComponent<SpriteRenderer>().bounds);
         }
         RemovePatch(surfaceCellX);
-        if (Application.isPlaying && InventoryManager.Instance)
+        if (Application.isPlaying)
         {
-            if (patch.IsHealingHerb)
-            {
-                if (healingHerbs) InventoryManager.Instance.Add(healingHerbs, respawnRandom != null
-                    ? respawnRandom.Next(Mathf.Max(1, healingHerbYield.x), Mathf.Max(healingHerbYield.x, healingHerbYield.y) + 1)
-                    : Mathf.Max(1, healingHerbYield.x));
-                if (fiber) InventoryManager.Instance.Add(fiber, respawnRandom != null
-                    ? respawnRandom.Next(Mathf.Max(1, healingHerbFiberYield.x), Mathf.Max(healingHerbFiberYield.x, healingHerbFiberYield.y) + 1)
-                    : Mathf.Max(1, healingHerbFiberYield.x));
-            }
-            else if (fiber) InventoryManager.Instance.Add(fiber, respawnRandom != null
-                ? respawnRandom.Next(Mathf.Max(1, fiberYield.x), Mathf.Max(fiberYield.x, fiberYield.y) + 1)
-                : Mathf.Max(1, fiberYield.x));
+            if (herbAmount > 0) inventory.Add(healingHerbs, herbAmount);
+            if (fiberAmount > 0) inventory.Add(fiber, fiberAmount);
         }
         return true;
     }
+
+    public bool RemoveWithoutYieldAt(int surfaceCellX)
+    {
+        if (!patches.TryGetValue(surfaceCellX, out var patch) || !patch) return false;
+        if (Application.isPlaying)
+        {
+            var renderer = patch.GetComponent<SpriteRenderer>();
+            var particles = GetComponent<TallGrassCutParticles>();
+            if (!particles) particles = gameObject.AddComponent<TallGrassCutParticles>();
+            if (renderer) particles.Burst(renderer.bounds);
+            AudioManager.Instance?.Play(SoundType.DryGrass);
+        }
+        RemovePatch(surfaceCellX);
+        return true;
+    }
+
+    int RollYield(Vector2Int range) => respawnRandom != null
+        ? respawnRandom.Next(Mathf.Max(1, range.x), Mathf.Max(range.x, range.y) + 1)
+        : Mathf.Max(1, range.x);
 
     public void RemoveNear(int surfaceCellX, int radius)
     {
@@ -361,6 +441,7 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     void RemovePatch(int x)
     {
         if (!patches.Remove(x, out var patch) || !patch) return;
+        healingHerbSites.Remove(x);
         patch.gameObject.SetActive(false);
         if (Application.isPlaying) Destroy(patch.gameObject);
         else DestroyImmediate(patch.gameObject);

@@ -16,7 +16,9 @@ public enum BlockType
     StoneLayer3 = 10,
     Dirt = 11,
     StoneLayer4 = 12,
-    UltroniumOre = 13
+    UltroniumOre = 13,
+    TitaniumOre = 14,
+    TungstenOre = 15
 }
 
 [CreateAssetMenu(fileName = "New BlockType", menuName = "Blocks/BlockType", order = 0)]
@@ -31,6 +33,7 @@ public class Block : ScriptableObject
 
     [Header("Stats")]
     public float hardness = 1f;
+    [Min(.01f)] public float hardnessIndex = 1f;
     [HideInInspector] public int points = 0;
     public bool isSolid = true;         
 

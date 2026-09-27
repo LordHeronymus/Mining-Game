@@ -17,7 +17,7 @@ public sealed partial class SurfaceCritters
             (camera.cullingMask & (1 << geometry.renderer.gameObject.layer)) == 0 || animal.age < .1f) return false;
         float progress = animal.jumping ? Mathf.Clamp01(animal.travel / Mathf.Max(.1f, hopDuration)) : 0f;
         float lift = Mathf.Sin(progress * Mathf.PI) * Mathf.Max(.1f, hopHeight);
-        var bounds = new Bounds(new Vector3(animal.x, surfaceY + lift + .25f * animal.scale, 0),
+        var bounds = new Bounds(new Vector3(animal.x, animal.y + lift + .25f * animal.scale, 0),
             new Vector3(1.05f * animal.scale, .55f * animal.scale, .02f));
         return GeometryUtility.TestPlanesAABB(viewPlanes, bounds);
     }
@@ -55,7 +55,7 @@ public sealed partial class SurfaceCritters
         }
         callingFrog = chosen;
         croakSource.clip = clip;
-        croakSource.pitch = 1f;
+        croakSource.pitch = AudioManager.TunedPitch(clip, 1f);
         ApplyCroakVolume(camera, chosen);
         croakSource.Play();
         float variation = Mathf.Clamp(-Mathf.Log(1f - (float)croakRandom.NextDouble()), .1f, 4f);
@@ -65,9 +65,10 @@ public sealed partial class SurfaceCritters
 
     void ApplyCroakVolume(Camera camera, Critter animal)
     {
-        croakSource.volume = Mathf.Clamp01(croakVolume) * AudioManager.GetAmbienceVolume(AmbienceType.Frogs);
+        croakSource.volume = AudioManager.TunedAmbienceVolume(croakSource.clip,
+            Mathf.Clamp01(croakVolume) * AudioManager.GetAmbienceVolume(AmbienceType.Frogs));
         croakSource.panStereo = Mathf.Clamp((camera.WorldToViewportPoint(
-            new Vector3(animal.x, surfaceY, 0)).x - .5f) * 1.4f, -.7f, .7f);
+            new Vector3(animal.x, animal.y, 0)).x - .5f) * 1.4f, -.7f, .7f);
     }
 
     void StopCroaking()

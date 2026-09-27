@@ -9,6 +9,7 @@ public class MapGenerator : MonoBehaviour
 {
     const int InitialGenerationRows = 128;
     const int StreamingRowsPerFrame = 4;
+    const float OreSubstrateInfluence = .7f;
     [Header("Map Size")]
     public int mapWidth = 100;
     public int mapHeight = 1000;
@@ -21,6 +22,38 @@ public class MapGenerator : MonoBehaviour
     [Range(.5f, 3f), InspectorName("Erzgröße (×)")] public float oreScale = 1.35f;
     [Range(1, 100), InspectorName("Übergangsdicke (Kacheln)")] public int transitionThickness = 15;
     [Range(-.5f, .5f), InspectorName("Gras Y-Versatz (Welteinheiten)")] public float grassYOffset;
+    [Header("Map Overview")]
+    [SerializeField, HideInInspector] public Color[] mapOverviewColors =
+    {
+        new Color32(244, 123, 32, 255),  // Stone / Übergang
+        new Color32(61, 156, 255, 255),  // Eisen
+        new Color32(255, 87, 34, 255),   // Kupfer
+        new Color32(255, 211, 0, 255),   // Gold
+        new Color32(231, 237, 245, 255), // Silber
+        new Color32(23, 25, 29, 255),    // Leer
+        new Color32(255, 62, 234, 255),  // Platin
+        new Color32(9, 11, 16, 255),     // Kohle
+        new Color32(0, 232, 255, 255),   // Diamant
+        new Color32(211, 91, 38, 255),   // Stein
+        new Color32(142, 63, 255, 255),  // Tiefstein 1
+        new Color32(196, 85, 28, 255),   // Erde
+        new Color32(49, 77, 255, 255),   // Tiefstein 2
+        new Color32(180, 0, 255, 255),   // Ultronium
+        new Color32(255, 255, 255, 255), // Titan
+        new Color32(111, 160, 208, 255)  // Wolfram
+    };
+    [SerializeField, HideInInspector] public Color mapOverviewPlayerColor = Color.cyan;
+    [Header("Torch Visuals")]
+    [Range(-2f, 2f)] public float torchFlameOffsetX;
+    [Range(-2f, 2f)] public float torchFlameOffsetY = .29f;
+    [Range(.1f, 3f)] public float torchFlameSize = 1f;
+    [Range(0f, 120f)] public float torchFlameFrequency = 49f;
+    [Range(0f, 2f)] public float torchBrightness = 1f;
+    [Header("Ultronium Altar")]
+    [Range(0f, .15f)] public float altarButtonPulseAmplitude = .035f;
+    [Range(0f, 3f)] public float altarButtonPulseFrequency = .65f;
+    [Range(0f, .2f)] public float altarButtonFloatAmplitude = .05f;
+    [Range(0f, 3f)] public float altarButtonFloatFrequency = .45f;
     [SerializeField] TileBase[] grassVariants;
     [SerializeField] bool continuousGrassStrip;
     [SerializeField] TileBase grassLeftEnd;
@@ -45,7 +78,9 @@ public class MapGenerator : MonoBehaviour
     [Header("Artifacts")]
     public ArtifactDistributionSetting[] artifactSettings = System.Array.Empty<ArtifactDistributionSetting>();
     [Min(1), InspectorName("Mindesttiefe Artefakte (Y)")] public int artifactMinimumDepth = 10;
+    [Range(0, 100), InspectorName("Mindestabstand gleicher Artefakte (Blöcke)")] public int artifactMinimumSameTypeDistance = 10;
     [Range(.1f, 5f)] public float artifactDropChanceMultiplier = 1f;
+    [Range(0f, 1f)] public float artifactEmbeddingStrength = 1f;
     [Range(.25f, 8f)] public float artifactOverviewIconScale = 4f;
     [Range(.5f, 10f)] public float artifactDiscoveryDurationSeconds = 3f;
     [Range(0, 60)] public int artifactDiscoveryShardCount = 16;
@@ -63,6 +98,7 @@ public class MapGenerator : MonoBehaviour
     public StoneTestTile surfaceDirtTile;
     public StoneTestTile layerOneTile;
     public StoneTestTile layerThreeTile;
+    public StoneTestTile layerFourTile;
 
     private Tilemap tilemap;
     [SerializeField] Tilemap oreOverlay;
@@ -71,6 +107,8 @@ public class MapGenerator : MonoBehaviour
     [SerializeField] Tilemap grassHangLeftOverlay;
     [SerializeField] Tilemap grassHangRightOverlay;
     public Tilemap Terrain => tilemap ? tilemap : tilemap = GetComponent<Tilemap>();
+    public UltroniumAltarChamber AltarChamber => GetComponent<UltroniumAltarChamber>();
+    public bool IsCellProtected(Vector3Int cell) => IsSurfaceCellProtected(cell) || (AltarChamber && AltarChamber.Protects(cell));
     public Tilemap OreOverlay => oreOverlay;
     public Tilemap ArtifactOverlay => artifactOverlay;
     public Tilemap GrassOverlay => grassOverlay;
@@ -149,6 +187,7 @@ public class MapGenerator : MonoBehaviour
 
     void Awake()
     {
+        if (!GetComponent<UltroniumAltarChamber>()) gameObject.AddComponent<UltroniumAltarChamber>();
         MigrateSeedMode();
         MigrateOreDensitySettings();
         tilemap = GetComponent<Tilemap>();
@@ -292,6 +331,7 @@ public class MapGenerator : MonoBehaviour
             target.sortingOrder = source.sortingOrder + 2;
             target.mode = source.mode;
             target.sortOrder = source.sortOrder;
+            ArtifactOverlayAppearance.ApplyTo(target, artifactEmbeddingStrength);
         }
         return artifactOverlay;
     }
@@ -489,26 +529,18 @@ public class MapGenerator : MonoBehaviour
     public float GetHardnessAt(Vector3Int cell, Block block)
     {
         if (!block) return 1f;
-        if (block.HasOreOverlays || layers == null || layers.Length == 0)
-            return Mathf.Max(.01f, block.hardness <= 0f ? 1f : block.hardness);
-        int depth = Mathf.Max(0, -cell.y);
-        int active = 0;
-        for (int i = 1; i < layers.Length; i++)
-            if (layers[i] != null && depth >= layers[i].startDepth) active = i;
-        for (int offset = 0; offset < 3; offset++)
-        {
-            int index = active + (offset == 0 ? 0 : offset == 1 ? 1 : -1);
-            if (index < 0 || index >= layers.Length || layers[index] == null ||
-                layers[index].stone != block) continue;
-            float hardness = layers[index].stoneHardness;
-            return Mathf.Max(.01f, hardness > 0f ? hardness : block.hardness);
-        }
-        return Mathf.Max(.01f, block.hardness <= 0f ? 1f : block.hardness);
+        float hardness = Mathf.Max(.01f, block.hardness <= 0f ? 1f : block.hardness);
+        if (!block.HasOreOverlays || !registry) return hardness;
+
+        var substrate = registry.FromTile(Terrain.GetTile(cell));
+        if (!substrate || substrate.HasOreOverlays) return hardness;
+        float substrateHardness = Mathf.Max(.01f, substrate.hardness <= 0f ? 1f : substrate.hardness);
+        return Mathf.Max(.01f, hardness + OreSubstrateInfluence * (substrateHardness - 1f));
     }
 
     public bool RemoveBlock(Vector3Int cell)
     {
-        if (IsSurfaceCellProtected(cell)) return false;
+        if (IsCellProtected(cell)) return false;
         if (!Terrain.HasTile(cell)) return false;
         if (oreOverlay) oreOverlay.SetTile(cell, null);
         if (artifactOverlay) artifactOverlay.SetTile(cell, null);
@@ -609,9 +641,19 @@ public class MapGenerator : MonoBehaviour
         EnsureGrassOverlay();
 
         int offsetX = -mapWidth / 2;
+        var altar = AltarChamber;
+        if (altar) altar.PrepareGeneration(usedSeed, mapWidth, mapHeight);
+        var chamber = altar ? altar.Layout : default;
         var blocks = new Block[checked(mapWidth * mapHeight)];
         for (int y = 0; y < mapHeight; y++)
-            for (int x = 0; x < mapWidth; x++) blocks[y * mapWidth + x] = sampler.GetBlock(x, y);
+            for (int x = 0; x < mapWidth; x++)
+            {
+                var cell = new Vector3Int(x + offsetX, -y, 0);
+                blocks[y * mapWidth + x] = chamber.IsOpen(cell) ? null :
+                    chamber.IsShell(cell) ? sampler.GetBaseBlock(x, y) : sampler.GetBlock(x, y);
+            }
+        OreVeins.CompactThinTips(blocks, mapWidth, mapHeight, sampler.GetBaseBlock,
+            sampler.CanPlaceOre, (x, y) => chamber.IsReserved(new Vector3Int(x + offsetX, -y, 0)));
         OreVeins.PruneSmallVeins(blocks, mapWidth, mapHeight, minimumOreVeinSize, sampler.GetBaseBlock);
         var richness = OreVeins.Build(blocks, mapWidth, mapHeight, usedSeed);
         var terrainTiles = new TileBase[blocks.Length];
@@ -636,6 +678,7 @@ public class MapGenerator : MonoBehaviour
                 bool surfaceDirt = surfaceDirtTile && baseBlock.id == BlockType.Dirt;
                 bool firstLayerStone = layerOneTile && baseBlock == layerOneTile.block;
                 bool thirdLayerStone = layerThreeTile && baseBlock == layerThreeTile.block;
+                bool fourthLayerStone = layerFourTile && baseBlock == layerFourTile.block;
                 if (uniformTestStone) baseBlock = uniformTestStone;
                 var baseVariants = baseBlock.variants;
                 if (baseVariants == null || baseVariants.Length == 0)
@@ -655,12 +698,15 @@ public class MapGenerator : MonoBehaviour
                 if (uniformTestStone && surfaceDirt) terrainTiles[tileIndex] = surfaceDirtTile;
                 if (uniformTestStone && firstLayerStone) terrainTiles[tileIndex] = layerOneTile;
                 if (uniformTestStone && thirdLayerStone) terrainTiles[tileIndex] = layerThreeTile;
+                if (uniformTestStone && fourthLayerStone) terrainTiles[tileIndex] = layerFourTile;
                 if (!layered)
                 {
+                    if (chamber.IsReserved(new Vector3Int(x + offsetX, -y, 0))) continue;
                     if (!OreVeins.HasVeinInNeighborhood(blocks, mapWidth, mapHeight, x, y))
                     {
                         var artifact = SelectArtifact(usedSeed, x, y);
-                        if (ArtifactPlacement.TryPlace(placedArtifacts, artifact, x, y))
+                        if (ArtifactPlacement.TryPlace(placedArtifacts, artifact, x, y,
+                            artifactMinimumSameTypeDistance))
                             artifactTiles[tileIndex] = artifact;
                     }
                     continue;

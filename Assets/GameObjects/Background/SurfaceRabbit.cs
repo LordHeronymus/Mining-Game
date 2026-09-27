@@ -21,10 +21,12 @@ public sealed class SurfaceRabbit : MonoBehaviour
     readonly System.Random random = new System.Random();
     Mesh mesh;
     MeshRenderer meshRenderer;
-    float homeX, surfaceY, fromX, toX, hopTime, wait, age, retry;
+    Rigidbody2D physicsBody;
+    float homeX, surfaceY, groundY, fromX, toX, hopTime, wait, age, retry;
     float restTime, untilRest, lookTime, headTilt;
     int direction = 1, hopsRemaining, entryHopsUntilRest, part;
-    bool ready, hopping, entering, returning, resting, landingSoundTriggered;
+    bool ready, hopping, falling, entering, returning, resting, landingSoundTriggered;
+    public bool IsFalling => falling;
 
     void OnEnable()
     {
@@ -38,7 +40,7 @@ public sealed class SurfaceRabbit : MonoBehaviour
             if (filter && filter.sharedMesh) Release(filter.sharedMesh);
             Release(old.gameObject);
         }
-        homeX = transform.position.x; ready = hopping = entering = returning = false; retry = 0; age = 0;
+        homeX = transform.position.x; ready = hopping = falling = entering = returning = false; retry = 0; age = 0;
         resting = false; headTilt = 0; untilRest = RandomSeconds(restInterval);
         if (!map || !material) return;
         var child = new GameObject("Rabbit shape (generated)") { hideFlags = HideFlags.DontSave };
@@ -81,15 +83,36 @@ public sealed class SurfaceRabbit : MonoBehaviour
         restDuration = source.restDuration; restInterval = source.restInterval; furColor = source.furColor;
     }
 
+    void EnsurePhysics()
+    {
+        gameObject.layer = LayerMask.NameToLayer("Player");
+        if (!physicsBody) physicsBody = GetComponent<Rigidbody2D>();
+        if (!physicsBody) physicsBody = gameObject.AddComponent<Rigidbody2D>();
+        physicsBody.bodyType = RigidbodyType2D.Dynamic;
+        physicsBody.freezeRotation = true;
+        physicsBody.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        physicsBody.interpolation = RigidbodyInterpolation2D.Interpolate;
+        var hitbox = GetComponent<CapsuleCollider2D>();
+        if (!hitbox) hitbox = gameObject.AddComponent<CapsuleCollider2D>();
+        hitbox.direction = CapsuleDirection2D.Vertical;
+        hitbox.size = new Vector2(.65f * size, .7f * size);
+        hitbox.offset = new Vector2(0f, .35f * size);
+    }
+
     public bool TrySpawn()
     {
         if (!map || !map.IsGenerated) return false;
         surfaceY = map.Terrain.CellToWorld(new Vector3Int(0,1,0)).y;
+        groundY = surfaceY;
         if (!FindEntrance(out float x, out float center)) return false;
+        EnsurePhysics();
         homeX = center;
         transform.position = new Vector3(x, surfaceY, transform.position.z);
+        physicsBody.position = new Vector2(x, surfaceY);
+        physicsBody.linearVelocity = Vector2.zero;
+        physicsBody.gravityScale = 1f;
         direction = x < center ? 1 : -1;
-        ready = entering = true; hopping = returning = resting = false;
+        ready = entering = true; hopping = falling = returning = resting = false;
         wait = Mathf.Max(0, entryDelay); untilRest = RandomSeconds(restInterval);
         entryHopsUntilRest = random.Next(2, 5);
         if (meshRenderer) { meshRenderer.enabled = true; Draw(0,0); }
@@ -111,6 +134,19 @@ public sealed class SurfaceRabbit : MonoBehaviour
             if (!TrySpawn()) return;
         }
         meshRenderer.enabled = true;
+        if (!hopping && !falling && !HasSupport(transform.position.x, groundY))
+        { falling = true; resting = false; if (physicsBody) physicsBody.gravityScale = 1f; }
+        if (falling)
+        {
+            if (HasSupport(transform.position.x, transform.position.y) &&
+                (!physicsBody || physicsBody.linearVelocity.y <= 0f))
+            {
+                falling = false; groundY = transform.position.y;
+                homeX = transform.position.x; wait = .3f;
+            }
+            Draw(0, 0);
+            return;
+        }
         if (!entering && !resting) untilRest -= deltaTime;
         float lift = 0, progress = 0;
         if (hopping)
@@ -124,16 +160,43 @@ public sealed class SurfaceRabbit : MonoBehaviour
             hopTime = returning ? Mathf.Max(0, hopTime-deltaTime) : hopTime+deltaTime;
             progress = Mathf.Clamp01(hopTime / Mathf.Max(.2f, hopDuration));
             lift = Mathf.Sin(progress * Mathf.PI) * Mathf.Max(.1f, hopHeight);
-            transform.position = new Vector3(Mathf.Lerp(fromX, toX, progress), surfaceY + lift, transform.position.z);
+            float nextX = Mathf.Lerp(fromX, toX, progress);
+            float nextY = groundY + lift;
+            if (!SurfaceAnimalCollision.CanMove(map, transform.position.x, nextX, transform.position.y,
+                    .65f * size, .7f * size) ||
+                !SurfaceAnimalCollision.CanRise(map, nextX, transform.position.y, nextY,
+                    .65f * size, .7f * size))
+            {
+                hopping = entering = false; falling = true;
+                if (physicsBody) physicsBody.gravityScale = 1f;
+                Draw(0, 0);
+                return;
+            }
+            if (nextY < transform.position.y &&
+                SurfaceAnimalCollision.TryGround(map, nextX, transform.position.y,
+                    transform.position.y - nextY, .65f * size, .7f * size, out float landingY))
+            {
+                groundY = landingY; hopping = entering = false; wait = .3f;
+                if (physicsBody) physicsBody.gravityScale = 1f;
+                homeX = nextX;
+                if (physicsBody) physicsBody.position = new Vector2(nextX, landingY);
+                else transform.position = new Vector3(nextX, landingY, transform.position.z);
+                Draw(0, 0);
+                return;
+            }
+            if (physicsBody) physicsBody.position = new Vector2(nextX, nextY);
+            else transform.position = new Vector3(nextX, nextY, transform.position.z);
             float landingX = returning ? fromX : toX;
             if (HasGround(landingX) && AudioManager.Instance)
                 AudioManager.Instance.UpdateGrassLanding(ref landingSoundTriggered,
                     returning ? hopTime : Mathf.Max(0f, Mathf.Max(.2f, hopDuration) - hopTime),
-                    new Vector3(landingX, surfaceY, transform.position.z));
+                    new Vector3(landingX, groundY, transform.position.z));
             if ((!returning && progress >= 1) || (returning && progress <= 0))
             {
                 hopping = false;
-                if (!HasGround(transform.position.x)) { ready = false; retry = 0; meshRenderer.enabled = false; }
+                if (physicsBody) physicsBody.gravityScale = 1f;
+                if (!HasSupport(transform.position.x, groundY))
+                { falling = true; resting = false; }
 
                 if (entering && Mathf.Abs(transform.position.x-homeX) < .01f)
                 {
@@ -150,7 +213,8 @@ public sealed class SurfaceRabbit : MonoBehaviour
         }
         else
         {
-            if (!HasGround(transform.position.x)) { ready = false; retry = 0; meshRenderer.enabled = false; return; }
+            if (!HasSupport(transform.position.x, groundY))
+            { falling = true; resting = false; if (physicsBody) physicsBody.gravityScale = 1f; Draw(0, 0); return; }
             if (resting || (!entering && untilRest <= 0))
             {
                 if (!resting) BeginRest();
@@ -190,6 +254,7 @@ public sealed class SurfaceRabbit : MonoBehaviour
                     {
                         fromX = transform.position.x; toX = candidate;
                         hopping = true; returning = false; hopTime = 0; found = true; landingSoundTriggered = false;
+                        if (physicsBody) { physicsBody.gravityScale = 0f; physicsBody.linearVelocity = Vector2.zero; }
                     }
                     else
                     {
@@ -208,16 +273,21 @@ public sealed class SurfaceRabbit : MonoBehaviour
         return HasContinuousGround(x, x);
     }
 
+    bool HasSupport(float x, float y) => SurfaceAnimalCollision.TryGround(map, x, y,
+        .06f, .65f * size, .7f * size, out _) ||
+        (physicsBody && Mathf.Abs(physicsBody.linearVelocity.y) < .05f &&
+         GetComponent<Collider2D>().IsTouchingLayers(1 << map.gameObject.layer));
+
     bool HasContinuousGround(float startX, float endX)
     {
         var tiles = map.Terrain;
         float margin = .2f*Mathf.Max(.2f,size)+.02f;
-        var left = tiles.WorldToCell(new Vector3(Mathf.Min(startX,endX)-margin, surfaceY-.01f, tiles.transform.position.z));
-        var right = tiles.WorldToCell(new Vector3(Mathf.Max(startX,endX)+margin, surfaceY-.01f, tiles.transform.position.z));
-        if (left.y != 0 || right.y != 0) return false;
+        var left = tiles.WorldToCell(new Vector3(Mathf.Min(startX,endX)-margin, groundY-.01f, tiles.transform.position.z));
+        var right = tiles.WorldToCell(new Vector3(Mathf.Max(startX,endX)+margin, groundY-.01f, tiles.transform.position.z));
+        if (left.y != right.y) return false;
         for (int x = Mathf.Min(left.x,right.x); x <= Mathf.Max(left.x,right.x); x++)
         {
-            if (!tiles.HasTile(new Vector3Int(x,0,0))) return false;
+            if (!tiles.HasTile(new Vector3Int(x,left.y,0))) return false;
         }
         return true;
     }

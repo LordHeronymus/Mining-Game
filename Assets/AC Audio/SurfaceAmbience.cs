@@ -16,6 +16,7 @@ public sealed class SurfaceAmbience : MonoBehaviour
     float gain;
     MapGenerator map;
     float Crossfade => clip ? Mathf.Min(crossfadeSeconds, clip.length * .25f) : .01f;
+    float SegmentDuration(AudioSource source) => clip.length / Mathf.Max(.1f, Mathf.Abs(source.pitch));
 
     void Awake()
     {
@@ -40,8 +41,10 @@ public sealed class SurfaceAmbience : MonoBehaviour
         if (!running)
         {
             current = 0;
+            sources[current].pitch = AudioManager.TunedPitch(clip, 1f);
             sources[current].Play();
-            nextStart = now + clip.length - Crossfade;
+            nextStart = now + SegmentDuration(sources[current]) - Crossfade;
+            sources[1].pitch = AudioManager.TunedPitch(clip, 1f);
             sources[1].PlayScheduled(nextStart);
             running = true;
         }
@@ -53,7 +56,9 @@ public sealed class SurfaceAmbience : MonoBehaviour
         }
         float blend = transitioning ? Mathf.SmoothStep(0f, 1f,
             Mathf.Clamp01((float)(now - transitionStart) / Mathf.Max(.01f, Crossfade))) : 0f;
-        float ambienceGain = volume * gain * AudioManager.GetAmbienceVolume(AmbienceType.Surface);
+        float ambienceGain = AudioManager.TunedAmbienceVolume(clip,
+            volume * gain * UltroniumAltarChamber.StandardLayerAmbienceGain *
+            AudioManager.GetAmbienceVolume(AmbienceType.Surface));
         sources[current].volume = ambienceGain * (1f - blend);
         sources[1 - current].volume = ambienceGain * blend;
         if (transitioning && blend >= 1f)
@@ -61,7 +66,8 @@ public sealed class SurfaceAmbience : MonoBehaviour
             sources[current].Stop();
             current = 1 - current;
             transitioning = false;
-            nextStart = transitionStart + clip.length - Crossfade;
+            nextStart = transitionStart + SegmentDuration(sources[current]) - Crossfade;
+            sources[1 - current].pitch = AudioManager.TunedPitch(clip, 1f);
             sources[1 - current].PlayScheduled(nextStart);
         }
     }

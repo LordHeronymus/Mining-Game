@@ -1,0 +1,9 @@
+Use case: stylized-concept
+Asset type: seamless underground parallax background sprite for a 2D mining game
+Input images: TS2_01_Ruhig.png is the material and palette reference for Tiefstein 2; Untergrund_03_Schiefer_Seamless_XY_6144x4096.png is the composition and rendering-style reference for the preceding depth layer.
+Primary request: create the next, deeper underground rock-wall background that unmistakably matches Tiefstein 2. It should be darker and denser than the preceding layer, built from broad interlocking charcoal-black slate slabs with subtle diagonal compressed striations matching the TS2 reference. Fine dark seams and sparse small fragments between slabs, restrained cool graphite highlights, no brown soil.
+Composition/framing: edge-to-edge orthographic rock wall texture, uniform visual density, no focal point, suitable for repeating behind gameplay.
+Style/medium: polished hand-painted 2D game environment texture, matching the existing background reference.
+Lighting/mood: very deep underground, low-key diffuse light, readable forms without glowing elements.
+Color palette: charcoal, graphite, near-black, faint cool blue-gray.
+Constraints: seamless/tileable on both X and Y edges; opaque; no ores, crystals, tunnels, props, text, borders, watermark, or transparent areas.

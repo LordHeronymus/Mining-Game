@@ -15,9 +15,11 @@ public static class MigrateFourLayers
             throw new InvalidOperationException("Expected the original three-layer map.");
 
         var dirt = map.registry.GetById(BlockType.Dirt);
-        var panorama = UnityEngine.Object.FindObjectsByType<ParallaxLayer>(
-            FindObjectsInactive.Include, FindObjectsSortMode.None).FirstOrDefault(layer => layer.undergroundTile);
-        if (!dirt || !panorama || !panorama.undergroundLayer2Tile || !panorama.undergroundLayer3Tile)
+        const string folder = "Assets/AB Sprites/Parralax BG/";
+        var dirtBackground = AssetDatabase.LoadAssetAtPath<Sprite>(folder + "Untergrund_01_Erdschicht_Seamless_XY_6144x4096.png");
+        var layer2Background = AssetDatabase.LoadAssetAtPath<Sprite>(folder + "Untergrund_02_Geschichteter_Schiefer_Seamless_XY_6144x4096.png");
+        var layer3Background = AssetDatabase.LoadAssetAtPath<Sprite>(folder + "Untergrund_03_Schiefer_Seamless_XY_6144x4096.png");
+        if (!dirt || !dirtBackground || !layer2Background || !layer3Background)
             throw new InvalidOperationException("Surface stone or underground backgrounds are missing.");
 
         Undo.RecordObject(map, "Create four map layers");
@@ -25,19 +27,19 @@ public static class MigrateFourLayers
         map.layers = new[]
         {
             new MapLayer { name = "Layer 1", startDepth = 0, transitionWidth = 0,
-                stone = dirt, stoneHardness = dirt.hardness, backgroundSprite = panorama.undergroundTile,
+                stone = dirt, backgroundSprite = dirtBackground,
                 ores = (BlockType[])old[0].ores.Clone() },
             new MapLayer { name = "Layer 2", startDepth = 30, transitionWidth = 15,
-                stone = old[0].stone, stoneHardness = old[0].stone.hardness,
-                backgroundSprite = panorama.undergroundTile,
+                stone = old[0].stone,
+                backgroundSprite = dirtBackground,
                 ores = (BlockType[])old[0].ores.Clone() },
             new MapLayer { name = "Layer 3", startDepth = 300, transitionWidth = 15,
-                stone = old[1].stone, stoneHardness = old[1].stone.hardness,
-                backgroundSprite = panorama.undergroundLayer2Tile,
+                stone = old[1].stone,
+                backgroundSprite = layer2Background,
                 ores = (BlockType[])old[1].ores.Clone() },
             new MapLayer { name = "Layer 4", startDepth = 800, transitionWidth = 15,
-                stone = old[2].stone, stoneHardness = old[2].stone.hardness,
-                backgroundSprite = panorama.undergroundLayer3Tile,
+                stone = old[2].stone,
+                backgroundSprite = layer3Background,
                 ores = (BlockType[])old[2].ores.Clone() }
         };
         PrefabUtility.RecordPrefabInstancePropertyModifications(map);

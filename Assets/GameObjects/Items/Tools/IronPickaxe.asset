@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: IronPickaxe
   m_EditorClassIdentifier: 
   item: 15
-  category: 1
+  category: 4
   displayName: Eisenspitzhacke
   icon: {fileID: 21300000, guid: ba70065d8c34aeb498cf0d8e7a33957d, type: 3}
   themeColor: {r: 1, g: 0.86, b: 0.58, a: 1}
   worth: 0
+  weight: 0

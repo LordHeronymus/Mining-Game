@@ -13,9 +13,10 @@ public static class LayerStoneVisualShiftChecks
         var light=AssetDatabase.LoadAssetAtPath<Texture2D>(root+"Layer3/LightGrayStone.png");
         var former=AssetDatabase.LoadAssetAtPath<Texture2D>(root+"WarmStone.png");
         var saved=AssetDatabase.LoadAssetAtPath<Texture2D>(root+"Layer3/DeepStone.png");
-        if(!light||!former||!saved||appearance.texture!=light||appearance.layerThreeTexture!=former)
+        if(!light||!former||!saved||appearance.texture!=light||appearance.layerThreeTexture!=former||
+            appearance.layerFourTexture!=saved)
             throw new Exception("L3/L4/L5 texture order is incorrect");
-        foreach(var path in new[]{root+"Layer3/LightGrayStone.png",root+"WarmStone.png"})
+        foreach(var path in new[]{root+"Layer3/LightGrayStone.png",root+"WarmStone.png",root+"Layer3/DeepStone.png"})
         {
             var importer=AssetImporter.GetAtPath(path) as TextureImporter;
             if(importer==null || importer.wrapModeU!=TextureWrapMode.Repeat ||
@@ -25,10 +26,13 @@ public static class LayerStoneVisualShiftChecks
         if(map.uniformTestTile.block!=map.layers[2].stone ||
             map.uniformTestTile.sprite!=AssetDatabase.LoadAssetAtPath<Sprite>(root+"Layer3/LightGrayStone.png") ||
             map.layerThreeTile.block!=map.layers[3].stone ||
-            map.layerThreeTile.sprite!=AssetDatabase.LoadAssetAtPath<Sprite>(root+"WarmStone.png"))
+            map.layerThreeTile.sprite!=AssetDatabase.LoadAssetAtPath<Sprite>(root+"WarmStone.png") ||
+            map.layerFourTile.block!=map.layers[4].stone ||
+            map.layerFourTile.sprite!=AssetDatabase.LoadAssetAtPath<Sprite>(root+"Layer3/DeepStone.png"))
             throw new Exception("Layer tiles do not match their stones");
         if(Mathf.Abs(map.uniformTestTile.sprite.bounds.size.x-1f)>.01f ||
-            Mathf.Abs(map.layerThreeTile.sprite.bounds.size.x-1f)>.01f)
+            Mathf.Abs(map.layerThreeTile.sprite.bounds.size.x-1f)>.01f ||
+            Mathf.Abs(map.layerFourTile.sprite.bounds.size.x-1f)>.01f)
             throw new Exception("Layer tile sprites extend beyond one cell");
         for(int i=0;i<map.layers[2].stone.variants.Length;i++)
         {
@@ -38,18 +42,19 @@ public static class LayerStoneVisualShiftChecks
                 !AssetDatabase.GetAssetPath(fourth).Contains("/Sprites/Stein_"))
                 throw new Exception("Variant art did not shift at index "+i);
         }
-        var future=AssetDatabase.LoadAssetAtPath<Block>(
+        var fifth=AssetDatabase.LoadAssetAtPath<Block>(
             "Assets/GameObjects/Map/Blocks/LayerStones/Stone_Layer4.asset");
-        foreach(var variant in future.variants)
-            if(!AssetDatabase.GetAssetPath(SpriteOf(variant)).Contains("/DeepStone/Layer3/TS1_"))
-                throw new Exception("Former L4 art is not prepared for L5");
+        foreach(var variant in fifth.variants)
+            if(!AssetDatabase.GetAssetPath(SpriteOf(variant)).Contains("/DeepStone/Layer4/TS2_"))
+                throw new Exception("Layer 5 does not use Tiefstein 2 sprites");
         appearance.RefreshAppearance();
         var properties=new MaterialPropertyBlock();
         map.GetComponent<TilemapRenderer>().GetPropertyBlock(properties);
         if(properties.GetTexture("_TestStoneTex")!=light ||
-            properties.GetTexture("_LayerThreeTex")!=former)
+            properties.GetTexture("_LayerThreeTex")!=former ||
+            properties.GetTexture("_LayerFourTex")!=saved)
             throw new Exception("Terrain renderer uses the wrong layer textures");
-        return new{passed=true,layer3=light.name,layer4=former.name,futureLayer5=saved.name};
+        return new{passed=true,layer3=light.name,layer4=former.name,layer5=saved.name};
     }
 
     static Sprite SpriteOf(TileBase tile)

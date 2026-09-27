@@ -22,6 +22,7 @@ MonoBehaviour:
     flipY: 0
   output: {fileID: 11400000, guid: 4649bc6085609a34bb4d707bdc7d53ca, type: 2}
   outputAmount: 1
+  shopPrice: 20000
   pluralName: Diamantspitzhacken
   ingredients:
   - item: {fileID: 11400000, guid: 75e7eb8e62b50c64eb4dd8132de34314, type: 2}

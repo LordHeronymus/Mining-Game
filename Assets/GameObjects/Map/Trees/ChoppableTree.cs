@@ -30,6 +30,7 @@ public sealed class ChoppableTree : MonoBehaviour
     MaterialPropertyBlock swayProperties;
     float health;
     int woodMin, woodMax, maximumBonusWood;
+    int pendingWoodYield;
     float shake;
     float fullScale;
     float fullHeight;
@@ -82,6 +83,7 @@ public sealed class ChoppableTree : MonoBehaviour
         wood = woodItem;
         health = Mathf.Max(1, hitPoints);
         woodMin = Mathf.Clamp(minWood, 1, 9999);
+        pendingWoodYield = 0;
         woodMax = Mathf.Clamp(maxWood, woodMin, 9999);
         maximumBonusWood = Mathf.Clamp(bonusWood, 0, 9999 - woodMax);
         maximumSizeBonusRatio = Mathf.Max(0f, bonusSizePercent) / 100f;
@@ -174,7 +176,16 @@ public sealed class ChoppableTree : MonoBehaviour
     public void Hit(Vector2 attackerPosition)
     {
         if (!CanChop) return;
-        health = Mathf.Max(0f, health - (owner ? owner.HitDamage : 1f));
+        float damage = owner ? owner.HitDamage : 1f;
+        if (health <= damage)
+        {
+            if (pendingWoodYield == 0)
+                pendingWoodYield = Random.Range(MinimumWoodYield, MaximumWoodYield + 1);
+            var inventory = InventoryManager.Instance;
+            if (wood && (!inventory || !inventory.CanAdd(wood, pendingWoodYield))) return;
+            if (wood) inventory.Add(wood, pendingWoodYield);
+        }
+        health = Mathf.Max(0f, health - damage);
         EmitSplinters();
         AudioManager.Instance?.Play(SoundType.WoodChop, true);
         shake = .13f;
@@ -272,7 +283,6 @@ public sealed class ChoppableTree : MonoBehaviour
             if (t > .7f) visual.color = new Color(1, 1, 1, 1 - (t - .7f) / .3f);
             yield return null;
         }
-        InventoryManager.Instance?.Add(wood, Random.Range(MinimumWoodYield, MaximumWoodYield + 1));
         owner?.TreeFelled(this);
         Destroy(gameObject);
     }

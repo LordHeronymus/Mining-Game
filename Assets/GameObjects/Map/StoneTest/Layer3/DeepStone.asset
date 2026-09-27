@@ -34,4 +34,4 @@ MonoBehaviour:
   m_InstancedGameObject: {fileID: 0}
   m_Flags: 1
   m_ColliderType: 2
-  block: {fileID: 11400000, guid: 35559232f15b256479bab82a4d797bb4, type: 2}
+  block: {fileID: 11400000, guid: f8bde08db09e8784cbbbb4f0f7616b44, type: 2}

@@ -21,9 +21,12 @@ public class StatsManager : MonoBehaviour
     readonly HashSet<ArtifactTile> collectedArtifactTypes = new();
     AudioClip artifactCollectedSound;
     public int Money { get; private set; } = 0;
+    public bool HasInfiniteMoney => GameplayTestSettings.InfiniteMoney;
+    public bool CanAffordMoney(int amount) => HasInfiniteMoney || Money >= Mathf.Max(0, amount);
 
     public float MoveSpeed;
-    public float EffectiveMoveSpeed => MoveSpeed * GameplayTestSettings.MovementMultiplier;
+    public float MovementWeightFactor => InventoryManager.Instance ? InventoryManager.Instance.MovementWeightFactor : 1f;
+    public float EffectiveMoveSpeed => MoveSpeed * GameplayTestSettings.MovementMultiplier * MovementWeightFactor;
     public float JumpHeightBlocks => baseStats.jumpHeightBlocks;
     public float MiningSpeedMultiplier { get; set; } = 1f;
     public float MiningSpeed => GameplaySettings.BaseDiggingSpeed * MiningSpeedMultiplier;
@@ -47,7 +50,7 @@ public class StatsManager : MonoBehaviour
     public bool IsMedkitActive => Health > 0f && Time.time < medkitActiveUntil;
     // Future damage handlers must respect this gate before applying damage.
     public bool IsInvulnerable => GameplayTestSettings.GodMode;
-    public bool CanTakeDamage => !IsInvulnerable;
+    public bool CanTakeDamage => !IsInvulnerable && !UltroniumAltarChamber.VictorySequenceActive;
     public float Reach;
     public float MaxEnergy;
 
@@ -88,6 +91,7 @@ public class StatsManager : MonoBehaviour
 
     public void ResetRun()
     {
+        foreach (var altar in FindObjectsByType<UltroniumAltarChamber>(FindObjectsSortMode.None)) altar.ResetChargeForNewRun();
         RecipeUnlocks.ResetRun();
         Reset();
         var inventory = InventoryManager.Instance;
@@ -98,16 +102,15 @@ public class StatsManager : MonoBehaviour
             foreach (var resource in resources.items)
             {
                 var item = StartingResourcesSettings.Resolve(resource.itemId);
-                if (item && resource.amount > 0) inventory.Add(item, resource.amount);
+                if (item && resource.amount > 0) inventory.AddStartingItem(item, resource.amount);
             }
         }
     }
 
     void Update()
     {
-        CheckUltroniumVictory();
         float healthFraction = Health / MaxHealth;
-        bool heartbeatActive = Health > 0f && !GameOverPanel.IsOpen &&
+        bool heartbeatActive = Health > 0f && !GameOverPanel.IsOpen && !GameVictoryPanel.IsOpen && !UltroniumAltarChamber.VictorySequenceActive &&
             healthFraction <= LowHealthHeartbeatThresholdFraction;
         AudioManager.Instance?.SetLowHealthHeartbeat(heartbeatActive);
 
@@ -124,22 +127,13 @@ public class StatsManager : MonoBehaviour
         OnHealthChanged?.Invoke(Health, MaxHealth);
     }
 
-    void CheckUltroniumVictory()
+    public bool CompleteAltarVictory(UltroniumAltarChamber altar)
     {
-        if (HasWon || GameOverPanel.IsOpen || Health <= 0f) return;
-        var inventory = InventoryManager.Instance;
-        if (!inventory) return;
-        int ultronium = 0;
-        foreach (var entry in inventory.GetSnapshot())
-            if (entry.Key && entry.Key.item == Item.Ultronium)
-            {
-                ultronium = entry.Value;
-                break;
-            }
-
-        if (ultronium < Mathf.Max(1, ultroniumRequiredToWin)) return;
+        if (HasWon || GameOverPanel.IsOpen || Health <= 0f || !altar || !altar.IsCompleting ||
+            altar.DepositedUltronium < Mathf.Max(1, ultroniumRequiredToWin)) return false;
         HasWon = true;
         GameVictoryPanel.Show();
+        return true;
     }
 
     public bool ApplyDamage(float amount)
@@ -208,9 +202,10 @@ public class StatsManager : MonoBehaviour
 
     public void AddMoney(int amount)
     {
+        if (amount < 0 && HasInfiniteMoney) return;
         Money += amount;
         HUDPoints.Instance?.UpdatePoints(Money, PointType.Money);
-        OnMoneyChanged?.Invoke(Money); // für ShopUI
+        OnMoneyChanged?.Invoke(Money); // fÃ¼r ShopUI
     }
 
     public void CollectArtifact(ArtifactTile artifact, int cash, int artifactPoints)

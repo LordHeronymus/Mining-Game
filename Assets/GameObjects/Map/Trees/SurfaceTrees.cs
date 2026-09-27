@@ -7,14 +7,14 @@ public sealed class SurfaceTrees : MonoBehaviour
     [SerializeField] ChoppableTree prefab;
     [SerializeField] Sprite[] variants;
     [SerializeField] ItemSO wood;
-    [SerializeField, Range(0, 20)] int maximumTrees = 12;
+    [SerializeField, Min(0)] int maximumTrees = 12;
     [SerializeField, Min(1)] int hitsToFell = 10;
     [SerializeField] ItemSO axePowerup;
     [SerializeField, Min(1f)] float axeHitMultiplier = 4f;
     [SerializeField, Min(1)] int woodYieldMin = 15;
     [SerializeField, Min(1)] int woodYieldMax = 25;
     [SerializeField, Min(0)] int maximumBonusWood = 10;
-    [SerializeField, Min(2)] float minimumTreeSpacing = 2f;
+    [SerializeField, Min(0)] float minimumTreeSpacing = 2f;
     [SerializeField, Min(1)] float treeHeight = 8.25f;
     [SerializeField, Min(.1f)] float fallDurationSeconds = .9f;
     [SerializeField, Range(0f, 1f)] float leafAlpha = 1f;
@@ -120,7 +120,7 @@ public sealed class SurfaceTrees : MonoBehaviour
             float nearest = float.PositiveInfinity;
             foreach (var tree in trees)
                 if (tree) nearest = Mathf.Min(nearest, Mathf.Abs(tree.transform.position.x - x));
-            float requiredSpacing = Mathf.Max(minimumTreeSpacing, map.Terrain.layoutGrid.cellSize.x * 4f);
+            float requiredSpacing = Mathf.Max(minimumTreeSpacing, map.Terrain.layoutGrid.cellSize.x);
             if (nearest < requiredSpacing) continue;
             float preferredSpacing = Mathf.Max(16f, requiredSpacing * 4f);
             float distanceFactor = Mathf.Clamp01(

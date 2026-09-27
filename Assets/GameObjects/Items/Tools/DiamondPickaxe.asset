@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: DiamondPickaxe
   m_EditorClassIdentifier: 
   item: 21
-  category: 1
+  category: 4
   displayName: Diamantspitzhacke
   icon: {fileID: 21300000, guid: d5cb342d172e08e46ba1d88d5523b545, type: 3}
   themeColor: {r: 1, g: 0.86, b: 0.58, a: 1}
   worth: 0
+  weight: 0

@@ -56,7 +56,7 @@ public class EnergyManager : MonoBehaviour
         if (!GameplayTestSettings.NoEnergyConsume)
             energy = Mathf.Max(energy - consumption * Time.deltaTime, 0f);
 
-        if (energy <= 0f && !GameOverPanel.IsOpen)
+        if (energy <= 0f && !GameOverPanel.IsOpen && !GameVictoryPanel.IsOpen)
             FindFirstObjectByType<GameOverPanel>(FindObjectsInactive.Include)?.Show();
 
         UpdateLowEnergyWarning();
@@ -94,7 +94,9 @@ public class EnergyManager : MonoBehaviour
         }
 
         if (Time.time < nextLowEnergyBeepTime) return;
-        lowEnergySource.pitch = Mathf.Lerp(1f, 1.25f, urgency);
+        lowEnergySource.pitch = AudioManager.TunedPitch(lowEnergyBeep,
+            Mathf.Lerp(1f, 1.25f, urgency));
+        lowEnergySource.volume = AudioManager.TunedVolume(lowEnergyBeep, 1f);
         lowEnergySource.Play();
         nextLowEnergyBeepTime = Time.time + interval;
     }

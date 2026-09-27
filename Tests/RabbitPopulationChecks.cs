@@ -7,6 +7,7 @@ public static class RabbitPopulationChecks
 {
     const BindingFlags Private=BindingFlags.NonPublic|BindingFlags.Instance;
     static void Check(bool ok,string message){if(!ok)throw new Exception(message);}
+    static void Set(object target,string field,object value)=>target.GetType().GetField(field,Private).SetValue(target,value);
     public static object Main()
     {
         var source=UnityEngine.Object.FindFirstObjectByType<SurfaceRabbit>();
@@ -51,6 +52,21 @@ public static class RabbitPopulationChecks
             step(3);step(20);Check(spawner.ActiveCount==0,"Rabbits keep spawning while player is underground");
             player.position=new Vector3(0,.5f,0);camera.transform.position=new Vector3(0,1,-10);step(0);
             Check(spawner.ActiveCount==1,"Surface return did not resume spawns");
+            spawner.maxRabbits=1;
+            SurfaceRabbit fallingRabbit=null;
+            foreach(var rabbit in population.GetComponentsInChildren<SurfaceRabbit>(true))
+                if(rabbit!=settings)fallingRabbit=rabbit;
+            Check(fallingRabbit,"Falling rabbit test setup missing a spawned rabbit");
+            var body=fallingRabbit.GetComponent<Rigidbody2D>();
+            body.gravityScale=0;body.position=new Vector2(0,.5f);fallingRabbit.transform.position=new Vector3(0,.5f,0);
+            Set(fallingRabbit,"falling",true);
+            player.position=new Vector3(50,.5f,0);
+            step(3);
+            Check(spawner.ActiveCount==1,"Visible falling rabbit despawned before leaving the screen");
+            body.position=new Vector2(0,-20);fallingRabbit.transform.position=new Vector3(0,-20,0);
+            step(1.5f);Check(spawner.ActiveCount==1,"Off-screen falling rabbit ignored the normal despawn delay");
+            step(.6f);Check(spawner.ActiveCount==0,"Off-screen falling rabbit ignored normal distance despawn");
+            player.position=new Vector3(0,.5f,0);
             map.RestorePreviewMetadata(2,60,1);Check(spawner.ActiveCount==0,"Map regeneration retained old population");
             step(0);Check(spawner.ActiveCount==1,"Regenerated map did not spawn rabbits");
             typeof(SurfaceRabbitSpawner).GetMethod("OnDisable",Private).Invoke(spawner,null);

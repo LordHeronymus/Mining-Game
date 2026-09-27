@@ -6,6 +6,7 @@ Shader "Mining Game/Terrain Edge Lit"
         _SurfaceDirtTex("Surface Dirt", 2D) = "white" {}
         _LayerOneTex("Layer One Rock", 2D) = "white" {}
         _LayerThreeTex("Layer Three Deep Stone", 2D) = "white" {}
+        _LayerFourTex("Layer Four Deep Stone", 2D) = "white" {}
         _TestOccupancy("Test Occupancy", 2D) = "white" {}
         _UniformStone("Uniform Stone", Vector) = (0,0,0,0)
         _TestBounds("Test Bounds", Vector) = (0,0,0,0)

@@ -22,11 +22,10 @@ MonoBehaviour:
     flipY: 0
   output: {fileID: 11400000, guid: 5b87da1e006a0804c91e132d48768d5c, type: 2}
   outputAmount: 1
+  shopPrice: 1250
   pluralName: Titanspitzhacken
   ingredients:
   - item: {fileID: 11400000, guid: 75e7eb8e62b50c64eb4dd8132de34314, type: 2}
-    amount: 4
-  - item: {fileID: 11400000, guid: 13a72d4a121bd0e499c2737ebc0b56ed, type: 2}
-    amount: 6
-  - item: {fileID: 11400000, guid: fad75854b09df8c458950d7b96227137, type: 2}
-    amount: 4
+    amount: 10
+  - item: {fileID: 11400000, guid: 858adb5dfe617ed45b399f5257b73530, type: 2}
+    amount: 20

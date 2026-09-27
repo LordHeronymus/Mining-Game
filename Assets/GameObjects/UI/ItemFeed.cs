@@ -12,11 +12,14 @@ public sealed class ItemFeed : MonoBehaviour
         public int amount;
         public bool money;
         public bool artifactPoints;
+        public Sprite icon;
+        public string customLabel;
     }
 
     sealed class Entry
     {
         public ItemSO item;
+        public string customLabel;
         public bool money;
         public bool artifactPoints;
         public int amount;
@@ -127,6 +130,23 @@ public sealed class ItemFeed : MonoBehaviour
         ShowNextPickup();
     }
 
+    public void ShowRecipe(CraftingRecipe recipe)
+    {
+        if (!recipe || !recipe.output) return;
+        string spriteName = recipe.output.name + "Recipe";
+        var blueprint = Resources.Load<Sprite>("Shop/" + spriteName);
+        string title = string.IsNullOrWhiteSpace(recipe.output.displayName)
+            ? recipe.output.name : recipe.output.displayName;
+        pending.Enqueue(new Pickup
+        {
+            item = recipe.output,
+            amount = 1,
+            icon = blueprint ? blueprint : recipe.output.icon,
+            customLabel = "Bauplan: " + title
+        });
+        ShowNextPickup();
+    }
+
     public void ShowMoney(int amount)
     {
         if (amount <= 0) return;
@@ -149,7 +169,25 @@ public sealed class ItemFeed : MonoBehaviour
         nextPickupTime = now + PickupInterval;
         if (pickup.money) DisplayCounter(pickup.amount, true);
         else if (pickup.artifactPoints) DisplayCounter(pickup.amount, false);
+        else if (!string.IsNullOrEmpty(pickup.customLabel)) DisplayCustomItem(pickup);
         else DisplayItem(pickup.item, pickup.amount);
+    }
+
+    void DisplayCustomItem(Pickup pickup)
+    {
+        float now = Time.unscaledTime;
+        PlayCollectionBling();
+        var entry = CreateEntry(pickup.item, pickup.amount, iconOverride: pickup.icon,
+            customLabel: pickup.customLabel);
+        entry.born = now;
+        entry.hopBorn = now;
+        entries.Insert(0, entry);
+        if (entries.Count > MaximumEntries)
+        {
+            var oldest = entries[entries.Count - 1];
+            entries.RemoveAt(entries.Count - 1);
+            Destroy(oldest.rect.gameObject);
+        }
     }
 
     void DisplayItem(ItemSO item, int amount)
@@ -215,7 +253,8 @@ public sealed class ItemFeed : MonoBehaviour
         }
     }
 
-    Entry CreateEntry(ItemSO item, int amount, bool money = false, bool artifactPoints = false)
+    Entry CreateEntry(ItemSO item, int amount, bool money = false, bool artifactPoints = false,
+        Sprite iconOverride = null, string customLabel = null)
     {
         var title = money ? "Money" : artifactPoints ? "Artifact Points" : item.name;
         var rect = MakeRect("Pickup " + title, transform, 0f, 0f, 300f, 48f);
@@ -234,9 +273,9 @@ public sealed class ItemFeed : MonoBehaviour
         backdrop.SetOpacity(backdropOpacity);
         backdrop.raycastTarget = false;
 
-        var iconRect = MakeRect("Icon", rect, 0f, artifactPoints ? 0f : 4f, 40f, 40f);
+        var iconRect = MakeRect("Icon", rect, 0f, 0f, 40f, 40f);
         var icon = iconRect.gameObject.AddComponent<Image>();
-        icon.sprite = money ? moneyIcon : artifactPoints ? artifactPointsIcon : item.icon;
+        icon.sprite = money ? moneyIcon : artifactPoints ? artifactPointsIcon : iconOverride ? iconOverride : item.icon;
         icon.enabled = icon.sprite != null;
         icon.preserveAspect = true;
         icon.raycastTarget = false;
@@ -269,7 +308,7 @@ public sealed class ItemFeed : MonoBehaviour
         accent.raycastTarget = false;
         accent.ConfigureSparks(sparkCount, sparkIntensity, sparkRiseHeight, sparkBrightness, lineBrightness);
 
-        var entry = new Entry { item = item, money = money, artifactPoints = artifactPoints, amount = amount, rect = rect, iconRect = iconRect, backdrop = backdrop, group = group,
+        var entry = new Entry { item = item, customLabel = customLabel, money = money, artifactPoints = artifactPoints, amount = amount, rect = rect, iconRect = iconRect, backdrop = backdrop, group = group,
             label = label, labelRect = textRect, accent = accent, effectBorn = Time.unscaledTime };
         SetContent(entry);
         return entry;
@@ -277,7 +316,7 @@ public sealed class ItemFeed : MonoBehaviour
 
     static void SetContent(Entry entry)
     {
-        entry.label.text = entry.money ? $"+${entry.amount}" : entry.artifactPoints
+        entry.label.text = !string.IsNullOrEmpty(entry.customLabel) ? entry.customLabel : entry.money ? $"+${entry.amount}" : entry.artifactPoints
             ? $"+{entry.amount}  {(entry.amount == 1 ? "Artefaktpunkt" : "Artefaktpunkte")}"
             : $"+{entry.amount}  {Name(entry.item)}";
         float textWidth = Mathf.Min(286f, Mathf.Ceil(entry.label.preferredWidth) + 4f);
@@ -320,7 +359,7 @@ public sealed class ItemFeed : MonoBehaviour
     static string Name(ItemSO item) => !item ? string.Empty : string.IsNullOrWhiteSpace(item.displayName)
         ? item.name : item.displayName;
 
-    static float IconBaseY(Entry entry) => entry.artifactPoints ? 0f : -4f;
+    static float IconBaseY(Entry entry) => 0f;
 
     static Sprite LoadSprite(string path, string spriteName)
     {

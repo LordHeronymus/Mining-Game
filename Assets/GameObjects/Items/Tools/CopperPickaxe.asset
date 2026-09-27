@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: CopperPickaxe
   m_EditorClassIdentifier: 
   item: 14
-  category: 1
+  category: 4
   displayName: Kupferspitzhacke
   icon: {fileID: 21300000, guid: db7ea51513272d748b5f6189e370e504, type: 3}
   themeColor: {r: 1, g: 0.86, b: 0.58, a: 1}
   worth: 0
+  weight: 0

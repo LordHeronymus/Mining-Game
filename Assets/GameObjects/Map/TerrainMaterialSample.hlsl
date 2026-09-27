@@ -10,6 +10,8 @@ TEXTURE2D(_LayerOneTex);
 SAMPLER(sampler_LayerOneTex);
 TEXTURE2D(_LayerThreeTex);
 SAMPLER(sampler_LayerThreeTex);
+TEXTURE2D(_LayerFourTex);
+SAMPLER(sampler_LayerFourTex);
 
 // Shared world-space material lookup keeps ore lips continuous with their host rock.
 half4 TerrainMaterialSample(float2 position)
@@ -19,7 +21,8 @@ half4 TerrainMaterialSample(float2 position)
     half4 stone = SAMPLE_TEXTURE2D(_TestStoneTex,sampler_TestStoneTex,uv);
     float2 maskUV = (cell - _TestBounds.xy) / _TestBounds.zw;
     float4 materials = SAMPLE_TEXTURE2D(_TestOccupancy,sampler_TestOccupancy,maskUV);
-    stone = lerp(stone,SAMPLE_TEXTURE2D(_LayerThreeTex,sampler_LayerThreeTex,uv),smoothstep(.1,.9,materials.a));
+    stone = lerp(stone,SAMPLE_TEXTURE2D(_LayerThreeTex,sampler_LayerThreeTex,uv),smoothstep(.05,.45,materials.a));
+    stone = lerp(stone,SAMPLE_TEXTURE2D(_LayerFourTex,sampler_LayerFourTex,uv),smoothstep(.55,.95,materials.a));
     stone = lerp(stone,SAMPLE_TEXTURE2D(_LayerOneTex,sampler_LayerOneTex,uv),smoothstep(.1,.9,materials.b/max(.001,1-materials.g)));
     return lerp(stone,SAMPLE_TEXTURE2D(_SurfaceDirtTex,sampler_SurfaceDirtTex,uv),smoothstep(.1,.9,materials.g));
 }

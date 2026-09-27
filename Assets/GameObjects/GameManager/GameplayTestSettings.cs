@@ -5,21 +5,22 @@ using UnityEngine;
 [Serializable]
 public sealed class GameplayTestSettingsData
 {
-    public int version = 5;
+    public int version = 8;
     public float diggingMultiplier = 1f;
     public float movementMultiplier = 1f;
     public bool diggingMultiplierEnabled = true;
     public bool movementMultiplierEnabled = true;
     public bool hasMiningHitOffsetOverride;
     public float miningHitOffsetMs;
-    public bool godMode, noEnergyConsume, flyMode, noClip;
+    public bool godMode, noEnergyConsume, flyMode, noClip, noWeight, infiniteMoney;
     public bool globalLighting = true;
+    public bool cameraFollow = true;
     public bool testModeDisabled;
     public bool discardPlayedMap;
     public GameplayDayNightMode dayNightMode;
 }
 
-public enum GameplayTestMode { God, NoEnergyConsume, Fly, NoClip, GlobalLighting, Active, KeepMap }
+public enum GameplayTestMode { God, NoEnergyConsume, Fly, NoClip, NoWeight, GlobalLighting, Active, KeepMap, InfiniteMoney, CameraFollow }
 public enum GameplayDayNightMode { Automatic, Day, Night }
 
 // Deliberately separate from GameplaySettingsData and the editor defaults writer.
@@ -33,11 +34,12 @@ public static class GameplayTestSettings
     static float miningHitOffsetMs;
     static bool savedHasMiningHitOffsetOverride;
     static float savedMiningHitOffsetMs;
-    static bool godMode, noEnergyConsume, flyMode, noClip, testModeDisabled, discardPlayedMap;
+    static bool godMode, noEnergyConsume, flyMode, noClip, noWeight, infiniteMoney, testModeDisabled, discardPlayedMap;
     static bool globalLighting = true;
+    static bool cameraFollow = true;
     static GameplayDayNightMode dayNightMode;
     static string savedModes;
-    static string Modes => $"{godMode},{noEnergyConsume},{flyMode},{noClip},{globalLighting},{testModeDisabled},{discardPlayedMap},{dayNightMode}";
+    static string Modes => $"{godMode},{noEnergyConsume},{flyMode},{noClip},{noWeight},{infiniteMoney},{globalLighting},{testModeDisabled},{discardPlayedMap},{dayNightMode},{cameraFollow}";
     // Editor preview preference is independent of gameplay cheats and their master switch.
     public static bool KeepMapInEditor => GetConfiguredMode(GameplayTestMode.KeepMap);
     public static bool IsActive => GetMode(GameplayTestMode.Active);
@@ -51,7 +53,10 @@ public static class GameplayTestSettings
     public static bool NoEnergyConsume => GetMode(GameplayTestMode.NoEnergyConsume);
     public static bool FlyMode => GetMode(GameplayTestMode.Fly);
     public static bool NoClipMode => GetMode(GameplayTestMode.NoClip);
+    public static bool NoWeight => GetMode(GameplayTestMode.NoWeight);
+    public static bool InfiniteMoney => GetMode(GameplayTestMode.InfiniteMoney);
     public static bool GlobalLighting => IsActive && GetConfiguredMode(GameplayTestMode.GlobalLighting);
+    public static bool CameraFollowEnabled => GetConfiguredMode(GameplayTestMode.CameraFollow);
     public static GameplayDayNightMode ConfiguredDayNightMode { get { EnsureLoaded(); return dayNightMode; } }
     public static GameplayDayNightMode EffectiveDayNightMode
     {
@@ -59,7 +64,7 @@ public static class GameplayTestSettings
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             EnsureLoaded();
-            return testModeDisabled ? GameplayDayNightMode.Automatic : dayNightMode;
+            return dayNightMode;
 #else
             return GameplayDayNightMode.Automatic;
 #endif
@@ -84,6 +89,9 @@ public static class GameplayTestSettings
         if (mode == GameplayTestMode.NoEnergyConsume) return noEnergyConsume;
         if (mode == GameplayTestMode.Fly) return flyMode;
         if (mode == GameplayTestMode.NoClip) return noClip;
+        if (mode == GameplayTestMode.NoWeight) return noWeight;
+        if (mode == GameplayTestMode.InfiniteMoney) return infiniteMoney;
+        if (mode == GameplayTestMode.CameraFollow) return cameraFollow;
         return globalLighting;
     }
     public static string FilePath => Path.Combine(Application.persistentDataPath, "gameplay-test-settings.json");
@@ -115,7 +123,7 @@ public static class GameplayTestSettings
     public static bool IsValidMiningHitOffset(float value) => !float.IsNaN(value) && !float.IsInfinity(value) && value >= -500f && value <= 500f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetSession() { loaded = false; multiplier = saved = movementMultiplier = savedMovementMultiplier = 1f; diggingMultiplierEnabled = savedDiggingMultiplierEnabled = movementMultiplierEnabled = savedMovementMultiplierEnabled = true; hasMiningHitOffsetOverride = savedHasMiningHitOffsetOverride = false; miningHitOffsetMs = savedMiningHitOffsetMs = 0f; Warning = null; godMode = noEnergyConsume = flyMode = noClip = testModeDisabled = discardPlayedMap = false; globalLighting = true; dayNightMode = GameplayDayNightMode.Automatic; savedModes = Modes; }
+    static void ResetSession() { loaded = false; multiplier = saved = movementMultiplier = savedMovementMultiplier = 1f; diggingMultiplierEnabled = savedDiggingMultiplierEnabled = movementMultiplierEnabled = savedMovementMultiplierEnabled = true; hasMiningHitOffsetOverride = savedHasMiningHitOffsetOverride = false; miningHitOffsetMs = savedMiningHitOffsetMs = 0f; Warning = null; godMode = noEnergyConsume = flyMode = noClip = noWeight = infiniteMoney = testModeDisabled = discardPlayedMap = false; globalLighting = cameraFollow = true; dayNightMode = GameplayDayNightMode.Automatic; savedModes = Modes; }
 
     static void EnsureLoaded()
     {
@@ -127,7 +135,7 @@ public static class GameplayTestSettings
             if (File.Exists(FilePath))
             {
                 var data = JsonUtility.FromJson<GameplayTestSettingsData>(File.ReadAllText(FilePath));
-                if (data == null || data.version < 1 || data.version > 5 ||
+                if (data == null || data.version < 1 || data.version > 8 ||
                     !IsValid(data.diggingMultiplier) || (data.version >= 3 && !IsValidMovementMultiplier(data.movementMultiplier)) ||
                     (data.version >= 4 && data.hasMiningHitOffsetOverride && !IsValidMiningHitOffset(data.miningHitOffsetMs)))
                     throw new FormatException("Ungültiger Testfaktor.");
@@ -140,6 +148,9 @@ public static class GameplayTestSettings
                 discardPlayedMap = data.discardPlayedMap;
                 godMode = data.godMode; noEnergyConsume = data.noEnergyConsume; flyMode = data.flyMode;
                 noClip = data.noClip; globalLighting = data.version < 2 || data.globalLighting;
+                noWeight = data.version >= 6 && data.noWeight;
+                infiniteMoney = data.version >= 7 && data.infiniteMoney;
+                cameraFollow = data.version < 8 || data.cameraFollow;
                 dayNightMode = Enum.IsDefined(typeof(GameplayDayNightMode), data.dayNightMode)
                     ? data.dayNightMode : GameplayDayNightMode.Automatic;
             }
@@ -186,6 +197,9 @@ public static class GameplayTestSettings
         else if (mode == GameplayTestMode.NoEnergyConsume) noEnergyConsume = value;
         else if (mode == GameplayTestMode.Fly) flyMode = value;
         else if (mode == GameplayTestMode.NoClip) noClip = value;
+        else if (mode == GameplayTestMode.NoWeight) noWeight = value;
+        else if (mode == GameplayTestMode.InfiniteMoney) infiniteMoney = value;
+        else if (mode == GameplayTestMode.CameraFollow) cameraFollow = value;
         else globalLighting = value;
     }
 
@@ -233,13 +247,14 @@ public static class GameplayTestSettings
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
             string temp = FilePath + ".tmp";
             File.WriteAllText(temp, JsonUtility.ToJson(new GameplayTestSettingsData {
-                version = 5,
+                version = 8,
                 discardPlayedMap = discardPlayedMap,
                 testModeDisabled = testModeDisabled, diggingMultiplier = multiplier, movementMultiplier = movementMultiplier,
                 diggingMultiplierEnabled = diggingMultiplierEnabled, movementMultiplierEnabled = movementMultiplierEnabled,
                 hasMiningHitOffsetOverride = hasMiningHitOffsetOverride, miningHitOffsetMs = miningHitOffsetMs,
                 godMode = godMode, noEnergyConsume = noEnergyConsume, flyMode = flyMode,
-                noClip = noClip, globalLighting = globalLighting,
+                noClip = noClip, noWeight = noWeight, infiniteMoney = infiniteMoney, globalLighting = globalLighting,
+                cameraFollow = cameraFollow,
                 dayNightMode = dayNightMode
             }, true));
             if (File.Exists(FilePath)) File.Replace(temp, FilePath, null);

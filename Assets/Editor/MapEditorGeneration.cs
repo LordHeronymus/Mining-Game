@@ -25,6 +25,7 @@ public static class MapEditorGeneration
         int undoGroup=Undo.GetCurrentGroup();
         Undo.SetCurrentGroupName("Map im Editor generieren");
         Undo.RegisterCompleteObjectUndo(new Object[]{map,terrain,overlay,artifacts,grass},"Map im Editor generieren");
+        if(map.AltarChamber) Undo.RegisterCompleteObjectUndo(map.AltarChamber,"Map im Editor generieren");
         var ladders = map.GetComponent<LadderMap>();
         if (ladders && ladders.Tiles) Undo.RegisterCompleteObjectUndo(ladders.Tiles, "Map im Editor generieren");
         try

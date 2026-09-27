@@ -22,78 +22,27 @@ public static class SurfaceBackgroundLightingChecks
 
         float surface = controller.GetSurfaceBackgroundBrightness();
 
+        var background = UnityEngine.Object.FindFirstObjectByType<FixedUndergroundBackground>();
+        Check(background && background.isActiveAndEnabled, "Fixed underground background is missing");
         var layer = UnityEngine.Object.FindObjectsByType<ParallaxLayer>(FindObjectsSortMode.None)
-            .FirstOrDefault(candidate => candidate.undergroundTile);
-        Check(layer, "Layer-1 underground background is missing");
-        float imageHeight = layer.height * controller.EffectiveZoom;
-        Vector3 scale = layer.transform.lossyScale;
-        float surfaceWidth = 0f;
-        foreach (Sprite sprite in layer.segments)
-            surfaceWidth += imageHeight * sprite.rect.width / sprite.rect.height * scale.x;
-        float tileHeight = surfaceWidth * layer.undergroundTile.rect.height /
-            layer.undergroundTile.rect.width * scale.y / scale.x;
-        Vector3 anchor = layer.transform.TransformPoint(new Vector3(layer.horizontalOffset,
-            layer.verticalOffset, 0f));
-        anchor.y += controller.verticalOffset;
-        Vector2 delta = controller.GetParallaxCameraDelta(controller.RenderCamera);
-        anchor.y += delta.y * (1f - Mathf.Clamp01(layer.verticalParallax));
-        float undergroundTop = anchor.y - imageHeight * scale.y * 0.5f +
-            layer.undergroundYOffsetPixels * tileHeight / layer.undergroundTile.rect.height;
-        Camera camera = controller.RenderCamera;
-        Check(camera && camera.orthographic, "Parallax camera is missing");
-        float originalSize = camera.orthographicSize;
-        object result;
-        try
-        {
-            camera.orthographicSize = Mathf.Max(originalSize,
-                Mathf.Abs(undergroundTop - camera.transform.position.y) + tileHeight + 1f);
-            layer.Refresh();
-
-            var surfaceRenderer = layer.Renderers.FirstOrDefault(renderer => renderer && renderer.enabled &&
-                layer.segments.Contains(renderer.sprite));
-            var undergroundRenderer = layer.Renderers.Where(renderer => renderer && renderer.enabled &&
-                renderer.sprite == layer.undergroundTile).OrderByDescending(renderer => renderer.bounds.max.y)
-                .FirstOrDefault();
-            Check(surfaceRenderer && undergroundRenderer,
-                "Generated surface/underground renderers are missing");
-            float seamOverlap = undergroundRenderer.bounds.max.y - surfaceRenderer.bounds.min.y;
-            float oneSourcePixel = undergroundRenderer.bounds.size.y /
-                layer.undergroundTile.rect.height;
-            Check(seamOverlap >= -0.0001f,
-                "Surface and underground background contain a geometric gap");
-            float seamAllowancePixels = Mathf.Max(1f, layer.undergroundYOffsetPixels) + 0.1f;
-            Check(seamOverlap <= oneSourcePixel * seamAllowancePixels + 0.0001f,
-                "Surface and underground background overlap by more than the seam allowance");
-            Check(surfaceRenderer.sortingOrder > undergroundRenderer.sortingOrder,
-                "The surface edge no longer covers the one-pixel underground overlap");
-
-            var properties = new MaterialPropertyBlock();
-            surfaceRenderer.GetPropertyBlock(properties);
-            Check(Near(properties.GetFloat("_LightTop"), surface) &&
-                Near(properties.GetFloat("_LightBottom"), surface),
-                "Surface renderer should use its configured brightness uniformly");
-
-            properties.Clear();
-            undergroundRenderer.GetPropertyBlock(properties);
-            Check(Near(properties.GetFloat("_LightTop"), 1f) &&
-                Near(properties.GetFloat("_LightBottom"), 1f),
-                "Underground renderer should no longer apply a background brightness curve");
-
-            result = new
-            {
-                passed = true,
-                surfaceBrightness = surface,
-                seamOverlapPixels = seamOverlap / oneSourcePixel,
-                layer1TopWorldY = undergroundRenderer.bounds.max.y,
-                layer1TopBrightness = properties.GetFloat("_LightTop")
-            };
-        }
-        finally
-        {
-            camera.orthographicSize = originalSize;
-            layer.Refresh();
-        }
-        return result;
+            .FirstOrDefault(candidate => candidate.name == "NearHills");
+        Check(layer, "Surface panorama is missing");
+        layer.Refresh();
+        Check(layer.Renderers.Where(renderer => renderer && renderer.enabled).All(renderer =>
+            layer.segments.Contains(renderer.sprite) || layer.IsBottomEdge(renderer.sprite)),
+            "Parallax has generated an underground renderer");
+        var surfaceRenderer = layer.Renderers.FirstOrDefault(renderer => renderer && renderer.enabled &&
+            layer.segments.Contains(renderer.sprite));
+        Check(surfaceRenderer, "Surface panorama renderer is missing");
+        var properties = new MaterialPropertyBlock();
+        surfaceRenderer.GetPropertyBlock(properties);
+        Check(Near(properties.GetFloat("_LightTop"), surface) &&
+            Near(properties.GetFloat("_LightBottom"), surface),
+            "Surface renderer should use its configured brightness uniformly");
+        background.Refresh(controller.RenderCamera);
+        Check(background.GetComponentInChildren<MeshRenderer>(true),
+            "Fixed underground renderer is missing");
+        return new { passed = true, surfaceBrightness = surface, undergroundOwner = background.name };
     }
 
     public static object Runtime()

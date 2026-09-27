@@ -1,0 +1,8 @@
+Use case: precise-object-edit
+Asset type: active-state transparent game UI button sprite
+Input images: Image 1 is the existing dormant Ultronium deposit button frame and exact edit target.
+Primary request: create its charged, available-to-deposit state. Keep the panel's exact silhouette, proportions, faceted basalt shapes, gold inlay paths, amethyst gem positions, and transparent outer background. Brighten the existing purple gemstones to rich pink-violet with inner light. Make the fine existing cracks across the dark basalt emit thin, bright magenta-violet light. Add a soft localized violet bloom just around the gems and fissures while keeping the dark center readable for live text overlay. Warm gold trim catches a little reflected violet light.
+Composition/framing: exactly the same single centered extra-wide button plate as Image 1, with all border details in frame.
+Text: none; the game adds live text separately.
+Constraints: preserve transparent alpha outside the panel; preserve original frame geometry and material identity; avoid changing size, placement, decoration, or the negative space in the center.
+Avoid: labels, letters, numbers, extra buttons, large aura hiding the silhouette, particles in this sprite, plain rectangular fills, watermark.

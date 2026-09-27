@@ -73,10 +73,10 @@ public sealed class WorkbenchPanel : MonoBehaviour
     {
         if (IsOpen)
         {
-            if (Input.GetKeyDown(KeyCode.Escape) || (Input.GetKeyDown(KeyCode.B) && !searchField.isFocused)) ShowPanel(false);
+            if (GameBindings.Down(GameAction.Settings) || (GameBindings.Down(GameAction.Workbench) && !searchField.isFocused)) ShowPanel(false);
             else SubscribeInventory();
         }
-        else if (allowKeyboardOpen && Input.GetKeyDown(KeyCode.B) && !GameplayInputBlocker.IsBlocked)
+        else if (allowKeyboardOpen && GameBindings.Down(GameAction.Workbench) && !GameplayInputBlocker.IsBlocked)
         {
             var selected = EventSystem.current ? EventSystem.current.currentSelectedGameObject : null;
             if (!selected || !selected.GetComponent<TMP_InputField>()) ShowPanel(true);

@@ -33,7 +33,7 @@ public static class ParallaxChecks
         Assert(!Application.isPlaying, "Run these checks outside Play Mode.");
         var scene = EditorSceneManager.NewPreviewScene();
         Texture2D texture = null;
-        Sprite a = null, b = null, underground = null;
+        Sprite a = null, b = null;
         Material material = null;
         try
         {
@@ -218,9 +218,6 @@ public static class ParallaxChecks
             layer.horizontalCount = 0;
             CheckCoverage(layer, camera);
 
-            underground = Sprite.Create(texture, new Rect(0, 0, 96, 32),
-                new Vector2(0.5f, 0.5f), 16f, 0, SpriteMeshType.FullRect);
-            layer.undergroundTile = underground;
             layer.horizontalCount = 1;
             layer.horizontalParallax = 1f;
             layer.verticalParallax = 1f;
@@ -230,44 +227,18 @@ public static class ParallaxChecks
             controller.opacity = 1f;
             camera.transform.position = new Vector3(0f, -10f, -10f);
             layer.Refresh();
-            var surface = Visible(layer).Where(r => r.sprite != underground).ToArray();
-            var earth = Visible(layer).Where(r => r.sprite == underground).ToArray();
-            Assert(earth.Length > 0, "Underground tiles should cover the camera beneath the surface.");
-            float seamY = surface.Min(r => r.bounds.min.y);
-            float pixelHeight = earth[0].bounds.size.y / underground.rect.height;
-            float undergroundTop = seamY + pixelHeight;
-            Assert(Mathf.Abs(earth.Max(r => r.bounds.max.y) - undergroundTop) < 0.001f,
-                "Underground must overlap the surface by one source pixel.");
-            Assert(earth.All(r => r.sortingOrder == layer.sortingOrder + 1),
-                "Underground must render over the surface in the overlap.");
-            var firstRow = earth.Where(r => Mathf.Abs(r.bounds.max.y - undergroundTop) < 0.001f)
-                .OrderBy(r => r.bounds.min.x).ToArray();
-            Assert(firstRow.First().bounds.min.x <= camera.transform.position.x - camera.orthographicSize * camera.aspect &&
-                firstRow.Last().bounds.max.x >= camera.transform.position.x + camera.orthographicSize * camera.aspect,
-                "Underground must repeat across the viewport.");
-            for (int i = 1; i < firstRow.Length; i++)
-                Assert(Mathf.Abs(firstRow[i - 1].bounds.max.x - firstRow[i].bounds.min.x) < 0.001f,
-                    "Underground horizontal tiles must meet without gaps.");
             camera.transform.position = new Vector3(0f, -100f, -10f);
             layer.Refresh();
-            earth = Visible(layer).Where(r => r.sprite == underground).ToArray();
-            Assert(earth.Length > 0 && earth.Min(r => r.bounds.min.y) <= -110f &&
-                earth.Max(r => r.bounds.max.y) >= -90f,
-                "Underground must repeat vertically at depth.");
-            layer.Refresh();
-            Assert(Visible(layer).Where(r => r.sprite != underground).All(r => Mathf.Abs(r.color.a - 1f) < 0.001f),
-                "NearHills must keep full opacity below the depth fade range.");
-            Assert(Visible(layer).Where(r => r.sprite == underground).All(r => Mathf.Abs(r.color.a - 1f) < 0.001f),
-                "Underground must keep full opacity below the depth fade range.");
+            Assert(Visible(layer).All(r => layer.segments.Contains(r.sprite)),
+                "Parallax must render only its surface panorama, even at depth.");
 
-            return "PASS: coverage, segment seams, underground X/Y repetition, one-pixel overlap, full NearHills opacity, zoom, parallax and lifecycle.";
+            return "PASS: surface coverage, segment seams, surface-only rendering, zoom, parallax and lifecycle.";
         }
         finally
         {
             EditorSceneManager.ClosePreviewScene(scene);
             if (a) UnityEngine.Object.DestroyImmediate(a);
             if (b) UnityEngine.Object.DestroyImmediate(b);
-            if (underground) UnityEngine.Object.DestroyImmediate(underground);
             if (texture) UnityEngine.Object.DestroyImmediate(texture);
             if (material) UnityEngine.Object.DestroyImmediate(material);
         }

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -47,6 +47,7 @@ public class SellPage : MonoBehaviour
     {
         if (InventoryManager.Instance) InventoryManager.Instance.OnInventoryChanged += OnInvChanged;
         if (StatsManager.Instance) StatsManager.Instance.OnMoneyChanged += HandleMoney;
+        HandleMoney(StatsManager.Instance ? StatsManager.Instance.Money : 0);
     }
     void OnDisable()
     {
@@ -187,8 +188,8 @@ public class SellPage : MonoBehaviour
 
     public void HandleItemClick(ItemSO item)
     {
-        bool controlHeld = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
-        bool shiftHeld = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        bool controlHeld = GameBindings.Held(GameAction.SellAll);
+        bool shiftHeld = GameBindings.Held(GameAction.SellTen);
 
         if (!controlHeld && !shiftHeld)
         {
@@ -286,8 +287,8 @@ public class SellPage : MonoBehaviour
         int count = (_selected && InventoryManager.Instance)
             ? InventoryManager.Instance.GetCount(_selected)
             : 0;
-        bool controlHeld = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
-        bool shiftHeld = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        bool controlHeld = GameBindings.Held(GameAction.SellAll);
+        bool shiftHeld = GameBindings.Held(GameAction.SellTen);
         bool canSellSelected = _selected && _selected.worth > 0 && count > 0;
         bool canSellCurrentQuantity = canSellSelected && (!shiftHeld || controlHeld || count >= 10);
 
@@ -309,8 +310,8 @@ public class SellPage : MonoBehaviour
 
     private void SellWithCurrentModifier()
     {
-        bool controlHeld = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
-        bool shiftHeld = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        bool controlHeld = GameBindings.Held(GameAction.SellAll);
+        bool shiftHeld = GameBindings.Held(GameAction.SellTen);
 
         if (controlHeld)
             SellMax();

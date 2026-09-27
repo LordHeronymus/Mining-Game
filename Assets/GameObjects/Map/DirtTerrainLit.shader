@@ -6,6 +6,7 @@ Shader "Mining Game/Dirt Terrain Lit"
         _SurfaceDirtTex("Surface Dirt", 2D) = "white" {}
         _LayerOneTex("Layer One Rock", 2D) = "white" {}
         _LayerThreeTex("Layer Three Deep Stone", 2D) = "white" {}
+        _LayerFourTex("Layer Four Deep Stone", 2D) = "white" {}
         _TestOccupancy("Test Occupancy", 2D) = "white" {}
         _FrayedInset("Frayed edge inset", Float) = 0
         _UseTerrainMasks("Use terrain masks", Float) = 0

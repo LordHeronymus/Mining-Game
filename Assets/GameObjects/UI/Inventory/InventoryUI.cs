@@ -23,6 +23,7 @@ public class InventoryUI : MonoBehaviour
     InventoryManager inventory;
     Image footerIcon;
     TextMeshProUGUI footerName, footerCount;
+    TextMeshProUGUI cargoWeight;
     TextMeshProUGUI hotbarWarning;
     Image draggedIcon;
     AudioClip hotbarErrorClip;
@@ -34,6 +35,8 @@ public class InventoryUI : MonoBehaviour
     bool alphabetical;
     Coroutine fade;
     static readonly Color Cream = new Color32(255, 245, 229, 255);
+    static readonly Color OverweightYellow = new Color32(255, 211, 86, 255);
+    static readonly Color OverweightRed = new Color32(255, 91, 75, 255);
     sealed class Cell
     {
         public RectTransform rect, badge;
@@ -49,8 +52,8 @@ public class InventoryUI : MonoBehaviour
     }
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Tab)) { if (IsOpen) HidePanel(); else ShowPanel(); }
-        else if (IsOpen && Input.GetKeyDown(KeyCode.Escape)) HidePanel();
+        if (GameBindings.Down(GameAction.Inventory)) { if (IsOpen) HidePanel(); else if (!GameplayInputBlocker.IsBlocked) ShowPanel(); }
+        else if (IsOpen && GameBindings.Down(GameAction.Settings)) HidePanel();
         if (IsOpen && inventory != InventoryManager.Instance) Subscribe();
         if (draggedItem) MoveDraggedIcon(Input.mousePosition);
         if (hotbarWarning)
@@ -204,6 +207,21 @@ public class InventoryUI : MonoBehaviour
     }
     void Refresh()
     {
+        if (cargoWeight)
+        {
+            bool unlimited = GameplayTestSettings.NoWeight;
+            double weight = inventory ? inventory.TotalWeight : 0d;
+            float carryingCapacity = inventory ? inventory.CarryingCapacity : 0f;
+            cargoWeight.text = inventory
+                ? unlimited
+                    ? $"Cargo {weight:0.##} / ∞ kg"
+                    : $"Cargo {weight:0.##} / {carryingCapacity:0.##} kg"
+                : "";
+            cargoWeight.color = !inventory || unlimited ? Cream
+                : weight > carryingCapacity * 2d ? OverweightRed
+                : weight > carryingCapacity ? OverweightYellow
+                : Cream;
+        }
         if (!IsOpen || !content) return;
         var items = inventory ? inventory.GetSnapshot().Where(p => p.Key && p.Key.category != ItemCategory.Powerup &&
             p.Value > 0 && (Filter == 0 || Category(p.Key) == Filter)).ToList()
@@ -287,6 +305,7 @@ public class InventoryUI : MonoBehaviour
         layout.anchorMin = layout.anchorMax = layout.pivot = new Vector2(.5f, .5f);
         Panel("Frame", layout, 0, 0, 1672, 941, frameSprite);
         Label(layout, "Inventar", 568, 32, 536, 85, 58, TextAlignmentOptions.Midline);
+        cargoWeight = Label(layout, "", 1130, 55, 300, 50, 26, TextAlignmentOptions.MidlineRight);
         var close = Button("Close", layout, "×", 1430, 85, 72, 72, HidePanel);
         close.GetComponent<Image>().sprite = actionSprite; close.GetComponentInChildren<TextMeshProUGUI>().fontSize = 60;
         string[] names = { "Alle", "Erze", "Materialien", "Werkzeuge" };

@@ -9,6 +9,7 @@ public sealed class UniformStoneAppearance : MonoBehaviour
     public Texture2D dirtTexture;
     public Texture2D layerOneTexture;
     public Texture2D layerThreeTexture;
+    public Texture2D layerFourTexture;
     public bool useFrayedEdges;
     public bool useTerrainMasks;
     [Range(0f,2f)] public float edgeDepth=1f;
@@ -105,7 +106,8 @@ public sealed class UniformStoneAppearance : MonoBehaviour
                     var block = sampler.GetBaseBlock(i % width, -(bottom + i / width));
                     if(map.surfaceDirtTile && block.id == BlockType.Dirt) colors[i].g = 255;
                     if(map.layerOneTile && block == map.layerOneTile.block) colors[i].b = 255;
-                    if(map.layerThreeTile && block == map.layerThreeTile.block) colors[i].a = 255;
+                    if(map.layerThreeTile && block == map.layerThreeTile.block) colors[i].a = 128;
+                    if(map.layerFourTile && block == map.layerFourTile.block) colors[i].a = 255;
                 }
             }
             occupancy.SetPixels32(colors);
@@ -125,6 +127,7 @@ public sealed class UniformStoneAppearance : MonoBehaviour
         properties.SetTexture("_SurfaceDirtTex", dirtTexture ? dirtTexture : texture);
         properties.SetTexture("_LayerOneTex", layerOneTexture ? layerOneTexture : texture);
         properties.SetTexture("_LayerThreeTex", layerThreeTexture ? layerThreeTexture : texture);
+        properties.SetTexture("_LayerFourTex", layerFourTexture ? layerFourTexture : layerThreeTexture ? layerThreeTexture : texture);
         properties.SetTexture("_TestOccupancy", occupancy);
         var origin = map.Terrain.CellToWorld(Vector3Int.zero);
         properties.SetVector("_UniformStone", new Vector4(map.Terrain.layoutGrid.cellSize.x, 3f, origin.x, origin.y));
@@ -138,6 +141,9 @@ public sealed class UniformStoneAppearance : MonoBehaviour
         properties.SetFloat("_FrayedInset",useFrayedEdges&&!masked?.18f:0);
         renderer.SetPropertyBlock(properties);
         GetComponent<OreOverlayAppearance>()?.ApplyTerrain(properties);
+        if (map.ArtifactOverlay)
+            ArtifactOverlayAppearance.ApplyTerrain(map.ArtifactOverlay.GetComponent<TilemapRenderer>(),
+                properties, map.artifactEmbeddingStrength);
         var rubble=GetComponent<TerrainEdgeRubble>();
         if(!rubble)rubble=gameObject.AddComponent<TerrainEdgeRubble>();
         rubble.enabled=rubbleAmount>0;
@@ -149,7 +155,8 @@ public sealed class UniformStoneAppearance : MonoBehaviour
     Color32 TileColor(TileBase tile) => !tile ? new Color32() :
         new Color32(255, (byte)(map.registry.FromTile(tile)?.id == BlockType.Dirt ? 255 : 0),
             (byte)(map.layerOneTile && map.registry.FromTile(tile) == map.layerOneTile.block ? 255 : 0),
-            (byte)(map.layerThreeTile && map.registry.FromTile(tile) == map.layerThreeTile.block ? 255 : 0));
+            (byte)(map.layerFourTile && map.registry.FromTile(tile) == map.layerFourTile.block ? 255 :
+                map.layerThreeTile && map.registry.FromTile(tile) == map.layerThreeTile.block ? 128 : 0));
 
     void UploadOccupancyRegion()
     {
@@ -202,6 +209,9 @@ public sealed class UniformStoneAppearance : MonoBehaviour
         properties.SetFloat("_UseTerrainMasks",0);
         properties.SetVector("_UniformStone", Vector4.zero); renderer.SetPropertyBlock(properties);
         GetComponent<OreOverlayAppearance>()?.ApplyTerrain(properties);
+        if (map && map.ArtifactOverlay)
+            ArtifactOverlayAppearance.ApplyTerrain(map.ArtifactOverlay.GetComponent<TilemapRenderer>(),
+                properties, map.artifactEmbeddingStrength);
         Release();
         var rubble=GetComponent<TerrainEdgeRubble>();if(rubble)rubble.enabled=false;
         var frayed=GetComponent<TerrainFrayedEdges>();if(frayed)frayed.enabled=false;

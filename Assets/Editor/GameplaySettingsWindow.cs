@@ -6,16 +6,18 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
 using Object = UnityEngine.Object;
 
 // This window edits the existing sources of truth; it does not copy scene settings
 // into a second configuration asset that could drift out of sync.
 public class GameplaySettingsWindow : EditorWindow
 {
-    static readonly string[] Tabs = { "Spieler", "Energie", "Map", "Erzverteilung", "Partikel", "Blöcke & Beute", "Licht", "Werkbank", "Audio", "Pflanzen", "Tiere", "Health", "Artefakte" };
+    static readonly string[] Tabs = { "Spieler", "Bewegung", "Upgrades", "Map", "Erzverteilung", "Partikel", "Licht", "Werkbank", "Shop", "Audio", "Pflanzen", "Tiere", "Health", "Artefakte" };
     [SerializeField] int tab;
-    [SerializeField] int selectedBlock;
+    [SerializeField] int tabLayoutVersion;
     [SerializeField] StatsManager stats;
+    [SerializeField] UpgradeSettings upgradeSettings;
     [SerializeField] PlayerMovement movement;
     [SerializeField] PlayerLadder ladder;
     [SerializeField] TileMiner miner;
@@ -41,7 +43,6 @@ public class GameplaySettingsWindow : EditorWindow
     ItemSO[] items = Array.Empty<ItemSO>();
     CraftingRecipe[] recipes = Array.Empty<CraftingRecipe>();
     [SerializeField] CraftingRecipe selectedRecipe;
-    bool showOtherItems;
     string notification;
     GameplaySettingsData savedOverride;
     string overrideWarning;
@@ -65,6 +66,33 @@ public class GameplaySettingsWindow : EditorWindow
 
     void OnEnable()
     {
+        if (tabLayoutVersion == 0)
+        {
+            if (tab > 0) tab++;
+            tabLayoutVersion = 1;
+        }
+        if (tabLayoutVersion == 1)
+        {
+            if (tab > 1) tab++;
+            tabLayoutVersion = 2;
+        }
+        if (tabLayoutVersion == 2)
+        {
+            if (tab > 9) tab++;
+            tabLayoutVersion = 3;
+        }
+        if (tabLayoutVersion == 3)
+        {
+            if (tab == 3) tab = 0;
+            else if (tab > 3) tab--;
+            tabLayoutVersion = 4;
+        }
+        if (tabLayoutVersion == 4)
+        {
+            if (tab == 6) tab = 3;
+            else if (tab > 6) tab--;
+            tabLayoutVersion = 5;
+        }
         minSize = new Vector2(760, 640);
         EditorApplication.hierarchyChanged += Refresh;
         EditorApplication.projectChanged += Refresh;
@@ -94,6 +122,7 @@ public class GameplaySettingsWindow : EditorWindow
             ? scene.GetRootGameObjects().SelectMany(go => go.GetComponentsInChildren<Component>(true)).Where(c => c).ToArray()
             : Array.Empty<Component>();
         stats = Resolve(stats);
+        upgradeSettings = AssetDatabase.LoadAssetAtPath<UpgradeSettings>("Assets/Resources/UpgradeSettings.asset");
         movement = Resolve(movement);
         ladder = Resolve(ladder);
         miner = Resolve(miner);
@@ -200,18 +229,19 @@ public class GameplaySettingsWindow : EditorWindow
             switch (tab)
             {
                 case 0: DrawPlayer(); break;
-                case 1: DrawEnergy(); break;
-                case 2: DrawMap(); break;
-                case 3: DrawOreDistribution(); break;
-                case 4: DrawParticles(); break;
-                case 5: DrawBlocks(); break;
+                case 1: DrawMovement(); break;
+                case 2: DrawUpgrades(); break;
+                case 3: DrawMap(); break;
+                case 4: DrawOreDistribution(); break;
+                case 5: DrawParticles(); break;
                 case 6: DrawLighting(); break;
                 case 7: DrawWorkbench(); break;
-                case 8: DrawAudio(); break;
-                case 9: DrawPlants(); break;
-                case 10: DrawAnimals(); break;
-                case 11: DrawHealth(); break;
-                case 12: DrawArtifacts(); break;
+                case 8: DrawShop(); break;
+                case 9: DrawAudio(); break;
+                case 10: DrawPlants(); break;
+                case 11: DrawAnimals(); break;
+                case 12: DrawHealth(); break;
+                case 13: DrawArtifacts(); break;
             }
         }
         EditorGUILayout.Space(12);
@@ -223,7 +253,11 @@ public class GameplaySettingsWindow : EditorWindow
 
     int DrawTabRows()
     {
-        const int tabsPerRow = 7;
+        const int tabsPerRow = 6;
+        const float horizontalPadding = 16f;
+        const float tabSpacing = 2f;
+        float tabWidth = Mathf.Max(1f,
+            (position.width - horizontalPadding - (tabsPerRow - 1) * tabSpacing) / tabsPerRow);
         int selected = tab;
         for (int first = 0; first < Tabs.Length; first += tabsPerRow)
         {
@@ -232,7 +266,7 @@ public class GameplaySettingsWindow : EditorWindow
                 int last = Mathf.Min(first + tabsPerRow, Tabs.Length);
                 for (int index = first; index < last; index++)
                     if (GUILayout.Toggle(tab == index, Tabs[index], EditorStyles.toolbarButton,
-                        GUILayout.Height(28), GUILayout.ExpandWidth(true)) && index != tab) selected = index;
+                        GUILayout.Width(tabWidth), GUILayout.Height(28)) && index != tab) selected = index;
             }
         }
         return selected;
@@ -245,13 +279,13 @@ public class GameplaySettingsWindow : EditorWindow
             var leafAlpha = data.FindProperty("leafAlpha");
             leafAlpha.floatValue = EditorGUILayout.Slider("Blatt-Alpha (%)",
                 leafAlpha.floatValue * 100f, 0f, 100f) / 100f;
-            Integer(data, "maximumTrees", "Maximale Anzahl", "", 0, 20);
+            Integer(data, "maximumTrees", "Maximale Anzahl", "", 0, int.MaxValue);
             var spacing = data.FindProperty("minimumTreeSpacing");
             float cellWidth = map && map.Terrain ? map.Terrain.layoutGrid.cellSize.x : .5f;
             EditorGUI.BeginChangeCheck();
             int tiles = EditorGUILayout.IntField("Mindestabstand (Kacheln)",
                 Mathf.RoundToInt(spacing.floatValue / cellWidth));
-            if (EditorGUI.EndChangeCheck()) spacing.floatValue = Mathf.Max(4, tiles) * cellWidth;
+            if (EditorGUI.EndChangeCheck()) spacing.floatValue = Mathf.Max(1, tiles) * cellWidth;
             Integer(data, "hitsToFell", "Treffer zum Fällen", "", 1, 100);
             Float(data, "fallDurationSeconds", "Fälldauer (s)", "", .1f, 10f);
             EditorGUILayout.CurveField(data.FindProperty("fallRotationCurve"), new Color(.42f, .72f, .28f),
@@ -324,6 +358,12 @@ public class GameplaySettingsWindow : EditorWindow
             SwayMultiplier(data, "fiberSwayFrequency", "Frequenz (%)");
         }, false);
 
+        Section("Oberfläche", map, data =>
+        {
+            EditorGUILayout.Slider(data.FindProperty("grassYOffset"), -.5f, .5f,
+                new GUIContent("Gras Y-Versatz (Welteinheiten)"));
+        }, false);
+
         Section("Heilkraut", tallGrass, data =>
         {
             var herbRarity = data.FindProperty("healingHerbRarityPercent");
@@ -331,7 +371,8 @@ public class GameplaySettingsWindow : EditorWindow
             float herbPercent = EditorGUILayout.FloatField("Seltenheit (%)", herbRarity.floatValue);
             if (EditorGUI.EndChangeCheck() && Finite(herbPercent))
                 herbRarity.floatValue = Mathf.Clamp(herbPercent, 0f, 100f);
-            Float(data, "healingHerbSpawnAreaSize", "Spawn Area Size (m)", "", 0f, 1000f);
+            Float(data, "healingHerbConversionLimitPercent", "Max. Konvertierungsgrenze (%)", "", 0f, 100f);
+            Float(data, "healingHerbConversionFactor", "Konvertierungsfaktor", "", 0f, 10f);
             var herbYield = data.FindProperty("healingHerbYield");
             Vector2Int herbAmount = herbYield.vector2IntValue;
             EditorGUI.BeginChangeCheck();
@@ -686,6 +727,71 @@ public class GameplaySettingsWindow : EditorWindow
         }
     }
 
+    void DrawShop()
+    {
+        var shopRecipes = recipes.Where(RecipeUnlocks.IsShopRecipe)
+            .OrderBy(recipe => RecipeCategoryOrder(recipe.Category))
+            .ThenBy(recipe => recipe.output.displayName, StringComparer.CurrentCultureIgnoreCase)
+            .ToArray();
+        var ores = items.Where(item => item && item.category == ItemCategory.Ore)
+            .OrderBy(item => item.item switch
+            {
+                Item.Coal => 0,
+                Item.Copper => 1,
+                Item.Iron => 2,
+                Item.Silver => 3,
+                Item.Gold => 4,
+                Item.Platinum => 5,
+                Item.Ultronium => 6,
+                _ => 7
+            }).ToArray();
+
+        EditorGUILayout.Space(8);
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            if (Foldout("shop-ore-sale-prices", "Erzverkaufspreise"))
+            {
+                foreach (var item in ores)
+                {
+                    var data = new SerializedObject(item);
+                    data.Update();
+                    Integer(data, "worth", item.displayName, "", 0, 1000000);
+                    Apply(data);
+                }
+            }
+        }
+
+        EditorGUILayout.Space(8);
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            if (!Foldout("shop-recipe-prices", "Kaufpreise")) return;
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.LabelField("Rezept", EditorStyles.miniBoldLabel);
+                GUILayout.Space(8);
+                EditorGUILayout.LabelField("Preis ($)", EditorStyles.miniBoldLabel, GUILayout.Width(100));
+            }
+            foreach (var recipe in shopRecipes)
+            {
+                var data = new SerializedObject(recipe);
+                data.Update();
+                var price = data.FindProperty("shopPrice");
+                if (price == null) continue;
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    EditorGUILayout.LabelField(recipe.output.displayName);
+                    EditorGUI.BeginChangeCheck();
+                    int nextPrice = EditorGUILayout.IntField(price.intValue, GUILayout.Width(100));
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        price.intValue = Mathf.Max(0, nextPrice);
+                        data.ApplyModifiedProperties();
+                    }
+                }
+            }
+        }
+    }
+
     void DrawLighting()
     {
         var sky = sceneComponents.OfType<SkyController>().FirstOrDefault();
@@ -727,26 +833,17 @@ public class GameplaySettingsWindow : EditorWindow
         {
             Integer(data, "ultroniumRequiredToWin", "Ultronium zum Gewinnen", "", 1, 1000000);
         }, false);
+        DrawEnergy();
         if (BaseStats)
         {
-            CollapsibleSection("player-movement-mining", "Bewegung und Abbauen", BaseStats, data =>
+            CollapsibleSection("player-mining", "Abbauen", BaseStats, data =>
             {
-                Float(data, "moveSpeed", "Laufgeschwindigkeit", "Welteinheiten pro Sekunde.", 0.01f);
-                Float(data, "jumpHeightBlocks", "Sprunghöhe (Blöcke)", "", 0, 100);
                 Float(data, "miningSpeed", "Basis-Abbaugeschwindigkeit", "Mehr = schneller. Zeit pro Block = Härte / Geschwindigkeit.", GameplaySettingsStore.MinDiggingSpeed, GameplaySettingsStore.MaxDiggingSpeed);
                 Float(data, "reach", "Abbau-Reichweite", "Maximale Entfernung vom Spieler zum Blockzentrum in Welteinheiten.", 0.01f);
             });
         }
         else Missing("Kein PlayerBaseStats-Asset am StatsManager zugewiesen.");
 
-        movement = Picker("Bewegungssteuerung", movement);
-        CollapsibleSection("player-movement-feel", "Bewegungsgefühl", movement, data =>
-        {
-            Float(data, "accelTime", "Beschleunigungszeit (s)", "Zeit bis zum Maximaltempo in der Luft. Am Boden wirkt zusätzlich der Bodenfaktor.", 0.01f);
-            Float(data, "decelTime", "Bremszeit (s)", "Zeit von Maximaltempo bis Stillstand in der Luft.", 0.01f);
-            Float(data, "directionChangeDecelTime", "Richtungswechsel-Bremszeit (s)", "Zeit zum Abbremsen bis Stillstand bei entgegengesetzter Eingabe.", 0.01f);
-            Float(data, "groundedCoeff", "Beschleunigungsfaktor am Boden", "Multipliziert Beschleunigen und Bremsen am Boden. Kleiner = träger. In der Luft gilt Faktor 1.", 0.01f);
-        });
         CollapsibleSection("player-cursor-pulse", "Cursor", miner, data =>
         {
             Float(data, "cursorPulseInterval", "Intervall (s)", "", .05f, 10f);
@@ -759,17 +856,6 @@ public class GameplaySettingsWindow : EditorWindow
             Float(data, "miningSwingsPerSecond", "Schläge pro Sekunde", "", .1f, 8f);
             MiningHitOffset(data);
         });
-        CollapsibleSection("player-ladder", "Leiter", ladder, data =>
-        {
-            Float(data, "horizontalExitUpwardImpulse", "Aufwärtsimpuls beim seitlichen Verlassen", "", 0, 10);
-        });
-        var body = movement ? movement.GetComponent<Rigidbody2D>() : null;
-        CollapsibleSection("player-jump-physics", "Sprungphysik", body, data =>
-        {
-            Float(data, "m_GravityScale", "Gravitationsfaktor", "Skaliert die globale 2D-Gravitation für den Spieler.", 0.01f);
-            Float(data, "m_Mass", "Spielermasse", "", 0.01f);
-        });
-
         follow = Picker("Spielkamera", follow);
         CollapsibleSection("player-camera", "Kamera", follow, data =>
         {
@@ -784,6 +870,92 @@ public class GameplaySettingsWindow : EditorWindow
         if (camera && camera.orthographic)
             CollapsibleSection("player-camera-visibility", "Sichtweite", camera, data => Float(data, "orthographic size", "Halbe sichtbare Höhe", "Orthographic Size: größere Werte zeigen mehr von der Welt.", 0.1f));
         DrawStartingResources();
+    }
+
+    void DrawMovement()
+    {
+        stats = Picker("Spieler-Basiswerte", stats);
+        if (BaseStats)
+            CollapsibleSection("player-movement", "Laufen und Springen", BaseStats, data =>
+            {
+                Float(data, "moveSpeed", "Laufgeschwindigkeit", "Welteinheiten pro Sekunde.", 0.01f);
+                Float(data, "jumpHeightBlocks", "Sprunghöhe (Blöcke)", "", 0, 100);
+            });
+        else Missing("Kein PlayerBaseStats-Asset am StatsManager zugewiesen.");
+
+        movement = Picker("Bewegungssteuerung", movement);
+        CollapsibleSection("player-movement-feel", "Bewegungsgefühl", movement, data =>
+        {
+            Float(data, "accelTime", "Beschleunigungszeit (s)", "Zeit bis zum Maximaltempo in der Luft. Am Boden wirkt zusätzlich der Bodenfaktor.", 0.01f);
+            Float(data, "decelTime", "Bremszeit (s)", "Zeit von Maximaltempo bis Stillstand in der Luft.", 0.01f);
+            Float(data, "directionChangeDecelTime", "Richtungswechsel-Bremszeit (s)", "Zeit zum Abbremsen bis Stillstand bei entgegengesetzter Eingabe.", 0.01f);
+            Float(data, "groundedCoeff", "Beschleunigungsfaktor am Boden", "Multipliziert Beschleunigen und Bremsen am Boden. Kleiner = träger. In der Luft gilt Faktor 1.", 0.01f);
+        });
+        CollapsibleSection("player-ladder", "Leiter", ladder, data =>
+        {
+            Float(data, "climbSpeed", "Klettergeschwindigkeit", "Welteinheiten pro Sekunde.", 0.1f);
+            Float(data, "horizontalExitUpwardImpulse", "Aufwärtsimpuls beim seitlichen Verlassen", "", 0, 10);
+        });
+        var body = movement ? movement.GetComponent<Rigidbody2D>() : null;
+        CollapsibleSection("player-jump-physics", "Sprungphysik", body, data =>
+        {
+            Float(data, "m_GravityScale", "Gravitationsfaktor", "Skaliert die globale 2D-Gravitation für den Spieler.", 0.01f);
+            Float(data, "m_Mass", "Spielermasse", "", 0.01f);
+        });
+
+        DrawItemWeights();
+    }
+
+    void DrawUpgrades()
+    {
+        if (!upgradeSettings)
+        {
+            Missing("UpgradeSettings-Asset fehlt.");
+            return;
+        }
+        Section("Traglast (kg)", upgradeSettings, data =>
+        {
+            var levels = data.FindProperty("carryingCapacityLevels");
+            if (levels.arraySize == 0) levels.arraySize = 1;
+            int removeLevel = -1;
+            for (int i = 0; i < levels.arraySize; i++)
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    var level = levels.GetArrayElementAtIndex(i);
+                    EditorGUI.BeginChangeCheck();
+                    float value = EditorGUILayout.FloatField("Level " + (i + 1), level.floatValue);
+                    if (EditorGUI.EndChangeCheck() && Finite(value)) level.floatValue = Mathf.Max(0.01f, value);
+                    using (new EditorGUI.DisabledScope(levels.arraySize == 1))
+                        if (GUILayout.Button("−", GUILayout.Width(26))) removeLevel = i;
+                }
+            }
+            if (removeLevel >= 0) levels.DeleteArrayElementAtIndex(removeLevel);
+            if (GUILayout.Button("Level hinzufügen"))
+            {
+                int next = levels.arraySize;
+                levels.InsertArrayElementAtIndex(next);
+                levels.GetArrayElementAtIndex(next).floatValue = next > 0
+                    ? levels.GetArrayElementAtIndex(next - 1).floatValue : 30f;
+            }
+        }, false);
+        Section("Spitzhacken", upgradeSettings, data =>
+        {
+            var levels = data.FindProperty("pickaxeLevels");
+            for (int i = 0; i < levels.arraySize; i++)
+            {
+                var level = levels.GetArrayElementAtIndex(i);
+                var item = level.FindPropertyRelative("pickaxe").objectReferenceValue as ItemSO;
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                {
+                    EditorGUILayout.LabelField($"Level {i + 1} · {(item ? item.displayName : "Spitzhacke fehlt")}", EditorStyles.boldLabel);
+                    EditorGUILayout.PropertyField(level.FindPropertyRelative("progressPerHitMultiplier"),
+                        new GUIContent("Abbaufortschritt pro Treffer (×)"));
+                    EditorGUILayout.PropertyField(level.FindPropertyRelative("maximumHardness"),
+                        new GUIContent("Max. HärteIndex"));
+                }
+            }
+        }, false);
     }
 
     void DrawStartingResources()
@@ -887,13 +1059,16 @@ public class GameplaySettingsWindow : EditorWindow
     }
     void DrawEnergy()
     {
-        stats = Picker("Spieler-Basiswerte", stats);
-        Section("Kapazität", BaseStats, data => Float(data, "maxEnergy", "Maximale Energie", "Kapazität und Startenergie des Spielers.", 1));
+        EditorGUILayout.Space(8);
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            if (!Foldout("player-energy", "Energie")) return;
+            Section("Kapazität", BaseStats, data => Float(data, "maxEnergy", "Maximale Energie", "Kapazität und Startenergie des Spielers.", 1));
         energy = Picker("Energieverbrauch", energy);
         Section("Verbrauch pro Sekunde", energy, data =>
         {
-            Float(data, "idleConsumtion", "Grundverbrauch", "Fällt immer an, solange Energie vorhanden ist.", 0);
             Float(data, "consumptionMultiplier", "Verbrauchsmultiplikator", "", 0);
+            Float(data, "idleConsumtion", "Grundverbrauch", "Fällt immer an, solange Energie vorhanden ist.", 0);
             Float(data, "moveConsumption", "Zusatz beim Bewegen", "Wird zum Grundverbrauch addiert, wenn Bewegungseingaben anliegen.", 0);
             Float(data, "diggingConsumption", "Zusatz beim Abbauen", "Wird zum Grundverbrauch addiert, solange der Miner abbaut.", 0);
         });
@@ -905,6 +1080,7 @@ public class GameplaySettingsWindow : EditorWindow
         station = Picker("Aufladestation", station);
         Section("Aufladen", station, data => Float(data, "rechargeCost", "Preis pro Energieeinheit", "Geldkosten pro fehlender Energieeinheit. Die aktuelle Aufladelogik rundet auf ganze Münzen ab.", 0.01f));
         EditorGUILayout.HelpBox("Aktueller Spielstand: Leere Energie stoppt Bewegung/Abbau noch nicht. Teilaufladung bei zu wenig Geld enthält einen bekannten Berechnungsfehler; Details in der Gameplay-Analyse.", MessageType.Warning);
+        }
     }
 
     void DrawMap()
@@ -926,20 +1102,18 @@ public class GameplaySettingsWindow : EditorWindow
             EditorGUILayout.PropertyField(randomSeed, new GUIContent("Seed zufällig generieren"));
             using (new EditorGUI.DisabledScope(randomSeed.boolValue))
                 Integer(data, "seed", "Seed", "", -10000000, 10000000);
+            if (tallGrass)
+            {
+                var herbData = new SerializedObject(tallGrass);
+                herbData.Update();
+                Float(herbData, "healingHerbSpawnAreaSize", "Spawn Area Size (m)", "", 0f, 1000f);
+                Apply(herbData);
+            }
         });
         CollapsibleSection("map-borders", "Weltgrenzen", map ? map.GetComponent<MapWorldBorders>() : null, data =>
         {
             Integer(data, "sidePaddingCells", "Seitenabstand (Kacheln)", "Abstand zwischen Kartenrand und unsichtbarer Seitenwand.", 0, 10000);
             Float(data, "topBorderY", "Obere Grenze (Welt-Y)", "Unsichtbare obere Wand und Kameragrenze.", -10000f);
-        }, false);
-        CollapsibleSection("map-surface", "Oberfläche", map, data =>
-        {
-            EditorGUILayout.Slider(data.FindProperty("grassYOffset"), -.5f, .5f,
-                new GUIContent("Gras Y-Versatz (Welteinheiten)"));
-        }, false);
-        CollapsibleSection("map-herb-spawn-area", "Heilkraut-Spawngebiet", tallGrass, data =>
-        {
-            Float(data, "healingHerbSpawnAreaSize", "Spawn Area Size (m)", "", 0f, 1000f);
         }, false);
         CollapsibleSection("map-layers", "Layer", map, data =>
         {
@@ -955,16 +1129,41 @@ public class GameplaySettingsWindow : EditorWindow
                 if (i > 0)
                     EditorGUILayout.PropertyField(layer.FindPropertyRelative("transitionWidth"), new GUIContent("Übergang (Blöcke)"));
                 EditorGUILayout.PropertyField(layer.FindPropertyRelative("backgroundSprite"), new GUIContent("Hintergrundsprite"));
-                var stoneProperty = layer.FindPropertyRelative("stone");
-                EditorGUILayout.PropertyField(stoneProperty, new GUIContent("Gesteinsart"));
-                var stone = stoneProperty.objectReferenceValue as Block;
-                var hardness = layer.FindPropertyRelative("stoneHardness");
-                EditorGUI.BeginChangeCheck();
-                float value = EditorGUILayout.FloatField("Gesteinshärte",
-                    hardness.floatValue > 0f ? hardness.floatValue : stone ? stone.hardness : 1f);
-                if (EditorGUI.EndChangeCheck() && Finite(value)) hardness.floatValue = Mathf.Max(.01f, value);
+                EditorGUILayout.PropertyField(layer.FindPropertyRelative("stone"), new GUIContent("Gesteinsart"));
             }
         }, false);
+        CollapsibleSection("map-ultronium-altar", "Ultronium Altar", map, data =>
+        {
+            EditorGUILayout.Slider(data.FindProperty("altarButtonPulseAmplitude"), 0f, .15f,
+                new GUIContent("Pulsamplitude"));
+            EditorGUILayout.Slider(data.FindProperty("altarButtonPulseFrequency"), 0f, 3f,
+                new GUIContent("Pulsfrequenz (Hz)"));
+            EditorGUILayout.Slider(data.FindProperty("altarButtonFloatAmplitude"), 0f, .2f,
+                new GUIContent("Float-Amplitude (Kacheln)"));
+            EditorGUILayout.Slider(data.FindProperty("altarButtonFloatFrequency"), 0f, 3f,
+                new GUIContent("Float-Frequenz (Hz)"));
+        }, false);
+        if (Registry)
+        {
+            EditorGUILayout.Space(8);
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                if (Foldout("map-block-properties", "Blockeigenschaften"))
+                {
+                    var blocks = Registry.blocks.Where(block => block).ToArray();
+                    var rocks = blocks.Where(block => block.IsStone || block.id == BlockType.Dirt)
+                        .OrderBy(BlockPickerOrder).ThenBy(block => block.displayName, StringComparer.CurrentCultureIgnoreCase).ToArray();
+                    var ores = blocks.Where(block => block.HasOreOverlays)
+                        .OrderBy(BlockPickerOrder).ThenBy(block => block.displayName, StringComparer.CurrentCultureIgnoreCase).ToArray();
+
+                    if (Foldout("map-block-properties-rocks", "Gesteine"))
+                        foreach (var block in rocks) DrawBlockSettings(block, false);
+                    if (Foldout("map-block-properties-ores", "Erze"))
+                        foreach (var block in ores) DrawBlockSettings(block, true);
+                    ValidateRegistry();
+                }
+            }
+        }
         CollapsibleSection("map-background", "Untergrund-Hintergrund", UnityEngine.Object.FindFirstObjectByType<FixedUndergroundBackground>(), data =>
         {
             EditorGUILayout.Slider(data.FindProperty("nightBrightnessMultiplier"), 0f, 3f,
@@ -1017,6 +1216,7 @@ public class GameplaySettingsWindow : EditorWindow
     void DrawOreDistribution()
     {
         map = Picker("Map-Generator", map);
+        if (map) DrawMapOverviewLegend(map);
         CollapsibleSection("ore-density", "Globale Verteilung", map, data =>
         {
             var curve = data.FindProperty("oreDensityCurve");
@@ -1033,6 +1233,59 @@ public class GameplaySettingsWindow : EditorWindow
         if (!map) return;
         if (!Registry) { Missing("Dem Map-Generator fehlt ein BlockRegistry-Asset."); return; }
         CollapsibleSection("ore-configurations", "Erze", map, DrawOreSettings, false);
+    }
+
+    static void DrawMapOverviewLegend(MapGenerator map)
+    {
+        var data = new SerializedObject(map);
+        data.Update();
+        var colors = data.FindProperty("mapOverviewColors");
+        if (colors == null || !colors.isArray) return;
+        int requiredSize = MapOverviewWindow.LegendTypes.Length;
+        bool paletteChanged = colors.arraySize < requiredSize;
+        if (colors.arraySize < requiredSize)
+        {
+            int previousSize = colors.arraySize;
+            colors.arraySize = requiredSize;
+            for (int i = previousSize; i < requiredSize; i++)
+                colors.GetArrayElementAtIndex(i).colorValue = MapOverviewWindow.ColorFor((BlockType)i);
+        }
+
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.Space(8);
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            EditorGUILayout.LabelField("Map-Overview-Farben", EditorStyles.boldLabel);
+            int columns = Mathf.Clamp(Mathf.FloorToInt((EditorGUIUtility.currentViewWidth - 55f) / 240f), 1, 3);
+            for (int start = 0; start < MapOverviewWindow.LegendNames.Length; start += columns)
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    for (int i = start; i < Mathf.Min(start + columns, MapOverviewWindow.LegendNames.Length); i++)
+                    {
+                        Rect row = GUILayoutUtility.GetRect(235f, 20f, GUILayout.ExpandWidth(true));
+                        SerializedProperty color = i == MapOverviewWindow.LegendTypes.Length
+                            ? data.FindProperty("mapOverviewPlayerColor")
+                            : colors.GetArrayElementAtIndex((int)MapOverviewWindow.LegendTypes[i]);
+                        EditorGUI.DrawRect(new Rect(row.x, row.y + 4f, 12f, 12f), color.colorValue);
+                        float pickerWidth = 64f;
+                        GUI.Label(new Rect(row.x + 18f, row.y, row.width - pickerWidth - 24f, row.height),
+                            MapOverviewWindow.LegendNames[i], EditorStyles.miniLabel);
+                        Rect pickerRect = new Rect(row.xMax - pickerWidth, row.y, pickerWidth, row.height);
+                        Color next = EditorGUI.ColorField(pickerRect, GUIContent.none, color.colorValue,
+                            false, false, false, null);
+                        next.a = 1f;
+                        color.colorValue = next;
+                    }
+                }
+            }
+        }
+        paletteChanged |= EditorGUI.EndChangeCheck();
+        if (paletteChanged)
+        {
+            Apply(data);
+            MapOverviewWindow.RefreshPalette();
+        }
     }
 
     internal static float DensityLayerX(int startDepth, int mapHeight) =>
@@ -1445,9 +1698,15 @@ public class GameplaySettingsWindow : EditorWindow
             var minimumDepth = data.FindProperty("artifactMinimumDepth");
             minimumDepth.intValue = EditorGUILayout.IntSlider("Mindesttiefe (Y)",
                 minimumDepth.intValue, 1, Mathf.Max(1, map.mapHeight - 1));
+            var minimumSameTypeDistance = data.FindProperty("artifactMinimumSameTypeDistance");
+            minimumSameTypeDistance.intValue = EditorGUILayout.IntSlider(
+                "Mindestabstand gleicher Artefakte (Blöcke)", minimumSameTypeDistance.intValue, 0, 100);
             var dropChance = data.FindProperty("artifactDropChanceMultiplier");
             dropChance.floatValue = EditorGUILayout.Slider("Drop-Chance-Multiplikator",
                 dropChance.floatValue, .1f, 5f);
+            var embeddingStrength = data.FindProperty("artifactEmbeddingStrength");
+            embeddingStrength.floatValue = EditorGUILayout.Slider("Embedding-Stärke",
+                embeddingStrength.floatValue, 0f, 1f);
             var iconScale = data.FindProperty("artifactOverviewIconScale");
             iconScale.floatValue = EditorGUILayout.Slider("Icon-Skalierung Übersicht",
                 iconScale.floatValue, .25f, 8f);
@@ -1539,33 +1798,6 @@ public class GameplaySettingsWindow : EditorWindow
         return next;
     }
 
-    Block BlockPicker()
-    {
-        if (!Registry || Registry.blocks == null || Registry.blocks.Length == 0) { Missing("Keine Blöcke im aktiven Map-Katalog."); return null; }
-        selectedBlock = Mathf.Clamp(selectedBlock, 0, Registry.blocks.Length - 1);
-        var indices = Enumerable.Range(0, Registry.blocks.Length)
-            .OrderBy(index => BlockPickerOrder(Registry.blocks[index]))
-            .ThenBy(index => Registry.blocks[index] ? Registry.blocks[index].displayName : "")
-            .ToArray();
-        using (new EditorGUILayout.HorizontalScope())
-        {
-            EditorGUILayout.PrefixLabel("Block / Erz");
-            var rect = GUILayoutUtility.GetRect(new GUIContent(BlockPickerName(Registry.blocks[selectedBlock])), EditorStyles.popup);
-            if (EditorGUI.DropdownButton(rect, new GUIContent(BlockPickerName(Registry.blocks[selectedBlock])), FocusType.Keyboard))
-            {
-                var menu = new GenericMenu();
-                foreach (int index in indices)
-                {
-                    int choice = index;
-                    menu.AddItem(new GUIContent(BlockPickerName(Registry.blocks[choice])), choice == selectedBlock,
-                        () => { selectedBlock = choice; Repaint(); });
-                }
-                menu.DropDown(rect);
-            }
-        }
-        return Registry.blocks[selectedBlock];
-    }
-
     void DrawParticles()
     {
         Section("Ultronium", lighting, data =>
@@ -1625,60 +1857,55 @@ public class GameplaySettingsWindow : EditorWindow
             case BlockType.GoldOre: return 14;
             case BlockType.PlatinumOre: return 15;
             case BlockType.DiamondOre: return 16;
-            case BlockType.UltroniumOre: return 17;
+            case BlockType.TitaniumOre: return 17;
+            case BlockType.TungstenOre: return 18;
+            case BlockType.UltroniumOre: return 19;
             default: return 90;
         }
     }
 
-    static string BlockPickerName(Block block)
+    void DrawBlockSettings(Block block, bool isOre)
     {
-        if (!block) return "Sonstige/Fehlender Block";
-        switch (block.id)
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
         {
-            case BlockType.Dirt: return "Gestein/Erde";
-            case BlockType.Stone: return "Gestein/Übergangsgestein";
-            case BlockType.StoneLayer2: return "Gestein/Stein";
-            case BlockType.StoneLayer3: return "Gestein/Tiefstein 1";
-            case BlockType.StoneLayer4: return "Gestein/Tiefstein 2";
-            default: return (block.HasOreOverlays ? "Erze/" : "Sonstige/") + block.displayName;
+            EditorGUILayout.LabelField(block.displayName, EditorStyles.boldLabel);
+            var blockData = new SerializedObject(block);
+            blockData.Update();
+            Float(blockData, "hardness", "Haltbarkeit", "", 0.01f);
+            Float(blockData, "hardnessIndex", "HärteIndex", "", 0.01f);
+            if (isOre && !block.itemDrop)
+                EditorGUILayout.PropertyField(blockData.FindProperty("itemDrop"), new GUIContent("Beute-Gegenstand"));
+            Apply(blockData);
         }
     }
 
-    void DrawBlocks()
+    void DrawItemWeights()
     {
-        map = Picker("Map-Katalog aus", map);
-        var block = BlockPicker();
-        Section("Abbau und Belohnung", block, data =>
-        {
-            Float(data, "hardness", "Blockhärte", "Mehr = längere Abbauzeit. Zeit = Härte / Abbaugeschwindigkeit.", 0.01f);
-            EditorGUILayout.PropertyField(data.FindProperty("itemDrop"), new GUIContent("Beute-Gegenstand"));
-        });
-        if (block && BaseStats && BaseStats.miningSpeed > 0)
-            EditorGUILayout.LabelField($"Abbauzeit mit Basiswert: {Mathf.Max(0.01f, block.hardness <= 0 ? 1 : block.hardness) / BaseStats.miningSpeed:0.###} s  (ohne JSON-Override/Upgrades)", EditorStyles.miniLabel);
-        if (block && block.itemDrop) DrawItem(block.itemDrop);
         EditorGUILayout.Space(12);
-        EditorGUILayout.LabelField("Verkaufswerte im Überblick", EditorStyles.boldLabel);
-        showOtherItems = EditorGUILayout.ToggleLeft("Auch Gegenstände ohne Beute-Zuordnung anzeigen", showOtherItems);
-        var usedItems = Registry && Registry.blocks != null
-            ? new HashSet<ItemSO>(Registry.blocks.Where(b => b && b.itemDrop).Select(b => b.itemDrop)) : new HashSet<ItemSO>();
-        foreach (var item in items.Where(item => showOtherItems || usedItems.Contains(item)))
+        EditorGUILayout.LabelField("Itemgewichte", EditorStyles.boldLabel);
+        foreach (ItemCategory category in new[] { ItemCategory.Ore, ItemCategory.Misc, ItemCategory.Tool, ItemCategory.Consumable, ItemCategory.Powerup })
         {
-            var data = new SerializedObject(item);
-            data.Update();
-            Integer(data, "worth", item.displayName + (usedItems.Contains(item) ? "" : " (nicht als Beute genutzt)"), AssetDatabase.GetAssetPath(item), 0, 1000000);
-            Apply(data);
+            var group = items.Where(item => item.category == category && !item.HasFixedZeroWeight).ToArray();
+            if (group.Length == 0) continue;
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField(category switch
+                {
+                    ItemCategory.Ore => "Erze",
+                    ItemCategory.Misc => "Materialien",
+                    ItemCategory.Tool => "Werkzeuge und Bauen",
+                    ItemCategory.Consumable => "Verbrauchsgegenstände",
+                    _ => "Sonstiges"
+                }, EditorStyles.boldLabel);
+                foreach (var item in group)
+                {
+                    var data = new SerializedObject(item);
+                    data.Update();
+                    Float(data, "weight", item.displayName, "", 0f);
+                    Apply(data);
+                }
+            }
         }
-        EditorGUILayout.HelpBox("Verkaufspreis gilt pro Stück; 0 = nicht verkaufbar. Der Shop zeigt nur Kategorie Ore. Kauf, Werkzeugwirkungen und Inventarlimits sind noch nicht implementiert.", MessageType.Info);
-        ValidateRegistry();
-    }
-
-    void DrawItem(ItemSO item)
-    {
-        Section("Zugehöriger Gegenstand", item, data =>
-        {
-            Integer(data, "worth", "Verkaufspreis pro Stück", "0 = nicht verkaufbar.", 0, 1000000);
-            EditorGUILayout.PropertyField(data.FindProperty("category"), new GUIContent("Kategorie", "Im aktuellen Verkaufsfenster erscheinen nur Gegenstände der Kategorie Ore."));
-        });
     }
 
     void ValidateRegistry()
@@ -1835,6 +2062,9 @@ public class GameplaySettingsWindow : EditorWindow
         if (data.targetObject is Component component)
         {
             if (component is SurfaceTallGrass grass && !Application.isPlaying) grass.Rebuild();
+            if (component is MapGenerator map && map.ArtifactOverlay)
+                ArtifactOverlayAppearance.ApplyTo(map.ArtifactOverlay.GetComponent<TilemapRenderer>(),
+                    map.artifactEmbeddingStrength);
             PrefabUtility.RecordPrefabInstancePropertyModifications(component);
             EditorSceneManager.MarkSceneDirty(component.gameObject.scene);
             if (component is SkyController sky)

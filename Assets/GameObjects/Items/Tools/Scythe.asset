@@ -18,3 +18,4 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 7e714060262fb584c89b8e4ff7a53fa4, type: 3}
   themeColor: {r: 0.72, g: 0.84, b: 0.73, a: 1}
   worth: 25
+  weight: 0

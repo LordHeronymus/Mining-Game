@@ -20,7 +20,7 @@ public class CameraFollow : MonoBehaviour
 
     void LateUpdate()
     {
-        if (!target) return;
+        if (!target || !GameplayTestSettings.CameraFollowEnabled) return;
 
         Vector3 desired = DesiredPosition();
         Vector3 smoothed = Vector3.Lerp(transform.position, desired, smoothSpeed * Time.deltaTime);

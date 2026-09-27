@@ -265,12 +265,16 @@ public static class OreOverlaySetup
             {
                 var current = map.GetBlockAt(new Vector3Int(left + x, -y, 0));
                 // Populate the new ore only in intact stone or dirt, preserving mined holes and other ores.
-                blocks[y * width + x] = newOre && current && (current.IsStone || current.id == BlockType.Dirt) && sampler.GetBlock(x, y) == newOre
+                blocks[y * width + x] = newOre && current && !map.IsCellProtected(new Vector3Int(left + x, -y, 0)) && (current.IsStone || current.id == BlockType.Dirt) && sampler.GetBlock(x, y) == newOre
                     ? newOre : current;
             }
         if (newOre)
+        {
+            OreVeins.CompactThinTips(blocks, width, height, sampler.GetBaseBlock,
+                sampler.CanPlaceOre, (x, y) => map.IsCellProtected(new Vector3Int(left + x, -y, 0)), newOre);
             OreVeins.PruneSmallVeins(blocks, width, height, map.minimumOreVeinSize,
                 sampler.GetBaseBlock, newOre);
+        }
         var richness = OreVeins.Build(blocks, width, height, map.ActiveSeed);
         int changed = 0;
         for (int y = 0; y < height; y++)

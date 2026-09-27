@@ -25,6 +25,7 @@ public class TileMiner : MonoBehaviour
     [FormerlySerializedAs("cursorBrightness"), Range(0f, 3f)] public float cursorGlowStrength = 1f;
 
     private Dictionary<Vector3Int, float> progress = new();
+    private readonly Dictionary<Vector3Int, int> pendingDropCounts = new();
     private MiningCrackVisual miningCracks;
     private Camera _cam;
     private MapGenerator map;
@@ -119,7 +120,7 @@ public class TileMiner : MonoBehaviour
         mining = false;
         IsChoppingTree = false;
         IsCuttingGrass = Time.time < grassSwingUntil;
-        if (!Input.GetMouseButton(0)) grassClickConsumed = false;
+        if (!GameBindings.Held(GameAction.Mine)) grassClickConsumed = false;
         if (!hotbar) hotbar = FindFirstObjectByType<CompactHud>();
         if (GameplayInputBlocker.IsBlocked || IsPointerOverUi(Input.mousePosition) || (hotbar && hotbar.SelectedSlot != 0))
         {
@@ -133,7 +134,7 @@ public class TileMiner : MonoBehaviour
             grassSwingUntil = 0f;
             return;
         }
-        if (Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.RightControl) || Input.GetMouseButtonDown(2))
+        if (GameBindings.Down(GameAction.SmartCursor))
             smartCursor = !smartCursor;
         if (!_cam || !tilemap) return;
 
@@ -166,7 +167,7 @@ public class TileMiner : MonoBehaviour
             ClearHighlight();
             ClearTreeGlow();
             UpdateToolCursor(grassReachable && tallGrass.HasScythe ? ToolCursor.Scythe : ToolCursor.None);
-            if (grassReachable && Input.GetMouseButton(0)) TryCutGrassAt(mouseWorld);
+            if (grassReachable && GameBindings.Held(GameAction.Mine)) TryCutGrassAt(mouseWorld);
             mining = IsCuttingGrass;
             return;
         }
@@ -185,7 +186,7 @@ public class TileMiner : MonoBehaviour
         if (tree)
         {
             ClearHighlight();
-            if (Input.GetMouseButton(0) && Vector2.Distance(transform.position, tree.HitPoint) <= stats.Reach)
+            if (GameBindings.Held(GameAction.Mine) && Vector2.Distance(transform.position, tree.HitPoint) <= stats.Reach)
             {
                 mining = true;
                 IsChoppingTree = true;
@@ -220,16 +221,17 @@ public class TileMiner : MonoBehaviour
             }
         }
 
-        if (map && map.IsSurfaceCellProtected(targetCell))
+        if (map && map.IsCellProtected(targetCell))
         {
             progress.Remove(targetCell);
+            pendingDropCounts.Remove(targetCell);
             ClearHighlight();
             return;
         }
 
         ShowHighlight(targetCell, tilemap.WorldToCell(mouseWorld));
 
-        if (!Input.GetMouseButton(0))
+        if (!GameBindings.Held(GameAction.Mine))
         {
             mining = false;
             return;
@@ -261,8 +263,15 @@ public class TileMiner : MonoBehaviour
 
     void ApplyMiningHit(Vector3Int cell, float damageInterval)
     {
+        if (!CanMineBlock(cell))
+        {
+            AudioManager.Instance?.PlayBlockedMiningHit();
+            return;
+        }
         float p = progress.TryGetValue(cell, out var current) ? current : 0f;
-        p += damageInterval / Mathf.Max(.0001f, GetTargetMineTime(cell));
+        float pickaxeMultiplier = InventoryManager.Instance
+            ? InventoryManager.Instance.EquippedPickaxeProgressMultiplier : 1f;
+        p += damageInterval * pickaxeMultiplier / Mathf.Max(.0001f, GetTargetMineTime(cell));
         if (p >= 1f) { CompleteMining(cell); return; }
         progress[cell] = p;
         miningCracks ??= new MiningCrackVisual(tilemap);
@@ -294,6 +303,7 @@ public class TileMiner : MonoBehaviour
     void ClearMiningProgress()
     {
         progress.Clear();
+        pendingDropCounts.Clear();
         miningCracks?.Dispose();
         miningCracks = null;
     }
@@ -473,6 +483,13 @@ public class TileMiner : MonoBehaviour
         return map ? map.GetBlockAt(cell) : blockRegistry ? blockRegistry.FromTile(tilemap.GetTile(cell)) : null;
     }
 
+    bool CanMineBlock(Vector3Int cell)
+    {
+        var block = GetBlock(cell);
+        var inventory = InventoryManager.Instance;
+        return !block || !inventory || block.hardnessIndex <= inventory.EquippedPickaxeMaximumHardness;
+    }
+
     int GetTerrainLayerIndex(Block block)
     {
         if (!block || !map || map.layers == null) return -1;
@@ -489,19 +506,28 @@ public class TileMiner : MonoBehaviour
     // One transaction for rewards, effects and both render layers. Effects read the cell before removal.
     public bool CompleteMining(Vector3Int cell)
     {
-        if (map && map.IsSurfaceCellProtected(cell)) return false;
+        if (map && map.IsCellProtected(cell)) return false;
         if (!tilemap || !tilemap.HasTile(cell)) return false;
+        if (!CanMineBlock(cell)) return false;
         var block = GetBlock(cell);
         var ore = map ? map.GetOreAt(cell) : null;
         var artifact = map ? map.GetArtifactAt(cell) : null;
-        int amount = ore ? OreTile.DropCount(ore.richness, UnityEngine.Random.value) : 1;
-        if (block && block.itemDrop && amount > 0) InventoryManager.Instance?.Add(block.itemDrop, amount);
+        if (!pendingDropCounts.TryGetValue(cell, out int amount))
+        {
+            amount = ore ? OreTile.DropCount(ore.richness, UnityEngine.Random.value) : 1;
+            pendingDropCounts[cell] = amount;
+        }
+        var inventory = InventoryManager.Instance;
+        if (block && block.itemDrop && amount > 0 &&
+            (!inventory || !inventory.CanAdd(block.itemDrop, amount))) return false;
+        if (block && block.itemDrop && amount > 0) inventory.Add(block.itemDrop, amount);
         int points = BlockRegistry.GetPoints(block, ore);
         Vector2 minedPosition = tilemap.GetCellCenterWorld(cell);
         OnBlockMined?.Invoke(minedPosition, points);
         if (points > 0) OnMiningPoints?.Invoke(minedPosition, points, block.itemDrop);
         if (artifact) StatsManager.Instance?.CollectArtifact(artifact,
             map.GetArtifactCash(artifact), map.GetArtifactPoints(artifact));
+        if (cell.y == 0 && map) map.GetComponent<SurfaceTallGrass>()?.RemoveWithoutYieldAt(cell.x);
         if (map) map.RemoveBlock(cell);
         else
         {
@@ -509,6 +535,7 @@ public class TileMiner : MonoBehaviour
             tilemap.GetComponent<MapLighting>()?.NotifyTileChanged(cell);
         }
         progress.Remove(cell);
+        pendingDropCounts.Remove(cell);
         miningCracks?.Hide(cell);
         int terrainLayer = !ore ? GetTerrainLayerIndex(block) : -1;
         SoundType breakSound = ore ? SoundType.BreakOre : block ? block.breakSound : SoundType.BreakRock;

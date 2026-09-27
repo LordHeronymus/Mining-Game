@@ -13,12 +13,14 @@ public class ShopManager : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStaticState() => Instance = null;
 
-    public bool TryBuyMedkitRecipe()
+    public bool TryBuyRecipe(CraftingRecipe recipe)
     {
         var stats = StatsManager.Instance;
-        if (!stats || RecipeUnlocks.IsMedkitUnlocked || stats.Money < RecipeUnlocks.MedkitPrice) return false;
-        stats.AddMoney(-RecipeUnlocks.MedkitPrice);
-        RecipeUnlocks.UnlockMedkit();
+        if (!stats || !RecipeUnlocks.IsShopRecipe(recipe) || RecipeUnlocks.IsUnlocked(recipe) ||
+            !stats.CanAffordMoney(recipe.ShopPrice)) return false;
+        if (!RecipeUnlocks.Unlock(recipe)) return false;
+        stats.AddMoney(-recipe.ShopPrice);
+        ItemFeed.Instance?.ShowRecipe(recipe);
         AudioManager.Instance?.PlayShopPaperSound();
         return true;
     }

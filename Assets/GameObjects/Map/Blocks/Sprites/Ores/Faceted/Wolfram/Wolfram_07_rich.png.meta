@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: ad33951d0660277418f3a893148a84ee
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2735105332974948195
+    second: Wolfram_07_rich_0
+  - first:
+      213: 6279465432384358000
+    second: Wolfram_07_rich_1
+  - first:
+      213: -5554719764973723143
+    second: Wolfram_07_rich_2
+  - first:
+      213: -6748536255754236414
+    second: Wolfram_07_rich_3
+  - first:
+      213: -7137125098459704353
+    second: Wolfram_07_rich_4
+  - first:
+      213: 5073774670233749537
+    second: Wolfram_07_rich_5
+  - first:
+      213: 3993622150454709959
+    second: Wolfram_07_rich_6
+  - first:
+      213: -5336328479576341694
+    second: Wolfram_07_rich_7
+  - first:
+      213: 4609439401824514592
+    second: Wolfram_07_rich_8
+  - first:
+      213: 7379694711331854735
+    second: Wolfram_07_rich_9
+  - first:
+      213: 2771684249987614880
+    second: Wolfram_07_rich_10
+  - first:
+      213: 2334277063770027725
+    second: Wolfram_07_rich_11
+  - first:
+      213: -7566557735973407003
+    second: Wolfram_07_rich_12
+  - first:
+      213: 1861208792829596576
+    second: Wolfram_07_rich_13
+  - first:
+      213: -2456365195837109241
+    second: Wolfram_07_rich_14
+  - first:
+      213: 8441320325346534375
+    second: Wolfram_07_rich_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 2
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 2508
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 0
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: 4
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Wolfram_07_rich_0
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 1132
+        width: 58
+        height: 58
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36f8f332fcb05f520800000000000000
+      internalID: 2735105332974948195
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wolfram_07_rich_1
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 1114
+        width: 14
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0764d9c6a84252750800000000000000
+      internalID: 6279465432384358000
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wolfram_07_rich_2
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 15
+        width: 1154
+        height: 1086
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9f166edcdcba9e2b0800000000000000
+      internalID: -5554719764973723143
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wolfram_07_rich_3
+      rect:
+        serializedVersion: 2
+        x: 87
+        y: 1092
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 20e8ce9d7026852a0800000000000000
+      internalID: -6748536255754236414
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wolfram_07_rich_4
+      rect:
+        serializedVersion: 2
+        x: 613
+        y: 77
+        width: 15
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd3d8cc7986d3fc90800000000000000
+      internalID: -7137125098459704353
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wolfram_07_rich_5
+      rect:
+        serializedVersion: 2
+        x: 866
+        y: 77
+        width: 23
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12848a93e2ba96640800000000000000
+      internalID: 5073774670233749537
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wolfram_07_rich_6
+      rect:
+        serializedVersion: 2
+        x: 946
+        y: 87
+        width: 8
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ce0cfccf223c6730800000000000000
+      internalID: 3993622150454709959
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wolfram_07_rich_7
+      rect:
+        serializedVersion: 2
+        x: 951
+        y: 90
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2434d0a558d81f5b0800000000000000
+      internalID: -5336328479576341694
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wolfram_07_rich_8
+      rect:
+        serializedVersion: 2
+        x: 484
+        y: 65
+        width: 13
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 022707fc6b408ff30800000000000000
+      internalID: 4609439401824514592
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wolfram_07_rich_9
+      rect:
+        serializedVersion: 2
+        x: 898
+        y: 53
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f8993cb9d31f96660800000000000000
+      internalID: 7379694711331854735
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wolfram_07_rich_10
+      rect:
+        serializedVersion: 2
+        x: 719
+        y: 51
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a88e0ee320077620800000000000000
+      internalID: 2771684249987614880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wolfram_07_rich_11
+      rect:
+        serializedVersion: 2
+        x: 906
+        y: 53
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc6ba593f94056020800000000000000
+      internalID: 2334277063770027725
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wolfram_07_rich_12
+      rect:
+        serializedVersion: 2
+        x: 524
+        y: 39
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e632d614df2ef690800000000000000
+      internalID: -7566557735973407003
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wolfram_07_rich_13
+      rect:
+        serializedVersion: 2
+        x: 533
+        y: 39
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a31175398754d910800000000000000
+      internalID: 1861208792829596576
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wolfram_07_rich_14
+      rect:
+        serializedVersion: 2
+        x: 538
+        y: 31
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 70c0f776edc39edd0800000000000000
+      internalID: -2456365195837109241
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Wolfram_07_rich_15
+      rect:
+        serializedVersion: 2
+        x: 745
+        y: 33
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e3a093ac18952570800000000000000
+      internalID: 8441320325346534375
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Wolfram_07_rich_0: 2735105332974948195
+      Wolfram_07_rich_1: 6279465432384358000
+      Wolfram_07_rich_10: 2771684249987614880
+      Wolfram_07_rich_11: 2334277063770027725
+      Wolfram_07_rich_12: -7566557735973407003
+      Wolfram_07_rich_13: 1861208792829596576
+      Wolfram_07_rich_14: -2456365195837109241
+      Wolfram_07_rich_15: 8441320325346534375
+      Wolfram_07_rich_2: -5554719764973723143
+      Wolfram_07_rich_3: -6748536255754236414
+      Wolfram_07_rich_4: -7137125098459704353
+      Wolfram_07_rich_5: 5073774670233749537
+      Wolfram_07_rich_6: 3993622150454709959
+      Wolfram_07_rich_7: -5336328479576341694
+      Wolfram_07_rich_8: 4609439401824514592
+      Wolfram_07_rich_9: 7379694711331854735
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

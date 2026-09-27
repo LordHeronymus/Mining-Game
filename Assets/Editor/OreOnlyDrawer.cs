@@ -14,6 +14,8 @@ public sealed class OreOnlyDrawer : PropertyDrawer
         BlockType.PlatinumOre,
         BlockType.Coal,
         BlockType.DiamondOre,
+        BlockType.TitaniumOre,
+        BlockType.TungstenOre,
         BlockType.UltroniumOre
     };
 

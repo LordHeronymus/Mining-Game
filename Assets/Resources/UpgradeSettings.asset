@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f613837018e349f090996731e238eae2, type: 3}
+  m_Name: UpgradeSettings
+  m_EditorClassIdentifier: 
+  carryingCapacityLevels:
+  - 30
+  - 50
+  - 80
+  - 125
+  - 200
+  - 320
+  - 500
+  pickaxeLevels:
+  - pickaxe: {fileID: 11400000, guid: 9070257f0e47309439e6c34c2f7bb97f, type: 2}
+    progressPerHitMultiplier: 0.8
+    maximumHardness: 1
+  - pickaxe: {fileID: 11400000, guid: 4251e602b7544f44cbf04e436fa792af, type: 2}
+    progressPerHitMultiplier: 1.3
+    maximumHardness: 2
+  - pickaxe: {fileID: 11400000, guid: 3c124a6c47da4424e8e04f09f01bad2f, type: 2}
+    progressPerHitMultiplier: 2.2
+    maximumHardness: 3
+  - pickaxe: {fileID: 11400000, guid: 5b87da1e006a0804c91e132d48768d5c, type: 2}
+    progressPerHitMultiplier: 3.2
+    maximumHardness: 4
+  - pickaxe: {fileID: 11400000, guid: d5aa54ded394ecc4a9ed9cc06414c941, type: 2}
+    progressPerHitMultiplier: 4.5
+    maximumHardness: 5
+  - pickaxe: {fileID: 11400000, guid: 368468b135811e144a2afb4caba0e63b, type: 2}
+    progressPerHitMultiplier: 6.2
+    maximumHardness: 6
+  - pickaxe: {fileID: 11400000, guid: 26969cbd644dd3747a3c15f5824b6d5e, type: 2}
+    progressPerHitMultiplier: 8
+    maximumHardness: 7
+  - pickaxe: {fileID: 11400000, guid: 4649bc6085609a34bb4d707bdc7d53ca, type: 2}
+    progressPerHitMultiplier: 10
+    maximumHardness: 8

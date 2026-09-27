@@ -30,13 +30,13 @@ public sealed class PlayerLadder : MonoBehaviour
         if (GameplayInputBlocker.IsBlocked) { HidePreview(); return; }
         if (!hotbar) hotbar = FindFirstObjectByType<CompactHud>();
         var selected = hotbar ? hotbar.SelectedItem : null;
-        if (Input.GetKeyDown(KeyCode.L) && hotbar)
+        if (GameBindings.Down(GameAction.QuickLadder) && hotbar)
         {
             int ladderSlot = System.Array.FindIndex(hotbar.slots, item => item && item.item == Item.Ladder) + 1;
             if (ladderSlot > 0) hotbar.SelectSlot(hotbar.SelectedSlot == ladderSlot ? 0 : ladderSlot);
             selected = hotbar.SelectedItem;
         }
-        if (Input.GetKeyDown(KeyCode.Escape) && hotbar && selected && selected.item == Item.Ladder)
+        if (GameBindings.Down(GameAction.Settings) && hotbar && selected && selected.item == Item.Ladder)
         {
             hotbar.SelectSlot(0);
             selected = null;
@@ -45,13 +45,13 @@ public sealed class PlayerLadder : MonoBehaviour
         Vector3 world = view.ScreenToWorldPoint(Input.mousePosition);
         world.z = 0;
         var inventory = InventoryManager.Instance;
-        if (Input.GetMouseButtonDown(1))
+        if (GameBindings.Down(GameAction.Remove))
         {
             if (PlacedTorch.TryRemoveAt(world, transform.position, stats.Reach)) return;
             if (ladders)
                 ladders.TryRemove(ladders.Map.Terrain.WorldToCell(world), inventory, transform.position, stats.Reach);
         }
-        if (Input.GetMouseButtonDown(0) && selected)
+        if (GameBindings.Down(GameAction.Place) && selected)
         {
             if (selected.item == Item.Ladder && ladders)
             {
@@ -102,7 +102,7 @@ public sealed class PlayerLadder : MonoBehaviour
             IsClimbing = true;
         }
         var tiles = ladders.Tiles;
-        float effectiveClimbSpeed = climbSpeed * GameplayTestSettings.MovementMultiplier;
+        float effectiveClimbSpeed = climbSpeed * GameplayTestSettings.MovementMultiplier * stats.MovementWeightFactor;
         float vx = Mathf.Clamp((tiles.GetCellCenterWorld(cell).x - bodyCollider.bounds.center.x) / Time.fixedDeltaTime,
             -effectiveClimbSpeed, effectiveClimbSpeed);
         float vy = vertical * effectiveClimbSpeed;

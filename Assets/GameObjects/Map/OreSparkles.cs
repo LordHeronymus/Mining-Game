@@ -159,6 +159,7 @@ public sealed class OreSparkles : MonoBehaviour
     public static Color GetOreColor(BlockType type) =>
         type == BlockType.DiamondOre ? new Color(.49f, .91f, .95f) :
         type == BlockType.UltroniumOre ? new Color(.45f, .28f, 1f) :
+        type == BlockType.TungstenOre ? new Color(.55f, .63f, .7f) :
         type == BlockType.Coal ? new Color(.22f, .23f, .25f) :
         type == BlockType.PlatinumOre ? new Color(.88f, .85f, .75f) :
         type == BlockType.GoldOre ? new Color(1f, .76f, .16f) :

@@ -16,6 +16,7 @@ public static class DebugTestModeChecks
         bool globalLighting = GameplayTestSettings.GetConfiguredMode(GameplayTestMode.GlobalLighting);
         var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement>();
         var collider = player.GetComponent<Collider2D>();
+        bool originalIsTrigger = collider && collider.isTrigger;
         var lighting = UnityEngine.Object.FindFirstObjectByType<MoonlightController>();
         var mapLighting = UnityEngine.Object.FindFirstObjectByType<MapLighting>();
         Check(player && collider && lighting && lighting.daylight && mapLighting, "Player or global light is missing.");
@@ -23,11 +24,16 @@ public static class DebugTestModeChecks
         try
         {
             Check(GameplayTestSettings.SetMode(GameplayTestMode.Active, true, out var error), error);
+            Check(GameplayTestSettings.SetMode(GameplayTestMode.NoClip, false, out error), error);
+            await WaitFrames(3);
+            Check(collider.enabled && collider.isTrigger == originalIsTrigger,
+                "Disabling No Clip did not restore the player's original collider state.");
             Check(GameplayTestSettings.SetMode(GameplayTestMode.NoClip, true, out error), error);
             Check(GameplayTestSettings.SetMode(GameplayTestMode.GlobalLighting, false, out error), error);
             await WaitFrames(3);
             lighting.Refresh();
-            Check(!collider.enabled, "No Clip did not disable the player collider.");
+            Check(collider.enabled && collider.isTrigger,
+                "No Clip must keep the player collider active as a trigger.");
             Check(player.IsFlying, "No Clip did not enable free movement.");
             Check(lighting.daylight.enabled, "Disabling Global Lighting unexpectedly disabled the scene light.");
 
@@ -35,7 +41,8 @@ public static class DebugTestModeChecks
             Check(GameplayTestSettings.SetMode(GameplayTestMode.GlobalLighting, true, out error), error);
             await WaitFrames(3);
             lighting.Refresh();
-            Check(collider.enabled, "Player collider was not restored.");
+            Check(collider.enabled && collider.isTrigger == originalIsTrigger,
+                "Player collider state was not restored after No Clip.");
             Check(lighting.daylight.enabled && Mathf.Approximately(lighting.daylight.intensity, 1f),
                 "Global Lighting did not set the scene light to full intensity.");
             Check(mapLighting.GetBrightness(Vector3Int.zero) >= 1f,

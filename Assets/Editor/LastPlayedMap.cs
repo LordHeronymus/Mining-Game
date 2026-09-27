@@ -99,7 +99,7 @@ public static class LastPlayedMap
         using (var stream = new GZipStream(File.Create(path), System.IO.Compression.CompressionLevel.Fastest))
         using (var writer = new BinaryWriter(stream))
         {
-            writer.Write(4);
+            writer.Write(5);
             writer.Write(GlobalObjectId.GetGlobalObjectIdSlow(map).ToString());
             writer.Write(map.ActiveSeed); writer.Write(map.GeneratedWidth); writer.Write(map.GeneratedHeight);
             WriteLayer(writer, map.GetComponent<Tilemap>());
@@ -108,6 +108,7 @@ public static class LastPlayedMap
             var ladders = map.GetComponent<LadderMap>();
             writer.Write(ladders != null);
             if (ladders) WriteLayer(writer, ladders.EnsureTiles());
+            writer.Write(JsonUtility.ToJson(map.AltarChamber ? map.AltarChamber.CaptureState() : default(UltroniumAltarChamber.SaveState)));
         }
     }
 
@@ -116,7 +117,7 @@ public static class LastPlayedMap
         using (var stream = new GZipStream(File.Create(path), System.IO.Compression.CompressionLevel.Fastest))
         using (var writer = new BinaryWriter(stream))
         {
-            writer.Write(4);
+            writer.Write(5);
             writer.Write(GlobalObjectId.GetGlobalObjectIdSlow(map).ToString());
             writer.Write(snapshot.seed); writer.Write(snapshot.width); writer.Write(snapshot.height);
             var bounds = new BoundsInt(snapshot.offsetX, 1 - snapshot.height, 0, snapshot.width, snapshot.height, 1);
@@ -124,6 +125,9 @@ public static class LastPlayedMap
             WriteGeneratedLayer(writer, bounds, snapshot.oreTiles, snapshot.seed, true);
             WriteGeneratedLayer(writer, bounds, snapshot.artifactTiles, snapshot.seed, false);
             writer.Write(false); // A freshly generated map has no player-built ladders.
+            var altarState = map.AltarChamber ? map.AltarChamber.CaptureState() : default;
+            altarState.deposited = 0; altarState.victoryShown = false;
+            writer.Write(JsonUtility.ToJson(altarState));
         }
     }
 
@@ -227,7 +231,7 @@ public static class LastPlayedMap
         using (var reader = new BinaryReader(stream))
         {
             int version = reader.ReadInt32();
-            if(version < 1 || version > 4) throw new InvalidDataException("Unbekanntes Mapformat.");
+            if(version < 1 || version > 5) throw new InvalidDataException("Unbekanntes Mapformat.");
             GlobalObjectId.TryParse(reader.ReadString(), out var mapId);
             var map = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(mapId) as MapGenerator;
             if (!map) throw new InvalidOperationException("Map-Szene ist nicht geladen.");
@@ -246,9 +250,13 @@ public static class LastPlayedMap
                 ReadLayer(reader, ladders.EnsureTiles());
             }
             else if (ladders) ladders.Clear();
+            var altar = map.AltarChamber;
+            if (!altar) altar = map.gameObject.AddComponent<UltroniumAltarChamber>();
+            if (version >= 5) altar.RestoreState(JsonUtility.FromJson<UltroniumAltarChamber.SaveState>(reader.ReadString()));
+            else altar.RestoreState(default);
             map.RestorePreviewMetadata(seed,width,height);
             EditorUtility.SetDirty(map);
-            EditorSceneManager.MarkSceneDirty(map.gameObject.scene);
+            if (!Application.isPlaying) EditorSceneManager.MarkSceneDirty(map.gameObject.scene);
         }
     }
 

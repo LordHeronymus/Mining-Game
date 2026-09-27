@@ -17,7 +17,8 @@ MonoBehaviour:
   itemDrop: {fileID: 11400000, guid: fa27fc9f4640a464b8ff65beb5407e0b, type: 2}
   digSound: 4
   breakSound: 5
-  hardness: 1.3
+  hardness: 1.4
+  hardnessIndex: 2
   points: 1000
   isSolid: 1
   variants:

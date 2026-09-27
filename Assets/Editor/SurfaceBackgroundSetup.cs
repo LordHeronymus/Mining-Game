@@ -9,59 +9,10 @@ using UnityEngine.SceneManagement;
 public static class SurfaceBackgroundSetup
 {
     const string Folder = "Assets/AB Sprites/Parralax BG";
-    const string UndergroundFile = Folder + "/Untergrund_01_Erdschicht_Seamless_XY_6144x4096.png";
-    const string UndergroundLayer2File = Folder + "/Untergrund_02_Geschichteter_Schiefer_Seamless_XY_6144x4096.png";
-    const string UndergroundLayer3File = Folder + "/Untergrund_03_Schiefer_Seamless_XY_6144x4096.png";
     static readonly string[] Files = {
         "Parallax_01_Himmel_6144x2046.png", "Parallax_02_Berge_6144x2046.png",
         "Berge_Ebene_02_Vordergrund_6144x2046.png", "Parallax_04_Huegel_Erde_Seamless_6144x4096.png"
     };
-
-    static SurfaceBackgroundSetup()
-    {
-        EditorApplication.update += BindUndergroundInOpenScenes;
-        EditorSceneManager.sceneOpened += (scene, mode) => BindUnderground(scene);
-    }
-
-    static void BindUndergroundInOpenScenes()
-    {
-        if (EditorApplication.isPlayingOrWillChangePlaymode) return;
-        for (int i = 0; i < SceneManager.sceneCount; i++)
-            if (BindUnderground(SceneManager.GetSceneAt(i)))
-            {
-                EditorApplication.update -= BindUndergroundInOpenScenes;
-                return;
-            }
-    }
-
-    static bool BindUnderground(Scene scene)
-    {
-        if (!scene.isLoaded || scene.path != "Assets/Scenes/SampleScene.unity" ||
-            EditorApplication.isPlayingOrWillChangePlaymode) return false;
-        Sprite underground = AssetDatabase.LoadAssetAtPath<Sprite>(UndergroundFile);
-        Sprite undergroundLayer2 = AssetDatabase.LoadAssetAtPath<Sprite>(UndergroundLayer2File);
-        Sprite undergroundLayer3 = AssetDatabase.LoadAssetAtPath<Sprite>(UndergroundLayer3File);
-        if (!underground || !undergroundLayer2 || !undergroundLayer3) return false;
-        bool found = false;
-        bool changed = false;
-        foreach (GameObject root in scene.GetRootGameObjects())
-        foreach (ParallaxLayer layer in root.GetComponentsInChildren<ParallaxLayer>(true))
-        {
-            if (layer.name == "NearHills") found = true;
-            if (layer.name != "NearHills" ||
-                (layer.undergroundTile && layer.undergroundLayer2Tile &&
-                 layer.undergroundLayer3Tile)) continue;
-            if (!layer.undergroundTile) layer.undergroundTile = underground;
-            if (!layer.undergroundLayer2Tile) layer.undergroundLayer2Tile = undergroundLayer2;
-            if (!layer.undergroundLayer3Tile) layer.undergroundLayer3Tile = undergroundLayer3;
-            EditorUtility.SetDirty(layer);
-            EditorSceneManager.MarkSceneDirty(scene);
-            layer.Refresh();
-            changed = true;
-        }
-        if (changed) EditorSceneManager.SaveScene(scene);
-        return found;
-    }
 
     [MenuItem("Mining Game/Background/Create Surface Background")]
     public static void Create()
@@ -78,10 +29,6 @@ public static class SurfaceBackgroundSetup
                 throw new InvalidOperationException("Missing panorama: " + file);
 
         var sprites = Files.Select(file => ImportPanorama(Folder + "/" + file)).ToArray();
-        var underground = ImportPanorama(UndergroundFile, true);
-        var undergroundLayer2 = ImportPanorama(UndergroundLayer2File, true);
-        var undergroundLayer3 = ImportPanorama(UndergroundLayer3File, true);
-
         EnsureSortingLayer();
         string materialPath = Folder + "/ParallaxUnlit.mat";
         Material material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
@@ -119,12 +66,6 @@ public static class SurfaceBackgroundSetup
             layer.sortingOrder = orders[i];
             layer.material = material;
             layer.extendBottomToCamera = i == 0;
-            if (i == 3)
-            {
-                layer.undergroundTile = underground;
-                layer.undergroundLayer2Tile = undergroundLayer2;
-                layer.undergroundLayer3Tile = undergroundLayer3;
-            }
             layer.Refresh();
         }
         controller.CollectLayers();
@@ -133,7 +74,7 @@ public static class SurfaceBackgroundSetup
         Selection.activeGameObject = root;
     }
 
-    public static Sprite ImportPanorama(string path, bool repeatVertically = false)
+    public static Sprite ImportPanorama(string path)
     {
         var importer = (TextureImporter)AssetImporter.GetAtPath(path);
         importer.textureType = TextureImporterType.Sprite;
@@ -146,7 +87,7 @@ public static class SurfaceBackgroundSetup
         importer.alphaIsTransparency = true;
         importer.filterMode = FilterMode.Bilinear;
         importer.wrapModeU = TextureWrapMode.Repeat;
-        importer.wrapModeV = repeatVertically ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+        importer.wrapModeV = TextureWrapMode.Clamp;
         var settings = new TextureImporterSettings();
         importer.ReadTextureSettings(settings);
         settings.spriteMeshType = SpriteMeshType.FullRect;

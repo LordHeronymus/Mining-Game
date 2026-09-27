@@ -6,15 +6,23 @@ Shader "Mining Game/Fixed Underground"
         _Layer1Tex("Layer 2",2D)="white"{}
         _Layer2Tex("Layer 3",2D)="white"{}
         _Layer3Tex("Layer 4",2D)="white"{}
+        _Layer4Tex("Layer 5",2D)="white"{}
         _CapTex("Upper soil lip",2D)="black"{}
         _TopY("Top Y",Float)=1
         _RepeatSize("Repeat size",Vector)=(16.5,11,0,0)
         _SurfaceY("Surface Y",Float)=1
         _LayerStarts("Layer starts",Vector)=(33,220,660,0)
+        _Layer4Start("Layer 5 start",Float)=1000000000
         _LayerFadeWorld("Layer fade",Float)=11
         _CapSize("Soil lip size",Vector)=(9.6,2.4,0,0)
         _CapTopOffset("Soil lip top offset",Float)=1.15
         [HideInInspector] _DaylightTex("Daylight mask",2D)="black"{}
+        [HideInInspector] _TerrainOcclusionTex("Terrain occlusion",2D)="black"{}
+        [HideInInspector] _TerrainOcclusionRect("Terrain occlusion rect",Vector)=(0,0,0,0)
+        [HideInInspector] _TerrainOcclusionSize("Terrain occlusion size",Vector)=(0,0,0,0)
+        [HideInInspector] _AltarMask("Altar visibility",2D)="black"{}
+        [HideInInspector] _AltarRect("Altar bounds",Vector)=(0,0,0,0)
+        [HideInInspector] _AltarMaskSize("Altar mask size",Vector)=(0,0,0,0)
         [HideInInspector] _UseMapLighting("Use map lighting",Float)=0
         [HideInInspector] _GlobalLight("Global light",Float)=1
         [HideInInspector] _GlobalLightColor("Global light color",Color)=(1,1,1,1)
@@ -39,6 +47,7 @@ Shader "Mining Game/Fixed Underground"
             TEXTURE2D(_Layer1Tex); SAMPLER(sampler_Layer1Tex);
             TEXTURE2D(_Layer2Tex); SAMPLER(sampler_Layer2Tex);
             TEXTURE2D(_Layer3Tex); SAMPLER(sampler_Layer3Tex);
+            TEXTURE2D(_Layer4Tex); SAMPLER(sampler_Layer4Tex);
             TEXTURE2D(_CapTex); SAMPLER(sampler_CapTex);
             TEXTURE2D(_DaylightTex); SAMPLER(sampler_DaylightTex);
             CBUFFER_START(UnityPerMaterial)
@@ -46,6 +55,7 @@ Shader "Mining Game/Fixed Underground"
             float4 _RepeatSize;
             float _SurfaceY;
             float4 _LayerStarts;
+            float _Layer4Start;
             float _LayerFadeWorld;
             float4 _CapSize;
             float _CapTopOffset;
@@ -92,6 +102,12 @@ Shader "Mining Game/Fixed Underground"
                     float upperAlpha=1.0-smoothstep(_LayerStarts.z-fade,_LayerStarts.z,depth);
                     underground=lerp(next,underground,upperAlpha);
                 }
+                if(depth>_Layer4Start-fade)
+                {
+                    half3 next=SAMPLE_TEXTURE2D(_Layer4Tex,sampler_Layer4Tex,uv).rgb;
+                    float upperAlpha=1.0-smoothstep(_Layer4Start-fade,_Layer4Start,depth);
+                    underground=lerp(next,underground,upperAlpha);
+                }
                 half baseAlpha=step(input.world.y,_TopY);
                 // The lip's lower pixels contain the L1 painting at these same
                 // world-space UVs, so both textures meet without color correction.
@@ -112,10 +128,12 @@ Shader "Mining Game/Fixed Underground"
                     {
                         float daylight=1-SAMPLE_TEXTURE2D(_DaylightTex,sampler_DaylightTex,lightUV).a;
                         globalLight*=daylight;
-                        localLight=MapLocalLight(input.world);
+                        localLight=MapOtherLocalLight(input.world);
                     }
                 }
-                half3 lighting=max(globalLight*_GlobalLightColor.rgb,localLight.xxx);
+                float torchLight=_UseMapLighting>0.5?MapTorchLight(input.world):0;
+                half3 lighting=max(globalLight*_GlobalLightColor.rgb,
+                    max(localLight.xxx,torchLight*half3(1,.68,.4)));
                 lighting*=_NightBrightnessMultiplier;
                 return half4(color*lighting,alpha);
             }

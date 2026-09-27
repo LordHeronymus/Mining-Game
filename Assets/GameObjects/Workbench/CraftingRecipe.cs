@@ -33,7 +33,8 @@ public sealed class CraftingRecipe : ScriptableObject
         ? (output ? ((int)output.item).ToString() : "none") + "." + name : persistentId);
     public RecipeCategory Category => category != RecipeCategory.Automatic ? category :
         output && (output.item == Item.Ladder || output.item == Item.BridgePart) ? RecipeCategory.Building :
-        output && (output.category == ItemCategory.Tool || output.category == ItemCategory.Consumable)
+        output && (output.category == ItemCategory.Tool || output.category == ItemCategory.Consumable ||
+            output.category == ItemCategory.Powerup)
             ? RecipeCategory.Tools : RecipeCategory.Materials;
     string SavedSettingsKey => "workbench.recipe." + (string.IsNullOrEmpty(persistentId)
         ? (output ? ((int)output.item).ToString() : name) : persistentId);
@@ -176,6 +177,8 @@ public sealed class CraftingRecipe : ScriptableObject
 
     public ItemSO output;
     [Min(1)] public int outputAmount = 1;
+    [Min(0)] public int shopPrice;
+    public int ShopPrice => Mathf.Max(0, shopPrice);
     public string pluralName;
     public CraftingIngredient[] ingredients = Array.Empty<CraftingIngredient>();
 

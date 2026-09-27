@@ -93,7 +93,8 @@ public sealed class FixedUndergroundBackground : MonoBehaviour
         properties.SetFloat("_SurfaceY",surfaceY);
         properties.SetFloat("_LayerFadeWorld",Mathf.Max(.01f,fadeDepthBlocks)*cellHeight);
         var starts=new Vector4(1e9f,1e9f,1e9f,1e9f);
-        for(int i=0;i<Mathf.Min(4,map.layers.Length);i++)
+        float layer4Start=1e9f;
+        for(int i=0;i<Mathf.Min(5,map.layers.Length);i++)
         {
             var layer=map.layers[i];
             if(layer==null||!layer.backgroundSprite)continue;
@@ -101,8 +102,10 @@ public sealed class FixedUndergroundBackground : MonoBehaviour
             if(i==1)starts.x=layer.startDepth*cellHeight;
             if(i==2)starts.y=layer.startDepth*cellHeight;
             if(i==3)starts.z=layer.startDepth*cellHeight;
+            if(i==4)layer4Start=layer.startDepth*cellHeight;
         }
         properties.SetVector("_LayerStarts",starts);
+        properties.SetFloat("_Layer4Start",layer4Start);
         if (!mapLighting) mapLighting=map.GetComponent<MapLighting>();
         if (!moonlight) moonlight=FindFirstObjectByType<MoonlightController>();
         if (!sky) sky=moonlight?moonlight.GetComponent<SkyController>():FindFirstObjectByType<SkyController>();

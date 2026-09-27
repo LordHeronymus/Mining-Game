@@ -1,0 +1,1 @@
+PASS: 360 seed/size placements; 106 open and 58 protected cells; physical entrances/floor, ore exclusion, inventory-only no-win, range, reentrancy, partial/final deposits, surplus, interpolation, version-5 map roundtrip, climax/victory and reset.

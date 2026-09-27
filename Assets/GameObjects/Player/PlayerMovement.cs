@@ -31,6 +31,7 @@ public class PlayerMovement : MonoBehaviour
     bool flying;
     bool noClip;
     bool colliderWasEnabled;
+    bool colliderWasTrigger;
     float previousRunVelocity;
     bool hasGroundedForFall;
     bool trackingFall;
@@ -53,6 +54,7 @@ public class PlayerMovement : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         col = GetComponent<Collider2D>();
         colliderWasEnabled = col && col.enabled;
+        colliderWasTrigger = col && col.isTrigger;
         ladder = GetComponent<PlayerLadder>();
         jumpMap = Object.FindFirstObjectByType<MapGenerator>();
         if (col)
@@ -81,15 +83,13 @@ public class PlayerMovement : MonoBehaviour
             moving = false;
             return;
         }
-        inputX = Input.GetAxisRaw("Horizontal");
-        inputY = Input.GetAxisRaw("Vertical");
+        inputX = (GameBindings.Held(GameAction.MoveRight) ? 1f : 0f) - (GameBindings.Held(GameAction.MoveLeft) ? 1f : 0f);
+        inputY = (GameBindings.Held(GameAction.MoveUp) ? 1f : 0f) - (GameBindings.Held(GameAction.MoveDown) ? 1f : 0f);
         if (flying)
         {
-            inputX = (Input.GetKey(KeyCode.D) ? 1f : 0f) - (Input.GetKey(KeyCode.A) ? 1f : 0f);
-            inputY = (Input.GetKey(KeyCode.W) ? 1f : 0f) - (Input.GetKey(KeyCode.S) ? 1f : 0f);
             jumpRequested = false;
         }
-        else if (Input.GetKeyDown(KeyCode.Space))
+        else if (GameBindings.Down(GameAction.Jump))
         {
             jumpRequested = true;
             jumpBufferRemaining = JumpBufferDuration;
@@ -165,7 +165,9 @@ public class PlayerMovement : MonoBehaviour
         if (!jumpMap) jumpMap = Object.FindFirstObjectByType<MapGenerator>();
         float blockHeight = jumpMap && jumpMap.Terrain
             ? Mathf.Abs((jumpMap.Terrain.CellToWorld(Vector3Int.up) - jumpMap.Terrain.CellToWorld(Vector3Int.zero)).y) : 1f;
-        float height = Mathf.Max(0f, Mathf.Clamp(stats.JumpHeightBlocks, 0f, 100f) * blockHeight - TakeoffClearance());
+        float weightScaledJumpHeight = Mathf.Clamp(stats.JumpHeightBlocks, 0f, 100f) *
+            Mathf.Sqrt(Mathf.Clamp01(stats.MovementWeightFactor));
+        float height = Mathf.Max(0f, weightScaledJumpHeight * blockHeight - TakeoffClearance());
         float speed = CalculateJumpSpeed(height, -Physics2D.gravity.y * rb.gravityScale, rb.linearDamping, Time.fixedDeltaTime);
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, speed);
     }
@@ -282,10 +284,15 @@ public class PlayerMovement : MonoBehaviour
             if (requestedNoClip)
             {
                 colliderWasEnabled = col && col.enabled;
-                if (col) col.enabled = false;
+                colliderWasTrigger = col && col.isTrigger;
+                if (col) col.isTrigger = true;
                 if (ladder) ladder.Detach();
             }
-            else if (col) col.enabled = colliderWasEnabled;
+            else if (col)
+            {
+                col.enabled = colliderWasEnabled;
+                col.isTrigger = colliderWasTrigger;
+            }
             noClip = requestedNoClip;
         }
         bool enabled = GameplayTestSettings.FlyMode || requestedNoClip;
@@ -303,7 +310,11 @@ public class PlayerMovement : MonoBehaviour
     {
         if (ladder) ladder.Detach();
         if (flying && rb) rb.gravityScale = previousGravity;
-        if (noClip && col) col.enabled = colliderWasEnabled;
+        if (noClip && col)
+        {
+            col.enabled = colliderWasEnabled;
+            col.isTrigger = colliderWasTrigger;
+        }
         noClip = false;
         flying = false; inputY = 0; jumpRequested = false;
         jumpBufferRemaining=0f;

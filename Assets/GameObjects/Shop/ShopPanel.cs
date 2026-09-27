@@ -20,6 +20,7 @@ public class ShopPanel : MonoBehaviour
     [SerializeField] Color inactiveTabColor = new Color(0.22f, 0.13f, 0.10f);
 
     private bool panelVisible = false;
+    public bool IsOpen => panelVisible;
 
     void Awake()
     {
@@ -32,7 +33,7 @@ public class ShopPanel : MonoBehaviour
 
     void Update()
     {
-        if (panelVisible && Input.GetKeyDown(KeyCode.Escape)) ShowPanel(false);
+        if (panelVisible && GameBindings.Down(GameAction.Settings)) ShowPanel(false);
     }
 
     void OnEnable()

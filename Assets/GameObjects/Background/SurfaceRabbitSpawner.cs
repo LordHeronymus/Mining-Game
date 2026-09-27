@@ -17,6 +17,7 @@ public sealed class SurfaceRabbitSpawner : MonoBehaviour
         public float distantTime;
     }
     const string SpawnedName = "Rabbit (spawned)";
+    static readonly Plane[] viewPlanes = new Plane[6];
     readonly List<Resident> residents = new List<Resident>();
     readonly System.Random random = new System.Random();
     MapGenerator subscribedMap;
@@ -50,10 +51,13 @@ public sealed class SurfaceRabbitSpawner : MonoBehaviour
             if (!player) return;
         }
         float distance = Mathf.Max(1,despawnDistance);
+        var camera = Camera.main;
         for (int i = residents.Count-1; i >= 0; i--)
         {
             var resident = residents[i];
             if (!resident.rabbit) { residents.RemoveAt(i); continue; }
+            if (resident.rabbit.IsFalling && IsVisibleOnScreen(resident.rabbit, camera))
+            { resident.distantTime = 0; continue; }
             bool distant = ((Vector2)(resident.rabbit.transform.position-player.position)).sqrMagnitude > distance*distance;
             resident.distantTime = distant ? resident.distantTime+deltaTime : 0;
             if (resident.distantTime < Mathf.Max(.1f,despawnDelay)) continue;
@@ -62,7 +66,6 @@ public sealed class SurfaceRabbitSpawner : MonoBehaviour
         nextSpawn = Mathf.Max(0,nextSpawn-deltaTime);
         if (nextSpawn > 0 || residents.Count >= Mathf.Clamp(maxRabbits,1,20)) return;
         if (!settings || !settings.map || !settings.map.IsGenerated || !settings.material) return;
-        var camera = Camera.main;
         if (!camera) return;
         float groundY = settings.map.Terrain.CellToWorld(new Vector3Int(0,1,0)).y;
         var view = camera.WorldToViewportPoint(new Vector3(player.position.x,groundY,settings.transform.position.z));
@@ -85,6 +88,23 @@ public sealed class SurfaceRabbitSpawner : MonoBehaviour
         float min = Mathf.Max(1,Mathf.Min(spawnInterval.x,spawnInterval.y));
         float max = Mathf.Max(min,Mathf.Max(spawnInterval.x,spawnInterval.y));
         nextSpawn = Mathf.Lerp(min,max,(float)random.NextDouble());
+    }
+
+    static bool IsVisibleOnScreen(SurfaceRabbit rabbit, Camera camera)
+    {
+        if (!rabbit || !camera || !camera.isActiveAndEnabled) return false;
+        var renderer = rabbit.GetComponentInChildren<Renderer>();
+        if (renderer)
+        {
+            if (!renderer.enabled || !renderer.gameObject.activeInHierarchy ||
+                (camera.cullingMask & (1 << renderer.gameObject.layer)) == 0) return false;
+            GeometryUtility.CalculateFrustumPlanes(camera, viewPlanes);
+            return GeometryUtility.TestPlanesAABB(viewPlanes, renderer.bounds);
+        }
+
+        var viewport = camera.WorldToViewportPoint(rabbit.transform.position);
+        return viewport.z > 0f && viewport.x >= 0f && viewport.x <= 1f &&
+            viewport.y >= 0f && viewport.y <= 1f;
     }
 
     void OnMapGenerated() { ClearRabbits(); nextSpawn = 0; }

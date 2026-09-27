@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24d469c3ce4fd914d9eb95135b7e747b, type: 3}
+  m_Name: Wolfram
+  m_EditorClassIdentifier: 
+  id: 15
+  displayName: Wolfram
+  itemDrop: {fileID: 11400000, guid: 54906269f3db5e14ba6ae9e4d8c339f4, type: 2}
+  digSound: 4
+  breakSound: 5
+  hardness: 6
+  hardnessIndex: 4
+  points: 0
+  isSolid: 1
+  variants: []
+  smallOre:
+  - {fileID: 11400000, guid: 2a6361dfbeb9f50418b5d1c69e973943, type: 2}
+  - {fileID: 11400000, guid: 90e6b96eee550394aa8d8acf54cbfb70, type: 2}
+  mediumOre:
+  - {fileID: 11400000, guid: fd83ca5ca259d6348baabdbed5f6d847, type: 2}
+  - {fileID: 11400000, guid: 4d304d6cb1288794abf7b9755b0ef410, type: 2}
+  richOre:
+  - {fileID: 11400000, guid: 25030859b60121646b6017bf89471343, type: 2}
+  - {fileID: 11400000, guid: e3799a82604feca40aa738f0cae2fabb, type: 2}
+  - {fileID: 11400000, guid: 8949aedc05235c44e98bc860f28b660e, type: 2}
+  spawnWithNoise: 1
+  oreFrequencyPercent: 0.9
+  veinSizeIndex: 9
+  rarityCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  noiseScale: 0.05
+  noiseSeedOffset: 8000
+  generationSettingsVersion: 0

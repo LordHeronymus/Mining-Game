@@ -10,7 +10,7 @@ using Object = UnityEngine.Object;
 public sealed class MapOverviewWindow : EditorWindow
 {
     const int RowsPerUpdate = 16;
-    static readonly Color32 EmptyColor = new Color32(26, 29, 33, 255);
+    static readonly Color32 EmptyColor = new Color32(23, 25, 29, 255);
     static readonly Color32 UnknownColor = new Color32(232, 58, 180, 255);
 
     [SerializeField] int previewSeed = 12345;
@@ -32,6 +32,7 @@ public sealed class MapOverviewWindow : EditorWindow
     int sourceSeed;
     bool live;
     bool building;
+    bool recolorAfterBuild;
     bool pendingBuild = true;
     bool dragging;
     Vector2 mouseDown;
@@ -49,6 +50,15 @@ public sealed class MapOverviewWindow : EditorWindow
         window.minSize = new Vector2(320, 420);
         window.Show();
         window.Focus();
+    }
+
+    internal static void RefreshPalette()
+    {
+        foreach (var window in Resources.FindObjectsOfTypeAll<MapOverviewWindow>())
+        {
+            if (window.building) window.recolorAfterBuild = true;
+            else window.RecolorTexture();
+        }
     }
 
     void OnEnable()
@@ -184,12 +194,15 @@ public sealed class MapOverviewWindow : EditorWindow
 
     void BuildRows()
     {
+        var chamber = map.AltarChamber ? (live ? map.AltarChamber.Layout : map.AltarChamber.ChooseLayout(sourceSeed,width,height)) : default;
         int end = Mathf.Min(height, nextRow + RowsPerUpdate);
         for (int y = nextRow; y < end; y++)
         {
             for (int x = 0; x < width; x++)
             {
                 Block block = live ? map.GetBlockAt(new Vector3Int(x - width / 2, -y, 0)) : sampler.GetBlock(x, y);
+                var cell = new Vector3Int(x-width/2,-y,0);
+                if(!live && chamber.IsReserved(cell)) block=chamber.IsOpen(cell)?null:sampler.GetBaseBlock(x,y);
                 if (!live) previewBlocks[y * width + x] = block;
                 SetCell(x, y, block);
             }
@@ -197,8 +210,10 @@ public sealed class MapOverviewWindow : EditorWindow
         nextRow = end;
         if (nextRow < height) { Repaint(); return; }
 
-        if (!live && map.minimumOreVeinSize > 1)
+        if (!live)
         {
+            OreVeins.CompactThinTips(previewBlocks, width, height, sampler.GetBaseBlock,
+                sampler.CanPlaceOre, (x, y) => chamber.IsReserved(new Vector3Int(x - width / 2, -y, 0)));
             OreVeins.PruneSmallVeins(previewBlocks, width, height, map.minimumOreVeinSize, sampler.GetBaseBlock);
             for (int y = 0; y < height; y++)
                 for (int x = 0; x < width; x++) SetCell(x, y, previewBlocks[y * width + x]);
@@ -211,17 +226,18 @@ public sealed class MapOverviewWindow : EditorWindow
                 for (int x = 0; x < width; x++)
                 {
                     var block = previewBlocks[y * width + x];
-                    if (block && !block.HasOreOverlays &&
+                    if (block && !chamber.IsReserved(new Vector3Int(x-width/2,-y,0)) && !block.HasOreOverlays &&
                         !OreVeins.HasVeinInNeighborhood(previewBlocks, width, height, x, y))
                     {
                         var artifact = map.SelectArtifact(sourceSeed, x, y);
-                        if (ArtifactPlacement.TryPlace(placedArtifacts, artifact, x, y))
+                        if (ArtifactPlacement.TryPlace(placedArtifacts, artifact, x, y,
+                            map.artifactMinimumSameTypeDistance))
                             SetArtifact(x, y, artifact);
                     }
                 }
         }
 
-        texture = new Texture2D(width, height, TextureFormat.RGBA32, false, true)
+        texture = new Texture2D(width, height, TextureFormat.RGBA32, false, false)
         {
             name = "Map Overview (editor only)",
             filterMode = FilterMode.Point,
@@ -233,6 +249,11 @@ public sealed class MapOverviewWindow : EditorWindow
         sampler = null;
         previewBlocks = null;
         building = false;
+        if (recolorAfterBuild)
+        {
+            recolorAfterBuild = false;
+            RecolorTexture();
+        }
         Repaint();
     }
 
@@ -243,9 +264,31 @@ public sealed class MapOverviewWindow : EditorWindow
         types[index] = type;
         SetArtifact(x, y, live && block
             ? map.GetArtifactAt(new Vector3Int(x - width / 2, -y, 0)) : null);
-        Color32 color = block ? ColorFor(type) : EmptyColor;
+        Color32 color = GetMapColor(type);
         pixels[(height - 1 - y) * width + x] = color;
         if (texture) texture.SetPixel(x, height - 1 - y, color);
+    }
+
+    Color32 GetMapColor(BlockType type)
+    {
+        if (map && map.mapOverviewColors != null)
+        {
+            int index = (int)type;
+            if (index >= 0 && index < map.mapOverviewColors.Length)
+                return map.mapOverviewColors[index];
+        }
+        return ColorFor(type);
+    }
+
+    void RecolorTexture()
+    {
+        if (!map || !texture || pixels == null || types == null) return;
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+                pixels[(height - 1 - y) * width + x] = GetMapColor(types[y * width + x]);
+        texture.SetPixels32(pixels);
+        texture.Apply(false, false);
+        Repaint();
     }
 
     void SetArtifact(int x, int y, ArtifactTile artifact)
@@ -255,23 +298,25 @@ public sealed class MapOverviewWindow : EditorWindow
         else artifactCells.Remove(index);
     }
 
-    static Color32 ColorFor(BlockType type)
+    internal static Color32 ColorFor(BlockType type)
     {
         switch (type)
         {
-            case BlockType.Dirt: return new Color32(109, 72, 42, 255);
-            case BlockType.Stone: return new Color32(105, 78, 60, 255);
-            case BlockType.StoneLayer2: return new Color32(80, 86, 96, 255);
-            case BlockType.StoneLayer3: return new Color32(67, 72, 82, 255);
-            case BlockType.StoneLayer4: return new Color32(54, 58, 68, 255);
-            case BlockType.DiamondOre: return new Color32(124, 231, 241, 255);
-            case BlockType.IronOre: return new Color32(168, 179, 195, 255);
-            case BlockType.CopperOre: return new Color32(211, 111, 69, 255);
-            case BlockType.SilverOre: return new Color32(226, 228, 222, 255);
-            case BlockType.GoldOre: return new Color32(246, 192, 58, 255);
-            case BlockType.PlatinumOre: return new Color32(210, 204, 184, 255);
-            case BlockType.Coal: return new Color32(38, 40, 45, 255);
-            case BlockType.UltroniumOre: return new Color32(123, 62, 221, 255);
+            case BlockType.Dirt: return new Color32(196, 85, 28, 255);
+            case BlockType.Stone: return new Color32(244, 123, 32, 255);
+            case BlockType.StoneLayer2: return new Color32(211, 91, 38, 255);
+            case BlockType.StoneLayer3: return new Color32(142, 63, 255, 255);
+            case BlockType.StoneLayer4: return new Color32(49, 77, 255, 255);
+            case BlockType.DiamondOre: return new Color32(0, 232, 255, 255);
+            case BlockType.IronOre: return new Color32(61, 156, 255, 255);
+            case BlockType.CopperOre: return new Color32(255, 87, 34, 255);
+            case BlockType.SilverOre: return new Color32(231, 237, 245, 255);
+            case BlockType.GoldOre: return new Color32(255, 211, 0, 255);
+            case BlockType.PlatinumOre: return new Color32(255, 62, 234, 255);
+            case BlockType.TitaniumOre: return new Color32(255, 255, 255, 255);
+            case BlockType.TungstenOre: return new Color32(111, 160, 208, 255);
+            case BlockType.Coal: return new Color32(9, 11, 16, 255);
+            case BlockType.UltroniumOre: return new Color32(180, 0, 255, 255);
             case BlockType.Empty: return EmptyColor;
             default: return UnknownColor;
         }
@@ -516,21 +561,43 @@ public sealed class MapOverviewWindow : EditorWindow
         float sx = imageRect.x + (u - view.x) / view.width * imageRect.width;
         float sy = imageRect.y + (1f - (v - view.y) / view.height) * imageRect.height;
         if (!imageRect.Contains(new Vector2(sx, sy))) return;
-        EditorGUI.DrawRect(new Rect(sx - 5, sy - 1, 11, 3), Color.cyan);
-        EditorGUI.DrawRect(new Rect(sx - 1, sy - 5, 3, 11), Color.cyan);
+        EditorGUI.DrawRect(new Rect(sx - 5, sy - 1, 11, 3), map.mapOverviewPlayerColor);
+        EditorGUI.DrawRect(new Rect(sx - 1, sy - 5, 3, 11), map.mapOverviewPlayerColor);
+    }
+
+    internal static readonly string[] LegendNames =
+    {
+        "Erde", "Übergang", "Stein", "Tiefstein 1", "Tiefstein 2", "Kohle", "Eisen", "Kupfer",
+        "Silber", "Gold", "Platin", "Titan", "Wolfram", "Diamant", "Ultronium", "Leer", "Spieler"
+    };
+
+    internal static readonly BlockType[] LegendTypes =
+    {
+        BlockType.Dirt, BlockType.Stone, BlockType.StoneLayer2, BlockType.StoneLayer3, BlockType.StoneLayer4,
+        BlockType.Coal, BlockType.IronOre, BlockType.CopperOre, BlockType.SilverOre, BlockType.GoldOre,
+        BlockType.PlatinumOre, BlockType.TitaniumOre, BlockType.TungstenOre, BlockType.DiamondOre,
+        BlockType.UltroniumOre, BlockType.Empty
+    };
+
+    internal static Color LegendColorAt(int index, MapGenerator map = null)
+    {
+        if (index == LegendTypes.Length) return map ? map.mapOverviewPlayerColor : Color.cyan;
+        if (map && map.mapOverviewColors != null)
+        {
+            int colorIndex = (int)LegendTypes[index];
+            if (colorIndex >= 0 && colorIndex < map.mapOverviewColors.Length)
+                return map.mapOverviewColors[colorIndex];
+        }
+        return ColorFor(LegendTypes[index]);
     }
 
     void DrawLegend(Rect area)
     {
-        string[] names = { "Erde", "Übergang", "Stein", "Tiefstein 1", "Tiefstein 2", "Kohle", "Eisen", "Kupfer", "Silber", "Gold", "Platin", "Diamant", "Ultronium", "Leer", "Spieler" };
-        BlockType[] ids = { BlockType.Dirt, BlockType.Stone, BlockType.StoneLayer2, BlockType.StoneLayer3, BlockType.StoneLayer4,
-            BlockType.Coal, BlockType.IronOre, BlockType.CopperOre,
-            BlockType.SilverOre, BlockType.GoldOre, BlockType.PlatinumOre, BlockType.DiamondOre, BlockType.UltroniumOre, BlockType.Empty };
         float x = area.x;
-        for (int i = 0; i < names.Length; i++)
+        for (int i = 0; i < LegendNames.Length; i++)
         {
-            EditorGUI.DrawRect(new Rect(x, area.y + 2, 11, 11), i == ids.Length ? Color.cyan : ColorFor(ids[i]));
-            GUI.Label(new Rect(x + 15, area.y, 65, 17), names[i], EditorStyles.miniLabel);
+            EditorGUI.DrawRect(new Rect(x, area.y + 2, 11, 11), LegendColorAt(i, map));
+            GUI.Label(new Rect(x + 15, area.y, 65, 17), LegendNames[i], EditorStyles.miniLabel);
             area.y += 18;
         }
         var artifact = map && map.artifactSettings != null

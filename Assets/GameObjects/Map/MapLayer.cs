@@ -9,7 +9,6 @@ public sealed class MapLayer
     [Min(0), InspectorName("Übergang (Blöcke)")] public int transitionWidth;
     [InspectorName("Hintergrundsprite")] public Sprite backgroundSprite;
     [InspectorName("Steintyp")] public Block stone;
-    [Min(.01f), InspectorName("Gesteinshärte")] public float stoneHardness;
     [HideInInspector] public BlockType[] ores = Array.Empty<BlockType>();
 }
 

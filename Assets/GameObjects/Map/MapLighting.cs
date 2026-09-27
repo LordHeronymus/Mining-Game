@@ -28,13 +28,13 @@ public sealed class MapLighting : MonoBehaviour
     static readonly int HeadlampOriginRange = Shader.PropertyToID("_HeadlampOriginRange");
     static readonly int HeadlampDirectionAngles = Shader.PropertyToID("_HeadlampDirectionAngles");
     static readonly int HeadlampInnerRadius = Shader.PropertyToID("_HeadlampInnerRadius");
-    static readonly int TorchSourcesId = Shader.PropertyToID("_TorchSources");
-    static readonly int TorchCountId = Shader.PropertyToID("_TorchCount");
+    static readonly int TerrainOcclusionTexId = Shader.PropertyToID("_TerrainOcclusionTex");
+    static readonly int TerrainOcclusionRectId = Shader.PropertyToID("_TerrainOcclusionRect");
+    static readonly int TerrainOcclusionSizeId = Shader.PropertyToID("_TerrainOcclusionSize");
     static readonly int UltroniumSourcesId = Shader.PropertyToID("_UltroniumSources");
     static readonly int UltroniumCountId = Shader.PropertyToID("_UltroniumCount");
-    const int MaximumTorchLights = 64;
     const int MaximumUltroniumLights = 32;
-    readonly Vector4[] torchSources = new Vector4[MaximumTorchLights];
+    readonly List<TorchLightField.Source> torchSources = new List<TorchLightField.Source>();
     readonly Vector4[] ultroniumSources = new Vector4[MaximumUltroniumLights];
     readonly List<Light2D> ultroniumLights = new List<Light2D>();
     readonly List<Vector3Int> visibleUltronium = new List<Vector3Int>();
@@ -44,7 +44,12 @@ public sealed class MapLighting : MonoBehaviour
     MapGenerator map;
     Tilemap tiles;
     GridDaylight field;
+    TorchLightField torchField;
     Texture2D texture;
+    Texture2D torchLightTexture;
+    Sprite torchLightSprite;
+    Color32[] torchLightPixels;
+    Light2D torchLight;
     Material material;
     Mesh mesh;
     GameObject overlay;
@@ -53,7 +58,7 @@ public sealed class MapLighting : MonoBehaviour
     readonly HashSet<Vector2Int> dirtyTextureChunks = new HashSet<Vector2Int>();
     Color32[] pixels;
     int width, height;
-    bool rebuild = true, textureDirty, fullTextureUpload;
+    bool rebuild = true, torchFieldDirty = true, textureDirty, fullTextureUpload;
     readonly HashSet<Vector3Int> changed = new HashSet<Vector3Int>();
     readonly Stopwatch timer = new Stopwatch();
     public bool IsReady => field != null;
@@ -102,6 +107,7 @@ public sealed class MapLighting : MonoBehaviour
         }
         map.GenerationCompleted += RequestRebuild;
         Tilemap.tilemapTileChanged += TilesChanged;
+        PlacedTorch.Changed += OnTorchChanged;
         rebuild = true;
     }
 
@@ -109,6 +115,7 @@ public sealed class MapLighting : MonoBehaviour
     {
         if (map) map.GenerationCompleted -= RequestRebuild;
         Tilemap.tilemapTileChanged -= TilesChanged;
+        PlacedTorch.Changed -= OnTorchChanged;
         ReleaseResources();
         ReleaseUltroniumLights();
     }
@@ -171,6 +178,11 @@ public sealed class MapLighting : MonoBehaviour
         nextOreRefresh = 0f;
     }
 
+    void OnTorchChanged(MapGenerator ownerMap)
+    {
+        if (ownerMap == map) torchFieldDirty = true;
+    }
+
     void TilesChanged(Tilemap source, Tilemap.SyncTile[] changes)
     {
         if (source != tiles || field == null || rebuild || changes == null ||
@@ -184,6 +196,7 @@ public sealed class MapLighting : MonoBehaviour
         if (!lightingEnabled || GameplayTestSettings.GlobalLighting)
         {
             if (overlay) overlay.SetActive(false);
+            if (torchLight) torchLight.enabled = false;
             SetUltroniumLightsActive(false);
             return;
         }
@@ -192,7 +205,13 @@ public sealed class MapLighting : MonoBehaviour
         if (field == null) return;
         overlay.SetActive(true);
         foreach (var cell in changed)
-            field.SetSolid(cell.x + width / 2, -cell.y, tiles.HasTile(cell));
+        {
+            bool solid = tiles.HasTile(cell);
+            field.SetSolid(cell.x + width / 2, -cell.y, solid);
+            if (torchField.SetSolid(cell.x + width / 2, -cell.y, solid))
+                torchFieldDirty = true;
+            UpdateSolidityPixel(cell, solid);
+        }
         changed.Clear();
 
         // Spread the work across frames for large shafts and low attenuation.
@@ -201,6 +220,8 @@ public sealed class MapLighting : MonoBehaviour
         while (field.HasPendingWork && processed < 8192 && timer.Elapsed.TotalMilliseconds < 2)
             processed += field.Process(256);
         timer.Stop();
+        UpdateTorchLighting();
+        if (torchLight) torchLight.enabled = torchSources.Count > 0;
         UploadLightingTexture();
         UpdateHeadlamp();
     }
@@ -208,8 +229,12 @@ public sealed class MapLighting : MonoBehaviour
     void UpdateHeadlamp()
     {
         if (!material) return;
-        UpdateTorchLights();
         UpdateUltroniumLights();
+        var altar = map ? map.AltarChamber : null;
+        material.SetVector("_AltarSource", altar ? altar.LightSource : Vector4.zero);
+        material.SetTexture("_AltarMask", altar && altar.ChamberLightMask ? altar.ChamberLightMask : Texture2D.blackTexture);
+        material.SetVector("_AltarRect", altar ? altar.ChamberLightRect : Vector4.zero);
+        material.SetVector("_AltarMaskSize", altar ? altar.ChamberLightSize : Vector4.zero);
         if (!headlamp || !headlamp.isActiveAndEnabled || headlamp.intensity <= 0)
         {
             material.SetVector(HeadlampOriginRange, Vector4.zero);
@@ -330,17 +355,46 @@ public sealed class MapLighting : MonoBehaviour
         return .55f + .65f * crest * crest;
     }
 
-    void UpdateTorchLights()
+    void UpdateTorchLighting()
     {
-        int count = 0;
+        if (!torchFieldDirty || torchField == null) return;
+        torchFieldDirty = false;
+        torchSources.Clear();
         foreach (var torch in PlacedTorch.Active)
         {
-            if (!torch || torch.OwnerMap != map || count >= torchSources.Length) continue;
-            Vector2 position = torch.LightPosition;
-            torchSources[count++] = new Vector4(position.x, position.y, torch.Radius, torch.Intensity);
+            if (!torch || torch.OwnerMap != map) continue;
+            Vector3Int cell = tiles.WorldToCell(torch.LightPosition);
+            torchSources.Add(new TorchLightField.Source(
+                cell.x + width / 2, -cell.y, torch.Intensity));
         }
-        material.SetVectorArray(TorchSourcesId, torchSources);
-        material.SetInt(TorchCountId, count);
+        bool lightChanged = false;
+        foreach (int index in torchField.Rebuild(torchSources))
+        {
+            int x = index % width, depth = index / width;
+            int pixelY = height - 1 - depth;
+            int pixelIndex = pixelY * width + x;
+            byte brightness = (byte)Mathf.RoundToInt(255f * Mathf.Clamp01(torchField.Get(index)));
+            if (torchLightPixels[pixelIndex].a != brightness)
+            {
+                Color32 lightPixel = torchLightPixels[pixelIndex];
+                lightPixel.a = brightness;
+                torchLightPixels[pixelIndex] = lightPixel;
+                lightChanged = true;
+            }
+            if (pixels[pixelIndex].g == brightness) continue;
+            Color32 pixel = pixels[pixelIndex];
+            pixel.g = brightness;
+            pixels[pixelIndex] = pixel;
+            textureDirty = true;
+            dirtyTextureChunks.Add(new Vector2Int(x / TextureUploadChunkSize,
+                pixelY / TextureUploadChunkSize));
+        }
+        if (lightChanged)
+        {
+            torchLightTexture.SetPixels32(torchLightPixels);
+            torchLightTexture.Apply(false, false);
+        }
+        if (torchLight) torchLight.enabled = torchSources.Count > 0;
     }
 
     public void ApplyBackgroundLighting(MaterialPropertyBlock properties)
@@ -356,10 +410,15 @@ public sealed class MapLighting : MonoBehaviour
         properties.SetVector(HeadlampOriginRange, material.GetVector(HeadlampOriginRange));
         properties.SetVector(HeadlampDirectionAngles, material.GetVector(HeadlampDirectionAngles));
         properties.SetFloat(HeadlampInnerRadius, material.GetFloat(HeadlampInnerRadius));
-        properties.SetVectorArray(TorchSourcesId, torchSources);
-        properties.SetInt(TorchCountId, material.GetInt(TorchCountId));
+        properties.SetTexture(TerrainOcclusionTexId, texture);
+        properties.SetVector(TerrainOcclusionRectId, material.GetVector(TerrainOcclusionRectId));
+        properties.SetVector(TerrainOcclusionSizeId, new Vector4(width, height, 0f, 0f));
         properties.SetVectorArray(UltroniumSourcesId, ultroniumSources);
         properties.SetInt(UltroniumCountId, material.GetInt(UltroniumCountId));
+        properties.SetVector("_AltarSource", material.GetVector("_AltarSource"));
+        properties.SetTexture("_AltarMask", material.GetTexture("_AltarMask") ?? Texture2D.blackTexture);
+        properties.SetVector("_AltarRect", material.GetVector("_AltarRect"));
+        properties.SetVector("_AltarMaskSize", material.GetVector("_AltarMaskSize"));
     }
 
     void Initialize()
@@ -395,21 +454,44 @@ public sealed class MapLighting : MonoBehaviour
             return;
         }
         var solid = new bool[width * height];
+        var altarShell = new bool[solid.Length];
+        var chamber = map ? map.AltarChamber : null;
         pixels = new Color32[solid.Length];
         byte dark = (byte)Mathf.RoundToInt(255f * (1f - ambientBrightness));
         for (int y = 0; y < height; y++)
             for (int x = 0; x < width; x++)
             {
                 solid[y * width + x] = allTiles[(height - 1 - y) * width + x] != null;
-                pixels[y * width + x] = new Color32(0, 0, 0, dark);
+                altarShell[y * width + x] = chamber && chamber.Protects(new Vector3Int(x - width / 2, -y, 0));
+                pixels[(height - 1 - y) * width + x] = new Color32(
+                    solid[y * width + x] ? (byte)255 : (byte)0, 0, 0, dark);
             }
-        field = new GridDaylight(width, height, solid, daylightStrength, downwardLoss, sidewaysLoss, blockLoss, exponentialStrength);
+        field = new GridDaylight(width, height, solid, daylightStrength, downwardLoss, sidewaysLoss, blockLoss, exponentialStrength, altarShell);
         field.LightChanged += UpdatePixel;
+        Vector3 cellWidth = tiles.transform.TransformVector(Vector3.right * tiles.layoutGrid.cellSize.x);
+        Vector3 cellHeight = tiles.transform.TransformVector(Vector3.up * tiles.layoutGrid.cellSize.y);
+        torchField = new TorchLightField(width, height, solid, cellWidth.magnitude,
+            cellHeight.magnitude, PlacedTorch.PropagationDistance);
+        torchFieldDirty = true;
         texture = new Texture2D(width, height, TextureFormat.RGBA32, false, true)
         {
             name = "Daylight mask", filterMode = FilterMode.Bilinear,
             wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.DontSave
         };
+        torchLightTexture = new Texture2D(width, height, TextureFormat.RGBA32, false, true)
+        {
+            name = "Torch light field", filterMode = FilterMode.Bilinear,
+            wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.DontSave
+        };
+        torchLightPixels = new Color32[pixels.Length];
+        for (int i = 0; i < torchLightPixels.Length; i++)
+            torchLightPixels[i] = new Color32(255, 255, 255, 0);
+        torchLightTexture.SetPixels32(torchLightPixels);
+        torchLightTexture.Apply(false, false);
+        torchLightSprite = Sprite.Create(torchLightTexture, new Rect(0, 0, width, height),
+            new Vector2(.5f, .5f), 1f, 0, SpriteMeshType.FullRect);
+        torchLightSprite.name = "Torch light field";
+        torchLightSprite.hideFlags = HideFlags.DontSave;
         material = new Material(darknessShader) { name = "Map darkness", hideFlags = HideFlags.DontSave };
         material.mainTexture = texture;
         overlay = new GameObject("Daylight Overlay") { hideFlags = HideFlags.DontSave, layer = gameObject.layer };
@@ -433,6 +515,24 @@ public sealed class MapLighting : MonoBehaviour
         renderer.receiveShadows = false;
         renderer.lightProbeUsage = LightProbeUsage.Off;
         renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+        var bounds = renderer.bounds;
+        var torchObject = new GameObject("Torch field light")
+            { hideFlags = HideFlags.DontSave, layer = gameObject.layer };
+        torchObject.transform.SetParent(transform, false);
+        torchObject.transform.position = new Vector3(bounds.center.x, bounds.center.y, 0f);
+        torchObject.transform.localScale = new Vector3(bounds.size.x / width, bounds.size.y / height, 1f);
+        torchLight = torchObject.AddComponent<Light2D>();
+        torchLight.enabled = false;
+        torchLight.lightType = Light2D.LightType.Sprite;
+        torchLight.lightCookieSprite = torchLightSprite;
+        torchLight.color = new Color(1f, .58f, .24f, 1f);
+        torchLight.intensity = 1.25f;
+        torchLight.shadowsEnabled = false;
+        material.SetTexture(TerrainOcclusionTexId, texture);
+        material.SetVector(TerrainOcclusionRectId, new Vector4(bounds.min.x, bounds.min.y,
+            1f / Mathf.Max(bounds.size.x, .001f), 1f / Mathf.Max(bounds.size.y, .001f)));
+        material.SetVector(TerrainOcclusionSizeId, new Vector4(width, height, 0f, 0f));
+        UpdateTorchLighting();
         field.Reset();
         textureDirty = true;
         fullTextureUpload = true;
@@ -444,10 +544,27 @@ public sealed class MapLighting : MonoBehaviour
     {
         int x = index % width, y = index / width;
         float brightness = Mathf.Max(ambientBrightness, GridDaylight.VisibleLight(light));
-        pixels[(height - 1 - y) * width + x] = new Color32(0, 0, 0,
-            (byte)Mathf.RoundToInt(255f * (1f - brightness)));
+        int pixelIndex = (height - 1 - y) * width + x;
+        Color32 pixel = pixels[pixelIndex];
+        pixel.a = (byte)Mathf.RoundToInt(255f * (1f - brightness));
+        pixels[pixelIndex] = pixel;
         textureDirty = true;
         int pixelY = height - 1 - y;
+        dirtyTextureChunks.Add(new Vector2Int(x / TextureUploadChunkSize, pixelY / TextureUploadChunkSize));
+    }
+
+    void UpdateSolidityPixel(Vector3Int cell, bool solid)
+    {
+        int x = cell.x + width / 2, depth = -cell.y;
+        if (x < 0 || x >= width || depth < 0 || depth >= height) return;
+        int pixelY = height - 1 - depth;
+        int index = pixelY * width + x;
+        byte value = solid ? (byte)255 : (byte)0;
+        if (pixels[index].r == value) return;
+        Color32 pixel = pixels[index];
+        pixel.r = value;
+        pixels[index] = pixel;
+        textureDirty = true;
         dirtyTextureChunks.Add(new Vector2Int(x / TextureUploadChunkSize, pixelY / TextureUploadChunkSize));
     }
 
@@ -521,8 +638,8 @@ public sealed class MapLighting : MonoBehaviour
             : field == null || x < 0 || x >= width || y >= height
             ? ambientBrightness
             : Mathf.Max(ambientBrightness, GridDaylight.VisibleLight(field[x, y]));
+        float brightness = Mathf.Max(mapBrightness, torchField != null ? torchField.Get(x, y) : 0f);
         Vector2 worldPosition = tiles ? tiles.GetCellCenterWorld(cell) : Vector2.zero;
-        float brightness = Mathf.Max(mapBrightness, PlacedTorch.BrightnessAt(worldPosition, map));
         if (headlamp && headlamp.isActiveAndEnabled && headlamp.intensity > 0 && tiles)
             brightness = Mathf.Max(brightness, GetHeadlampBrightness(worldPosition));
         return brightness;
@@ -547,12 +664,22 @@ public sealed class MapLighting : MonoBehaviour
 
     void ReleaseResources()
     {
+        if (torchLight) Destroy(torchLight.gameObject);
+        if (torchLightSprite) Destroy(torchLightSprite);
+        if (torchLightTexture) Destroy(torchLightTexture);
         if (overlay) { overlay.SetActive(false); Destroy(overlay); }
         if (texture) Destroy(texture);
         if (material) Destroy(material);
         if (mesh) Destroy(mesh);
         if (uploadPatch) Destroy(uploadPatch);
         field = null;
+        torchField = null;
+        torchLight = null;
+        torchLightSprite = null;
+        torchLightTexture = null;
+        torchLightPixels = null;
+        torchSources.Clear();
+        torchFieldDirty = true;
         pixels = null;
         overlay = null;
         texture = null;

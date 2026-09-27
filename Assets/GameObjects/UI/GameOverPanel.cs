@@ -68,7 +68,7 @@ public sealed class GameOverPanel : MonoBehaviour
 
     void OnHealthChanged(float health, float maximum)
     {
-        if (health <= 0f && !IsOpen) Show();
+        if (health <= 0f && !IsOpen && !GameVictoryPanel.IsOpen) Show();
     }
 
     public void Show()

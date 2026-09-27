@@ -277,6 +277,17 @@ public sealed class MapGenerationSampler
         return density >= 1f || bestScore * totalWeight < -Math.Log(1d - density) ? chosen : baseStone;
     }
 
+    public bool CanPlaceOre(Block ore, int depth)
+    {
+        if (!ore || depth < 0 || depth >= densityByRow.Length || densityByRow[depth] <= 0f) return false;
+        int index = Array.IndexOf(noiseBlocks, ore);
+        if (index < 0) return false;
+        int layer = LayerIndex(depth);
+        if (layer >= 0 && Array.IndexOf(layerOres[layer], index) < 0) return false;
+        return configuredWeightsByRow == null ? weights[index] > 0f :
+            configuredWeightsByRow[depth * noiseBlocks.Length + index] > 0f;
+    }
+
     float[] DynamicCdf(int ore, int veinIndex)
     {
         if (dynamicNoiseCdfs[ore].TryGetValue(veinIndex, out var cdf)) return cdf;
@@ -314,6 +325,16 @@ public sealed class MapGenerationSampler
         return Mathf.Clamp(Mathf.Lerp(cdf[bin], cdf[bin + 1], position - bin), .000001f, .999999f);
     }
 
-    static float SampleNoise(int x, int y, float scale, Vector2 offset) =>
-        Mathf.PerlinNoise(x * scale + offset.x, y * scale + offset.y);
+    static float SampleNoise(int x, int y, float scale, Vector2 offset)
+    {
+        // Rotate and gently bend an elongated field, so equal-area contours grow
+        // along a seam instead of forming mostly round, axis-aligned islands.
+        float angle = Mathf.Repeat(offset.x * .731f + offset.y * .417f, 1f) * Mathf.PI;
+        float along = x * Mathf.Cos(angle) + y * Mathf.Sin(angle);
+        float across = y * Mathf.Cos(angle) - x * Mathf.Sin(angle);
+        float bend = (Mathf.PerlinNoise(along * scale * .32f + offset.y + 19.17f,
+            across * scale * .32f + offset.x + 37.41f) - .5f) * .75f;
+        return Mathf.PerlinNoise(along * scale * .7f + offset.x,
+            across * scale * 1.35f + offset.y + bend);
+    }
 }

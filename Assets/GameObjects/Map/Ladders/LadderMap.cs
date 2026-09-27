@@ -59,7 +59,7 @@ public sealed class LadderMap : MonoBehaviour
     public bool TryRemove(Vector3Int cell, InventoryManager inventory, Vector2 player, float reach)
     {
         if (GameplayInputBlocker.IsBlocked || !inventory || !ladderItem || !Has(cell) || !InReach(cell, player, reach) ||
-            inventory.GetCount(ladderItem) == int.MaxValue) return false;
+            !inventory.CanAdd(ladderItem)) return false;
         tiles.SetTile(cell, null);
         inventory.Add(ladderItem);
         AudioManager.Instance?.Play(SoundType.LadderRemove, true);
