@@ -21,4 +21,6 @@ public sealed class OreDistributionSetting
     public AnimationCurve weightCurve = AnimationCurve.Constant(0f, 1f, 1f);
     [Min(1f)] public float baseVeinSize = 7f;
     public AnimationCurve veinSizeCurve = AnimationCurve.Constant(0f, 1f, 1f);
+    // Zero inherits the legacy map-wide value; Ultronium keeps its former single-cell default.
+    [Min(1), InspectorName("Mindestadergröße (Blöcke)")] public int minimumVeinSize;
 }

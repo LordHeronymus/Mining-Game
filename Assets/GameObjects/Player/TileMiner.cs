@@ -17,7 +17,6 @@ public class TileMiner : MonoBehaviour
     [SerializeField] Texture2D treeCursorTexture;
 
     [Header("Mining")]
-    public int searchRadiusCells = 2;
     public float miningSoundInterval = 0.5f;
     [Min(.05f)] public float cursorPulseInterval = .9f;
     public Vector2 cursorPulseAlphaRange = new(.76f, 1f);
@@ -25,6 +24,11 @@ public class TileMiner : MonoBehaviour
     [FormerlySerializedAs("cursorBrightness"), Range(0f, 3f)] public float cursorGlowStrength = 1f;
 
     private Dictionary<Vector3Int, float> progress = new();
+    private readonly Dictionary<Vector3Int, float> lastMiningHitTime = new();
+    private readonly Dictionary<Vector3Int, float> lastMiningProgressUpdateTime = new();
+    private readonly List<Vector3Int> miningProgressCells = new();
+    const float MiningRegenerationDelay = 60f;
+    const float MiningRegenerationDuration = 60f;
     private readonly Dictionary<Vector3Int, int> pendingDropCounts = new();
     private MiningCrackVisual miningCracks;
     private Camera _cam;
@@ -114,6 +118,7 @@ public class TileMiner : MonoBehaviour
 
     void Update()
     {
+        RegenerateMiningProgress(Time.time);
         miningCracks?.Refresh(progress);
         bool continuedBlockMining = miningBlockActive;
         miningBlockActive = false;
@@ -199,31 +204,28 @@ public class TileMiner : MonoBehaviour
             }
             return;
         }
-        Vector3Int? nearest = smartCursor
-            ? FindNearestExistingCell(mouseWorld, searchRadiusCells)
+        Vector3Int? selectedCell = smartCursor
+            ? FindSmartMiningTarget(mouseWorld)
             : tilemap.WorldToCell(mouseWorld);
 
-        if (nearest == null)
+        if (selectedCell == null)
         {
             ClearHighlight();
             return;
         }
 
-        Vector3Int targetCell;
-        if (smartCursor) targetCell = GetReachLimitedCell(nearest.Value);
-        else
+        Vector3Int targetCell = selectedCell.Value;
+        if (!stats || Vector2.Distance(tilemap.GetCellCenterWorld(targetCell), transform.position) > stats.Reach)
         {
-            targetCell = nearest.Value;
-            if (!stats || Vector2.Distance(tilemap.GetCellCenterWorld(targetCell), transform.position) > stats.Reach)
-            {
-                ClearHighlight();
-                return;
-            }
+            ClearHighlight();
+            return;
         }
 
         if (map && map.IsCellProtected(targetCell))
         {
             progress.Remove(targetCell);
+            lastMiningHitTime.Remove(targetCell);
+            lastMiningProgressUpdateTime.Remove(targetCell);
             pendingDropCounts.Remove(targetCell);
             ClearHighlight();
             return;
@@ -272,6 +274,8 @@ public class TileMiner : MonoBehaviour
         float pickaxeMultiplier = InventoryManager.Instance
             ? InventoryManager.Instance.EquippedPickaxeProgressMultiplier : 1f;
         p += damageInterval * pickaxeMultiplier / Mathf.Max(.0001f, GetTargetMineTime(cell));
+        lastMiningHitTime[cell] = Time.time;
+        lastMiningProgressUpdateTime[cell] = Time.time;
         if (p >= 1f) { CompleteMining(cell); return; }
         progress[cell] = p;
         miningCracks ??= new MiningCrackVisual(tilemap);
@@ -303,9 +307,47 @@ public class TileMiner : MonoBehaviour
     void ClearMiningProgress()
     {
         progress.Clear();
+        lastMiningHitTime.Clear();
+        lastMiningProgressUpdateTime.Clear();
         pendingDropCounts.Clear();
         miningCracks?.Dispose();
         miningCracks = null;
+    }
+
+    void RegenerateMiningProgress(float now)
+    {
+        if (progress.Count == 0) return;
+        miningProgressCells.Clear();
+        miningProgressCells.AddRange(progress.Keys);
+        for (int i = 0; i < miningProgressCells.Count; i++)
+        {
+            Vector3Int cell = miningProgressCells[i];
+            if (!progress.TryGetValue(cell, out float amount)) continue;
+            if (!lastMiningHitTime.TryGetValue(cell, out float lastHit))
+            {
+                lastMiningHitTime[cell] = now;
+                lastMiningProgressUpdateTime[cell] = now;
+                continue;
+            }
+
+            if (!lastMiningProgressUpdateTime.TryGetValue(cell, out float lastUpdate))
+                lastUpdate = lastHit;
+            float decayStart = lastHit + MiningRegenerationDelay;
+            float decayTime = Mathf.Max(0f, now - Mathf.Max(lastUpdate, decayStart));
+            lastMiningProgressUpdateTime[cell] = now;
+            if (decayTime <= 0f) continue;
+
+            amount = Mathf.Max(0f, amount - decayTime / MiningRegenerationDuration);
+            if (amount <= 0f)
+            {
+                progress.Remove(cell);
+                lastMiningHitTime.Remove(cell);
+                lastMiningProgressUpdateTime.Remove(cell);
+                pendingDropCounts.Remove(cell);
+                miningCracks?.Hide(cell);
+            }
+            else progress[cell] = amount;
+        }
     }
 
     public static bool IsPointerOverUi(Vector2 screenPosition)
@@ -535,6 +577,8 @@ public class TileMiner : MonoBehaviour
             tilemap.GetComponent<MapLighting>()?.NotifyTileChanged(cell);
         }
         progress.Remove(cell);
+        lastMiningHitTime.Remove(cell);
+        lastMiningProgressUpdateTime.Remove(cell);
         pendingDropCounts.Remove(cell);
         miningCracks?.Hide(cell);
         int terrainLayer = !ore ? GetTerrainLayerIndex(block) : -1;
@@ -547,37 +591,104 @@ public class TileMiner : MonoBehaviour
         return true;
     }
 
-    Vector3Int? FindNearestExistingCell(Vector3 mouseWorld, int radius)
+    Vector3Int? FindSmartMiningTarget(Vector3 mouseWorld)
     {
-        Vector3Int center = tilemap.WorldToCell(mouseWorld);
-        if (tilemap.HasTile(center)) return center;
+        if (!stats || stats.Reach <= 0f) return null;
 
-        float bestSqr = float.PositiveInfinity;
+        Vector2 playerPosition = transform.position;
+        Vector2 aim = (Vector2)mouseWorld - playerPosition;
+        float aimDistance = aim.magnitude;
+        Vector2 direction = aimDistance > .001f ? aim / aimDistance : Vector2.right;
+        float pathLength = Mathf.Min(aimDistance, stats.Reach);
+        Vector2 pathEnd = playerPosition + direction * pathLength;
+        Vector3Int playerCell = tilemap.WorldToCell(playerPosition);
+        Vector2 cellCenter = tilemap.GetCellCenterWorld(playerCell);
+        float cellWidth = Vector2.Distance(cellCenter, tilemap.GetCellCenterWorld(playerCell + Vector3Int.right));
+        float cellHeight = Vector2.Distance(cellCenter, tilemap.GetCellCenterWorld(playerCell + Vector3Int.up));
+        if (cellWidth <= 0f || cellHeight <= 0f) return null;
+
+        float tileSize = Mathf.Min(cellWidth, cellHeight);
+        float strokeRadius = GameplayTestSettings.ConfiguredSmartCursorStrokeWidth * tileSize * .5f;
+        int scanRadiusX = Mathf.CeilToInt(pathLength / cellWidth) + Mathf.CeilToInt(strokeRadius / cellWidth) + 2;
+        int scanRadiusY = Mathf.CeilToInt(pathLength / cellHeight) + Mathf.CeilToInt(strokeRadius / cellHeight) + 2;
+        float bestPlayerDistanceSqr = float.PositiveInfinity;
+        float bestPathProjection = float.PositiveInfinity;
+        float reachSqr = stats.Reach * stats.Reach;
         Vector3Int? best = null;
 
-        for (int dx = -radius; dx <= radius; dx++)
-            for (int dy = -radius; dy <= radius; dy++)
+        for (int dx = -scanRadiusX; dx <= scanRadiusX; dx++)
+            for (int dy = -scanRadiusY; dy <= scanRadiusY; dy++)
             {
-                var c = new Vector3Int(center.x + dx, center.y + dy, 0);
-                if (!tilemap.HasTile(c)) continue;
-                float d2 = (tilemap.GetCellCenterWorld(c) - mouseWorld).sqrMagnitude;
-                if (d2 < bestSqr) { bestSqr = d2; best = c; }
+                Vector3Int cell = new(playerCell.x + dx, playerCell.y + dy, 0);
+                if (!tilemap.HasTile(cell)) continue;
+
+                Vector2 targetPosition = tilemap.GetCellCenterWorld(cell);
+                Vector2 fromPlayer = targetPosition - playerPosition;
+                float playerDistanceSqr = fromPlayer.sqrMagnitude;
+                if (playerDistanceSqr > reachSqr) continue;
+                if (!StrokeIntersectsCell(playerPosition, pathEnd, targetPosition,
+                        new Vector2(cellWidth * .5f, cellHeight * .5f), strokeRadius)) continue;
+
+                float pathProjection = Vector2.Dot(fromPlayer, direction);
+                if (playerDistanceSqr < bestPlayerDistanceSqr - .0001f ||
+                    (Mathf.Abs(playerDistanceSqr - bestPlayerDistanceSqr) <= .0001f && pathProjection < bestPathProjection))
+                {
+                    bestPlayerDistanceSqr = playerDistanceSqr;
+                    bestPathProjection = pathProjection;
+                    best = cell;
+                }
             }
 
         return best;
     }
 
-    Vector3Int GetReachLimitedCell(Vector3Int cell)
+    static bool StrokeIntersectsCell(Vector2 start, Vector2 end, Vector2 center, Vector2 halfExtents, float radius)
     {
-        Vector3 cellWorld = tilemap.GetCellCenterWorld(cell);
-        Vector3 playerPos = transform.position;
+        Vector2 minimum = center - halfExtents;
+        Vector2 maximum = center + halfExtents;
+        Vector2 segment = end - start;
+        float entry = 0f;
+        float exit = 1f;
+        if (ClipSegmentAxis(start.x, segment.x, minimum.x, maximum.x, ref entry, ref exit) &&
+            ClipSegmentAxis(start.y, segment.y, minimum.y, maximum.y, ref entry, ref exit))
+            return true;
 
-        float dist = Vector2.Distance(cellWorld, playerPos);
-        if (dist <= stats.Reach) return cell;
+        float closestDistanceSqr = PointToRectDistanceSqr(start, minimum, maximum);
+        closestDistanceSqr = Mathf.Min(closestDistanceSqr, PointToRectDistanceSqr(end, minimum, maximum));
+        closestDistanceSqr = Mathf.Min(closestDistanceSqr, PointToSegmentDistanceSqr(minimum, start, end));
+        closestDistanceSqr = Mathf.Min(closestDistanceSqr, PointToSegmentDistanceSqr(
+            new Vector2(minimum.x, maximum.y), start, end));
+        closestDistanceSqr = Mathf.Min(closestDistanceSqr, PointToSegmentDistanceSqr(maximum, start, end));
+        closestDistanceSqr = Mathf.Min(closestDistanceSqr, PointToSegmentDistanceSqr(
+            new Vector2(maximum.x, minimum.y), start, end));
+        return closestDistanceSqr <= radius * radius + .000001f;
+    }
 
-        Vector2 dir = (cellWorld - playerPos).normalized;
-        Vector3 limited = playerPos + (Vector3)(dir * stats.Reach);
-        return tilemap.WorldToCell(limited);
+    static bool ClipSegmentAxis(float origin, float delta, float minimum, float maximum, ref float entry, ref float exit)
+    {
+        if (Mathf.Abs(delta) < .000001f) return origin >= minimum && origin <= maximum;
+
+        float first = (minimum - origin) / delta;
+        float second = (maximum - origin) / delta;
+        if (first > second) (first, second) = (second, first);
+        entry = Mathf.Max(entry, first);
+        exit = Mathf.Min(exit, second);
+        return entry <= exit;
+    }
+
+    static float PointToRectDistanceSqr(Vector2 point, Vector2 minimum, Vector2 maximum)
+    {
+        float dx = point.x < minimum.x ? minimum.x - point.x : point.x > maximum.x ? point.x - maximum.x : 0f;
+        float dy = point.y < minimum.y ? minimum.y - point.y : point.y > maximum.y ? point.y - maximum.y : 0f;
+        return dx * dx + dy * dy;
+    }
+
+    static float PointToSegmentDistanceSqr(Vector2 point, Vector2 start, Vector2 end)
+    {
+        Vector2 segment = end - start;
+        float lengthSqr = segment.sqrMagnitude;
+        float t = lengthSqr > .000001f ? Mathf.Clamp01(Vector2.Dot(point - start, segment) / lengthSqr) : 0f;
+        return (point - (start + segment * t)).sqrMagnitude;
     }
 
     float GetTargetMineTime(Vector3Int cell)

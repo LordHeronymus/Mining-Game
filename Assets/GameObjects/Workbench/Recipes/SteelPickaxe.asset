@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bd168b198ca49c4a82450a3ed868988, type: 3}
   m_Name: SteelPickaxe
   m_EditorClassIdentifier: 
-  category: 0
+  category: 1
   persistentId: 612eccd38e5e7d54f85bb09acdb4135f
   customCardIconLayout: 1
   cardIconLayout:
@@ -26,8 +26,6 @@ MonoBehaviour:
   pluralName: Stahlspitzhacken
   ingredients:
   - item: {fileID: 11400000, guid: 75e7eb8e62b50c64eb4dd8132de34314, type: 2}
-    amount: 3
-  - item: {fileID: 11400000, guid: 13a72d4a121bd0e499c2737ebc0b56ed, type: 2}
     amount: 10
-  - item: {fileID: 11400000, guid: 8ce50848319387b46b7171f0cf06cdc0, type: 2}
-    amount: 4
+  - item: {fileID: 11400000, guid: a79ffa1203bdaa146b29e3d31a869cfe, type: 2}
+    amount: 10

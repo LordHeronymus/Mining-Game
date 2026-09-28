@@ -1,6 +1,10 @@
 Shader "Mining/Firefly Glow"
 {
-    Properties { _Brightness ("Brightness", Float) = 2 }
+    Properties
+    {
+        _Brightness ("Brightness", Float) = 2
+        _CoreColorMix ("Core Color Mix", Float) = 1
+    }
     SubShader
     {
         Tags { "Queue"="Transparent" "RenderType"="Transparent" "RenderPipeline"="UniversalPipeline" }
@@ -16,6 +20,7 @@ Shader "Mining/Firefly Glow"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             CBUFFER_START(UnityPerMaterial)
                 float _Brightness;
+                float _CoreColorMix;
             CBUFFER_END
             struct Attributes { float3 positionOS : POSITION; float4 color : COLOR; float2 uv : TEXCOORD0; };
             struct Varyings { float4 positionCS : SV_POSITION; half4 color : COLOR; float2 uv : TEXCOORD0; };
@@ -31,7 +36,7 @@ Shader "Mining/Firefly Glow"
                 float r = length(input.uv * 2 - 1);
                 float halo = exp(-r * r * 6) * (1 - smoothstep(.7, 1, r));
                 float core = 1 - smoothstep(.06, .22, r);
-                half3 color = lerp(input.color.rgb, half3(1, 1, .85), core);
+                half3 color = lerp(input.color.rgb, half3(1, 1, .85), core * saturate(_CoreColorMix));
                 return half4(color * _Brightness, (core * .75 + halo * .25) * input.color.a);
             }
             ENDHLSL

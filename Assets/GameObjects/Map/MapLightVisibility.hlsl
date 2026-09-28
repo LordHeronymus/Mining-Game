@@ -1,9 +1,6 @@
 #ifndef MINING_MAP_LIGHT_VISIBILITY_INCLUDED
 #define MINING_MAP_LIGHT_VISIBILITY_INCLUDED
 
-float4 _HeadlampOriginRange;
-float4 _HeadlampDirectionAngles;
-float _HeadlampInnerRadius;
 TEXTURE2D(_TerrainOcclusionTex);
 SAMPLER(sampler_TerrainOcclusionTex);
 float4 _TerrainOcclusionRect;
@@ -72,19 +69,6 @@ float MapTorchLight(float2 worldPos)
 float MapOtherLocalLight(float2 worldPos)
 {
     float light = 0;
-    float2 delta = worldPos - _HeadlampOriginRange.xy;
-    float range = _HeadlampOriginRange.z;
-    float distanceSquared = dot(delta, delta);
-    if (_HeadlampOriginRange.w > 0 && range > 0 && distanceSquared < range * range)
-    {
-        float distance = sqrt(distanceSquared);
-        float angle = dot(delta, _HeadlampDirectionAngles.xy) / max(distance, .0001);
-        float beam = smoothstep(_HeadlampDirectionAngles.w, _HeadlampDirectionAngles.z, angle);
-        float centerGlow = 1 - smoothstep(0, max(_HeadlampInnerRadius, .0001), distance);
-        float falloff = 1 - smoothstep(_HeadlampInnerRadius, range, distance);
-        light = saturate(max(beam, centerGlow) * falloff * _HeadlampOriginRange.w) *
-            MapAltarShellVisibility(_HeadlampOriginRange.xy, worldPos);
-    }
 
     [loop]
     for (int index = 0; index < 32; index++)

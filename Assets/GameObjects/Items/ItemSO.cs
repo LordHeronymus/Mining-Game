@@ -2,7 +2,7 @@ using UnityEngine;
 
 public enum Item
 {
-    //next 30
+    //next 34
 
     Coal = 3,
     Copper = 0,
@@ -35,6 +35,10 @@ public enum Item
     HealingHerbs = 27,
     Titanium = 28,
     Tungsten = 29,
+    Steel = 30,
+    Obsidian = 31,
+    OrangeGarnet = 32,
+    Diamond = 33,
 }
 
 public enum ItemCategory

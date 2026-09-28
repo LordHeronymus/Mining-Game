@@ -289,7 +289,7 @@ public static class LastPlayedMap
                 int i=cellIndex++;if(!tiles[i])continue;
                 tilemap.SetTileFlags(cell,TileFlags.None);
                 if(custom.TryGetValue(i,out var value)) {tilemap.SetColor(cell,value.color);tilemap.SetTransformMatrix(cell,value.matrix);}
-                // Older previews may still contain randomized ore rotations.
+                // Keep ore overlays at their authored scale and orientation after loading.
                 if(tiles[i] is OreTile ore)tilemap.SetTransformMatrix(cell,ore.transform);
                 tilemap.SetTileFlags(cell,flags[i]);
             }

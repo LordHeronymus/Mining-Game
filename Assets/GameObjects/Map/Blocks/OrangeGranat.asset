@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24d469c3ce4fd914d9eb95135b7e747b, type: 3}
+  m_Name: OrangeGranat
+  m_EditorClassIdentifier: 
+  id: 16
+  displayName: Orange Granat
+  itemDrop: {fileID: 11400000, guid: a638ddf2986a0024aafbce3f1c439aae, type: 2}
+  digSound: 4
+  breakSound: 5
+  hardness: 1.5
+  hardnessIndex: 3
+  points: 0
+  isSolid: 1
+  variants: []
+  smallOre:
+  - {fileID: 11400000, guid: 52bc13e6ae14ac04fa5c1f72084fe759, type: 2}
+  - {fileID: 11400000, guid: af7347a1c7f526f418993bca9b58f951, type: 2}
+  mediumOre:
+  - {fileID: 11400000, guid: 4fffc3d493bac4844a3b104de8dc83f2, type: 2}
+  - {fileID: 11400000, guid: 469ca6dff481e934c9f465e2de7b7f60, type: 2}
+  richOre:
+  - {fileID: 11400000, guid: 65473a314f5b7d74f968356e28a2db2a, type: 2}
+  - {fileID: 11400000, guid: d8a6be2ead28f9e40b0646cdba5e95f2, type: 2}
+  - {fileID: 11400000, guid: 449a8757fa30ed944a6fb45281f816b0, type: 2}
+  spawnWithNoise: 1
+  oreFrequencyPercent: 1
+  veinSizeIndex: 8
+  rarityCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  noiseScale: 0.05
+  noiseSeedOffset: 9000
+  generationSettingsVersion: 0

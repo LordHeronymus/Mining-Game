@@ -35,7 +35,7 @@ public static class DirtSurfaceChecks
             var expected=new Block[map.mapWidth*map.mapHeight];
             for(int y=0;y<map.mapHeight;y++)for(int x=0;x<map.mapWidth;x++)
                 expected[y*map.mapWidth+x]=sampler.GetBlock(x,y);
-            OreVeins.PruneSmallVeins(expected,map.mapWidth,map.mapHeight,map.minimumOreVeinSize,sampler.GetBaseBlock);
+            ConnectedOreVeins.Generate(expected,map.mapWidth,map.mapHeight,map.seed,sampler,map.GetMinimumVeinSize);
             int[] variants=new int[4];
             for(int y=0;y<sampler.DirtEndDepth;y++)for(int x=0;x<36;x++)
             {

@@ -741,9 +741,11 @@ public class GameplaySettingsWindow : EditorWindow
                 Item.Iron => 2,
                 Item.Silver => 3,
                 Item.Gold => 4,
-                Item.Platinum => 5,
-                Item.Ultronium => 6,
-                _ => 7
+                Item.Diamond => 5,
+                Item.Platinum => 6,
+                Item.Ultronium => 7,
+                Item.OrangeGarnet => 8,
+                _ => 9
             }).ToArray();
 
         EditorGUILayout.Space(8);
@@ -1094,6 +1096,14 @@ public class GameplaySettingsWindow : EditorWindow
                 catch (Exception ex) { notification = "Generierung fehlgeschlagen: " + ex.Message; Debug.LogException(ex); }
                 GUIUtility.ExitGUI();
             }
+        using (new EditorGUI.DisabledScope(!map || EditorApplication.isPlaying))
+            if (GUILayout.Button("Map-Position zurücksetzen", GUILayout.Height(28)))
+            {
+                notification = RecenterMapTransforms(map) > 0
+                    ? "Map-Position zurückgesetzt."
+                    : "Map-Position ist bereits korrekt.";
+                GUIUtility.ExitGUI();
+            }
         CollapsibleSection("map-size", "Kartengröße und Seed", map, data =>
         {
             Integer(data, "mapWidth", "Breite (Zellen)", "Die Karte wird horizontal um X = 0 zentriert.", 1, 10000);
@@ -1131,6 +1141,43 @@ public class GameplaySettingsWindow : EditorWindow
                 EditorGUILayout.PropertyField(layer.FindPropertyRelative("backgroundSprite"), new GUIContent("Hintergrundsprite"));
                 EditorGUILayout.PropertyField(layer.FindPropertyRelative("stone"), new GUIContent("Gesteinsart"));
             }
+        }, false);
+        CollapsibleSection("map-caves", "Höhlengeneration", map, data =>
+        {
+            var caves = data.FindProperty("caveGeneration");
+            EditorGUILayout.PropertyField(caves.FindPropertyRelative("enabled"), new GUIContent("Aktiv"));
+            EditorGUILayout.IntSlider(caves.FindPropertyRelative("minimumDepth"), 0,
+                Mathf.Max(0, map.mapHeight - 1), new GUIContent("Mindesttiefe"));
+            EditorGUILayout.IntSlider(caves.FindPropertyRelative("walkerCount"), 0, 100,
+                new GUIContent("Walker-Anzahl"));
+            EditorGUILayout.Slider(caves.FindPropertyRelative("walkerStartRandomness"), 0f, 1f,
+                new GUIContent("Startpunkt-Zufälligkeit"));
+            EditorGUILayout.PropertyField(caves.FindPropertyRelative("minimumWalkerLength"),
+                new GUIContent("Walker-Länge min."));
+            EditorGUILayout.PropertyField(caves.FindPropertyRelative("maximumWalkerLength"),
+                new GUIContent("Walker-Länge max."));
+            EditorGUILayout.Slider(caves.FindPropertyRelative("minimumTunnelRadius"), .5f, 12f,
+                new GUIContent("Tunnelradius min."));
+            EditorGUILayout.Slider(caves.FindPropertyRelative("maximumTunnelRadius"), .5f, 12f,
+                new GUIContent("Tunnelradius max."));
+            EditorGUILayout.Slider(caves.FindPropertyRelative("caveAversionPercent"), 0f, 100f,
+                new GUIContent("Höhlenaversion (%)"));
+            EditorGUILayout.Slider(caves.FindPropertyRelative("directionChange"), 0f, 1f,
+                new GUIContent("Richtungsänderung"));
+            EditorGUILayout.Slider(caves.FindPropertyRelative("branchChancePercent"), 0f, 10f,
+                new GUIContent("Verzweigungschance (%)"));
+            EditorGUILayout.Slider(caves.FindPropertyRelative("splitBranchChanceFactorPercent"), 0f, 100f,
+                new GUIContent("Folge-Split-Faktor (%)"));
+            EditorGUILayout.PropertyField(caves.FindPropertyRelative("branchChanceByDepth"),
+                new GUIContent("Verzweigung nach Tiefe"));
+            EditorGUILayout.Slider(caves.FindPropertyRelative("chamberChancePercent"), 0f, 100f,
+                new GUIContent("Kammerchance an Knoten (%)"));
+            EditorGUILayout.Slider(caves.FindPropertyRelative("minimumChamberRadius"), 1f, 20f,
+                new GUIContent("Kammerradius min."));
+            EditorGUILayout.Slider(caves.FindPropertyRelative("maximumChamberRadius"), 1f, 20f,
+                new GUIContent("Kammerradius max."));
+            EditorGUILayout.PropertyField(caves.FindPropertyRelative("densityByDepth"),
+                new GUIContent("Verteilung nach Tiefe"));
         }, false);
         CollapsibleSection("map-ultronium-altar", "Ultronium Altar", map, data =>
         {
@@ -1192,6 +1239,39 @@ public class GameplaySettingsWindow : EditorWindow
         if (Registry && Foldout("map-catalog", "Blockkatalog")) DrawBlockCatalog();
     }
 
+    internal static int RecenterMapTransforms(MapGenerator generator)
+    {
+        if (!generator || !generator.gameObject.scene.IsValid()) return 0;
+
+        var terrain = generator.transform;
+        var grid = terrain.parent;
+        var mapRoot = grid ? grid.parent : null;
+        var objectsRoot = mapRoot ? mapRoot.parent : null;
+        var targets = new Dictionary<Transform, Vector3>();
+        if (objectsRoot && objectsRoot.name == "Map Objects") targets[objectsRoot] = Vector3.zero;
+        if (mapRoot && mapRoot.name == "Map") targets[mapRoot] = Vector3.zero;
+        if (grid && grid.name == "BlockGrid")
+        {
+            targets[grid] = new Vector3(0f, -.6f, 0f);
+            foreach (var tilemap in grid.GetComponentsInChildren<Tilemap>(true))
+                if (tilemap.transform != terrain && tilemap.transform != grid)
+                    targets[tilemap.transform] = Vector3.zero;
+        }
+        targets[terrain] = Vector3.zero;
+
+        int changed = 0;
+        foreach (var pair in targets)
+        {
+            if (pair.Key.localPosition == pair.Value) continue;
+            Undo.RecordObject(pair.Key, "Map-Position zurücksetzen");
+            pair.Key.localPosition = pair.Value;
+            EditorUtility.SetDirty(pair.Key);
+            changed++;
+        }
+        if (changed > 0) EditorSceneManager.MarkSceneDirty(generator.gameObject.scene);
+        return changed;
+    }
+
     void DrawBlockCatalog()
     {
         Source(Registry);
@@ -1228,7 +1308,6 @@ public class GameplaySettingsWindow : EditorWindow
         CollapsibleSection("ore-veins", "Adern", map, data =>
         {
             EditorGUILayout.Slider(data.FindProperty("oreScale"), .5f, 3f, new GUIContent("Erzgröße (×)"));
-            Integer(data, "minimumOreVeinSize", "Minimale Adergröße (Blöcke)", "", 1, 10000);
         }, false);
         if (!map) return;
         if (!Registry) { Missing("Dem Map-Generator fehlt ein BlockRegistry-Asset."); return; }
@@ -1637,6 +1716,7 @@ public class GameplaySettingsWindow : EditorWindow
                 created.FindPropertyRelative("weightCurve").animationCurveValue = AnimationCurve.Constant(0f, 1f, 1f);
                 created.FindPropertyRelative("baseVeinSize").floatValue = ore.veinSizeIndex;
                 created.FindPropertyRelative("veinSizeCurve").animationCurveValue = AnimationCurve.Constant(0f, 1f, 1f);
+                created.FindPropertyRelative("minimumVeinSize").intValue = map.GetMinimumVeinSize(ore);
                 data.FindProperty("useOreSettings").boolValue = true;
             }
             var entry = settings.GetArrayElementAtIndex(index);
@@ -1687,6 +1767,11 @@ public class GameplaySettingsWindow : EditorWindow
                 DrawDensityCurvePreview(sizeCurve, first, end, new HashSet<int>(enabled),
                     weightCurve.animationCurveValue, weight.floatValue);
             }
+            var minimumSize = entry.FindPropertyRelative("minimumVeinSize");
+            int configuredMinimum = minimumSize.intValue > 0 ? minimumSize.intValue : map.GetMinimumVeinSize(ore);
+            EditorGUI.BeginChangeCheck();
+            int nextMinimum = EditorGUILayout.IntField("Mindestadergröße (Blöcke)", configuredMinimum);
+            if (EditorGUI.EndChangeCheck()) minimumSize.intValue = Mathf.Clamp(nextMinimum, 1, 10000);
         }
     }
 
@@ -1860,6 +1945,7 @@ public class GameplaySettingsWindow : EditorWindow
             case BlockType.TitaniumOre: return 17;
             case BlockType.TungstenOre: return 18;
             case BlockType.UltroniumOre: return 19;
+            case BlockType.OrangeGarnetOre: return 20;
             default: return 90;
         }
     }

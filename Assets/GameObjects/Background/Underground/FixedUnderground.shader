@@ -81,6 +81,7 @@ Shader "Mining Game/Fixed Underground"
                 float2 phase=(input.world-float2(0,_TopY))/max(_RepeatSize.xy,.001);
                 phase.x+=0.5;
                 float2 uv=1.0-abs(frac(phase*0.5)*2.0-1.0);
+                float2 tiledUV=frac(float2(phase.x,-phase.y));
                 float depth=_SurfaceY-input.world.y;
                 half3 underground=SAMPLE_TEXTURE2D(_Layer0Tex,sampler_Layer0Tex,uv).rgb;
                 float fade=max(_LayerFadeWorld,.001);
@@ -92,19 +93,19 @@ Shader "Mining Game/Fixed Underground"
                 }
                 if(depth>_LayerStarts.y-fade)
                 {
-                    half3 next=SAMPLE_TEXTURE2D(_Layer2Tex,sampler_Layer2Tex,uv).rgb;
+                    half3 next=SAMPLE_TEXTURE2D(_Layer2Tex,sampler_Layer2Tex,tiledUV).rgb;
                     float upperAlpha=1.0-smoothstep(_LayerStarts.y-fade,_LayerStarts.y,depth);
                     underground=lerp(next,underground,upperAlpha);
                 }
                 if(depth>_LayerStarts.z-fade)
                 {
-                    half3 next=SAMPLE_TEXTURE2D(_Layer3Tex,sampler_Layer3Tex,uv).rgb;
+                    half3 next=SAMPLE_TEXTURE2D(_Layer3Tex,sampler_Layer3Tex,tiledUV).rgb;
                     float upperAlpha=1.0-smoothstep(_LayerStarts.z-fade,_LayerStarts.z,depth);
                     underground=lerp(next,underground,upperAlpha);
                 }
                 if(depth>_Layer4Start-fade)
                 {
-                    half3 next=SAMPLE_TEXTURE2D(_Layer4Tex,sampler_Layer4Tex,uv).rgb;
+                    half3 next=SAMPLE_TEXTURE2D(_Layer4Tex,sampler_Layer4Tex,tiledUV).rgb;
                     float upperAlpha=1.0-smoothstep(_Layer4Start-fade,_Layer4Start,depth);
                     underground=lerp(next,underground,upperAlpha);
                 }

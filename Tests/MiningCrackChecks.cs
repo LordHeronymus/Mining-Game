@@ -116,6 +116,28 @@ public static class MiningCrackChecks
             var persistedRenderer = owned.Renderer;
             typeof(TileMiner).GetMethod("Update", Private).Invoke(miner, null);
             Check(persistedRenderer.enabled, "Stored damage did not remain visible");
+            var hitTimes = (System.Collections.Generic.Dictionary<Vector3Int, float>)typeof(TileMiner)
+                .GetField("lastMiningHitTime", Private).GetValue(miner);
+            var updateTimes = (System.Collections.Generic.Dictionary<Vector3Int, float>)typeof(TileMiner)
+                .GetField("lastMiningProgressUpdateTime", Private).GetValue(miner);
+            var regenCell = new Vector3Int(4, 0, 0);
+            progress[regenCell] = .75f;
+            hitTimes[regenCell] = 100f;
+            updateTimes[regenCell] = 100f;
+            typeof(TileMiner).GetMethod("ShowMiningCracks", Private).Invoke(miner, new object[] { regenCell, .75f });
+            var regenerate = typeof(TileMiner).GetMethod("RegenerateMiningProgress", Private);
+            regenerate.Invoke(miner, new object[] { 159f });
+            Check(Mathf.Abs(progress[regenCell] - .75f) < .001f, "Damage regenerated before the 60 second delay");
+            regenerate.Invoke(miner, new object[] { 160f });
+            Check(Mathf.Abs(progress[regenCell] - .75f) < .001f, "Damage regenerated at the start of the delay");
+            regenerate.Invoke(miner, new object[] { 190f });
+            Check(Mathf.Abs(progress[regenCell] - .25f) < .001f, "Regeneration did not decay gradually at 100% per minute");
+            owned.Show(regenCell, progress[regenCell]);
+            var regenProperties = new MaterialPropertyBlock(); owned.Renderer.GetPropertyBlock(regenProperties);
+            Check(Mathf.Abs(regenProperties.GetFloat("_CrackGrowth") - .25f) < .001f, "Cracks did not shrink with damage");
+            regenerate.Invoke(miner, new object[] { 220f });
+            Check(!progress.ContainsKey(regenCell) && !hitTimes.ContainsKey(regenCell) && !owned.Renderer.enabled,
+                "Fully regenerated damage or cracks were not cleared");
             var strikeCell = new Vector3Int(8, 0, 0);
             var targetTime = (float)typeof(TileMiner).GetMethod("GetTargetMineTime", Private).Invoke(miner, new object[] { strikeCell });
             float strikeInterval = Mathf.Min(.01f, targetTime * .1f);
@@ -133,7 +155,7 @@ public static class MiningCrackChecks
                 Check(Mathf.Abs(progress[strikeCell] - first * 2f) < .0001f, "Second hit damage is wrong");
             }
             finally { TileMiner.OnBlockHit = previousHit; AudioManager.Instance = previousAudio; }
-            return "PASS: five growing crack stages, persistent damage, hit-only progress, no frame damage, completion and rendering. Play mode=" + Application.isPlaying;
+            return "PASS: five growing crack stages, persistent damage, gradual regeneration after 60 seconds, hit-only progress, completion and rendering. Play mode=" + Application.isPlaying;
         }
         finally
         {

@@ -38,7 +38,6 @@ public sealed partial class SurfaceCritters : MonoBehaviour
     static void ResetStaticState() => populations.Clear();
     static readonly Plane[] viewPlanes = new Plane[6];
     const int VisibleSpawnLimit = 2;
-    const float GroundTileProbeDepth = .05f;
     readonly System.Random random = new System.Random();
     const string GeneratedName = "Critters (generated)";
     CritterMesh geometry;
@@ -163,6 +162,8 @@ public sealed partial class SurfaceCritters : MonoBehaviour
             var animal = new Critter { x = x, y = surfaceY, home = x, scale = scale,
                 direction = inside ? side : -side, wait = inside ? Random(.4f, 3) : .2f,
                 travel = Random(6, 12), phase = Random(0, 6.28f), shade = Random(.87f, 1.1f), awaitingEntrance = !inside };
+            if (map.TryGetComponent(out TerrainColliderChunks terrainColliders))
+                terrainColliders.EnsureAnimalCollisionAt(new Vector2(x, surfaceY));
             animal.body = CreateBody(animal);
             animals.Add(animal);
             return true;
@@ -178,6 +179,7 @@ public sealed partial class SurfaceCritters : MonoBehaviour
         proxy.transform.position = new Vector3(animal.x, animal.y, transform.position.z);
         var body = proxy.AddComponent<Rigidbody2D>();
         body.bodyType = RigidbodyType2D.Dynamic;
+        body.gravityScale = 0f;
         body.freezeRotation = true;
         body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         body.interpolation = RigidbodyInterpolation2D.Interpolate;
@@ -320,8 +322,8 @@ public sealed partial class SurfaceCritters : MonoBehaviour
     {
         float margin = .38f * scale + .02f;
         var tiles = map.Terrain;
-        var left = tiles.WorldToCell(new Vector3(Mathf.Min(from, to) - margin, groundY - GroundTileProbeDepth, 0));
-        var right = tiles.WorldToCell(new Vector3(Mathf.Max(from, to) + margin, groundY - GroundTileProbeDepth, 0));
+        var left = tiles.WorldToCell(new Vector3(Mathf.Min(from, to) - margin, groundY - SurfaceAnimalCollision.GroundTileProbeDepth, tiles.transform.position.z));
+        var right = tiles.WorldToCell(new Vector3(Mathf.Max(from, to) + margin, groundY - SurfaceAnimalCollision.GroundTileProbeDepth, tiles.transform.position.z));
         if (left.y != right.y) return false;
         for (int x = left.x; x <= right.x; x++) if (!tiles.HasTile(new Vector3Int(x, left.y, 0))) return false;
         return true;

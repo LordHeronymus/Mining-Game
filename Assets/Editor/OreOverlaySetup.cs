@@ -256,6 +256,7 @@ public static class OreOverlaySetup
         int width = map.GeneratedWidth, height = map.GeneratedHeight;
         if (!map.registry || width <= 0 || height <= 0) return 0;
         var blocks = new Block[checked(width * height)];
+        var generated = newOre ? new Block[blocks.Length] : null;
         int left = -width / 2;
         var sampler = new MapGenerationSampler(map.registry, map.ActiveSeed, height, map.layers,
             map.oreDensityCurve, map.oreDensityMultiplierPercent, map.transitionThickness,
@@ -263,17 +264,21 @@ public static class OreOverlaySetup
         for (int y = 0; y < height; y++)
             for (int x = 0; x < width; x++)
             {
-                var current = map.GetBlockAt(new Vector3Int(left + x, -y, 0));
-                // Populate the new ore only in intact stone or dirt, preserving mined holes and other ores.
-                blocks[y * width + x] = newOre && current && !map.IsCellProtected(new Vector3Int(left + x, -y, 0)) && (current.IsStone || current.id == BlockType.Dirt) && sampler.GetBlock(x, y) == newOre
-                    ? newOre : current;
+                var cell = new Vector3Int(left + x, -y, 0);
+                var current = map.GetBlockAt(cell);
+                int index = y * width + x;
+                blocks[index] = current;
+                if (newOre && current && !map.IsCellProtected(cell) &&
+                    (current.IsStone || current.id == BlockType.Dirt))
+                    generated[index] = sampler.GetBlock(x, y);
             }
         if (newOre)
         {
-            OreVeins.CompactThinTips(blocks, width, height, sampler.GetBaseBlock,
-                sampler.CanPlaceOre, (x, y) => map.IsCellProtected(new Vector3Int(left + x, -y, 0)), newOre);
-            OreVeins.PruneSmallVeins(blocks, width, height, map.minimumOreVeinSize,
-                sampler.GetBaseBlock, newOre);
+            ConnectedOreVeins.Generate(generated, width, height, map.ActiveSeed, sampler,
+                map.GetMinimumVeinSize);
+            for (int i = 0; i < blocks.Length; i++)
+                if (generated[i] == newOre && blocks[i] &&
+                    (blocks[i].IsStone || blocks[i].id == BlockType.Dirt)) blocks[i] = newOre;
         }
         var richness = OreVeins.Build(blocks, width, height, map.ActiveSeed);
         int changed = 0;

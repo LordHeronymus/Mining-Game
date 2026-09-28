@@ -17,5 +17,5 @@ MonoBehaviour:
   displayName: Wolfram
   icon: {fileID: 21300000, guid: 0c29b8328411973418fa653f7ec4d4d2, type: 3}
   themeColor: {r: 0.36078432, g: 0.35686275, b: 0.34117648, a: 1}
-  worth: 0
+  worth: 75
   weight: 3

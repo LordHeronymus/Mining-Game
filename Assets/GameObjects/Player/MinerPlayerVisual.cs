@@ -34,6 +34,7 @@ public sealed class MinerPlayerVisual : MonoBehaviour
 
     void OnEnable()
     {
+        if (Application.isPlaying && headlamp) headlamp.enabled = false;
         CritterMesh.RemoveGenerated(transform, GeneratedName);
         body = GetComponent<Rigidbody2D>(); bodyCollider = GetComponent<Collider2D>();
         movement = GetComponent<PlayerMovement>(); miner = GetComponent<TileMiner>();
@@ -166,7 +167,7 @@ public sealed class MinerPlayerVisual : MonoBehaviour
         geometry.ShadedEllipse(.326f, 1.161f + bob, .059f, .056f, new Color(.30f, .33f, .30f), new Color(.70f, .73f, .64f), new Color(1, .98f, .79f));
         geometry.Ellipse(.337f, 1.165f + bob, .043f, .041f, new Color(1.3f, 1.18f, .75f));
         geometry.Ellipse(.348f, 1.177f + bob, .018f, .019f, Color.white);
-        lampPosition = footPosition + new Vector2(.36f * facing, 1.16f + bob) * scale;
+        lampPosition = footPosition + new Vector2(.074f * facing, .99f + bob) * scale;
 
         Vector2 shoulder = new Vector2(.16f, .77f + bob);
         Vector2 restHand = new Vector2(.27f - armSwing * .045f, .53f + bob + Mathf.Abs(armSwing) * .012f + airborne * .08f);
@@ -336,9 +337,8 @@ public sealed class MinerPlayerVisual : MonoBehaviour
     void UpdateLamp()
     {
         if (!headlamp) return;
+        if (Application.isPlaying) headlamp.enabled = false;
         headlamp.transform.position = new Vector3(lampPosition.x, lampPosition.y, transform.position.z);
-        float direction = Mathf.Atan2(-.22f, facing) * Mathf.Rad2Deg - 90f;
-        headlamp.transform.rotation = Quaternion.Euler(0, 0, direction);
         headlamp.color = new Color(1, .83f, .48f);
         headlamp.intensity = Mathf.Max(0, headlampIntensity);
     }

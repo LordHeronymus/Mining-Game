@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class RecipeUnlocks
@@ -29,8 +30,31 @@ public static class RecipeUnlocks
             Item.ObsidianPickaxe => IsObsidianPickaxeUnlocked,
             Item.MythrilPickaxe => IsMythrilPickaxeUnlocked,
             Item.DiamondPickaxe => IsDiamondPickaxeUnlocked,
+            Item.Steel => IsRequiredByUnlockedRecipe(recipe.output),
             _ => true
         };
+
+    static bool IsRequiredByUnlockedRecipe(ItemSO item)
+    {
+        if (!item) return false;
+        var recipes = new HashSet<CraftingRecipe>();
+        foreach (var panel in Object.FindObjectsByType<WorkbenchPanel>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            if (panel && panel.recipes != null)
+                foreach (var recipe in panel.recipes)
+                    if (recipe) recipes.Add(recipe);
+        foreach (var recipe in Resources.LoadAll<CraftingRecipe>("WorkbenchRecipes"))
+            if (recipe) recipes.Add(recipe);
+
+        foreach (var candidate in recipes)
+        {
+            if (!candidate || !candidate.output || candidate.output == item || candidate.ingredients == null) continue;
+            bool consumesItem = false;
+            foreach (var ingredient in candidate.ingredients)
+                if (ingredient.item == item) { consumesItem = true; break; }
+            if (consumesItem && IsUnlocked(candidate)) return true;
+        }
+        return false;
+    }
 
     public static bool IsMedkitUnlocked => PlayerPrefs.GetInt(MedkitKey, 0) == 1;
     public static bool IsIronPickaxeUnlocked => PlayerPrefs.GetInt(IronPickaxeKey, 0) == 1;

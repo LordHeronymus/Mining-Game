@@ -22,6 +22,22 @@ public class MapGenerator : MonoBehaviour
     [Range(.5f, 3f), InspectorName("Erzgröße (×)")] public float oreScale = 1.35f;
     [Range(1, 100), InspectorName("Übergangsdicke (Kacheln)")] public int transitionThickness = 15;
     [Range(-.5f, .5f), InspectorName("Gras Y-Versatz (Welteinheiten)")] public float grassYOffset;
+    [Header("Caves")]
+    public CaveGenerationSettings caveGeneration = new CaveGenerationSettings();
+    [Range(0f, 60f), InspectorName("Spawnrate (Gruppen/min)")]
+    public float caveFireflySpawnRate = 3f;
+    [Range(0f, 200f), InspectorName("Helligkeit (%)")]
+    public float caveFireflyBrightness = 55f;
+    [ColorUsage(false, false), InspectorName("Spektrum Blau")]
+    public Color caveFireflyBlue = new Color32(75, 160, 255, 255);
+    [ColorUsage(false, false), InspectorName("Spektrum Grün")]
+    public Color caveFireflyGreen = new Color32(110, 245, 145, 255);
+    [ColorUsage(false, false), InspectorName("Spektrum Gelb")]
+    public Color caveFireflyYellow = new Color32(255, 224, 95, 255);
+    [Range(1, 12), InspectorName("Gruppengröße min")]
+    public int caveFireflyGroupSizeMin = 3;
+    [Range(1, 12), InspectorName("Gruppengröße max")]
+    public int caveFireflyGroupSizeMax = 6;
     [Header("Map Overview")]
     [SerializeField, HideInInspector] public Color[] mapOverviewColors =
     {
@@ -40,7 +56,8 @@ public class MapGenerator : MonoBehaviour
         new Color32(49, 77, 255, 255),   // Tiefstein 2
         new Color32(180, 0, 255, 255),   // Ultronium
         new Color32(255, 255, 255, 255), // Titan
-        new Color32(111, 160, 208, 255)  // Wolfram
+        new Color32(111, 160, 208, 255), // Wolfram
+        new Color32(255, 112, 24, 255)   // Orange Granat
     };
     [SerializeField, HideInInspector] public Color mapOverviewPlayerColor = Color.cyan;
     [Header("Torch Visuals")]
@@ -66,7 +83,8 @@ public class MapGenerator : MonoBehaviour
     public AnimationCurve oreDensityCurve = AnimationCurve.Linear(0f, .1f, 1f, 1f);
     [Range(0f, 100f), InspectorName("Basis-Erzdichte (%)")]
     public float oreDensityMultiplierPercent = 50f;
-    [Min(1), InspectorName("Minimale Adergröße (Blöcke)")]
+    // Retained as the inherited default for maps/settings created before per-ore minimums.
+    [SerializeField, HideInInspector, Min(1)]
     public int minimumOreVeinSize = 4;
     [SerializeField, HideInInspector, FormerlySerializedAs("oreDensityByDepth")]
     AnimationCurve legacyOreDensityByDepth;
@@ -128,6 +146,9 @@ public class MapGenerator : MonoBehaviour
     int pendingGenerationRow;
     TileBase[] streamedTerrainRows;
     TileBase[] streamedOreRows;
+    bool[] pendingCaveMask;
+    bool[] generatedCaveMask;
+    int cachedCaveMaskWidth, cachedCaveMaskHeight;
     bool applyingGeneratedTiles;
 
     public sealed class MapGenerationSnapshot
@@ -196,6 +217,16 @@ public class MapGenerator : MonoBehaviour
             gameObject.AddComponent<TerrainColliderChunks>();
     }
 
+    void OnEnable()
+    {
+        Tilemap.tilemapTileChanged += TerrainChanged;
+        if (!Application.isPlaying || GetComponent<CaveFireflies>()) return;
+        var fireflies = gameObject.AddComponent<CaveFireflies>();
+        fireflies.map = this;
+    }
+
+    void OnDisable() => Tilemap.tilemapTileChanged -= TerrainChanged;
+
     void OnValidate()
     {
         MigrateSeedMode();
@@ -244,6 +275,16 @@ public class MapGenerator : MonoBehaviour
         return true;
     }
 
+    public int GetMinimumVeinSize(Block ore)
+    {
+        if (!ore) return Mathf.Max(1, minimumOreVeinSize);
+        var setting = oreSettings == null ? null : System.Array.Find(oreSettings,
+            entry => entry != null && entry.ore == ore.id);
+        if (setting != null && setting.minimumVeinSize > 0)
+            return Mathf.Max(1, setting.minimumVeinSize);
+        return ore.id == BlockType.UltroniumOre ? 1 : Mathf.Max(1, minimumOreVeinSize);
+    }
+
     void Start()
     {
         if (Application.isPlaying)
@@ -251,9 +292,6 @@ public class MapGenerator : MonoBehaviour
         else
             GenerateMap();
     }
-
-    void OnEnable() => Tilemap.tilemapTileChanged += TerrainChanged;
-    void OnDisable() => Tilemap.tilemapTileChanged -= TerrainChanged;
 
     void TerrainChanged(Tilemap source, Tilemap.SyncTile[] changes)
     {
@@ -644,17 +682,20 @@ public class MapGenerator : MonoBehaviour
         var altar = AltarChamber;
         if (altar) altar.PrepareGeneration(usedSeed, mapWidth, mapHeight);
         var chamber = altar ? altar.Layout : default;
+        var caves = CreateCaveMask(usedSeed, mapWidth, mapHeight, chamber);
+        pendingCaveMask = caves;
         var blocks = new Block[checked(mapWidth * mapHeight)];
         for (int y = 0; y < mapHeight; y++)
             for (int x = 0; x < mapWidth; x++)
             {
                 var cell = new Vector3Int(x + offsetX, -y, 0);
-                blocks[y * mapWidth + x] = chamber.IsOpen(cell) ? null :
+                int index = y * mapWidth + x;
+                blocks[index] = chamber.IsOpen(cell) || caves[index] ? null :
                     chamber.IsShell(cell) ? sampler.GetBaseBlock(x, y) : sampler.GetBlock(x, y);
             }
-        OreVeins.CompactThinTips(blocks, mapWidth, mapHeight, sampler.GetBaseBlock,
-            sampler.CanPlaceOre, (x, y) => chamber.IsReserved(new Vector3Int(x + offsetX, -y, 0)));
-        OreVeins.PruneSmallVeins(blocks, mapWidth, mapHeight, minimumOreVeinSize, sampler.GetBaseBlock);
+        ConnectedOreVeins.Generate(blocks, mapWidth, mapHeight, usedSeed, sampler,
+            GetMinimumVeinSize, (x, y) => caves[y * mapWidth + x] ||
+                chamber.IsReserved(new Vector3Int(x + offsetX, -y, 0)));
         var richness = OreVeins.Build(blocks, mapWidth, mapHeight, usedSeed);
         var terrainTiles = new TileBase[blocks.Length];
         var oreTiles = new TileBase[blocks.Length];
@@ -722,6 +763,33 @@ public class MapGenerator : MonoBehaviour
         return new MapGenerationSnapshot(usedSeed, mapWidth, mapHeight, offsetX, terrainTiles, oreTiles, artifactTiles);
     }
 
+    public bool[] CreateCaveMask(int usedSeed, int width, int height, UltroniumChamberLayout chamber)
+    {
+        int offsetX = -width / 2;
+        return CaveGenerator.Generate(caveGeneration, usedSeed, width, height,
+            reserved: (x, y) => chamber.IsReserved(new Vector3Int(x + offsetX, -y, 0)));
+    }
+
+    public bool IsGeneratedCaveCell(Vector3Int cell)
+    {
+        if (!isGenerated || !Terrain || cell.z != 0) return false;
+        int x = cell.x + generatedWidth / 2;
+        int depth = -cell.y;
+        if (x < 0 || x >= generatedWidth || depth < Mathf.Max(1, caveGeneration.minimumDepth) ||
+            depth >= generatedHeight) return false;
+
+        if (generatedCaveMask == null || cachedCaveMaskWidth != generatedWidth ||
+            cachedCaveMaskHeight != generatedHeight)
+        {
+            generatedCaveMask = CreateCaveMask(generatedSeed, generatedWidth, generatedHeight,
+                AltarChamber ? AltarChamber.Layout : default);
+            cachedCaveMaskWidth = generatedWidth;
+            cachedCaveMaskHeight = generatedHeight;
+        }
+
+        return generatedCaveMask[depth * generatedWidth + x] && !Terrain.HasTile(cell);
+    }
+
     public ArtifactTile SelectArtifact(int usedSeed, int x, int depth)
     {
         if (depth < Mathf.Max(1, artifactMinimumDepth) || artifactSettings == null || layers == null) return null;
@@ -748,6 +816,8 @@ public class MapGenerator : MonoBehaviour
         applyingGeneratedTiles = true;
         GetComponent<LadderMap>()?.Clear();
         isGenerated = false;
+        generatedCaveMask = null;
+        cachedCaveMaskWidth = cachedCaveMaskHeight = 0;
         oreOverlay.ClearAllTiles();
         artifactOverlay.ClearAllTiles();
         tilemap.ClearAllTiles();
@@ -800,6 +870,10 @@ public class MapGenerator : MonoBehaviour
         generatedSeed = data.seed;
         generatedWidth = data.width;
         generatedHeight = data.height;
+        generatedCaveMask = pendingCaveMask;
+        cachedCaveMaskWidth = data.width;
+        cachedCaveMaskHeight = data.height;
+        pendingCaveMask = null;
         isGenerated = true;
         applyingGeneratedTiles = false;
         SyncGrassFromTerrain();

@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24d469c3ce4fd914d9eb95135b7e747b, type: 3}
+  m_Name: Diamond
+  m_EditorClassIdentifier: 
+  id: 8
+  displayName: Diamant
+  itemDrop: {fileID: 11400000, guid: 13358f76183232a44974b91d8414f522, type: 2}
+  digSound: 4
+  breakSound: 5
+  hardness: 3.5
+  hardnessIndex: 4
+  points: 0
+  isSolid: 1
+  variants: []
+  smallOre:
+  - {fileID: 11400000, guid: cf86810fee0c44b468bc9756d626d263, type: 2}
+  - {fileID: 11400000, guid: c3ba848a990b47a40a488a34efb64e6c, type: 2}
+  mediumOre:
+  - {fileID: 11400000, guid: 282dd4baee52bcb458ce030e22c63e5a, type: 2}
+  - {fileID: 11400000, guid: a99c1e64941669e4aa45cf4ee5b4aecb, type: 2}
+  richOre:
+  - {fileID: 11400000, guid: 19f0cdf4258f22e4bae716f6cd1db16c, type: 2}
+  - {fileID: 11400000, guid: 41ac3dd5785380d4cbdc71c70ac15ed6, type: 2}
+  - {fileID: 11400000, guid: ec217e4d7f205594bbc92d1e0ee026ed, type: 2}
+  spawnWithNoise: 1
+  oreFrequencyPercent: 1
+  veinSizeIndex: 8
+  rarityCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  noiseScale: 0.05
+  noiseSeedOffset: 10000
+  generationSettingsVersion: 1

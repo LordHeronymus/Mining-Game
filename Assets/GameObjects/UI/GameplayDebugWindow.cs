@@ -9,7 +9,7 @@ using UnityEngine.UI;
 // Runtime debug controls are assembled from the existing canvas styles.
 public sealed partial class GameplayDebugWindow : MonoBehaviour
 {
-    enum DebugTab { Gameplay, Items, Powerups, Recipes, Icons, World, Audio, Tests, Misc }
+    enum DebugTab { Gameplay, Items, Powerups, Recipes, Icons, World, Animals, Audio, Tests, Misc }
 
     RectTransform window, bounds, content, tooltip;
     TextMeshProUGUI tooltipLabel;
@@ -23,6 +23,8 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
     readonly List<string> gameplayCoreItems = new List<string>();
     readonly List<string> worldLightingItems = new List<string>();
     readonly List<string> torchSettingsItems = new List<string>();
+    readonly List<string> caveFireflySettingsItems = new List<string>();
+    readonly List<string> animalItems = new List<string>();
     readonly List<string> testItems = new List<string>();
     readonly List<string> testModeItems = new List<string>();
     readonly List<string> healthTestItems = new List<string>();
@@ -55,6 +57,11 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
     Toggle movementMultiplierToggle;
     TMP_InputField healthInput;
     TMP_InputField miningHitOffsetInput;
+    TMP_InputField playerFigureHeightInput;
+    TMP_InputField smartCursorStrokeWidthInput;
+    TextMeshProUGUI smartCursorStrokeWidthStatus;
+    bool playerFigureHeightListenerBound;
+    bool smartCursorStrokeWidthListenerBound;
     TMP_InputField panelBackdropAlphaInput;
     TMP_InputField panelElementAlphaInput;
     const string PanelBackdropAlphaKey = "GameplayDebugPanel.BackdropAlpha";
@@ -65,6 +72,11 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
     TMP_InputField torchFlameOffsetXInput, torchFlameOffsetYInput;
     TMP_InputField torchFlameSizeInput, torchFlameFrequencyInput, torchBrightnessInput;
     TextMeshProUGUI torchSettingsStatus;
+    TMP_InputField caveFireflySpawnRateInput, caveFireflyBrightnessInput;
+    TMP_InputField caveFireflyBlueInput, caveFireflyGreenInput, caveFireflyYellowInput;
+    TMP_InputField caveFireflyGroupMinInput, caveFireflyGroupMaxInput;
+    TextMeshProUGUI caveFireflySettingsStatus;
+    bool caveFireflySettingsListenersBound;
     MinerPlayerVisual minerVisual;
     bool miningHitOffsetListenerBound;
     bool torchSettingsListenersBound;
@@ -138,6 +150,7 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
     DebugTab currentTab;
     public bool IsGameplayTab => currentTab == DebugTab.Gameplay;
     public bool IsWorldTab => currentTab == DebugTab.World;
+    public bool IsAnimalTab => currentTab == DebugTab.Animals;
     public bool IsTestTab => currentTab == DebugTab.Tests;
     public bool IsMiscTab => currentTab == DebugTab.Misc;
     public bool IsIconTab => currentTab == DebugTab.Icons;
@@ -1543,6 +1556,7 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         CreateTab("RecipesTab", "Rezepte", DebugTab.Recipes);
         CreateTab("IconsTab", "Icons", DebugTab.Icons);
         CreateTab("WorldTab", "Welt", DebugTab.World);
+        CreateTab("AnimalsTab", "Tiere", DebugTab.Animals);
         CreateTab("AudioTab", "Audio", DebugTab.Audio);
         CreateTab("TestsTab", "Test", DebugTab.Tests);
         CreateTab("MiscTab", "Misc", DebugTab.Misc);
@@ -1637,8 +1651,10 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         });
         EnsureMiningHitOffsetControl();
         EnsureTorchSettingsControls();
+        EnsureCaveFireflySettingsControls();
         SetupCollapsibleSection("LightingSection", "world-lighting", "Beleuchtung", true);
         SetupCollapsibleSection("TorchFlameSection", "world-torch", "Fackel", true);
+        SetupCollapsibleSection("CaveFireflySection", "animals-cave-fireflies", "Höhlenglühwürmchen", true);
         var movementLabel = CloneItem("SpeedLabel", "MovementLabel", content, "Bewegungsfaktor (×)");
         movementMultiplier = CloneItem("DiggingSpeed", "MovementMultiplier", content).GetComponent<TMP_InputField>();
         movementMultiplier.contentType = TMP_InputField.ContentType.DecimalNumber;
@@ -1980,6 +1996,8 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
             SetActive(worldLightingItems, currentTab == DebugTab.World && expandedSections.Contains("world-lighting"));
             SetActive(torchSettingsItems, currentTab == DebugTab.World && expandedSections.Contains("world-torch"));
         }
+        else if (key.StartsWith("animals-", System.StringComparison.Ordinal))
+            SetActive(caveFireflySettingsItems, currentTab == DebugTab.Animals && expandedSections.Contains("animals-cave-fireflies"));
         else if (key == "test-mode")
             SetActive(testModeItems, currentTab == DebugTab.Tests && expandedSections.Contains("test-mode"));
         else if (key == "test-health")
@@ -2127,6 +2145,10 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         {
             if (!ApplyTorchSettings() || !GetComponent<GameplayDebugPanel>().TryApplyAll()) return;
         }
+        else if (IsAnimalTab)
+        {
+            if (!ApplyCaveFireflySettings() || !GetComponent<GameplayDebugPanel>().TryApplyAll()) return;
+        }
         else if (!GetComponent<GameplayDebugPanel>().TryApplyAll()) return;
         SetTab(tab);
     }
@@ -2156,6 +2178,8 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         SetActive(worldItems, tab == DebugTab.World);
         SetActive(worldLightingItems, tab == DebugTab.World && expandedSections.Contains("world-lighting"));
         SetActive(torchSettingsItems, tab == DebugTab.World && expandedSections.Contains("world-torch"));
+        SetActive(animalItems, tab == DebugTab.Animals);
+        SetActive(caveFireflySettingsItems, tab == DebugTab.Animals && expandedSections.Contains("animals-cave-fireflies"));
         SetActive(audioItems, tab == DebugTab.Audio);
         SetActive(legacyAudioItems, false);
         SetActive(iconItems, tab == DebugTab.Icons);
@@ -2188,6 +2212,7 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
     {
         EnsureMiningHitOffsetControl();
         EnsureTorchSettingsControls();
+        EnsureCaveFireflySettingsControls();
         foreach (var entry in artifactYOffsetInputs)
             entry.Value.SetTextWithoutNotify(entry.Key.DiscoveryIconYOffset.ToString("0.##", CultureInfo.InvariantCulture));
         foreach (var entry in modeToggles) entry.Value.SetIsOnWithoutNotify(GameplayTestSettings.GetConfiguredMode(entry.Key));
@@ -2203,6 +2228,11 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
             ? GameplayTestSettings.ConfiguredMiningHitOffsetMs
             : minerVisual ? minerVisual.miningHitOffsetMs : 0f;
         miningHitOffsetInput.SetTextWithoutNotify(hitOffset.ToString("R", CultureInfo.InvariantCulture));
+        if (smartCursorStrokeWidthInput)
+            smartCursorStrokeWidthInput.SetTextWithoutNotify(
+                GameplayTestSettings.ConfiguredSmartCursorStrokeWidth.ToString("0.##", CultureInfo.InvariantCulture));
+        if (playerFigureHeightInput && minerVisual)
+            playerFigureHeightInput.SetTextWithoutNotify(minerVisual.height.ToString("0.##", CultureInfo.InvariantCulture));
         var torchMap = FindFirstObjectByType<MapGenerator>();
         if (torchMap)
         {
@@ -2212,6 +2242,7 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
             SetInputIfUnfocused(torchFlameFrequencyInput, torchMap.torchFlameFrequency);
             SetInputIfUnfocused(torchBrightnessInput, torchMap.torchBrightness * 100f);
         }
+        RefreshCaveFireflyInputs(torchMap);
         RefreshCurrentHealthInput();
         testStatus.text = GameplayTestSettings.Warning ?? "";
         RefreshDayNight();
@@ -2269,6 +2300,45 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         if (!miscItems.Contains("MiningHitOffsetInput")) miscItems.Add("MiningHitOffsetInput");
         inputRect.gameObject.SetActive(IsMiscTab);
         items["MiningHitOffsetLabel"].gameObject.SetActive(IsMiscTab);
+
+        if (!items.ContainsKey("PlayerFigureHeightLabel"))
+            CloneItem("SpeedLabel", "PlayerFigureHeightLabel", content, "Figurhöhe (m)");
+        if (!items.TryGetValue("PlayerFigureHeightInput", out var heightRect))
+            heightRect = CloneItem("DiggingSpeed", "PlayerFigureHeightInput", content);
+        playerFigureHeightInput = heightRect.GetComponent<TMP_InputField>();
+        playerFigureHeightInput.contentType = TMP_InputField.ContentType.DecimalNumber;
+        DisableInputChildRaycasts(playerFigureHeightInput);
+        if (!playerFigureHeightListenerBound)
+        {
+            playerFigureHeightInput.onEndEdit.AddListener(_ => ApplyTestInput());
+            playerFigureHeightListenerBound = true;
+        }
+        heightRect.gameObject.SetActive(IsMiscTab);
+        items["PlayerFigureHeightLabel"].gameObject.SetActive(IsMiscTab);
+        if (!miscItems.Contains("PlayerFigureHeightLabel")) miscItems.Add("PlayerFigureHeightLabel");
+        if (!miscItems.Contains("PlayerFigureHeightInput")) miscItems.Add("PlayerFigureHeightInput");
+
+        if (!items.ContainsKey("SmartCursorStrokeWidthLabel"))
+            CloneItem("SpeedLabel", "SmartCursorStrokeWidthLabel", content, "Smartcursor-Breite (Kacheln)");
+        if (!items.TryGetValue("SmartCursorStrokeWidthInput", out var strokeWidthRect))
+            strokeWidthRect = CloneItem("DiggingSpeed", "SmartCursorStrokeWidthInput", content);
+        smartCursorStrokeWidthInput = strokeWidthRect.GetComponent<TMP_InputField>();
+        smartCursorStrokeWidthInput.contentType = TMP_InputField.ContentType.DecimalNumber;
+        DisableInputChildRaycasts(smartCursorStrokeWidthInput);
+        if (!smartCursorStrokeWidthListenerBound)
+        {
+            smartCursorStrokeWidthInput.onEndEdit.AddListener(_ => ApplyTestInput());
+            smartCursorStrokeWidthListenerBound = true;
+        }
+        strokeWidthRect.gameObject.SetActive(IsMiscTab);
+        items["SmartCursorStrokeWidthLabel"].gameObject.SetActive(IsMiscTab);
+        if (!miscItems.Contains("SmartCursorStrokeWidthLabel")) miscItems.Add("SmartCursorStrokeWidthLabel");
+        if (!miscItems.Contains("SmartCursorStrokeWidthInput")) miscItems.Add("SmartCursorStrokeWidthInput");
+        if (!items.ContainsKey("SmartCursorStrokeWidthStatus"))
+            smartCursorStrokeWidthStatus = CloneItem("Status", "SmartCursorStrokeWidthStatus", content, "")
+                .GetComponent<TextMeshProUGUI>();
+        else smartCursorStrokeWidthStatus = items["SmartCursorStrokeWidthStatus"].GetComponent<TextMeshProUGUI>();
+        if (!miscItems.Contains("SmartCursorStrokeWidthStatus")) miscItems.Add("SmartCursorStrokeWidthStatus");
     }
 
     void EnsureTorchSettingsControls()
@@ -2329,6 +2399,153 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         items[labelId].gameObject.SetActive(visible);
     }
 
+    void EnsureCaveFireflySettingsControls()
+    {
+        if (!items.ContainsKey("CaveFireflySection"))
+            CloneItem("Section", "CaveFireflySection", content, "Höhlenglühwürmchen");
+        if (!animalItems.Contains("CaveFireflySection")) animalItems.Add("CaveFireflySection");
+        CreateCaveFireflySettingInput("CaveFireflySpawnRate", "Spawnrate (Gruppen/min)", out caveFireflySpawnRateInput);
+        CreateCaveFireflySettingInput("CaveFireflyBrightness", "Helligkeit (%)", out caveFireflyBrightnessInput);
+        CreateCaveFireflySettingInput("CaveFireflyBlue", "Spektrum Blau (#RRGGBB)", out caveFireflyBlueInput);
+        CreateCaveFireflySettingInput("CaveFireflyGreen", "Spektrum Grün (#RRGGBB)", out caveFireflyGreenInput);
+        CreateCaveFireflySettingInput("CaveFireflyYellow", "Spektrum Gelb (#RRGGBB)", out caveFireflyYellowInput);
+        CreateCaveFireflySettingInput("CaveFireflyGroupMin", "Gruppengröße min", out caveFireflyGroupMinInput);
+        CreateCaveFireflySettingInput("CaveFireflyGroupMax", "Gruppengröße max", out caveFireflyGroupMaxInput);
+        if (!items.ContainsKey("CaveFireflySettingsStatus"))
+            caveFireflySettingsStatus = CloneItem("Status", "CaveFireflySettingsStatus", content, "")
+                .GetComponent<TextMeshProUGUI>();
+        else caveFireflySettingsStatus = items["CaveFireflySettingsStatus"].GetComponent<TextMeshProUGUI>();
+
+        foreach (string name in new[] { "CaveFireflySpawnRateLabel", "CaveFireflySpawnRateInput",
+                     "CaveFireflyBrightnessLabel", "CaveFireflyBrightnessInput", "CaveFireflyBlueLabel",
+                     "CaveFireflyBlueInput", "CaveFireflyGreenLabel", "CaveFireflyGreenInput",
+                     "CaveFireflyYellowLabel", "CaveFireflyYellowInput", "CaveFireflyGroupMinLabel",
+                     "CaveFireflyGroupMinInput", "CaveFireflyGroupMaxLabel", "CaveFireflyGroupMaxInput",
+                     "CaveFireflySettingsStatus" })
+            if (!caveFireflySettingsItems.Contains(name)) caveFireflySettingsItems.Add(name);
+
+        if (!caveFireflySettingsListenersBound)
+        {
+            foreach (var input in new[] { caveFireflySpawnRateInput, caveFireflyBrightnessInput,
+                         caveFireflyBlueInput, caveFireflyGreenInput, caveFireflyYellowInput,
+                         caveFireflyGroupMinInput, caveFireflyGroupMaxInput })
+                input.onEndEdit.AddListener(_ => ApplyCaveFireflySettings());
+            caveFireflySettingsListenersBound = true;
+        }
+
+        var map = FindFirstObjectByType<MapGenerator>();
+        foreach (var input in new[] { caveFireflySpawnRateInput, caveFireflyBrightnessInput,
+                     caveFireflyBlueInput, caveFireflyGreenInput, caveFireflyYellowInput,
+                     caveFireflyGroupMinInput, caveFireflyGroupMaxInput })
+            input.interactable = map;
+        if (!map && caveFireflySettingsStatus) caveFireflySettingsStatus.text = "Keine Map verfügbar.";
+        else if (map && caveFireflySettingsStatus && caveFireflySettingsStatus.text == "Keine Map verfügbar.")
+            caveFireflySettingsStatus.text = "";
+
+        bool visible = IsAnimalTab && expandedSections.Contains("animals-cave-fireflies");
+        foreach (string name in caveFireflySettingsItems)
+            if (items.TryGetValue(name, out var rect)) rect.gameObject.SetActive(visible);
+    }
+
+    void CreateCaveFireflySettingInput(string id, string labelText, out TMP_InputField input)
+    {
+        string labelId = id + "Label";
+        string inputId = id + "Input";
+        if (!items.ContainsKey(labelId)) CloneItem("SpeedLabel", labelId, content, labelText);
+        else items[labelId].GetComponent<TextMeshProUGUI>().text = labelText;
+        bool created = !items.TryGetValue(inputId, out var existing);
+        RectTransform inputRect = created ? CloneItem("DiggingSpeed", inputId, content) : existing;
+        input = inputRect.GetComponent<TMP_InputField>();
+        if (created)
+        {
+            input.onValueChanged = new TMP_InputField.OnChangeEvent();
+            input.onEndEdit = new TMP_InputField.SubmitEvent();
+        }
+        input.contentType = TMP_InputField.ContentType.Standard;
+        input.characterValidation = TMP_InputField.CharacterValidation.None;
+        DisableInputChildRaycasts(input);
+    }
+
+    void RefreshCaveFireflyInputs(MapGenerator map)
+    {
+        if (!map) return;
+        SetInputIfUnfocused(caveFireflySpawnRateInput, map.caveFireflySpawnRate);
+        SetInputIfUnfocused(caveFireflyBrightnessInput, map.caveFireflyBrightness);
+        SetTextIfUnfocused(caveFireflyBlueInput, "#" + ColorUtility.ToHtmlStringRGB(map.caveFireflyBlue));
+        SetTextIfUnfocused(caveFireflyGreenInput, "#" + ColorUtility.ToHtmlStringRGB(map.caveFireflyGreen));
+        SetTextIfUnfocused(caveFireflyYellowInput, "#" + ColorUtility.ToHtmlStringRGB(map.caveFireflyYellow));
+        SetTextIfUnfocused(caveFireflyGroupMinInput, map.caveFireflyGroupSizeMin.ToString(CultureInfo.InvariantCulture));
+        SetTextIfUnfocused(caveFireflyGroupMaxInput, map.caveFireflyGroupSizeMax.ToString(CultureInfo.InvariantCulture));
+    }
+
+    static void SetTextIfUnfocused(TMP_InputField input, string value)
+    {
+        if (input && !input.isFocused && input.text != value) input.SetTextWithoutNotify(value);
+    }
+
+    public bool ApplyCaveFireflySettings()
+    {
+        EnsureCaveFireflySettingsControls();
+        var map = FindFirstObjectByType<MapGenerator>();
+        if (!map) return true;
+
+        if (!TryParseCaveFireflyFloat(caveFireflySpawnRateInput, 0f, 60f,
+                "Spawnrate: bitte 0 bis 60 Gruppen/min eingeben.", out float spawnRate) ||
+            !TryParseCaveFireflyFloat(caveFireflyBrightnessInput, 0f, 200f,
+                "Helligkeit: bitte 0 bis 200 % eingeben.", out float brightness)) return false;
+        if (!int.TryParse(caveFireflyGroupMinInput.text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int groupMin) ||
+            !int.TryParse(caveFireflyGroupMaxInput.text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int groupMax) ||
+            groupMin < 1 || groupMax > 12 || groupMin > groupMax)
+        {
+            caveFireflySettingsStatus.text = "Gruppengröße: min. 1, max. 12; min darf max nicht überschreiten.";
+            return false;
+        }
+        if (!TryParseCaveFireflyColor(caveFireflyBlueInput, out Color blue) ||
+            !TryParseCaveFireflyColor(caveFireflyGreenInput, out Color green) ||
+            !TryParseCaveFireflyColor(caveFireflyYellowInput, out Color yellow))
+        {
+            caveFireflySettingsStatus.text = "Farben bitte als Hexwert #RRGGBB eingeben.";
+            return false;
+        }
+
+        map.caveFireflySpawnRate = spawnRate;
+        map.caveFireflyBrightness = brightness;
+        map.caveFireflyGroupSizeMin = groupMin;
+        map.caveFireflyGroupSizeMax = groupMax;
+        map.caveFireflyBlue = blue;
+        map.caveFireflyGreen = green;
+        map.caveFireflyYellow = yellow;
+        caveFireflySettingsStatus.text = "";
+#if UNITY_EDITOR
+        QueueGpsDefault(map, nameof(MapGenerator.caveFireflySpawnRate));
+        QueueGpsDefault(map, nameof(MapGenerator.caveFireflyBrightness));
+        QueueGpsDefault(map, nameof(MapGenerator.caveFireflyGroupSizeMin));
+        QueueGpsDefault(map, nameof(MapGenerator.caveFireflyGroupSizeMax));
+        QueueGpsDefault(map, nameof(MapGenerator.caveFireflyBlue));
+        QueueGpsDefault(map, nameof(MapGenerator.caveFireflyGreen));
+        QueueGpsDefault(map, nameof(MapGenerator.caveFireflyYellow));
+#endif
+        return true;
+    }
+
+    bool TryParseCaveFireflyFloat(TMP_InputField input, float minimum, float maximum,
+        string errorMessage, out float value)
+    {
+        if (input && float.TryParse(input.text.Replace(',', '.'), NumberStyles.Float,
+                CultureInfo.InvariantCulture, out value) && !float.IsNaN(value) &&
+            !float.IsInfinity(value) && value >= minimum && value <= maximum) return true;
+        caveFireflySettingsStatus.text = errorMessage;
+        value = 0f;
+        return false;
+    }
+
+    static bool TryParseCaveFireflyColor(TMP_InputField input, out Color color)
+    {
+        string html = input ? input.text.Trim() : "";
+        if (!html.StartsWith("#")) html = "#" + html;
+        return ColorUtility.TryParseHtmlString(html, out color);
+    }
+
     void RefreshDayNight()
     {
         if (dayNightBackgrounds == null) return;
@@ -2382,16 +2599,38 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         if (!float.TryParse(miningHitOffsetInput.text.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out float hitOffset) ||
             !GameplayTestSettings.IsValidMiningHitOffset(hitOffset))
         { testStatus.text = "Treffer-Versatz: bitte -500 bis 500 ms eingeben."; return false; }
+        if (!float.TryParse(smartCursorStrokeWidthInput.text.Replace(',', '.'), NumberStyles.Float,
+                CultureInfo.InvariantCulture, out float strokeWidth) ||
+            !GameplayTestSettings.IsValidSmartCursorStrokeWidth(strokeWidth))
+        {
+            smartCursorStrokeWidthStatus.text = "Bitte 0 bis 3 Kacheln eingeben.";
+            return false;
+        }
+        if (!float.TryParse(playerFigureHeightInput.text.Replace(',', '.'), NumberStyles.Float,
+                CultureInfo.InvariantCulture, out float figureHeight) || float.IsNaN(figureHeight) ||
+            float.IsInfinity(figureHeight) || figureHeight < .3f || figureHeight > 4f)
+        { testStatus.text = "Figurhöhe: bitte 0,3 bis 4 m eingeben."; return false; }
         GameplayTestSettings.SetDiggingMultiplier(digging);
         GameplayTestSettings.SetMovementMultiplier(movement);
         GameplayTestSettings.SetMiningHitOffset(hitOffset);
+        GameplayTestSettings.SetSmartCursorStrokeWidth(strokeWidth);
         if (!minerVisual) minerVisual = FindFirstObjectByType<MinerPlayerVisual>();
-        if (minerVisual) minerVisual.miningHitOffsetMs = hitOffset;
+        if (minerVisual)
+        {
+            minerVisual.miningHitOffsetMs = hitOffset;
+            minerVisual.height = figureHeight;
+        }
         if (GameplayTestSettings.HasUnsavedChanges && !GameplayTestSettings.Save(out string error))
-        { testStatus.text = error; return false; }
+        {
+            testStatus.text = error;
+            if (IsMiscTab && smartCursorStrokeWidthStatus) smartCursorStrokeWidthStatus.text = error;
+            return false;
+        }
         RefreshTest();
+        if (smartCursorStrokeWidthStatus) smartCursorStrokeWidthStatus.text = "";
 #if UNITY_EDITOR
         if (IsMiscTab && minerVisual) QueueGpsDefault(minerVisual, "miningHitOffsetMs");
+        if (IsMiscTab && minerVisual) QueueGpsDefault(minerVisual, "height");
 #endif
         return true;
     }
@@ -2593,8 +2832,8 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         float w = lastSize.x;
         Place("Title", 24, 16, 270, 58); Place("Close", w-70, 18, 48, 48);
         Place("Accent", 0, 0, w, 5);
-        string[] tabs = { "GameplayTab", "ItemsTab", "PowerupsTab", "RecipesTab", "IconsTab", "WorldTab", "AudioTab", "TestsTab", "MiscTab" };
-        bool compactTabs = w < 1280f;
+        string[] tabs = { "GameplayTab", "ItemsTab", "PowerupsTab", "RecipesTab", "IconsTab", "WorldTab", "AnimalsTab", "AudioTab", "TestsTab", "MiscTab" };
+        bool compactTabs = w < 1460f;
         var viewportRect = scroll.viewport;
         viewportRect.offsetMax = new Vector2(-28f, compactTabs ? -184f : -120f);
         var track = window.Find("WindowScrollbar") as RectTransform;
@@ -2788,7 +3027,12 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
             Place("PanelElementAlphaInput",x+col-150,118,150,50);
             Place("MiningHitOffsetLabel",x,176,col-170,50);
             Place("MiningHitOffsetInput",x+col-150,176,150,50);
-            content.sizeDelta = new Vector2(0, 244);
+            Place("PlayerFigureHeightLabel",x,234,col-170,50);
+            Place("PlayerFigureHeightInput",x+col-150,234,150,50);
+            Place("SmartCursorStrokeWidthLabel",x,292,col-170,50);
+            Place("SmartCursorStrokeWidthInput",x+col-150,292,150,50);
+            Place("SmartCursorStrokeWidthStatus",x,350,col,42);
+            content.sizeDelta = new Vector2(0, 412);
             return;
         }
 
@@ -2943,6 +3187,28 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
                 y += 48;
             }
             content.sizeDelta = new Vector2(0,y+24);
+            return;
+        }
+
+        if (currentTab == DebugTab.Animals)
+        {
+            float y = 12;
+            Place("CaveFireflySection", x, y, col, 36);
+            y += 48;
+            if (expandedSections.Contains("animals-cave-fireflies"))
+            {
+                string[] settings = { "CaveFireflySpawnRate", "CaveFireflyBrightness", "CaveFireflyBlue",
+                    "CaveFireflyGreen", "CaveFireflyYellow", "CaveFireflyGroupMin", "CaveFireflyGroupMax" };
+                for (int i = 0; i < settings.Length; i++)
+                {
+                    Place(settings[i] + "Label", x, y + i * 54, col - 170, 48);
+                    Place(settings[i] + "Input", x + col - 150, y + i * 54, 150, 48);
+                }
+                y += settings.Length * 54;
+                Place("CaveFireflySettingsStatus", x, y, col, 44);
+                y += 48;
+            }
+            content.sizeDelta = new Vector2(0, y + 24);
             return;
         }
 

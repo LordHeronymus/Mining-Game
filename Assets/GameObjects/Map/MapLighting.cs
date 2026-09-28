@@ -25,9 +25,6 @@ public sealed class MapLighting : MonoBehaviour
     [SerializeField] Shader darknessShader;
     [SerializeField] Light2D headlamp;
 
-    static readonly int HeadlampOriginRange = Shader.PropertyToID("_HeadlampOriginRange");
-    static readonly int HeadlampDirectionAngles = Shader.PropertyToID("_HeadlampDirectionAngles");
-    static readonly int HeadlampInnerRadius = Shader.PropertyToID("_HeadlampInnerRadius");
     static readonly int TerrainOcclusionTexId = Shader.PropertyToID("_TerrainOcclusionTex");
     static readonly int TerrainOcclusionRectId = Shader.PropertyToID("_TerrainOcclusionRect");
     static readonly int TerrainOcclusionSizeId = Shader.PropertyToID("_TerrainOcclusionSize");
@@ -59,6 +56,9 @@ public sealed class MapLighting : MonoBehaviour
     Color32[] pixels;
     int width, height;
     bool rebuild = true, torchFieldDirty = true, textureDirty, fullTextureUpload;
+    bool headlampSourceStateKnown, headlampSourceActive;
+    int headlampSourceX = -1, headlampSourceY = -1;
+    float headlampSourceIntensity;
     readonly HashSet<Vector3Int> changed = new HashSet<Vector3Int>();
     readonly Stopwatch timer = new Stopwatch();
     public bool IsReady => field != null;
@@ -220,14 +220,14 @@ public sealed class MapLighting : MonoBehaviour
         while (field.HasPendingWork && processed < 8192 && timer.Elapsed.TotalMilliseconds < 2)
             processed += field.Process(256);
         timer.Stop();
-        UpdateTorchLighting();
-        if (torchLight) torchLight.enabled = torchSources.Count > 0;
-        UploadLightingTexture();
         UpdateHeadlamp();
     }
 
     void UpdateHeadlamp()
     {
+        UpdateTorchLighting();
+        if (torchLight) torchLight.enabled = torchSources.Count > 0;
+        UploadLightingTexture();
         if (!material) return;
         UpdateUltroniumLights();
         var altar = map ? map.AltarChamber : null;
@@ -235,19 +235,6 @@ public sealed class MapLighting : MonoBehaviour
         material.SetTexture("_AltarMask", altar && altar.ChamberLightMask ? altar.ChamberLightMask : Texture2D.blackTexture);
         material.SetVector("_AltarRect", altar ? altar.ChamberLightRect : Vector4.zero);
         material.SetVector("_AltarMaskSize", altar ? altar.ChamberLightSize : Vector4.zero);
-        if (!headlamp || !headlamp.isActiveAndEnabled || headlamp.intensity <= 0)
-        {
-            material.SetVector(HeadlampOriginRange, Vector4.zero);
-            return;
-        }
-        Vector3 origin = headlamp.transform.position;
-        Vector3 direction = headlamp.transform.up;
-        float inner = Mathf.Cos(headlamp.pointLightInnerAngle * .5f * Mathf.Deg2Rad);
-        float outer = Mathf.Cos(headlamp.pointLightOuterAngle * .5f * Mathf.Deg2Rad);
-        material.SetVector(HeadlampOriginRange,
-            new Vector4(origin.x, origin.y, headlamp.pointLightOuterRadius, headlamp.intensity));
-        material.SetVector(HeadlampDirectionAngles, new Vector4(direction.x, direction.y, inner, outer));
-        material.SetFloat(HeadlampInnerRadius, headlamp.pointLightInnerRadius);
     }
 
     void SetUltroniumLightsActive(bool active)
@@ -357,6 +344,7 @@ public sealed class MapLighting : MonoBehaviour
 
     void UpdateTorchLighting()
     {
+        RefreshHeadlampSourceState();
         if (!torchFieldDirty || torchField == null) return;
         torchFieldDirty = false;
         torchSources.Clear();
@@ -367,6 +355,9 @@ public sealed class MapLighting : MonoBehaviour
             torchSources.Add(new TorchLightField.Source(
                 cell.x + width / 2, -cell.y, torch.Intensity));
         }
+        if (headlampSourceActive)
+            torchSources.Add(new TorchLightField.Source(
+                headlampSourceX, headlampSourceY, headlampSourceIntensity));
         bool lightChanged = false;
         foreach (int index in torchField.Rebuild(torchSources))
         {
@@ -397,6 +388,33 @@ public sealed class MapLighting : MonoBehaviour
         if (torchLight) torchLight.enabled = torchSources.Count > 0;
     }
 
+    void RefreshHeadlampSourceState()
+    {
+        bool active = headlamp && headlamp.gameObject.activeInHierarchy &&
+            headlamp.intensity > 0f && tiles && torchField != null;
+        int sourceX = -1, sourceY = -1;
+        if (active)
+        {
+            Vector3Int cell = tiles.WorldToCell(headlamp.transform.position);
+            sourceX = cell.x + width / 2;
+            sourceY = -cell.y;
+            active = sourceX >= 0 && sourceX < width && sourceY >= 0 && sourceY < height &&
+                !tiles.HasTile(cell);
+        }
+
+        float intensity = active ? headlamp.intensity : 0f;
+        if (!headlampSourceStateKnown || active != headlampSourceActive ||
+            (active && (sourceX != headlampSourceX || sourceY != headlampSourceY ||
+                !Mathf.Approximately(intensity, headlampSourceIntensity))))
+            torchFieldDirty = true;
+
+        headlampSourceStateKnown = true;
+        headlampSourceActive = active;
+        headlampSourceX = sourceX;
+        headlampSourceY = sourceY;
+        headlampSourceIntensity = intensity;
+    }
+
     public void ApplyBackgroundLighting(MaterialPropertyBlock properties)
     {
         bool active = lightingEnabled && !GameplayTestSettings.GlobalLighting &&
@@ -407,9 +425,6 @@ public sealed class MapLighting : MonoBehaviour
         properties.SetTexture("_DaylightTex", texture);
         properties.SetVector("_DaylightRect", new Vector4(bounds.min.x, bounds.min.y,
             1f / Mathf.Max(bounds.size.x, .001f), 1f / Mathf.Max(bounds.size.y, .001f)));
-        properties.SetVector(HeadlampOriginRange, material.GetVector(HeadlampOriginRange));
-        properties.SetVector(HeadlampDirectionAngles, material.GetVector(HeadlampDirectionAngles));
-        properties.SetFloat(HeadlampInnerRadius, material.GetFloat(HeadlampInnerRadius));
         properties.SetTexture(TerrainOcclusionTexId, texture);
         properties.SetVector(TerrainOcclusionRectId, material.GetVector(TerrainOcclusionRectId));
         properties.SetVector(TerrainOcclusionSizeId, new Vector4(width, height, 0f, 0f));
@@ -639,27 +654,7 @@ public sealed class MapLighting : MonoBehaviour
             ? ambientBrightness
             : Mathf.Max(ambientBrightness, GridDaylight.VisibleLight(field[x, y]));
         float brightness = Mathf.Max(mapBrightness, torchField != null ? torchField.Get(x, y) : 0f);
-        Vector2 worldPosition = tiles ? tiles.GetCellCenterWorld(cell) : Vector2.zero;
-        if (headlamp && headlamp.isActiveAndEnabled && headlamp.intensity > 0 && tiles)
-            brightness = Mathf.Max(brightness, GetHeadlampBrightness(worldPosition));
         return brightness;
-    }
-
-    float GetHeadlampBrightness(Vector2 worldPosition)
-    {
-        Vector2 delta = worldPosition - (Vector2)headlamp.transform.position;
-        float range = headlamp.pointLightOuterRadius;
-        float distanceSquared = delta.sqrMagnitude;
-        if (range <= 0 || distanceSquared >= range * range) return 0f;
-        float distance = Mathf.Sqrt(distanceSquared);
-        float innerAngle = Mathf.Cos(headlamp.pointLightInnerAngle * .5f * Mathf.Deg2Rad);
-        float outerAngle = Mathf.Cos(headlamp.pointLightOuterAngle * .5f * Mathf.Deg2Rad);
-        float angle = Vector2.Dot(delta, (Vector2)headlamp.transform.up) / Mathf.Max(distance, .0001f);
-        float beam = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(outerAngle, innerAngle, angle));
-        float innerRadius = Mathf.Max(headlamp.pointLightInnerRadius, .0001f);
-        float centerGlow = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0f, innerRadius, distance));
-        float falloff = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(headlamp.pointLightInnerRadius, range, distance));
-        return Mathf.Clamp01(Mathf.Max(beam, centerGlow) * falloff * headlamp.intensity);
     }
 
     void ReleaseResources()
@@ -680,6 +675,10 @@ public sealed class MapLighting : MonoBehaviour
         torchLightPixels = null;
         torchSources.Clear();
         torchFieldDirty = true;
+        headlampSourceStateKnown = false;
+        headlampSourceActive = false;
+        headlampSourceX = headlampSourceY = -1;
+        headlampSourceIntensity = 0f;
         pixels = null;
         overlay = null;
         texture = null;

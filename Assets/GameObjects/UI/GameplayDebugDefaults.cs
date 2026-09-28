@@ -34,6 +34,7 @@ public static class GameplayDebugDefaults
         public int intValue;
         public bool boolValue;
         public float[] floatArray = Array.Empty<float>();
+        public Color colorValue;
     }
 
     static GameplayDebugDefaults()
@@ -137,6 +138,11 @@ public static class GameplayDebugDefaults
             {
                 patch.valueType = "bool";
                 patch.boolValue = property.boolValue;
+            }
+            else if (property.propertyType == SerializedPropertyType.Color)
+            {
+                patch.valueType = "color";
+                patch.colorValue = property.colorValue;
             }
             else if (property.propertyType == SerializedPropertyType.Integer ||
                      property.propertyType == SerializedPropertyType.Enum)
@@ -278,6 +284,7 @@ public static class GameplayDebugDefaults
         {
             case "float": property.floatValue = patch.floatValue; break;
             case "bool": property.boolValue = patch.boolValue; break;
+            case "color": property.colorValue = patch.colorValue; break;
             case "int":
             case "enum": property.intValue = patch.intValue; break;
             case "floatArray":

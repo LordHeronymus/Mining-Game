@@ -84,8 +84,10 @@ public static class MapLayerChecks
                 expected[index] = sampler.GetBlock(x, y);
                 expectedReordered[index] = reordered.GetBlock(x, y);
             }
-            OreVeins.PruneSmallVeins(expected, 128, 192, sourceMap.minimumOreVeinSize, sampler.GetBaseBlock);
-            OreVeins.PruneSmallVeins(expectedReordered, 128, 192, sourceMap.minimumOreVeinSize, reordered.GetBaseBlock);
+            Func<Block, int> minimum = ore => ore.id == BlockType.UltroniumOre ? 1 :
+                Mathf.Max(1, sourceMap.minimumOreVeinSize);
+            ConnectedOreVeins.Generate(expected, 128, 192, 42319, sampler, minimum);
+            ConnectedOreVeins.Generate(expectedReordered, 128, 192, 42319, reordered, minimum);
 
             scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
             SceneManager.SetActiveScene(scene);

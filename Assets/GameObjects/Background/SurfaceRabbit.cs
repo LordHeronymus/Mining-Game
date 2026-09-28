@@ -105,12 +105,14 @@ public sealed class SurfaceRabbit : MonoBehaviour
         surfaceY = map.Terrain.CellToWorld(new Vector3Int(0,1,0)).y;
         groundY = surfaceY;
         if (!FindEntrance(out float x, out float center)) return false;
+        if (map.TryGetComponent(out TerrainColliderChunks terrainColliders))
+            terrainColliders.EnsureAnimalCollisionAt(new Vector2(x, surfaceY));
         EnsurePhysics();
         homeX = center;
         transform.position = new Vector3(x, surfaceY, transform.position.z);
         physicsBody.position = new Vector2(x, surfaceY);
         physicsBody.linearVelocity = Vector2.zero;
-        physicsBody.gravityScale = 1f;
+        physicsBody.gravityScale = 0f;
         direction = x < center ? 1 : -1;
         ready = entering = true; hopping = falling = returning = resting = false;
         wait = Mathf.Max(0, entryDelay); untilRest = RandomSeconds(restInterval);
@@ -282,8 +284,8 @@ public sealed class SurfaceRabbit : MonoBehaviour
     {
         var tiles = map.Terrain;
         float margin = .2f*Mathf.Max(.2f,size)+.02f;
-        var left = tiles.WorldToCell(new Vector3(Mathf.Min(startX,endX)-margin, groundY-.01f, tiles.transform.position.z));
-        var right = tiles.WorldToCell(new Vector3(Mathf.Max(startX,endX)+margin, groundY-.01f, tiles.transform.position.z));
+        var left = tiles.WorldToCell(new Vector3(Mathf.Min(startX,endX)-margin, groundY-SurfaceAnimalCollision.GroundTileProbeDepth, tiles.transform.position.z));
+        var right = tiles.WorldToCell(new Vector3(Mathf.Max(startX,endX)+margin, groundY-SurfaceAnimalCollision.GroundTileProbeDepth, tiles.transform.position.z));
         if (left.y != right.y) return false;
         for (int x = Mathf.Min(left.x,right.x); x <= Mathf.Max(left.x,right.x); x++)
         {

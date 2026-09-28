@@ -288,6 +288,21 @@ public sealed class MapGenerationSampler
             configuredWeightsByRow[depth * noiseBlocks.Length + index] > 0f;
     }
 
+    public int LayerEnd(int depth)
+    {
+        int layer = LayerIndex(depth);
+        return layerStarts != null && layer + 1 < layerStarts.Length
+            ? layerStarts[layer + 1] : densityByRow.Length;
+    }
+
+    public int VeinSizeIndex(Block ore, int depth)
+    {
+        int index = Array.IndexOf(noiseBlocks, ore);
+        if (index < 0 || depth < 0 || depth >= densityByRow.Length) return 1;
+        return configuredVeinSizeByRow == null ? Mathf.Max(1, Mathf.RoundToInt(1f / scales[index])) :
+            Mathf.Max(1, configuredVeinSizeByRow[depth * noiseBlocks.Length + index]);
+    }
+
     float[] DynamicCdf(int ore, int veinIndex)
     {
         if (dynamicNoiseCdfs[ore].TryGetValue(veinIndex, out var cdf)) return cdf;

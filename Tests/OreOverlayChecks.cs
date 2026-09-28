@@ -19,9 +19,21 @@ public static class OreOverlayChecks
         // Edit-mode gameplay checks must not call a stale audio singleton left by play mode.
         var audio = AudioManager.Instance;
         AudioManager.Instance = null;
-        try { return new[] { Run(BlockType.CopperOre), Run(BlockType.GoldOre), Run(BlockType.SilverOre), Run(BlockType.PlatinumOre), Run(BlockType.IronOre), Run(BlockType.Coal), Run(BlockType.TitaniumOre) }; }
+        try
+        {
+            var results = new List<object>();
+            foreach (var type in new[] { BlockType.CopperOre, BlockType.GoldOre, BlockType.SilverOre,
+                BlockType.PlatinumOre, BlockType.IronOre, BlockType.Coal, BlockType.TitaniumOre, BlockType.DiamondOre })
+            {
+                try { results.Add(Run(type)); }
+                catch (Exception exception) { throw new Exception("Ore overlay check failed for " + type + ": " + exception, exception); }
+            }
+            return results;
+        }
         finally { AudioManager.Instance = audio; }
     }
+
+    public static object DiamondOnly() => Run(BlockType.DiamondOre);
 
     static object Run(BlockType oreType)
     {
@@ -37,6 +49,12 @@ public static class OreOverlayChecks
             Check(OreSparkles.IsOre(oreBlock), "Platinum missing from ore particle handling");
             Check(oreBlock.variants.Length == 0, "Platinum must not reuse legacy gold tiles");
             foreach (var tile in gold.variants) Check(registry.FromTile(tile) == gold, "Platinum replaced legacy gold identity");
+        }
+        if (oreType == BlockType.DiamondOre)
+        {
+            Check(oreBlock.itemDrop && oreBlock.itemDrop.item == Item.Diamond && oreBlock.itemDrop.icon,
+                "Diamond ore item drop or cut inventory icon is incomplete");
+            Check(OreSparkles.IsOre(oreBlock), "Diamond missing from ore particle handling");
         }
         Check(oreBlock.smallOre.Length == 2 && oreBlock.mediumOre.Length == 2 && oreBlock.richOre.Length == 3, "Ore art groups incorrect");
         Check(registry.GetById(BlockType.IronOre).HasOreOverlays, "Iron overlay migration missing");
@@ -87,6 +105,7 @@ public static class OreOverlayChecks
         var randomState = UnityEngine.Random.state;
         var originalMined = TileMiner.OnBlockMined;
         GameObject inventoryObject = null;
+        UpgradeSettings testUpgrades = null;
         try
         {
             SceneManager.SetActiveScene(scene);
@@ -104,7 +123,7 @@ public static class OreOverlayChecks
             var terrainBefore=map.Terrain.GetTilesBlock(bounds);
             var oreBefore=map.OreOverlay.GetTilesBlock(bounds);
             var matrices=new Dictionary<Vector3Int,Matrix4x4>();
-            var oreArt=new HashSet<TileBase>();var baseArt=new HashSet<TileBase>();var angles=new HashSet<int>();
+            var oreArt=new HashSet<TileBase>();var baseArt=new HashSet<TileBase>();
             int oreCount=0;
             foreach(var cell in bounds.allPositionsWithin)
             {
@@ -113,18 +132,19 @@ public static class OreOverlayChecks
                 Check(registry.FromTile(map.Terrain.GetTile(cell))==sampler.GetBaseBlock(cell.x+map.mapWidth/2,-cell.y),"Ore has wrong substrate");
                 Check(map.GetBlockAt(cell)==oreBlock,"Layered ore resolves as stone");
                 var m=map.OreOverlay.GetTransformMatrix(cell);matrices[cell]=m;
-                float angle=Mathf.Atan2(m.m10,m.m00)*Mathf.Rad2Deg;
-                angles.Add((Mathf.RoundToInt(angle/90)+4)%4);
-                Check(Mathf.Abs(angle/90-Mathf.Round(angle/90))<.001f,"Rotation is not a quarter-turn");
+                Check(m==ore.transform,"Ore overlays must keep their authored orientation");
                 Check(Mathf.Abs(m.MultiplyVector(Vector3.right).magnitude-1)<.001f,"Overlay scale differs from stone");
             }
-            Check(oreCount>100 && oreArt.Count==7 && baseArt.Count>=stone.variants.Length && angles.Count==1 && angles.Contains(0),"Generation missed art variants or rotated ores");
+            int minimumVisibleSprites = oreType == BlockType.DiamondOre ? 5 : 7;
+            Check(oreCount>100 && oreArt.Count>=minimumVisibleSprites && baseArt.Count>=stone.variants.Length,
+                "Generation missed art variants: cells=" + oreCount + ", sprites=" + oreArt.Count +
+                ", stones=" + baseArt.Count);
             for(int i=0;i<100;i++)UnityEngine.Random.value.ToString();
             map.GenerateMap();
             var terrainAfter=map.Terrain.GetTilesBlock(bounds);var oreAfter=map.OreOverlay.GetTilesBlock(bounds);
             for(int i=0;i<terrainBefore.Length;i++)
                 Check(terrainBefore[i]==terrainAfter[i] && oreBefore[i]==oreAfter[i],"Generation depends on global RNG state");
-            foreach(var pair in matrices)Check(map.OreOverlay.GetTransformMatrix(pair.Key)==pair.Value,"Rotation changed on regeneration");
+            foreach(var pair in matrices)Check(map.OreOverlay.GetTransformMatrix(pair.Key)==pair.Value,"Overlay transform changed on regeneration");
             Check(map.OreOverlay.GetComponent<TilemapRenderer>().sharedMaterial==terrain.GetComponent<TilemapRenderer>().sharedMaterial,
                 "Stone and ore must use identical lighting");
             var glints=terrain.AddComponent<OreSparkles>();
@@ -135,7 +155,7 @@ public static class OreOverlayChecks
             Check(!map.OreOverlay.GetComponent<Collider2D>() && map.OreOverlay.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>().Length==0,
                 "Overlay must not add collisions or lights");
 
-            // Exercise the actual save format, including ore identity, rotation and a mined hole.
+            // Exercise the actual save format, including ore identity and a mined hole.
             var first=new List<Vector3Int>(matrices.Keys)[0];
             var second=new List<Vector3Int>(matrices.Keys)[1];
             Check(map.RemoveBlock(first),"Failed to remove layered ore");
@@ -144,13 +164,24 @@ public static class OreOverlayChecks
             UnityEngine.Object.DestroyImmediate(glints);
             RoundTrip(map);
             Check(!map.Terrain.HasTile(first)&&!map.OreOverlay.HasTile(first),"Mined cell came back after restore");
-            Check(map.GetBlockAt(second)==oreBlock && map.OreOverlay.GetTransformMatrix(second)==matrices[second],"Overlay restore lost identity or rotation");
+            Check(map.GetBlockAt(second)==oreBlock && map.OreOverlay.GetTransformMatrix(second)==matrices[second],"Overlay restore lost its tile transform");
 
             // Run the same completion method used by the player's mining timer.
             Check(!InventoryManager.Instance,"Run edit-mode checks without a live player inventory");
             inventoryObject=new GameObject("Test Inventory",typeof(InventoryManager));
             var inventory=inventoryObject.GetComponent<InventoryManager>();
             typeof(InventoryManager).GetField("<Instance>k__BackingField",BindingFlags.Static|BindingFlags.NonPublic).SetValue(null,inventory);
+            var testPickaxe=AssetDatabase.LoadAssetAtPath<ItemSO>("Assets/GameObjects/Items/Tools/CopperPickaxe.asset");
+            typeof(InventoryManager).GetField("<EquippedPickaxe>k__BackingField",BindingFlags.Instance|BindingFlags.NonPublic)
+                .SetValue(inventory,testPickaxe);
+            testUpgrades=ScriptableObject.CreateInstance<UpgradeSettings>();
+            testUpgrades.carryingCapacityLevels=new[]{1000000f};
+            testUpgrades.pickaxeLevels=new[]{new PickaxeUpgradeLevel
+            {
+                pickaxe=testPickaxe,
+                maximumHardness=1000000f
+            }};
+            typeof(InventoryManager).GetField("upgradeSettings",Private).SetValue(inventory,testUpgrades);
             var player=new GameObject("Test Miner",typeof(BoxCollider2D),typeof(AudioSource),typeof(TileMiner));
             var miner=player.GetComponent<TileMiner>();miner.enabled=false;
             typeof(TileMiner).GetField("tilemap",Private).SetValue(miner,map.Terrain);
@@ -192,7 +223,8 @@ public static class OreOverlayChecks
                 {
                     map.Terrain.SetTile(first,stone.variants[n%stone.variants.Length]);
                     map.OreOverlay.SetTile(first,oreBlock.GetOreVariants(r)[0]);
-                    Check(miner.CompleteMining(first),"Mining transaction failed");
+                    bool mined=miner.CompleteMining(first);
+                    Check(mined,"Mining transaction failed");
                     Check(!map.GetBlockAt(first)&&!map.OreOverlay.HasTile(first),"Mining failed to remove both layers");
                     Check(!miner.CompleteMining(first),"Double mining paid twice");
                 }
@@ -207,7 +239,7 @@ public static class OreOverlayChecks
                 UnityEngine.Object.DestroyImmediate(shopObject);
             }
             Check(totals[0]==1000 && Math.Abs(totals[1]-1500)<65 && totals[2]==2000,"Inventory drop distribution incorrect");
-            return new { success=true, oreType=oreType.ToString(), oreCount, sprites=oreArt.Count, stones=baseArt.Count, rotations=angles.Count,
+            return new { success=true, oreType=oreType.ToString(), oreCount, sprites=oreArt.Count, stones=baseArt.Count,
                 minedPerTier=1000, smallDrops=totals[0], mediumDrops=totals[1], richDrops=totals[2],
                 checks="transparent imports, vein gradient, deterministic graphics, legacy ores, inventory, atomic removal, persistence, shared lighting" };
         }
@@ -216,6 +248,7 @@ public static class OreOverlayChecks
             TileMiner.OnBlockMined=originalMined;
             UnityEngine.Random.state=randomState;
             if(inventoryObject)UnityEngine.Object.DestroyImmediate(inventoryObject);
+            if(testUpgrades)UnityEngine.Object.DestroyImmediate(testUpgrades);
             typeof(InventoryManager).GetField("<Instance>k__BackingField",BindingFlags.Static|BindingFlags.NonPublic).SetValue(null,null);
             EditorSceneManager.CloseScene(scene,true);
             SceneManager.SetActiveScene(previous);

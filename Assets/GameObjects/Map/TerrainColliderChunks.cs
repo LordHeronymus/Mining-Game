@@ -163,6 +163,13 @@ public sealed class TerrainColliderChunks : MonoBehaviour
         }
     }
 
+    public void EnsureAnimalCollisionAt(Vector2 worldPosition)
+    {
+        if (!Application.isPlaying || chunks == null || !map || !map.Terrain) return;
+        EnsureChunksAroundPosition(worldPosition);
+        Physics2D.SyncTransforms();
+    }
+
     void EnsureChunksAroundPosition(Vector2 worldPosition)
     {
         var cell = map.Terrain.WorldToCell(worldPosition);

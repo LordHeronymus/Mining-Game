@@ -24,6 +24,8 @@ public sealed class MapOverviewWindow : EditorWindow
     BlockType[] types;
     readonly Dictionary<int, ArtifactTile> artifactCells = new();
     Block[] previewBlocks;
+    bool[] previewCaves;
+    UltroniumChamberLayout previewChamber;
     MapGenerationSampler sampler;
     readonly HashSet<int> changedCells = new HashSet<int>();
     int width;
@@ -181,6 +183,9 @@ public sealed class MapOverviewWindow : EditorWindow
             sampler = live ? null : new MapGenerationSampler(map.registry, seed, height, map.layers,
                 map.oreDensityCurve, map.oreDensityMultiplierPercent, map.transitionThickness,
                 map.useOreSettings ? map.oreSettings ?? Array.Empty<OreDistributionSetting>() : null);
+            previewChamber = !live && map.AltarChamber
+                ? map.AltarChamber.ChooseLayout(sourceSeed, width, height) : default;
+            previewCaves = live ? null : map.CreateCaveMask(sourceSeed, width, height, previewChamber);
             building = true;
         }
         catch (Exception ex)
@@ -194,7 +199,7 @@ public sealed class MapOverviewWindow : EditorWindow
 
     void BuildRows()
     {
-        var chamber = map.AltarChamber ? (live ? map.AltarChamber.Layout : map.AltarChamber.ChooseLayout(sourceSeed,width,height)) : default;
+        var chamber = live && map.AltarChamber ? map.AltarChamber.Layout : previewChamber;
         int end = Mathf.Min(height, nextRow + RowsPerUpdate);
         for (int y = nextRow; y < end; y++)
         {
@@ -203,6 +208,7 @@ public sealed class MapOverviewWindow : EditorWindow
                 Block block = live ? map.GetBlockAt(new Vector3Int(x - width / 2, -y, 0)) : sampler.GetBlock(x, y);
                 var cell = new Vector3Int(x-width/2,-y,0);
                 if(!live && chamber.IsReserved(cell)) block=chamber.IsOpen(cell)?null:sampler.GetBaseBlock(x,y);
+                if (!live && previewCaves[y * width + x]) block = null;
                 if (!live) previewBlocks[y * width + x] = block;
                 SetCell(x, y, block);
             }
@@ -212,9 +218,9 @@ public sealed class MapOverviewWindow : EditorWindow
 
         if (!live)
         {
-            OreVeins.CompactThinTips(previewBlocks, width, height, sampler.GetBaseBlock,
-                sampler.CanPlaceOre, (x, y) => chamber.IsReserved(new Vector3Int(x - width / 2, -y, 0)));
-            OreVeins.PruneSmallVeins(previewBlocks, width, height, map.minimumOreVeinSize, sampler.GetBaseBlock);
+            ConnectedOreVeins.Generate(previewBlocks, width, height, sourceSeed, sampler,
+                map.GetMinimumVeinSize, (x, y) => previewCaves[y * width + x] ||
+                    chamber.IsReserved(new Vector3Int(x - width / 2, -y, 0)));
             for (int y = 0; y < height; y++)
                 for (int x = 0; x < width; x++) SetCell(x, y, previewBlocks[y * width + x]);
         }
@@ -248,6 +254,7 @@ public sealed class MapOverviewWindow : EditorWindow
         texture.Apply(false, false);
         sampler = null;
         previewBlocks = null;
+        previewCaves = null;
         building = false;
         if (recolorAfterBuild)
         {
@@ -315,6 +322,7 @@ public sealed class MapOverviewWindow : EditorWindow
             case BlockType.PlatinumOre: return new Color32(255, 62, 234, 255);
             case BlockType.TitaniumOre: return new Color32(255, 255, 255, 255);
             case BlockType.TungstenOre: return new Color32(111, 160, 208, 255);
+            case BlockType.OrangeGarnetOre: return new Color32(255, 112, 24, 255);
             case BlockType.Coal: return new Color32(9, 11, 16, 255);
             case BlockType.UltroniumOre: return new Color32(180, 0, 255, 255);
             case BlockType.Empty: return EmptyColor;
@@ -568,7 +576,7 @@ public sealed class MapOverviewWindow : EditorWindow
     internal static readonly string[] LegendNames =
     {
         "Erde", "Übergang", "Stein", "Tiefstein 1", "Tiefstein 2", "Kohle", "Eisen", "Kupfer",
-        "Silber", "Gold", "Platin", "Titan", "Wolfram", "Diamant", "Ultronium", "Leer", "Spieler"
+        "Silber", "Gold", "Platin", "Titan", "Wolfram", "Diamant", "Ultronium", "Orange Granat", "Leer", "Spieler"
     };
 
     internal static readonly BlockType[] LegendTypes =
@@ -576,7 +584,7 @@ public sealed class MapOverviewWindow : EditorWindow
         BlockType.Dirt, BlockType.Stone, BlockType.StoneLayer2, BlockType.StoneLayer3, BlockType.StoneLayer4,
         BlockType.Coal, BlockType.IronOre, BlockType.CopperOre, BlockType.SilverOre, BlockType.GoldOre,
         BlockType.PlatinumOre, BlockType.TitaniumOre, BlockType.TungstenOre, BlockType.DiamondOre,
-        BlockType.UltroniumOre, BlockType.Empty
+        BlockType.UltroniumOre, BlockType.OrangeGarnetOre, BlockType.Empty
     };
 
     internal static Color LegendColorAt(int index, MapGenerator map = null)

@@ -3,6 +3,7 @@ using UnityEngine;
 public static class SurfaceAnimalCollision
 {
     const float Skin = .02f;
+    public const float GroundTileProbeDepth = .05f;
 
     public static bool TryGround(MapGenerator map, float x, float fromY, float distance,
         float width, float height, out float groundY)

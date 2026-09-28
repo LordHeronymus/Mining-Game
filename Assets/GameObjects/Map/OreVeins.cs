@@ -72,11 +72,16 @@ public static class OreVeins
 
     public static int PruneSmallVeins(Block[] blocks, int width, int height, int minimumSize,
         Func<int, int, Block> baseBlock, Block onlyOre = null)
+        => PruneSmallVeins(blocks, width, height,
+            ore => ore.id == BlockType.UltroniumOre ? 1 : minimumSize, baseBlock, onlyOre);
+
+    public static int PruneSmallVeins(Block[] blocks, int width, int height, Func<Block, int> minimumSize,
+        Func<int, int, Block> baseBlock, Block onlyOre = null)
     {
         if (blocks == null || width <= 0 || height <= 0 || blocks.Length != checked(width * height))
             throw new ArgumentException("Invalid vein grid dimensions.");
+        if (minimumSize == null) throw new ArgumentNullException(nameof(minimumSize));
         if (baseBlock == null) throw new ArgumentNullException(nameof(baseBlock));
-        if (minimumSize <= 1) return 0;
 
         var visited = new bool[blocks.Length];
         var queue = new int[blocks.Length];
@@ -85,11 +90,6 @@ public static class OreVeins
         {
             var ore = blocks[start];
             if (visited[start] || !ore || !ore.HasOreOverlays || (onlyOre && ore != onlyOre)) continue;
-            if (ore.id == BlockType.UltroniumOre)
-            {
-                visited[start] = true;
-                continue;
-            }
             int head = 0, tail = 0;
             queue[tail++] = start;
             visited[start] = true;
@@ -101,7 +101,7 @@ public static class OreVeins
                 if (y > 0) Visit(index - width);
                 if (y + 1 < height) Visit(index + width);
             }
-            if (tail >= minimumSize) continue;
+            if (tail >= Mathf.Max(1, minimumSize(ore))) continue;
             for (int i = 0; i < tail; i++)
             {
                 int index = queue[i];
