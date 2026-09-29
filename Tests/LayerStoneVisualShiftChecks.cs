@@ -30,9 +30,9 @@ public static class LayerStoneVisualShiftChecks
             map.layerFourTile.block!=map.layers[4].stone ||
             map.layerFourTile.sprite!=AssetDatabase.LoadAssetAtPath<Sprite>(root+"Layer3/DeepStone.png"))
             throw new Exception("Layer tiles do not match their stones");
-        if(Mathf.Abs(map.uniformTestTile.sprite.bounds.size.x-1f)>.01f ||
-            Mathf.Abs(map.layerThreeTile.sprite.bounds.size.x-1f)>.01f ||
-            Mathf.Abs(map.layerFourTile.sprite.bounds.size.x-1f)>.01f)
+        if(Mathf.Abs(map.uniformTestTile.sprite.bounds.size.x*map.Terrain.orientationMatrix.m00-map.Terrain.layoutGrid.cellSize.x)>.01f ||
+            Mathf.Abs(map.layerThreeTile.sprite.bounds.size.x*map.Terrain.orientationMatrix.m00-map.Terrain.layoutGrid.cellSize.x)>.01f ||
+            Mathf.Abs(map.layerFourTile.sprite.bounds.size.x*map.Terrain.orientationMatrix.m00-map.Terrain.layoutGrid.cellSize.x)>.01f)
             throw new Exception("Layer tile sprites extend beyond one cell");
         for(int i=0;i<map.layers[2].stone.variants.Length;i++)
         {

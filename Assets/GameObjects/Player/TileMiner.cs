@@ -601,6 +601,12 @@ public class TileMiner : MonoBehaviour
         Vector2 direction = aimDistance > .001f ? aim / aimDistance : Vector2.right;
         float pathLength = Mathf.Min(aimDistance, stats.Reach);
         Vector2 pathEnd = playerPosition + direction * pathLength;
+        Vector3Int hoveredCell = tilemap.WorldToCell(mouseWorld);
+        float reachSqr = stats.Reach * stats.Reach;
+        if (tilemap.HasTile(hoveredCell) &&
+            ((Vector2)tilemap.GetCellCenterWorld(hoveredCell) - playerPosition).sqrMagnitude <= reachSqr)
+            return hoveredCell;
+
         Vector3Int playerCell = tilemap.WorldToCell(playerPosition);
         Vector2 cellCenter = tilemap.GetCellCenterWorld(playerCell);
         float cellWidth = Vector2.Distance(cellCenter, tilemap.GetCellCenterWorld(playerCell + Vector3Int.right));
@@ -613,7 +619,6 @@ public class TileMiner : MonoBehaviour
         int scanRadiusY = Mathf.CeilToInt(pathLength / cellHeight) + Mathf.CeilToInt(strokeRadius / cellHeight) + 2;
         float bestPlayerDistanceSqr = float.PositiveInfinity;
         float bestPathProjection = float.PositiveInfinity;
-        float reachSqr = stats.Reach * stats.Reach;
         Vector3Int? best = null;
 
         for (int dx = -scanRadiusX; dx <= scanRadiusX; dx++)

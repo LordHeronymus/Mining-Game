@@ -76,18 +76,15 @@ Shader "Mining Game/Fixed Underground"
             }
             half4 Frag(Output input):SV_Target
             {
-                // Mirror the non-seamless paintings at their boundaries so a
-                // repeated layer has no hard vertical or horizontal cut.
                 float2 phase=(input.world-float2(0,_TopY))/max(_RepeatSize.xy,.001);
                 phase.x+=0.5;
-                float2 uv=1.0-abs(frac(phase*0.5)*2.0-1.0);
                 float2 tiledUV=frac(float2(phase.x,-phase.y));
                 float depth=_SurfaceY-input.world.y;
-                half3 underground=SAMPLE_TEXTURE2D(_Layer0Tex,sampler_Layer0Tex,uv).rgb;
+                half3 underground=SAMPLE_TEXTURE2D(_Layer0Tex,sampler_Layer0Tex,tiledUV).rgb;
                 float fade=max(_LayerFadeWorld,.001);
                 if(depth>_LayerStarts.x-fade)
                 {
-                    half3 next=SAMPLE_TEXTURE2D(_Layer1Tex,sampler_Layer1Tex,uv).rgb;
+                    half3 next=SAMPLE_TEXTURE2D(_Layer1Tex,sampler_Layer1Tex,tiledUV).rgb;
                     float upperAlpha=1.0-smoothstep(_LayerStarts.x-fade,_LayerStarts.x,depth);
                     underground=lerp(next,underground,upperAlpha);
                 }
@@ -112,7 +109,7 @@ Shader "Mining Game/Fixed Underground"
                 half baseAlpha=step(input.world.y,_TopY);
                 // The lip's lower pixels contain the L1 painting at these same
                 // world-space UVs, so both textures meet without color correction.
-                float2 capUV=float2(uv.x,
+                float2 capUV=float2(tiledUV.x,
                     (input.world.y-(_TopY+_CapTopOffset-_CapSize.y))/_CapSize.y);
                 half4 cap=half4(0,0,0,0);
                 if (capUV.y >= 0.0 && capUV.y <= 1.0)

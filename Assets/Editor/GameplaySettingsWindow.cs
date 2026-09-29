@@ -846,6 +846,8 @@ public class GameplaySettingsWindow : EditorWindow
         }
         else Missing("Kein PlayerBaseStats-Asset am StatsManager zugewiesen.");
 
+        DrawCursorSettings();
+
         CollapsibleSection("player-cursor-pulse", "Cursor", miner, data =>
         {
             Float(data, "cursorPulseInterval", "Intervall (s)", "", .05f, 10f);
@@ -872,6 +874,25 @@ public class GameplaySettingsWindow : EditorWindow
         if (camera && camera.orthographic)
             CollapsibleSection("player-camera-visibility", "Sichtweite", camera, data => Float(data, "orthographic size", "Halbe sichtbare Höhe", "Orthographic Size: größere Werte zeigen mehr von der Welt.", 0.1f));
         DrawStartingResources();
+    }
+
+    void DrawCursorSettings()
+    {
+        EditorGUILayout.Space(8);
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            if (!Foldout("player-cursor-settings", "Cursor Einstellungen")) return;
+
+            EditorGUI.BeginChangeCheck();
+            float value = EditorGUILayout.FloatField("Smartcursor-Strahlbreite (Kacheln)",
+                GameplayTestSettings.ConfiguredSmartCursorStrokeWidth);
+            if (!EditorGUI.EndChangeCheck() || !Finite(value)) return;
+
+            value = Mathf.Clamp(value, 0f, 3f);
+            if (!GameplayTestSettings.SetSmartCursorStrokeWidth(value)) return;
+            if (!GameplayTestSettings.Save(out string error)) notification = error;
+            else notification = "Cursor-Einstellungen gespeichert.";
+        }
     }
 
     void DrawMovement()
@@ -1145,39 +1166,68 @@ public class GameplaySettingsWindow : EditorWindow
         CollapsibleSection("map-caves", "Höhlengeneration", map, data =>
         {
             var caves = data.FindProperty("caveGeneration");
-            EditorGUILayout.PropertyField(caves.FindPropertyRelative("enabled"), new GUIContent("Aktiv"));
-            EditorGUILayout.IntSlider(caves.FindPropertyRelative("minimumDepth"), 0,
-                Mathf.Max(0, map.mapHeight - 1), new GUIContent("Mindesttiefe"));
-            EditorGUILayout.IntSlider(caves.FindPropertyRelative("walkerCount"), 0, 100,
-                new GUIContent("Walker-Anzahl"));
-            EditorGUILayout.Slider(caves.FindPropertyRelative("walkerStartRandomness"), 0f, 1f,
-                new GUIContent("Startpunkt-Zufälligkeit"));
-            EditorGUILayout.PropertyField(caves.FindPropertyRelative("minimumWalkerLength"),
-                new GUIContent("Walker-Länge min."));
-            EditorGUILayout.PropertyField(caves.FindPropertyRelative("maximumWalkerLength"),
-                new GUIContent("Walker-Länge max."));
-            EditorGUILayout.Slider(caves.FindPropertyRelative("minimumTunnelRadius"), .5f, 12f,
-                new GUIContent("Tunnelradius min."));
-            EditorGUILayout.Slider(caves.FindPropertyRelative("maximumTunnelRadius"), .5f, 12f,
-                new GUIContent("Tunnelradius max."));
-            EditorGUILayout.Slider(caves.FindPropertyRelative("caveAversionPercent"), 0f, 100f,
-                new GUIContent("Höhlenaversion (%)"));
-            EditorGUILayout.Slider(caves.FindPropertyRelative("directionChange"), 0f, 1f,
-                new GUIContent("Richtungsänderung"));
-            EditorGUILayout.Slider(caves.FindPropertyRelative("branchChancePercent"), 0f, 10f,
-                new GUIContent("Verzweigungschance (%)"));
-            EditorGUILayout.Slider(caves.FindPropertyRelative("splitBranchChanceFactorPercent"), 0f, 100f,
-                new GUIContent("Folge-Split-Faktor (%)"));
-            EditorGUILayout.PropertyField(caves.FindPropertyRelative("branchChanceByDepth"),
-                new GUIContent("Verzweigung nach Tiefe"));
-            EditorGUILayout.Slider(caves.FindPropertyRelative("chamberChancePercent"), 0f, 100f,
-                new GUIContent("Kammerchance an Knoten (%)"));
-            EditorGUILayout.Slider(caves.FindPropertyRelative("minimumChamberRadius"), 1f, 20f,
-                new GUIContent("Kammerradius min."));
-            EditorGUILayout.Slider(caves.FindPropertyRelative("maximumChamberRadius"), 1f, 20f,
-                new GUIContent("Kammerradius max."));
-            EditorGUILayout.PropertyField(caves.FindPropertyRelative("densityByDepth"),
-                new GUIContent("Verteilung nach Tiefe"));
+            if (Foldout("map-caves-starts", "Walker-Starts und Verteilung"))
+            {
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    EditorGUILayout.PropertyField(caves.FindPropertyRelative("enabled"), new GUIContent("Aktiv"));
+                    EditorGUILayout.IntSlider(caves.FindPropertyRelative("minimumDepth"), 0,
+                        Mathf.Max(0, map.mapHeight - 1), new GUIContent("Mindesttiefe"));
+                    EditorGUILayout.IntSlider(caves.FindPropertyRelative("walkerCount"), 0, 100,
+                        new GUIContent("Walker-Anzahl"));
+                    EditorGUILayout.Slider(caves.FindPropertyRelative("walkerStartRandomness"), 0f, 1f,
+                        new GUIContent("Startpunkt-Zufälligkeit"));
+                    EditorGUILayout.PropertyField(caves.FindPropertyRelative("densityByDepth"),
+                        new GUIContent("Verteilung nach Tiefe"));
+                }
+            }
+
+            if (Foldout("map-caves-tunnels", "Tunnelverlauf"))
+            {
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    EditorGUILayout.PropertyField(caves.FindPropertyRelative("minimumWalkerLength"),
+                        new GUIContent("Walker-Länge min."));
+                    EditorGUILayout.PropertyField(caves.FindPropertyRelative("maximumWalkerLength"),
+                        new GUIContent("Walker-Länge max."));
+                    EditorGUILayout.Slider(caves.FindPropertyRelative("minimumTunnelRadius"), .5f, 12f,
+                        new GUIContent("Tunnelradius min."));
+                    EditorGUILayout.Slider(caves.FindPropertyRelative("maximumTunnelRadius"), .5f, 12f,
+                        new GUIContent("Tunnelradius max."));
+                    EditorGUILayout.Slider(caves.FindPropertyRelative("caveAversionPercent"), 0f, 100f,
+                        new GUIContent("Höhlenaversion (%)"));
+                    EditorGUILayout.Slider(caves.FindPropertyRelative("directionChange"), 0f, 1f,
+                        new GUIContent("Richtungsänderung"));
+                    EditorGUILayout.Slider(caves.FindPropertyRelative("verticalityIndex"), 0f, 1f,
+                        new GUIContent("Vertikalität"));
+                }
+            }
+
+            if (Foldout("map-caves-branches", "Verzweigungen"))
+            {
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    EditorGUILayout.Slider(caves.FindPropertyRelative("branchChancePercent"), 0f, 10f,
+                        new GUIContent("Verzweigungschance (%)"));
+                    EditorGUILayout.Slider(caves.FindPropertyRelative("splitBranchChanceFactorPercent"), 0f, 100f,
+                        new GUIContent("Folge-Split-Faktor (%)"));
+                    EditorGUILayout.PropertyField(caves.FindPropertyRelative("branchChanceByDepth"),
+                        new GUIContent("Verzweigung nach Tiefe"));
+                }
+            }
+
+            if (Foldout("map-caves-chambers", "Kammern"))
+            {
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    EditorGUILayout.Slider(caves.FindPropertyRelative("chamberChancePercent"), 0f, 100f,
+                        new GUIContent("Kammerchance an Knoten (%)"));
+                    EditorGUILayout.Slider(caves.FindPropertyRelative("minimumChamberRadius"), 1f, 20f,
+                        new GUIContent("Kammerradius min."));
+                    EditorGUILayout.Slider(caves.FindPropertyRelative("maximumChamberRadius"), 1f, 20f,
+                        new GUIContent("Kammerradius max."));
+                }
+            }
         }, false);
         CollapsibleSection("map-ultronium-altar", "Ultronium Altar", map, data =>
         {

@@ -15,6 +15,7 @@ public sealed class CaveGenerationSettings
     [Range(.5f, 12f)] public float maximumTunnelRadius = 3.75f;
     [Range(0f, 100f)] public float caveAversionPercent = 35f;
     [Range(0f, 1f)] public float directionChange = .2f;
+    [Range(0f, 1f)] public float verticalityIndex = 1f;
     [Range(0f, 10f)] public float branchChancePercent = 1.1f;
     [Range(0f, 100f)] public float splitBranchChanceFactorPercent = 50f;
     public AnimationCurve branchChanceByDepth = AnimationCurve.Linear(0f, .7f, 1f, 1.35f);
@@ -298,7 +299,14 @@ public static class CaveGenerator
             if (step % random.Range(8, 18) == 0)
                 radiusTarget = random.Range(minimumRadius, maximumRadius) * Mathf.Lerp(.9f, 1.12f, depth01);
             walker.radius = Mathf.Lerp(walker.radius, radiusTarget, .075f);
-            walker.position += new Vector2(Mathf.Cos(walker.angle), Mathf.Sin(walker.angle)) * .72f;
+            Vector2 direction = new Vector2(
+                Mathf.Cos(walker.angle),
+                Mathf.Sin(walker.angle) * Mathf.Clamp01(settings.verticalityIndex));
+            if (direction.sqrMagnitude < .000001f)
+                direction = new Vector2(Mathf.Cos(walker.angle) >= 0f ? 1f : -1f, 0f);
+            else
+                direction.Normalize();
+            walker.position += direction * .72f;
 
             if (walker.position.x < 0f || walker.position.x >= width)
             {

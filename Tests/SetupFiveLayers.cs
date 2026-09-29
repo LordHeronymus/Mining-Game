@@ -25,7 +25,7 @@ public static class SetupFiveLayers
         if (!terrainImporter) throw new Exception("Tiefgestein-2-Texturimport fehlt.");
         terrainImporter.textureType = TextureImporterType.Sprite;
         terrainImporter.spriteImportMode = SpriteImportMode.Single;
-        terrainImporter.spritePixelsPerUnit = texture.width;
+        terrainImporter.spritePixelsPerUnit = texture.width / .5f;
         terrainImporter.mipmapEnabled = true;
         terrainImporter.wrapMode = TextureWrapMode.Repeat;
         terrainImporter.filterMode = FilterMode.Trilinear;

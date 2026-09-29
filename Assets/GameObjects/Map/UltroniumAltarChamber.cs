@@ -393,11 +393,23 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
     }
     void BuildBackdrop(Material material,int layer,int order)
     {
-        Vector3 lowerLeft=map.Terrain.CellToWorld(new Vector3Int(chamberOrigin.x-UltroniumChamberLayout.HalfWidth,chamberOrigin.y,0));
-        Vector3 upperRight=map.Terrain.CellToWorld(new Vector3Int(chamberOrigin.x+UltroniumChamberLayout.HalfWidth+1,
-            chamberOrigin.y+UltroniumChamberLayout.Height,0));
-        BuildQuad("Chamber backdrop",(lowerLeft+upperRight)*.5f,
-            new Vector2(upperRight.x-lowerLeft.x,upperRight.y-lowerLeft.y),material,layer,order);
+        var vertices=new List<Vector3>(); var uv=new List<Vector2>(); var triangles=new List<int>();
+        float width=UltroniumChamberLayout.HalfWidth*2+1;
+        foreach(var cell in Layout.Bounds.allPositionsWithin)
+        {
+            if(!Layout.IsOpen(cell)) continue;
+            Vector3 a=map.Terrain.CellToWorld(cell), b=map.Terrain.CellToWorld(cell+new Vector3Int(1,1,0));
+            float x=(cell.x-chamberOrigin.x+UltroniumChamberLayout.HalfWidth)/width;
+            float y=(cell.y-chamberOrigin.y)/(float)UltroniumChamberLayout.Height;
+            float dx=1f/width, dy=1f/UltroniumChamberLayout.Height;
+            int n=vertices.Count;
+            vertices.Add(root.transform.InverseTransformPoint(a)); vertices.Add(root.transform.InverseTransformPoint(new Vector3(b.x,a.y,a.z)));
+            vertices.Add(root.transform.InverseTransformPoint(b)); vertices.Add(root.transform.InverseTransformPoint(new Vector3(a.x,b.y,a.z)));
+            uv.Add(new Vector2(x,y)); uv.Add(new Vector2(x+dx,y));
+            uv.Add(new Vector2(x+dx,y+dy)); uv.Add(new Vector2(x,y+dy));
+            triangles.AddRange(new[]{n,n+2,n+1,n,n+3,n+2});
+        }
+        MakeMesh("Chamber backdrop",vertices.ToArray(),uv.ToArray(),triangles.ToArray(),material,layer,order);
     }
     void BuildShellMesh(Material material,int layer,int order)
     {
