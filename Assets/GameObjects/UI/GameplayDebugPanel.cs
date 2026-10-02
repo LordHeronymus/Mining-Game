@@ -113,6 +113,7 @@ public class GameplayDebugPanel : MonoBehaviour
     void SetVisible(bool visible)
     {
         IsOpen = visible;
+        GetComponent<GameplayDebugWindow>()?.SetViewVisible(visible);
         GameplayInputBlocker.SetBlocked(this, visible);
         if (!visible) GetComponent<GameplayDebugWindow>()?.HideTooltip();
         panel.alpha = visible ? 1f : 0f;

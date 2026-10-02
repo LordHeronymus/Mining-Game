@@ -26,10 +26,8 @@ MonoBehaviour:
   pluralName: Obsidianspitzhacken
   ingredients:
   - item: {fileID: 11400000, guid: 75e7eb8e62b50c64eb4dd8132de34314, type: 2}
+    amount: 10
+  - item: {fileID: 11400000, guid: 7118deb47d14256439f8c99ab5625311, type: 2}
     amount: 4
-  - item: {fileID: 11400000, guid: 2db8d69ab3b281f4bb7db704f45308c0, type: 2}
-    amount: 4
-  - item: {fileID: 11400000, guid: 13a72d4a121bd0e499c2737ebc0b56ed, type: 2}
-    amount: 4
-  - item: {fileID: 11400000, guid: 8ce50848319387b46b7171f0cf06cdc0, type: 2}
-    amount: 8
+  - item: {fileID: 11400000, guid: f6caf08236c90e24c8aa4bdd7013f934, type: 2}
+    amount: 25

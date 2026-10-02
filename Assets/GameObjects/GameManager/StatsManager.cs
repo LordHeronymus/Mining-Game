@@ -54,6 +54,15 @@ public class StatsManager : MonoBehaviour
     public float Reach;
     public float MaxEnergy;
 
+    public void RefreshEnergyCapacity()
+    {
+        if (!baseStats) return;
+        float initial = baseStats.maxEnergy;
+        if (float.IsNaN(initial) || float.IsInfinity(initial)) initial = 100f;
+        MaxEnergy = Mathf.Max(1f, initial) * (InventoryManager.Instance
+            ? InventoryManager.Instance.EnergyCapacityMultiplier : 1f);
+    }
+
     public Action<int> OnMoneyChanged;
 
     void OnEnable()
@@ -92,6 +101,7 @@ public class StatsManager : MonoBehaviour
     public void ResetRun()
     {
         foreach (var altar in FindObjectsByType<UltroniumAltarChamber>(FindObjectsSortMode.None)) altar.ResetChargeForNewRun();
+        foreach (var storage in FindObjectsByType<SurfaceStorageBuilding>(FindObjectsSortMode.None)) storage.ResetForNewRun();
         RecipeUnlocks.ResetRun();
         Reset();
         var inventory = InventoryManager.Instance;
@@ -105,10 +115,18 @@ public class StatsManager : MonoBehaviour
                 if (item && resource.amount > 0) inventory.AddStartingItem(item, resource.amount);
             }
         }
+        var hud = FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include);
+        if (hud)
+        {
+            hud.AddStartingResourcesToSlots();
+            hud.RefreshHotbarIconLayouts();
+        }
+        FindFirstObjectByType<EnergyManager>()?.ResetForNewRun();
     }
 
     void Update()
     {
+        RefreshEnergyCapacity();
         float healthFraction = Health / MaxHealth;
         bool heartbeatActive = Health > 0f && !GameOverPanel.IsOpen && !GameVictoryPanel.IsOpen && !UltroniumAltarChamber.VictorySequenceActive &&
             healthFraction <= LowHealthHeartbeatThresholdFraction;
@@ -134,6 +152,30 @@ public class StatsManager : MonoBehaviour
         HasWon = true;
         GameVictoryPanel.Show();
         return true;
+    }
+
+    public SavedStats CaptureRunState()
+    {
+        var artifacts = new List<string>(); foreach (var tile in collectedArtifactTypes) if (tile) artifacts.Add(tile.name);
+        return new SavedStats { money = Money, points = Points, artifactPoints = ArtifactPoints, won = HasWon,
+            health = Health, medkitRemaining = Mathf.Max(0, medkitActiveUntil - Time.time),
+            damageCooldown = Mathf.Max(0, healthRegenDelay - (Time.time - lastHealthDamageTime)),
+            miningMultiplier = MiningSpeedMultiplier, artifacts = artifacts.ToArray() };
+    }
+
+    public void RestoreRunState(SavedStats state, MapGenerator map)
+    {
+        Money = state.money; Points = state.points; ArtifactPoints = state.artifactPoints; HasWon = state.won;
+        Health = Mathf.Clamp(state.health, 0, MaxHealth); MiningSpeedMultiplier = state.miningMultiplier;
+        medkitActiveUntil = Time.time + state.medkitRemaining;
+        lastHealthDamageTime = Time.time - healthRegenDelay + state.damageCooldown;
+        collectedArtifactTypes.Clear();
+        foreach (string name in state.artifacts ?? Array.Empty<string>())
+            foreach (var entry in map.artifactSettings)
+                if (entry != null && entry.tile && entry.tile.name == name) collectedArtifactTypes.Add(entry.tile);
+        HUDPoints.Instance?.UpdatePoints(Money, PointType.Money);
+        HUDPoints.Instance?.UpdatePoints(Points, PointType.Points);
+        OnMoneyChanged?.Invoke(Money); OnHealthChanged?.Invoke(Health, MaxHealth);
     }
 
     public bool ApplyDamage(float amount)
@@ -241,7 +283,7 @@ public class StatsManager : MonoBehaviour
 
         MiningSpeedMultiplier = 1f;
         Reach = baseStats.reach;
-        MaxEnergy = baseStats.maxEnergy;
+        RefreshEnergyCapacity();
         Health = MaxHealth;
         medkitActiveUntil = 0f;
         lastHealthDamageTime = Time.time;

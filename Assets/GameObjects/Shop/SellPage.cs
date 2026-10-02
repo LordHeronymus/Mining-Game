@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class SellPage : MonoBehaviour
+public partial class SellPage : MonoBehaviour
 {
     [Header("Refs")]
     [SerializeField] private Transform content;
@@ -34,6 +34,7 @@ public class SellPage : MonoBehaviour
 
     void Awake()
     {
+        BuildSellView();
         if (sell1Button) sell1Button.onClick.AddListener(() => Sell(1));
         if (sell10Button) sell10Button.onClick.AddListener(() => Sell(10));
         if (sellMaxButton) sellMaxButton.onClick.AddListener(SellWithCurrentModifier);
@@ -48,9 +49,11 @@ public class SellPage : MonoBehaviour
         if (InventoryManager.Instance) InventoryManager.Instance.OnInventoryChanged += OnInvChanged;
         if (StatsManager.Instance) StatsManager.Instance.OnMoneyChanged += HandleMoney;
         HandleMoney(StatsManager.Instance ? StatsManager.Instance.Money : 0);
+        Rebuild();
     }
     void OnDisable()
     {
+        _pendingRebuild = false;
         if (InventoryManager.Instance) InventoryManager.Instance.OnInventoryChanged -= OnInvChanged;
         if (StatsManager.Instance) StatsManager.Instance.OnMoneyChanged -= HandleMoney;
     }
@@ -59,6 +62,7 @@ public class SellPage : MonoBehaviour
     {
         if (!panel || panel.alpha <= 0f) return;
         UpdateSellActionButton();
+        if (itemGlowMaterial) itemGlowMaterial.SetFloat("_AnimationTime", Time.unscaledTime);
     }
     void OnInvChanged()
     {
@@ -121,12 +125,10 @@ public class SellPage : MonoBehaviour
     {
         if (!content || InventoryManager.Instance == null) return;
         ItemSO previousSelected = _selected;
-        ClearChildren();
-
         _buffer.Clear();
         foreach (var kv in InventoryManager.Instance.GetSnapshot())
         {
-            if (kv.Key != null && kv.Key.category == ItemCategory.Ore)
+            if (kv.Key != null && kv.Key.category == ItemCategory.Ore && kv.Value > 0 && MatchesSearch(kv.Key))
                 _buffer.Add((kv.Key, kv.Value));
         }
 
@@ -157,22 +159,11 @@ public class SellPage : MonoBehaviour
 
         _selected = newSelected;
 
-        foreach (var e in _buffer)
-        {
-            var slot = Instantiate(slotPrefab, content);
-            slot.Bind(e.item, e.count, this);
-            slot.name = $"Slot_{e.item.displayName}";
-        }
+        SyncOreCards();
 
         ApplySelectionHighlight();
         UpdateDetails();
         UpdateButtons();
-    }
-
-    private void ClearChildren()
-    {
-        for (int i = content.childCount - 1; i >= 0; i--)
-            Destroy(content.GetChild(i).gameObject);
     }
 
     public void SelectItem(ItemSO item)
@@ -237,7 +228,7 @@ public class SellPage : MonoBehaviour
 
         int count = InventoryManager.Instance?.GetCount(_selected) ?? 0;
         int worth = _selected.worth;
-        int total = worth * count;
+        long total = (long)worth * CurrentSaleCount(count);
 
         if (oreNameText) oreNameText.text = _selected.displayName;
         if (selectedOreIcon)
@@ -245,9 +236,9 @@ public class SellPage : MonoBehaviour
             selectedOreIcon.sprite = _selected.icon;
             selectedOreIcon.enabled = _selected.icon;
         }
-        if (oreWorthText) oreWorthText.text = $"{worth}";
-        if (countText) countText.text = $"{count}";
-        if (totalWorthText) totalWorthText.text = $"{total}";
+        if (oreWorthText) oreWorthText.text = ShopMoneyFormatter.Format(worth);
+        if (countText) countText.text = ShopMoneyFormatter.Format(count);
+        if (totalWorthText) totalWorthText.text = ShopMoneyFormatter.Format(total);
     }
 
     private void UpdateButtons()
@@ -306,6 +297,9 @@ public class SellPage : MonoBehaviour
         var label = sellMaxButton.GetComponentInChildren<TextMeshProUGUI>();
         if (label && label.text != labelText) label.text = labelText;
         sellMaxButton.interactable = canSellCurrentQuantity;
+        if (totalWorthText) totalWorthText.text = ShopMoneyFormatter.Format(_selected ? (long)_selected.worth * CurrentSaleCount(count) : 0);
+        CenterStatValue(oreWorthText, unitPriceCoin);
+        CenterStatValue(totalWorthText, proceedsCoin);
     }
 
     private void SellWithCurrentModifier()

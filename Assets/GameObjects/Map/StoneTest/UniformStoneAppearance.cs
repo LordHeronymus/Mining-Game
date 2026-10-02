@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Tilemaps;
+using System.Collections;
+using System.Collections.Generic;
 
 [ExecuteAlways, DisallowMultipleComponent, RequireComponent(typeof(MapGenerator))]
 public sealed class UniformStoneAppearance : MonoBehaviour
@@ -25,7 +27,7 @@ public sealed class UniformStoneAppearance : MonoBehaviour
     Texture2D occupancy;
     Texture2D occupancyUpload;
     MaterialPropertyBlock properties;
-    bool rebuild = true, fullUpload, dirtyRegion;
+    bool rebuild = true, fullUpload, dirtyRegion, preparedForStreamingGeneration;
     int left, bottom;
     int dirtyMinX, dirtyMinY, dirtyMaxX, dirtyMaxY;
     void OnValidate()
@@ -51,10 +53,15 @@ public sealed class UniformStoneAppearance : MonoBehaviour
         rebuild = true;
         var rubble=GetComponent<TerrainEdgeRubble>();if(rubble)rubble.enabled=true;
     }
-    void Rebuild() => rebuild = true;
+    void Rebuild()
+    {
+        if (preparedForStreamingGeneration) { preparedForStreamingGeneration = false; return; }
+        rebuild = true;
+    }
     void Changed(Tilemap source, Tilemap.SyncTile[] changes)
     {
-        if (!map || source != map.Terrain || !occupancy || rebuild) return;
+        if (!map || source != map.Terrain || !occupancy || rebuild ||
+            (Application.isPlaying && map.IsGenerationStreaming)) return;
         foreach (var change in changes)
         {
             int x = change.position.x - left, y = change.position.y - bottom;
@@ -85,33 +92,13 @@ public sealed class UniformStoneAppearance : MonoBehaviour
     void LateUpdate()
     {
         if (!map || !map.uniformTestStone || !texture) return;
+        if (Application.isPlaying && (!map.IsGenerated || map.IsGenerationStreaming)) return;
         if (rebuild)
         {
-            Release();
             int width = map.GeneratedWidth, height = map.GeneratedHeight;
-            left = -width / 2; bottom = 1 - height;
-            // The occupancy mask also drives the visual chipped edges around mined openings.
-            occupancy = new Texture2D(width, height, TextureFormat.RGBA32, false, true)
-            { name = "Test stone occupancy", filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp,
-                hideFlags = HideFlags.HideAndDontSave };
-            var tiles = map.Terrain.GetTilesBlock(new BoundsInt(left, bottom, 0, width, height, 1));
-            var colors = new Color32[tiles.Length];
-            var sampler = new MapGenerationSampler(map.registry,map.ActiveSeed,height,map.layers,
-                map.oreDensityCurve,map.oreDensityMultiplierPercent,map.transitionThickness);
-            for (int i = 0; i < colors.Length; i++)
-            {
-                colors[i] = TileColor(tiles[i]);
-                if (!tiles[i])
-                {
-                    var block = sampler.GetBaseBlock(i % width, -(bottom + i / width));
-                    if(map.surfaceDirtTile && block.id == BlockType.Dirt) colors[i].g = 255;
-                    if(map.layerOneTile && block == map.layerOneTile.block) colors[i].b = 255;
-                    if(map.layerThreeTile && block == map.layerThreeTile.block) colors[i].a = 128;
-                    if(map.layerFourTile && block == map.layerFourTile.block) colors[i].a = 255;
-                }
-            }
-            occupancy.SetPixels32(colors);
-            rebuild = false; fullUpload = true; dirtyRegion = false;
+            var tiles = map.Terrain.GetTilesBlock(new BoundsInt(-width / 2, 1 - height, 0, width, height, 1));
+            var steps = BuildOccupancy(tiles, width, height, map.ActiveSeed);
+            while (steps.MoveNext()) { }
         }
         if (fullUpload)
         {
@@ -152,6 +139,54 @@ public sealed class UniformStoneAppearance : MonoBehaviour
         if(useFrayedEdges&&!masked&&!frayed)frayed=gameObject.AddComponent<TerrainFrayedEdges>();
         if(frayed){frayed.enabled=useFrayedEdges&&!masked;if(frayed.enabled)frayed.Apply(properties);}
     }
+    public IEnumerator PrepareForLoading(MapGenerator.MapGenerationSnapshot snapshot, System.Action<float> progress = null)
+    {
+        if (!map || !map.uniformTestStone || !texture || snapshot == null) yield break;
+        var steps = BuildOccupancy(snapshot.terrainTiles, snapshot.width, snapshot.height, snapshot.seed, progress);
+        while (steps.MoveNext()) yield return null;
+        yield return null;
+        occupancy.Apply(false, false); fullUpload = false;
+        preparedForStreamingGeneration = true;
+    }
+
+    IEnumerator BuildOccupancy(TileBase[] tiles, int width, int height, int seed, System.Action<float> progress = null)
+    {
+        Release(); left = -width / 2; bottom = 1 - height;
+        occupancy = new Texture2D(width, height, TextureFormat.RGBA32, false, true)
+        { name = "Test stone occupancy", filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp,
+            hideFlags = HideFlags.HideAndDontSave };
+        var colors = new Color32[tiles.Length];
+        var tileColors = new Dictionary<TileBase, Color32>();
+        var sampler = new MapGenerationSampler(map.registry, seed, height, map.layers,
+            map.oreDensityCurve, map.oreDensityMultiplierPercent, map.transitionThickness);
+        var budget = new LoadingWorkBudget();
+        for (int i = 0; i < colors.Length; i++)
+        {
+            var tile = tiles[i];
+            if (tile)
+            {
+                if (!tileColors.TryGetValue(tile, out var color)) tileColors.Add(tile, color = TileColor(tile));
+                colors[i] = color;
+            }
+            else
+            {
+                var block = sampler.GetBaseBlock(i % width, -(bottom + i / width));
+                if (map.surfaceDirtTile && block.id == BlockType.Dirt) colors[i].g = 255;
+                if (map.layerOneTile && block == map.layerOneTile.block) colors[i].b = 255;
+                if (map.layerThreeTile && block == map.layerThreeTile.block) colors[i].a = 128;
+                if (map.layerFourTile && block == map.layerFourTile.block) colors[i].a = 255;
+            }
+            if ((i & 255) == 255 && budget.Expired)
+            {
+                progress?.Invoke((i + 1f) / colors.Length);
+                yield return null; budget.Restart();
+            }
+        }
+        occupancy.SetPixels32(colors);
+        rebuild = false; fullUpload = true; dirtyRegion = false;
+        progress?.Invoke(1f);
+    }
+
     Color32 TileColor(TileBase tile) => !tile ? new Color32() :
         new Color32(255, (byte)(map.registry.FromTile(tile)?.id == BlockType.Dirt ? 255 : 0),
             (byte)(map.layerOneTile && map.registry.FromTile(tile) == map.layerOneTile.block ? 255 : 0),
@@ -228,6 +263,6 @@ public sealed class UniformStoneAppearance : MonoBehaviour
             if (Application.isPlaying) Destroy(occupancyUpload); else DestroyImmediate(occupancyUpload);
             occupancyUpload = null;
         }
-        fullUpload = dirtyRegion = false;
+        fullUpload = dirtyRegion = preparedForStreamingGeneration = false;
     }
 }

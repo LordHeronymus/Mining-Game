@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24d469c3ce4fd914d9eb95135b7e747b, type: 3}
+  m_Name: Ruby
+  m_EditorClassIdentifier: 
+  id: 19
+  displayName: Rubinerz
+  itemDrop: {fileID: 11400000, guid: eeb7dfaf4ed948a3b361467137a0365e, type: 2}
+  digSound: 4
+  breakSound: 5
+  hardness: 3.8
+  hardnessIndex: 4.5
+  points: 0
+  isSolid: 1
+  variants: []
+  smallOre:
+  - {fileID: 11400000, guid: d8b630606e8a4c91a83b18e8ba9aa197, type: 2}
+  - {fileID: 11400000, guid: 5a583dd5785141a298b005548ca2e6af, type: 2}
+  mediumOre:
+  - {fileID: 11400000, guid: fd009fb1c1c0429faa1bfdc16d3fc7e8, type: 2}
+  - {fileID: 11400000, guid: cb9a5c899c9e4d3e8e423b1ddaf6e156, type: 2}
+  richOre:
+  - {fileID: 11400000, guid: 20bced1b33294129bc7e62b346d06eb9, type: 2}
+  - {fileID: 11400000, guid: 1fb98d9aa34d4e8a8529f27a8f791c8e, type: 2}
+  - {fileID: 11400000, guid: 35a3c1e1ec3949568812810fe9727c12, type: 2}
+  spawnWithNoise: 1
+  oreFrequencyPercent: 0.65
+  veinSizeIndex: 7
+  rarityCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  noiseScale: 0.05
+  noiseSeedOffset: 19000
+  generationSettingsVersion: 1

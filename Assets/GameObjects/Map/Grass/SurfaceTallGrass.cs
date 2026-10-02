@@ -33,6 +33,8 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     [SerializeField, Min(0f)] float healingHerbSwayStrength = 2f;
     [SerializeField, Min(0f)] float healingHerbSwayFrequency = 1.5f;
     [SerializeField] Vector2 heightRange = new Vector2(1.55f, 2.05f);
+    [SerializeField, Range(.25f, 3f)] float grassSizeMultiplier = 1f;
+    [SerializeField, Range(.25f, 3f)] float healingHerbSizeMultiplier = 1f;
 
     readonly Dictionary<int, TallGrassPatch> patches = new();
     readonly List<int> sites = new();
@@ -51,6 +53,27 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     public int PatchCount => patches.Count;
     public int Capacity => sites.Count;
     public IEnumerable<TallGrassPatch> ActivePatches => patches.Values;
+    public SavedGrassland CaptureRunState()
+    {
+        var saved = new List<SavedGrass>();
+        foreach (var patch in patches.Values) if (patch) saved.Add(new SavedGrass { cell = patch.SurfaceCellX, herb = patch.IsHealingHerb });
+        return new SavedGrassland { patches = saved.ToArray(), sites = sites.ToArray(), herbSites = new List<int>(healingHerbSites).ToArray(),
+            respawn = Mathf.Max(0, nextRespawn - Time.time), conversion = float.IsPositiveInfinity(nextConversion) ? -1 : Mathf.Max(0, nextConversion - Time.time) };
+    }
+    public void RestoreRunState(SavedGrassland state)
+    {
+        if (state == null) return;
+        Rebuild(); Clear(); healingHerbSites.Clear();
+        if (state.sites != null) { sites.Clear(); sites.AddRange(state.sites); }
+        foreach (int site in state.herbSites ?? System.Array.Empty<int>()) healingHerbSites.Add(site);
+        foreach (var saved in state.patches ?? System.Array.Empty<SavedGrass>())
+        {
+            if (!map.Terrain.HasTile(new Vector3Int(saved.cell, 0)) || patches.ContainsKey(saved.cell)) continue;
+            if (saved.herb) healingHerbSites.Add(saved.cell);
+            Spawn(saved.cell, map.Terrain.GetCellCenterWorld(new Vector3Int(saved.cell, 0)).x);
+        }
+        nextRespawn = Time.time + state.respawn; nextConversion = state.conversion < 0 ? float.PositiveInfinity : Time.time + state.conversion;
+    }
     public bool HasScythe => scythePowerup && InventoryManager.Instance &&
         InventoryManager.Instance.IsPowerupUnlocked(scythePowerup);
     public Sprite ScytheIcon => scythePowerup ? scythePowerup.icon : null;
@@ -119,6 +142,28 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         fiberSwayFrequency = Mathf.Max(0f, fiberSwayFrequency);
         healingHerbSwayStrength = Mathf.Max(0f, healingHerbSwayStrength);
         healingHerbSwayFrequency = Mathf.Max(0f, healingHerbSwayFrequency);
+        grassSizeMultiplier = Mathf.Clamp(grassSizeMultiplier, .25f, 3f);
+        healingHerbSizeMultiplier = Mathf.Clamp(healingHerbSizeMultiplier, .25f, 3f);
+    }
+
+    public void ApplyPatchSizes()
+    {
+        foreach (var patch in patches.Values)
+            if (patch) ApplyPatchSize(patch);
+    }
+
+    void ApplyPatchSize(TallGrassPatch patch)
+    {
+        var renderer = patch.GetComponent<SpriteRenderer>();
+        if (!renderer || !renderer.sprite) return;
+        float size = patch.IsHealingHerb ? healingHerbSizeMultiplier : grassSizeMultiplier;
+        float baseHeight = Mathf.Lerp(heightRange.x, heightRange.y, Hash01(patch.SurfaceCellX, 0x5EB1u));
+        float widthSign = Hash01(patch.SurfaceCellX, 0xC3A7u) < .5f ? -1f : 1f;
+        var targetScale = new Vector3(widthSign * baseHeight * size, baseHeight * size, 1f);
+        if (patch.transform.localScale == targetScale) return;
+        float bottom = renderer.bounds.min.y;
+        patch.transform.localScale = targetScale;
+        patch.transform.position += Vector3.up * (bottom - renderer.bounds.min.y);
     }
 
     void OnTilesChanged(Tilemap source, Tilemap.SyncTile[] changes)
@@ -384,6 +429,7 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         renderer.sortingOrder = 1;
         var patch = go.GetComponent<TallGrassPatch>();
         patch.Initialize(this, x, isHealingHerb);
+        ApplyPatchSize(patch);
         patches.Add(x, patch);
     }
 
@@ -468,6 +514,8 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         foreach (var building in FindObjectsByType<WorkbenchBuilding>(FindObjectsSortMode.None))
             if (Overlaps(x, building.GetComponent<Collider2D>())) return true;
         foreach (var building in FindObjectsByType<EnergyMonolyth>(FindObjectsSortMode.None))
+            if (Overlaps(x, building.GetComponent<Collider2D>())) return true;
+        foreach (var building in FindObjectsByType<SurfaceStorageBuilding>(FindObjectsSortMode.None))
             if (Overlaps(x, building.GetComponent<Collider2D>())) return true;
         return false;
     }

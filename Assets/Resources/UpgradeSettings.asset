@@ -20,6 +20,16 @@ MonoBehaviour:
   - 200
   - 320
   - 500
+  - 800
+  energyCapacityMultipliers:
+  - 1
+  - 1.5
+  - 2.25
+  - 3.25
+  - 4.75
+  - 7
+  - 10
+  - 15
   pickaxeLevels:
   - pickaxe: {fileID: 11400000, guid: 9070257f0e47309439e6c34c2f7bb97f, type: 2}
     progressPerHitMultiplier: 0.8

@@ -8,21 +8,32 @@ public class ShopSlot : MonoBehaviour
     [SerializeField] private Image iconImage;              // Kind "Icon"
     [SerializeField] private TextMeshProUGUI countText;    // Kind "CountText"
     [SerializeField] private Image countBadge;
-    [SerializeField] private Image selectionFrame;         // optionaler Rahmen fürs Highlight
+    [SerializeField] private Image selectionFrame;         // optionaler Rahmen fÃ¼rs Highlight
     [SerializeField] private Button button;                // Button auf demselben GO
 
     // Exponieren, damit ShopUI vergleichen kann
     public ItemSO Item { get; private set; }
     public int Count { get; private set; }
+    Image wideBackground;
+    Sprite normalCard, selectedCard;
+    TextMeshProUGUI itemName;
 
-    private SellPage shop;                                   // Referenz auf ShopUI für Callbacks
+    public void ConfigureWideCard(Image icon, TextMeshProUGUI nameLabel, TextMeshProUGUI countLabel,
+        Image badge, Image background, Button action, Sprite normal, Sprite selected)
+    {
+        iconImage = icon; itemName = nameLabel; countText = countLabel; countBadge = badge;
+        wideBackground = background; button = action; normalCard = normal; selectedCard = selected;
+    }
 
-    /// <summary> Slot befüllen und Klick-Callback setzen. </summary>
+    private SellPage shop;                                   // Referenz auf ShopUI fÃ¼r Callbacks
+
+    /// <summary> Slot befÃ¼llen und Klick-Callback setzen. </summary>
     public void Bind(ItemSO item, int count, SellPage shopUI)
     {
         Item = item;
         Count = count;
         shop = shopUI;
+        if (itemName) itemName.text = item ? item.displayName : "";
 
         if (iconImage) { iconImage.sprite = item ? item.icon : null; iconImage.enabled = item && item.icon; }
         UpdateCountDisplay(count);
@@ -40,6 +51,7 @@ public class ShopSlot : MonoBehaviour
     public void SetSelected(bool selected)
     {
         if (selectionFrame) selectionFrame.enabled = selected;
+        if (wideBackground) wideBackground.sprite = selected ? selectedCard : normalCard;
     }
 
     /// <summary> Falls nur Anzeige aktualisiert werden soll (z. B. nach Verkauf). </summary>
@@ -52,8 +64,8 @@ public class ShopSlot : MonoBehaviour
     private void UpdateCountDisplay(int count)
     {
         if (!countText) return;
-        countText.text = count.ToString();
-        float width = Mathf.Max(52f, Mathf.Ceil(countText.GetPreferredValues(countText.text).x) + 18f);
+        countText.text = wideBackground ? ShopMoneyFormatter.Format(count) : count.ToString();
+        float width = Mathf.Max(wideBackground ? 100f : 52f, Mathf.Ceil(countText.GetPreferredValues(countText.text).x) + 18f);
         if (countBadge) countBadge.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
         countText.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
     }

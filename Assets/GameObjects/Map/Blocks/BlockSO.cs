@@ -19,7 +19,10 @@ public enum BlockType
     UltroniumOre = 13,
     TitaniumOre = 14,
     TungstenOre = 15,
-    OrangeGarnetOre = 16
+    OrangeGarnetOre = 16,
+    MythrilOre = 17,
+    EmeraldOre = 18,
+    RubyOre = 19
 }
 
 [CreateAssetMenu(fileName = "New BlockType", menuName = "Blocks/BlockType", order = 0)]

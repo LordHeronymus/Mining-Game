@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using System.Collections.Generic;
 
 [ExecuteAlways]
 public sealed class GrassRootFill : MonoBehaviour
@@ -8,16 +9,46 @@ public sealed class GrassRootFill : MonoBehaviour
     [SerializeField] TileBase leftTile, rightTile;
     [SerializeField] Tilemap leftOverlay, rightOverlay;
     bool dirty = true;
+    readonly HashSet<int> dirtyColumns = new HashSet<int>();
 
-    void OnEnable() { Tilemap.tilemapTileChanged += Changed; dirty = true; }
-    void OnDisable() { Tilemap.tilemapTileChanged -= Changed; }
+    void OnEnable()
+    {
+        if (!map) map = GetComponent<MapGenerator>();
+        if (map) map.Generated += Invalidate;
+        Tilemap.tilemapTileChanged += Changed;
+        Invalidate();
+    }
+    void OnDisable()
+    {
+        if (map) map.Generated -= Invalidate;
+        Tilemap.tilemapTileChanged -= Changed;
+        dirtyColumns.Clear();
+    }
+    void Invalidate() { dirty = true; dirtyColumns.Clear(); }
     void Changed(Tilemap changed, Tilemap.SyncTile[] changes)
     {
-        if (map && (changed == map.Terrain || changed == map.GrassOverlay)) dirty = true;
+        if (dirty || !map || changes == null ||
+            (changed != map.Terrain && changed != map.GrassOverlay)) return;
+        foreach (var change in changes)
+        {
+            if (change.position.y != 0 || change.position.z != 0) continue;
+            dirtyColumns.Add(change.position.x - 1);
+            dirtyColumns.Add(change.position.x);
+            dirtyColumns.Add(change.position.x + 1);
+        }
     }
     void LateUpdate()
     {
         if (dirty) Sync();
+        else if (dirtyColumns.Count > 0)
+        {
+            if (!leftOverlay || !rightOverlay) Sync();
+            else
+            {
+                foreach (int x in dirtyColumns) SyncColumn(x);
+                dirtyColumns.Clear();
+            }
+        }
         if (map && map.GrassOverlay)
         {
             if (leftOverlay) leftOverlay.transform.localPosition = map.GrassOverlay.transform.localPosition;
@@ -25,7 +56,13 @@ public sealed class GrassRootFill : MonoBehaviour
         }
     }
     public void Configure(MapGenerator owner, TileBase left, TileBase right)
-    { map = owner; leftTile = left; rightTile = right; Sync(); }
+    {
+        if (map) map.Generated -= Invalidate;
+        map = owner; leftTile = left; rightTile = right;
+        if (map && isActiveAndEnabled) map.Generated += Invalidate;
+        Invalidate();
+        Sync();
+    }
 
     public void Sync()
     {
@@ -37,13 +74,21 @@ public sealed class GrassRootFill : MonoBehaviour
         rightOverlay.ClearAllTiles();
         int width = map.GeneratedWidth;
         for (int x = -width / 2; x < -width / 2 + width; x++)
-        {
-            var cell = new Vector3Int(x, 0, 0);
-            if (!map.Terrain.HasTile(cell)) continue;
-            if (!map.Terrain.HasTile(cell + Vector3Int.left)) leftOverlay.SetTile(cell, leftTile);
-            if (!map.Terrain.HasTile(cell + Vector3Int.right)) rightOverlay.SetTile(cell, rightTile);
-        }
+            SyncColumn(x);
         dirty = false;
+        dirtyColumns.Clear();
+    }
+
+    void SyncColumn(int x)
+    {
+        int width = map.GeneratedWidth;
+        if (x < -width / 2 || x >= -width / 2 + width) return;
+        var cell = new Vector3Int(x, 0, 0);
+        bool solid = map.Terrain.HasTile(cell);
+        TileBase left = solid && !map.Terrain.HasTile(cell + Vector3Int.left) ? leftTile : null;
+        TileBase right = solid && !map.Terrain.HasTile(cell + Vector3Int.right) ? rightTile : null;
+        if (leftOverlay.GetTile(cell) != left) leftOverlay.SetTile(cell, left);
+        if (rightOverlay.GetTile(cell) != right) rightOverlay.SetTile(cell, right);
     }
 
     Tilemap EnsureOverlay(Tilemap overlay, string objectName)

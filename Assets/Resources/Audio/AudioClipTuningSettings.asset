@@ -49,3 +49,11 @@ MonoBehaviour:
     volume: 0.39
     pitch: 1
     pitchSpread: 0
+  - clip: {fileID: 8300000, guid: c3fcae6935dabec43b5577ed0fc44d9b, type: 3}
+    volume: 0.73
+    pitch: 1.1
+    pitchSpread: 0.04
+  - clip: {fileID: 8300000, guid: a4b89e5ae3ea6304a97ad7b1e084d6e2, type: 3}
+    volume: 1
+    pitch: 0.61
+    pitchSpread: 0

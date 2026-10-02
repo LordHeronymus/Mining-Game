@@ -33,8 +33,10 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
     public Vector4 ChamberLightSize => ChamberLightMask ? new Vector4(ChamberLightMask.width,ChamberLightMask.height,0,0) : Vector4.zero;
     public bool IsCompleting => completing;
     public Vector3 AltarPosition => map ? map.Terrain.CellToWorld(chamberOrigin)+new Vector3(CellSize*.5f,0f,0f) : Vector3.zero;
-    public Vector4 LightSource => root && hasLayout ? new Vector4(AltarPosition.x,AltarPosition.y+CellSize*1.35f,CellSize*14f,maskIntensity) : Vector4.zero;
+    public Vector4 LightSource => root && hasLayout ? new Vector4(AltarPosition.x,AltarPosition.y+AltarVisualY(CellSize*1.35f),CellSize*14f*AltarScale,maskIntensity) : Vector4.zero;
     public float CellSize => map ? Mathf.Abs(map.Terrain.CellToWorld(Vector3Int.right).x-map.Terrain.CellToWorld(Vector3Int.zero).x) : 1f;
+    float AltarScale => map ? Mathf.Clamp(map.altarSize,.25f,3f) : 1f;
+    float AltarVisualY(float unscaledY) => -.2f*CellSize+(unscaledY+.2f*CellSize)*AltarScale;
 
     MapGenerator map;
     GameObject root;
@@ -331,13 +333,13 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
         foreach(var material in materials)
         {
             material.SetFloat("_Charge",q); material.SetFloat("_Power",power);
-            material.SetVector("_AltarOrigin",new Vector4(AltarPosition.x,AltarPosition.y+CellSize*1.35f,CellSize,0));
+            material.SetVector("_AltarOrigin",new Vector4(AltarPosition.x,AltarPosition.y+AltarVisualY(CellSize*1.35f),CellSize*AltarScale,0));
         }
         if(altarLight)
         {
             altarLight.intensity=power*1.5f;
-            altarLight.pointLightInnerRadius=CellSize*Mathf.Lerp(.6f,2.5f,q);
-            altarLight.pointLightOuterRadius=CellSize*Mathf.Lerp(3f,12f,q);
+            altarLight.pointLightInnerRadius=CellSize*AltarScale*Mathf.Lerp(.6f,2.5f,q);
+            altarLight.pointLightOuterRadius=CellSize*AltarScale*Mathf.Lerp(3f,12f,q);
         }
         if(sparks)
         {
@@ -367,12 +369,12 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
         BuildBackdrop(MakeMaterial(shader,wall,0),layer,order-2);
         BuildShellMesh(MakeMaterial(shader,stone,1),layer,order+2);
         // Separate object behind the player; the altar does not block either passage.
-        float width=CellSize*6.2f, height=CellSize*3.9f;
+        float width=CellSize*6.2f*AltarScale, height=CellSize*3.9f*AltarScale;
         BuildQuad("Ultronium altar",AltarPosition+Vector3.up*(height*.5f-.20f*CellSize),new Vector2(width,height),MakeMaterial(shader,altar,2),layer,order+3);
-        BuildQuad("Basin glow",AltarPosition+Vector3.up*CellSize*1.58f,new Vector2(CellSize*2.5f,CellSize*1.2f),MakeMaterial(shader,Texture2D.whiteTexture,3),layer,order+4);
-        BuildQuad("Rising energy",AltarPosition+Vector3.up*CellSize*2.7f,new Vector2(CellSize*1.65f,CellSize*2.4f),MakeMaterial(shader,Texture2D.whiteTexture,5),layer,order+4);
+        BuildQuad("Basin glow",AltarPosition+Vector3.up*AltarVisualY(CellSize*1.58f),new Vector2(CellSize*2.5f,CellSize*1.2f)*AltarScale,MakeMaterial(shader,Texture2D.whiteTexture,3),layer,order+4);
+        BuildQuad("Rising energy",AltarPosition+Vector3.up*AltarVisualY(CellSize*2.7f),new Vector2(CellSize*1.65f,CellSize*2.4f)*AltarScale,MakeMaterial(shader,Texture2D.whiteTexture,5),layer,order+4);
         var lightObject=new GameObject("Altar Light"); lightObject.transform.SetParent(root.transform,false);
-        lightObject.transform.position=AltarPosition+Vector3.up*CellSize*1.35f;
+        lightObject.transform.position=AltarPosition+Vector3.up*AltarVisualY(CellSize*1.35f);
         altarLight=lightObject.AddComponent<Light2D>(); altarLight.lightType=Light2D.LightType.Point;
         altarLight.color=new Color(.65f,.14f,1f); altarLight.shadowsEnabled=false;
         BuildSparks(layer,order+5);
@@ -446,7 +448,7 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
     void BuildSparks(int layer,int order)
     {
         var go=new GameObject("Altar sparks"); go.transform.SetParent(root.transform,false);
-        go.transform.position=AltarPosition+Vector3.up*CellSize*1.6f;
+        go.transform.position=AltarPosition+Vector3.up*AltarVisualY(CellSize*1.6f);
         sparks=go.AddComponent<ParticleSystem>(); sparks.Stop(true,ParticleSystemStopBehavior.StopEmittingAndClear);
         var main=sparks.main; main.loop=true; main.playOnAwake=false; main.maxParticles=160;
         main.simulationSpace=ParticleSystemSimulationSpace.World;
@@ -464,7 +466,7 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
     {
         var go=new GameObject("Altar interaction",typeof(RectTransform),typeof(Canvas),typeof(CanvasGroup),typeof(GraphicRaycaster));
         go.transform.SetParent(root.transform,false);
-        go.transform.position=AltarPosition+Vector3.up*CellSize*4.4f; go.transform.localScale=Vector3.one*(CellSize/110f);
+        go.transform.position=AltarPosition+Vector3.up*AltarVisualY(CellSize*4.4f); go.transform.localScale=Vector3.one*(CellSize/110f);
         var canvas=go.GetComponent<Canvas>(); canvas.renderMode=RenderMode.WorldSpace; canvas.worldCamera=Camera.main;
         canvas.sortingLayerName="UI"; canvas.sortingOrder=200;
         var rect=(RectTransform)go.transform; rect.sizeDelta=new Vector2(280,140);

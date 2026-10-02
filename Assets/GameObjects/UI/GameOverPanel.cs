@@ -142,7 +142,7 @@ public sealed class GameOverPanel : MonoBehaviour
         var stats = StatsManager.Instance ? StatsManager.Instance : FindFirstObjectByType<StatsManager>();
         if (stats) Destroy(stats.gameObject);
         yield return null;
-        SceneManager.LoadScene(sceneIndex);
+        LoadingScreen.LoadScene(sceneIndex);
     }
 
     void ReturnToMainMenu()
@@ -151,7 +151,7 @@ public sealed class GameOverPanel : MonoBehaviour
         const string mainMenuScene = "MainMenu";
         if (Application.CanStreamedLevelBeLoaded(mainMenuScene))
         {
-            SceneManager.LoadScene(mainMenuScene);
+            RunNavigation.MainMenu();
             return;
         }
 

@@ -7,13 +7,17 @@ public class ShopBuilding : MonoBehaviour
 
     [SerializeField] float fadeDuration = 0.1f;
 
+    static bool IsPlayer(Collider2D other) => other && other.GetComponentInParent<PlayerMovement>();
+
     void OnTriggerEnter2D(Collider2D other)
     {
+        if (!IsPlayer(other)) return;
         StartCoroutine(FadePanel(true));
     }
 
     void OnTriggerExit2D(Collider2D other)
     {
+        if (!IsPlayer(other)) return;
         StartCoroutine(FadePanel(false));
     }
 

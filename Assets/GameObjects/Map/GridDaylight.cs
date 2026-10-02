@@ -21,6 +21,7 @@ public sealed class GridDaylight
 
     public event Action<int, float> LightChanged;
     public bool HasPendingWork => queue.Count > 0;
+    public int PendingWorkCount => queue.Count;
     public float this[int x, int depth] => light[depth * width + x];
 
     public GridDaylight(int width, int height, bool[] solid, float daylight,

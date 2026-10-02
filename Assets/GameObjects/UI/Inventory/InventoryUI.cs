@@ -194,7 +194,8 @@ public class InventoryUI : MonoBehaviour
     static int ItemOrder(ItemSO item) => item.item switch
     {
         Item.Coal => 0, Item.Iron => 1, Item.Copper => 2, Item.Silver => 3,
-        Item.Gold => 4, Item.Diamond => 5, Item.Platinum => 6, Item.OrangeGarnet => 7,
+        Item.Gold => 4, Item.Diamond => 5, Item.Emerald => 6, Item.Ruby => 7,
+        Item.Mythril => 8, Item.Platinum => 9, Item.OrangeGarnet => 10,
         Item.Wood => 8, Item.PlantFiber => 9, Item.HealingHerbs => 10, Item.Rope => 11,
         Item.Nails => 12, Item.Torche => 13, Item.Dynamite => 14, Item.Ladder => 15,
         Item.BridgePart => 16, _ => 17 + (int)item.item

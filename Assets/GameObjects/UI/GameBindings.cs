@@ -6,7 +6,7 @@ public enum GameAction
     MoveLeft, MoveRight, MoveUp, MoveDown, Jump, Inventory, Workbench, Settings,
     Mine, Place, Remove, SmartCursor, QuickLadder, UseMedkit, PreviousSlot, NextSlot,
     Slot1, Slot2, Slot3, Slot4, Slot5, Slot6, Slot7, Slot8,
-    SellTen, SellAll, DebugPanel
+    SellTen, SellAll, DebugPanel, Map
 }
 
 public static class GameBindings
@@ -48,7 +48,8 @@ public static class GameBindings
         new(GameAction.Slot8, "Hotbar 8", KeyCode.Alpha8, KeyCode.Keypad8),
         new(GameAction.SellTen, "Zehn verkaufen", KeyCode.LeftShift, KeyCode.RightShift),
         new(GameAction.SellAll, "Alles verkaufen", KeyCode.LeftControl, KeyCode.RightControl),
-        new(GameAction.DebugPanel, "Debug-Einstellungen", KeyCode.F1)
+        new(GameAction.DebugPanel, "Debug-Einstellungen", KeyCode.F1),
+        new(GameAction.Map, "Karte", KeyCode.M)
     };
 
     static readonly KeyCode[,] keys = new KeyCode[Entries.Length, 2];

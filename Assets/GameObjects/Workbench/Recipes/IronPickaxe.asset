@@ -26,8 +26,8 @@ MonoBehaviour:
   pluralName: Eisenspitzhacken
   ingredients:
   - item: {fileID: 11400000, guid: 75e7eb8e62b50c64eb4dd8132de34314, type: 2}
-    amount: 3
-  - item: {fileID: 11400000, guid: 13a72d4a121bd0e499c2737ebc0b56ed, type: 2}
-    amount: 6
+    amount: 10
   - item: {fileID: 11400000, guid: 7118deb47d14256439f8c99ab5625311, type: 2}
-    amount: 2
+    amount: 4
+  - item: {fileID: 11400000, guid: d5aa54ded394ecc4a9ed9cc06414c941, type: 2}
+    amount: 10

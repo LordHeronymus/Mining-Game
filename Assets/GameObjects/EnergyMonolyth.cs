@@ -10,13 +10,17 @@ public class EnergyMonolyth : MonoBehaviour
     [SerializeField] float rechargeCost = 1.0f;
     [SerializeField] float fadeDuration = 0.1f;
 
+    static bool IsPlayer(Collider2D other) => other && other.GetComponentInParent<PlayerMovement>();
+
     void OnTriggerEnter2D(Collider2D other)
     {
+        if (!IsPlayer(other)) return;
         StartCoroutine(FadePanel(true));
     }
 
     void OnTriggerExit2D(Collider2D other)
     {
+        if (!IsPlayer(other)) return;
         StartCoroutine(FadePanel(false));
     }
 
@@ -55,8 +59,10 @@ public class EnergyMonolyth : MonoBehaviour
         }
         else
         {
-            stats.AddMoney(-stats.Money);
-            energyManager.energy += stats.Money / rechargeCost;
+            int availableMoney = stats.Money;
+            float affordableEnergy = availableMoney / rechargeCost;
+            stats.AddMoney(-availableMoney);
+            energyManager.energy = Mathf.Min(stats.MaxEnergy, energyManager.energy + affordableEnergy);
         }
     }
 }

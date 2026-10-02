@@ -69,6 +69,7 @@ public sealed class CompactHud : MonoBehaviour
         Array.Resize(ref slots, 8);
         LoadSlotLayout();
         if (RemoveIneligibleSlots()) SaveSlotLayout();
+        AddStartingResourcesToSlots();
         visibility = gameObject.AddComponent<CanvasGroup>();
         ladder = player ? player.GetComponent<PlayerLadder>() : null;
         workbench = UnityEngine.Object.FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include);
@@ -234,7 +235,6 @@ public sealed class CompactHud : MonoBehaviour
     {
         if (index < 1 || index > 8) return;
         var item = slots[index - 1];
-        if (!IsKnownHotbarItem(item)) return;
         if (item && item.item == Item.Medkit)
         {
             bool inventoryOpen = inventoryPanel && inventoryPanel.IsOpen && !GameOverPanel.IsOpen;
@@ -247,8 +247,7 @@ public sealed class CompactHud : MonoBehaviour
     }
     public bool SelectSlot(int index)
     {
-        if (GameplayInputBlocker.IsBlocked || index < 0 || index >= 9 ||
-            (index > 0 && !IsKnownHotbarItem(slots[index - 1]))) return false;
+        if (GameplayInputBlocker.IsBlocked || index < 0 || index >= 9) return false;
         SelectedSlot = index;
         if (ladder) ladder.SetBuildMode(SelectedItem && SelectedItem.item == Item.Ladder);
         wasBuilding = ladder && ladder.BuildMode;
@@ -256,11 +255,24 @@ public sealed class CompactHud : MonoBehaviour
     }
     public void AssignSlot(int index, ItemSO item)
     {
+        AssignSlotInternal(index, item, true);
+    }
+    public void RestoreRunSlots(int[] ids, int selected)
+    {
+        for (int i = 0; i < slots.Length; i++)
+            slots[i] = ids != null && i < ids.Length && ids[i] >= 0 ? StartingResourcesSettings.Resolve(ids[i]) : null;
+        SelectedSlot = Mathf.Clamp(selected, 0, 8);
+        if (ladder) ladder.SetBuildMode(SelectedItem && SelectedItem.item == Item.Ladder);
+        wasBuilding = ladder && ladder.BuildMode;
+        RefreshItems();
+    }
+    void AssignSlotInternal(int index, ItemSO item, bool persist)
+    {
         if (index < 1 || index > 8) throw new ArgumentOutOfRangeException(nameof(index));
         if (item && !IsHotbarItem(item)) throw new ArgumentException("Item cannot be used from the hotbar.", nameof(item));
         slots[index - 1] = item;
         if (SelectedSlot == index && ladder) ladder.SetBuildMode(IsKnownHotbarItem(item) && item.item == Item.Ladder);
-        SaveSlotLayout();
+        if (persist) SaveSlotLayout();
         RefreshItems();
     }
     public bool CanReorderSlot(int index) => !GameplayInputBlocker.IsBlocked && index >= 1 && index <= 8 &&
@@ -344,6 +356,21 @@ public sealed class CompactHud : MonoBehaviour
     }
     const string SlotLayoutVersion = "CompactHud.SlotLayoutVersion";
     const string SlotLayoutPrefix = "CompactHud.Slot.";
+    public void AddStartingResourcesToSlots()
+    {
+        bool changed = false;
+        foreach (var resource in StartingResourcesSettings.Load().items)
+        {
+            if (resource.amount <= 0) continue;
+            var item = StartingResourcesSettings.Resolve(resource.itemId);
+            if (!IsHotbarItem(item) || Array.Exists(slots, slot => slot && slot.item == item.item)) continue;
+            int freeSlot = Array.FindIndex(slots, slot => !slot);
+            if (freeSlot < 0) break;
+            slots[freeSlot] = item;
+            changed = true;
+        }
+        if (changed) SaveSlotLayout();
+    }
     void LoadSlotLayout()
     {
         if (PlayerPrefs.GetInt(SlotLayoutVersion, 0) != 1) return;
@@ -375,7 +402,6 @@ public sealed class CompactHud : MonoBehaviour
     {
         if (SelectedSlot > 0 && !IsKnownHotbarItem(slots[SelectedSlot - 1]))
         {
-            SelectedSlot = 0;
             if (ladder) ladder.SetBuildMode(false);
             wasBuilding = false;
         }

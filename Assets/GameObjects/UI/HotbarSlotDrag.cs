@@ -3,7 +3,17 @@ using UnityEngine.EventSystems;
 
 public sealed class HotbarSlotDrag : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
 {
-    const float HoldDuration = .5f;
+    const string HoldDurationKey = "hotbar.dragHoldDuration";
+    public static float HoldDuration
+    {
+        get => Mathf.Clamp(PlayerPrefs.GetFloat(HoldDurationKey, .5f), 0f, 2f);
+        set
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value)) return;
+            PlayerPrefs.SetFloat(HoldDurationKey, Mathf.Clamp(value, 0f, 2f));
+            PlayerPrefs.Save();
+        }
+    }
 
     public CompactHud hud;
     public int slotIndex;

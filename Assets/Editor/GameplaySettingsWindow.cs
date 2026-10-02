@@ -13,7 +13,7 @@ using Object = UnityEngine.Object;
 // into a second configuration asset that could drift out of sync.
 public class GameplaySettingsWindow : EditorWindow
 {
-    static readonly string[] Tabs = { "Spieler", "Bewegung", "Upgrades", "Map", "Erzverteilung", "Partikel", "Licht", "Werkbank", "Shop", "Audio", "Pflanzen", "Tiere", "Health", "Artefakte" };
+    static readonly string[] Tabs = { "Spieler", "Bewegung", "Upgrades", "Map", "Erzverteilung", "Partikel", "Licht", "Werkbank", "Shop", "Audio", "Pflanzen", "Tiere", "Health", "Artefakte", "UI" };
     [SerializeField] int tab;
     [SerializeField] int tabLayoutVersion;
     [SerializeField] StatsManager stats;
@@ -26,6 +26,7 @@ public class GameplaySettingsWindow : EditorWindow
     [SerializeField] EnergyMonolyth station;
     [SerializeField] MapGenerator map;
     [SerializeField] MapLighting lighting;
+    [SerializeField] PlayerMapDiscovery mapDiscovery;
     [SerializeField] OreSparkles oreSparkles;
     [SerializeField] BlockBreakParticles blockBreakParticles;
     [SerializeField] ItemFeed itemFeed;
@@ -55,6 +56,8 @@ public class GameplaySettingsWindow : EditorWindow
     string selectedCurvePath;
     int selectedCurveKey = -1;
     readonly Dictionary<string, Vector2> curveViews = new Dictionary<string, Vector2>();
+    int draggingIngredientIndex = -1;
+    int ingredientDragControlId;
 
     [MenuItem("Mining Game/Gameplay Settings")]
     public static void Open()
@@ -131,6 +134,7 @@ public class GameplaySettingsWindow : EditorWindow
         station = Resolve(station);
         map = Resolve(map);
         lighting = Resolve(lighting);
+        mapDiscovery = Resolve(mapDiscovery);
         oreSparkles = Resolve(oreSparkles);
         blockBreakParticles = Resolve(blockBreakParticles);
         itemFeed = Resolve(itemFeed);
@@ -242,6 +246,7 @@ public class GameplaySettingsWindow : EditorWindow
                 case 11: DrawAnimals(); break;
                 case 12: DrawHealth(); break;
                 case 13: DrawArtifacts(); break;
+                case 14: DrawUI(); break;
             }
         }
         EditorGUILayout.Space(12);
@@ -467,6 +472,26 @@ public class GameplaySettingsWindow : EditorWindow
 
     void DrawAudio()
     {
+        EditorGUI.BeginChangeCheck();
+        float masterVolume = EditorGUILayout.Slider("Gesamtlautstärke (%)", PlayerSettings.Master * 100f, 0f, 100f);
+        if (EditorGUI.EndChangeCheck()) PlayerSettings.Master = masterVolume / 100f;
+
+        var rubbleAudio = Resources.Load<RubbleAudioSettingsAsset>("Audio/RubbleAudioSettings");
+        if (rubbleAudio) CollapsibleSection("audio-rubble", "Rubble", rubbleAudio, data =>
+        {
+            Float(data, "minimumDelaySeconds", "Versatz min. (s)", "", 0f, 10f);
+            Float(data, "maximumDelaySeconds", "Versatz max. (s)", "",
+                data.FindProperty("minimumDelaySeconds").floatValue, 10f);
+            Float(data, "nextClipStartPercent", "Nächster Clip ab (%)", "", 0f, 100f);
+        }, false);
+        var loadingAudio = Resources.Load<LoadingAudioSettingsAsset>("Audio/LoadingAudioSettings");
+        if (loadingAudio) CollapsibleSection("audio-loading", "Ladebildschirm", loadingAudio, data =>
+        {
+            VolumeSlider(data, "yogaVolume", "Yoga-Lautstärke (%)");
+            VolumeSlider(data, "pickaxeVolume", "Spitzhacke-Lautstärke (%)");
+            Float(data, "worldFadeInSeconds", "Spiel-Ambience einblenden (s)", "", 0f, 30f);
+            Float(data, "yogaFadeOutSeconds", "Yoga ausblenden (s)", "", 0f, 30f);
+        }, false);
         CollapsibleSection("audio-ambience", "Ambience", sceneComponents.OfType<AudioManager>().FirstOrDefault(), data =>
         {
             VolumeSlider(data, "ambienceVolume", "Gesamtlautstärke (%)");
@@ -657,22 +682,61 @@ public class GameplaySettingsWindow : EditorWindow
             var choices = items.Where(item => item != selectedRecipe.output).ToArray();
             var names = new[] { "Auswählen" }.Concat(choices.Select(item => item.displayName)).ToArray();
             int remove = -1;
+            var rowRects = new Rect[ingredients.arraySize];
             for (int i = 0; i < ingredients.arraySize; i++)
             {
                 var ingredient = ingredients.GetArrayElementAtIndex(i);
                 var item = ingredient.FindPropertyRelative("item");
                 var amount = ingredient.FindPropertyRelative("amount");
-                using (new EditorGUILayout.HorizontalScope())
+                Rect rowRect = GUILayoutUtility.GetRect(0, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
+                rowRects[i] = rowRect;
+                var dragRect = new Rect(rowRect.x, rowRect.y, 24, rowRect.height);
+                DrawIngredientDragHandle(dragRect);
+                EditorGUIUtility.AddCursorRect(dragRect, MouseCursor.Pan);
+                int controlId = GUIUtility.GetControlID(FocusType.Passive);
+                Event currentEvent = Event.current;
+                if (currentEvent.type == EventType.MouseDown && currentEvent.button == 0 && dragRect.Contains(currentEvent.mousePosition))
                 {
-                    int current = Array.IndexOf(choices, item.objectReferenceValue as ItemSO) + 1;
-                    EditorGUI.BeginChangeCheck();
-                    int next = EditorGUILayout.Popup(current, names);
-                    if (EditorGUI.EndChangeCheck()) item.objectReferenceValue = next > 0 ? choices[next - 1] : null;
-                    EditorGUI.BeginChangeCheck();
-                    int value = EditorGUILayout.IntField(amount.intValue, GUILayout.Width(100));
-                    if (EditorGUI.EndChangeCheck()) amount.intValue = Mathf.Max(1, value);
-                    using (new EditorGUI.DisabledScope(ingredients.arraySize <= 1))
-                        if (GUILayout.Button("−", GUILayout.Width(26))) remove = i;
+                    draggingIngredientIndex = i;
+                    ingredientDragControlId = controlId;
+                    GUIUtility.hotControl = controlId;
+                    currentEvent.Use();
+                }
+
+                float x = rowRect.x + dragRect.width + 4f;
+                float removeWidth = 26f;
+                float amountWidth = 100f;
+                float gap = 6f;
+                float popupWidth = Mathf.Max(80f, rowRect.width - dragRect.width - 4f - amountWidth - removeWidth - gap * 2f);
+                int current = Array.IndexOf(choices, item.objectReferenceValue as ItemSO) + 1;
+                EditorGUI.BeginChangeCheck();
+                int next = EditorGUI.Popup(new Rect(x, rowRect.y, popupWidth, rowRect.height), current, names);
+                if (EditorGUI.EndChangeCheck()) item.objectReferenceValue = next > 0 ? choices[next - 1] : null;
+                x += popupWidth + gap;
+                EditorGUI.BeginChangeCheck();
+                int value = EditorGUI.IntField(new Rect(x, rowRect.y, amountWidth, rowRect.height), amount.intValue);
+                if (EditorGUI.EndChangeCheck()) amount.intValue = Mathf.Max(1, value);
+                x += amountWidth + gap;
+                using (new EditorGUI.DisabledScope(ingredients.arraySize <= 1))
+                    if (GUI.Button(new Rect(x, rowRect.y, removeWidth, rowRect.height), "−")) remove = i;
+            }
+
+            if (draggingIngredientIndex >= 0 && GUIUtility.hotControl == ingredientDragControlId)
+            {
+                if (Event.current.type == EventType.MouseDrag)
+                {
+                    Event.current.Use();
+                    Repaint();
+                }
+                else if (Event.current.type == EventType.MouseUp)
+                {
+                    int target = Array.FindIndex(rowRects, rect => rect.Contains(Event.current.mousePosition));
+                    if (target >= 0 && target != draggingIngredientIndex)
+                        ingredients.MoveArrayElement(draggingIngredientIndex, target);
+                    draggingIngredientIndex = -1;
+                    GUIUtility.hotControl = 0;
+                    Event.current.Use();
+                    GUI.changed = true;
                 }
             }
             if (remove >= 0) ingredients.DeleteArrayElementAtIndex(remove);
@@ -727,6 +791,16 @@ public class GameplaySettingsWindow : EditorWindow
         }
     }
 
+    static void DrawIngredientDragHandle(Rect rect)
+    {
+        GUI.Box(rect, GUIContent.none, EditorStyles.miniButton);
+        Color grip = EditorGUIUtility.isProSkin ? new Color(.78f, .81f, .84f, .9f) : new Color(.24f, .27f, .3f, .9f);
+        float centerX = rect.center.x;
+        for (int row = 0; row < 3; row++)
+            for (int column = 0; column < 2; column++)
+                EditorGUI.DrawRect(new Rect(centerX - 3f + column * 4f, rect.center.y - 4f + row * 4f, 2f, 2f), grip);
+    }
+
     void DrawShop()
     {
         var shopRecipes = recipes.Where(RecipeUnlocks.IsShopRecipe)
@@ -742,10 +816,13 @@ public class GameplaySettingsWindow : EditorWindow
                 Item.Silver => 3,
                 Item.Gold => 4,
                 Item.Diamond => 5,
-                Item.Platinum => 6,
-                Item.Ultronium => 7,
-                Item.OrangeGarnet => 8,
-                _ => 9
+                Item.Emerald => 6,
+                Item.Ruby => 7,
+                Item.Platinum => 8,
+                Item.Mythril => 9,
+                Item.Ultronium => 10,
+                Item.OrangeGarnet => 11,
+                _ => 12
             }).ToArray();
 
         EditorGUILayout.Space(8);
@@ -962,6 +1039,22 @@ public class GameplaySettingsWindow : EditorWindow
                     ? levels.GetArrayElementAtIndex(next - 1).floatValue : 30f;
             }
         }, false);
+        Section("Energiekapazität (×)", upgradeSettings, data =>
+        {
+            var levels = data.FindProperty("energyCapacityMultipliers");
+            if (levels.arraySize != 8) levels.arraySize = 8;
+            levels.GetArrayElementAtIndex(0).floatValue = 1f;
+            for (int i = 0; i < levels.arraySize; i++)
+            {
+                var level = levels.GetArrayElementAtIndex(i);
+                using (new EditorGUI.DisabledScope(i == 0))
+                {
+                    EditorGUI.BeginChangeCheck();
+                    float value = EditorGUILayout.FloatField("Level " + (i + 1), level.floatValue);
+                    if (EditorGUI.EndChangeCheck() && Finite(value)) level.floatValue = Mathf.Max(1f, value);
+                }
+            }
+        }, false);
         Section("Spitzhacken", upgradeSettings, data =>
         {
             var levels = data.FindProperty("pickaxeLevels");
@@ -1080,6 +1173,25 @@ public class GameplaySettingsWindow : EditorWindow
             Float(data, "heartbeatFlashOffsetSeconds", "Herzschlag-Versatz (s)", "", -1f, 1f);
         });
     }
+
+    void DrawUI()
+    {
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            EditorGUILayout.LabelField("Hotbar", EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            float holdDuration = EditorGUILayout.Slider("Drag-Haltezeit (s)", HotbarSlotDrag.HoldDuration, 0f, 2f);
+            if (EditorGUI.EndChangeCheck()) HotbarSlotDrag.HoldDuration = holdDuration;
+        }
+        mapDiscovery = Picker("Spielerkarte", mapDiscovery);
+        Section("UI Map", mapDiscovery, data =>
+        {
+            EditorGUILayout.Slider(data.FindProperty("revealLightThreshold"), 0f, 1f,
+                new GUIContent("Lichtschwelle"));
+            EditorGUILayout.Slider(data.FindProperty("panelAlpha"), 0f, 1f,
+                new GUIContent("Panel-Alpha"));
+        });
+    }
     void DrawEnergy()
     {
         EditorGUILayout.Space(8);
@@ -1102,7 +1214,6 @@ public class GameplaySettingsWindow : EditorWindow
         }
         station = Picker("Aufladestation", station);
         Section("Aufladen", station, data => Float(data, "rechargeCost", "Preis pro Energieeinheit", "Geldkosten pro fehlender Energieeinheit. Die aktuelle Aufladelogik rundet auf ganze Münzen ab.", 0.01f));
-        EditorGUILayout.HelpBox("Aktueller Spielstand: Leere Energie stoppt Bewegung/Abbau noch nicht. Teilaufladung bei zu wenig Geld enthält einen bekannten Berechnungsfehler; Details in der Gameplay-Analyse.", MessageType.Warning);
         }
     }
 
@@ -1239,6 +1350,23 @@ public class GameplaySettingsWindow : EditorWindow
                 new GUIContent("Float-Amplitude (Kacheln)"));
             EditorGUILayout.Slider(data.FindProperty("altarButtonFloatFrequency"), 0f, 3f,
                 new GUIContent("Float-Frequenz (Hz)"));
+        }, false);
+        CollapsibleSection("map-objects", "Map-Objekte", map, data =>
+        {
+            EditorGUILayout.Slider(data.FindProperty("shopSize"), .25f, 3f, new GUIContent("Shop-Größe"));
+            EditorGUILayout.Slider(data.FindProperty("workshopSize"), .25f, 3f, new GUIContent("Workshop-Größe"));
+            EditorGUILayout.Slider(data.FindProperty("altarSize"), .25f, 3f, new GUIContent("Altar-Größe"));
+            EditorGUILayout.Slider(data.FindProperty("energyMonolythSize"), .25f, 3f, new GUIContent("Energy Monolyth-Größe"));
+            if (tallGrass)
+            {
+                var grassData = new SerializedObject(tallGrass);
+                grassData.Update();
+                EditorGUILayout.Slider(grassData.FindProperty("grassSizeMultiplier"), .25f, 3f,
+                    new GUIContent("Gras-Größe"));
+                EditorGUILayout.Slider(grassData.FindProperty("healingHerbSizeMultiplier"), .25f, 3f,
+                    new GUIContent("Heilkraut-Größe"));
+                Apply(grassData);
+            }
         }, false);
         if (Registry)
         {
@@ -1994,8 +2122,11 @@ public class GameplaySettingsWindow : EditorWindow
             case BlockType.DiamondOre: return 16;
             case BlockType.TitaniumOre: return 17;
             case BlockType.TungstenOre: return 18;
-            case BlockType.UltroniumOre: return 19;
-            case BlockType.OrangeGarnetOre: return 20;
+            case BlockType.MythrilOre: return 19;
+            case BlockType.EmeraldOre: return 20;
+            case BlockType.RubyOre: return 21;
+            case BlockType.UltroniumOre: return 22;
+            case BlockType.OrangeGarnetOre: return 23;
             default: return 90;
         }
     }
@@ -2197,10 +2328,15 @@ public class GameplaySettingsWindow : EditorWindow
         if (!data.ApplyModifiedProperties()) return;
         if (data.targetObject is Component component)
         {
-            if (component is SurfaceTallGrass grass && !Application.isPlaying) grass.Rebuild();
+            if (component is SurfaceTallGrass grass)
+            {
+                if (Application.isPlaying) grass.ApplyPatchSizes();
+                else grass.Rebuild();
+            }
             if (component is MapGenerator map && map.ArtifactOverlay)
                 ArtifactOverlayAppearance.ApplyTo(map.ArtifactOverlay.GetComponent<TilemapRenderer>(),
                     map.artifactEmbeddingStrength);
+            if (component is MapGenerator objectMap) objectMap.ApplyMapObjectSizes();
             PrefabUtility.RecordPrefabInstancePropertyModifications(component);
             EditorSceneManager.MarkSceneDirty(component.gameObject.scene);
             if (component is SkyController sky)

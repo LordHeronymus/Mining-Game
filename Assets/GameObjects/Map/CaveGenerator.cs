@@ -73,7 +73,16 @@ public static class CaveGenerator
     {
         if (width <= 0 || height <= 0) throw new ArgumentOutOfRangeException("Map dimensions must be positive.");
         var result = new bool[checked(width * height)];
-        if (settings == null || !settings.enabled || settings.walkerCount <= 0) return result;
+        var steps = GenerateSteps(settings, seed, width, height, result, ignoredBorderPadding, reserved);
+        while (steps.MoveNext()) { }
+        return result;
+    }
+    public static System.Collections.IEnumerator GenerateSteps(CaveGenerationSettings settings, int seed, int width, int height,
+        bool[] result, int ignoredBorderPadding = 0, Func<int, int, bool> reserved = null, Action<float> progress = null)
+    {
+        if (width <= 0 || height <= 0) throw new ArgumentOutOfRangeException("Map dimensions must be positive.");
+
+        if (settings == null || !settings.enabled || settings.walkerCount <= 0) yield break;
 
         int minimumDepth = Mathf.Clamp(settings.minimumDepth, 0, height - 1);
         float minimumRadius = Mathf.Clamp(Mathf.Min(settings.minimumTunnelRadius,
@@ -81,17 +90,17 @@ public static class CaveGenerator
         float maximumRadius = Mathf.Clamp(Mathf.Max(settings.minimumTunnelRadius,
             settings.maximumTunnelRadius), minimumRadius, 12f);
         // Keep the legacy border argument for existing callers; cave tunnels may now reach side borders.
-        if (minimumDepth >= height - 1) return result;
+        if (minimumDepth >= height - 1) yield break;
 
         int minimumLength = Mathf.Max(1, Mathf.Min(settings.minimumWalkerLength, settings.maximumWalkerLength));
         int maximumLength = Mathf.Max(minimumLength, Mathf.Max(settings.minimumWalkerLength,
             settings.maximumWalkerLength));
         int roots = Mathf.Clamp(settings.walkerCount, 0, 100);
-        if (roots == 0) return result;
+        if (roots == 0) yield break;
 
         var depthWeights = BuildDepthWeights(settings.densityByDepth, minimumDepth, height);
         float totalDepthWeight = depthWeights[depthWeights.Length - 1];
-        if (totalDepthWeight <= 0f) return result;
+        if (totalDepthWeight <= 0f) yield break;
 
         var random = new StableRandom(seed, width, height);
         var horizontalRanks = new int[roots];
@@ -134,10 +143,14 @@ public static class CaveGenerator
                     maximumWalkersPerSystem - createdWalkers, ref random);
                 createdWalkers += walkers.Count - queuedBefore;
             }
+            progress?.Invoke(.8f * (i + 1f) / roots);
+            yield return null;
         }
 
-        Smooth(result, width, height, minimumDepth, reserved);
-        return result;
+        var smoothing = SmoothSteps(result, width, height, minimumDepth, reserved, progress);
+        while (smoothing.MoveNext()) yield return null;
+        progress?.Invoke(1f);
+        yield break;
     }
 
     static float[] BuildDepthWeights(AnimationCurve curve, int minimumDepth, int height)
@@ -432,11 +445,12 @@ public static class CaveGenerator
             }
     }
 
-    static void Smooth(bool[] caves, int width, int height, int minimumDepth,
-        Func<int, int, bool> reserved)
+    static System.Collections.IEnumerator SmoothSteps(bool[] caves, int width, int height, int minimumDepth,
+        Func<int, int, bool> reserved, Action<float> progress)
     {
         var source = (bool[])caves.Clone();
         for (int y = minimumDepth; y < height; y++)
+        {
             for (int x = 0; x < width; x++)
             {
                 int index = y * width + x;
@@ -452,6 +466,12 @@ public static class CaveGenerator
                 if (source[index] && neighbors <= 1) caves[index] = false;
                 else if (!source[index] && neighbors >= 7) caves[index] = true;
             }
+            if ((y & 15) == 15)
+            {
+                progress?.Invoke(.8f + .2f * (y - minimumDepth + 1f) / (height - minimumDepth));
+                yield return null;
+            }
+        }
     }
 
     static float Depth01(int depth, int minimumDepth, int height) =>

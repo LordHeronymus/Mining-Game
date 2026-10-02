@@ -1,0 +1,3198 @@
+fileFormatVersion: 2
+guid: 63fa9494005f52f4081c7f71534dcb8a
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 258289199596618906
+    second: ImpactAtlas_0
+  - first:
+      213: -71639333810363520
+    second: ImpactAtlas_1
+  - first:
+      213: 3408270437732187588
+    second: ImpactAtlas_2
+  - first:
+      213: -158516728576932235
+    second: ImpactAtlas_3
+  - first:
+      213: 9113348574499328412
+    second: ImpactAtlas_4
+  - first:
+      213: 5651404798971203687
+    second: ImpactAtlas_5
+  - first:
+      213: 5060410178778164301
+    second: ImpactAtlas_6
+  - first:
+      213: 6065238973373139574
+    second: ImpactAtlas_7
+  - first:
+      213: 5657528041056630730
+    second: ImpactAtlas_8
+  - first:
+      213: -2947091418028388414
+    second: ImpactAtlas_9
+  - first:
+      213: -7683264844326685290
+    second: ImpactAtlas_10
+  - first:
+      213: 4562089741972687182
+    second: ImpactAtlas_11
+  - first:
+      213: 6608656212262122768
+    second: ImpactAtlas_12
+  - first:
+      213: 2419181248373341220
+    second: ImpactAtlas_13
+  - first:
+      213: 1614128673032589326
+    second: ImpactAtlas_14
+  - first:
+      213: 1985695314314733673
+    second: ImpactAtlas_15
+  - first:
+      213: -4601570290573602575
+    second: ImpactAtlas_16
+  - first:
+      213: -4713065426227834630
+    second: ImpactAtlas_17
+  - first:
+      213: -8760212812655218397
+    second: ImpactAtlas_18
+  - first:
+      213: -5365125694523532261
+    second: ImpactAtlas_19
+  - first:
+      213: 4730017309908736762
+    second: ImpactAtlas_20
+  - first:
+      213: -1327302174833699534
+    second: ImpactAtlas_21
+  - first:
+      213: 5121378528099969011
+    second: ImpactAtlas_22
+  - first:
+      213: 8226432355576338190
+    second: ImpactAtlas_23
+  - first:
+      213: -7714677723642179687
+    second: ImpactAtlas_24
+  - first:
+      213: -884544880467268706
+    second: ImpactAtlas_25
+  - first:
+      213: -6413266460946684863
+    second: ImpactAtlas_26
+  - first:
+      213: -5947023494480037461
+    second: ImpactAtlas_27
+  - first:
+      213: 6866942762110479854
+    second: ImpactAtlas_28
+  - first:
+      213: -3692613500392750181
+    second: ImpactAtlas_29
+  - first:
+      213: 5814238354912905174
+    second: ImpactAtlas_30
+  - first:
+      213: -3997031876819136779
+    second: ImpactAtlas_31
+  - first:
+      213: 8851700471718043295
+    second: ImpactAtlas_32
+  - first:
+      213: 8817700613267432160
+    second: ImpactAtlas_33
+  - first:
+      213: 8111034591848798930
+    second: ImpactAtlas_34
+  - first:
+      213: -5870798285851052968
+    second: ImpactAtlas_35
+  - first:
+      213: -506930081710956210
+    second: ImpactAtlas_36
+  - first:
+      213: 1736291506049961786
+    second: ImpactAtlas_37
+  - first:
+      213: 136273977343800945
+    second: ImpactAtlas_38
+  - first:
+      213: -405651000999651892
+    second: ImpactAtlas_39
+  - first:
+      213: -506496359684381583
+    second: ImpactAtlas_40
+  - first:
+      213: 8467175947193803105
+    second: ImpactAtlas_41
+  - first:
+      213: -3604411040708385969
+    second: ImpactAtlas_42
+  - first:
+      213: -1623701805437713229
+    second: ImpactAtlas_43
+  - first:
+      213: -374273106308266154
+    second: ImpactAtlas_44
+  - first:
+      213: 5684647864794570446
+    second: ImpactAtlas_45
+  - first:
+      213: 5889131645389764482
+    second: ImpactAtlas_46
+  - first:
+      213: 3141281927290182809
+    second: ImpactAtlas_47
+  - first:
+      213: -2544861250329666242
+    second: ImpactAtlas_48
+  - first:
+      213: -8475466336573690612
+    second: ImpactAtlas_49
+  - first:
+      213: -133755387914331965
+    second: ImpactAtlas_50
+  - first:
+      213: 8571674879086294478
+    second: ImpactAtlas_51
+  - first:
+      213: 533826952055196345
+    second: ImpactAtlas_52
+  - first:
+      213: 8437715096919816348
+    second: ImpactAtlas_53
+  - first:
+      213: 5883494383148584284
+    second: ImpactAtlas_54
+  - first:
+      213: 210341559081905384
+    second: ImpactAtlas_55
+  - first:
+      213: -6646270471608162851
+    second: ImpactAtlas_56
+  - first:
+      213: 9030622193645738079
+    second: ImpactAtlas_57
+  - first:
+      213: 3958645786343048619
+    second: ImpactAtlas_58
+  - first:
+      213: -4789831999850646828
+    second: ImpactAtlas_59
+  - first:
+      213: 487297247637373969
+    second: ImpactAtlas_60
+  - first:
+      213: -6408593695065806441
+    second: ImpactAtlas_61
+  - first:
+      213: 2460604714513883541
+    second: ImpactAtlas_62
+  - first:
+      213: -6166858911357955607
+    second: ImpactAtlas_63
+  - first:
+      213: 6324350287379480194
+    second: ImpactAtlas_64
+  - first:
+      213: 160075379475369160
+    second: ImpactAtlas_65
+  - first:
+      213: -7168572232647603220
+    second: ImpactAtlas_66
+  - first:
+      213: -8492856414753483528
+    second: ImpactAtlas_67
+  - first:
+      213: 5124661480698595111
+    second: ImpactAtlas_68
+  - first:
+      213: -482002694139770888
+    second: ImpactAtlas_69
+  - first:
+      213: 5077638178475749113
+    second: ImpactAtlas_70
+  - first:
+      213: 2521563906942710302
+    second: ImpactAtlas_71
+  - first:
+      213: 624081482917176210
+    second: ImpactAtlas_72
+  - first:
+      213: 6787859193700135388
+    second: ImpactAtlas_73
+  - first:
+      213: -3623123751777333677
+    second: ImpactAtlas_74
+  - first:
+      213: -8144383397442106179
+    second: ImpactAtlas_75
+  - first:
+      213: 1421026615811107428
+    second: ImpactAtlas_76
+  - first:
+      213: -7540849007520857305
+    second: ImpactAtlas_77
+  - first:
+      213: 8994203900731139434
+    second: ImpactAtlas_78
+  - first:
+      213: -5121073046078485138
+    second: ImpactAtlas_79
+  - first:
+      213: 5522502603056210510
+    second: ImpactAtlas_80
+  - first:
+      213: -5172580708372741369
+    second: ImpactAtlas_81
+  - first:
+      213: 1895497874747221020
+    second: ImpactAtlas_82
+  - first:
+      213: 8128849574279647413
+    second: ImpactAtlas_83
+  - first:
+      213: -6793077808465573598
+    second: ImpactAtlas_84
+  - first:
+      213: -9010827254070234980
+    second: ImpactAtlas_85
+  - first:
+      213: 7577819114713516109
+    second: ImpactAtlas_86
+  - first:
+      213: 49738056951162824
+    second: ImpactAtlas_87
+  - first:
+      213: 1320745316087630161
+    second: ImpactAtlas_88
+  - first:
+      213: 9051910615070459461
+    second: ImpactAtlas_89
+  - first:
+      213: -8439310797856637944
+    second: ImpactAtlas_90
+  - first:
+      213: 8285798440250434769
+    second: ImpactAtlas_91
+  - first:
+      213: 6997375173971798010
+    second: ImpactAtlas_92
+  - first:
+      213: 5922096786442554598
+    second: ImpactAtlas_93
+  - first:
+      213: -4258802589560852052
+    second: ImpactAtlas_94
+  - first:
+      213: 2574377675489301482
+    second: ImpactAtlas_95
+  - first:
+      213: -3952705201034274836
+    second: ImpactAtlas_96
+  - first:
+      213: 2570999809994788559
+    second: ImpactAtlas_97
+  - first:
+      213: -8171476843610444410
+    second: ImpactAtlas_98
+  - first:
+      213: 6974808997007959222
+    second: ImpactAtlas_99
+  - first:
+      213: 6192845358048315977
+    second: ImpactAtlas_100
+  - first:
+      213: 2676972120721085968
+    second: ImpactAtlas_101
+  - first:
+      213: -3555228918575486351
+    second: ImpactAtlas_102
+  - first:
+      213: 419610001023294803
+    second: ImpactAtlas_103
+  - first:
+      213: 8190940059987076874
+    second: ImpactAtlas_104
+  - first:
+      213: -4797658668720600862
+    second: ImpactAtlas_105
+  - first:
+      213: -9165908129779976038
+    second: ImpactAtlas_106
+  - first:
+      213: 662883853259055085
+    second: ImpactAtlas_107
+  - first:
+      213: -472908381843069415
+    second: ImpactAtlas_108
+  - first:
+      213: 9200584144580298276
+    second: ImpactAtlas_109
+  - first:
+      213: 6733733164805315277
+    second: ImpactAtlas_110
+  - first:
+      213: -7276893202185078521
+    second: ImpactAtlas_111
+  - first:
+      213: 5644842564549968807
+    second: ImpactAtlas_112
+  - first:
+      213: 842062613362273467
+    second: ImpactAtlas_113
+  - first:
+      213: 3498359783906647917
+    second: ImpactAtlas_114
+  - first:
+      213: 4398802383033052483
+    second: ImpactAtlas_115
+  - first:
+      213: -3579950810965859386
+    second: ImpactAtlas_116
+  - first:
+      213: 4933216899233780076
+    second: ImpactAtlas_117
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ImpactAtlas_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 546
+        width: 389
+        height: 610
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a94c64798a0a59300800000000000000
+      internalID: 258289199596618906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_1
+      rect:
+        serializedVersion: 2
+        x: 141
+        y: 1108
+        width: 320
+        height: 138
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 083a94cc76c710ff0800000000000000
+      internalID: -71639333810363520
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_2
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 1142
+        width: 9
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4cdfd73c7eb9c4f20800000000000000
+      internalID: 3408270437732187588
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_3
+      rect:
+        serializedVersion: 2
+        x: 368
+        y: 1115
+        width: 9
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 576073e00e5dccdf0800000000000000
+      internalID: -158516728576932235
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_4
+      rect:
+        serializedVersion: 2
+        x: 454
+        y: 875
+        width: 321
+        height: 341
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9158517e3e197e70800000000000000
+      internalID: 9113348574499328412
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_5
+      rect:
+        serializedVersion: 2
+        x: 667
+        y: 1197
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 760dd94e8b2dd6e40800000000000000
+      internalID: 5651404798971203687
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_6
+      rect:
+        serializedVersion: 2
+        x: 714
+        y: 1181
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d4ce7d31f303a3640800000000000000
+      internalID: 5060410178778164301
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_7
+      rect:
+        serializedVersion: 2
+        x: 729
+        y: 1173
+        width: 52
+        height: 43
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 67ac2c516be0c2450800000000000000
+      internalID: 6065238973373139574
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_8
+      rect:
+        serializedVersion: 2
+        x: 731
+        y: 1155
+        width: 16
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ac7fdf947c3938e40800000000000000
+      internalID: 5657528041056630730
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_9
+      rect:
+        serializedVersion: 2
+        x: 737
+        y: 1100
+        width: 30
+        height: 52
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cfc0db38f3d917d0800000000000000
+      internalID: -2947091418028388414
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_10
+      rect:
+        serializedVersion: 2
+        x: 745
+        y: 1162
+        width: 12
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69539aee45f8f5590800000000000000
+      internalID: -7683264844326685290
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_11
+      rect:
+        serializedVersion: 2
+        x: 762
+        y: 1116
+        width: 11
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e494cb7037ccf4f30800000000000000
+      internalID: 4562089741972687182
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_12
+      rect:
+        serializedVersion: 2
+        x: 778
+        y: 1108
+        width: 51
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 015ff869fc9a6bb50800000000000000
+      internalID: 6608656212262122768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_13
+      rect:
+        serializedVersion: 2
+        x: 858
+        y: 1118
+        width: 116
+        height: 136
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 42c349c2788a29120800000000000000
+      internalID: 2419181248373341220
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_14
+      rect:
+        serializedVersion: 2
+        x: 971
+        y: 1076
+        width: 268
+        height: 170
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e0051e1e979866610800000000000000
+      internalID: 1614128673032589326
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_15
+      rect:
+        serializedVersion: 2
+        x: 973
+        y: 1237
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 96823e12e5b9e8b10800000000000000
+      internalID: 1985695314314733673
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_16
+      rect:
+        serializedVersion: 2
+        x: 731
+        y: 1110
+        width: 14
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f09e5d6330f320c0800000000000000
+      internalID: -4601570290573602575
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_17
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 1014
+        width: 6
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af0d38a37f3d79eb0800000000000000
+      internalID: -4713065426227834630
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_18
+      rect:
+        serializedVersion: 2
+        x: 402
+        y: 1014
+        width: 33
+        height: 81
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3213cd84cd87d6680800000000000000
+      internalID: -8760212812655218397
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_19
+      rect:
+        serializedVersion: 2
+        x: 516
+        y: 1022
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1c9a924b9e3b85b0800000000000000
+      internalID: -5365125694523532261
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_20
+      rect:
+        serializedVersion: 2
+        x: 782
+        y: 827
+        width: 115
+        height: 204
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: afa1f82cea564a140800000000000000
+      internalID: 4730017309908736762
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_21
+      rect:
+        serializedVersion: 2
+        x: 876
+        y: 596
+        width: 363
+        height: 499
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2351f6f44b9749de0800000000000000
+      internalID: -1327302174833699534
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_22
+      rect:
+        serializedVersion: 2
+        x: 362
+        y: 859
+        width: 65
+        height: 125
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f726b713aac21740800000000000000
+      internalID: 5121378528099969011
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_23
+      rect:
+        serializedVersion: 2
+        x: 376
+        y: 964
+        width: 31
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e0758e254a82a2270800000000000000
+      internalID: 8226432355576338190
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_24
+      rect:
+        serializedVersion: 2
+        x: 346
+        y: 923
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 99f40b50c75ffe490800000000000000
+      internalID: -7714677723642179687
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_25
+      rect:
+        serializedVersion: 2
+        x: 368
+        y: 911
+        width: 11
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e9babd32e1779b3f0800000000000000
+      internalID: -884544880467268706
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_26
+      rect:
+        serializedVersion: 2
+        x: 157
+        y: 435
+        width: 122
+        height: 433
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 144a859f1208ff6a0800000000000000
+      internalID: -6413266460946684863
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_27
+      rect:
+        serializedVersion: 2
+        x: 327
+        y: 858
+        width: 16
+        height: 58
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ba97d94f3ade77da0800000000000000
+      internalID: -5947023494480037461
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_28
+      rect:
+        serializedVersion: 2
+        x: 209
+        y: 840
+        width: 7
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eede88c3f084c4f50800000000000000
+      internalID: 6866942762110479854
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_29
+      rect:
+        serializedVersion: 2
+        x: 214
+        y: 849
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b934740f59331ccc0800000000000000
+      internalID: -3692613500392750181
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_30
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 763
+        width: 54
+        height: 62
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d709088af250b050800000000000000
+      internalID: 5814238354912905174
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_31
+      rect:
+        serializedVersion: 2
+        x: 319
+        y: 805
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5fe484a6fa0b788c0800000000000000
+      internalID: -3997031876819136779
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_32
+      rect:
+        serializedVersion: 2
+        x: 442
+        y: 328
+        width: 293
+        height: 492
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f9e59e24eae87da70800000000000000
+      internalID: 8851700471718043295
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_33
+      rect:
+        serializedVersion: 2
+        x: 595
+        y: 819
+        width: 27
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0e2ac855df3ce5a70800000000000000
+      internalID: 8817700613267432160
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_34
+      rect:
+        serializedVersion: 2
+        x: 303
+        y: 805
+        width: 14
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2da9d08bcfe209070800000000000000
+      internalID: 8111034591848798930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_35
+      rect:
+        serializedVersion: 2
+        x: 313
+        y: 803
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 85430e7501cb68ea0800000000000000
+      internalID: -5870798285851052968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_36
+      rect:
+        serializedVersion: 2
+        x: 392
+        y: 580
+        width: 148
+        height: 230
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e41a8a9c6c507f8f0800000000000000
+      internalID: -506930081710956210
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_37
+      rect:
+        serializedVersion: 2
+        x: 745
+        y: 339
+        width: 104
+        height: 467
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a3fc2aceceb881810800000000000000
+      internalID: 1736291506049961786
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_38
+      rect:
+        serializedVersion: 2
+        x: 1133
+        y: 795
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 176f4bbd57424e100800000000000000
+      internalID: 136273977343800945
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_39
+      rect:
+        serializedVersion: 2
+        x: 1146
+        y: 799
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc552a65096de5af0800000000000000
+      internalID: -405651000999651892
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_40
+      rect:
+        serializedVersion: 2
+        x: 723
+        y: 771
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 174ebf09e3098f8f0800000000000000
+      internalID: -506496359684381583
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_41
+      rect:
+        serializedVersion: 2
+        x: 1105
+        y: 777
+        width: 21
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 161e737b9a3718570800000000000000
+      internalID: 8467175947193803105
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_42
+      rect:
+        serializedVersion: 2
+        x: 715
+        y: 753
+        width: 10
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f43a416614f8afdc0800000000000000
+      internalID: -3604411040708385969
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_43
+      rect:
+        serializedVersion: 2
+        x: 723
+        y: 741
+        width: 20
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b489b98fc37779e0800000000000000
+      internalID: -1623701805437713229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_44
+      rect:
+        serializedVersion: 2
+        x: 1097
+        y: 730
+        width: 13
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6578381c7905ecaf0800000000000000
+      internalID: -374273106308266154
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_45
+      rect:
+        serializedVersion: 2
+        x: 506
+        y: 742
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ece534e4d1de3ee40800000000000000
+      internalID: 5684647864794570446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_46
+      rect:
+        serializedVersion: 2
+        x: 719
+        y: 714
+        width: 32
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 287f7fe87066ab150800000000000000
+      internalID: 5889131645389764482
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_47
+      rect:
+        serializedVersion: 2
+        x: 725
+        y: 734
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 99c5c770543189b20800000000000000
+      internalID: 3141281927290182809
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_48
+      rect:
+        serializedVersion: 2
+        x: 928
+        y: 742
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3d91731d26deacd0800000000000000
+      internalID: -2544861250329666242
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_49
+      rect:
+        serializedVersion: 2
+        x: 472
+        y: 706
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0d6eb69548116a80800000000000000
+      internalID: -8475466336573690612
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_50
+      rect:
+        serializedVersion: 2
+        x: 742
+        y: 719
+        width: 13
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3c85290fe2ec42ef0800000000000000
+      internalID: -133755387914331965
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_51
+      rect:
+        serializedVersion: 2
+        x: 737
+        y: 694
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ec5f31a43e4b4f670800000000000000
+      internalID: 8571674879086294478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_52
+      rect:
+        serializedVersion: 2
+        x: 744
+        y: 696
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ba87c8d8c8886700800000000000000
+      internalID: 533826952055196345
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_53
+      rect:
+        serializedVersion: 2
+        x: 973
+        y: 375
+        width: 139
+        height: 332
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c983bdbfc29c81570800000000000000
+      internalID: 8437715096919816348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_54
+      rect:
+        serializedVersion: 2
+        x: 946
+        y: 673
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c5dc39928fe56a150800000000000000
+      internalID: 5883494383148584284
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_55
+      rect:
+        serializedVersion: 2
+        x: 1163
+        y: 664
+        width: 6
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ec249698884be200800000000000000
+      internalID: 210341559081905384
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_56
+      rect:
+        serializedVersion: 2
+        x: 1163
+        y: 647
+        width: 8
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd5a0a23834b3c3a0800000000000000
+      internalID: -6646270471608162851
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_57
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 622
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f585301f907335d70800000000000000
+      internalID: 9030622193645738079
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_58
+      rect:
+        serializedVersion: 2
+        x: 770
+        y: 616
+        width: 9
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ba5039e6e5fefe630800000000000000
+      internalID: 3958645786343048619
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_59
+      rect:
+        serializedVersion: 2
+        x: 770
+        y: 610
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d27a1b7c29178db0800000000000000
+      internalID: -4789831999850646828
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_60
+      rect:
+        serializedVersion: 2
+        x: 824
+        y: 592
+        width: 43
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1148371d34a33c600800000000000000
+      internalID: 487297247637373969
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_61
+      rect:
+        serializedVersion: 2
+        x: 729
+        y: 546
+        width: 22
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7996bcf0df91017a0800000000000000
+      internalID: -6408593695065806441
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_62
+      rect:
+        serializedVersion: 2
+        x: 747
+        y: 562
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 591604573f2d52220800000000000000
+      internalID: 2460604714513883541
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_63
+      rect:
+        serializedVersion: 2
+        x: 466
+        y: 513
+        width: 66
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e19e885e7aea6aa0800000000000000
+      internalID: -6166858911357955607
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_64
+      rect:
+        serializedVersion: 2
+        x: 525
+        y: 533
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 28eb46a141b94c750800000000000000
+      internalID: 6324350287379480194
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_65
+      rect:
+        serializedVersion: 2
+        x: 735
+        y: 535
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8cc4ae2a5b3b83200800000000000000
+      internalID: 160075379475369160
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_66
+      rect:
+        serializedVersion: 2
+        x: 737
+        y: 527
+        width: 38
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ceb8f4ef88d148c90800000000000000
+      internalID: -7168572232647603220
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_67
+      rect:
+        serializedVersion: 2
+        x: 922
+        y: 532
+        width: 42
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f4983e7610532a80800000000000000
+      internalID: -8492856414753483528
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_68
+      rect:
+        serializedVersion: 2
+        x: 1198
+        y: 481
+        width: 29
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 727ca2f07747e1740800000000000000
+      internalID: 5124661480698595111
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_69
+      rect:
+        serializedVersion: 2
+        x: 745
+        y: 513
+        width: 10
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f7840b7a159f49f0800000000000000
+      internalID: -482002694139770888
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_70
+      rect:
+        serializedVersion: 2
+        x: 914
+        y: 521
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9fe22065505677640800000000000000
+      internalID: 5077638178475749113
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_71
+      rect:
+        serializedVersion: 2
+        x: 932
+        y: 481
+        width: 32
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1234c773056ef220800000000000000
+      internalID: 2521563906942710302
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_72
+      rect:
+        serializedVersion: 2
+        x: 938
+        y: 521
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2936d2c5dce29a800800000000000000
+      internalID: 624081482917176210
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_73
+      rect:
+        serializedVersion: 2
+        x: 1129
+        y: 401
+        width: 102
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd1bdd919f1533e50800000000000000
+      internalID: 6787859193700135388
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_74
+      rect:
+        serializedVersion: 2
+        x: 108
+        y: 467
+        width: 13
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 35e0806d42418bdc0800000000000000
+      internalID: -3623123751777333677
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_75
+      rect:
+        serializedVersion: 2
+        x: 118
+        y: 465
+        width: 20
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dbccfd8637659fe80800000000000000
+      internalID: -8144383397442106179
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_76
+      rect:
+        serializedVersion: 2
+        x: 1153
+        y: 473
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46aebcb9d2088b310800000000000000
+      internalID: 1421026615811107428
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_77
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 423
+        width: 24
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 723ccd1e7c5895790800000000000000
+      internalID: -7540849007520857305
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_78
+      rect:
+        serializedVersion: 2
+        x: 376
+        y: 447
+        width: 57
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a65238c5bc4d1dc70800000000000000
+      internalID: 8994203900731139434
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_79
+      rect:
+        serializedVersion: 2
+        x: 890
+        y: 457
+        width: 42
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e6d0aab723b4ee8b0800000000000000
+      internalID: -5121073046078485138
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_80
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 449
+        height: 453
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e42e556abded3ac40800000000000000
+      internalID: 5522502603056210510
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_81
+      rect:
+        serializedVersion: 2
+        x: 954
+        y: 440
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7038761504d4738b0800000000000000
+      internalID: -5172580708372741369
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_82
+      rect:
+        serializedVersion: 2
+        x: 127
+        y: 409
+        width: 9
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c14e0d836492e4a10800000000000000
+      internalID: 1895497874747221020
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_83
+      rect:
+        serializedVersion: 2
+        x: 313
+        y: 417
+        width: 22
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b0168b8e997fc070800000000000000
+      internalID: 8128849574279647413
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_84
+      rect:
+        serializedVersion: 2
+        x: 378
+        y: 423
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22902d679b32ab1a0800000000000000
+      internalID: -6793077808465573598
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_85
+      rect:
+        serializedVersion: 2
+        x: 329
+        y: 410
+        width: 10
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c903cb49a5c13f280800000000000000
+      internalID: -9010827254070234980
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_86
+      rect:
+        serializedVersion: 2
+        x: 1107
+        y: 407
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d480aa8f552d92960800000000000000
+      internalID: 7577819114713516109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_87
+      rect:
+        serializedVersion: 2
+        x: 1119
+        y: 372
+        width: 21
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c76460df74b0b000800000000000000
+      internalID: 49738056951162824
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_88
+      rect:
+        serializedVersion: 2
+        x: 522
+        y: 369
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1590a2c0eda345210800000000000000
+      internalID: 1320745316087630161
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_89
+      rect:
+        serializedVersion: 2
+        x: 522
+        y: 363
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 546ccddceb8de9d70800000000000000
+      internalID: 9051910615070459461
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_90
+      rect:
+        serializedVersion: 2
+        x: 850
+        y: 0
+        width: 393
+        height: 367
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 80cf2a0fa8b81ea80800000000000000
+      internalID: -8439310797856637944
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_91
+      rect:
+        serializedVersion: 2
+        x: 995
+        y: 357
+        width: 25
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d4ec9708c11df270800000000000000
+      internalID: 8285798440250434769
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_92
+      rect:
+        serializedVersion: 2
+        x: 1019
+        y: 363
+        width: 11
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af7e9b4a5abab1160800000000000000
+      internalID: 6997375173971798010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_93
+      rect:
+        serializedVersion: 2
+        x: 1139
+        y: 361
+        width: 36
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ec046196a38f2250800000000000000
+      internalID: 5922096786442554598
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_94
+      rect:
+        serializedVersion: 2
+        x: 1165
+        y: 337
+        width: 24
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca136b0eb91b5e4c0800000000000000
+      internalID: -4258802589560852052
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_95
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 0
+        width: 391
+        height: 356
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae35c313bd60ab320800000000000000
+      internalID: 2574377675489301482
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_96
+      rect:
+        serializedVersion: 2
+        x: 520
+        y: 343
+        width: 6
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ce7538edf8b2529c0800000000000000
+      internalID: -3952705201034274836
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_97
+      rect:
+        serializedVersion: 2
+        x: 1182
+        y: 308
+        width: 45
+        height: 40
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fce065894b60ea320800000000000000
+      internalID: 2570999809994788559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_98
+      rect:
+        serializedVersion: 2
+        x: 1157
+        y: 291
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 68de446ea15199e80800000000000000
+      internalID: -8171476843610444410
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_99
+      rect:
+        serializedVersion: 2
+        x: 844
+        y: 200
+        width: 59
+        height: 84
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6b4abd224df7bc060800000000000000
+      internalID: 6974808997007959222
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_100
+      rect:
+        serializedVersion: 2
+        x: 1137
+        y: 278
+        width: 11
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94a8563ca0861f550800000000000000
+      internalID: 6192845358048315977
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_101
+      rect:
+        serializedVersion: 2
+        x: 1147
+        y: 278
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0165439e5f3862520800000000000000
+      internalID: 2676972120721085968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_102
+      rect:
+        serializedVersion: 2
+        x: 1187
+        y: 216
+        width: 54
+        height: 67
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17aac1d822a49aec0800000000000000
+      internalID: -3555228918575486351
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_103
+      rect:
+        serializedVersion: 2
+        x: 883
+        y: 250
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 35dd13f9211c2d500800000000000000
+      internalID: 419610001023294803
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_104
+      rect:
+        serializedVersion: 2
+        x: 1176
+        y: 256
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a07eb0c46901ca170800000000000000
+      internalID: 8190940059987076874
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_105
+      rect:
+        serializedVersion: 2
+        x: 426
+        y: 208
+        width: 41
+        height: 47
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e8c5512cda4b6db0800000000000000
+      internalID: -4797658668720600862
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_106
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 168
+        width: 9
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a9879987e172cc080800000000000000
+      internalID: -9165908129779976038
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_107
+      rect:
+        serializedVersion: 2
+        x: 494
+        y: 183
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: def19d83a59033900800000000000000
+      internalID: 662883853259055085
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_108
+      rect:
+        serializedVersion: 2
+        x: 394
+        y: 144
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91660f01554ef69f0800000000000000
+      internalID: -472908381843069415
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_109
+      rect:
+        serializedVersion: 2
+        x: 946
+        y: 150
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 426cccf588a0faf70800000000000000
+      internalID: 9200584144580298276
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_110
+      rect:
+        serializedVersion: 2
+        x: 1160
+        y: 130
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dcadc74f2a6037d50800000000000000
+      internalID: 6733733164805315277
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_111
+      rect:
+        serializedVersion: 2
+        x: 1176
+        y: 103
+        width: 15
+        height: 40
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 709bd4fef28430b90800000000000000
+      internalID: -7276893202185078521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_112
+      rect:
+        serializedVersion: 2
+        x: 390
+        y: 81
+        width: 13
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a38101a762865e40800000000000000
+      internalID: 5644842564549968807
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_113
+      rect:
+        serializedVersion: 2
+        x: 842
+        y: 95
+        width: 19
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bbc68144c7b9fab00800000000000000
+      internalID: 842062613362273467
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_114
+      rect:
+        serializedVersion: 2
+        x: 938
+        y: 95
+        width: 12
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6f944830bbac8030800000000000000
+      internalID: 3498359783906647917
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_115
+      rect:
+        serializedVersion: 2
+        x: 1149
+        y: 97
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34da3d5267fab0d30800000000000000
+      internalID: 4398802383033052483
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_116
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 62
+        width: 17
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6c3220f64b5715ec0800000000000000
+      internalID: -3579950810965859386
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ImpactAtlas_117
+      rect:
+        serializedVersion: 2
+        x: 1149
+        y: 63
+        width: 12
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c6198cee1ae467440800000000000000
+      internalID: 4933216899233780076
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      ImpactAtlas_0: 258289199596618906
+      ImpactAtlas_1: -71639333810363520
+      ImpactAtlas_10: -7683264844326685290
+      ImpactAtlas_100: 6192845358048315977
+      ImpactAtlas_101: 2676972120721085968
+      ImpactAtlas_102: -3555228918575486351
+      ImpactAtlas_103: 419610001023294803
+      ImpactAtlas_104: 8190940059987076874
+      ImpactAtlas_105: -4797658668720600862
+      ImpactAtlas_106: -9165908129779976038
+      ImpactAtlas_107: 662883853259055085
+      ImpactAtlas_108: -472908381843069415
+      ImpactAtlas_109: 9200584144580298276
+      ImpactAtlas_11: 4562089741972687182
+      ImpactAtlas_110: 6733733164805315277
+      ImpactAtlas_111: -7276893202185078521
+      ImpactAtlas_112: 5644842564549968807
+      ImpactAtlas_113: 842062613362273467
+      ImpactAtlas_114: 3498359783906647917
+      ImpactAtlas_115: 4398802383033052483
+      ImpactAtlas_116: -3579950810965859386
+      ImpactAtlas_117: 4933216899233780076
+      ImpactAtlas_12: 6608656212262122768
+      ImpactAtlas_13: 2419181248373341220
+      ImpactAtlas_14: 1614128673032589326
+      ImpactAtlas_15: 1985695314314733673
+      ImpactAtlas_16: -4601570290573602575
+      ImpactAtlas_17: -4713065426227834630
+      ImpactAtlas_18: -8760212812655218397
+      ImpactAtlas_19: -5365125694523532261
+      ImpactAtlas_2: 3408270437732187588
+      ImpactAtlas_20: 4730017309908736762
+      ImpactAtlas_21: -1327302174833699534
+      ImpactAtlas_22: 5121378528099969011
+      ImpactAtlas_23: 8226432355576338190
+      ImpactAtlas_24: -7714677723642179687
+      ImpactAtlas_25: -884544880467268706
+      ImpactAtlas_26: -6413266460946684863
+      ImpactAtlas_27: -5947023494480037461
+      ImpactAtlas_28: 6866942762110479854
+      ImpactAtlas_29: -3692613500392750181
+      ImpactAtlas_3: -158516728576932235
+      ImpactAtlas_30: 5814238354912905174
+      ImpactAtlas_31: -3997031876819136779
+      ImpactAtlas_32: 8851700471718043295
+      ImpactAtlas_33: 8817700613267432160
+      ImpactAtlas_34: 8111034591848798930
+      ImpactAtlas_35: -5870798285851052968
+      ImpactAtlas_36: -506930081710956210
+      ImpactAtlas_37: 1736291506049961786
+      ImpactAtlas_38: 136273977343800945
+      ImpactAtlas_39: -405651000999651892
+      ImpactAtlas_4: 9113348574499328412
+      ImpactAtlas_40: -506496359684381583
+      ImpactAtlas_41: 8467175947193803105
+      ImpactAtlas_42: -3604411040708385969
+      ImpactAtlas_43: -1623701805437713229
+      ImpactAtlas_44: -374273106308266154
+      ImpactAtlas_45: 5684647864794570446
+      ImpactAtlas_46: 5889131645389764482
+      ImpactAtlas_47: 3141281927290182809
+      ImpactAtlas_48: -2544861250329666242
+      ImpactAtlas_49: -8475466336573690612
+      ImpactAtlas_5: 5651404798971203687
+      ImpactAtlas_50: -133755387914331965
+      ImpactAtlas_51: 8571674879086294478
+      ImpactAtlas_52: 533826952055196345
+      ImpactAtlas_53: 8437715096919816348
+      ImpactAtlas_54: 5883494383148584284
+      ImpactAtlas_55: 210341559081905384
+      ImpactAtlas_56: -6646270471608162851
+      ImpactAtlas_57: 9030622193645738079
+      ImpactAtlas_58: 3958645786343048619
+      ImpactAtlas_59: -4789831999850646828
+      ImpactAtlas_6: 5060410178778164301
+      ImpactAtlas_60: 487297247637373969
+      ImpactAtlas_61: -6408593695065806441
+      ImpactAtlas_62: 2460604714513883541
+      ImpactAtlas_63: -6166858911357955607
+      ImpactAtlas_64: 6324350287379480194
+      ImpactAtlas_65: 160075379475369160
+      ImpactAtlas_66: -7168572232647603220
+      ImpactAtlas_67: -8492856414753483528
+      ImpactAtlas_68: 5124661480698595111
+      ImpactAtlas_69: -482002694139770888
+      ImpactAtlas_7: 6065238973373139574
+      ImpactAtlas_70: 5077638178475749113
+      ImpactAtlas_71: 2521563906942710302
+      ImpactAtlas_72: 624081482917176210
+      ImpactAtlas_73: 6787859193700135388
+      ImpactAtlas_74: -3623123751777333677
+      ImpactAtlas_75: -8144383397442106179
+      ImpactAtlas_76: 1421026615811107428
+      ImpactAtlas_77: -7540849007520857305
+      ImpactAtlas_78: 8994203900731139434
+      ImpactAtlas_79: -5121073046078485138
+      ImpactAtlas_8: 5657528041056630730
+      ImpactAtlas_80: 5522502603056210510
+      ImpactAtlas_81: -5172580708372741369
+      ImpactAtlas_82: 1895497874747221020
+      ImpactAtlas_83: 8128849574279647413
+      ImpactAtlas_84: -6793077808465573598
+      ImpactAtlas_85: -9010827254070234980
+      ImpactAtlas_86: 7577819114713516109
+      ImpactAtlas_87: 49738056951162824
+      ImpactAtlas_88: 1320745316087630161
+      ImpactAtlas_89: 9051910615070459461
+      ImpactAtlas_9: -2947091418028388414
+      ImpactAtlas_90: -8439310797856637944
+      ImpactAtlas_91: 8285798440250434769
+      ImpactAtlas_92: 6997375173971798010
+      ImpactAtlas_93: 5922096786442554598
+      ImpactAtlas_94: -4258802589560852052
+      ImpactAtlas_95: 2574377675489301482
+      ImpactAtlas_96: -3952705201034274836
+      ImpactAtlas_97: 2570999809994788559
+      ImpactAtlas_98: -8171476843610444410
+      ImpactAtlas_99: 6974808997007959222
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

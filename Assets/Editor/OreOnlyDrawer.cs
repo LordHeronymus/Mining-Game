@@ -17,7 +17,10 @@ public sealed class OreOnlyDrawer : PropertyDrawer
         BlockType.TitaniumOre,
         BlockType.TungstenOre,
         BlockType.UltroniumOre,
-        BlockType.OrangeGarnetOre
+        BlockType.OrangeGarnetOre,
+        BlockType.MythrilOre,
+        BlockType.EmeraldOre,
+        BlockType.RubyOre
     };
 
     static readonly string[] Names = Array.ConvertAll(OreTypes,

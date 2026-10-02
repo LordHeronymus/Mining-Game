@@ -1,0 +1,57 @@
+{
+  "gameTitle": "Tiefenhall",
+  "homeAndWorldSaveChecks": {
+    "passed": 34,
+    "source": "Tests/TiefenhallChecks.cs"
+  },
+  "manualSaveUiChecks": {
+    "passed": 9,
+    "source": "Tests/TiefenhallUiChecks.cs"
+  },
+  "freshPlayCameraCheck": {
+    "result": "passed",
+    "source": "Tests/TiefenhallFinalChecks.cs",
+    "editorReloadOptionsRestored": true
+  },
+  "windowsBuild": {
+    "initialBuild": "succeeded",
+    "errors": 0,
+    "warnings": 13,
+    "finalRebuild": "canceled",
+    "latestSourceVerifiedInEditor": true
+  },
+  "animationCapture": {
+    "frames": 72,
+    "seconds": 3,
+    "source": "Tests/TiefenhallHomePreview.cs",
+    "preview": "Homescreen-motion.gif",
+    "backgroundRevision": "Historical capture before Lake-02-Deep implementation; current visual verification is Homescreen-implemented.png."
+  },
+  "saveFormatVersion": 1,
+  "waterBackgroundCorrection": {
+    "date": "2026-10-02",
+    "staticRippleRemoval": "visually verified in Unity at shader time 0",
+    "runtimeDropletRings": "visually verified at shader time 6.79",
+    "freshPlayCameraCheck": "passed",
+    "prompt": "Water-correction-prompts.json",
+    "preview": "Homescreen-motion.gif"
+  },
+  "lakeV2Implementation": {
+    "date": "2026-10-02",
+    "background": "LakePrototypes/Lake-02-Deep.png",
+    "shaderErrors": 0,
+    "quietWater": "visually verified at shader time 0",
+    "droplet": "visually verified at shader time 6.8",
+    "removedEffects": [
+      "continuous lake UV distortion",
+      "horizontal wave bands",
+      "waterfall distortion"
+    ],
+    "screen": "Homescreen-implemented.png",
+    "shaderFrames": [
+      "LakePrototypes/Lake-02-Implemented-Quiet.png",
+      "LakePrototypes/Lake-02-Implemented-Drop.png"
+    ],
+    "gameplayCamera": "Verified in active SampleScene after fresh Play: generated world, player target, CameraFollow, CameraWorldBorderClamp and debug camera follow enabled."
+  }
+}

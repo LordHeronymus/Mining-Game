@@ -10,6 +10,13 @@ public static class ConnectedOreVeins
         MapGenerationSampler sampler, Func<Block, int> minimumSize,
         Func<int, int, bool> reserved = null, int depthOffset = 0)
     {
+        var steps = GenerateSteps(blocks, width, height, seed, sampler, minimumSize, reserved, depthOffset);
+        while (steps.MoveNext()) { }
+    }
+    public static System.Collections.IEnumerator GenerateSteps(Block[] blocks, int width, int height, int seed,
+        MapGenerationSampler sampler, Func<Block, int> minimumSize,
+        Func<int, int, bool> reserved = null, int depthOffset = 0, Action<float> progress = null)
+    {
         if (blocks == null || width <= 0 || height <= 0 || blocks.Length != checked(width * height))
             throw new ArgumentException("Invalid vein grid dimensions.");
         if (sampler == null) throw new ArgumentNullException(nameof(sampler));
@@ -91,6 +98,8 @@ public static class ConnectedOreVeins
             }
             foreach (var ore in ores) ConsolidateSmallVeins(ore, bandStart, bandEnd);
             bandStart = bandEnd;
+            progress?.Invoke(bandStart / (float)height);
+            yield return null;
         }
 
         bool Available(int index, Block ore)

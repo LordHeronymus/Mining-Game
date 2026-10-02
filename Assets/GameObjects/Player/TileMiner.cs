@@ -36,10 +36,9 @@ public class TileMiner : MonoBehaviour
     private CompactHud hotbar;
     private SurfaceTallGrass tallGrass;
     private SurfaceTrees surfaceTrees;
-    private float nextMiningSoundTime = 0f;
-    private bool miningBlockActive;
+    private float nextMiningHitTime = 0f;
+    private bool miningTargetActive;
     private MinerPlayerVisual minerVisual;
-    private float nextTreeHitTime;
     private float nextGrassCutTime;
     private float grassSwingUntil;
     private bool grassClickConsumed;
@@ -53,6 +52,11 @@ public class TileMiner : MonoBehaviour
     private Texture2D scytheCursorTexture;
     private ToolCursor activeCursor;
     static readonly List<UnityEngine.EventSystems.RaycastResult> uiRaycasts = new();
+    static UnityEngine.EventSystems.PointerEventData uiPointer;
+    static UnityEngine.EventSystems.EventSystem uiEventSystem;
+    static int uiRaycastFrame = -1;
+    static Vector2 uiRaycastPosition;
+    static bool uiRaycastBlocked, uiRaycastResult;
     enum ToolCursor { None, Axe, Scythe }
 
     public static Action<Vector2, int> OnBlockMined;
@@ -66,6 +70,9 @@ public class TileMiner : MonoBehaviour
         OnBlockHit = null;
         OnMiningPoints = null;
         uiRaycasts.Clear();
+        uiPointer = null;
+        uiEventSystem = null;
+        uiRaycastFrame = -1;
     }
 
     private bool mining;
@@ -75,6 +82,29 @@ public class TileMiner : MonoBehaviour
     public bool HasAxe => surfaceTrees && surfaceTrees.HasAxe;
     public bool IsCuttingGrass { get; private set; }
     public Vector2 MiningTarget { get; private set; }
+
+    public SavedMiningCell[] CaptureRunState()
+    {
+        var cells = new List<SavedMiningCell>();
+        foreach (var entry in progress)
+            cells.Add(new SavedMiningCell { cell = entry.Key, progress = entry.Value,
+                hitAgo = lastMiningHitTime.TryGetValue(entry.Key, out float hit) ? Time.time - hit : 0,
+                pendingDrop = pendingDropCounts.TryGetValue(entry.Key, out int count) ? count : 0 });
+        return cells.ToArray();
+    }
+    public void RestoreRunState(SavedMiningCell[] cells)
+    {
+        ClearMiningProgress();
+        foreach (var entry in cells ?? Array.Empty<SavedMiningCell>())
+        {
+            if (!tilemap.HasTile(entry.cell)) continue;
+            progress[entry.cell] = Mathf.Clamp01(entry.progress);
+            lastMiningHitTime[entry.cell] = Time.time - entry.hitAgo;
+            lastMiningProgressUpdateTime[entry.cell] = Time.time;
+            if (entry.pendingDrop > 0) pendingDropCounts[entry.cell] = entry.pendingDrop;
+            ShowMiningCracks(entry.cell, entry.progress);
+        }
+    }
 
     void Awake()
     {
@@ -120,8 +150,8 @@ public class TileMiner : MonoBehaviour
     {
         RegenerateMiningProgress(Time.time);
         miningCracks?.Refresh(progress);
-        bool continuedBlockMining = miningBlockActive;
-        miningBlockActive = false;
+        bool continuedMining = miningTargetActive;
+        miningTargetActive = false;
         mining = false;
         IsChoppingTree = false;
         IsCuttingGrass = Time.time < grassSwingUntil;
@@ -194,13 +224,10 @@ public class TileMiner : MonoBehaviour
             if (GameBindings.Held(GameAction.Mine) && Vector2.Distance(transform.position, tree.HitPoint) <= stats.Reach)
             {
                 mining = true;
+                miningTargetActive = true;
                 IsChoppingTree = true;
                 MiningTarget = tree.HitPoint;
-                if (Time.time >= nextTreeHitTime)
-                {
-                    tree.Hit(transform.position);
-                    nextTreeHitTime = Time.time + .55f / Mathf.Max(.25f, stats.MiningSpeed) / GameplayTestSettings.DiggingMultiplier;
-                }
+                if (TryBeginMiningHit(continuedMining)) tree.Hit(transform.position);
             }
             return;
         }
@@ -241,13 +268,19 @@ public class TileMiner : MonoBehaviour
         TileBase t = tilemap.GetTile(targetCell);
         if (!t) return;
         mining = true;
-        miningBlockActive = true;
+        miningTargetActive = true;
         MiningTarget = tilemap.GetCellCenterWorld(targetCell);
-        float hitInterval = GetMiningHitInterval();
-        if (!continuedBlockMining) nextMiningSoundTime = Time.time + hitInterval * .5f;
-        if (Time.time < nextMiningSoundTime) return;
-        nextMiningSoundTime = Time.time + hitInterval;
+        if (!TryBeginMiningHit(continuedMining)) return;
         ApplyMiningHit(targetCell, GetBaseMiningHitInterval());
+    }
+
+    bool TryBeginMiningHit(bool continuedMining)
+    {
+        float hitInterval = GetMiningHitInterval();
+        if (!continuedMining) nextMiningHitTime = Time.time + hitInterval * .5f;
+        if (Time.time < nextMiningHitTime) return false;
+        nextMiningHitTime = Time.time + hitInterval;
+        return true;
     }
 
     float GetMiningHitInterval()
@@ -281,18 +314,20 @@ public class TileMiner : MonoBehaviour
         miningCracks ??= new MiningCrackVisual(tilemap);
         miningCracks.Show(cell, p);
 
-        PlayMiningHitSound(GetBlock(cell));
+        PlayMiningHitSound(GetBlock(cell), map && map.GetOreAt(cell));
         OnBlockHit?.Invoke(tilemap.GetCellCenterWorld(cell));
     }
 
-    void PlayMiningHitSound(Block block)
+    void PlayMiningHitSound(Block block, bool isOre)
     {
         SoundType hit = SoundType.DigMedium;
         int hitLayer = -1;
         if (block != null)
         {
             hitLayer = GetTerrainLayerIndex(block);
-            hit = hitLayer >= 2 ? SoundType.DigDeepStone : block.digSound;
+            hit = hitLayer >= 2
+                ? (isOre ? SoundType.DigDeepOreHit : SoundType.DigDeepStone)
+                : block.digSound;
         }
         if (hitLayer >= 0) AudioManager.Instance?.PlayLayerMiningSound(hitLayer, hit, false);
         else AudioManager.Instance?.Play(hit, true);
@@ -354,9 +389,24 @@ public class TileMiner : MonoBehaviour
     {
         var eventSystem = UnityEngine.EventSystems.EventSystem.current;
         if (!eventSystem) return false;
+        bool blocked = GameplayInputBlocker.IsBlocked;
+        if (uiRaycastFrame == Time.frameCount && uiEventSystem == eventSystem &&
+            uiRaycastPosition == screenPosition && uiRaycastBlocked == blocked)
+            return uiRaycastResult;
+        if (uiEventSystem != eventSystem || uiPointer == null)
+        {
+            uiEventSystem = eventSystem;
+            uiPointer = new UnityEngine.EventSystems.PointerEventData(eventSystem);
+        }
+        uiPointer.Reset();
+        uiPointer.position = screenPosition;
         uiRaycasts.Clear();
-        eventSystem.RaycastAll(new UnityEngine.EventSystems.PointerEventData(eventSystem) { position = screenPosition }, uiRaycasts);
-        return uiRaycasts.Count > 0;
+        eventSystem.RaycastAll(uiPointer, uiRaycasts);
+        uiRaycastFrame = Time.frameCount;
+        uiRaycastPosition = screenPosition;
+        uiRaycastBlocked = blocked;
+        uiRaycastResult = uiRaycasts.Count > 0;
+        return uiRaycastResult;
     }
 
     public bool TryCutGrassAt(Vector2 worldPoint)
@@ -585,7 +635,7 @@ public class TileMiner : MonoBehaviour
         SoundType breakSound = ore ? SoundType.BreakOre : block ? block.breakSound : SoundType.BreakRock;
         if (terrainLayer >= 2) breakSound = SoundType.StoneBreak;
         else if (terrainLayer >= 0) breakSound = SoundType.ClayBreak;
-        PlayMiningHitSound(block);
+        PlayMiningHitSound(block, ore != null);
         if (terrainLayer >= 0) AudioManager.Instance?.PlayLayerMiningSound(terrainLayer, breakSound, true);
         else AudioManager.Instance?.Play(breakSound, ore != null);
         return true;

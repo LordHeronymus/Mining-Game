@@ -323,6 +323,9 @@ public sealed class MapOverviewWindow : EditorWindow
             case BlockType.TitaniumOre: return new Color32(255, 255, 255, 255);
             case BlockType.TungstenOre: return new Color32(111, 160, 208, 255);
             case BlockType.OrangeGarnetOre: return new Color32(255, 112, 24, 255);
+            case BlockType.MythrilOre: return new Color32(35, 205, 255, 255);
+            case BlockType.EmeraldOre: return new Color32(28, 210, 72, 255);
+            case BlockType.RubyOre: return new Color32(242, 20, 52, 255);
             case BlockType.Coal: return new Color32(9, 11, 16, 255);
             case BlockType.UltroniumOre: return new Color32(180, 0, 255, 255);
             case BlockType.Empty: return EmptyColor;
@@ -332,7 +335,7 @@ public sealed class MapOverviewWindow : EditorWindow
 
     void OnTilesChanged(Tilemap changedMap, Tilemap.SyncTile[] changes)
     {
-        if (!live || (changedMap != tilemap && changedMap != map.OreOverlay) || !HasLiveMap() || changes == null) return;
+        if (!live || !map || (changedMap != tilemap && changedMap != map.OreOverlay) || !HasLiveMap() || changes == null) return;
         foreach (var change in changes)
             QueueCell(change.position);
     }
@@ -576,7 +579,7 @@ public sealed class MapOverviewWindow : EditorWindow
     internal static readonly string[] LegendNames =
     {
         "Erde", "Übergang", "Stein", "Tiefstein 1", "Tiefstein 2", "Kohle", "Eisen", "Kupfer",
-        "Silber", "Gold", "Platin", "Titan", "Wolfram", "Diamant", "Ultronium", "Orange Granat", "Leer", "Spieler"
+        "Silber", "Gold", "Platin", "Titan", "Wolfram", "Diamant", "Ultronium", "Orange Granat", "Mythril", "Smaragd", "Rubin", "Leer", "Spieler"
     };
 
     internal static readonly BlockType[] LegendTypes =
@@ -584,7 +587,7 @@ public sealed class MapOverviewWindow : EditorWindow
         BlockType.Dirt, BlockType.Stone, BlockType.StoneLayer2, BlockType.StoneLayer3, BlockType.StoneLayer4,
         BlockType.Coal, BlockType.IronOre, BlockType.CopperOre, BlockType.SilverOre, BlockType.GoldOre,
         BlockType.PlatinumOre, BlockType.TitaniumOre, BlockType.TungstenOre, BlockType.DiamondOre,
-        BlockType.UltroniumOre, BlockType.OrangeGarnetOre, BlockType.Empty
+        BlockType.UltroniumOre, BlockType.OrangeGarnetOre, BlockType.MythrilOre, BlockType.EmeraldOre, BlockType.RubyOre, BlockType.Empty
     };
 
     internal static Color LegendColorAt(int index, MapGenerator map = null)

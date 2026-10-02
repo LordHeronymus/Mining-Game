@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bd168b198ca49c4a82450a3ed868988, type: 3}
+  m_Name: RuneBelt
+  m_EditorClassIdentifier: 
+  category: 1
+  persistentId: 7f68bc4be295f6c4d9f2963742873531
+  customCardIconLayout: 0
+  cardIconLayout:
+    scale: {x: 0, y: 0}
+    offset: {x: 0, y: 0}
+    flipX: 0
+    flipY: 0
+  output: {fileID: 11400000, guid: 7be3e815e3e140641ba6e1d36b5fcaf9, type: 2}
+  outputAmount: 1
+  shopPrice: 1000
+  pluralName: 
+  ingredients:
+  - item: {fileID: 11400000, guid: a79ffa1203bdaa146b29e3d31a869cfe, type: 2}
+    amount: 4
+  - item: {fileID: 11400000, guid: fa27fc9f4640a464b8ff65beb5407e0b, type: 2}
+    amount: 4
+  - item: {fileID: 11400000, guid: dd533ba7e1dad994b85859e613d42480, type: 2}
+    amount: 6
+  - item: {fileID: 11400000, guid: 760648c834dc0cd46b697d742b6e7447, type: 2}
+    amount: 4

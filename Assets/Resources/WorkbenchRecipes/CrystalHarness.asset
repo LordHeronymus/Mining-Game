@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bd168b198ca49c4a82450a3ed868988, type: 3}
+  m_Name: CrystalHarness
+  m_EditorClassIdentifier: 
+  category: 1
+  persistentId: d09d219a1d65032409fe9e28761290c5
+  customCardIconLayout: 0
+  cardIconLayout:
+    scale: {x: 0, y: 0}
+    offset: {x: 0, y: 0}
+    flipX: 0
+    flipY: 0
+  output: {fileID: 11400000, guid: 0c14d3176b2edbf4b98257abdfe87135, type: 2}
+  outputAmount: 1
+  shopPrice: 3000
+  pluralName: 
+  ingredients:
+  - item: {fileID: 11400000, guid: 13358f76183232a44974b91d8414f522, type: 2}
+    amount: 4
+  - item: {fileID: 11400000, guid: 858adb5dfe617ed45b399f5257b73530, type: 2}
+    amount: 6
+  - item: {fileID: 11400000, guid: dd533ba7e1dad994b85859e613d42480, type: 2}
+    amount: 8
+  - item: {fileID: 11400000, guid: 760648c834dc0cd46b697d742b6e7447, type: 2}
+    amount: 6
+  - item: {fileID: 11400000, guid: 7118deb47d14256439f8c99ab5625311, type: 2}
+    amount: 8

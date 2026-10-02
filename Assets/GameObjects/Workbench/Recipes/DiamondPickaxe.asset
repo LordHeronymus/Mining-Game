@@ -26,10 +26,8 @@ MonoBehaviour:
   pluralName: Diamantspitzhacken
   ingredients:
   - item: {fileID: 11400000, guid: 75e7eb8e62b50c64eb4dd8132de34314, type: 2}
-    amount: 4
-  - item: {fileID: 11400000, guid: fa27fc9f4640a464b8ff65beb5407e0b, type: 2}
-    amount: 5
-  - item: {fileID: 11400000, guid: 0aec7199c102c754fa44d1281ae1a9d5, type: 2}
-    amount: 8
-  - item: {fileID: 11400000, guid: fad75854b09df8c458950d7b96227137, type: 2}
     amount: 10
+  - item: {fileID: 11400000, guid: 7118deb47d14256439f8c99ab5625311, type: 2}
+    amount: 4
+  - item: {fileID: 11400000, guid: 13358f76183232a44974b91d8414f522, type: 2}
+    amount: 30

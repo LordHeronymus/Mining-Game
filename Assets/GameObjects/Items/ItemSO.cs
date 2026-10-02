@@ -2,7 +2,7 @@ using UnityEngine;
 
 public enum Item
 {
-    //next 34
+    //next 51
 
     Coal = 3,
     Copper = 0,
@@ -39,6 +39,23 @@ public enum Item
     Obsidian = 31,
     OrangeGarnet = 32,
     Diamond = 33,
+    Mythril = 34,
+    Backpack = 35,
+    Emerald = 36,
+    LoadBelt = 37,
+    ReinforcedBackpack = 38,
+    HeavyDutyBoots = 39,
+    Ruby = 40,
+    SpringGreaves = 41,
+    LoadFrame = 42,
+    Exoskeleton = 43,
+    CrystalPendant = 44,
+    CopperEnergyBracelet = 45,
+    EnergyStorageVial = 46,
+    RuneBelt = 47,
+    CrystalHeart = 48,
+    CrystalHarness = 49,
+    TravelMonolith = 50,
 }
 
 public enum ItemCategory
@@ -62,6 +79,10 @@ public class ItemSO : ScriptableObject
     [Header("Stats")]
     public int worth = 0;
     [Min(0f)] public float weight = 1f;
+
+    [Header("Powerup effect")]
+    [Min(0)] public int carryingCapacityUpgradeLevel;
+    [Min(0)] public int energyCapacityUpgradeLevel;
 
     public bool HasFixedZeroWeight => item == Item.Axe || item == Item.Scythe ||
         item == Item.CopperPickaxe || item == Item.IronPickaxe || item == Item.SteelPickaxe ||

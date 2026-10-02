@@ -24,6 +24,7 @@ public sealed class PlacedTorch : MonoBehaviour
     ItemSO item;
     public static IEnumerable<PlacedTorch> Active => active;
     public MapGenerator OwnerMap => map;
+    public Vector3Int Cell => cell;
     public Vector3 LightLocalPosition
     {
         get
@@ -118,6 +119,15 @@ public sealed class PlacedTorch : MonoBehaviour
             if (placed && placed.map == map && placed.cell == target) return false;
 
         if (!InventoryManager.Instance.TryRemove(item)) return false;
+        CreateAt(map, item, target);
+        AudioManager.Instance?.PlayTorchSound(true);
+        return true;
+    }
+
+    public static void CreateAt(MapGenerator map, ItemSO item, Vector3Int target)
+    {
+        var sprite = Resources.Load<Sprite>("Torches/TorchHolderSprite");
+        Vector2 targetCenter = map.Terrain.GetCellCenterWorld(target);
         var instance = new GameObject("Placed Torch");
         instance.SetActive(false);
         instance.transform.SetParent(map.transform, false);
@@ -137,7 +147,5 @@ public sealed class PlacedTorch : MonoBehaviour
         flame.Initialize(map);
         instance.SetActive(true);
         flame.Play();
-        AudioManager.Instance?.PlayTorchSound(true);
-        return true;
     }
 }

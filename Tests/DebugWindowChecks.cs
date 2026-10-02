@@ -65,6 +65,21 @@ public static class DebugWindowChecks
         Check(audio.GetComponentsInChildren<Button>(true).Length>20,"Audio clip controls are missing.");
         window.SwitchTab("Icons");
         Check(content.Find("IconRecipeDropdown").gameObject.activeInHierarchy,"Icon page did not open.");
+        window.SwitchTab("Recipes");
+        var recipeSearch=content.Find("RecipeBrowserSearch")?.GetComponent<TMP_InputField>();
+        var recipeFilter=content.Find("RecipeBrowserCategoryDropdown")?.GetComponent<TMP_Dropdown>();
+        var recipeList=content.Find("RecipeBrowserViewport/RecipeBrowserContent");
+        Check(recipeSearch && recipeFilter && recipeList && recipeSearch.gameObject.activeInHierarchy &&
+            recipeFilter.gameObject.activeInHierarchy,"Recipe browser controls are missing.");
+        recipeSearch.text="Leiter";
+        Check(recipeList.GetComponentsInChildren<Button>(false).Length>0,"Recipe search returned no matching result.");
+        recipeSearch.text="";
+        recipeFilter.value=1;
+        var buildingResults=recipeList.GetComponentsInChildren<Button>(false);
+        Check(buildingResults.Length>0 && buildingResults.All(button =>
+            button.GetComponentInChildren<TMP_Text>().text.StartsWith("Bauen · ")),
+            "Recipe category filter returned a result from another category.");
+        recipeFilter.value=0;
         window.SwitchTab(true);
         return new {passed=true,fullscreen=true,tabs=9,testControls=true,miscHitOffset=true,startingResourcesInGameplay=true,powerups=true,singleRuntimeWindow=true};
     }

@@ -3,8 +3,10 @@ using UnityEngine.Tilemaps;
 using System.Collections.Generic;
 
 [RequireComponent(typeof(MapGenerator), typeof(TilemapCollider2D))]
+[DefaultExecutionOrder(-100)]
 public sealed class TerrainColliderChunks : MonoBehaviour
 {
+    static readonly Unity.Profiling.ProfilerMarker UpdateMarker = new Unity.Profiling.ProfilerMarker("Mining.ColliderChunk");
     const int ChunkSize = 16;
     const int ChunkRadius = 1;
     const float AnimalBodyRefreshInterval = .25f;
@@ -14,6 +16,7 @@ public sealed class TerrainColliderChunks : MonoBehaviour
     CompositeCollider2D sourceComposite;
     Tilemap[,] chunks;
     readonly Dictionary<Tilemap, Vector2Int> chunkCoordinates = new Dictionary<Tilemap, Vector2Int>();
+    readonly HashSet<Tilemap> dirtyChunks = new HashSet<Tilemap>();
     readonly List<Rigidbody2D> animalBodies = new List<Rigidbody2D>();
     BoundsInt sourceBounds;
     PlayerMovement player;
@@ -51,6 +54,8 @@ public sealed class TerrainColliderChunks : MonoBehaviour
     void FixedUpdate()
     {
         if (!Application.isPlaying || chunks == null) return;
+        // Apply queued terrain changes before movement queries and the physics step.
+        FlushDirtyChunks();
         animalBodyRefreshTimer -= Time.fixedDeltaTime;
         if (animalBodyRefreshTimer <= 0f)
         {
@@ -61,6 +66,18 @@ public sealed class TerrainColliderChunks : MonoBehaviour
         foreach (var body in animalBodies)
             if (body && body.gameObject.activeInHierarchy)
                 EnsureChunksAroundPosition(body.position);
+    }
+
+    void LateUpdate()
+    {
+        if (Application.isPlaying && chunks != null) FlushDirtyChunks();
+    }
+
+    void FlushDirtyChunks()
+    {
+        foreach (var chunk in dirtyChunks)
+            if (chunk) PopulateChunk(chunk);
+        dirtyChunks.Clear();
     }
 
     void OnDisable()
@@ -167,6 +184,7 @@ public sealed class TerrainColliderChunks : MonoBehaviour
     {
         if (!Application.isPlaying || chunks == null || !map || !map.Terrain) return;
         EnsureChunksAroundPosition(worldPosition);
+        FlushDirtyChunks();
         Physics2D.SyncTransforms();
     }
 
@@ -211,6 +229,7 @@ public sealed class TerrainColliderChunks : MonoBehaviour
         var body = child.AddComponent<Rigidbody2D>();
         body.bodyType = RigidbodyType2D.Static;
         var composite = child.AddComponent<CompositeCollider2D>();
+        composite.generationType = CompositeCollider2D.GenerationType.Manual;
         if (sourceComposite)
         {
             composite.geometryType = sourceComposite.geometryType;
@@ -232,6 +251,7 @@ public sealed class TerrainColliderChunks : MonoBehaviour
 
     void PopulateChunk(Tilemap chunk)
     {
+        using var profile = UpdateMarker.Auto();
         if (!chunkCoordinates.TryGetValue(chunk, out var coordinates)) return;
         int cx=coordinates.x,cy=coordinates.y;
         int left=sourceBounds.xMin+cx*ChunkSize,bottom=sourceBounds.yMin+cy*ChunkSize;
@@ -276,24 +296,25 @@ public sealed class TerrainColliderChunks : MonoBehaviour
         }
         chunk.SetTilesBlock(area,tiles);
         chunk.GetComponent<TilemapCollider2D>().ProcessTilemapChanges();
+        // SetPath and tile changes must complete before combining the geometry once.
+        chunk.GetComponent<CompositeCollider2D>().GenerateGeometry();
     }
     float CurrentInset => appearance ? Mathf.Clamp(appearance.colliderInset,0f,.3f) : 0f;
 
     void OnTilesChanged(Tilemap source, Tilemap.SyncTile[] changes)
     {
         if(chunks==null||source!=map.Terrain||changes==null)return;
-        var dirty=new System.Collections.Generic.HashSet<Tilemap>();
         foreach(var change in changes)for(int dy=-1;dy<=1;dy++)for(int dx=-1;dx<=1;dx++)
         {
             var cell=change.position+new Vector3Int(dx,dy,0);
             if(!sourceBounds.Contains(cell))continue;
             var chunk=chunks[(cell.x-sourceBounds.xMin)/ChunkSize,(cell.y-sourceBounds.yMin)/ChunkSize];
-            if(chunk)dirty.Add(chunk);
+            if(chunk)dirtyChunks.Add(chunk);
         }
-        foreach(var chunk in dirty)PopulateChunk(chunk);
     }
     void ClearChunks()
     {
+        dirtyChunks.Clear();
         if (chunks == null) return;
         foreach (var chunk in chunks)
             if (chunk)

@@ -55,6 +55,7 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
     TMP_InputField movementMultiplier;
     Toggle diggingMultiplierToggle;
     Toggle movementMultiplierToggle;
+    Toggle performanceMonitorToggle;
     TMP_InputField healthInput;
     TMP_InputField miningHitOffsetInput;
     TMP_InputField playerFigureHeightInput;
@@ -64,6 +65,7 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
     bool smartCursorStrokeWidthListenerBound;
     TMP_InputField panelBackdropAlphaInput;
     TMP_InputField panelElementAlphaInput;
+    TMP_InputField mapPanelAlphaInput;
     const string PanelBackdropAlphaKey = "GameplayDebugPanel.BackdropAlpha";
     const string PanelElementAlphaKey = "GameplayDebugPanel.ElementAlpha";
     const float DefaultPanelBackdropAlpha = .55f;
@@ -135,12 +137,19 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
     CraftingRecipe[] editableRecipes = System.Array.Empty<CraftingRecipe>();
     ItemSO[] recipeIngredientChoices = System.Array.Empty<ItemSO>();
     CraftingRecipe editingRecipe;
-    TMP_Dropdown recipeDropdown, recipeCategoryDropdown;
+    TMP_Dropdown recipeBrowserCategoryDropdown, recipeCategoryDropdown;
+    TMP_InputField recipeBrowserSearchInput;
+    ScrollRect recipeBrowserScroll;
+    RectTransform recipeBrowserViewport, recipeBrowserContent;
+    TextMeshProUGUI recipeSelectedLabel;
+    TextMeshProUGUI recipeBrowserEmptyLabel;
+    readonly List<Button> recipeBrowserButtons = new List<Button>();
     TMP_InputField recipeOutputAmount;
     RectTransform recipeIngredientRows;
     TextMeshProUGUI recipeEditorStatus;
     Button recipeAddIngredient;
     readonly List<RecipeIngredientEditorRow> recipeRows = new List<RecipeIngredientEditorRow>();
+    int draggedRecipeIngredientIndex = -1;
     TMP_InputField startingMoneyInput;
     RectTransform startingResourceRows;
     Button startingResourceAdd;
@@ -160,6 +169,7 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
     sealed class RecipeIngredientEditorRow
     {
         public RectTransform rect;
+        public Button dragHandle;
         public TMP_Dropdown item;
         public TextMeshProUGUI amountLabel;
         public TMP_InputField amount;
@@ -262,6 +272,7 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         CreateTabs();
         SetTab(false);
         Layout();
+        SetViewVisible(GameplayDebugPanel.IsOpen);
     }
 
     void CreateStartingResourcesEditor()
@@ -444,6 +455,11 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         AddPowerupSection("Werkzeuge", giftItems.Where(item =>
             item.item == Item.Axe || item.item == Item.Scythe)
             .OrderBy(item => item.item == Item.Axe ? 0 : 1).ToArray());
+        AddPowerupSection("Upgrades", giftItems.Where(item =>
+            item.category == ItemCategory.Powerup &&
+            !(item.item >= Item.CopperPickaxe && item.item <= Item.DiamondPickaxe) &&
+            item.item != Item.Axe && item.item != Item.Scythe)
+            .OrderBy(item => item.displayName).ToArray());
         RefreshPowerups();
     }
 
@@ -1347,21 +1363,82 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         var workbench = UnityEngine.Object.FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include);
         if (workbench && workbench.recipes != null)
             editableRecipes = workbench.recipes.Where(recipe => recipe && recipe.TryGetCosts(out _))
-                .OrderBy(recipe => recipe.Category == CraftingRecipe.RecipeCategory.Building ? 0 :
-                    recipe.Category == CraftingRecipe.RecipeCategory.Materials ? 1 :
-                    recipe.Category == CraftingRecipe.RecipeCategory.Tools ? 2 : 3)
-                .ThenBy(recipe => recipe.output.displayName, System.StringComparer.CurrentCultureIgnoreCase)
+                .OrderBy(recipe => recipe.output.displayName, System.StringComparer.CurrentCultureIgnoreCase)
                 .ThenBy(recipe => recipe.name, System.StringComparer.CurrentCultureIgnoreCase).ToArray();
         recipeIngredientChoices = giftItems.Where(item => item).OrderBy(item => item.displayName,
             System.StringComparer.CurrentCultureIgnoreCase).ToArray();
-        recipeDropdown = CreateStyledDropdown("RecipeEditorDropdown");
-        recipeDropdown.ClearOptions();
-        recipeDropdown.AddOptions(editableRecipes.Select(recipe => new TMP_Dropdown.OptionData(
-            IconCategoryName(recipe.Category) + " · " + recipe.output.displayName)).ToList());
-        recipeDropdown.interactable = editableRecipes.Length > 0;
-        recipeDropdown.onValueChanged = new TMP_Dropdown.DropdownEvent();
-        recipeDropdown.onValueChanged.AddListener(_ => RefreshRecipeEditor());
-        recipeItems.Add("RecipeEditorDropdown");
+        recipeBrowserSearchInput = CloneItem("DiggingSpeed", "RecipeBrowserSearch", content)
+            .GetComponent<TMP_InputField>();
+        recipeBrowserSearchInput.onValueChanged = new TMP_InputField.OnChangeEvent();
+        recipeBrowserSearchInput.contentType = TMP_InputField.ContentType.Standard;
+        recipeBrowserSearchInput.characterLimit = 0;
+        recipeBrowserSearchInput.SetTextWithoutNotify("");
+        DisableInputChildRaycasts(recipeBrowserSearchInput);
+        var searchPlaceholder = recipeBrowserSearchInput.placeholder as TMP_Text;
+        if (searchPlaceholder) searchPlaceholder.text = "Rezept suchen …";
+        recipeBrowserSearchInput.onValueChanged.AddListener(_ => RefreshRecipeBrowserResults());
+        recipeItems.Add("RecipeBrowserSearch");
+
+        recipeBrowserCategoryDropdown = CreateStyledDropdown("RecipeBrowserCategoryDropdown");
+        recipeBrowserCategoryDropdown.ClearOptions();
+        recipeBrowserCategoryDropdown.AddOptions(new List<string> { "Alle", "Bauen", "Materialien", "Werkzeuge" });
+        recipeBrowserCategoryDropdown.onValueChanged = new TMP_Dropdown.DropdownEvent();
+        recipeBrowserCategoryDropdown.onValueChanged.AddListener(_ => RefreshRecipeBrowserResults());
+        recipeItems.Add("RecipeBrowserCategoryDropdown");
+
+        recipeBrowserViewport = MakeRect("RecipeBrowserViewport", content);
+        items[recipeBrowserViewport.name] = recipeBrowserViewport;
+        recipeBrowserViewport.gameObject.AddComponent<Image>().color = new Color(.075f, .095f, .12f, 1f);
+        recipeBrowserViewport.gameObject.AddComponent<RectMask2D>();
+        recipeBrowserScroll = recipeBrowserViewport.gameObject.AddComponent<ScrollRect>();
+        recipeBrowserScroll.viewport = recipeBrowserViewport;
+        recipeBrowserScroll.horizontal = false;
+        recipeBrowserScroll.vertical = true;
+        recipeBrowserScroll.movementType = ScrollRect.MovementType.Clamped;
+        recipeBrowserScroll.scrollSensitivity = 42f;
+        recipeBrowserScroll.inertia = false;
+        recipeBrowserContent = MakeRect("RecipeBrowserContent", recipeBrowserViewport);
+        recipeBrowserContent.anchorMin = new Vector2(0, 1);
+        recipeBrowserContent.anchorMax = Vector2.one;
+        recipeBrowserContent.pivot = new Vector2(.5f, 1);
+        recipeBrowserContent.sizeDelta = Vector2.zero;
+        recipeBrowserScroll.content = recipeBrowserContent;
+        items[recipeBrowserContent.name] = recipeBrowserContent;
+        recipeItems.Add("RecipeBrowserViewport");
+        recipeItems.Add("RecipeBrowserContent");
+        recipeBrowserEmptyLabel = CloneItem("SpeedLabel", "RecipeBrowserEmptyLabel", content, "Keine Treffer")
+            .GetComponent<TextMeshProUGUI>();
+        recipeBrowserEmptyLabel.alignment = TextAlignmentOptions.Center;
+        recipeBrowserEmptyLabel.raycastTarget = false;
+        recipeItems.Add("RecipeBrowserEmptyLabel");
+        for (int i = 0; i < editableRecipes.Length; i++)
+        {
+            string buttonName = "RecipeBrowserItem_" + i;
+            var button = CloneItem("Defaults", buttonName, recipeBrowserContent,
+                IconCategoryName(editableRecipes[i].Category) + " · " + editableRecipes[i].output.displayName)
+                .GetComponent<Button>();
+            var label = button.GetComponentInChildren<TextMeshProUGUI>();
+            label.alignment = TextAlignmentOptions.MidlineLeft;
+            label.margin = new Vector4(14, 0, 8, 0);
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 15;
+            label.fontSizeMax = 22;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            int recipeIndex = i;
+            button.onClick = new Button.ButtonClickedEvent();
+            button.onClick.AddListener(() => SelectRecipe(editableRecipes[recipeIndex]));
+            recipeBrowserButtons.Add(button);
+            recipeItems.Add(buttonName);
+        }
+        recipeBrowserCategoryDropdown.SetValueWithoutNotify(0);
+
+        recipeSelectedLabel = CloneItem("SpeedLabel", "RecipeSelectedLabel", content, "").GetComponent<TextMeshProUGUI>();
+        recipeSelectedLabel.fontSize = 20;
+        recipeSelectedLabel.enableAutoSizing = true;
+        recipeSelectedLabel.fontSizeMin = 16;
+        recipeSelectedLabel.fontSizeMax = 22;
+        recipeSelectedLabel.textWrappingMode = TextWrappingModes.NoWrap;
+        recipeItems.Add("RecipeSelectedLabel");
         CloneItem("SpeedLabel", "RecipeCategoryLabel", content, "Kategorie");
         recipeCategoryDropdown = CreateStyledDropdown("RecipeCategoryDropdown");
         recipeCategoryDropdown.ClearOptions();
@@ -1384,15 +1461,69 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         recipeEditorStatus = CloneItem("Status", "RecipeEditorStatus", content, "").GetComponent<TextMeshProUGUI>();
         recipeItems.AddRange(new[] { "RecipeCategoryLabel", "RecipeCategoryDropdown", "RecipeOutputLabel",
             "RecipeOutputAmount", "RecipeIngredientsSection", "RecipeIngredientRows", "RecipeAddIngredient", "RecipeEditorStatus" });
+        editingRecipe = editableRecipes.FirstOrDefault();
+        RefreshRecipeBrowserResults(false);
         RefreshRecipeEditor();
     }
 
-    CraftingRecipe SelectedEditableRecipe => editableRecipes.Length > 0
-        ? editableRecipes[Mathf.Clamp(recipeDropdown.value, 0, editableRecipes.Length - 1)] : null;
+    void SelectRecipe(CraftingRecipe recipe)
+    {
+        if (!recipe || recipe == editingRecipe) return;
+        if (editingRecipe && !ApplyRecipeEditor(false))
+        {
+            RefreshRecipeBrowserResults();
+            return;
+        }
+        editingRecipe = recipe;
+        RefreshRecipeEditor();
+    }
+
+    void RefreshRecipeBrowserResults(bool resetScroll = true)
+    {
+        if (!recipeBrowserCategoryDropdown || recipeBrowserButtons.Count != editableRecipes.Length) return;
+        string query = recipeBrowserSearchInput ? recipeBrowserSearchInput.text.Trim() : "";
+        int categoryFilter = recipeBrowserCategoryDropdown.value;
+        var visible = new List<int>();
+        for (int i = 0; i < editableRecipes.Length; i++)
+        {
+            var recipe = editableRecipes[i];
+            bool categoryMatches = categoryFilter == 0 || categoryFilter switch
+            {
+                1 => recipe.Category == CraftingRecipe.RecipeCategory.Building,
+                2 => recipe.Category == CraftingRecipe.RecipeCategory.Materials,
+                _ => recipe.Category == CraftingRecipe.RecipeCategory.Tools
+            };
+            bool queryMatches = string.IsNullOrEmpty(query) ||
+                recipe.output.displayName.IndexOf(query, System.StringComparison.CurrentCultureIgnoreCase) >= 0 ||
+                IconCategoryName(recipe.Category).IndexOf(query, System.StringComparison.CurrentCultureIgnoreCase) >= 0;
+            bool show = categoryMatches && queryMatches;
+            recipeBrowserButtons[i].gameObject.SetActive(show);
+            var image = recipeBrowserButtons[i].targetGraphic as Image;
+            if (image) image.color = recipe == editingRecipe
+                ? new Color(.44f, .29f, .11f, 1f) : new Color(.2f, .25f, .32f, 1f);
+            if (show) visible.Add(i);
+        }
+
+        int columns = 2;
+        int rows = Mathf.CeilToInt(visible.Count / (float)columns);
+        float width = recipeBrowserViewport.rect.width;
+        float buttonWidth = Mathf.Max(100f, (width - 12f) * .5f);
+        for (int slot = 0; slot < visible.Count; slot++)
+        {
+            int recipeIndex = visible[slot];
+            var rect = (RectTransform)recipeBrowserButtons[recipeIndex].transform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0, 1);
+            rect.pivot = new Vector2(0, 1);
+            rect.anchoredPosition = new Vector2((slot % columns) * (buttonWidth + 12f), -(slot / columns) * 46f);
+            rect.sizeDelta = new Vector2(buttonWidth, 40f);
+        }
+        recipeBrowserContent.sizeDelta = new Vector2(0, rows == 0 ? 0 : rows * 46f - 6f);
+        recipeBrowserEmptyLabel.gameObject.SetActive(visible.Count == 0);
+        if (resetScroll) recipeBrowserScroll.verticalNormalizedPosition = 1f;
+    }
 
     void RefreshRecipeEditor()
     {
-        editingRecipe = SelectedEditableRecipe;
         bool available = editingRecipe;
         recipeCategoryDropdown.interactable = available;
         recipeOutputAmount.interactable = available;
@@ -1401,10 +1532,13 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         {
             recipeCategoryDropdown.SetValueWithoutNotify((int)editingRecipe.category);
             recipeOutputAmount.SetTextWithoutNotify(editingRecipe.outputAmount.ToString(CultureInfo.InvariantCulture));
+            recipeSelectedLabel.text = IconCategoryName(editingRecipe.Category) + " · " + editingRecipe.output.displayName;
         }
+        else recipeSelectedLabel.text = "Kein Rezept verfügbar";
         ClearRecipeIngredientRows();
         if (available && editingRecipe.ingredients != null)
             for (int i = 0; i < editingRecipe.ingredients.Length; i++) CreateRecipeIngredientRow(i, editingRecipe.ingredients[i]);
+        RefreshRecipeBrowserResults(false);
         recipeEditorStatus.text = "";
         Layout();
     }
@@ -1415,10 +1549,12 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         {
             recipeItems.Remove(row.rect.name);
             items.Remove(row.rect.name);
+            recipeItems.Remove(row.dragHandle.name);
             recipeItems.Remove(row.item.name);
             recipeItems.Remove(row.amountLabel.name);
             recipeItems.Remove(row.amount.name);
             recipeItems.Remove(row.remove.name);
+            items.Remove(row.dragHandle.name);
             items.Remove(row.item.name);
             items.Remove(row.amountLabel.name);
             items.Remove(row.amount.name);
@@ -1434,6 +1570,18 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         items[rowRect.name] = rowRect;
         recipeItems.Add(rowRect.name);
         var row = new RecipeIngredientEditorRow { rect = rowRect };
+        row.dragHandle = CloneItem("Defaults", "RecipeIngredientDrag_" + index, rowRect, "↕").GetComponent<Button>();
+        row.dragHandle.onClick = new Button.ButtonClickedEvent();
+        var trigger = row.dragHandle.gameObject.AddComponent<EventTrigger>();
+        trigger.triggers = new List<EventTrigger.Entry>();
+        var beginDrag = new EventTrigger.Entry { eventID = EventTriggerType.BeginDrag };
+        beginDrag.callback.AddListener(_ => draggedRecipeIngredientIndex = index);
+        trigger.triggers.Add(beginDrag);
+        var endDrag = new EventTrigger.Entry { eventID = EventTriggerType.EndDrag };
+        endDrag.callback.AddListener(data => DropRecipeIngredient(index, (PointerEventData)data));
+        trigger.triggers.Add(endDrag);
+        recipeItems.Add(row.dragHandle.name);
+
         row.item = CreateStyledDropdown("RecipeIngredientDropdown_" + index, rowRect);
         row.item.ClearOptions();
         var choices = recipeIngredientChoices.Where(item => item && item != editingRecipe.output).ToArray();
@@ -1500,7 +1648,7 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
             return false;
         }
         recipe.SaveRecipeSettings();
-        RefreshRecipeDropdownLabels();
+        RefreshRecipeBrowserResults(false);
         UnityEngine.Object.FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include)?.RefreshRecipeSettings(recipe);
         recipeEditorStatus.text = "";
         if (refresh) RefreshRecipeEditor();
@@ -1508,16 +1656,6 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
     }
 
     public bool CommitRecipeInputs() => ApplyRecipeEditor(false);
-
-    void RefreshRecipeDropdownLabels()
-    {
-        int selected = recipeDropdown.value;
-        recipeDropdown.ClearOptions();
-        recipeDropdown.AddOptions(editableRecipes.Select(recipe => new TMP_Dropdown.OptionData(
-            IconCategoryName(recipe.Category) + " · " + recipe.output.displayName)).ToList());
-        if (editableRecipes.Length > 0) recipeDropdown.SetValueWithoutNotify(Mathf.Clamp(selected, 0, editableRecipes.Length - 1));
-        recipeDropdown.RefreshShownValue();
-    }
 
     void AddRecipeIngredient()
     {
@@ -1547,6 +1685,27 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
             RefreshRecipeEditor();
             UnityEngine.Object.FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include)?.RefreshRecipeSettings(editingRecipe);
         }
+    }
+
+    void DropRecipeIngredient(int from, PointerEventData eventData)
+    {
+        if (draggedRecipeIngredientIndex < 0 || from != draggedRecipeIngredientIndex || recipeRows.Count < 2)
+        { draggedRecipeIngredientIndex = -1; return; }
+        draggedRecipeIngredientIndex = -1;
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(recipeIngredientRows, eventData.position,
+                eventData.pressEventCamera, out Vector2 localPoint)) return;
+        int to = Mathf.Clamp(Mathf.RoundToInt((-localPoint.y - 25f) / 58f), 0, recipeRows.Count - 1);
+        if (to == from || !ApplyRecipeEditor(false)) return;
+
+        var ingredients = editingRecipe.ingredients.ToList();
+        var moved = ingredients[from];
+        ingredients.RemoveAt(from);
+        ingredients.Insert(to, moved);
+        if (!editingRecipe.SetRecipeSettings(editingRecipe.category, editingRecipe.outputAmount, ingredients.ToArray())) return;
+        editingRecipe.SaveRecipeSettings();
+        RefreshRecipeEditor();
+        UnityEngine.Object.FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include)
+            ?.RefreshRecipeSettings(editingRecipe);
     }
     void CreateTabs()
     {
@@ -1585,12 +1744,23 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         panelElementAlphaInput.onValueChanged.AddListener(_ => ApplyPanelElementAlpha(false));
         panelElementAlphaInput.onEndEdit.AddListener(_ => ApplyPanelElementAlpha(true));
 
+        CloneItem("SpeedLabel", "MapPanelAlphaLabel", content, "Karten-Alpha (0–1)");
+        mapPanelAlphaInput = CloneItem("DiggingSpeed", "MapPanelAlphaInput", content)
+            .GetComponent<TMP_InputField>();
+        mapPanelAlphaInput.onValueChanged = new TMP_InputField.OnChangeEvent();
+        mapPanelAlphaInput.onEndEdit = new TMP_InputField.SubmitEvent();
+        mapPanelAlphaInput.contentType = TMP_InputField.ContentType.DecimalNumber;
+        DisableInputChildRaycasts(mapPanelAlphaInput);
+        mapPanelAlphaInput.onValueChanged.AddListener(_ => ApplyMapPanelAlpha(false));
+        mapPanelAlphaInput.onEndEdit.AddListener(_ => ApplyMapPanelAlpha(true));
+
         SetupCollapsibleSection("Section", "gameplay-main", "Gameplay", true);
         SetupCollapsibleSection("StartSection", "gameplay-start", "Start", true);
-        gameplayCoreItems.AddRange(new[] { "SpeedLabel", "DiggingSpeed", "DayNightRow", "KeepMap", "CameraFollow" });
+        gameplayCoreItems.AddRange(new[] { "SpeedLabel", "DiggingSpeed", "DayNightRow", "KeepMap", "CameraFollow", "PerformanceMonitoring" });
 
-        MoveToTab(recipeItems, "RecipeEditorSection", "RecipeEditorDropdown", "RecipeCategoryLabel",
-            "RecipeCategoryDropdown", "RecipeOutputLabel", "RecipeOutputAmount", "RecipeIngredientsSection",
+        MoveToTab(recipeItems, "RecipeEditorSection", "RecipeBrowserSearch", "RecipeBrowserCategoryDropdown",
+            "RecipeBrowserViewport", "RecipeBrowserContent", "RecipeBrowserEmptyLabel", "RecipeSelectedLabel",
+            "RecipeCategoryLabel", "RecipeCategoryDropdown", "RecipeOutputLabel", "RecipeOutputAmount", "RecipeIngredientsSection",
             "RecipeIngredientRows", "RecipeAddIngredient", "RecipeEditorStatus");
 
         MoveToTab(giftingItems, "ItemWeightSection", "ItemWeightDropdown", "ItemWeightLabel", "ItemWeightInput", "ItemWeightStatus",
@@ -1673,6 +1843,11 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         CreateModeToggle("KeepMap", "Map nach Play-Stopp im Editor behalten", GameplayTestMode.KeepMap, null);
         testItems.Remove("KeepMap");
         gameplayItems.Add("KeepMap");
+        performanceMonitorToggle = CreateToggleRow("PerformanceMonitoring", "Performance aufzeichnen");
+        gameplayItems.Add("PerformanceMonitoring");
+        performanceMonitorToggle.SetIsOnWithoutNotify(PerformanceMonitorControl.IsEnabled);
+        performanceMonitorToggle.interactable = PerformanceMonitorControl.IsAvailable;
+        performanceMonitorToggle.onValueChanged.AddListener(PerformanceMonitorControl.SetEnabled);
 #endif
         CreateModeToggle("CameraFollow", "Camera Follow", GameplayTestMode.CameraFollow, null);
         testItems.Remove("CameraFollow");
@@ -1726,6 +1901,9 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         var testEndScreen = CloneItem("Defaults", "TestEndScreen", content, "Endscreen testen").GetComponent<Button>();
         testEndScreen.onClick = new Button.ButtonClickedEvent();
         testEndScreen.onClick.AddListener(ShowTestEndScreen);
+        var resetLoading = CloneItem("Defaults", "ResetLoadingCalibration", content, "Ladekalibrierung zurücksetzen").GetComponent<Button>();
+        resetLoading.onClick = new Button.ButtonClickedEvent();
+        resetLoading.onClick.AddListener(LoadingProgress.ResetCalibration);
         CloneItem("Section", "OverlayTestSection", content, "OVERLAYS");
         CreateArtifactAnimationTests();
         CreateDayNightSelector();
@@ -1738,11 +1916,12 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         healthTestItems.AddRange(new[] { "HealthValueLabel", "HealthValueInput", "SetHealth", "DamageTest90",
             "DamageTest40", "DamageTest10", "DamageTest1", "EnergyDrain10", "EnergyMax" });
         overlayTestItems.Add("TestEndScreen");
+        overlayTestItems.Add("ResetLoadingCalibration");
         SetupCollapsibleSection("TestModeSection", "test-mode", "Testmodus", true);
         SetupCollapsibleSection("HealthTestSection", "test-health", "HP", true);
         SetupCollapsibleSection("OverlayTestSection", "test-overlays", "Overlays", true);
         MoveToTab(miscItems, "MiscSection", "PanelBackdropAlphaLabel", "PanelBackdropAlphaInput",
-            "PanelElementAlphaLabel", "PanelElementAlphaInput");
+            "PanelElementAlphaLabel", "PanelElementAlphaInput", "MapPanelAlphaLabel", "MapPanelAlphaInput");
     }
 
     void TeleportToUltroniumAltar()
@@ -1827,6 +2006,24 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         RefreshPanelGraphicAlphas();
         if (normalizeInput)
             panelElementAlphaInput.SetTextWithoutNotify(alpha.ToString("0.###", CultureInfo.InvariantCulture));
+    }
+
+    void ApplyMapPanelAlpha(bool normalizeInput)
+    {
+        if (!mapPanelAlphaInput) return;
+        var discovery = FindFirstObjectByType<PlayerMapDiscovery>(FindObjectsInactive.Include);
+        if (!discovery) return;
+        if (!float.TryParse(mapPanelAlphaInput.text.Replace(',', '.'), NumberStyles.Float,
+                CultureInfo.InvariantCulture, out float alpha) || float.IsNaN(alpha) ||
+            float.IsInfinity(alpha) || alpha < 0f || alpha > 1f)
+        {
+            if (!normalizeInput) return;
+            alpha = Mathf.Clamp01(discovery.panelAlpha);
+        }
+
+        discovery.panelAlpha = alpha;
+        if (normalizeInput)
+            mapPanelAlphaInput.SetTextWithoutNotify(alpha.ToString("0.###", CultureInfo.InvariantCulture));
     }
 
     void RefreshPanelGraphicAlphas()
@@ -2064,9 +2261,9 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         }
     }
 
-    void CreateModeToggle(string name, string label, GameplayTestMode mode, string hint)
+    Toggle CreateToggleRow(string name, string label)
     {
-        var row = MakeRect(name, content); items[name] = row; testItems.Add(name);
+        var row = MakeRect(name, content); items[name] = row;
         var hit = row.gameObject.AddComponent<Image>(); hit.color = Color.clear;
         var box = MakeRect("Box", row);
         box.anchorMin = box.anchorMax = new Vector2(0,.5f);
@@ -2084,6 +2281,13 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         text.fontSize = 26; text.text = label; text.alignment = TextAlignmentOptions.MidlineLeft;
         var toggle = row.gameObject.AddComponent<Toggle>();
         toggle.targetGraphic = boxImage; toggle.graphic = checkImage;
+        return toggle;
+    }
+
+    void CreateModeToggle(string name, string label, GameplayTestMode mode, string hint)
+    {
+        var toggle = CreateToggleRow(name, label);
+        testItems.Add(name);
         modeToggles[mode] = toggle;
         toggle.onValueChanged.AddListener(value => {
             if (mode == GameplayTestMode.KeepMap || mode == GameplayTestMode.CameraFollow)
@@ -2160,7 +2364,8 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
     {
         if (detailClipDropdown && detailClipDropdown.IsExpanded) detailClipDropdown.Hide();
         if (iconRecipeDropdown && iconRecipeDropdown.IsExpanded) iconRecipeDropdown.Hide();
-        if (recipeDropdown && recipeDropdown.IsExpanded) recipeDropdown.Hide();
+        if (recipeBrowserCategoryDropdown && recipeBrowserCategoryDropdown.IsExpanded)
+            recipeBrowserCategoryDropdown.Hide();
         foreach (var row in recipeRows) if (row.item && row.item.IsExpanded) row.item.Hide();
         foreach (var row in startingResourceRowsData) if (row.item && row.item.IsExpanded) row.item.Hide();
         HideTooltip(); currentTab = tab;
@@ -2231,6 +2436,8 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         if (smartCursorStrokeWidthInput)
             smartCursorStrokeWidthInput.SetTextWithoutNotify(
                 GameplayTestSettings.ConfiguredSmartCursorStrokeWidth.ToString("0.##", CultureInfo.InvariantCulture));
+        var mapDiscovery = FindFirstObjectByType<PlayerMapDiscovery>(FindObjectsInactive.Include);
+        if (mapDiscovery) SetInputIfUnfocused(mapPanelAlphaInput, Mathf.Clamp01(mapDiscovery.panelAlpha));
         if (playerFigureHeightInput && minerVisual)
             playerFigureHeightInput.SetTextWithoutNotify(minerVisual.height.ToString("0.##", CultureInfo.InvariantCulture));
         var torchMap = FindFirstObjectByType<MapGenerator>();
@@ -2790,6 +2997,13 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
 
     void LateUpdate()
     {
+        SetViewVisible(GameplayDebugPanel.IsOpen);
+        if (!GameplayDebugPanel.IsOpen) return;
+        if (performanceMonitorToggle)
+        {
+            performanceMonitorToggle.interactable = PerformanceMonitorControl.IsAvailable;
+            performanceMonitorToggle.SetIsOnWithoutNotify(PerformanceMonitorControl.IsEnabled);
+        }
         if (currentTab == DebugTab.Audio && audioBrowserGroups.Count == 0)
         {
             BuildAudioBrowser();
@@ -2800,6 +3014,12 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         if (currentTab == DebugTab.Tests) RefreshCurrentHealthInput();
         if (lastSize != window.rect.size || lastBounds != bounds.rect.size) Layout();
         if (GameplayDebugPanel.IsOpen) RefreshPanelGraphicAlphas();
+    }
+
+    public void SetViewVisible(bool visible)
+    {
+        if (window && window.gameObject.activeSelf != visible)
+            window.gameObject.SetActive(visible);
     }
 
     void ClampWindow()
@@ -2878,6 +3098,8 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
                 y += 60;
 #if UNITY_EDITOR
                 Place("KeepMap", x, y, col, 64);
+                y += 76;
+                Place("PerformanceMonitoring", x, y, col, 64);
                 y += 76;
 #endif
                 Place("CameraFollow", x, y, col, 64);
@@ -2978,6 +3200,8 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
             y += 48;
             if (expandedSections.Contains("test-overlays"))
             {
+                Place("ResetLoadingCalibration",x,y,col,48);
+                y += 58;
                 Place("TestEndScreen",x,y,col,48);
                 y += 58;
             }
@@ -3032,7 +3256,9 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
             Place("SmartCursorStrokeWidthLabel",x,292,col-170,50);
             Place("SmartCursorStrokeWidthInput",x+col-150,292,150,50);
             Place("SmartCursorStrokeWidthStatus",x,350,col,42);
-            content.sizeDelta = new Vector2(0, 412);
+            Place("MapPanelAlphaLabel",x,408,col-170,50);
+            Place("MapPanelAlphaInput",x+col-150,408,150,50);
+            content.sizeDelta = new Vector2(0, 474);
             return;
         }
 
@@ -3117,18 +3343,23 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
         if (currentTab == DebugTab.Recipes)
         {
             Place("RecipeEditorSection", x, 12, col, 36);
-            Place("RecipeEditorDropdown", x, 60, col, 50);
+            Place("RecipeBrowserSearch", x, 60, col - 320, 48);
+            Place("RecipeBrowserCategoryDropdown", x + col - 300, 60, 300, 48);
+            Place("RecipeBrowserViewport", x, 116, col, 224);
+            Place("RecipeBrowserEmptyLabel", x, 116, col, 224);
+            RefreshRecipeBrowserResults(false);
+            Place("RecipeSelectedLabel", x, 350, col, 42);
             float sideWidth = Mathf.Min(260, col * .52f);
-            Place("RecipeCategoryLabel", x, 126, col - sideWidth - 12, 48);
-            Place("RecipeCategoryDropdown", x + col - sideWidth, 124, sideWidth, 50);
-            Place("RecipeOutputLabel", x, 188, col - 150, 48);
-            Place("RecipeOutputAmount", x + col - 140, 186, 140, 50);
-            Place("RecipeIngredientsSection", x, 250, col, 36);
+            Place("RecipeCategoryLabel", x, 410, col - sideWidth - 12, 48);
+            Place("RecipeCategoryDropdown", x + col - sideWidth, 408, sideWidth, 50);
+            Place("RecipeOutputLabel", x, 470, col - 150, 48);
+            Place("RecipeOutputAmount", x + col - 140, 468, 140, 50);
+            Place("RecipeIngredientsSection", x, 532, col, 36);
             recipeIngredientRows.anchorMin = recipeIngredientRows.anchorMax = new Vector2(0, 1);
             recipeIngredientRows.pivot = new Vector2(0, 1);
-            recipeIngredientRows.anchoredPosition = new Vector2(x, -298);
+            recipeIngredientRows.anchoredPosition = new Vector2(x, -580);
             recipeIngredientRows.sizeDelta = new Vector2(col, recipeRows.Count * 58);
-            float ingredientWidth = Mathf.Max(100, col - 340);
+            float ingredientWidth = Mathf.Max(120, col - 400);
             for (int i = 0; i < recipeRows.Count; i++)
             {
                 var row = recipeRows[i];
@@ -3136,13 +3367,14 @@ public sealed partial class GameplayDebugWindow : MonoBehaviour
                 row.rect.pivot = new Vector2(0, 1);
                 row.rect.anchoredPosition = new Vector2(0, -i * 58);
                 row.rect.sizeDelta = new Vector2(col, 50);
-                Place(row.item.name, 0, 0, ingredientWidth, 48);
+                Place(row.dragHandle.name, 0, 0, 48, 48);
+                Place(row.item.name, 58, 0, ingredientWidth - 58, 48);
                 Place(row.amountLabel.name, ingredientWidth + 8, 0, 112, 48);
                 Place(row.amount.name, ingredientWidth + 128, 0, 150, 48);
                 Place(row.remove.name, ingredientWidth + 288, 0, 46, 48);
                 row.remove.interactable = recipeRows.Count > 1;
             }
-            float addY = 310 + recipeRows.Count * 58;
+            float addY = 592 + recipeRows.Count * 58;
             Place("RecipeAddIngredient", x, addY, Mathf.Min(260, col), 50);
             Place("RecipeEditorStatus", x, addY + 64, col, 52);
             content.sizeDelta = new Vector2(0, addY + 142);

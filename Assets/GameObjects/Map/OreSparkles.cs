@@ -154,10 +154,14 @@ public sealed class OreSparkles : MonoBehaviour
 
     public static bool IsOre(Block block) => block && (block.HasOreOverlays || block.id == BlockType.IronOre ||
         block.id == BlockType.CopperOre || block.id == BlockType.SilverOre || block.id == BlockType.GoldOre ||
-        block.id == BlockType.PlatinumOre || block.id == BlockType.Coal || block.id == BlockType.DiamondOre);
+        block.id == BlockType.PlatinumOre || block.id == BlockType.Coal || block.id == BlockType.DiamondOre ||
+        block.id == BlockType.MythrilOre || block.id == BlockType.EmeraldOre || block.id == BlockType.RubyOre);
 
     public static Color GetOreColor(BlockType type) =>
         type == BlockType.DiamondOre ? new Color(.49f, .91f, .95f) :
+        type == BlockType.MythrilOre ? new Color(.08f, .78f, 1f) :
+        type == BlockType.EmeraldOre ? new Color(.08f, .82f, .24f) :
+        type == BlockType.RubyOre ? new Color(.96f, .08f, .18f) :
         type == BlockType.UltroniumOre ? new Color(.45f, .28f, 1f) :
         type == BlockType.OrangeGarnetOre ? new Color(1f, .36f, .08f) :
         type == BlockType.TungstenOre ? new Color(.55f, .63f, .7f) :

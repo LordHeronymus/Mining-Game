@@ -34,6 +34,7 @@ public enum SoundType
     Hurt = 24,
     BoneBreaking1 = 25,
     Death = 26,
+    DigDeepOreHit = 27,
 }
 
 [System.Serializable]
@@ -79,7 +80,7 @@ public class AudioManager : MonoBehaviour
 
     public static float GetAmbienceVolume(AmbienceType type)
     {
-        if (!Instance) return PlayerSettings.Ambience;
+        if (!Instance) return PlayerSettings.Ambience * LoadingAudio.WorldAmbienceGain;
         float category = type switch
         {
             AmbienceType.Surface => Instance.surfaceVolume,
@@ -89,7 +90,7 @@ public class AudioManager : MonoBehaviour
             AmbienceType.Cave => Instance.caveVolume,
             _ => 1f
         };
-        return AmbienceVolume * Mathf.Clamp01(category);
+        return AmbienceVolume * Mathf.Clamp01(category) * LoadingAudio.WorldAmbienceGain;
     }
 
     public static float AmbienceVolume => (Instance ? Mathf.Clamp01(Instance.ambienceVolume) : 1f) * PlayerSettings.Ambience;
@@ -157,6 +158,11 @@ public class AudioManager : MonoBehaviour
     AudioClip grassLanding;
     AudioClip shopPaper;
     AudioClip medkitCloth;
+    AudioClip deepLayerOreHitClip;
+    AudioClip deepLayerStoneHitClip;
+    AudioClip[] lightRubbleClips;
+    RubbleAudioSettingsAsset rubbleSettings;
+    double nextLightRubbleStart;
     AudioClip blockedMiningHitClip;
     AudioSource lowHealthHeartbeatSource;
     AudioSource gameOverMusicSource;
@@ -175,6 +181,26 @@ public class AudioManager : MonoBehaviour
             if (!layerMiningSettings)
                 layerMiningSettings = Resources.Load<LayerMiningAudioSettingsAsset>("Audio/LayerMiningAudioSettings");
             return layerMiningSettings;
+        }
+    }
+
+    AudioClip DeepLayerOreHitClip
+    {
+        get
+        {
+            if (!deepLayerOreHitClip)
+                deepLayerOreHitClip = Resources.Load<AudioClip>("Audio/PickaxeHitL3Plus");
+            return deepLayerOreHitClip;
+        }
+    }
+
+    AudioClip DeepLayerStoneHitClip
+    {
+        get
+        {
+            if (!deepLayerStoneHitClip)
+                deepLayerStoneHitClip = Resources.Load<AudioClip>("Audio/PickaxeStoneHitL3Plus");
+            return deepLayerStoneHitClip;
         }
     }
 
@@ -243,11 +269,13 @@ public class AudioManager : MonoBehaviour
     public void PreviewLayerMiningClip(int layerIndex, SoundType type, bool breaking, int clipIndex)
     {
         var clip = GetSoundClip(type, clipIndex);
-        if (!clip || !soundLookup.TryGetValue(type, out var sound)) return;
+        if (!clip) return;
+        soundLookup.TryGetValue(type, out var sound);
         var tuning = GetLayerMiningClipTuning(layerIndex, breaking, type, clipIndex);
         float spread = Mathf.Clamp01(tuning.pitchSpread);
-        PlayPreview(clip, sound.volume * tuning.volume * (IsDigSound(type) ? digSoundVolume : 1f),
-            sound.pitch * tuning.pitch * Random.Range(1f - spread, 1f + spread));
+        PlayPreview(clip, (sound != null ? sound.volume : 1f) * tuning.volume *
+            (IsDigSound(type) ? digSoundVolume : 1f),
+            (sound != null ? sound.pitch : 1f) * tuning.pitch * Random.Range(1f - spread, 1f + spread));
     }
 
     void PlayPreview(AudioClip clip, float volume, float pitch)
@@ -538,6 +566,8 @@ public class AudioManager : MonoBehaviour
 
     public bool HasSound(SoundType type)
     {
+        if (type == SoundType.DigDeepStone && DeepLayerStoneHitClip) return true;
+        if (type == SoundType.DigDeepOreHit && DeepLayerOreHitClip) return true;
         if (!soundLookup.TryGetValue(type, out var sound)) return false;
         if (sound.variants != null && sound.variants.Length > 0)
         {
@@ -549,12 +579,18 @@ public class AudioManager : MonoBehaviour
 
     public int GetSoundClipCount(SoundType type)
     {
+        if (type == SoundType.DigDeepStone && DeepLayerStoneHitClip) return 1;
+        if (type == SoundType.DigDeepOreHit && DeepLayerOreHitClip) return 1;
         if (!soundLookup.TryGetValue(type, out var sound)) return 0;
         return sound.variants != null && sound.variants.Length > 0 ? sound.variants.Length : 1;
     }
 
     public AudioClip GetSoundClip(SoundType type, int clipIndex)
     {
+        if (type == SoundType.DigDeepStone && DeepLayerStoneHitClip)
+            return clipIndex == 0 ? DeepLayerStoneHitClip : null;
+        if (type == SoundType.DigDeepOreHit && DeepLayerOreHitClip)
+            return clipIndex == 0 ? DeepLayerOreHitClip : null;
         if (!soundLookup.TryGetValue(type, out var sound)) return null;
         if (sound.variants != null && sound.variants.Length > 0)
             return clipIndex >= 0 && clipIndex < sound.variants.Length ? sound.variants[clipIndex] : null;
@@ -602,9 +638,43 @@ public class AudioManager : MonoBehaviour
         PlayLayerMiningClip(layerIndex, type, breaking, clipIndex);
     }
 
+    public void PlayLightRubble()
+    {
+        if (!rubbleSettings)
+            rubbleSettings = Resources.Load<RubbleAudioSettingsAsset>("Audio/RubbleAudioSettings");
+        float minimum = Mathf.Max(0f, rubbleSettings ? rubbleSettings.minimumDelaySeconds : .1f);
+        float maximum = Mathf.Max(minimum, rubbleSettings ? rubbleSettings.maximumDelaySeconds : .3f);
+        StartCoroutine(PlayLightRubbleAfterDelay(Random.Range(minimum, maximum)));
+    }
+
+    System.Collections.IEnumerator PlayLightRubbleAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (AudioSettings.dspTime < nextLightRubbleStart) yield break;
+        if (lightRubbleClips == null)
+        {
+            lightRubbleClips = new AudioClip[3];
+            for (int i = 0; i < lightRubbleClips.Length; i++)
+                lightRubbleClips[i] = Resources.Load<AudioClip>($"Audio/LightRubble{i + 1:00}");
+        }
+        var clip = lightRubbleClips[Random.Range(0, lightRubbleClips.Length)];
+        if (!clip) yield break;
+        var source = GetFreeSource();
+        if (!source) yield break;
+        ambienceSources.Remove(source);
+        source.clip = clip;
+        source.loop = false;
+        source.panStereo = 0f;
+        source.pitch = TunedPitch(clip, 1f);
+        source.volume = TunedVolume(clip, digSoundVolume);
+        source.Play();
+        float startFraction = rubbleSettings ? Mathf.Clamp01(rubbleSettings.nextClipStartPercent / 100f) : .5f;
+        nextLightRubbleStart = AudioSettings.dspTime + clip.length / source.pitch * startFraction;
+    }
+
     public void PlayLayerMiningClip(int layerIndex, SoundType type, bool breaking, int clipIndex)
     {
-        if (!soundLookup.TryGetValue(type, out var sound)) return;
+        soundLookup.TryGetValue(type, out var sound);
         AudioClip clip = GetSoundClip(type, clipIndex);
         if (!clip) return;
 
@@ -612,11 +682,11 @@ public class AudioManager : MonoBehaviour
         var source = GetFreeSource();
         if (!source) return;
         ambienceSources.Remove(source);
-        float pitch = Mathf.Max(.01f, sound.pitch) * Mathf.Clamp(tuning.pitch, .5f, 2f);
+        float pitch = Mathf.Max(.01f, sound != null ? sound.pitch : 1f) * Mathf.Clamp(tuning.pitch, .5f, 2f);
         float spread = Mathf.Clamp01(tuning.pitchSpread);
         source.pitch = TunedPitch(clip, pitch * Random.Range(1f - spread, 1f + spread));
         source.clip = clip;
-        source.volume = TunedVolume(clip, sound.volume * Mathf.Clamp01(tuning.volume) *
+        source.volume = TunedVolume(clip, (sound != null ? sound.volume : 1f) * Mathf.Clamp01(tuning.volume) *
             (IsDigSound(type) ? digSoundVolume : 1f));
         source.panStereo = 0f;
         source.Play();
@@ -729,6 +799,7 @@ public class AudioManager : MonoBehaviour
         return type is SoundType.DigSoft or SoundType.DigMedium or SoundType.DigHard or
             SoundType.DigOre or SoundType.BreakRock or SoundType.BreakOre or
             SoundType.DigDirt or SoundType.DigTransitionStone or SoundType.DigStone or
-            SoundType.DirtHit or SoundType.DigDeepStone or SoundType.StoneBreak or SoundType.ClayBreak;
+            SoundType.DirtHit or SoundType.DigDeepStone or SoundType.DigDeepOreHit or
+            SoundType.StoneBreak or SoundType.ClayBreak;
     }
 }

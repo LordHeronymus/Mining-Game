@@ -30,7 +30,7 @@ public class EnergyManager : MonoBehaviour
 
     void Start()
     {
-        energy = stats.MaxEnergy;
+        ResetForNewRun();
         lowEnergyBeep = Resources.Load<AudioClip>("Audio/LowEnergyBip");
         if (lowEnergyBeep)
         {
@@ -48,6 +48,18 @@ public class EnergyManager : MonoBehaviour
 
     void Update()
     {
+        if (LoadingProgress.Active)
+        {
+            if (lowEnergySource && lowEnergySource.isPlaying) lowEnergySource.Stop();
+            return;
+        }
+        // The stats object can survive a scene transition; its scene references cannot.
+        if (!stats) stats = StatsManager.Instance;
+        if (!playerMovement) playerMovement = FindFirstObjectByType<PlayerMovement>();
+        if (!tileMiner) tileMiner = FindFirstObjectByType<TileMiner>();
+        if (!stats || !playerMovement || !tileMiner) return;
+        stats.RefreshEnergyCapacity();
+        energy = Mathf.Min(energy, stats.MaxEnergy);
         float consumption = idleConsumtion;
         if (playerMovement.IsMoving) consumption += moveConsumption;
         if (tileMiner.IsMingin) consumption += diggingConsumption;
@@ -72,6 +84,15 @@ public class EnergyManager : MonoBehaviour
     public void DrainEnergy(float amount)
     {
         energy = Mathf.Max(0f, energy - Mathf.Max(0f, amount));
+    }
+
+    public void ResetForNewRun()
+    {
+        if (!stats) stats = StatsManager.Instance;
+        if (!stats) return;
+        stats.RefreshEnergyCapacity();
+        energy = stats.MaxEnergy;
+        lowEnergyWarningActive = false;
     }
 
     void UpdateLowEnergyWarning()

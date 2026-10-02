@@ -17,5 +17,7 @@ MonoBehaviour:
   displayName: Diamant
   icon: {fileID: 21300000, guid: 77f60ac6fc3078a4c9648cd9f4de7a8f, type: 3}
   themeColor: {r: 0.2901961, g: 0.74509805, b: 1, a: 1}
-  worth: 0
+  worth: 1000
   weight: 1
+  carryingCapacityUpgradeLevel: 0
+  energyCapacityUpgradeLevel: 0

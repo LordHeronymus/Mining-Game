@@ -57,7 +57,10 @@ public class MapGenerator : MonoBehaviour
         new Color32(180, 0, 255, 255),   // Ultronium
         new Color32(255, 255, 255, 255), // Titan
         new Color32(111, 160, 208, 255), // Wolfram
-        new Color32(255, 112, 24, 255)   // Orange Granat
+        new Color32(255, 112, 24, 255),  // Orange Granat
+        new Color32(35, 205, 255, 255), // Mythril
+        new Color32(28, 210, 72, 255),  // Emerald
+        new Color32(242, 20, 52, 255)   // Ruby
     };
     [SerializeField, HideInInspector] public Color mapOverviewPlayerColor = Color.cyan;
     [Header("Torch Visuals")]
@@ -71,6 +74,15 @@ public class MapGenerator : MonoBehaviour
     [Range(0f, 3f)] public float altarButtonPulseFrequency = .65f;
     [Range(0f, .2f)] public float altarButtonFloatAmplitude = .05f;
     [Range(0f, 3f)] public float altarButtonFloatFrequency = .45f;
+    [Header("Map Objects")]
+    [Range(.25f, 3f)] public float shopSize = 1f;
+    [Range(.25f, 3f)] public float workshopSize = 1f;
+    [Range(.25f, 3f)] public float altarSize = 1f;
+    [Range(.25f, 3f)] public float energyMonolythSize = 1f;
+    [SerializeField, HideInInspector] float appliedShopSize = 1f;
+    [SerializeField, HideInInspector] float appliedWorkshopSize = 1f;
+    [SerializeField, HideInInspector] float appliedEnergyMonolythSize = 1f;
+    [SerializeField, HideInInspector] float appliedAltarSize = 1f;
     [SerializeField] TileBase[] grassVariants;
     [SerializeField] bool continuousGrassStrip;
     [SerializeField] TileBase grassLeftEnd;
@@ -193,6 +205,7 @@ public class MapGenerator : MonoBehaviour
         AddProtectedSurfaceObjectBounds<ShopBuilding>();
         AddProtectedSurfaceObjectBounds<WorkbenchBuilding>();
         AddProtectedSurfaceObjectBounds<EnergyMonolyth>();
+        AddProtectedSurfaceObjectBounds<SurfaceStorageBuilding>();
     }
 
     void AddProtectedSurfaceObjectBounds<T>() where T : MonoBehaviour
@@ -208,6 +221,10 @@ public class MapGenerator : MonoBehaviour
 
     void Awake()
     {
+        if (Application.isPlaying && !FindFirstObjectByType<SurfaceStorageBuilding>())
+            SurfaceStorageBuilding.CreateNearShop(FindFirstObjectByType<ShopBuilding>(),
+                Resources.Load<Sprite>("SurfaceStorage/StorageHut"));
+        ApplyMapObjectSizes();
         if (!GetComponent<UltroniumAltarChamber>()) gameObject.AddComponent<UltroniumAltarChamber>();
         MigrateSeedMode();
         MigrateOreDensitySettings();
@@ -232,6 +249,48 @@ public class MapGenerator : MonoBehaviour
         MigrateSeedMode();
         MigrateOreDensitySettings();
         UpdateGrassOffset();
+    }
+
+    public void ApplyMapObjectSizes()
+    {
+        ApplyGroundedSize<ShopBuilding>(shopSize, ref appliedShopSize);
+        ApplyGroundedSize<WorkbenchBuilding>(workshopSize, ref appliedWorkshopSize);
+        ApplyGroundedSize<EnergyMonolyth>(energyMonolythSize, ref appliedEnergyMonolythSize);
+        if (!Mathf.Approximately(altarSize, appliedAltarSize))
+        {
+            appliedAltarSize = altarSize;
+            if (AltarChamber && AltarChamber.Layout.valid) AltarChamber.RebuildVisuals();
+        }
+        protectedSurfaceObjectBounds.Clear();
+    }
+
+    static void ApplyGroundedSize<T>(float requested, ref float applied) where T : MonoBehaviour
+    {
+        requested = Mathf.Clamp(requested, .25f, 3f);
+        if (Mathf.Approximately(requested, applied)) return;
+        float ratio = requested / Mathf.Max(.001f, applied);
+        foreach (var item in FindObjectsByType<T>(FindObjectsSortMode.None))
+        {
+            var sprites = item.GetComponentsInChildren<SpriteRenderer>(true);
+            if (sprites.Length == 0) continue;
+            float bottom = float.PositiveInfinity;
+            foreach (var sprite in sprites)
+                if (sprite.sprite) bottom = Mathf.Min(bottom, sprite.bounds.min.y);
+            if (float.IsInfinity(bottom)) continue;
+            item.transform.localScale *= ratio;
+            float scaledBottom = float.PositiveInfinity;
+            foreach (var sprite in sprites)
+                if (sprite.sprite) scaledBottom = Mathf.Min(scaledBottom, sprite.bounds.min.y);
+            item.transform.position += Vector3.up * (bottom - scaledBottom);
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                UnityEditor.PrefabUtility.RecordPrefabInstancePropertyModifications(item.transform);
+                UnityEditor.EditorUtility.SetDirty(item.transform);
+            }
+#endif
+        }
+        applied = requested;
     }
 
     public void MigrateSeedMode()
@@ -606,39 +665,63 @@ public class MapGenerator : MonoBehaviour
 
     IEnumerator GenerateMapInPlay()
     {
-        var data = PrepareGeneratedMap(ChooseGenerationSeed());
+        if (!LoadingProgress.Active) LoadingScreen.Show();
+        if (GameSaveSystem.HasPendingLoad)
+        {
+            yield return GameSaveSystem.RestorePending(this);
+            yield break;
+        }
+        LoadingProgress.Configure(mapWidth, mapHeight);
+        yield return null;
+        MapGenerationSnapshot data = null;
+        var prepare = PrepareGeneratedMapSteps(ChooseGenerationSeed(), value => data = value, true);
+        while (prepare.MoveNext()) yield return null;
 #if UNITY_EDITOR
         InitialMapPrepared?.Invoke(this, data);
 #endif
-        GetComponent<MapLighting>()?.PrepareForStreamingGeneration(data);
+        LoadingProgress.SetStage(5);
         BeginTileApplication();
-        int initialRows = Mathf.Min(InitialGenerationRows, data.height);
-        ApplyTileRows(data, 0, initialRows);
-
-        IsGenerationStreaming = initialRows < data.height;
+        IsGenerationStreaming = true;
         pendingGeneration = data;
-        pendingGenerationRow = initialRows;
-        ActivateGeneratedMap(data);
-
-        if (!IsGenerationStreaming)
+        for (pendingGenerationRow = 0; pendingGenerationRow < data.height;)
         {
-            FinishGeneration();
-            yield break;
-        }
-
-        yield return null;
-        while (IsGenerationStreaming && pendingGeneration == data && pendingGenerationRow < data.height)
-        {
-            int rows = Mathf.Min(StreamingRowsPerFrame, data.height - pendingGenerationRow);
+            // SetTilesBlock also queues native Tilemap work later in the frame.
+            // Bound cells, not just rows, so wider maps keep the loading animation responsive.
+            int rows = Mathf.Min(Mathf.Max(1, 1024 / data.width), data.height - pendingGenerationRow);
             ApplyTileRows(data, pendingGenerationRow, rows);
             pendingGenerationRow += rows;
+            LoadingProgress.Report(pendingGenerationRow / (float)data.height * .9f);
             yield return null;
         }
-
-        if (IsGenerationStreaming && pendingGeneration == data)
-            FinishGeneration();
+        var appearance = GetComponent<UniformStoneAppearance>();
+        if (appearance && appearance.isActiveAndEnabled)
+        {
+            var appearanceSteps = appearance.PrepareForLoading(data, value => LoadingProgress.Report(.9f + value * .09f));
+            while (appearanceSteps.MoveNext()) yield return null;
+        }
+        ActivateGeneratedMap(data);
+        var surface = GetComponent<DirtSurfaceAppearance>();
+        if (surface && surface.isActiveAndEnabled)
+        {
+            var surfaceSteps = surface.PrepareForLoading();
+            while (surfaceSteps.MoveNext()) yield return null;
+        }
+        LoadingProgress.Report(1f);
+        yield return null;
+        LoadingProgress.SetStage(6);
+        var lighting = GetComponent<MapLighting>();
+        if (lighting)
+        {
+            var preparation = lighting.PrepareForLoading(data, LoadingProgress.Report);
+            while (preparation.MoveNext()) yield return null;
+        }
+        LoadingProgress.SetStage(7);
+        FinishGeneration(true);
+        LoadingProgress.Report(.5f);
+        yield return null;
+        yield return new WaitForEndOfFrame();
+        LoadingProgress.Complete();
     }
-
     public void CompleteStreamingGeneration()
     {
         if (!IsGenerationStreaming || pendingGeneration == null) return;
@@ -660,6 +743,14 @@ public class MapGenerator : MonoBehaviour
 
     MapGenerationSnapshot PrepareGeneratedMap(int usedSeed)
     {
+        MapGenerationSnapshot result = null;
+        var steps = PrepareGeneratedMapSteps(usedSeed, data => result = data, false);
+        while (steps.MoveNext()) { }
+        return result;
+    }
+    IEnumerator PrepareGeneratedMapSteps(int usedSeed, System.Action<MapGenerationSnapshot> complete, bool loading)
+    {
+        if (loading) LoadingProgress.SetStage(1);
         MigrateOreDensitySettings();
         if (!registry || mapWidth <= 0 || mapHeight <= 0)
             throw new System.InvalidOperationException("Map generation requires a registry and positive dimensions.");
@@ -682,10 +773,11 @@ public class MapGenerator : MonoBehaviour
         var altar = AltarChamber;
         if (altar) altar.PrepareGeneration(usedSeed, mapWidth, mapHeight);
         var chamber = altar ? altar.Layout : default;
-        var caves = CreateCaveMask(usedSeed, mapWidth, mapHeight, chamber);
+        var caves = new bool[checked(mapWidth * mapHeight)];
         pendingCaveMask = caves;
         var blocks = new Block[checked(mapWidth * mapHeight)];
         for (int y = 0; y < mapHeight; y++)
+        {
             for (int x = 0; x < mapWidth; x++)
             {
                 var cell = new Vector3Int(x + offsetX, -y, 0);
@@ -693,10 +785,27 @@ public class MapGenerator : MonoBehaviour
                 blocks[index] = chamber.IsOpen(cell) || caves[index] ? null :
                     chamber.IsShell(cell) ? sampler.GetBaseBlock(x, y) : sampler.GetBlock(x, y);
             }
-        ConnectedOreVeins.Generate(blocks, mapWidth, mapHeight, usedSeed, sampler,
+            if ((y & 7) == 7 || y == mapHeight - 1)
+            {
+                if (loading) LoadingProgress.Report((y + 1f) / mapHeight);
+                yield return null;
+            }
+        }
+        if (loading) LoadingProgress.SetStage(2);
+        var caveSteps = CaveGenerator.GenerateSteps(caveGeneration, usedSeed, mapWidth, mapHeight, caves,
+            reserved: (x, y) => chamber.IsReserved(new Vector3Int(x + offsetX, -y, 0)),
+            progress: loading ? LoadingProgress.Report : null);
+        while (caveSteps.MoveNext()) yield return null;
+        for (int i = 0; i < blocks.Length; i++) if (caves[i]) blocks[i] = null;
+        if (loading) LoadingProgress.SetStage(3);
+        var veinSteps = ConnectedOreVeins.GenerateSteps(blocks, mapWidth, mapHeight, usedSeed, sampler,
             GetMinimumVeinSize, (x, y) => caves[y * mapWidth + x] ||
-                chamber.IsReserved(new Vector3Int(x + offsetX, -y, 0)));
+                chamber.IsReserved(new Vector3Int(x + offsetX, -y, 0)),
+            progress: loading ? LoadingProgress.Report : null);
+        while (veinSteps.MoveNext()) yield return null;
         var richness = OreVeins.Build(blocks, mapWidth, mapHeight, usedSeed);
+        if (loading) LoadingProgress.SetStage(4);
+        yield return null;
         var terrainTiles = new TileBase[blocks.Length];
         var oreTiles = new TileBase[blocks.Length];
         var artifactTiles = new TileBase[blocks.Length];
@@ -758,9 +867,14 @@ public class MapGenerator : MonoBehaviour
             (previousBlocks, currentBlocks) = (currentBlocks, previousBlocks);
             (previousVariants, currentVariants) = (currentVariants, previousVariants);
             System.Array.Clear(currentBlocks, 0, currentBlocks.Length);
+            if ((y & 7) == 7 || y == mapHeight - 1)
+            {
+                if (loading) LoadingProgress.Report((y + 1f) / mapHeight);
+                yield return null;
+            }
         }
 
-        return new MapGenerationSnapshot(usedSeed, mapWidth, mapHeight, offsetX, terrainTiles, oreTiles, artifactTiles);
+        complete(new MapGenerationSnapshot(usedSeed, mapWidth, mapHeight, offsetX, terrainTiles, oreTiles, artifactTiles));
     }
 
     public bool[] CreateCaveMask(int usedSeed, int width, int height, UltroniumChamberLayout chamber)
@@ -877,12 +991,12 @@ public class MapGenerator : MonoBehaviour
         isGenerated = true;
         applyingGeneratedTiles = false;
         SyncGrassFromTerrain();
-        GetComponent<DirtSurfaceAppearance>()?.Apply(!IsGenerationStreaming);
+        if (!IsGenerationStreaming) GetComponent<DirtSurfaceAppearance>()?.Apply();
 
         Generated?.Invoke();
     }
 
-    void FinishGeneration()
+    void FinishGeneration(bool appearanceReady = false)
     {
         bool streamed = IsGenerationStreaming;
         tilemap.CompressBounds();
@@ -892,11 +1006,34 @@ public class MapGenerator : MonoBehaviour
         generationRoutine = null;
         pendingGeneration = null;
         pendingGenerationRow = 0;
-        if (streamed) GetComponent<DirtSurfaceAppearance>()?.Apply();
+        if (streamed && !appearanceReady) GetComponent<DirtSurfaceAppearance>()?.Apply();
 #if UNITY_EDITOR
         InitialMapGenerated?.Invoke(this);
 #endif
         GenerationCompleted?.Invoke();
+    }
+
+    public void BeginSavedMapRestore(int usedSeed, int width, int height)
+    {
+        CancelStreamingGeneration();
+        EnsureOreOverlay(); EnsureArtifactOverlay(); BeginTileApplication();
+        generatedSeed = usedSeed; generatedWidth = width; generatedHeight = height;
+        mapWidth = width; mapHeight = height; IsGenerationStreaming = true;
+    }
+    public void FinishSavedMapRestore(TileBase[] restoredTerrain = null)
+    {
+        generatedCaveMask = new bool[generatedWidth * generatedHeight];
+        bool hasSnapshot = restoredTerrain != null && restoredTerrain.Length == generatedCaveMask.Length;
+        for (int depth = 0; depth < generatedHeight; depth++)
+            for (int x = 0; x < generatedWidth; x++)
+                generatedCaveMask[depth * generatedWidth + x] = hasSnapshot
+                    ? !restoredTerrain[(generatedHeight - 1 - depth) * generatedWidth + x]
+                    : !Terrain.HasTile(new Vector3Int(-generatedWidth / 2 + x, -depth));
+        cachedCaveMaskWidth = generatedWidth; cachedCaveMaskHeight = generatedHeight;
+        isGenerated = true; applyingGeneratedTiles = false; IsGenerationStreaming = false;
+        UpdateGrassOffset(); SyncGrassFromTerrain();
+        if (!LoadingProgress.Active) GetComponent<DirtSurfaceAppearance>()?.Apply();
+        Generated?.Invoke(); GenerationCompleted?.Invoke();
     }
 
 #if UNITY_EDITOR

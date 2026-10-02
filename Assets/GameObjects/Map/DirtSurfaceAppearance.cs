@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using System.Collections;
 [ExecuteAlways, DisallowMultipleComponent]
 public sealed class DirtSurfaceAppearance : MonoBehaviour
 {
@@ -12,25 +13,51 @@ public sealed class DirtSurfaceAppearance : MonoBehaviour
     int dirtSignature, stoneSignature, deepSignature;
     int appliedSeed=int.MinValue;
     public Material TerrainMaterial {get=>terrainMaterial;set{terrainMaterial=value;Apply();}}
-    void OnEnable()=>Apply();
+    void OnEnable()
+    {
+        map=GetComponent<MapGenerator>();
+        if(!Application.isPlaying)Apply();
+    }
     void OnValidate()=>appliedSeed=int.MinValue;
     void Update()
     {
         if(!map)map=GetComponent<MapGenerator>();
+        if(Application.isPlaying && (!map || !map.IsGenerated || map.IsGenerationStreaming || LoadingProgress.Active))return;
         if(map && map.ActiveSeed!=appliedSeed)Apply();
     }
     public void Apply(bool includeDeepBoundary=true)
     {
+        var steps=ApplySteps(includeDeepBoundary);
+        while(steps.MoveNext()) { }
+    }
+    public IEnumerator PrepareForLoading() => ApplySteps(true);
+    IEnumerator ApplySteps(bool includeDeepBoundary)
+    {
         if(!map)map=GetComponent<MapGenerator>();
         var renderer=GetComponent<TilemapRenderer>();
-        if(!map || !map.registry || !renderer || !terrainMaterial || !map.Terrain.layoutGrid)return;
+        if(!map || !map.registry || !renderer || !terrainMaterial || !map.Terrain.layoutGrid)yield break;
+        // The world-space terrain shader returns before sampling the legacy
+        // boundary arrays. Do not upload large textures that it never uses.
+        var uniform=GetComponent<UniformStoneAppearance>();
+        if(map.uniformTestStone && uniform && uniform.isActiveAndEnabled && uniform.texture)
+        {
+            renderer.sharedMaterial=terrainMaterial;
+            properties??=new MaterialPropertyBlock();renderer.GetPropertyBlock(properties);
+            properties.SetVector("_DirtSurface",Vector4.zero);
+            properties.SetVector("_DeepSurface",Vector4.zero);
+            renderer.SetPropertyBlock(properties);
+            appliedSeed=map.ActiveSeed;
+            ReleaseMask();ReleaseDeepMask();
+            ReleaseVariantArray(ref dirtVariants);ReleaseVariantArray(ref stoneVariants);ReleaseVariantArray(ref deepVariants);
+            yield break;
+        }
         int thickness=Mathf.Clamp(map.transitionThickness,1,100);
         bool explicitSurface=map.layers!=null && map.layers.Length>1 && map.layers[0]!=null &&
             map.layers[0].stone && map.layers[0].stone.id==BlockType.Dirt;
         int dirtWidth=explicitSurface?Mathf.Min(Mathf.Max(0,map.layers[1].transitionWidth),map.layers[1].startDepth):thickness;
         int dirtStart=explicitSurface?map.layers[1].startDepth-dirtWidth:MapGenerationSampler.SurfaceDirtRows;
         int width=map.GeneratedWidth,height=Mathf.Min(map.GeneratedHeight,dirtStart+dirtWidth+2);
-        if(width<=0 || height<=0)return;
+        if(width<=0 || height<=0)yield break;
         appliedSeed=map.ActiveSeed;
         int boundary=-1;
         Block upper=null,lower=null;
@@ -58,10 +85,16 @@ public sealed class DirtSurfaceAppearance : MonoBehaviour
         upper ??= map.registry.GetById(BlockType.Stone);
         var dirt=map.registry.GetById(BlockType.Dirt);
         SyncVariantArray(dirt,ref cachedDirt,ref dirtSignature,ref dirtVariants);
+        yield return null;
         SyncVariantArray(upper,ref cachedStone,ref stoneSignature,ref stoneVariants);
+        yield return null;
         SyncVariantArray(lower,ref cachedDeep,ref deepSignature,ref deepVariants);
+        yield return null;
         var dirtIndices=BuildIndices(appliedSeed,width,height,dirt);
+        yield return null;
         var stoneIndices=BuildIndices(appliedSeed,width,height,upper);
+        yield return null;
+        var budget=new LoadingWorkBudget();
         var raw=new float[width*height];
         var placedTiles=new TileBase[raw.Length];
         MapGenerationSampler fallback=null;
@@ -77,6 +110,7 @@ public sealed class DirtSurfaceAppearance : MonoBehaviour
                 fallback??=new MapGenerationSampler(map.registry,appliedSeed,map.GeneratedHeight,map.layers,map.oreDensityCurve,map.oreDensityMultiplierPercent,thickness);
                 raw[y*width+x]=fallback.IsDirtAt(x,y)?1f:0f;
             }
+            if(x==width-1 && budget.Expired){yield return null;budget.Restart();}
         }
         var pixels=new Color32[raw.Length];
         for(int y=0;y<height;y++)for(int x=0;x<width;x++)
@@ -89,6 +123,7 @@ public sealed class DirtSurfaceAppearance : MonoBehaviour
             pixels[index]=new Color32(value,
                 (byte)PlacedIndex(dirt,placedTiles[index],dirtIndices[index]),
                 (byte)PlacedIndex(upper,placedTiles[index],stoneIndices[index]),255);
+            if(x==width-1 && budget.Expired){yield return null;budget.Restart();}
         }
         if(!mask || mask.width!=width || mask.height!=height)
         {
@@ -97,6 +132,7 @@ public sealed class DirtSurfaceAppearance : MonoBehaviour
                 filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};
         }
         mask.SetPixels32(pixels);mask.Apply(false,false);
+        yield return null;
         renderer.sharedMaterial=terrainMaterial;
         properties??=new MaterialPropertyBlock();renderer.GetPropertyBlock(properties);
         properties.SetTexture("_DirtMask",mask);
@@ -117,7 +153,10 @@ public sealed class DirtSurfaceAppearance : MonoBehaviour
         if(includeDeepBoundary && boundary>0 && deepWidth>0 && upper && lower && upper!=lower && deepHeight>0)
         {
             var upperIndices=BuildIndices(appliedSeed,width,deepHeight,upper,firstRow);
+            yield return null;
             var lowerIndices=BuildIndices(appliedSeed,width,deepHeight,lower,firstRow);
+            yield return null;
+            budget.Restart();
             var deepRaw=new float[width*deepHeight];
             var deepTiles=new TileBase[deepRaw.Length];
             for(int row=0;row<deepHeight;row++)for(int x=0;x<width;x++)
@@ -132,6 +171,7 @@ public sealed class DirtSurfaceAppearance : MonoBehaviour
                     block=fallback.GetBaseBlock(x,y);
                 }
                 deepRaw[row*width+x]=block==upper?1f:0f;
+                if(x==width-1 && budget.Expired){yield return null;budget.Restart();}
             }
             var deepPixels=new Color32[deepRaw.Length];
             for(int row=0;row<deepHeight;row++)for(int x=0;x<width;x++)
@@ -145,6 +185,7 @@ public sealed class DirtSurfaceAppearance : MonoBehaviour
                 deepPixels[index]=new Color32(value,
                     (byte)PlacedIndex(upper,deepTiles[index],upperIndices[index]),
                     (byte)PlacedIndex(lower,deepTiles[index],lowerIndices[index]),255);
+                if(x==width-1 && budget.Expired){yield return null;budget.Restart();}
             }
             if(!deepMask || deepMask.width!=width || deepMask.height!=deepHeight)
             {

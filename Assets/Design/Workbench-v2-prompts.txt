@@ -1,0 +1,12 @@
+Tool: built-in image_gen (no CLI/API fallback).
+Approved reference: generated workshop prototype V2, exec-86ea4753-fe61-44fb-9216-fa7611ee67d1.png.
+Final production shell: Assets/Resources/Workbench/WorkshopBackground-v2.png.
+Implemented game capture: Assets/Design/Workbench-v2-implemented.png.
+
+Shell generation prompt:
+Use case: precise-object-edit. Production Unity workshop UI background, use the approved variant 2 reference as EDIT TARGET. Preserve exactly its warm illustrated workshop room exterior, big refined chestnut/brass main outer panel frame, chamfered bronze corners and rivets, the centered top title plaque with the two crossed-tool emblems at its sides, thin engraved double-line trims, the inset full-width upper toolbar frame, lower left grid compartment frame and lower right detail compartment frame. REMOVE ALL CONTENT inside these frames: no text whatsoever (remove Werkbank too, leave plaque blank), no searchbox, no category buttons, no toggle controls, no cards or item icons, no boots, no glowing light, no arch behind boots, no ingredient tiles, no quantity controls, no footer button. Empty smooth subdued dark chestnut timber interiors across all compartments. Maintain precisely the layout proportions of the reference and straight-on flat UI framing. Absolutely no letters, numbers or extra objects inside the panel. Final image 16:9 horizontal, sharp polished fantasy style. Outer room and frame are invariant.
+
+Final correction prompt:
+Edit target: the provided empty workshop UI shell. SINGLE CORRECTION: remove all twelve small rectangular recipe card frames in the lower LEFT compartment. Replace them seamlessly with uninterrupted dark chestnut wood matching that compartment. Preserve the large enclosing left compartment border, right compartment border, central divider, upper toolbar border, blank title plaque, outer brass/wood frame, exterior workshop room, proportions and lighting EXACTLY. The left compartment must be entirely empty with NO card frames, NO scrollbar, NO smaller boxes. Do not change anything else. No text.
+
+Interactive controls reuse the approved Shop/BuyFrames-v2 sprite sheet and ArtifactDiscovery/TitleFont. Item icons remain the actual game sprites. The animated gold shimmer is procedural UI geometry/shading, not baked into the background.

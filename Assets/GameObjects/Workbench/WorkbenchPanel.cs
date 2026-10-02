@@ -31,6 +31,12 @@ public sealed class WorkbenchPanel : MonoBehaviour
     static readonly Color Enough = new Color32(150, 224, 109, 255);
     static readonly Color Missing = new Color32(232, 134, 101, 255);
     const float CraftingPickupLeadTime = .3f;
+    const float LayoutWidth = 1640, LayoutHeight = 924;
+    const float GridWidth = 758, GridHeight = 570, CardWidth = 178, CardHeight = 180, ColumnPitch = 192, RowPitch = 195;
+    const float IngredientWidth = 450, IngredientHeight = 134;
+    readonly List<Sprite> styleSprites = new();
+    Material ownedFontMaterial, glowMaterial;
+    Sprite backgroundSprite;
     readonly List<RecipeRow> rows = new();
     readonly List<IngredientRow> ingredientRows = new();
     CanvasGroup group;
@@ -39,7 +45,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
     readonly List<Image> categoryTabs = new();
     WorkbenchGlyph craftableCheck, favoriteFilterStar;
     TMP_InputField searchField;
-    ScrollRect recipeScroll;
+    ScrollRect recipeScroll, ingredientScroll;
     TextMeshProUGUI outputName, resultText, quantityText, craftText, emptyText;
     Button minus, plus, maximum, craft;
     InventoryManager inventory;
@@ -52,20 +58,25 @@ public sealed class WorkbenchPanel : MonoBehaviour
     void Awake()
     {
         LoadResourceRecipes();
+        LoadVisualStyle();
         group = GetComponent<CanvasGroup>();
         BuildView();
         group.alpha = 0;
         group.blocksRaycasts = group.interactable = false;
+        if (layout) layout.gameObject.SetActive(false);
     }
 
     void LoadResourceRecipes()
     {
-        var resourceRecipes = Resources.LoadAll<CraftingRecipe>("WorkbenchRecipes");
-        if (resourceRecipes.Length == 0) return;
+        var combined = new List<CraftingRecipe>();
+        var seen = new HashSet<CraftingRecipe>();
+        if (recipes != null)
+            foreach (var recipe in recipes)
+                if (recipe && seen.Add(recipe)) combined.Add(recipe);
 
-        var combined = new List<CraftingRecipe>(recipes ?? System.Array.Empty<CraftingRecipe>());
-        foreach (var recipe in resourceRecipes)
-            if (recipe && !combined.Contains(recipe)) combined.Add(recipe);
+        foreach (var recipe in Resources.LoadAll<CraftingRecipe>("WorkbenchRecipes"))
+            if (recipe && seen.Add(recipe)) combined.Add(recipe);
+
         recipes = combined.ToArray();
     }
 
@@ -73,8 +84,9 @@ public sealed class WorkbenchPanel : MonoBehaviour
     {
         if (IsOpen)
         {
+            if (glowMaterial) glowMaterial.SetFloat("_AnimationTime", Time.unscaledTime);
             if (GameBindings.Down(GameAction.Settings) || (GameBindings.Down(GameAction.Workbench) && !searchField.isFocused)) ShowPanel(false);
-            else SubscribeInventory();
+            else if (SubscribeInventory()) Refresh();
         }
         else if (allowKeyboardOpen && GameBindings.Down(GameAction.Workbench) && !GameplayInputBlocker.IsBlocked)
         {
@@ -88,33 +100,41 @@ public sealed class WorkbenchPanel : MonoBehaviour
     {
         if (!layout) return;
         var size = ((RectTransform)transform).rect.size;
-        float scale = Mathf.Min(size.x / 1640f, size.y / 960f);
+        float scale = Mathf.Min(size.x / LayoutWidth, size.y / LayoutHeight);
         layout.localScale = new Vector3(scale, scale, 1);
     }
 
     void OnDisable()
     {
-        if (inventory) inventory.OnInventoryChanged -= Refresh;
+        if (inventory) inventory.OnInventoryChanged -= OnInventoryChanged;
         inventory = null;
         GameplayInputBlocker.SetBlocked(this, false);
         if (IsOpen) InfoPanel.Instance?.ShowPanel(true);
         IsOpen = false;
+        if (layout) layout.gameObject.SetActive(false);
         if (group) { group.alpha = 0; group.blocksRaycasts = group.interactable = false; }
     }
 
-    void SubscribeInventory()
+    bool SubscribeInventory()
     {
-        if (inventory == InventoryManager.Instance) return;
-        if (inventory) inventory.OnInventoryChanged -= Refresh;
+        if (inventory == InventoryManager.Instance) return false;
+        if (inventory) inventory.OnInventoryChanged -= OnInventoryChanged;
         inventory = InventoryManager.Instance;
-        if (inventory) inventory.OnInventoryChanged += Refresh;
-        Refresh();
+        if (inventory) inventory.OnInventoryChanged += OnInventoryChanged;
+        return true;
+    }
+
+    void OnInventoryChanged()
+    {
+        // Opening always refreshes from the current inventory; hidden cards need no updates.
+        if (IsOpen) Refresh();
     }
 
     public void ShowPanel(bool show)
     {
         if (show && !IsOpen && GameplayInputBlocker.IsBlocked) return;
         IsOpen = show;
+        if (layout) layout.gameObject.SetActive(show);
         GameplayInputBlocker.SetBlocked(this, show);
         group.alpha = show ? 1 : 0;
         group.interactable = group.blocksRaycasts = show;
@@ -255,11 +275,11 @@ public sealed class WorkbenchPanel : MonoBehaviour
             if (!show) continue;
             if (!first) first = row.recipe;
             if (row.recipe == SelectedRecipe) selectionVisible = true;
-            row.rect.anchoredPosition = new Vector2(visible % 4 * 196, -(visible / 4) * 174);
+            row.rect.anchoredPosition = new Vector2(visible % 4 * ColumnPitch, -(visible / 4) * RowPitch);
             visible++;
         }
         VisibleRecipeCount = visible;
-        recipeContent.sizeDelta = new Vector2(770, Mathf.Max(508, ((visible + 3) / 4) * 174 - 14));
+        recipeContent.sizeDelta = new Vector2(GridWidth, Mathf.Max(GridHeight, ((visible + 3) / 4) * RowPitch - (RowPitch - CardHeight)));
         emptyText.gameObject.SetActive(visible == 0);
         if (!selectionVisible) { SelectedRecipe = first; Quantity = 1; }
         foreach (var row in rows) row.image.sprite = row.recipe == SelectedRecipe ? selectedRowSprite : rowSprite;
@@ -277,14 +297,15 @@ public sealed class WorkbenchPanel : MonoBehaviour
                 int i = 0;
                 foreach (var cost in costs)
                 {
-                    var row = Panel("Ingredient_" + cost.Key.name, ingredientContent, 0, i * 68, 490, 61, rowSprite);
-                    Icon(row.transform, cost.Key.icon, 10, 6, 68, 49);
-                    Label(row.transform, cost.Key.displayName, 87, 0, 187, 61, 25);
-                    var count = Label(row.transform, "", 278, 0, 199, 61, 25, TextAlignmentOptions.Right);
+                    var row = Panel("Ingredient_" + cost.Key.name, ingredientContent, i % 2 * 230, i / 2 * 72, 220, 62, rowSprite);
+                    Icon(row.transform, cost.Key.icon, 9, 10, 43, 42);
+                    Label(row.transform, cost.Key.displayName, 60, 5, 146, 25, 23);
+                    var count = Label(row.transform, "", 60, 30, 146, 25, 22, TextAlignmentOptions.MidlineLeft);
                     ingredientRows.Add(new IngredientRow { item = cost.Key, amount = cost.Value, count = count });
                     i++;
                 }
-                ingredientContent.sizeDelta = new Vector2(490, Mathf.Max(215, i * 68 - 7));
+                ingredientContent.sizeDelta = new Vector2(IngredientWidth, Mathf.Max(IngredientHeight, ((i + 1) / 2) * 72 - 10));
+                ingredientScroll.StopMovement(); ingredientScroll.verticalNormalizedPosition = 1;
             }
             outputIcon.sprite = SelectedRecipe.output.icon;
             outputName.text = SelectedRecipe.output.displayName;
@@ -308,81 +329,119 @@ public sealed class WorkbenchPanel : MonoBehaviour
         craft.interactable = !craftingPending && max >= Quantity;
     }
 
+    void LoadVisualStyle()
+    {
+        backgroundSprite = Resources.Load<Sprite>("Workbench/WorkshopBackground-v2");
+        var titleFont = Resources.Load<TMP_FontAsset>("ArtifactDiscovery/TitleFont");
+        if (titleFont)
+        {
+            font = titleFont;
+            ownedFontMaterial = new Material(font.material);
+            ownedFontMaterial.SetFloat("_OutlineWidth", .065f);
+            ownedFontMaterial.SetColor("_OutlineColor", new Color(.10f, .055f, .025f, 1));
+            fontMaterial = ownedFontMaterial;
+        }
+        var sheet = Resources.Load<Texture2D>("Shop/BuyFrames-v2");
+        if (sheet)
+        {
+            rowSprite = SliceFrame(sheet, "Workbench Card", 40, 110, 1175, 325);
+            selectedRowSprite = SliceFrame(sheet, "Workbench Selected", 35, 490, 1185, 340);
+            actionSprite = SliceFrame(sheet, "Workbench Action", 38, 890, 1178, 275);
+        }
+    }
+
+    Sprite SliceFrame(Texture2D sheet, string name, float x, float top, float width, float height)
+    {
+        float sx = sheet.width / 1280f, sy = sheet.height / 1280f;
+        var sprite = Sprite.Create(sheet, new UnityEngine.Rect(x * sx, (1280 - top - height) * sy, width * sx, height * sy),
+            Vector2.one * .5f, 100, 0, SpriteMeshType.FullRect, new Vector4(100 * sx, 80 * sy, 100 * sx, 80 * sy));
+        sprite.name = name; styleSprites.Add(sprite); return sprite;
+    }
+
+    void OnDestroy()
+    {
+        foreach (var sprite in styleSprites) if (sprite) Destroy(sprite);
+        if (ownedFontMaterial) Destroy(ownedFontMaterial);
+        if (glowMaterial) Destroy(glowMaterial);
+    }
+
     void BuildView()
     {
-        layout = Rect("Layout", transform, 0, 0, 1640, 960);
+        layout = Rect("Layout", transform, 0, 0, LayoutWidth, LayoutHeight);
         layout.anchorMin = layout.anchorMax = layout.pivot = new Vector2(.5f, .5f);
         var backdrop = GetComponent<Image>();
-        if (backdrop)
-        {
-            var background = Panel("Background", layout, 0, 0, 1640, 960, backdrop.sprite);
-            background.type = Image.Type.Simple;
-            backdrop.sprite = null; backdrop.color = new Color32(15, 9, 5, 255);
-        }
-        Label(layout, "Werkbank", 550, 75, 535, 80, 57, TextAlignmentOptions.Center);
-        Label(layout, "Rezepte", 170, 201, 228, 50, 38);
+        var background = Panel("Background", layout, 0, 0, LayoutWidth, LayoutHeight, backgroundSprite ? backgroundSprite : backdrop ? backdrop.sprite : null);
+        background.type = Image.Type.Simple;
+        if (backdrop) { backdrop.sprite = null; backdrop.color = new Color32(15, 9, 5, 255); }
+        Label(layout, "Werkbank", 550, 24, 540, 80, 64, TextAlignmentOptions.Midline);
         BuildSearch();
-        favoriteFilter = Button("Favorites", layout, "", 744, 204, 50, 48, () => SetFavoritesOnly(!OnlyFavorites)).GetComponent<Image>();
-        favoriteFilterStar = Glyph(favoriteFilter.transform, WorkbenchGlyph.Shape.Star, 9, 7, 32);
-        favoriteFilterStar.color = new Color32(255, 199, 70, 255);
-        var craftable = Button("Craftable", layout, "", 812, 204, 153, 48, () => SetFilter(!OnlyCraftable));
-        craftable.GetComponent<Image>().color = Color.clear;
-        Panel("Checkbox", craftable.transform, 0, 8, 31, 31, rowSprite);
-        craftableCheck = Glyph(craftable.transform, WorkbenchGlyph.Shape.Check, 2, 10, 27);
-        Label(craftable.transform, "Herstellbar", 39, 0, 114, 48, 21);
         string[] categories = { "Alle", "Werkzeuge", "Bauen", "Materialien" };
         for (int i = 0; i < categories.Length; i++)
         {
             var category = (CraftingRecipe.RecipeCategory)i;
-            var tab = Button("Category_" + category, layout, categories[i], 170 + i * 200, 264, 190, 44, () => SetCategory(category));
-            tab.GetComponentInChildren<TextMeshProUGUI>().fontSizeMax = 24;
+            var tab = Button("Category_" + category, layout, categories[i], 524 + i * 158, 137, 148, 49, () => SetCategory(category));
+            tab.GetComponentInChildren<TextMeshProUGUI>().fontSizeMax = 25;
             categoryTabs.Add(tab.GetComponent<Image>());
         }
-        recipeContent = ScrollArea("Recipes", layout, 170, 323, 774, 508, 770);
+        favoriteFilter = Button("Favorites", layout, "", 1166, 137, 49, 49, () => SetFavoritesOnly(!OnlyFavorites)).GetComponent<Image>();
+        favoriteFilterStar = Glyph(favoriteFilter.transform, WorkbenchGlyph.Shape.Star, 11, 11, 27);
+        favoriteFilterStar.color = new Color32(255, 199, 70, 255);
+        var craftable = Button("Craftable", layout, "", 1230, 137, 222, 49, () => SetFilter(!OnlyCraftable));
+        craftable.GetComponent<Image>().color = Color.clear;
+        Panel("Checkbox", craftable.transform, 8, 10, 29, 29, rowSprite);
+        craftableCheck = Glyph(craftable.transform, WorkbenchGlyph.Shape.Check, 10, 12, 25);
+        Label(craftable.transform, "Herstellbar", 47, 0, 165, 49, 28);
+        recipeContent = ScrollArea("Recipes", layout, 179, 230, GridWidth, GridHeight, GridWidth);
         recipeScroll = recipeContent.parent.GetComponent<ScrollRect>();
-        AddScrollbar(recipeScroll, layout, 955, 323, 18, 508);
+        AddScrollbar(recipeScroll, layout, 944, 230, 13, GridHeight);
         if (recipes != null) foreach (var recipe in recipes)
         {
             if (!recipe || !recipe.output) continue;
-            var button = Button(recipe.name, recipeContent, "", 0, 0, 182, 160, () => SelectRecipe(recipe));
-            var icon = Icon(button.transform, recipe.output.icon, 20, 12, 134, 106);
+            var button = Button(recipe.name, recipeContent, "", 0, 0, CardWidth, CardHeight, () => SelectRecipe(recipe));
+            var iconArea = Rect("Icon Area", button.transform, 2, 10, 174, 130);
+            var icon = Icon(iconArea, recipe.output.icon, 20, 12, 134, 106);
             ApplyRecipeIconLayout(recipe, icon.rectTransform);
-            var name = Label(button.transform, recipe.output.displayName, 8, 123, 166, 31, 22, TextAlignmentOptions.Center);
+            var name = Label(button.transform, recipe.output.displayName, 10, 140, CardWidth - 20, 30, 23, TextAlignmentOptions.Midline);
             name.fontSizeMin = 15;
-            var favorite = Button("Favorite", button.transform, "", 139, 3, 40, 40, () => ToggleFavorite(recipe));
+            var favorite = Button("Favorite", button.transform, "", CardWidth - 36, 5, 32, 32, () => ToggleFavorite(recipe));
             favorite.GetComponent<Image>().color = Color.clear;
-            var star = Glyph(favorite.transform, WorkbenchGlyph.Shape.Star, 5, 5, 30);
+            var star = Glyph(favorite.transform, WorkbenchGlyph.Shape.Star, 5, 5, 22);
             rows.Add(new RecipeRow { recipe = recipe, rect = (RectTransform)button.transform, icon = icon.rectTransform,
                 image = button.GetComponent<Image>(), star = star, favorite = IsFavorite(recipe) });
         }
-        emptyText = Label(layout, "Keine Rezepte", 170, 440, 774, 60, 28, TextAlignmentOptions.Center);
-        details = Rect("Details", layout, 0, 0, 1640, 960);
-        var preview = Panel("OutputFrame", details, 1026, 210, 195, 187, rowSprite);
-        outputIcon = Icon(preview.transform, null, 12, 10, 171, 167);
-        outputName = Label(details, "", 1236, 225, 284, 68, 35);
-        outputName.textWrappingMode = TextWrappingModes.Normal;
-        resultText = Label(details, "", 1236, 302, 284, 62, 24);
-        resultText.textWrappingMode = TextWrappingModes.Normal;
+        emptyText = Label(layout, "Keine Rezepte", 179, 445, GridWidth, 60, 30, TextAlignmentOptions.Midline);
+        details = Rect("Details", layout, 0, 0, LayoutWidth, LayoutHeight);
+        var glow = Panel("Item Glow", details, 1010, 233, 470, 286, null);
+        var shader = Resources.Load<Shader>("Workbench/ItemGlow");
+        if (shader) { glowMaterial = new Material(shader); glow.material = glowMaterial; }
+        else glow.color = Color.clear;
+        var ornament = Rect("Preview Ornament", details, 1050, 240, 390, 252).gameObject.AddComponent<WorkbenchPreviewOrnament>();
+        ornament.color = new Color(1, .72f, .28f, .52f); ornament.raycastTarget = false;
+        outputIcon = Icon(details, null, 1110, 235, 270, 215);
+        outputName = Label(details, "", 1000, 455, 490, 44, 39, TextAlignmentOptions.Midline);
+        resultText = Label(details, "", 1000, 499, 490, 34, 24, TextAlignmentOptions.Midline);
         resultText.color = Muted;
-        var line = Panel("Separator", details, 1026, 410, 494, 2, null);
-        line.color = new Color32(142, 99, 57, 255);
-        Label(details, "Materialien", 1026, 422, 230, 40, 31);
-        Label(details, "Vorhanden / Benötigt", 1260, 422, 256, 40, 22, TextAlignmentOptions.Right);
-        ingredientContent = ScrollArea("Ingredients", details, 1026, 469, 494, 215, 490);
-        quantityControls = Rect("QuantityControls", details, 0, 0, 1640, 960);
-        Label(quantityControls, "Menge", 1026, 701, 106, 52, 27);
-        minus = Button("Minus", quantityControls, "−", 1140, 700, 48, 52, () => SetQuantity(Quantity - 1));
-        Panel("QuantityField", quantityControls, 1195, 700, 100, 52, rowSprite);
-        quantityText = Label(quantityControls, "1", 1197, 700, 96, 52, 30, TextAlignmentOptions.Center);
-        plus = Button("Plus", quantityControls, "+", 1302, 700, 48, 52, () => SetQuantity(Quantity + (Quantity < int.MaxValue ? 1 : 0)));
-        maximum = Button("Max", quantityControls, "Max", 1370, 700, 146, 52,
+        var line = Panel("Separator", details, 1030, 539, 430, 1, null);
+        line.color = new Color32(169, 123, 65, 255);
+        Label(details, "Materialien", 1030, 550, 225, 36, 30);
+        Label(details, "Vorhanden / Benötigt", 1235, 550, 225, 36, 20, TextAlignmentOptions.MidlineRight);
+        ingredientContent = ScrollArea("Ingredients", details, 1020, 592, IngredientWidth, IngredientHeight, IngredientWidth);
+        ingredientScroll = ingredientContent.parent.GetComponent<ScrollRect>();
+        AddScrollbar(ingredientScroll, details, 1475, 592, 10, IngredientHeight);
+        quantityControls = Rect("QuantityControls", details, 0, 0, LayoutWidth, LayoutHeight);
+        Label(quantityControls, "Menge", 1030, 739, 105, 38, 27);
+        minus = Button("Minus", quantityControls, "−", 1140, 739, 38, 38, () => SetQuantity(Quantity - 1));
+        Panel("QuantityField", quantityControls, 1185, 739, 82, 38, rowSprite);
+        quantityText = Label(quantityControls, "1", 1185, 739, 82, 38, 27, TextAlignmentOptions.Midline);
+        plus = Button("Plus", quantityControls, "+", 1274, 739, 38, 38, () => SetQuantity(Quantity + (Quantity < int.MaxValue ? 1 : 0)));
+        maximum = Button("Max", quantityControls, "Max", 1330, 739, 130, 38,
             () => SetQuantity(CraftingService.GetMaxCraftable(SelectedRecipe, inventory)));
-        craft = Button("Craft", details, "Herstellen", 1026, 775, 494, 65, () => CraftSelected());
+        craft = Button("Craft", details, "Herstellen", 1020, 787, 450, 49, () => CraftSelected());
         craft.GetComponent<Image>().sprite = actionSprite;
         craftText = craft.GetComponentInChildren<TextMeshProUGUI>();
+        craftText.fontSizeMax = 27;
         SelectedRecipe = recipes != null && recipes.Length > 0 ? recipes[Mathf.Clamp(initialRecipe, 0, recipes.Length - 1)] : null;
-        FitLayout();
-        Refresh();
+        FitLayout(); Refresh();
     }
 
     public static void ApplyRecipeIconLayout(CraftingRecipe recipe, RectTransform icon)
@@ -412,7 +471,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
 
     void BuildSearch()
     {
-        var panel = Panel("Search", layout, 410, 204, 314, 48, rowSprite);
+        var panel = Panel("Search", layout, 180, 137, 327, 49, rowSprite);
         panel.raycastTarget = true;
         Glyph(panel.transform, WorkbenchGlyph.Shape.Search, 12, 10, 28);
         var viewport = Rect("Text Area", panel.transform, 48, 4, 254, 40);
@@ -435,10 +494,10 @@ public sealed class WorkbenchPanel : MonoBehaviour
     void AddScrollbar(ScrollRect scroll, Transform parent, float x, float y, float width, float height)
     {
         var track = Panel("RecipeScrollbar", parent, x, y, width, height, rowSprite);
-        track.raycastTarget = true;
+        track.raycastTarget = true; track.pixelsPerUnitMultiplier = 16;
         var area = Rect("Sliding Area", track.transform, 2, 2, width - 4, height - 4);
         var handle = Panel("Handle", area, 0, 0, width - 4, height - 4, selectedRowSprite);
-        handle.raycastTarget = true;
+        handle.raycastTarget = true; handle.pixelsPerUnitMultiplier = 16;
         handle.rectTransform.anchorMin = Vector2.zero; handle.rectTransform.anchorMax = Vector2.one;
         handle.rectTransform.offsetMin = handle.rectTransform.offsetMax = Vector2.zero;
         var bar = track.gameObject.AddComponent<Scrollbar>();
@@ -481,6 +540,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
         var image = Rect(name, parent, x, y, width, height).gameObject.AddComponent<Image>();
         image.sprite = sprite;
         image.type = sprite ? Image.Type.Sliced : Image.Type.Simple;
+        image.pixelsPerUnitMultiplier = 5;
         image.raycastTarget = false;
         return image;
     }
@@ -499,9 +559,14 @@ public sealed class WorkbenchPanel : MonoBehaviour
         var text = Rect("Label", parent, x, y, width, height).gameObject.AddComponent<TextMeshProUGUI>();
         text.font = font;
         if (fontMaterial) text.fontSharedMaterial = fontMaterial;
-        text.text = caption; text.color = Cream; text.fontStyle = FontStyles.Bold;
+        text.text = caption; text.color = Cream; text.fontStyle = FontStyles.Normal;
         text.fontSize = size; text.enableAutoSizing = true; text.fontSizeMin = size * .65f; text.fontSizeMax = size;
-        text.alignment = alignment; text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.alignment = alignment switch {
+            TextAlignmentOptions.Left => TextAlignmentOptions.MidlineLeft,
+            TextAlignmentOptions.Center => TextAlignmentOptions.Midline,
+            TextAlignmentOptions.Right => TextAlignmentOptions.MidlineRight,
+            _ => alignment
+        }; text.textWrappingMode = TextWrappingModes.NoWrap;
         text.overflowMode = TextOverflowModes.Ellipsis;
         text.raycastTarget = false;
         return text;

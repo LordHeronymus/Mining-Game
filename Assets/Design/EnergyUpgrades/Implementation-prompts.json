@@ -1,0 +1,267 @@
+{
+  "date": "2026-10-01",
+  "artStyle": "Redesign reference equipment into ONE isolated mystical energy storage inventory item. Reference 1 supplies exact rich high-detail painterly fantasy mining game style, stitched dark brown leather, worn bevelled metal, brass rivets/buckles, top-left warm light and deep shadows. Reference 2 supplies blue sapphire crystals with cyan glowing internal branching veins. True transparent background, entire centered item in square canvas with margin, readable strong silhouette, hand-painted 2D game icon, no wearer, text, letters, numbers, clouds, floor, scenery, parchment, batteries, electronics or futuristic technology.",
+  "references": [
+    "C:\\IT\\GameDev\\Git Repos\\Mining Game\\Assets\\GameObjects\\Items\\Sprites\\Powerups\\SpringGreaves.png",
+    "C:\\IT\\GameDev\\Git Repos\\Mining Game\\Assets\\AB Sprites\\Energy Monolyth 2.png"
+  ],
+  "recipePrompt": "Use case: precise-object-edit/compositing. Create a square parchment recipe blueprint game icon. Image1 is the exact immutable approved item sprite. Image2 supplies ONLY antique parchment style. Place image1 centrally like a literal 2D cutout scaled uniformly to fit within 75% of paper width and 78% of paper height. Preserve precisely its perspective, proportions, shape, materials, crystal glow, all straps and attachment points. Do not rotate, reinterpret or redesign any part. Surround with small thin sepia pencil technical sketches of this same object's component details and dimension arrows. Warm aged golden parchment, stained textured paper, torn browned curled irregular edges like image2, true transparent outside paper. Entire item visible with generous paper margin. High-detail hand-painted fantasy mining game art. No text, letters, numbers, labels, people, or watermark.",
+  "upgrades": [
+    {
+      "name": "CrystalPendant",
+      "displayName": "Kristallanhänger",
+      "level": 2,
+      "price": 150,
+      "costs": [
+        [
+          "Copper",
+          2
+        ],
+        [
+          "Rope",
+          1
+        ],
+        [
+          "PlantFiber",
+          4
+        ]
+      ]
+    },
+    {
+      "name": "CopperEnergyBracelet",
+      "displayName": "Kupferarmreif",
+      "level": 3,
+      "price": 300,
+      "costs": [
+        [
+          "Copper",
+          5
+        ],
+        [
+          "Iron",
+          2
+        ],
+        [
+          "Fabric",
+          2
+        ]
+      ]
+    },
+    {
+      "name": "EnergyStorageVial",
+      "displayName": "Speicherphiole",
+      "level": 4,
+      "price": 600,
+      "costs": [
+        [
+          "Copper",
+          4
+        ],
+        [
+          "Silver",
+          2
+        ],
+        [
+          "Fabric",
+          4
+        ],
+        [
+          "Rope",
+          2
+        ]
+      ]
+    },
+    {
+      "name": "RuneBelt",
+      "displayName": "Runengürtel",
+      "level": 5,
+      "price": 1000,
+      "costs": [
+        [
+          "Steel",
+          4
+        ],
+        [
+          "Silver",
+          4
+        ],
+        [
+          "Fabric",
+          6
+        ],
+        [
+          "Rope",
+          4
+        ]
+      ]
+    },
+    {
+      "name": "CrystalHeart",
+      "displayName": "Kristallherz",
+      "level": 6,
+      "price": 1800,
+      "costs": [
+        [
+          "Diamond",
+          2
+        ],
+        [
+          "Gold",
+          4
+        ],
+        [
+          "Steel",
+          6
+        ],
+        [
+          "Fabric",
+          4
+        ]
+      ]
+    },
+    {
+      "name": "CrystalHarness",
+      "displayName": "Kristallgeschirr",
+      "level": 7,
+      "price": 3000,
+      "costs": [
+        [
+          "Diamond",
+          4
+        ],
+        [
+          "Titanium",
+          6
+        ],
+        [
+          "Fabric",
+          8
+        ],
+        [
+          "Rope",
+          6
+        ],
+        [
+          "Nails",
+          8
+        ]
+      ]
+    },
+    {
+      "name": "TravelMonolith",
+      "displayName": "Reisemonolith",
+      "level": 8,
+      "price": 5000,
+      "costs": [
+        [
+          "Diamond",
+          6
+        ],
+        [
+          "Mythril",
+          6
+        ],
+        [
+          "Steel",
+          10
+        ],
+        [
+          "Wood",
+          6
+        ],
+        [
+          "Fabric",
+          8
+        ],
+        [
+          "Rope",
+          8
+        ]
+      ]
+    }
+  ],
+  "itemSources": [
+    {
+      "name": "CrystalPendant",
+      "path": "C:\\Users\\jlang\\.codex\\generated_images\\01a0f347-b33b-7f63-8d0d-3bd2de879366\\exec-96076a79-6a8d-435d-a0b3-54cfa35eb2d6.png"
+    },
+    {
+      "name": "CopperEnergyBracelet",
+      "path": "C:\\Users\\jlang\\.codex\\generated_images\\01a0f347-b33b-7f63-8d0d-3bd2de879366\\exec-2bc5ae60-1950-48d5-a314-e3e98abdf8d0.png"
+    },
+    {
+      "name": "EnergyStorageVial",
+      "path": "C:\\Users\\jlang\\.codex\\generated_images\\01a0f347-b33b-7f63-8d0d-3bd2de879366\\exec-317b7be2-d2d5-40a7-9ca5-eb12e80a5b1d.png"
+    },
+    {
+      "name": "RuneBelt",
+      "path": "C:\\Users\\jlang\\.codex\\generated_images\\01a0f347-b33b-7f63-8d0d-3bd2de879366\\exec-b1e36a89-f4a6-4ce2-bd00-6fea965ab805.png"
+    },
+    {
+      "name": "CrystalHeart",
+      "path": "C:\\Users\\jlang\\.codex\\generated_images\\01a0f347-b33b-7f63-8d0d-3bd2de879366\\exec-10e07710-494d-48a3-a486-f19278fb3b4b.png"
+    },
+    {
+      "name": "CrystalHarness",
+      "path": "C:\\Users\\jlang\\.codex\\generated_images\\01a0f347-b33b-7f63-8d0d-3bd2de879366\\exec-caf5ac5e-0a0b-4572-8071-db9b9512bfcd.png"
+    },
+    {
+      "name": "TravelMonolith",
+      "path": "C:\\Users\\jlang\\.codex\\generated_images\\01a0f347-b33b-7f63-8d0d-3bd2de879366\\exec-66943497-7ed5-4b82-81fb-c6c010f4e518.png"
+    }
+  ],
+  "recipeSources": [
+    {
+      "name": "CrystalPendant",
+      "path": "C:\\Users\\jlang\\.codex\\generated_images\\01a0f347-b33b-7f63-8d0d-3bd2de879366\\exec-700f5036-99f8-4046-ba07-cb28150e66ea.png"
+    },
+    {
+      "name": "CopperEnergyBracelet",
+      "path": "C:\\Users\\jlang\\.codex\\generated_images\\01a0f347-b33b-7f63-8d0d-3bd2de879366\\exec-c07ecb45-beb6-436e-a6be-9c7372506be1.png"
+    },
+    {
+      "name": "EnergyStorageVial",
+      "path": "C:\\Users\\jlang\\.codex\\generated_images\\01a0f347-b33b-7f63-8d0d-3bd2de879366\\exec-6185d5f4-3ce0-4335-aa57-f7211ebacd55.png"
+    },
+    {
+      "name": "RuneBelt",
+      "path": "C:\\Users\\jlang\\.codex\\generated_images\\01a0f347-b33b-7f63-8d0d-3bd2de879366\\exec-77fca348-27e9-48cb-b060-3787256db13c.png"
+    },
+    {
+      "name": "CrystalHeart",
+      "path": "C:\\Users\\jlang\\.codex\\generated_images\\01a0f347-b33b-7f63-8d0d-3bd2de879366\\exec-dcb13c3a-6545-48af-8f20-6480aec2b4da.png"
+    },
+    {
+      "name": "CrystalHarness",
+      "path": "C:\\Users\\jlang\\.codex\\generated_images\\01a0f347-b33b-7f63-8d0d-3bd2de879366\\exec-ff85c522-1096-4f84-82d4-5b7e1b5b1e52.png"
+    },
+    {
+      "name": "TravelMonolith",
+      "path": "C:\\Users\\jlang\\.codex\\generated_images\\01a0f347-b33b-7f63-8d0d-3bd2de879366\\exec-233c7fa8-9780-4326-8289-d7ba59dc44f1.png"
+    }
+  ],
+  "midPrompts": [
+    {
+      "name": "EnergyStorageVial",
+      "prompt": "Redesign reference equipment into ONE isolated mystical energy storage inventory item. Reference 1 supplies exact rich high-detail painterly fantasy mining game style, stitched dark brown leather, worn bevelled metal, brass rivets/buckles, top-left warm light and deep shadows. Reference 2 supplies blue sapphire crystals with cyan glowing internal branching veins. True transparent background, entire centered item in square canvas with margin, readable strong silhouette, hand-painted 2D game icon, no wearer, text, letters, numbers, clouds, floor, scenery, parchment, batteries, electronics or futuristic technology. Subject: STORAGE VIAL, a thick-walled transparent glass phial packed with tiny solid blue crystal granules, cylindrical rounded base and cork stopper, no liquid. The glass is supported by dark brown stitched leather cradle around base and two side straps with small copper buckles; open viewing window reveals glowing blue granules and glass rim. A belt attachment loop behind the neck, bronze stopper retainer. Subtle cyan glow refracts through glass with clear edges. Three-quarter view; recognizable sturdy portable refillable energy container."
+    },
+    {
+      "name": "RuneBelt",
+      "prompt": "Redesign reference equipment into ONE isolated mystical energy storage inventory item. Reference 1 supplies exact rich high-detail painterly fantasy mining game style, stitched dark brown leather, worn bevelled metal, brass rivets/buckles, top-left warm light and deep shadows. Reference 2 supplies blue sapphire crystals with cyan glowing internal branching veins. True transparent background, entire centered item in square canvas with margin, readable strong silhouette, hand-painted 2D game icon, no wearer, text, letters, numbers, clouds, floor, scenery, parchment, batteries, electronics or futuristic technology. Subject: RUNE BELT. A heavy broad dark brown stitched leather waist belt forming a wearable oval loop in three-quarter view. Five separate weathered steel plates fastened to its outside with brass studs, engraved abstract nonletter geometric rune grooves, each plate containing a blue energy crystal cabochon. A substantial central brass buckle with large hexagonal blue stone, sensible clasp and joined leather straps, padded dark teal inner band. Crystal-set plates distribute energy storage along belt. Clear oval waistbelt silhouette, physically coherent, distinctly bigger than simple copper wrist bracelet."
+    },
+    {
+      "name": "CrystalHeart",
+      "prompt": "Redesign reference equipment into ONE isolated mystical energy storage inventory item. Reference 1 supplies exact rich high-detail painterly fantasy mining game style, stitched dark brown leather, worn bevelled metal, brass rivets/buckles, top-left warm light and deep shadows. Reference 2 supplies blue sapphire crystals with cyan glowing internal branching veins. True transparent background, entire centered item in square canvas with margin, readable strong silhouette, hand-painted 2D game icon, no wearer, text, letters, numbers, clouds, floor, scenery, parchment, batteries, electronics or futuristic technology. Subject: CRYSTAL HEART, a large expertly cut angular blue crystal core in an ornate reinforced chest mounting. One luminous octahedral diamond-shaped blue gem with crisp facets held by six dark steel claws edged with gold/brass, mounted on a shield-shaped stitched brown leather breast pad with teal lining. Two shoulder strap attachment tabs at top and two buckle straps at lower corners, compact wearable chest harness visibly supports one central jewel. No anatomical or cartoon heart shape; name means centerpiece energy core. Front three-quarter view. Stone dominant, elegant high-tier handmade crystal equipment."
+    }
+  ],
+  "lastPrompts": [
+    {
+      "name": "CrystalHarness",
+      "prompt": "Redesign reference equipment into ONE isolated mystical energy storage inventory item. Reference 1 supplies exact rich high-detail painterly fantasy mining game style, stitched dark brown leather, worn bevelled metal, brass rivets/buckles, top-left warm light and deep shadows. Reference 2 supplies blue sapphire crystals with cyan glowing internal branching veins. True transparent background, entire centered item in square canvas with margin, readable strong silhouette, hand-painted 2D game icon, no wearer, text, letters, numbers, clouds, floor, scenery, parchment, batteries, electronics or futuristic technology. Subject: CRYSTAL HARNESS. A handmade backpack-style energy storage harness with FIVE LARGE tall blue crystals secured vertically along a reinforced steel backplate: tallest crystal in center, medium crystals flanking it and shorter outside shards. Each shard clamped by worn steel with brass rivets; brown leather belts wrap their bases, teal padded backing, two visible curved shoulder straps behind sides and broad hip belt underneath. Crystals symmetrical coherent array with distinct heights, all logically attached to one frame. Three-quarter view from crystal side so both glowing crystals and rear straps visible. A substantial portable multi-crystal storage, no arms/legs, no person, no backpack bags."
+    },
+    {
+      "name": "TravelMonolith",
+      "prompt": "Redesign reference equipment into ONE isolated mystical energy storage inventory item. Reference 1 supplies exact rich high-detail painterly fantasy mining game style, stitched dark brown leather, worn bevelled metal, brass rivets/buckles, top-left warm light and deep shadows. Reference 2 supplies blue sapphire crystals with cyan glowing internal branching veins. True transparent background, entire centered item in square canvas with margin, readable strong silhouette, hand-painted 2D game icon, no wearer, text, letters, numbers, clouds, floor, scenery, parchment, batteries, electronics or futuristic technology. Subject: TRAVEL MONOLITH, the ultimate energy capacity upgrade. A miniature portable counterpart of reference2 charging monolith: one heavy rectangular dark indigo-blue carved stone monolith with angular chamfered top, irregular luminous cyan veins branching up face, sturdy aged steel edge clamps with brass rivets and two brown leather retention straps. Stone rests on small steel-and-dark-oak carrying shelf connected to narrow reinforced back frame. Two teal-padded leather shoulder straps behind stone and a broad leather hip belt with brass buckle are visible at sides, physically wearable. Monolith is a carved solid flat-sided stone pillar rather than jagged crystal cluster, no rock ground/base scenery. Three-quarter view similar to load-carrying backpack. Refined top-tier handmade portable artifact. One item including frame, do not create a pedestal ground or humanoid."
+    }
+  ]
+}

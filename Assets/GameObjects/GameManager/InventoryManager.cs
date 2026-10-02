@@ -12,16 +12,14 @@ public class InventoryManager : MonoBehaviour
 
     UpgradeSettings upgradeSettings;
     int carryingCapacityLevel = 1;
+    int energyCapacityLevel = 1;
+    public int EnergyCapacityLevel => energyCapacityLevel;
+    public float EnergyCapacityMultiplier => upgradeSettings
+        ? upgradeSettings.GetEnergyCapacityMultiplier(energyCapacityLevel) : 1f;
     public int CarryingCapacityLevel
     {
         get => carryingCapacityLevel;
-        set
-        {
-            int next = Mathf.Clamp(value, 1, upgradeSettings ? upgradeSettings.CarryingCapacityLevelCount : 1);
-            if (carryingCapacityLevel == next) return;
-            carryingCapacityLevel = next;
-            OnInventoryChanged?.Invoke();
-        }
+        set => SetCarryingCapacityLevel(value, true);
     }
     public float CarryingCapacity => upgradeSettings ? upgradeSettings.GetCarryingCapacity(carryingCapacityLevel) : 30f;
     public float MaximumWeight => CarryingCapacity * 3f;
@@ -147,12 +145,32 @@ public class InventoryManager : MonoBehaviour
 
     public bool IsPickaxeUnlocked(ItemSO item) => IsPickaxe(item) && _unlockedPowerups.Contains(item.item);
 
-    bool UnlockPowerup(ItemSO item)
+    bool SetCarryingCapacityLevel(int value, bool notify)
+    {
+        int next = Mathf.Clamp(value, 1, upgradeSettings ? upgradeSettings.CarryingCapacityLevelCount : 1);
+        if (carryingCapacityLevel == next) return false;
+        carryingCapacityLevel = next;
+        if (notify) OnInventoryChanged?.Invoke();
+        return true;
+    }
+
+    bool UnlockPowerup(ItemSO item, bool notify = true)
     {
         if (!item || item.category != ItemCategory.Powerup || !_unlockedPowerups.Add(item.item)) return false;
         if (IsPickaxe(item)) SelectBestUnlockedPickaxe();
-        OnInventoryChanged?.Invoke();
-        OnItemGained?.Invoke(item, 1);
+        if (item.carryingCapacityUpgradeLevel > 0)
+            SetCarryingCapacityLevel(Mathf.Max(carryingCapacityLevel, item.carryingCapacityUpgradeLevel), false);
+        if (item.energyCapacityUpgradeLevel > 0)
+        {
+            energyCapacityLevel = Mathf.Clamp(Mathf.Max(energyCapacityLevel, item.energyCapacityUpgradeLevel),
+                1, upgradeSettings ? upgradeSettings.EnergyCapacityLevelCount : 1);
+            StatsManager.Instance?.RefreshEnergyCapacity();
+        }
+        if (notify)
+        {
+            OnInventoryChanged?.Invoke();
+            OnItemGained?.Invoke(item, 1);
+        }
         return true;
     }
     void OnDestroy()
@@ -224,6 +242,7 @@ public class InventoryManager : MonoBehaviour
         double changeInWeight = outputIsPowerup ? 0d : output.EffectiveWeight * (double)amount;
         foreach (var cost in costs) changeInWeight -= cost.Key.EffectiveWeight * (double)cost.Value;
         if (!CanFitWeight(changeInWeight)) return false;
+        if (outputIsPowerup && !UnlockPowerup(output, false)) return false;
 
         var changed = new HashSet<ItemSO>();
         foreach (var cost in costs)
@@ -233,12 +252,7 @@ public class InventoryManager : MonoBehaviour
             else _counts[cost.Key] = remaining;
             changed.Add(cost.Key);
         }
-        if (outputIsPowerup)
-        {
-            _unlockedPowerups.Add(output.item);
-            if (IsPickaxe(output)) SelectBestUnlockedPickaxe();
-        }
-        else
+        if (!outputIsPowerup)
         {
             _counts[output] = (int)finalOutput;
             _ownedThisRun.Add(output);
@@ -252,12 +266,38 @@ public class InventoryManager : MonoBehaviour
 
     public IReadOnlyDictionary<ItemSO, int> GetSnapshot() => _counts;
 
+    public SavedInventory CaptureRunState()
+    {
+        var items = new List<SavedItem>();
+        foreach (var entry in _counts) if (entry.Key) items.Add(new SavedItem { id = (int)entry.Key.item, count = entry.Value });
+        var owned = new List<int>(); foreach (var item in _ownedThisRun) if (item) owned.Add((int)item.item);
+        var powerups = new List<int>(); foreach (var item in _unlockedPowerups) powerups.Add((int)item);
+        return new SavedInventory { items = items.ToArray(), owned = owned.ToArray(), powerups = powerups.ToArray(),
+            carryingLevel = carryingCapacityLevel, energyLevel = energyCapacityLevel };
+    }
+
+    public void RestoreRunState(SavedInventory state)
+    {
+        _counts.Clear(); _ownedThisRun.Clear(); _unlockedPowerups.Clear();
+        foreach (var entry in state.items ?? Array.Empty<SavedItem>())
+        { var item = StartingResourcesSettings.Resolve(entry.id); if (item && entry.count > 0) _counts[item] = entry.count; }
+        foreach (int id in state.owned ?? Array.Empty<int>())
+        { var item = StartingResourcesSettings.Resolve(id); if (item) _ownedThisRun.Add(item); }
+        foreach (int id in state.powerups ?? Array.Empty<int>()) _unlockedPowerups.Add((Item)id);
+        carryingCapacityLevel = Mathf.Clamp(state.carryingLevel, 1, upgradeSettings ? upgradeSettings.CarryingCapacityLevelCount : 1);
+        energyCapacityLevel = Mathf.Clamp(state.energyLevel, 1, upgradeSettings ? upgradeSettings.EnergyCapacityLevelCount : 1);
+        UnlockDefaultPickaxe(); StatsManager.Instance?.RefreshEnergyCapacity();
+        OnInventoryChanged?.Invoke();
+    }
+
     public void ResetAll()
     {
         _counts.Clear();
         _ownedThisRun.Clear();
         _unlockedPowerups.Clear();
         carryingCapacityLevel = 1;
+        energyCapacityLevel = 1;
+        StatsManager.Instance?.RefreshEnergyCapacity();
         UnlockDefaultPickaxe();
         OnInventoryChanged?.Invoke();
     }

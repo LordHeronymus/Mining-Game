@@ -24,6 +24,7 @@ public class ShopPanel : MonoBehaviour
 
     void Awake()
     {
+        ShopVisualTheme.Ensure(transform).UseBuyLayout(false);
         if (panel) panel.alpha = 0f;
         sellText.color = tabHighlight;
         sellPage.gameObject.SetActive(true);
@@ -78,6 +79,7 @@ public class ShopPanel : MonoBehaviour
 
     public void ShowSellPage()
     {
+        ShopVisualTheme.Ensure(transform).UseBuyLayout(false);
         AudioManager.Instance.Play(SoundType.UI_Click);
         buyPage.gameObject.SetActive(false);
         sellPage.gameObject.SetActive(true);
@@ -88,6 +90,7 @@ public class ShopPanel : MonoBehaviour
 
     public void ShowBuyPage()
     {
+        ShopVisualTheme.Ensure(transform).UseBuyLayout(true);
         AudioManager.Instance.Play(SoundType.UI_Click);
         sellPage.gameObject.SetActive(false);
         buyPage.gameObject.SetActive(true);

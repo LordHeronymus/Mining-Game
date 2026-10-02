@@ -1,0 +1,520 @@
+fileFormatVersion: 2
+guid: 6b7eb080335ab434fabb0a0daafcd4dd
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2982453064716956566
+    second: BuyFrames-v2_0
+  - first:
+      213: 7004421158194001290
+    second: BuyFrames-v2_1
+  - first:
+      213: 4622776049894753375
+    second: BuyFrames-v2_2
+  - first:
+      213: 3780803540524619789
+    second: BuyFrames-v2_3
+  - first:
+      213: 8789907502343744241
+    second: BuyFrames-v2_4
+  - first:
+      213: 386273186452693986
+    second: BuyFrames-v2_5
+  - first:
+      213: 7924233871980747057
+    second: BuyFrames-v2_6
+  - first:
+      213: 1093125098623223874
+    second: BuyFrames-v2_7
+  - first:
+      213: -5560183359114331875
+    second: BuyFrames-v2_8
+  - first:
+      213: -4504040656736778188
+    second: BuyFrames-v2_9
+  - first:
+      213: 450693613242385595
+    second: BuyFrames-v2_10
+  - first:
+      213: 415463518386865954
+    second: BuyFrames-v2_11
+  - first:
+      213: -4020090251892857121
+    second: BuyFrames-v2_12
+  - first:
+      213: 3610386506424491178
+    second: BuyFrames-v2_13
+  - first:
+      213: 697499021283216746
+    second: BuyFrames-v2_14
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: BuyFrames-v2_0
+      rect:
+        serializedVersion: 2
+        x: 44
+        y: 763
+        width: 1165
+        height: 465
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a6c45464db23c96d0800000000000000
+      internalID: -2982453064716956566
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BuyFrames-v2_1
+      rect:
+        serializedVersion: 2
+        x: 659
+        y: 1195
+        width: 21
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a85326faee3b43160800000000000000
+      internalID: 7004421158194001290
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BuyFrames-v2_2
+      rect:
+        serializedVersion: 2
+        x: 689
+        y: 1197
+        width: 17
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f54092a2356672040800000000000000
+      internalID: 4622776049894753375
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BuyFrames-v2_3
+      rect:
+        serializedVersion: 2
+        x: 924
+        y: 1195
+        width: 24
+        height: 58
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d08528ed9cc187430800000000000000
+      internalID: 3780803540524619789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BuyFrames-v2_4
+      rect:
+        serializedVersion: 2
+        x: 956
+        y: 1208
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1fa6dbd6d460cf970800000000000000
+      internalID: 8789907502343744241
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BuyFrames-v2_5
+      rect:
+        serializedVersion: 2
+        x: 603
+        y: 1183
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e365c0aa615c5500800000000000000
+      internalID: 386273186452693986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BuyFrames-v2_6
+      rect:
+        serializedVersion: 2
+        x: 858
+        y: 1197
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 139d780e8b888fd60800000000000000
+      internalID: 7924233871980747057
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BuyFrames-v2_7
+      rect:
+        serializedVersion: 2
+        x: 199
+        y: 1164
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 248408e4c7f8b2f00800000000000000
+      internalID: 1093125098623223874
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BuyFrames-v2_8
+      rect:
+        serializedVersion: 2
+        x: 892
+        y: 1164
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d19b3f9a1b246d2b0800000000000000
+      internalID: -5560183359114331875
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BuyFrames-v2_9
+      rect:
+        serializedVersion: 2
+        x: 921
+        y: 1169
+        width: 13
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4388949d2ee6e71c0800000000000000
+      internalID: -4504040656736778188
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BuyFrames-v2_10
+      rect:
+        serializedVersion: 2
+        x: 291
+        y: 1158
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb489df047f214600800000000000000
+      internalID: 450693613242385595
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BuyFrames-v2_11
+      rect:
+        serializedVersion: 2
+        x: 932
+        y: 1158
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22745966ed504c500800000000000000
+      internalID: 415463518386865954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BuyFrames-v2_12
+      rect:
+        serializedVersion: 2
+        x: 1029
+        y: 773
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd66aea1735c538c0800000000000000
+      internalID: -4020090251892857121
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BuyFrames-v2_13
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 377
+        width: 1219
+        height: 381
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aac9b41266baa1230800000000000000
+      internalID: 3610386506424491178
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BuyFrames-v2_14
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 0
+        width: 1171
+        height: 358
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a6dc4c21aa30ea900800000000000000
+      internalID: 697499021283216746
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      BuyFrames-v2_0: -2982453064716956566
+      BuyFrames-v2_1: 7004421158194001290
+      BuyFrames-v2_10: 450693613242385595
+      BuyFrames-v2_11: 415463518386865954
+      BuyFrames-v2_12: -4020090251892857121
+      BuyFrames-v2_13: 3610386506424491178
+      BuyFrames-v2_14: 697499021283216746
+      BuyFrames-v2_2: 4622776049894753375
+      BuyFrames-v2_3: 3780803540524619789
+      BuyFrames-v2_4: 8789907502343744241
+      BuyFrames-v2_5: 386273186452693986
+      BuyFrames-v2_6: 7924233871980747057
+      BuyFrames-v2_7: 1093125098623223874
+      BuyFrames-v2_8: -5560183359114331875
+      BuyFrames-v2_9: -4504040656736778188
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24d469c3ce4fd914d9eb95135b7e747b, type: 3}
+  m_Name: Emerald
+  m_EditorClassIdentifier: 
+  id: 18
+  displayName: Smaragderz
+  itemDrop: {fileID: 11400000, guid: 79563a15c50c4c0eb63683ae4cf8420f, type: 2}
+  digSound: 4
+  breakSound: 5
+  hardness: 3.5
+  hardnessIndex: 4
+  points: 0
+  isSolid: 1
+  variants: []
+  smallOre:
+  - {fileID: 11400000, guid: 61146548b2014b94aad41969412b3d40, type: 2}
+  - {fileID: 11400000, guid: e6af1208e6d14cfab4a39c6273641b90, type: 2}
+  mediumOre:
+  - {fileID: 11400000, guid: bd5411b6c65345d9a8751a8659515177, type: 2}
+  - {fileID: 11400000, guid: 0fd00c718c2c4f32ad776476b9aec880, type: 2}
+  richOre:
+  - {fileID: 11400000, guid: c3eeff19af634982ad60fc19d2915643, type: 2}
+  - {fileID: 11400000, guid: d3809483f0d1468c88e4afa91d922c2a, type: 2}
+  - {fileID: 11400000, guid: 74a1a59b5d8c4c9888c492d097a63d1d, type: 2}
+  spawnWithNoise: 1
+  oreFrequencyPercent: 0.7
+  veinSizeIndex: 7
+  rarityCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  noiseScale: 0.05
+  noiseSeedOffset: 18000
+  generationSettingsVersion: 1

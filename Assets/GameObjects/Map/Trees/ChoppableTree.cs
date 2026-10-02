@@ -41,11 +41,25 @@ public sealed class ChoppableTree : MonoBehaviour
     float maximumSizeBonusRatio;
     float growthRatioPerSecond;
     bool sprouting;
+    float sproutElapsed;
     bool falling;
     bool birchWood;
     int reachGlowLevel;
 
     public int SurfaceCellX { get; private set; }
+    public SavedTree CaptureRunState(int variant) => new SavedTree { cell = SurfaceCellX, variant = variant,
+        position = transform.position, height = fullHeight, health = health, growth = sizeBonusRatio,
+        sproutScale = sprouting ? transform.localScale.y / Mathf.Max(.001f, fullScale) : 1f,
+        sproutElapsed = sproutElapsed, pendingWood = pendingWoodYield };
+    public string SourceSpriteName => swaySprite ? swaySprite.name.Replace(" Sway", "") : "";
+    public bool IsFalling => falling;
+    public void RestoreRunState(SavedTree state)
+    {
+        health = state.health; sizeBonusRatio = Mathf.Clamp(state.growth, 0, maximumSizeBonusRatio);
+        pendingWoodYield = state.pendingWood;
+        transform.localScale = Vector3.one * fullScale * Mathf.Clamp(state.sproutScale, .05f, 1f) * GrowthFactor;
+        if (state.sproutScale < 1) StartCoroutine(Grow(state.sproutElapsed));
+    }
     public int Health => Mathf.CeilToInt(health);
     public bool CanChop => health > 0 && !falling && trunk && trunk.enabled;
     public Vector2 HitPoint => (Vector2)transform.position + Vector2.up;
@@ -230,14 +244,15 @@ public sealed class ChoppableTree : MonoBehaviour
         visual.SetPropertyBlock(swayProperties);
     }
 
-    IEnumerator Grow()
+    IEnumerator Grow(float elapsed = 0)
     {
         sprouting = true;
         trunk.enabled = false;
-        float duration = 10f, elapsed = 0;
+        float duration = 10f;
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
+            sproutElapsed = elapsed;
             float scale = Mathf.SmoothStep(.15f, 1f, Mathf.Clamp01(elapsed / duration));
             transform.localScale = Vector3.one * fullScale * scale;
             yield return null;

@@ -35,6 +35,29 @@ public sealed class SurfaceTrees : MonoBehaviour
     public int ActiveCount => trees.Count;
     public MapGenerator Map => map;
     public int Capacity => targetPopulation;
+    public SavedForest CaptureRunState()
+    {
+        var saved = new List<SavedTree>();
+        foreach (var tree in trees)
+            if (tree && !tree.IsFalling) saved.Add(tree.CaptureRunState(System.Array.FindIndex(variants, x => x && x.name == tree.SourceSpriteName)));
+        return new SavedForest { trees = saved.ToArray(), regrowth = Mathf.Max(0, nextGrowth - Time.time) };
+    }
+    public void RestoreRunState(SavedForest state)
+    {
+        if (state == null) return;
+        foreach (var tree in trees) if (tree) { tree.gameObject.SetActive(false); Destroy(tree.gameObject); }
+        trees.Clear();
+        foreach (var saved in state.trees ?? System.Array.Empty<SavedTree>())
+        {
+            if (saved.variant < 0 || saved.variant >= variants.Length || !variants[saved.variant]) continue;
+            var grown = Instantiate(prefab, transform);
+            grown.Initialize(this, saved.cell, variants[saved.variant], wood, saved.position, saved.height,
+                hitsToFell, Mathf.Max(1, woodYieldMin), Mathf.Max(woodYieldMin, woodYieldMax),
+                Mathf.Max(0, maximumBonusWood), maximumSizeBonusPercent, growthSpeedPercentPerMinute, true);
+            grown.RestoreRunState(saved); trees.Add(grown);
+        }
+        nextGrowth = Time.time + state.regrowth;
+    }
     public bool HasAxe => axePowerup && InventoryManager.Instance &&
         InventoryManager.Instance.IsPowerupUnlocked(axePowerup);
     public float HitDamage => HasAxe ? Mathf.Max(1f, axeHitMultiplier) : 1f;
@@ -154,6 +177,8 @@ public sealed class SurfaceTrees : MonoBehaviour
         foreach (var building in FindObjectsByType<WorkbenchBuilding>(FindObjectsSortMode.None))
             if (TooClose(x, building.GetComponent<Collider2D>())) return false;
         foreach (var building in FindObjectsByType<EnergyMonolyth>(FindObjectsSortMode.None))
+            if (TooClose(x, building.GetComponent<Collider2D>())) return false;
+        foreach (var building in FindObjectsByType<SurfaceStorageBuilding>(FindObjectsSortMode.None))
             if (TooClose(x, building.GetComponent<Collider2D>())) return false;
         return true;
     }

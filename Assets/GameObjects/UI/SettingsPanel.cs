@@ -28,6 +28,7 @@ public sealed class SettingsPanel : MonoBehaviour
     int captureSlot, captureFrame;
     float previousTimeScale = 1f;
     bool open;
+    public bool IsOpen => open;
     Tab current = Tab.Keys;
     TextMeshProUGUI status;
 
@@ -65,6 +66,10 @@ public sealed class SettingsPanel : MonoBehaviour
             rowSprite = workbench.rowSprite; selectedSprite = workbench.selectedRowSprite;
             actionSprite = workbench.actionSprite;
         }
+        if (!font) font = Resources.Load<TMP_FontAsset>("ArtifactDiscovery/TitleFont");
+        if (!rowSprite) rowSprite = HomeUi.Sprite("Button");
+        if (!selectedSprite) selectedSprite = HomeUi.Sprite("Active");
+        if (!actionSprite) actionSprite = HomeUi.Sprite("Active");
         group = GetComponent<CanvasGroup>();
         if (!group) group = gameObject.AddComponent<CanvasGroup>();
         Build();
@@ -88,6 +93,7 @@ public sealed class SettingsPanel : MonoBehaviour
     void Update()
     {
         if (capturing.HasValue) { CaptureKey(); return; }
+        if (!open && (RunPauseMenu.InputConsumedFrame == Time.frameCount || RunPauseMenu.IsOpen || MainMenuController.IsVisible)) return;
         if (!GameBindings.Down(GameAction.Settings)) return;
         if (open) { Close(); return; }
         if (GameOverPanel.IsOpen || GameVictoryPanel.IsOpen) return;
@@ -99,8 +105,9 @@ public sealed class SettingsPanel : MonoBehaviour
         Open();
     }
 
-    void Open()
+    public void Open()
     {
+        if (open) return;
         open = true;
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;

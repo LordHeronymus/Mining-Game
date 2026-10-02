@@ -18,4 +18,6 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: a111355d272c5d043ac6e03647a967c9, type: 3}
   themeColor: {r: 0.5176471, g: 0.70980394, b: 0.28627452, a: 1}
   worth: 0
-  weight: 0.05
+  weight: 0.1
+  carryingCapacityUpgradeLevel: 0
+  energyCapacityUpgradeLevel: 0

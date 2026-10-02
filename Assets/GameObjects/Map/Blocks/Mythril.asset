@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24d469c3ce4fd914d9eb95135b7e747b, type: 3}
+  m_Name: Mythril
+  m_EditorClassIdentifier: 
+  id: 17
+  displayName: Mythril
+  itemDrop: {fileID: 11400000, guid: 03caa9336a64416a91a532a8f862f6c2, type: 2}
+  digSound: 4
+  breakSound: 5
+  hardness: 5
+  hardnessIndex: 4
+  points: 0
+  isSolid: 1
+  variants: []
+  smallOre:
+  - {fileID: 11400000, guid: 2cb3e8db184849c3b9f328875b58b439, type: 2}
+  - {fileID: 11400000, guid: e68a8e0cc15c41399cc4848ecdccfc2c, type: 2}
+  mediumOre:
+  - {fileID: 11400000, guid: ae5b1b55ed6f4ca4bbccf59c01128ced, type: 2}
+  - {fileID: 11400000, guid: 863927f3bedb4b09a91e73d15fe8f1f0, type: 2}
+  richOre:
+  - {fileID: 11400000, guid: 6232e67ea15c47a1b005e2cc0ee79afe, type: 2}
+  - {fileID: 11400000, guid: 017ed1f231614cfbaf72ee3fcda4b8d4, type: 2}
+  - {fileID: 11400000, guid: 0cf70a572eca4d22ab37586f6267590f, type: 2}
+  spawnWithNoise: 1
+  oreFrequencyPercent: 0.6
+  veinSizeIndex: 6
+  rarityCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  noiseScale: 0.05
+  noiseSeedOffset: 11000
+  generationSettingsVersion: 1

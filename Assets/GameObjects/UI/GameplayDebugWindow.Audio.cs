@@ -131,6 +131,8 @@ public sealed partial class GameplayDebugWindow
                 SoundType hit = layerIndex >= 2 ? SoundType.DigDeepStone : layer.stone.digSound;
                 SoundType breaking = layerIndex >= 2 ? SoundType.StoneBreak : SoundType.ClayBreak;
                 AddAudioLayerClips(layerGroup, layerIndex, hit, false);
+                if (layerIndex >= 2)
+                    AddAudioLayerClips(layerGroup, layerIndex, SoundType.DigDeepOreHit, false, "Erz · ");
                 AddAudioLayerClips(layerGroup, layerIndex, breaking, true);
             }
         }
@@ -219,7 +221,7 @@ public sealed partial class GameplayDebugWindow
         if (name.Contains("dirt") || name.Contains("stone") || name.Contains("ore") ||
             name.Contains("pickaxe") || name.Contains("mining") || name.Contains("crumble") ||
             name.Contains("breakrock") || name.Contains("claybreak") ||
-            name.Contains("metal") || name.Contains("blunt")) return mining;
+            name.Contains("metal") || name.Contains("blunt") || name.Contains("rubble")) return mining;
         if (name.Contains("bird") || name.Contains("chirp") || name.Contains("frog") ||
             name.Contains("croak") || name.Contains("grass") || name.Contains("tree") ||
             name.Contains("wood") || name.Contains("torch")) return animals;
@@ -232,7 +234,8 @@ public sealed partial class GameplayDebugWindow
     static bool IsMiningSound(SoundType type) => type is SoundType.DigSoft or SoundType.DigMedium or
         SoundType.DigHard or SoundType.DigOre or SoundType.BreakRock or SoundType.BreakOre or
         SoundType.DigDirt or SoundType.DigTransitionStone or SoundType.DigStone or
-        SoundType.DirtHit or SoundType.DigDeepStone or SoundType.StoneBreak or SoundType.ClayBreak;
+        SoundType.DirtHit or SoundType.DigDeepStone or SoundType.DigDeepOreHit or
+        SoundType.StoneBreak or SoundType.ClayBreak;
 
     static bool IsEnvironmentSound(SoundType type) => type is SoundType.WoodChop or
         SoundType.LadderPlace or SoundType.LadderRemove or SoundType.DryGrass or SoundType.TreeFall;
@@ -263,7 +266,8 @@ public sealed partial class GameplayDebugWindow
         return group;
     }
 
-    void AddAudioLayerClips(AudioBrowserGroup group, int layerIndex, SoundType type, bool breaking)
+    void AddAudioLayerClips(AudioBrowserGroup group, int layerIndex, SoundType type, bool breaking,
+        string labelPrefix = null)
     {
         var audio = AudioManager.Instance;
         int count = audio.GetSoundClipCount(type);
@@ -272,7 +276,8 @@ public sealed partial class GameplayDebugWindow
             var clip = audio.GetSoundClip(type, i);
             if (!clip) continue;
             audioCataloguedClips.Add(clip);
-            var row = AddAudioBrowserRow(group, (breaking ? "Bruch · " : "Hieb · ") + clip.name, clip);
+            var prefix = labelPrefix ?? (breaking ? "Bruch · " : "Hieb · ");
+            var row = AddAudioBrowserRow(group, prefix + clip.name, clip);
             row.layerIndex = layerIndex;
             row.soundType = type;
             row.breaking = breaking;
