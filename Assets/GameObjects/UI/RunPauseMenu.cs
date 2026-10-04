@@ -28,17 +28,18 @@ public sealed class RunPauseMenu : MonoBehaviour
         group = gameObject.AddComponent<CanvasGroup>();
         var scrim = HomeUi.Image("Scrim", transform, Vector2.zero, Vector2.zero); HomeUi.Stretch(scrim.rectTransform);
         scrim.color = new Color(0, 0, 0, .62f); scrim.raycastTarget = true;
-        layout = HomeUi.Rect("Pause Layout", transform, Vector2.zero, new Vector2(700, 850));
-        HomeUi.Image("Board", layout, Vector2.zero, new Vector2(650, 800), "Panel");
-        HomeUi.Label("Title", layout, "Tiefenhall", new Vector2(0, 314), new Vector2(560, 85), 62);
-        HomeUi.Button("Resume", layout, "Fortsetzen", new Vector2(0, 193), new Vector2(500, 86), Close, true);
-        saveButton = HomeUi.Button("Save", layout, "Speichern", new Vector2(0, 89), new Vector2(500, 86), () => SaveSlotPanel.Show(transform.parent, true));
-        HomeUi.Button("Load", layout, "Laden", new Vector2(0, -15), new Vector2(500, 86), () => SaveSlotPanel.Show(transform.parent, false));
-        HomeUi.Button("Settings", layout, "Einstellungen", new Vector2(0, -119), new Vector2(500, 86), () =>
+        layout = HomeUi.Rect("Pause Layout", transform, Vector2.zero, new Vector2(700, 900));
+        HomeUi.Image("Board", layout, Vector2.zero, new Vector2(650, 850), "Panel");
+        HomeUi.Label("Title", layout, "Tiefenhall", new Vector2(0, 338), new Vector2(560, 85), 62);
+        HomeUi.Button("Resume", layout, "Fortsetzen", new Vector2(0, 220), new Vector2(500, 76), Close, true);
+        saveButton = HomeUi.Button("Save", layout, "Speichern", new Vector2(0, 129), new Vector2(500, 76), () => SaveSlotPanel.Show(transform.parent, true));
+        HomeUi.Button("Load", layout, "Laden", new Vector2(0, 38), new Vector2(500, 76), () => SaveSlotPanel.Show(transform.parent, false));
+        HomeUi.Button("Progression", layout, "Fortschritt", new Vector2(0, -53), new Vector2(500, 76), () => MetaProgressionPanel.Show(transform.parent, true));
+        HomeUi.Button("Settings", layout, "Einstellungen", new Vector2(0, -144), new Vector2(500, 76), () =>
             FindFirstObjectByType<SettingsPanel>(FindObjectsInactive.Include)?.Open());
-        HomeUi.Button("Home", layout, "Speichern & Hauptmenü", new Vector2(0, -223), new Vector2(500, 86), SaveAndHome);
-        status = HomeUi.Label("Status", layout, "", new Vector2(0, -336), new Vector2(580, 60), 24);
-        Visible(false); HomeUi.Fit(layout, new Vector2(780, 930));
+        HomeUi.Button("Home", layout, "Speichern & Hauptmenü", new Vector2(0, -235), new Vector2(500, 76), SaveAndHome);
+        status = HomeUi.Label("Status", layout, "", new Vector2(0, -350), new Vector2(580, 60), 24);
+        Visible(false); HomeUi.Fit(layout, new Vector2(780, 970));
     }
     void Update()
     {
@@ -46,7 +47,7 @@ public sealed class RunPauseMenu : MonoBehaviour
             GameSaveSystem.PlayedSeconds += Time.deltaTime;
         if (!Input.GetKeyDown(KeyCode.Escape) || InputConsumedFrame == Time.frameCount || LoadingProgress.Active || RunNavigation.IsTransitioning) return;
         var settings = FindFirstObjectByType<SettingsPanel>(FindObjectsInactive.Include);
-        if (SaveSlotPanel.IsOpen || (settings && settings.IsOpen)) return;
+        if (SaveSlotPanel.IsOpen || MetaProgressionPanel.IsOpen || (settings && settings.IsOpen)) return;
         if (IsOpen && !GameSaveSystem.IsBusy) { ConsumeInput(); Close(); }
         else if (!GameplayInputBlocker.IsBlocked && !GameOverPanel.IsOpen && !GameVictoryPanel.IsOpen) { ConsumeInput(); Open(); }
     }
@@ -73,6 +74,6 @@ public sealed class RunPauseMenu : MonoBehaviour
             (ok, message) => { status.text = message; if (ok) RunNavigation.MainMenu(); }));
     }
     void Visible(bool show) { group.alpha = show ? 1 : 0; group.interactable = group.blocksRaycasts = show; }
-    void OnRectTransformDimensionsChange() => HomeUi.Fit(layout, new Vector2(780, 930));
+    void OnRectTransformDimensionsChange() => HomeUi.Fit(layout, new Vector2(780, 970));
     void OnDestroy() { IsOpen = false; GameplayInputBlocker.SetBlocked(this, false); }
 }

@@ -1,0 +1,821 @@
+[
+  {
+    "guid": "9a7de517d555400f9601e06fdfd04a7e",
+    "volume": 0.09905488,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.06
+  },
+  {
+    "guid": "d5cb81569a1d45b7a5562e3d5cfd07e9",
+    "volume": 0.10319607,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.06
+  },
+  {
+    "guid": "e5a6750511344a82a6947a85f3622b5c",
+    "volume": 0.10115701,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.06
+  },
+  {
+    "guid": "954408e019f243ff84daa68c758ad9e6",
+    "volume": 0.0978739038,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.06
+  },
+  {
+    "guid": "0d8a0d89d40ee6b4a88475b0d14c65ea",
+    "volume": 0.4090552,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.1
+  },
+  {
+    "guid": "281c17b147ba2f04bbd0646fc1354a0a",
+    "volume": 0.4829468,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.1
+  },
+  {
+    "guid": "a96c0bd74afe00d42b6c065c1ad4b85d",
+    "volume": 0.258161217,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.09
+  },
+  {
+    "guid": "20c086e45f332dc458b0dab570701a5a",
+    "volume": 0.116706446,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "2c103af800e987443a72f2ca5ea716ee",
+    "volume": 0.182923555,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "c3fcae6935dabec43b5577ed0fc44d9b",
+    "volume": 0.451762,
+    "volumeSpread": 0.0,
+    "pitch": 1.1,
+    "pitchSpread": 0.04
+  },
+  {
+    "guid": "a4b89e5ae3ea6304a97ad7b1e084d6e2",
+    "volume": 0.5097473,
+    "volumeSpread": 0.0,
+    "pitch": 0.61,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "2b831b337fe77be4e8e6c752d466fb27",
+    "volume": 0.234050527,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "8b8cf15dba7953248bf04c6e3412ded4",
+    "volume": 1.0,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "6ef7394397cafa145b5c03ad63ddb709",
+    "volume": 1.0,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "db75d99273639714aa8b630bccbd9664",
+    "volume": 0.222418159,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "b8d18c896beb1fe48a3e77cf982de260",
+    "volume": 0.291895419,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "bbaa1574a0786074a8b028b073e8ddb2",
+    "volume": 0.2130849,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "204e2315bfbb4744383d35fa322274d0",
+    "volume": 0.6175654,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "1fef2fc821db98040809720b16de6b39",
+    "volume": 0.286555052,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "67f489b4dd04fa946a23110bfc7dc2bb",
+    "volume": 0.347148627,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "2631be0872fc60d478566faac3fed5dd",
+    "volume": 0.5300628,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "5dfc8fa2c1b18c94d98307b109e19e6d",
+    "volume": 0.227782354,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "4f6149eb5e2682c458fea699936e103d",
+    "volume": 0.217696071,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "2f0bce0d3c54a2540bf41f9cd50b8bbc",
+    "volume": 0.6877646,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "a392f9923b0463744add90dfebbb65eb",
+    "volume": 0.275728852,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "0052a48ee2cb1084eb97f1792eecf361",
+    "volume": 0.550829649,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "fae931fb89e1309499c2bf2610cbe419",
+    "volume": 0.428819656,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "189ca89c0c5ba974484c32b33692c881",
+    "volume": 0.175310776,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "e8ccbf6a598fa344ba389282895e2a64",
+    "volume": 0.297317326,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "cd7a73148ae4aad4fbfd3e2e03042f99",
+    "volume": 0.124100573,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "12850712a40fd9c4c9f9b24832e26b67",
+    "volume": 0.328735381,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "107ac3de248d26947bbc6f917418b600",
+    "volume": 0.5039436,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "112610f69aaa34841946ad822adff6ca",
+    "volume": 0.357767,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "fa7846fa02348a7469f81090bf6e618e",
+    "volume": 0.317053139,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "415490ee8070920408732067b79754f8",
+    "volume": 0.260993421,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "0593b5cd40d7f6844ac1762ae49037f7",
+    "volume": 0.282328665,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "19b70ef0133cbf44b87e26ae5824f49f",
+    "volume": 0.314356059,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "1d173552b66bc694997df7f98a4e9170",
+    "volume": 0.273871362,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "6f973ea3974977947ada9bf699e5493a",
+    "volume": 0.3302934,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "961fe52b92b24de48af263bfb8ce562c",
+    "volume": 0.209630221,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "7bf82cb00f9ab9d47b6ba45935f91a9d",
+    "volume": 0.495277971,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "0d479eb0c7b4b5342a626cd910484773",
+    "volume": 0.5077987,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "c0ed43e1cc855694bbf6024b44061805",
+    "volume": 0.216032773,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "29a576bf8ce35a143a6536688792ffce",
+    "volume": 0.405655652,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "2bbc662060df397469f27ba8ce97cc05",
+    "volume": 0.525054455,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "371a2835022069a45b95281d49130ac6",
+    "volume": 0.459097058,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "1d63e9063d19d41429cf6925a15b8368",
+    "volume": 0.46805045,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "356bd62bef0274942a3c0e74fc87673c",
+    "volume": 0.54276067,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "659ba493410026342ab11953e2c9615b",
+    "volume": 0.322421163,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "8a64251b0775f3b4592176acbb97ce28",
+    "volume": 0.354151368,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "821039f32e4183b4ca488bd55c1fd01c",
+    "volume": 0.225817457,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "c85072ca8c160c0458c74357a58911c0",
+    "volume": 0.694258749,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "a7cccc1ca6efc9b409ced37a112ce91b",
+    "volume": 0.145849824,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "1974ff0bed5db83479585db9693976fd",
+    "volume": 0.245308787,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "1d73f8c16f72b2340be3641e729d7490",
+    "volume": 0.263363749,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "5515fb34272c0e347a0638b9c5c60b50",
+    "volume": 0.389793068,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "f8ad356b30559dc4f97ea6a5df754ef9",
+    "volume": 0.5910714,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "46cd43fcda63c8b4e9020e369733fd63",
+    "volume": 0.625788152,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "c915004dd297c054db895be073ca5cc9",
+    "volume": 0.593847752,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "96f68f030b80a5845a2888cacaa71b12",
+    "volume": 0.673311055,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "be3882af98f5178479a8e8f9b31e18d8",
+    "volume": 0.5888597,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "79da76b3ebc32c84db7210b928cb4fe7",
+    "volume": 0.47710824,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "ffcece7b00a6c2e499bfd5efa92f4acb",
+    "volume": 0.196892783,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "6b55e5774acdb4e4184c4ba64d9477dd",
+    "volume": 0.253782123,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "cb6317f1b1a383341806dfcc8658ee60",
+    "volume": 0.3420195,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "3b7c9b77f192c7b4eaf0f4210baca682",
+    "volume": 0.5410117,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "03eabd021c7fbb247b02545f95d50988",
+    "volume": 0.3246846,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "00d6563d8e95ba14aaa3d7c85dbf9208",
+    "volume": 0.2743014,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "4383923a40a6a6e40b5ed30d3a1984a9",
+    "volume": 0.169921175,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "f4f47d7c12ca08a46a56d04db63734ff",
+    "volume": 0.3409659,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "4464a10f870455e4fa2370208a648af1",
+    "volume": 0.5185462,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "bb425449475cc61479df426bcb21be62",
+    "volume": 0.3927414,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "45498591e999f0941899b11150f8147c",
+    "volume": 0.339340478,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "627e6f6b877e5874e89a01894d63f3bf",
+    "volume": 0.428819656,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "1f67f6fcf834761418cf997d1d25f6da",
+    "volume": 0.628210247,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "33d7eba132d89ad44ba25586e1ad61e0",
+    "volume": 0.188589647,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "7575acb5dae46a241ae0d8c7e29b0b6b",
+    "volume": 0.130897537,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "ccdd73218df811c4b8c0126e829e8fbf",
+    "volume": 0.505351543,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "72f882a481351f440b6d199556d1aadb",
+    "volume": 0.9688928,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "70d928afe9378e14ca59d28ee5220ce3",
+    "volume": 0.239007309,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "dddb56184226bb74d9e08b7f3a12a6d5",
+    "volume": 0.234937742,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "192150a0f6a8c0b46a0bb33305d3cae0",
+    "volume": 0.421698481,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "13417bbca45d6e74c8206aaf69bf468e",
+    "volume": 0.243119076,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "39a37d8748127444b9e2847c604c38ec",
+    "volume": 0.440404117,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "70257bf73205928488c278313da05ea1",
+    "volume": 0.29691416,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "ec3cc61b045a650429316d5ffd83c91a",
+    "volume": 0.207463861,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "1d90479b59d59bf40aae03633b7dc2e6",
+    "volume": 0.1548519,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "d354f0b76d4482649b8e873d241a81f7",
+    "volume": 0.236037329,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "67f1737f5433bc74f8cc0538c2beecb1",
+    "volume": 0.224656776,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "7d277eeb83114974ab06bc818355981c",
+    "volume": 0.30977878,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "dd68d055ed8dadb48a2f63373b2d1d36",
+    "volume": 0.271129251,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "7bc6f4f6e669eed4ca48adb9769628da",
+    "volume": 0.2691778,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "35fede82a4b19b442a95b785ea475708",
+    "volume": 0.3111423,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "71619f9cda1827249ba7aec0d699787d",
+    "volume": 0.3027416,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "e590abe6e0fdb6a44a7d3e90b90bd974",
+    "volume": 0.280566961,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "80816eb163e52d14eb3f698ddf91c817",
+    "volume": 0.360126317,
+    "volumeSpread": 0.15,
+    "pitch": 1.0,
+    "pitchSpread": 0.1
+  },
+  {
+    "guid": "8abf80becb7861549b87e0b078c34974",
+    "volume": 0.733981431,
+    "volumeSpread": 0.15,
+    "pitch": 1.0,
+    "pitchSpread": 0.1
+  },
+  {
+    "guid": "82fd0828f354eba4781cbaa40fcfad74",
+    "volume": 0.586359143,
+    "volumeSpread": 0.15,
+    "pitch": 1.0,
+    "pitchSpread": 0.1
+  },
+  {
+    "guid": "93eaa6e4787b3bf42b86498f5c14241b",
+    "volume": 0.5291649,
+    "volumeSpread": 0.15,
+    "pitch": 1.0,
+    "pitchSpread": 0.1
+  },
+  {
+    "guid": "0640c8aefddab5e469939ff7fb03a22a",
+    "volume": 0.7555838,
+    "volumeSpread": 0.15,
+    "pitch": 1.0,
+    "pitchSpread": 0.1
+  },
+  {
+    "guid": "db1435b5eab394b42bef39a5f1d5c026",
+    "volume": 0.8152469,
+    "volumeSpread": 0.15,
+    "pitch": 1.0,
+    "pitchSpread": 0.1
+  },
+  {
+    "guid": "62b1710d58cfecc4d9f6296864128733",
+    "volume": 0.528927743,
+    "volumeSpread": 0.15,
+    "pitch": 1.0,
+    "pitchSpread": 0.1
+  },
+  {
+    "guid": "b09ba81f7db5beb4cae304e78d208a79",
+    "volume": 0.8695652,
+    "volumeSpread": 0.15,
+    "pitch": 1.0,
+    "pitchSpread": 0.1
+  },
+  {
+    "guid": "c29b78611774193418367cd9acd24aa2",
+    "volume": 0.295381665,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.1
+  },
+  {
+    "guid": "c218a5e599ce4954f90b03d17eef722e",
+    "volume": 0.303821325,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.1
+  },
+  {
+    "guid": "34ea2eaa2a9ffee4bb96e0466ed701b3",
+    "volume": 0.400081068,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "50f94d81d9e9a8a47a55b7a98b572fe3",
+    "volume": 1.0,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "76aa57f9baacc554f912e24f7a6f5d75",
+    "volume": 0.9617974,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "450fcdc15347da649815ad71ae1915fb",
+    "volume": 0.896826267,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "d434b1f682c9a044d977fa5fc7f4238d",
+    "volume": 0.7765647,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "f4d27f17f642f9141bbbb5d614d141ab",
+    "volume": 0.651321,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "6f3d75fe726061b48b686a90b2add179",
+    "volume": 0.660179555,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "cabde2a7470c8ac4abb2f7ae3976bc16",
+    "volume": 0.33877337,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "b325a1fa139c7554d9b7a98336848112",
+    "volume": 0.364624023,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "8391e3becb9e421ca2047c04daf1e658",
+    "volume": 0.221942991,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "7c179888d6c5d854f84a04c01646ba9e",
+    "volume": 0.96569103,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  },
+  {
+    "guid": "40d79d65a6a40954ca6cb271c41ac456",
+    "volume": 0.3325665,
+    "volumeSpread": 0.0,
+    "pitch": 1.0,
+    "pitchSpread": 0.0
+  }
+]

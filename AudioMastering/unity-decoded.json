@@ -1,0 +1,938 @@
+[
+  {
+    "guid": "9a7de517d555400f9601e06fdfd04a7e",
+    "path": "Assets/Resources/BirdChirps/BirdChirp_01.wav",
+    "streaming": false,
+    "rate": 22050,
+    "channels": 1,
+    "frames": 13671
+  },
+  {
+    "guid": "d5cb81569a1d45b7a5562e3d5cfd07e9",
+    "path": "Assets/Resources/BirdChirps/BirdChirp_02.wav",
+    "streaming": false,
+    "rate": 22050,
+    "channels": 1,
+    "frames": 11907
+  },
+  {
+    "guid": "e5a6750511344a82a6947a85f3622b5c",
+    "path": "Assets/Resources/BirdChirps/BirdChirp_03.wav",
+    "streaming": false,
+    "rate": 22050,
+    "channels": 1,
+    "frames": 15435
+  },
+  {
+    "guid": "954408e019f243ff84daa68c758ad9e6",
+    "path": "Assets/Resources/BirdChirps/BirdChirp_04.wav",
+    "streaming": false,
+    "rate": 22050,
+    "channels": 1,
+    "frames": 8820
+  },
+  {
+    "guid": "0d8a0d89d40ee6b4a88475b0d14c65ea",
+    "path": "Assets/AC Audio/Torches/PlaceTorch_01.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 1,
+    "frames": 56754
+  },
+  {
+    "guid": "281c17b147ba2f04bbd0646fc1354a0a",
+    "path": "Assets/AC Audio/Torches/RemoveTorch_01.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 1,
+    "frames": 55018
+  },
+  {
+    "guid": "a96c0bd74afe00d42b6c065c1ad4b85d",
+    "path": "Assets/Resources/Audio/MetalHitBlunt.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 24251
+  },
+  {
+    "guid": "20c086e45f332dc458b0dab570701a5a",
+    "path": "Assets/Resources/Audio/LowEnergyBip.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 24872
+  },
+  {
+    "guid": "2c103af800e987443a72f2ca5ea716ee",
+    "path": "Assets/Resources/Audio/UltroniumAltarAmbience.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 7997184
+  },
+  {
+    "guid": "c3fcae6935dabec43b5577ed0fc44d9b",
+    "path": "Assets/Resources/Audio/LoadingPickaxeHit.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 22142
+  },
+  {
+    "guid": "a4b89e5ae3ea6304a97ad7b1e084d6e2",
+    "path": "Assets/Resources/Audio/LightRubble01.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 96000
+  },
+  {
+    "guid": "2b831b337fe77be4e8e6c752d466fb27",
+    "path": "Assets/AC Audio/alert.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 14746
+  },
+  {
+    "guid": "8b8cf15dba7953248bf04c6e3412ded4",
+    "path": "Assets/AC Audio/Ambience/CaveAmbience.wav",
+    "streaming": true,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 28947458
+  },
+  {
+    "guid": "6ef7394397cafa145b5c03ad63ddb709",
+    "path": "Assets/AC Audio/Ambience/CaveTribalSong.wav",
+    "streaming": true,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 461126
+  },
+  {
+    "guid": "db75d99273639714aa8b630bccbd9664",
+    "path": "Assets/AC Audio/Ambience/GhostWhispers/dragon-studio-creepy-ghost-sound-487677.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 178560
+  },
+  {
+    "guid": "b8d18c896beb1fe48a3e77cf982de260",
+    "path": "Assets/AC Audio/Ambience/GhostWhispers/ghost whisper.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 357120
+  },
+  {
+    "guid": "bbaa1574a0786074a8b028b073e8ddb2",
+    "path": "Assets/AC Audio/Ambience/GhostWhispers/ghost1.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 93312
+  },
+  {
+    "guid": "204e2315bfbb4744383d35fa322274d0",
+    "path": "Assets/AC Audio/Ambience/Layer1Details/freesound_community-rocks-6129.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 152640
+  },
+  {
+    "guid": "1fef2fc821db98040809720b16de6b39",
+    "path": "Assets/AC Audio/Ambience/Layer1Details/freesound_community-stones-falling-6375.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 102528
+  },
+  {
+    "guid": "67f489b4dd04fa946a23110bfc7dc2bb",
+    "path": "Assets/AC Audio/Ambience/Layer1Details/gravel slide.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 385920
+  },
+  {
+    "guid": "2631be0872fc60d478566faac3fed5dd",
+    "path": "Assets/AC Audio/Ambience/Layer1Details/gravel_slide_trocken_variante.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 1,
+    "frames": 122400
+  },
+  {
+    "guid": "5dfc8fa2c1b18c94d98307b109e19e6d",
+    "path": "Assets/AC Audio/Ambience/Layer1Details/Sandrieseln_02_Weich_Laenger_weicher_Ausklang.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 1,
+    "frames": 192000
+  },
+  {
+    "guid": "4f6149eb5e2682c458fea699936e103d",
+    "path": "Assets/AC Audio/Ambience/Layer1Details/Sandrieseln_03_Zwei_Schuebe_weicher_Ausklang_laut.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 1,
+    "frames": 206400
+  },
+  {
+    "guid": "2f0bce0d3c54a2540bf41f9cd50b8bbc",
+    "path": "Assets/AC Audio/Ambience/MeadowAmbience.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 6234049
+  },
+  {
+    "guid": "a392f9923b0463744add90dfebbb65eb",
+    "path": "Assets/AC Audio/Ambience/UndergroundClay.wav",
+    "streaming": true,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 14400000
+  },
+  {
+    "guid": "0052a48ee2cb1084eb97f1792eecf361",
+    "path": "Assets/AC Audio/Ambience/WindAmbience.wav",
+    "streaming": true,
+    "rate": 44100,
+    "channels": 1,
+    "frames": 7801344
+  },
+  {
+    "guid": "fae931fb89e1309499c2bf2610cbe419",
+    "path": "Assets/AC Audio/click.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 2125
+  },
+  {
+    "guid": "189ca89c0c5ba974484c32b33692c881",
+    "path": "Assets/AC Audio/door.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 60968
+  },
+  {
+    "guid": "e8ccbf6a598fa344ba389282895e2a64",
+    "path": "Assets/AC Audio/Grass/DryGrass.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 66816
+  },
+  {
+    "guid": "cd7a73148ae4aad4fbfd3e2e03042f99",
+    "path": "Assets/AC Audio/Hurt.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 38114
+  },
+  {
+    "guid": "12850712a40fd9c4c9f9b24832e26b67",
+    "path": "Assets/AC Audio/Mining/ClayBreak_L1L2.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 44784
+  },
+  {
+    "guid": "107ac3de248d26947bbc6f917418b600",
+    "path": "Assets/AC Audio/Mining/Dirt_Crumble.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 1,
+    "frames": 12960
+  },
+  {
+    "guid": "112610f69aaa34841946ad822adff6ca",
+    "path": "Assets/AC Audio/Mining/DirtHits/DirtHit_01.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 15361
+  },
+  {
+    "guid": "fa7846fa02348a7469f81090bf6e618e",
+    "path": "Assets/AC Audio/Mining/DirtHits/DirtHit_02.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 15489
+  },
+  {
+    "guid": "415490ee8070920408732067b79754f8",
+    "path": "Assets/AC Audio/Mining/DirtHits/DirtHit_03.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 12801
+  },
+  {
+    "guid": "0593b5cd40d7f6844ac1762ae49037f7",
+    "path": "Assets/AC Audio/Mining/DirtHits/DirtHit_04.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 12417
+  },
+  {
+    "guid": "19b70ef0133cbf44b87e26ae5824f49f",
+    "path": "Assets/AC Audio/Mining/DirtHits/DirtHit_05.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 14465
+  },
+  {
+    "guid": "1d173552b66bc694997df7f98a4e9170",
+    "path": "Assets/AC Audio/Mining/DirtHits/DirtHit_06.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 12545
+  },
+  {
+    "guid": "6f973ea3974977947ada9bf699e5493a",
+    "path": "Assets/AC Audio/Mining/OreBreak.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 50714
+  },
+  {
+    "guid": "961fe52b92b24de48af263bfb8ce562c",
+    "path": "Assets/AC Audio/Mining/Pickaxe2.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 26496
+  },
+  {
+    "guid": "7bf82cb00f9ab9d47b6ba45935f91a9d",
+    "path": "Assets/AC Audio/Mining/Stone_Thud.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 1,
+    "frames": 14400
+  },
+  {
+    "guid": "0d479eb0c7b4b5342a626cd910484773",
+    "path": "Assets/AC Audio/Mining/StoneBreak.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 14370
+  },
+  {
+    "guid": "c0ed43e1cc855694bbf6024b44061805",
+    "path": "Assets/AC Audio/Mining/StoneBreak_L3.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 44784
+  },
+  {
+    "guid": "29a576bf8ce35a143a6536688792ffce",
+    "path": "Assets/AC Audio/Mining/TransitionStone_Crumble.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 1,
+    "frames": 12000
+  },
+  {
+    "guid": "2bbc662060df397469f27ba8ce97cc05",
+    "path": "Assets/AC Audio/Mining.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 1,
+    "frames": 13117
+  },
+  {
+    "guid": "371a2835022069a45b95281d49130ac6",
+    "path": "Assets/AC Audio/Mining2.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 1,
+    "frames": 13117
+  },
+  {
+    "guid": "1d63e9063d19d41429cf6925a15b8368",
+    "path": "Assets/AC Audio/Money v1.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 36375
+  },
+  {
+    "guid": "356bd62bef0274942a3c0e74fc87673c",
+    "path": "Assets/AC Audio/Ore Digging.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 1,
+    "frames": 12315
+  },
+  {
+    "guid": "659ba493410026342ab11953e2c9615b",
+    "path": "Assets/AC Audio/Pickaxe 1.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 16725
+  },
+  {
+    "guid": "8a64251b0775f3b4592176acbb97ce28",
+    "path": "Assets/AC Audio/pickaxe 3.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 8485
+  },
+  {
+    "guid": "821039f32e4183b4ca488bd55c1fd01c",
+    "path": "Assets/AC Audio/recharge.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 1,
+    "frames": 34427
+  },
+  {
+    "guid": "c85072ca8c160c0458c74357a58911c0",
+    "path": "Assets/AC Audio/Trees/OldTreeFalls.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 125568
+  },
+  {
+    "guid": "a7cccc1ca6efc9b409ced37a112ce91b",
+    "path": "Assets/AC Audio/UI/Bling.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 34560
+  },
+  {
+    "guid": "1974ff0bed5db83479585db9693976fd",
+    "path": "Assets/AC Audio/UI/Crafting.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 41222
+  },
+  {
+    "guid": "1d73f8c16f72b2340be3641e729d7490",
+    "path": "Assets/AC Audio/UI/Crafting2.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 63759
+  },
+  {
+    "guid": "5515fb34272c0e347a0638b9c5c60b50",
+    "path": "Assets/AC Audio/UI/DingLight.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 88704
+  },
+  {
+    "guid": "f8ad356b30559dc4f97ea6a5df754ef9",
+    "path": "Assets/AC Audio/UI/ItemInBag.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 1,
+    "frames": 35712
+  },
+  {
+    "guid": "46cd43fcda63c8b4e9020e369733fd63",
+    "path": "Assets/AC Audio/Wood/LadderPlace/Wood_01.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 15126
+  },
+  {
+    "guid": "c915004dd297c054db895be073ca5cc9",
+    "path": "Assets/AC Audio/Wood/LadderPlace/Wood_02.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 15355
+  },
+  {
+    "guid": "96f68f030b80a5845a2888cacaa71b12",
+    "path": "Assets/AC Audio/Wood/LadderPlace/Wood_03.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 16730
+  },
+  {
+    "guid": "be3882af98f5178479a8e8f9b31e18d8",
+    "path": "Assets/AC Audio/Wood/LadderPlace/Wood_04.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 18793
+  },
+  {
+    "guid": "79da76b3ebc32c84db7210b928cb4fe7",
+    "path": "Assets/AC Audio/Wood/LadderPlace/Wood_05.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 17188
+  },
+  {
+    "guid": "ffcece7b00a6c2e499bfd5efa92f4acb",
+    "path": "Assets/AC Audio/Wood/LadderRemove.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 45090
+  },
+  {
+    "guid": "6b55e5774acdb4e4184c4ba64d9477dd",
+    "path": "Assets/AC Audio/WoodChopping/WoodChopping_01.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 29707
+  },
+  {
+    "guid": "cb6317f1b1a383341806dfcc8658ee60",
+    "path": "Assets/AC Audio/WoodChopping/WoodChopping_02.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 20795
+  },
+  {
+    "guid": "3b7c9b77f192c7b4eaf0f4210baca682",
+    "path": "Assets/AC Audio/WoodChopping/WoodChopping_03.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 19867
+  },
+  {
+    "guid": "03eabd021c7fbb247b02545f95d50988",
+    "path": "Assets/AC Audio/WoodChopping/WoodChopping_04.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 20609
+  },
+  {
+    "guid": "00d6563d8e95ba14aaa3d7c85dbf9208",
+    "path": "Assets/AC Audio/WoodChopping/WoodChopping_05.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 19867
+  },
+  {
+    "guid": "4383923a40a6a6e40b5ed30d3a1984a9",
+    "path": "Assets/Resources/Audio/ArtifactCollected.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 357120
+  },
+  {
+    "guid": "f4f47d7c12ca08a46a56d04db63734ff",
+    "path": "Assets/Resources/Audio/BoneBreaking_01.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 54144
+  },
+  {
+    "guid": "4464a10f870455e4fa2370208a648af1",
+    "path": "Assets/Resources/Audio/Cloth1.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 1,
+    "frames": 45280
+  },
+  {
+    "guid": "bb425449475cc61479df426bcb21be62",
+    "path": "Assets/Resources/Audio/Ding4.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 88704
+  },
+  {
+    "guid": "45498591e999f0941899b11150f8147c",
+    "path": "Assets/Resources/Audio/GameOverMusic.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 1487232
+  },
+  {
+    "guid": "627e6f6b877e5874e89a01894d63f3bf",
+    "path": "Assets/Resources/Audio/HomeClick.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 2125
+  },
+  {
+    "guid": "1f67f6fcf834761418cf997d1d25f6da",
+    "path": "Assets/Resources/Audio/HomescreenAmbience.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 8640000
+  },
+  {
+    "guid": "33d7eba132d89ad44ba25586e1ad61e0",
+    "path": "Assets/Resources/Audio/HotbarError.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 44928
+  },
+  {
+    "guid": "7575acb5dae46a241ae0d8c7e29b0b6b",
+    "path": "Assets/Resources/Audio/Hurt2.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 1,
+    "frames": 61162
+  },
+  {
+    "guid": "ccdd73218df811c4b8c0126e829e8fbf",
+    "path": "Assets/Resources/Audio/LightRubble02.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 96000
+  },
+  {
+    "guid": "72f882a481351f440b6d199556d1aadb",
+    "path": "Assets/Resources/Audio/LightRubble03.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 96000
+  },
+  {
+    "guid": "70d928afe9378e14ca59d28ee5220ce3",
+    "path": "Assets/Resources/Audio/LoadingYogaAmbience.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 8870400
+  },
+  {
+    "guid": "dddb56184226bb74d9e08b7f3a12a6d5",
+    "path": "Assets/Resources/Audio/OreBreakV3.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 128232
+  },
+  {
+    "guid": "192150a0f6a8c0b46a0bb33305d3cae0",
+    "path": "Assets/Resources/Audio/Paper1.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 50524
+  },
+  {
+    "guid": "13417bbca45d6e74c8206aaf69bf468e",
+    "path": "Assets/Resources/Audio/PickaxeHitL3Plus.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 96000
+  },
+  {
+    "guid": "39a37d8748127444b9e2847c604c38ec",
+    "path": "Assets/Resources/Audio/PickaxeStoneHitL3Plus.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 96000
+  },
+  {
+    "guid": "70257bf73205928488c278313da05ea1",
+    "path": "Assets/Resources/Audio/SingleHeartBeat.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 57820
+  },
+  {
+    "guid": "ec3cc61b045a650429316d5ffd83c91a",
+    "path": "Assets/Resources/Audio/UltroniumChargeUp.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 257191
+  },
+  {
+    "guid": "1d90479b59d59bf40aae03633b7dc2e6",
+    "path": "Assets/Resources/Audio/UltroniumFullCharge.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 787450
+  },
+  {
+    "guid": "d354f0b76d4482649b8e873d241a81f7",
+    "path": "Assets/Resources/Audio/WalkOnGrass.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 20736
+  },
+  {
+    "guid": "67f1737f5433bc74f8cc0538c2beecb1",
+    "path": "Assets/Resources/FrogCroaks/Frog_01.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 83141
+  },
+  {
+    "guid": "7d277eeb83114974ab06bc818355981c",
+    "path": "Assets/Resources/FrogCroaks/Frog_02.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 71384
+  },
+  {
+    "guid": "dd68d055ed8dadb48a2f63373b2d1d36",
+    "path": "Assets/Resources/FrogCroaks/Frog_03.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 62986
+  },
+  {
+    "guid": "7bc6f4f6e669eed4ca48adb9769628da",
+    "path": "Assets/Resources/FrogCroaks/Frog_04.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 50389
+  },
+  {
+    "guid": "35fede82a4b19b442a95b785ea475708",
+    "path": "Assets/Resources/FrogCroaks/Frog_05.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 83981
+  },
+  {
+    "guid": "71619f9cda1827249ba7aec0d699787d",
+    "path": "Assets/Resources/FrogCroaks/Frog_06.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 72223
+  },
+  {
+    "guid": "e590abe6e0fdb6a44a7d3e90b90bd974",
+    "path": "Assets/Resources/FrogCroaks/Frog_07.wav",
+    "streaming": false,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 69704
+  },
+  {
+    "guid": "80816eb163e52d14eb3f698ddf91c817",
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe01.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 190857
+  },
+  {
+    "guid": "8abf80becb7861549b87e0b078c34974",
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe02.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 214857
+  },
+  {
+    "guid": "82fd0828f354eba4781cbaa40fcfad74",
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe03.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 112762
+  },
+  {
+    "guid": "93eaa6e4787b3bf42b86498f5c14241b",
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe04.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 261852
+  },
+  {
+    "guid": "0640c8aefddab5e469939ff7fb03a22a",
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe05.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 169434
+  },
+  {
+    "guid": "db1435b5eab394b42bef39a5f1d5c026",
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe06.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 138628
+  },
+  {
+    "guid": "62b1710d58cfecc4d9f6296864128733",
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe07.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 260040
+  },
+  {
+    "guid": "b09ba81f7db5beb4cae304e78d208a79",
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe08.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 91570
+  },
+  {
+    "guid": "c29b78611774193418367cd9acd24aa2",
+    "path": "Assets/Resources/Audio/HomeWaterdrop02.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 65981
+  },
+  {
+    "guid": "c218a5e599ce4954f90b03d17eef722e",
+    "path": "Assets/Resources/Audio/HomeWaterdrop03.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 144000
+  },
+  {
+    "guid": "34ea2eaa2a9ffee4bb96e0466ed701b3",
+    "path": "Assets/AC Audio/Archive/ArtifactCollected_Old.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 357120
+  },
+  {
+    "guid": "50f94d81d9e9a8a47a55b7a98b572fe3",
+    "path": "Assets/AC Audio/Archive/GeneratedFrogCroaks/FrogCroak_01.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 1,
+    "frames": 36162
+  },
+  {
+    "guid": "76aa57f9baacc554f912e24f7a6f5d75",
+    "path": "Assets/AC Audio/Archive/GeneratedFrogCroaks/FrogCroak_02.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 1,
+    "frames": 39910
+  },
+  {
+    "guid": "450fcdc15347da649815ad71ae1915fb",
+    "path": "Assets/AC Audio/Archive/GeneratedFrogCroaks/FrogCroak_03.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 1,
+    "frames": 43659
+  },
+  {
+    "guid": "d434b1f682c9a044d977fa5fc7f4238d",
+    "path": "Assets/AC Audio/Archive/HeartBeating-loop.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 574462
+  },
+  {
+    "guid": "f4d27f17f642f9141bbbb5d614d141ab",
+    "path": "Assets/AC Audio/Archive/Layer1Details/ErdkruemelRollen.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 99072
+  },
+  {
+    "guid": "6f3d75fe726061b48b686a90b2add179",
+    "path": "Assets/AC Audio/Archive/Layer1Details/GravelSlide.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 385920
+  },
+  {
+    "guid": "cabde2a7470c8ac4abb2f7ae3976bc16",
+    "path": "Assets/AC Audio/Archive/Layer1Details/SandrieselnFein.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 1,
+    "frames": 91200
+  },
+  {
+    "guid": "b325a1fa139c7554d9b7a98336848112",
+    "path": "Assets/AC Audio/Archive/Layer1Details/SandrieselnSchuebe.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 1,
+    "frames": 134400
+  },
+  {
+    "guid": "8391e3becb9e421ca2047c04daf1e658",
+    "path": "Assets/AC Audio/Archive/LowEnergyBip_Old.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 24872
+  },
+  {
+    "guid": "7c179888d6c5d854f84a04c01646ba9e",
+    "path": "Assets/AC Audio/Archive/Mining/OreBreak_Old.wav",
+    "streaming": false,
+    "rate": 44100,
+    "channels": 2,
+    "frames": 14370
+  },
+  {
+    "guid": "40d79d65a6a40954ca6cb271c41ac456",
+    "path": "Assets/ZZZ New Assets/epic upgrade boom.wav",
+    "streaming": false,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 692352
+  }
+]

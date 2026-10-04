@@ -1,0 +1,97 @@
+{
+  "flow": {
+    "flow_id": "MJc1tz57AtPQkJirzbgm",
+    "name": "Workshop Favorite Star - Four Variants",
+    "url": "https://elevenlabs.io/app/flows/MJc1tz57AtPQkJirzbgm?mode=switchWorkspace&oobCode=e88ddddac1ab41ffbbba337e69499d88"
+  },
+  "nodes": [
+    "3ad3JLSqbt5hBQaZrhsA",
+    "RmzRbZru73RJHy2eY4EX",
+    "WFl10DyBRtUAWQxOeaIt",
+    "B93XqO1gkPt8DD6VdFXI"
+  ],
+  "prompts": [
+    "One very short satisfying metallic star UI confirmation sound. A crisp polished brass ting with a tiny luminous high overtone sparkle, warm rounded body and quick clean decay. Like tapping a small golden star with a fingernail. Single compact event, dry close sound, no music, no voice, no background, not harsh.",
+    "One short premium fantasy favorite-star UI sound. A tactile soft metallic click immediately blooming into two tightly spaced ascending silver bell notes, bright magical star shimmer and a smooth brief decay. Satisfying and refined, compact, clean and dry. No voice, no background, no melody beyond the two-note chime.",
+    "A single short satisfying favorite-star activation sound: a warm weighty bronze plink with a delicate crystalline metallic glint on top, soft rounded attack followed by a tiny sparkling tail. Rich resonant metal, miniature golden star, elegant restrained game UI confirmation, no music, no speech, no ambience.",
+    "One short playful but premium metallic star confirmation UI sound. A tiny crisp metal snap followed by a bright high-pitched twinkling ting that gently rises and quickly settles, like a polished silver star lighting up. Sparkly, tactile, satisfying, smooth decay, clean isolated sound, no voice, no music, no background."
+  ],
+  "run": {
+    "flow_id": "MJc1tz57AtPQkJirzbgm",
+    "flow_created": false,
+    "url": "https://elevenlabs.io/app/flows/MJc1tz57AtPQkJirzbgm?vs=viewstate_01m44418gaewzr0d0c05x017ja&mode=switchWorkspace&oobCode=e88ddddac1ab41ffbbba337e69499d88",
+    "flow_url": "https://elevenlabs.io/app/flows/MJc1tz57AtPQkJirzbgm?mode=switchWorkspace&oobCode=e88ddddac1ab41ffbbba337e69499d88",
+    "results": [
+      {
+        "success": true,
+        "node_id": "3ad3JLSqbt5hBQaZrhsA",
+        "session_id": "3CO22t1gSwTOiI9lPr0d",
+        "credit_costs": {
+          "zLkbPYybhR02NIwhYlif": 3.333
+        }
+      },
+      {
+        "success": true,
+        "node_id": "RmzRbZru73RJHy2eY4EX",
+        "session_id": "pk14KPPnfUxgUBV5xYnc",
+        "credit_costs": {
+          "88GDqQ4vB9eXzncSlfDR": 3.333
+        }
+      },
+      {
+        "success": true,
+        "node_id": "WFl10DyBRtUAWQxOeaIt",
+        "session_id": "Yyyli1NF5t4MomEpIiiI",
+        "credit_costs": {
+          "kxuvs5sP1F4kEiqWZc5V": 3.333
+        }
+      },
+      {
+        "success": true,
+        "node_id": "B93XqO1gkPt8DD6VdFXI",
+        "session_id": "FyxR5xvrXFxvri1Nzqe2",
+        "credit_costs": {
+          "RLK4s8qA0lLhJkzHaS6q": 3.333
+        }
+      }
+    ],
+    "summary": {
+      "nodes_run": 4,
+      "generations_started": 4,
+      "failed": 0,
+      "generations_by_node": {
+        "3ad3JLSqbt5hBQaZrhsA": 1,
+        "RmzRbZru73RJHy2eY4EX": 1,
+        "WFl10DyBRtUAWQxOeaIt": 1,
+        "B93XqO1gkPt8DD6VdFXI": 1
+      }
+    },
+    "session_ids": [
+      "3CO22t1gSwTOiI9lPr0d",
+      "pk14KPPnfUxgUBV5xYnc",
+      "Yyyli1NF5t4MomEpIiiI",
+      "FyxR5xvrXFxvri1Nzqe2"
+    ],
+    "pending": [
+      {
+        "generation_id": "zLkbPYybhR02NIwhYlif",
+        "kind": "audio"
+      },
+      {
+        "generation_id": "88GDqQ4vB9eXzncSlfDR",
+        "kind": "audio"
+      },
+      {
+        "generation_id": "kxuvs5sP1F4kEiqWZc5V",
+        "kind": "audio"
+      },
+      {
+        "generation_id": "RLK4s8qA0lLhJkzHaS6q",
+        "kind": "audio"
+      }
+    ],
+    "poll_after_seconds": 3,
+    "notes": "Not finished yet. If a generation view is shown it tracks progress and polls by itself, so there is nothing to do here. Only call creative_get_flow_run_status yourself if no view appeared: wait poll_after_seconds, then call it with this flow_id and session_ids, repeating until all_completed or has_failures is true.",
+    "view_state_id": "viewstate_01m44418gaewzr0d0c05x017ja"
+  }
+}

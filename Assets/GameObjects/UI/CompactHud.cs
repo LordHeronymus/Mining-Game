@@ -117,7 +117,7 @@ public sealed class CompactHud : MonoBehaviour
         {
             wasBuilding = ladder.BuildMode;
             if (wasBuilding)
-                for (int i = 0; i < 8; i++) if (IsKnownHotbarItem(slots[i]) && slots[i].item == Item.Ladder) { SelectedSlot = i + 1; RefreshItems(); break; }
+                for (int i = 0; i < 8; i++) if (IsKnownHotbarItem(slots[i]) && (slots[i].item == Item.Ladder || slots[i].item == Item.IronLadder)) { SelectedSlot = i + 1; RefreshItems(); break; }
         }
     }
     void LateUpdate()
@@ -249,7 +249,7 @@ public sealed class CompactHud : MonoBehaviour
     {
         if (GameplayInputBlocker.IsBlocked || index < 0 || index >= 9) return false;
         SelectedSlot = index;
-        if (ladder) ladder.SetBuildMode(SelectedItem && SelectedItem.item == Item.Ladder);
+        if (ladder) ladder.SetBuildMode(SelectedItem && (SelectedItem.item == Item.Ladder || SelectedItem.item == Item.IronLadder));
         wasBuilding = ladder && ladder.BuildMode;
         RefreshItems(); return true;
     }
@@ -262,7 +262,7 @@ public sealed class CompactHud : MonoBehaviour
         for (int i = 0; i < slots.Length; i++)
             slots[i] = ids != null && i < ids.Length && ids[i] >= 0 ? StartingResourcesSettings.Resolve(ids[i]) : null;
         SelectedSlot = Mathf.Clamp(selected, 0, 8);
-        if (ladder) ladder.SetBuildMode(SelectedItem && SelectedItem.item == Item.Ladder);
+        if (ladder) ladder.SetBuildMode(SelectedItem && (SelectedItem.item == Item.Ladder || SelectedItem.item == Item.IronLadder));
         wasBuilding = ladder && ladder.BuildMode;
         RefreshItems();
     }
@@ -271,14 +271,14 @@ public sealed class CompactHud : MonoBehaviour
         if (index < 1 || index > 8) throw new ArgumentOutOfRangeException(nameof(index));
         if (item && !IsHotbarItem(item)) throw new ArgumentException("Item cannot be used from the hotbar.", nameof(item));
         slots[index - 1] = item;
-        if (SelectedSlot == index && ladder) ladder.SetBuildMode(IsKnownHotbarItem(item) && item.item == Item.Ladder);
+        if (SelectedSlot == index && ladder) ladder.SetBuildMode(IsKnownHotbarItem(item) && (item.item == Item.Ladder || item.item == Item.IronLadder));
         if (persist) SaveSlotLayout();
         RefreshItems();
     }
     public bool CanReorderSlot(int index) => !GameplayInputBlocker.IsBlocked && index >= 1 && index <= 8 &&
         IsKnownHotbarItem(slots[index - 1]);
     public static bool IsHotbarItem(ItemSO item) => item &&
-        (item.item == Item.Torche || item.item == Item.Dynamite || item.item == Item.Ladder ||
+        (item.item == Item.Torche || item.item == Item.LavaLamp || item.item == Item.Dynamite || item.item == Item.Ladder || item.item == Item.IronLadder ||
          item.item == Item.BridgePart || item.item == Item.Medkit);
     bool IsKnownHotbarItem(ItemSO item) => IsHotbarItem(item) && InventoryManager.Instance &&
         (InventoryManager.Instance.GetCount(item) > 0 || InventoryManager.Instance.WasOwnedThisRun(item));
@@ -343,7 +343,7 @@ public sealed class CompactHud : MonoBehaviour
         (slots[first - 1], slots[second - 1]) = (slots[second - 1], slots[first - 1]);
         if (SelectedSlot == first) SelectedSlot = second;
         else if (SelectedSlot == second) SelectedSlot = first;
-        if (ladder) ladder.SetBuildMode(SelectedItem && SelectedItem.item == Item.Ladder);
+        if (ladder) ladder.SetBuildMode(SelectedItem && (SelectedItem.item == Item.Ladder || SelectedItem.item == Item.IronLadder));
         wasBuilding = ladder && ladder.BuildMode;
         SaveSlotLayout();
         RefreshItems();
@@ -402,10 +402,12 @@ public sealed class CompactHud : MonoBehaviour
     {
         if (SelectedSlot > 0 && !IsKnownHotbarItem(slots[SelectedSlot - 1]))
         {
+            SelectedSlot = 0;
             if (ladder) ladder.SetBuildMode(false);
             wasBuilding = false;
         }
-        selections[0].enabled = SelectedSlot == 0;
+        selections[0].enabled = false;
+        GoldButtonFeedback.Select(selections[0].transform.parent.GetComponent<Image>(), SelectedSlot == 0);
         var equippedPickaxe = InventoryManager.Instance ? InventoryManager.Instance.EquippedPickaxe : null;
         if (pickaxeIcon)
         {
@@ -427,7 +429,8 @@ public sealed class CompactHud : MonoBehaviour
             badge.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal,
                 Mathf.Ceil(counts[i].GetPreferredValues(counts[i].text).x) + 8f);
             counts[i].transform.parent.gameObject.SetActive(item);
-            selections[i + 1].enabled = SelectedSlot == i + 1;
+            selections[i + 1].enabled = false;
+            GoldButtonFeedback.Select(selections[i + 1].transform.parent.GetComponent<Image>(), SelectedSlot == i + 1);
         }
     }
     public void RefreshHotbarIconLayouts() => RefreshItems();
@@ -504,13 +507,14 @@ public sealed class CompactHud : MonoBehaviour
         healthFill=Bar("Health",11,heartSprite,new Color(.92f,.055f,.075f),"100 / 100",out healthValue);
         energyFill=Bar("Energy",30,boltSprite,new Color(1,.68f,.035f),"",out energyValue);
         foreach(float x in new[]{395.2f,577.2f,781.2f}) Image("Divider",top,x,12,2,32,null,new Color(.68f,.43f,.22f,.7f));
-        var coin=Image("Coin",top,423.2f,16,24,24,coinSprite,Color.white); coin.preserveAspect=true;
+        var coin=Image("Coin",top,419.2f,12,32,32,coinSprite,Color.white); coin.preserveAspect=true;
         moneyValue=Text("Money",top,"",468f,8,100,40,21);
         pointsValue=Text("Points",top,"",593.2f,8,172,40,20);
         depthValue=Text("Depth",top,"",795.2f,8,154,40,20);
         hotbar=Rect("Hotbar",transform,0,0,658,66); hotbar.anchorMin=hotbar.anchorMax=hotbar.pivot=new Vector2(.5f,0);
         var pickaxe=Image("Slot 1",hotbar,0,0,66,66,slotSprite,Color.white); pickaxe.raycastTarget=true;
         var pickaxeButton=pickaxe.gameObject.AddComponent<Button>(); pickaxeButton.targetGraphic=pickaxe;
+        GoldButtonFeedback.Apply(pickaxeButton, slotSprite, selectedSprite);
         pickaxeButton.navigation=new Navigation {mode=Navigation.Mode.None}; pickaxeButton.onClick.AddListener(()=>SelectSlot(0));
         selections[0]=Image("Selection",pickaxe.transform,0,0,66,66,selectedSprite,Color.white);
         var pickaxeImage=Image("Pickaxe",pickaxe.transform,9,9,48,48,pickaxeSprite,Color.white); pickaxeImage.preserveAspect=true;
@@ -519,6 +523,7 @@ public sealed class CompactHud : MonoBehaviour
         {
             int index=i+1; var bg=Image("Slot "+(i+2),hotbar,86+i*72,0,66,66,slotSprite,Color.white); bg.raycastTarget=true;
             buttons[i]=bg.gameObject.AddComponent<Button>(); buttons[i].targetGraphic=bg;
+            GoldButtonFeedback.Apply(buttons[i], slotSprite, selectedSprite);
             buttons[i].navigation=new Navigation {mode=Navigation.Mode.None};
             slotDrags[i] = bg.gameObject.AddComponent<HotbarSlotDrag>();
             slotDrags[i].hud = this; slotDrags[i].slotIndex = index;

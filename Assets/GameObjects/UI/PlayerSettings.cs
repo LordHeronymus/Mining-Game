@@ -56,9 +56,21 @@ public static class PlayerSettings
         foreach (var scaler in dead) References.Remove(scaler);
     }
 
+    public static float Music
+    {
+        get => GpsSettings.Preferences.musicVolume;
+        set
+        {
+            float volume = Mathf.Clamp01(value);
+            if (Mathf.Approximately(Music, volume)) return;
+            GpsSettings.PreviewMusicVolume(volume);
+            GpsSettings.SavePreference("musicVolume", out _);
+        }
+    }
+
     public static void RestoreDefaults()
     {
-        Master=1; PlayerPrefs.DeleteKey(AmbienceKey); PlayerPrefs.DeleteKey(SfxKey);
+        Master=1; Music=1; PlayerPrefs.DeleteKey(AmbienceKey); PlayerPrefs.DeleteKey(SfxKey);
         PlayerPrefs.DeleteKey(FullscreenKey); PlayerPrefs.DeleteKey(UiScaleKey);
         PlayerPrefs.Save();
         ApplyAudio(); Screen.fullScreen = true; ApplyUiScale();

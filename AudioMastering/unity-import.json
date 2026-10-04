@@ -1,0 +1,1055 @@
+[
+  {
+    "name": "BirdChirp_01",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 1,
+    "frequency": 22050,
+    "samples": 13671,
+    "volume": 0.09905488
+  },
+  {
+    "name": "BirdChirp_02",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 1,
+    "frequency": 22050,
+    "samples": 11907,
+    "volume": 0.10319607
+  },
+  {
+    "name": "BirdChirp_03",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 1,
+    "frequency": 22050,
+    "samples": 15435,
+    "volume": 0.10115701
+  },
+  {
+    "name": "BirdChirp_04",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 1,
+    "frequency": 22050,
+    "samples": 8820,
+    "volume": 0.0978739038
+  },
+  {
+    "name": "PlaceTorch_01",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 1,
+    "frequency": 44100,
+    "samples": 56754,
+    "volume": 0.4090552
+  },
+  {
+    "name": "RemoveTorch_01",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 1,
+    "frequency": 44100,
+    "samples": 55018,
+    "volume": 0.4829468
+  },
+  {
+    "name": "MetalHitBlunt",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 24251,
+    "volume": 0.258161217
+  },
+  {
+    "name": "LowEnergyBip",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 24872,
+    "volume": 0.116706446
+  },
+  {
+    "name": "UltroniumAltarAmbience",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 7997184,
+    "volume": 0.182923555
+  },
+  {
+    "name": "LoadingPickaxeHit",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 22142,
+    "volume": 0.451762
+  },
+  {
+    "name": "LightRubble01",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 96000,
+    "volume": 0.5097473
+  },
+  {
+    "name": "alert",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 14746,
+    "volume": 0.234050527
+  },
+  {
+    "name": "CaveAmbience",
+    "loadType": "Streaming",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 28947458,
+    "volume": 1.0
+  },
+  {
+    "name": "CaveTribalSong",
+    "loadType": "Streaming",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 461126,
+    "volume": 1.0
+  },
+  {
+    "name": "dragon-studio-creepy-ghost-sound-487677",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 178560,
+    "volume": 0.222418159
+  },
+  {
+    "name": "ghost whisper",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 357120,
+    "volume": 0.291895419
+  },
+  {
+    "name": "ghost1",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 93312,
+    "volume": 0.2130849
+  },
+  {
+    "name": "freesound_community-rocks-6129",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 152640,
+    "volume": 0.6175654
+  },
+  {
+    "name": "freesound_community-stones-falling-6375",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 102528,
+    "volume": 0.286555052
+  },
+  {
+    "name": "gravel slide",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 385920,
+    "volume": 0.347148627
+  },
+  {
+    "name": "gravel_slide_trocken_variante",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 1,
+    "frequency": 48000,
+    "samples": 122400,
+    "volume": 0.5300628
+  },
+  {
+    "name": "Sandrieseln_02_Weich_Laenger_weicher_Ausklang",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 1,
+    "frequency": 48000,
+    "samples": 192000,
+    "volume": 0.227782354
+  },
+  {
+    "name": "Sandrieseln_03_Zwei_Schuebe_weicher_Ausklang_laut",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 1,
+    "frequency": 48000,
+    "samples": 206400,
+    "volume": 0.217696071
+  },
+  {
+    "name": "MeadowAmbience",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 6234049,
+    "volume": 0.6877646
+  },
+  {
+    "name": "UndergroundClay",
+    "loadType": "Streaming",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 14400000,
+    "volume": 0.275728852
+  },
+  {
+    "name": "WindAmbience",
+    "loadType": "Streaming",
+    "state": "Unloaded",
+    "channels": 1,
+    "frequency": 44100,
+    "samples": 7801344,
+    "volume": 0.550829649
+  },
+  {
+    "name": "click",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 2125,
+    "volume": 0.428819656
+  },
+  {
+    "name": "door",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 60968,
+    "volume": 0.175310776
+  },
+  {
+    "name": "DryGrass",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 66816,
+    "volume": 0.297317326
+  },
+  {
+    "name": "Hurt",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 38114,
+    "volume": 0.124100573
+  },
+  {
+    "name": "ClayBreak_L1L2",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 44784,
+    "volume": 0.328735381
+  },
+  {
+    "name": "Dirt_Crumble",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 1,
+    "frequency": 48000,
+    "samples": 12960,
+    "volume": 0.5039436
+  },
+  {
+    "name": "DirtHit_01",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 15361,
+    "volume": 0.357767
+  },
+  {
+    "name": "DirtHit_02",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 15489,
+    "volume": 0.317053139
+  },
+  {
+    "name": "DirtHit_03",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 12801,
+    "volume": 0.260993421
+  },
+  {
+    "name": "DirtHit_04",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 12417,
+    "volume": 0.282328665
+  },
+  {
+    "name": "DirtHit_05",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 14465,
+    "volume": 0.314356059
+  },
+  {
+    "name": "DirtHit_06",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 12545,
+    "volume": 0.273871362
+  },
+  {
+    "name": "OreBreak",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 50714,
+    "volume": 0.3302934
+  },
+  {
+    "name": "Pickaxe2",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 26496,
+    "volume": 0.209630221
+  },
+  {
+    "name": "Stone_Thud",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 1,
+    "frequency": 48000,
+    "samples": 14400,
+    "volume": 0.495277971
+  },
+  {
+    "name": "StoneBreak",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 14370,
+    "volume": 0.5077987
+  },
+  {
+    "name": "StoneBreak_L3",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 44784,
+    "volume": 0.216032773
+  },
+  {
+    "name": "TransitionStone_Crumble",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 1,
+    "frequency": 48000,
+    "samples": 12000,
+    "volume": 0.405655652
+  },
+  {
+    "name": "Mining",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 1,
+    "frequency": 44100,
+    "samples": 13117,
+    "volume": 0.525054455
+  },
+  {
+    "name": "Mining2",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 1,
+    "frequency": 44100,
+    "samples": 13117,
+    "volume": 0.459097058
+  },
+  {
+    "name": "Money v1",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 36375,
+    "volume": 0.46805045
+  },
+  {
+    "name": "Ore Digging",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 1,
+    "frequency": 44100,
+    "samples": 12315,
+    "volume": 0.54276067
+  },
+  {
+    "name": "Pickaxe 1",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 16725,
+    "volume": 0.322421163
+  },
+  {
+    "name": "pickaxe 3",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 8485,
+    "volume": 0.354151368
+  },
+  {
+    "name": "recharge",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 1,
+    "frequency": 44100,
+    "samples": 34427,
+    "volume": 0.225817457
+  },
+  {
+    "name": "OldTreeFalls",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 125568,
+    "volume": 0.694258749
+  },
+  {
+    "name": "Bling",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 34560,
+    "volume": 0.145849824
+  },
+  {
+    "name": "Crafting",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 41222,
+    "volume": 0.245308787
+  },
+  {
+    "name": "Crafting2",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 63759,
+    "volume": 0.263363749
+  },
+  {
+    "name": "DingLight",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 88704,
+    "volume": 0.389793068
+  },
+  {
+    "name": "ItemInBag",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 1,
+    "frequency": 48000,
+    "samples": 35712,
+    "volume": 0.5910714
+  },
+  {
+    "name": "Wood_01",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 15126,
+    "volume": 0.625788152
+  },
+  {
+    "name": "Wood_02",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 15355,
+    "volume": 0.593847752
+  },
+  {
+    "name": "Wood_03",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 16730,
+    "volume": 0.673311055
+  },
+  {
+    "name": "Wood_04",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 18793,
+    "volume": 0.5888597
+  },
+  {
+    "name": "Wood_05",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 17188,
+    "volume": 0.47710824
+  },
+  {
+    "name": "LadderRemove",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 45090,
+    "volume": 0.196892783
+  },
+  {
+    "name": "WoodChopping_01",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 29707,
+    "volume": 0.253782123
+  },
+  {
+    "name": "WoodChopping_02",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 20795,
+    "volume": 0.3420195
+  },
+  {
+    "name": "WoodChopping_03",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 19867,
+    "volume": 0.5410117
+  },
+  {
+    "name": "WoodChopping_04",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 20609,
+    "volume": 0.3246846
+  },
+  {
+    "name": "WoodChopping_05",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 19867,
+    "volume": 0.2743014
+  },
+  {
+    "name": "ArtifactCollected",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 357120,
+    "volume": 0.169921175
+  },
+  {
+    "name": "BoneBreaking_01",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 54144,
+    "volume": 0.3409659
+  },
+  {
+    "name": "Cloth1",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 1,
+    "frequency": 48000,
+    "samples": 45280,
+    "volume": 0.5185462
+  },
+  {
+    "name": "Ding4",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 88704,
+    "volume": 0.3927414
+  },
+  {
+    "name": "GameOverMusic",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 1487232,
+    "volume": 0.339340478
+  },
+  {
+    "name": "HomeClick",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 2125,
+    "volume": 0.428819656
+  },
+  {
+    "name": "HomescreenAmbience",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 8640000,
+    "volume": 0.628210247
+  },
+  {
+    "name": "HotbarError",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 44928,
+    "volume": 0.188589647
+  },
+  {
+    "name": "Hurt2",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 1,
+    "frequency": 48000,
+    "samples": 61162,
+    "volume": 0.130897537
+  },
+  {
+    "name": "LightRubble02",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 96000,
+    "volume": 0.505351543
+  },
+  {
+    "name": "LightRubble03",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 96000,
+    "volume": 0.9688928
+  },
+  {
+    "name": "LoadingYogaAmbience",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 8870400,
+    "volume": 0.239007309
+  },
+  {
+    "name": "OreBreakV3",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 128232,
+    "volume": 0.234937742
+  },
+  {
+    "name": "Paper1",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 50524,
+    "volume": 0.421698481
+  },
+  {
+    "name": "PickaxeHitL3Plus",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 96000,
+    "volume": 0.243119076
+  },
+  {
+    "name": "PickaxeStoneHitL3Plus",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 96000,
+    "volume": 0.440404117
+  },
+  {
+    "name": "SingleHeartBeat",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 57820,
+    "volume": 0.29691416
+  },
+  {
+    "name": "UltroniumChargeUp",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 257191,
+    "volume": 0.207463861
+  },
+  {
+    "name": "UltroniumFullCharge",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 787450,
+    "volume": 0.1548519
+  },
+  {
+    "name": "WalkOnGrass",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 20736,
+    "volume": 0.236037329
+  },
+  {
+    "name": "Frog_01",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 83141,
+    "volume": 0.224656776
+  },
+  {
+    "name": "Frog_02",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 71384,
+    "volume": 0.30977878
+  },
+  {
+    "name": "Frog_03",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 62986,
+    "volume": 0.271129251
+  },
+  {
+    "name": "Frog_04",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 50389,
+    "volume": 0.2691778
+  },
+  {
+    "name": "Frog_05",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 83981,
+    "volume": 0.3111423
+  },
+  {
+    "name": "Frog_06",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 72223,
+    "volume": 0.3027416
+  },
+  {
+    "name": "Frog_07",
+    "loadType": "DecompressOnLoad",
+    "state": "Loaded",
+    "channels": 2,
+    "frequency": 24000,
+    "samples": 69704,
+    "volume": 0.280566961
+  },
+  {
+    "name": "HomeDistantPickaxe01",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 190857,
+    "volume": 0.360126317
+  },
+  {
+    "name": "HomeDistantPickaxe02",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 214857,
+    "volume": 0.733981431
+  },
+  {
+    "name": "HomeDistantPickaxe03",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 112762,
+    "volume": 0.586359143
+  },
+  {
+    "name": "HomeDistantPickaxe04",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 261852,
+    "volume": 0.5291649
+  },
+  {
+    "name": "HomeDistantPickaxe05",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 169434,
+    "volume": 0.7555838
+  },
+  {
+    "name": "HomeDistantPickaxe06",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 138628,
+    "volume": 0.8152469
+  },
+  {
+    "name": "HomeDistantPickaxe07",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 260040,
+    "volume": 0.528927743
+  },
+  {
+    "name": "HomeDistantPickaxe08",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 91570,
+    "volume": 0.8695652
+  },
+  {
+    "name": "HomeWaterdrop02",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 65981,
+    "volume": 0.295381665
+  },
+  {
+    "name": "HomeWaterdrop03",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 144000,
+    "volume": 0.303821325
+  },
+  {
+    "name": "ArtifactCollected_Old",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 357120,
+    "volume": 0.400081068
+  },
+  {
+    "name": "FrogCroak_01",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 1,
+    "frequency": 44100,
+    "samples": 36162,
+    "volume": 1.0
+  },
+  {
+    "name": "FrogCroak_02",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 1,
+    "frequency": 44100,
+    "samples": 39910,
+    "volume": 0.9617974
+  },
+  {
+    "name": "FrogCroak_03",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 1,
+    "frequency": 44100,
+    "samples": 43659,
+    "volume": 0.896826267
+  },
+  {
+    "name": "HeartBeating-loop",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 574462,
+    "volume": 0.7765647
+  },
+  {
+    "name": "ErdkruemelRollen",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 99072,
+    "volume": 0.651321
+  },
+  {
+    "name": "GravelSlide",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 385920,
+    "volume": 0.660179555
+  },
+  {
+    "name": "SandrieselnFein",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 1,
+    "frequency": 48000,
+    "samples": 91200,
+    "volume": 0.33877337
+  },
+  {
+    "name": "SandrieselnSchuebe",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 1,
+    "frequency": 48000,
+    "samples": 134400,
+    "volume": 0.364624023
+  },
+  {
+    "name": "LowEnergyBip_Old",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 24872,
+    "volume": 0.221942991
+  },
+  {
+    "name": "OreBreak_Old",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 44100,
+    "samples": 14370,
+    "volume": 0.96569103
+  },
+  {
+    "name": "epic upgrade boom",
+    "loadType": "DecompressOnLoad",
+    "state": "Unloaded",
+    "channels": 2,
+    "frequency": 48000,
+    "samples": 692352,
+    "volume": 0.3325665
+  }
+]

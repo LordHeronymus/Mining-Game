@@ -1,0 +1,19 @@
+{
+  "tool": "Built-in image_gen",
+  "transparent": true,
+  "boulderPrompt": "Create one production-ready isolated 2D side-view game sprite of a large heavy underground BOULDER, dark grey-brown rugged stone, natural asymmetrical rounded block roughly as wide as tall, flat grounded lower edge. Premium hand-painted realistic fantasy mining game art, matching richly textured layered granite cave terrain: subtle mottled mineral detail, intricate rough stone texture, weathered irregular facets and thin deep fractures, warm neutral brown-grey lit upper-left surfaces, deep graphite lower-right shadow, controlled contrast so readable by torchlight. A solid impassable two-by-two tile rock obstacle. It must look like a believable massive granite rock with irregular natural outline, not low-poly or cartoon or flat vector, not an outlined icon. Slightly raised shallow facets, no huge central crack splitting it, no shiny gems/ore, no moss/plants, no props, no environment, no ground plane, no cast shadow outside the silhouette, no text, no frame, no glow. Orthographic side/front elevation suited to side-scrolling mining game. Entire single boulder fully visible and tightly framed with a little transparent margin. Genuine transparent alpha background.",
+  "prompts": [
+    [
+      "LavaLamp",
+      "Use case: stylized-concept. Create a single polished game inventory sprite for a handcrafted fantasy miner's lava lamp, upright compact brass-and-dark-iron lantern containing vivid molten amber lava blobs in a glass chamber. Hand-painted high-quality 2D fantasy game asset, subtly textured worn metal, warm gold glass reflections, clear strong silhouette, rich shading, readable at 64 pixels, consistent frontal 3/4 very slight angle. No floor, scene, shadow beyond object, text, labels, frame or UI. Entire object centered, ample transparent margins, true transparent background. The lamp itself fills 80% of square canvas. No pixel art, no flat vector art, no modern plastic. Standalone item art for Tiefenhall mining roguelike."
+    ],
+    [
+      "PercussionHammer",
+      "Use case: stylized-concept. Create one polished game inventory sprite of a rugged fantasy miner's percussion pick-hammer (Spitzhammer) that can break large boulders: stout wooden leather-wrapped handle angled bottom-left to top-right, heavy dark forged-steel head with brass rivets, broad blunt hammer face on one side and short chisel spike on other. Hand-painted high-quality 2D fantasy game item, rich subtle worn-metal shading, dramatic but readable silhouette at64pixels, wood grain, careful highlights. Single centered object fully visible filling80% of square canvas on true transparent background, ample margins. No text, no frame, no logo, no scene, no people, no cast ground shadow. No pixel art or flat vector icon. Medieval practical mining tool, no gun."
+    ],
+    [
+      "IronLadder",
+      "Use case: stylized-concept. Create one polished game inventory sprite of a compact wrought-iron mining ladder, five rungs, upright front view with slight 3/4 perspective, straight dark steel rails with clean pale metallic edge highlights, round rivets, reinforced brass collar details. Hand-painted high-quality 2D fantasy game item matching warm wood/brass mining UI, rich worn-metal shading, realistic crafted material but stylized readable silhouette at64pixels. Entire ladder centered fully visible, fills80% of square canvas with transparent padding. True transparent background, no scene, no wall, no floor, no text, no labels, no border, no pixel art or flat vector icon."
+    ]
+  ]
+}

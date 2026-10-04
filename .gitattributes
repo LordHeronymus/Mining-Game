@@ -1,2 +1,9 @@
 Assets/Scenes/SampleScene.unity filter=lfs diff=lfs merge=lfs -text
 Assets/AB[[:space:]]Sprites/Parralax[[:space:]]BG/Himmel_Wolken_Sonne_14000x9333.png filter=lfs diff=lfs merge=lfs -text
+Assets/AC[[:space:]]Audio/Ambience/CaveAmbience.wav filter=lfs diff=lfs merge=lfs -text
+Assets/AC[[:space:]]Audio/Ambience/UndergroundClay.wav filter=lfs diff=lfs merge=lfs -text
+Assets/Resources/Audio/LoadingYogaAmbience.wav filter=lfs diff=lfs merge=lfs -text
+AudioMastering/Candidates/Assets/AC[[:space:]]Audio/Ambience/CaveAmbience.wav filter=lfs diff=lfs merge=lfs -text
+AudioMastering/Candidates/Assets/AC[[:space:]]Audio/Ambience/UndergroundClay.wav filter=lfs diff=lfs merge=lfs -text
+AudioMastering/Candidates/Assets/Resources/Audio/LoadingYogaAmbience.wav filter=lfs diff=lfs merge=lfs -text
+AudioMastering/Originals/Assets/AC[[:space:]]Audio/Ambience/UndergroundClay.wav filter=lfs diff=lfs merge=lfs -text

@@ -27,6 +27,7 @@ public class ShopItem : MonoBehaviour
         if (button)
         {
             button.onClick.RemoveAllListeners();
+            HomeClickAudio.Bind(button);
             button.onClick.AddListener(() => shop.SelectItem(Item));
         }
 

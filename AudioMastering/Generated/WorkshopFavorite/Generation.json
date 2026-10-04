@@ -1,0 +1,17 @@
+{
+  "rate": 44100,
+  "channels": 2,
+  "frames": 44100,
+  "duration": 1.0,
+  "loudness": -12.82932483757594,
+  "true_peak": -1.2100003998806845,
+  "sample_peak": -1.2287129464265338,
+  "clipped_samples": 0,
+  "block_seconds": 0.1,
+  "subtype": "PCM_24",
+  "gps_volume": 0.2331772853184017,
+  "pitch_spread": 0.03,
+  "generation_id": "196ErOXMqHEWazHloRZb",
+  "model": "eleven_text_to_sound_v2",
+  "prompt": "A delicate warm brass UI confirmation chime, two gently rising notes, soft rounded attack and a tiny sparkling decay, close and dry, one brief event."
+}

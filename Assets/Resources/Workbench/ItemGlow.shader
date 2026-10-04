@@ -18,7 +18,7 @@ Shader "UI/Workbench Item Glow"
         Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" "CanUseSpriteAtlas"="True" }
         Stencil { Ref [_Stencil] Comp [_StencilComp] Pass [_StencilOp] ReadMask [_StencilReadMask] WriteMask [_StencilWriteMask] }
         Cull Off Lighting Off ZWrite Off ZTest [unity_GUIZTestMode]
-        Blend SrcAlpha One
+        Blend One One
         ColorMask [_ColorMask]
         Pass
         {
@@ -38,22 +38,24 @@ Shader "UI/Workbench Item Glow"
                 v2f o; UNITY_SETUP_INSTANCE_ID(v); UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 o.world=v.vertex; o.vertex=UnityObjectToClipPos(v.vertex); o.color=v.color*_Color; o.uv=v.uv; return o;
             }
-            fixed4 frag(v2f i):SV_Target
+            float4 frag(v2f i):SV_Target
             {
                 float2 p=(i.uv-.5)*2;
                 float r=length(p), a=atan2(p.y,p.x), t=_AnimationTime;
-                float rays=pow(.5+.5*sin(a*19+t*.13+sin(a*7-t*.09)),8);
-                float pulse=.91+.09*sin(t*1.3);
-                float intensity=(exp(-r*r*5)*.30 + exp(-r*r*20)*.48 + rays*exp(-r*r*4)*.25)*pulse;
-                intensity*=1-smoothstep(.70,1,r);
-                fixed4 c=fixed4(1,.66,.15,intensity)*i.color;
+                float rays=pow(.5+.5*sin(a*13+t*.06+sin(a*5)*.4),3);
+                float pulse=.97+.03*sin(t*.65);
+                // The faint rays stay near the core; only a smooth halo reaches the wood.
+                float intensity=(exp(-r*r*6)*.28 + exp(-r*r*22)*.42
+                    + rays*exp(-r*r*18)*.055)*pulse;
+                intensity*=1-smoothstep(.72,.98,r);
+                float opacity=intensity*i.color.a;
                 #ifdef UNITY_UI_CLIP_RECT
-                c.a*=UnityGet2DClipping(i.world.xy,_ClipRect);
+                opacity*=UnityGet2DClipping(i.world.xy,_ClipRect);
                 #endif
                 #ifdef UNITY_UI_ALPHACLIP
-                clip(c.a-.001);
+                clip(opacity-.001);
                 #endif
-                return c;
+                return float4(float3(1,.68,.22)*i.color.rgb*opacity,opacity);
             }
             ENDCG
         }

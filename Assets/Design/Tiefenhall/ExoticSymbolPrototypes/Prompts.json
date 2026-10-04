@@ -1,0 +1,17 @@
+{
+  "mode": "built-in image_gen",
+  "variants": [
+    {
+      "title": "V1 – Facettenkristall",
+      "prompt": "Use case: stylized-concept. Asset type: small fantasy game UI rarity emblem prototype for Tiefenhall, mining roguelike. Primary request: A single upright elongated turquoise crystal with strongly visible asymmetrical cut planes, rich deep teal side faces, luminous cyan core, crisp pale cyan specular bevels. Elegant simple recognizable silhouette, jewel is the entire symbol, no metal frame. Style: richly hand-painted high-quality game sprite with dimensional faceting, designed to accompany dark wood and aged brass UI. Composition: ONE centered emblem, square canvas, large clean silhouette occupying 65% of canvas, generous transparent margins, straight frontal view. Must remain legible when scaled to 26–32 pixels. Palette: turquoise, cyan, deep navy, restrained ivory highlights. Actual transparent background. No lettering, numbers, watermarks, scenery, card, UI panel, particles or fake checkerboard. Avoid flat polygon placeholder look, avoid exaggerated bloom or tiny decorative details."
+    },
+    {
+      "title": "V2 – Kristallsiegel",
+      "prompt": "Use case: stylized-concept. Asset type: small fantasy game UI rarity emblem prototype for Tiefenhall, mining roguelike. Primary request: An elegant small polished antique brass circular seal framing one upright turquoise faceted crystal. Thin beveled gold ring with four restrained engraved notches, deep dark navy recess behind the crystal, exquisite luminous cyan gemstone face. Readable chunky simple geometry, no elaborate ornament. Style: richly hand-painted high-quality game sprite with dimensional faceting, designed to accompany dark wood and aged brass UI. Composition: ONE centered emblem, square canvas, large clean silhouette occupying 65% of canvas, generous transparent margins, straight frontal view. Must remain legible when scaled to 26–32 pixels. Palette: turquoise, cyan, deep navy, restrained ivory highlights, antique brass. Actual transparent background. No lettering, numbers, watermarks, scenery, card, UI panel, particles or fake checkerboard. Avoid flat polygon placeholder look, avoid exaggerated bloom or tiny decorative details."
+    },
+    {
+      "title": "V3 – Kristallgruppe",
+      "prompt": "Use case: stylized-concept. Asset type: small fantasy game UI rarity emblem prototype for Tiefenhall, mining roguelike. Primary request: A compact cluster of three turquoise crystals, a tall central upright gem and two short side gems angled slightly outward. Strong crisp individually lit facets, deep teal shadows, cyan inner glow and very restrained soft light spill, no circular frame. Clear distinctive compact silhouette. Style: richly hand-painted high-quality game sprite with dimensional faceting, designed to accompany dark wood and aged brass UI. Composition: ONE centered emblem, square canvas, large clean silhouette occupying 65% of canvas, generous transparent margins, straight frontal view. Must remain legible when scaled to 26–32 pixels. Palette: turquoise, cyan, deep navy, restrained ivory highlights. Actual transparent background. No lettering, numbers, watermarks, scenery, card, UI panel, particles or fake checkerboard. Avoid flat polygon placeholder look, avoid exaggerated bloom or tiny decorative details."
+    }
+  ]
+}

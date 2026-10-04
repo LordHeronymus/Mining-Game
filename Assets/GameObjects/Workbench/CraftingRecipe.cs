@@ -25,13 +25,16 @@ public sealed class CraftingRecipe : ScriptableObject
 
     public enum RecipeCategory { Automatic, Tools, Building, Materials }
     public RecipeCategory category;
+    public bool exotic;
+    public string exoticId;
+    [Min(1)] public int metaUnlockLevel = 1;
     [SerializeField, HideInInspector] string persistentId;
     [SerializeField, HideInInspector] bool customCardIconLayout;
     [SerializeField, HideInInspector] RecipeIconLayout cardIconLayout;
     public string FavoriteKey => "workbench.favorite." + (string.IsNullOrEmpty(persistentId)
         ? (output ? ((int)output.item).ToString() : "none") + "." + name : persistentId);
     public RecipeCategory Category => category != RecipeCategory.Automatic ? category :
-        output && (output.item == Item.Ladder || output.item == Item.BridgePart) ? RecipeCategory.Building :
+        output && (output.item == Item.Ladder || output.item == Item.IronLadder || output.item == Item.BridgePart) ? RecipeCategory.Building :
         output && (output.category == ItemCategory.Tool || output.category == ItemCategory.Consumable ||
             output.category == ItemCategory.Powerup)
             ? RecipeCategory.Tools : RecipeCategory.Materials;

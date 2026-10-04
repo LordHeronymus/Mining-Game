@@ -1,0 +1,38 @@
+[
+  {
+    "guid": "8b8cf15dba7953248bf04c6e3412ded4",
+    "path": "Assets/AC Audio/Ambience/CaveAmbience.wav",
+    "streaming": true,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 28947458,
+    "true_peak": -1.1267873892413058
+  },
+  {
+    "guid": "6ef7394397cafa145b5c03ad63ddb709",
+    "path": "Assets/AC Audio/Ambience/CaveTribalSong.wav",
+    "streaming": true,
+    "rate": 24000,
+    "channels": 2,
+    "frames": 461126,
+    "true_peak": -1.2511225423175047
+  },
+  {
+    "guid": "a392f9923b0463744add90dfebbb65eb",
+    "path": "Assets/AC Audio/Ambience/UndergroundClay.wav",
+    "streaming": true,
+    "rate": 48000,
+    "channels": 2,
+    "frames": 14400000,
+    "true_peak": -1.1992625189472945
+  },
+  {
+    "guid": "0052a48ee2cb1084eb97f1792eecf361",
+    "path": "Assets/AC Audio/Ambience/WindAmbience.wav",
+    "streaming": true,
+    "rate": 44100,
+    "channels": 1,
+    "frames": 7801344,
+    "true_peak": -1.2542484862523742
+  }
+]

@@ -124,7 +124,8 @@ Shader "Mining Game/Fixed Underground"
                     float2 lightUV=(input.world-_DaylightRect.xy)*_DaylightRect.zw;
                     if(all(lightUV>=0) && all(lightUV<=1))
                     {
-                        float daylight=1-SAMPLE_TEXTURE2D(_DaylightTex,sampler_DaylightTex,lightUV).a;
+                        float darkness=SAMPLE_TEXTURE2D(_DaylightTex,sampler_DaylightTex,lightUV).a;
+                        float daylight=1-darkness*MapSurfaceDarknessFade(lightUV);
                         globalLight*=daylight;
                         localLight=MapOtherLocalLight(input.world);
                     }

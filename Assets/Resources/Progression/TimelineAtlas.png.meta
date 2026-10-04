@@ -1,0 +1,1586 @@
+fileFormatVersion: 2
+guid: 1c559c1c3a6e00c42a3dd40a514c1268
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3943794843589506293
+    second: TimelineAtlas_0
+  - first:
+      213: 3715570809750128821
+    second: TimelineAtlas_1
+  - first:
+      213: 4365791807729952152
+    second: TimelineAtlas_2
+  - first:
+      213: -1070850215233733926
+    second: TimelineAtlas_3
+  - first:
+      213: 610543976857619773
+    second: TimelineAtlas_4
+  - first:
+      213: -7350868213310837271
+    second: TimelineAtlas_5
+  - first:
+      213: 1676146169105320955
+    second: TimelineAtlas_6
+  - first:
+      213: 5121700858592430654
+    second: TimelineAtlas_7
+  - first:
+      213: -4462104176527209571
+    second: TimelineAtlas_8
+  - first:
+      213: -328157299544937325
+    second: TimelineAtlas_9
+  - first:
+      213: -3568565678854005271
+    second: TimelineAtlas_10
+  - first:
+      213: 694903525198247600
+    second: TimelineAtlas_11
+  - first:
+      213: 2294126701988374555
+    second: TimelineAtlas_12
+  - first:
+      213: -4789728160009861885
+    second: TimelineAtlas_13
+  - first:
+      213: 5814040610813201005
+    second: TimelineAtlas_14
+  - first:
+      213: 5750670017126127205
+    second: TimelineAtlas_15
+  - first:
+      213: 573109683534254666
+    second: TimelineAtlas_16
+  - first:
+      213: -6408777545988816616
+    second: TimelineAtlas_17
+  - first:
+      213: -3380172503680681356
+    second: TimelineAtlas_18
+  - first:
+      213: 4681955496469287298
+    second: TimelineAtlas_19
+  - first:
+      213: 5567896395262185940
+    second: TimelineAtlas_20
+  - first:
+      213: -8400166533853693187
+    second: TimelineAtlas_21
+  - first:
+      213: 5122175074582430063
+    second: TimelineAtlas_22
+  - first:
+      213: -6971804684291108821
+    second: TimelineAtlas_23
+  - first:
+      213: 7936664602251244415
+    second: TimelineAtlas_24
+  - first:
+      213: 8825753181864315432
+    second: TimelineAtlas_25
+  - first:
+      213: -4811937349366948137
+    second: TimelineAtlas_26
+  - first:
+      213: 470434680536911031
+    second: TimelineAtlas_27
+  - first:
+      213: -3663924418499265446
+    second: TimelineAtlas_28
+  - first:
+      213: -8679213906015368472
+    second: TimelineAtlas_29
+  - first:
+      213: -7262043997510347610
+    second: TimelineAtlas_30
+  - first:
+      213: -1965721820642437864
+    second: TimelineAtlas_31
+  - first:
+      213: 5002299520631585393
+    second: TimelineAtlas_32
+  - first:
+      213: -6886079818270786447
+    second: TimelineAtlas_33
+  - first:
+      213: -6340962558893749698
+    second: TimelineAtlas_34
+  - first:
+      213: -8429003666543910690
+    second: TimelineAtlas_35
+  - first:
+      213: -2630426759382340335
+    second: TimelineAtlas_36
+  - first:
+      213: 4369609488741111065
+    second: TimelineAtlas_37
+  - first:
+      213: 1548966762219145508
+    second: TimelineAtlas_38
+  - first:
+      213: 1210918994663513590
+    second: TimelineAtlas_39
+  - first:
+      213: -8151346909703631378
+    second: TimelineAtlas_40
+  - first:
+      213: 7366282447360244078
+    second: TimelineAtlas_41
+  - first:
+      213: 2948272876010984444
+    second: TimelineAtlas_42
+  - first:
+      213: -5061714105929467131
+    second: TimelineAtlas_43
+  - first:
+      213: 2489516310694769373
+    second: TimelineAtlas_44
+  - first:
+      213: -4318122496537972623
+    second: TimelineAtlas_45
+  - first:
+      213: -7608837363249948997
+    second: TimelineAtlas_46
+  - first:
+      213: 1714803939094441981
+    second: TimelineAtlas_47
+  - first:
+      213: -6983127720762436609
+    second: TimelineAtlas_48
+  - first:
+      213: -7787228825910620157
+    second: TimelineAtlas_49
+  - first:
+      213: -2165277161142962242
+    second: TimelineAtlas_50
+  - first:
+      213: 8456075685248807020
+    second: TimelineAtlas_51
+  - first:
+      213: -6938714521081260209
+    second: TimelineAtlas_52
+  - first:
+      213: -1081397515559628183
+    second: TimelineAtlas_53
+  - first:
+      213: -120948108403987208
+    second: TimelineAtlas_54
+  - first:
+      213: -5412909766874745238
+    second: TimelineAtlas_55
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: TimelineAtlas_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 314
+        width: 467
+        height: 551
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f47b2fd38c2bb630800000000000000
+      internalID: 3943794843589506293
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_1
+      rect:
+        serializedVersion: 2
+        x: 482
+        y: 336
+        width: 456
+        height: 482
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b887fc27fb509330800000000000000
+      internalID: 3715570809750128821
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_2
+      rect:
+        serializedVersion: 2
+        x: 552
+        y: 811
+        width: 12
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 895ed07a488669c30800000000000000
+      internalID: 4365791807729952152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_3
+      rect:
+        serializedVersion: 2
+        x: 871
+        y: 763
+        width: 37
+        height: 111
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: adab75127639321f0800000000000000
+      internalID: -1070850215233733926
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_4
+      rect:
+        serializedVersion: 2
+        x: 968
+        y: 436
+        width: 368
+        height: 431
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d3d4a5c1386197800800000000000000
+      internalID: 610543976857619773
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_5
+      rect:
+        serializedVersion: 2
+        x: 1410
+        y: 475
+        width: 315
+        height: 340
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9eda5ea7e487cf990800000000000000
+      internalID: -7350868213310837271
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_6
+      rect:
+        serializedVersion: 2
+        x: 474
+        y: 473
+        width: 17
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bfb87296f0ed24710800000000000000
+      internalID: 1676146169105320955
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_7
+      rect:
+        serializedVersion: 2
+        x: 490
+        y: 464
+        width: 21
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3a07328bcfe31740800000000000000
+      internalID: 5121700858592430654
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_8
+      rect:
+        serializedVersion: 2
+        x: 718
+        y: 469
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d9b0f4784eb6312c0800000000000000
+      internalID: -4462104176527209571
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_9
+      rect:
+        serializedVersion: 2
+        x: 724
+        y: 467
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 39c2c2abca6227bf0800000000000000
+      internalID: -328157299544937325
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_10
+      rect:
+        serializedVersion: 2
+        x: 806
+        y: 458
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ed91421c68e97ec0800000000000000
+      internalID: -3568565678854005271
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_11
+      rect:
+        serializedVersion: 2
+        x: 839
+        y: 459
+        width: 35
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b6bb9c031bc4a900800000000000000
+      internalID: 694903525198247600
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_12
+      rect:
+        serializedVersion: 2
+        x: 564
+        y: 436
+        width: 12
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1861c5a41066df10800000000000000
+      internalID: 2294126701988374555
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_13
+      rect:
+        serializedVersion: 2
+        x: 814
+        y: 451
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3054de39d97778db0800000000000000
+      internalID: -4789728160009861885
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_14
+      rect:
+        serializedVersion: 2
+        x: 1230
+        y: 436
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6a4735a12f9fa050800000000000000
+      internalID: 5814040610813201005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_15
+      rect:
+        serializedVersion: 2
+        x: 314
+        y: 436
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 566da4789eb7ecf40800000000000000
+      internalID: 5750670017126127205
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_16
+      rect:
+        serializedVersion: 2
+        x: 393
+        y: 436
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a425560883814f700800000000000000
+      internalID: 573109683534254666
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_17
+      rect:
+        serializedVersion: 2
+        x: 683
+        y: 428
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 81146dee6c27f07a0800000000000000
+      internalID: -6408777545988816616
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_18
+      rect:
+        serializedVersion: 2
+        x: 691
+        y: 432
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 47af19e44073711d0800000000000000
+      internalID: -3380172503680681356
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_19
+      rect:
+        serializedVersion: 2
+        x: 837
+        y: 425
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2815d3dc7b5a9f040800000000000000
+      internalID: 4681955496469287298
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_20
+      rect:
+        serializedVersion: 2
+        x: 1072
+        y: 434
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d1d7c18544254d40800000000000000
+      internalID: 5567896395262185940
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_21
+      rect:
+        serializedVersion: 2
+        x: 1199
+        y: 432
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dfab68f1b0d9c6b80800000000000000
+      internalID: -8400166533853693187
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_22
+      rect:
+        serializedVersion: 2
+        x: 1399
+        y: 46
+        width: 314
+        height: 392
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6188d5871f951740800000000000000
+      internalID: 5122175074582430063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_23
+      rect:
+        serializedVersion: 2
+        x: 143
+        y: 357
+        width: 31
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b209c6de39c2f3f90800000000000000
+      internalID: -6971804684291108821
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_24
+      rect:
+        serializedVersion: 2
+        x: 177
+        y: 386
+        width: 18
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f733a9ec762b42e60800000000000000
+      internalID: 7936664602251244415
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_25
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 378
+        width: 19
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82acb4012cf5b7a70800000000000000
+      internalID: 8825753181864315432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_26
+      rect:
+        serializedVersion: 2
+        x: 538
+        y: 365
+        width: 9
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7de5c89b970983db0800000000000000
+      internalID: -4811937349366948137
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_27
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 343
+        width: 28
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7bc4d6779d1578600800000000000000
+      internalID: 470434680536911031
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_28
+      rect:
+        serializedVersion: 2
+        x: 593
+        y: 299
+        width: 67
+        height: 110
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5cb8775720272dc0800000000000000
+      internalID: -3663924418499265446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_29
+      rect:
+        serializedVersion: 2
+        x: 633
+        y: 317
+        width: 96
+        height: 89
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8eac25adfec3d8780800000000000000
+      internalID: -8679213906015368472
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_30
+      rect:
+        serializedVersion: 2
+        x: 699
+        y: 401
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a45321d579083b90800000000000000
+      internalID: -7262043997510347610
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_31
+      rect:
+        serializedVersion: 2
+        x: 734
+        y: 331
+        width: 7
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8159f514b6a58b4e0800000000000000
+      internalID: -1965721820642437864
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_32
+      rect:
+        serializedVersion: 2
+        x: 742
+        y: 344
+        width: 35
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17a3a5329ecbb6540800000000000000
+      internalID: 5002299520631585393
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_33
+      rect:
+        serializedVersion: 2
+        x: 1008
+        y: 330
+        width: 172
+        height: 89
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17cbbf8a3eabf60a0800000000000000
+      internalID: -6886079818270786447
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_34
+      rect:
+        serializedVersion: 2
+        x: 1183
+        y: 340
+        width: 74
+        height: 78
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3a061706206008a0800000000000000
+      internalID: -6340962558893749698
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_35
+      rect:
+        serializedVersion: 2
+        x: 603
+        y: 317
+        width: 11
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed06f25f2d9260b80800000000000000
+      internalID: -8429003666543910690
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_36
+      rect:
+        serializedVersion: 2
+        x: 693
+        y: 308
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11d65578cc8de7bd0800000000000000
+      internalID: -2630426759382340335
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_37
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 420
+        height: 310
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9151797cda8f3ac30800000000000000
+      internalID: 4369609488741111065
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_38
+      rect:
+        serializedVersion: 2
+        x: 133
+        y: 44
+        width: 39
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 42985fe30190f7510800000000000000
+      internalID: 1548966762219145508
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_39
+      rect:
+        serializedVersion: 2
+        x: 193
+        y: 55
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6fd11b0f86c0ec010800000000000000
+      internalID: 1210918994663513590
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_40
+      rect:
+        serializedVersion: 2
+        x: 204
+        y: 59
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eed032e5c2990ee80800000000000000
+      internalID: -8151346909703631378
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_41
+      rect:
+        serializedVersion: 2
+        x: 264
+        y: 29
+        width: 11
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e693a1e8bda4a3660800000000000000
+      internalID: 7366282447360244078
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_42
+      rect:
+        serializedVersion: 2
+        x: 296
+        y: 60
+        width: 32
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf3dd836f8e5ae820800000000000000
+      internalID: 2948272876010984444
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_43
+      rect:
+        serializedVersion: 2
+        x: 425
+        y: 63
+        width: 22
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 50b7d79b6dd21c9b0800000000000000
+      internalID: -5061714105929467131
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_44
+      rect:
+        serializedVersion: 2
+        x: 453
+        y: 14
+        width: 443
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd2b08105e98c8220800000000000000
+      internalID: 2489516310694769373
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_45
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 0
+        width: 9
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1703b31c772f214c0800000000000000
+      internalID: -4318122496537972623
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_46
+      rect:
+        serializedVersion: 2
+        x: 530
+        y: 13
+        width: 19
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb654c14bbaf76690800000000000000
+      internalID: -7608837363249948997
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_47
+      rect:
+        serializedVersion: 2
+        x: 603
+        y: 96
+        width: 9
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dff2a21e8153cc710800000000000000
+      internalID: 1714803939094441981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_48
+      rect:
+        serializedVersion: 2
+        x: 683
+        y: 67
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff395ce0652f61f90800000000000000
+      internalID: -6983127720762436609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_49
+      rect:
+        serializedVersion: 2
+        x: 699
+        y: 21
+        width: 10
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3005aee24a43ee390800000000000000
+      internalID: -7787228825910620157
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_50
+      rect:
+        serializedVersion: 2
+        x: 705
+        y: 38
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eb7bec1e4e363f1e0800000000000000
+      internalID: -2165277161142962242
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_51
+      rect:
+        serializedVersion: 2
+        x: 708
+        y: 15
+        width: 11
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c60b21598040a5570800000000000000
+      internalID: 8456075685248807020
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_52
+      rect:
+        serializedVersion: 2
+        x: 754
+        y: 69
+        width: 17
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f475b1de7ebb4bf90800000000000000
+      internalID: -6938714521081260209
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_53
+      rect:
+        serializedVersion: 2
+        x: 808
+        y: 78
+        width: 22
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 962141860ba1ef0f0800000000000000
+      internalID: -1081397515559628183
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_54
+      rect:
+        serializedVersion: 2
+        x: 824
+        y: 66
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8fc2352165e425ef0800000000000000
+      internalID: -120948108403987208
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TimelineAtlas_55
+      rect:
+        serializedVersion: 2
+        x: 915
+        y: 0
+        width: 390
+        height: 296
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a663030fe3b71e4b0800000000000000
+      internalID: -5412909766874745238
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      TimelineAtlas_0: 3943794843589506293
+      TimelineAtlas_1: 3715570809750128821
+      TimelineAtlas_10: -3568565678854005271
+      TimelineAtlas_11: 694903525198247600
+      TimelineAtlas_12: 2294126701988374555
+      TimelineAtlas_13: -4789728160009861885
+      TimelineAtlas_14: 5814040610813201005
+      TimelineAtlas_15: 5750670017126127205
+      TimelineAtlas_16: 573109683534254666
+      TimelineAtlas_17: -6408777545988816616
+      TimelineAtlas_18: -3380172503680681356
+      TimelineAtlas_19: 4681955496469287298
+      TimelineAtlas_2: 4365791807729952152
+      TimelineAtlas_20: 5567896395262185940
+      TimelineAtlas_21: -8400166533853693187
+      TimelineAtlas_22: 5122175074582430063
+      TimelineAtlas_23: -6971804684291108821
+      TimelineAtlas_24: 7936664602251244415
+      TimelineAtlas_25: 8825753181864315432
+      TimelineAtlas_26: -4811937349366948137
+      TimelineAtlas_27: 470434680536911031
+      TimelineAtlas_28: -3663924418499265446
+      TimelineAtlas_29: -8679213906015368472
+      TimelineAtlas_3: -1070850215233733926
+      TimelineAtlas_30: -7262043997510347610
+      TimelineAtlas_31: -1965721820642437864
+      TimelineAtlas_32: 5002299520631585393
+      TimelineAtlas_33: -6886079818270786447
+      TimelineAtlas_34: -6340962558893749698
+      TimelineAtlas_35: -8429003666543910690
+      TimelineAtlas_36: -2630426759382340335
+      TimelineAtlas_37: 4369609488741111065
+      TimelineAtlas_38: 1548966762219145508
+      TimelineAtlas_39: 1210918994663513590
+      TimelineAtlas_4: 610543976857619773
+      TimelineAtlas_40: -8151346909703631378
+      TimelineAtlas_41: 7366282447360244078
+      TimelineAtlas_42: 2948272876010984444
+      TimelineAtlas_43: -5061714105929467131
+      TimelineAtlas_44: 2489516310694769373
+      TimelineAtlas_45: -4318122496537972623
+      TimelineAtlas_46: -7608837363249948997
+      TimelineAtlas_47: 1714803939094441981
+      TimelineAtlas_48: -6983127720762436609
+      TimelineAtlas_49: -7787228825910620157
+      TimelineAtlas_5: -7350868213310837271
+      TimelineAtlas_50: -2165277161142962242
+      TimelineAtlas_51: 8456075685248807020
+      TimelineAtlas_52: -6938714521081260209
+      TimelineAtlas_53: -1081397515559628183
+      TimelineAtlas_54: -120948108403987208
+      TimelineAtlas_55: -5412909766874745238
+      TimelineAtlas_6: 1676146169105320955
+      TimelineAtlas_7: 5121700858592430654
+      TimelineAtlas_8: -4462104176527209571
+      TimelineAtlas_9: -328157299544937325
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

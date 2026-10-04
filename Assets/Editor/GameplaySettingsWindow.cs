@@ -21,10 +21,10 @@ public class GameplaySettingsWindow : EditorWindow
     int selectedCurveKey = -1;
     readonly Dictionary<string, Vector2> curveViews = new();
     readonly Dictionary<string, GpsEditorCurve> curves = new();
-    [MenuItem("Mining Game/Gameplay Settings")]
+    [MenuItem("Mining Game/Debug Settings")]
     public static void Open()
-    { var window = GetWindow<GameplaySettingsWindow>("Gameplay Settings"); window.minSize = new Vector2(760,640); window.Show(); }
-    void OnEnable() { view = new GpsEditorView(this); GpsSettings.Changed += Repaint; EditorApplication.playModeStateChanged += PlayModeChanged; }
+    { var window = GetWindow<GameplaySettingsWindow>("Debug Settings"); window.minSize = new Vector2(760,640); window.Show(); }
+    void OnEnable() { titleContent = new GUIContent("Debug Settings"); view = new GpsEditorView(this); GpsSettings.Changed += Repaint; EditorApplication.playModeStateChanged += PlayModeChanged; }
     void PlayModeChanged(PlayModeStateChange state) { GpsSettings.Changed -= Repaint; GpsSettings.Changed += Repaint; Repaint(); }
     void OnDisable()
     {
@@ -52,14 +52,15 @@ public class GameplaySettingsWindow : EditorWindow
         GpsSettings.EnsureLoaded(); map=Object.FindFirstObjectByType<MapGenerator>();
         EditorGUIUtility.labelWidth=Mathf.Min(330,position.width*.39f);
         var header=GUILayoutUtility.GetRect(1,44,GUILayout.ExpandWidth(true));
-        GUI.Label(new Rect(header.x,header.y,header.width-245,38),"Gameplay Settings"+(GpsSettings.HasUnsavedChanges ? " *" : ""),Theme.Title);
+        GUI.Label(new Rect(header.x,header.y,header.width-245,38),"Debug Settings"+(GpsSettings.HasUnsavedChanges ? " *" : ""),Theme.Title);
         var save=new Rect(header.xMax-224,header.y,224,34);
         if(GUI.Button(save,"Einstellungen speichern",Theme.Primary))
         { GUI.FocusControl(null);status=GpsSettings.Save(out string error)?"Gespeichert":error; }
         GpsEditorTheme.Icon("Speichern",new Rect(save.x+12,save.y+8,18,18),GpsEditorTheme.Brass);
         using(new EditorGUILayout.HorizontalScope())
         {
-            if(GUILayout.Button("Aktualisieren",Theme.Tab,GUILayout.Width(148),GUILayout.Height(30)))Repaint();
+            if(GUILayout.Button("Aktualisieren",Theme.Tab,GUILayout.Width(148),GUILayout.Height(30)))
+            { if(!Application.isPlaying)EditorApplication.delayCall+=GpsProfileEditor.Install; Repaint(); }
             var refresh=GUILayoutUtility.GetLastRect();GpsEditorTheme.Icon("Aktualisieren",new Rect(refresh.x+13,refresh.y+7,17,17),GpsEditorTheme.Ink);
             GUILayout.FlexibleSpace();
         }

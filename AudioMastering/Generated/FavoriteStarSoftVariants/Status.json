@@ -1,0 +1,167 @@
+{
+  "flow_id": "nCjXb86QFZYYoOZzye8j",
+  "flow_created": false,
+  "url": "https://elevenlabs.io/app/flows/nCjXb86QFZYYoOZzye8j?mode=switchWorkspace&oobCode=e88ddddac1ab41ffbbba337e69499d88",
+  "flow_url": "https://elevenlabs.io/app/flows/nCjXb86QFZYYoOZzye8j?mode=switchWorkspace&oobCode=e88ddddac1ab41ffbbba337e69499d88",
+  "session_id": "1BhfHNw0zDIAiqF08SvO",
+  "generations": [
+    {
+      "id": "RufoN7S6kkct8j4aBALT",
+      "status": "completed",
+      "model_id": "eleven_text_to_sound_v2",
+      "modality": "audio",
+      "prompt": "A single very gentle short UI confirmation for a golden favorite star. A small warm bronze chime softly struck with a felt mallet: rounded pillowy onset, mellow low-mid metallic resonance, cozy satisf",
+      "duration_secs": 1.0,
+      "created_at_unix_ms": 1791140154126,
+      "price": {
+        "credits": 3.333,
+        "price_cents": 0.0606,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "d9GKDCAOGYaufJ8gB6KV",
+      "status": "completed",
+      "model_id": "eleven_text_to_sound_v2",
+      "modality": "audio",
+      "prompt": "A single soft satisfying favorite-star UI sound, two tiny rounded rising notes of a muted brass music box in a warm middle register. Smooth felt-soft onset, subtle velvety metal resonance, a gentle up",
+      "duration_secs": 1.0,
+      "created_at_unix_ms": 1791140154123,
+      "price": {
+        "credits": 3.333,
+        "price_cents": 0.0606,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "ejuTPVQu9qdtGEKzOIQv",
+      "status": "completed",
+      "model_id": "eleven_text_to_sound_v2",
+      "modality": "audio",
+      "prompt": "A short cozy tactile UI confirmation sound for selecting a favorite star: one soft rounded bronze plonk, with a low warm bell body and a faint smooth middle-register harmonic. Damped metal gently tapp",
+      "duration_secs": 1.0,
+      "created_at_unix_ms": 1791140154127,
+      "price": {
+        "credits": 3.333,
+        "price_cents": 0.0606,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "RFHtdpKVkV9mKGAs0F2e",
+      "status": "completed",
+      "model_id": "eleven_text_to_sound_v2",
+      "modality": "audio",
+      "prompt": "A single gentle magical favorite-star activation sound. A soft warm rounded metallic hum-chime swelling very briefly into a comforting mellow middle-register two-tone harmony, then fading smoothly, li",
+      "duration_secs": 1.0,
+      "created_at_unix_ms": 1791140154125,
+      "price": {
+        "credits": 3.333,
+        "price_cents": 0.0606,
+        "cost_fiat_currency": "usd"
+      }
+    }
+  ],
+  "all_completed": true,
+  "has_failures": false,
+  "session_ids": [
+    "1BhfHNw0zDIAiqF08SvO",
+    "sLJ55uLORnNVOmcVNG6M",
+    "1epZNIrbvihl6Xq2Q9Sq",
+    "yl6oZ1fgBN7pEh2wj0j9"
+  ],
+  "media": [
+    {
+      "generation_id": "RufoN7S6kkct8j4aBALT",
+      "kind": "audio",
+      "url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/1BhfHNw0zDIAiqF08SvO/RufoN7S6kkct8j4aBALT/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185558Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=1d7e4e7fe19c56b6c8a2a5eec2c692516a4c1dd1a01aaa3762da0a915996a18b7d48c5683a4d26549c605d5f2de4ec5096013370ca4fde6cc65c46c8967cc865e700f794a9275ef52f5f177c73366ae05d2c8fdf5b2d6590ef6f6c7ef3e7fd89c4587bb125139f8da224559f00b22fc9d90977b676727f6d7548efaa2e3bf67c864cf1367d5c9f9ade8cd7fde7ce17951a326ff8484920799f2650e7104a07de5c0df8d313da096b00d674b8e7bd4e1fe16d95b4b69840606e714ffbbbf23e5cd37f12ab7664bc3abd1da8f36f129fce7b36b520ec40502d1489fce328b77dcc9c6772c7562dfd53ab935aa557a04148fd56db945625f49795dc4be2e2eaa5f3",
+      "prompt": "A single very gentle short UI confirmation for a golden favorite star. A small warm bronze chime softly struck with a felt mallet: rounded pillowy onset, mellow low-mid metallic resonance, cozy satisfying soft bloom and silky quick decay. Restrained intimate game interface sound, about half a second of ringing. The metal sounds cushioned and warm, not bright. No click, snap, sharp ting, high piercing overtones, sparkling hiss, music or voice.",
+      "duration_secs": 1.0,
+      "master_url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/1BhfHNw0zDIAiqF08SvO/RufoN7S6kkct8j4aBALT/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185558Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=1d7e4e7fe19c56b6c8a2a5eec2c692516a4c1dd1a01aaa3762da0a915996a18b7d48c5683a4d26549c605d5f2de4ec5096013370ca4fde6cc65c46c8967cc865e700f794a9275ef52f5f177c73366ae05d2c8fdf5b2d6590ef6f6c7ef3e7fd89c4587bb125139f8da224559f00b22fc9d90977b676727f6d7548efaa2e3bf67c864cf1367d5c9f9ade8cd7fde7ce17951a326ff8484920799f2650e7104a07de5c0df8d313da096b00d674b8e7bd4e1fe16d95b4b69840606e714ffbbbf23e5cd37f12ab7664bc3abd1da8f36f129fce7b36b520ec40502d1489fce328b77dcc9c6772c7562dfd53ab935aa557a04148fd56db945625f49795dc4be2e2eaa5f3",
+      "model_id": "eleven_text_to_sound_v2",
+      "settings": [
+        {
+          "label": "Duration seconds",
+          "value": "1.0"
+        },
+        {
+          "label": "Prompt influence",
+          "value": "0.85"
+        },
+        {
+          "label": "Loop",
+          "value": "False"
+        }
+      ]
+    },
+    {
+      "generation_id": "d9GKDCAOGYaufJ8gB6KV",
+      "kind": "audio",
+      "url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/sLJ55uLORnNVOmcVNG6M/d9GKDCAOGYaufJ8gB6KV/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185558Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=8971dc982755a4593eade95bbb92f75ba6660fb6b0e6f28002b0cf75072242c0269a09a233dc98b00e456001aab744680aac4a260716307bf50f1353cc8d12fafedd5dc5edf1fd629e5e572dae024d2337d38b2d924ce096c19dea28832b43a7ce1d80bd29ae0efc9780825f3074232827b4f0ad10fd45521fae96bf6743ffc0272299dc5c296d8ffeb5d405caf02a555d916971495238e74140074ac5049d264ba505b3acea1b60c8f7561fe7604182b080105817338d2f7a538c1604efa9a66ac50d9991403cc64a5bb58b2b3efbc4c182dbdc6850c5107d379c3feebafc97f7cad531a7b26d202aebc1d94631ba438ae383af66ac9c9ae135ba9c91b48701",
+      "prompt": "A single soft satisfying favorite-star UI sound, two tiny rounded rising notes of a muted brass music box in a warm middle register. Smooth felt-soft onset, subtle velvety metal resonance, a gentle uplifting golden glow, very brief silky decay. Quiet polished comforting confirmation, close and clean. No sharp impact, no bright bells, no high treble sparkle, no percussive click, no music track, no speech.",
+      "duration_secs": 1.0,
+      "master_url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/sLJ55uLORnNVOmcVNG6M/d9GKDCAOGYaufJ8gB6KV/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185558Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=8971dc982755a4593eade95bbb92f75ba6660fb6b0e6f28002b0cf75072242c0269a09a233dc98b00e456001aab744680aac4a260716307bf50f1353cc8d12fafedd5dc5edf1fd629e5e572dae024d2337d38b2d924ce096c19dea28832b43a7ce1d80bd29ae0efc9780825f3074232827b4f0ad10fd45521fae96bf6743ffc0272299dc5c296d8ffeb5d405caf02a555d916971495238e74140074ac5049d264ba505b3acea1b60c8f7561fe7604182b080105817338d2f7a538c1604efa9a66ac50d9991403cc64a5bb58b2b3efbc4c182dbdc6850c5107d379c3feebafc97f7cad531a7b26d202aebc1d94631ba438ae383af66ac9c9ae135ba9c91b48701",
+      "model_id": "eleven_text_to_sound_v2",
+      "settings": [
+        {
+          "label": "Duration seconds",
+          "value": "1.0"
+        },
+        {
+          "label": "Prompt influence",
+          "value": "0.85"
+        },
+        {
+          "label": "Loop",
+          "value": "False"
+        }
+      ]
+    },
+    {
+      "generation_id": "ejuTPVQu9qdtGEKzOIQv",
+      "kind": "audio",
+      "url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/1epZNIrbvihl6Xq2Q9Sq/ejuTPVQu9qdtGEKzOIQv/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185557Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=1f2ee32000327a99afd41fa6a725780adffe7280fa74e79725d4c496f885aff001c703135720a81cdf1efbef25333daaa6d48eb06afd676c64276a7fbff27a148c4b5786625b4c86506962d423f082d434edd8bb2461aac5f65801035b5517df7198d63562d468c5d5dd28f01b30a6eda1b9ed94300b2a385f824ff4e9e5cf3855886b7440aad620c959a6dd1c549cac43e2d9de7371db215e8b13464d12342c945a16d99b5baa857ca6406966d17976a11e08df70da83a9b644dab90fd1b529dd110276c663445223bbceb9c3bf7673a0a65ad6be9d47cb34a01da8b8b68e9ab59aaeefdd0e705d788bde5ba5f4a6a815e7142cacdd4c6d3979ed28d020e3c2",
+      "prompt": "A short cozy tactile UI confirmation sound for selecting a favorite star: one soft rounded bronze plonk, with a low warm bell body and a faint smooth middle-register harmonic. Damped metal gently tapped through a felt pad, cushioned attack, pleasing mellow resonance that softly melts away. Small elegant friendly event. No bright ting, sharp transient, high-pitched whistle, glitter, rattle, voice or background.",
+      "duration_secs": 1.0,
+      "master_url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/1epZNIrbvihl6Xq2Q9Sq/ejuTPVQu9qdtGEKzOIQv/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185557Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=1f2ee32000327a99afd41fa6a725780adffe7280fa74e79725d4c496f885aff001c703135720a81cdf1efbef25333daaa6d48eb06afd676c64276a7fbff27a148c4b5786625b4c86506962d423f082d434edd8bb2461aac5f65801035b5517df7198d63562d468c5d5dd28f01b30a6eda1b9ed94300b2a385f824ff4e9e5cf3855886b7440aad620c959a6dd1c549cac43e2d9de7371db215e8b13464d12342c945a16d99b5baa857ca6406966d17976a11e08df70da83a9b644dab90fd1b529dd110276c663445223bbceb9c3bf7673a0a65ad6be9d47cb34a01da8b8b68e9ab59aaeefdd0e705d788bde5ba5f4a6a815e7142cacdd4c6d3979ed28d020e3c2",
+      "model_id": "eleven_text_to_sound_v2",
+      "settings": [
+        {
+          "label": "Duration seconds",
+          "value": "1.0"
+        },
+        {
+          "label": "Prompt influence",
+          "value": "0.85"
+        },
+        {
+          "label": "Loop",
+          "value": "False"
+        }
+      ]
+    },
+    {
+      "generation_id": "RFHtdpKVkV9mKGAs0F2e",
+      "kind": "audio",
+      "url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/yl6oZ1fgBN7pEh2wj0j9/RFHtdpKVkV9mKGAs0F2e/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185558Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=b6ab07a73a93a1fdd6ddf8c34d91144f7fefd518c86694dd80346b1a08b44aea27814793b5378387d01f2b6782ab92bfc8123348cba90c1234e0383c28f762b99048870e23018ff435281c4e809977e3dd3c538f9b8c6938a65079c595960f3f0412516dfd123ede44b2659ada52eedc75cf935667e0c7a1ebf543125f00b159e3eaac6d7168e373208d6d7eb88b35de3f585f450cddd6f056aa8dab2b2ae3b207cb296117845a269bffb0c51d4b09836e4ff623a410718e0ce550119da800ce3d408ed76a207fbcfe6c22ccfc4a3c7ddfe9c311f43863a600b520dc5235483c97375d6b9218a9c30d0168607eefba2ed20059f84e7b20d81ecd24a5814ec9ef",
+      "prompt": "A single gentle magical favorite-star activation sound. A soft warm rounded metallic hum-chime swelling very briefly into a comforting mellow middle-register two-tone harmony, then fading smoothly, like a miniature muted bronze singing bowl. Satisfying subtle golden warmth, velvety and relaxed, compact game UI sound. Soft onset without any hard hit. No sharp bells, piercing frequencies, bright shimmer, click, hiss, music or voice.",
+      "duration_secs": 1.0,
+      "master_url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/yl6oZ1fgBN7pEh2wj0j9/RFHtdpKVkV9mKGAs0F2e/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185558Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=b6ab07a73a93a1fdd6ddf8c34d91144f7fefd518c86694dd80346b1a08b44aea27814793b5378387d01f2b6782ab92bfc8123348cba90c1234e0383c28f762b99048870e23018ff435281c4e809977e3dd3c538f9b8c6938a65079c595960f3f0412516dfd123ede44b2659ada52eedc75cf935667e0c7a1ebf543125f00b159e3eaac6d7168e373208d6d7eb88b35de3f585f450cddd6f056aa8dab2b2ae3b207cb296117845a269bffb0c51d4b09836e4ff623a410718e0ce550119da800ce3d408ed76a207fbcfe6c22ccfc4a3c7ddfe9c311f43863a600b520dc5235483c97375d6b9218a9c30d0168607eefba2ed20059f84e7b20d81ecd24a5814ec9ef",
+      "model_id": "eleven_text_to_sound_v2",
+      "settings": [
+        {
+          "label": "Duration seconds",
+          "value": "1.0"
+        },
+        {
+          "label": "Prompt influence",
+          "value": "0.85"
+        },
+        {
+          "label": "Loop",
+          "value": "False"
+        }
+      ]
+    }
+  ]
+}

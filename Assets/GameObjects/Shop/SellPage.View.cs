@@ -54,7 +54,7 @@ public partial class SellPage
         searchField.placeholder = placeholder; searchField.targetGraphic = search;
         searchField.characterLimit = 80; searchField.lineType = TMP_InputField.LineType.SingleLine;
         searchField.customCaretColor = true; searchField.caretColor = new Color32(255, 245, 229, 255);
-        LichtfadenCaret.Apply(searchField);
+        HomeUi.StyleInputField(searchField, true);
         searchField.onValueChanged.AddListener(SetSearch);
         var viewport = SellRect("Ores", root, 290, 297, 1250, ListHeight);
         viewport.gameObject.AddComponent<RectMask2D>(); viewport.gameObject.AddComponent<Image>().color = Color.clear;
@@ -155,6 +155,8 @@ public partial class SellPage
     {
         var image = SellFrame(name, parent, x, y, w, h, sprite); image.raycastTarget = true;
         var result = image.gameObject.AddComponent<Button>(); result.targetGraphic = image;
+        GoldButtonFeedback.Apply(result, theme.CardFrame, theme.SelectedFrame);
+        HomeClickAudio.Bind(result);
         result.navigation = new Navigation { mode = Navigation.Mode.None };
         var colors = result.colors; colors.disabledColor = new Color(.48f, .44f, .38f);
         colors.highlightedColor = new Color(1, .95f, .78f); colors.pressedColor = new Color(.8f, .65f, .45f); result.colors = colors;
@@ -165,7 +167,7 @@ public partial class SellPage
     {
         var image = SellRect(name, parent, x, y, w, h).gameObject.AddComponent<Image>(); image.sprite = sprite;
         image.type = sprite && sprite.border.sqrMagnitude > 0 ? Image.Type.Sliced : Image.Type.Simple;
-        image.pixelsPerUnitMultiplier = 3; image.raycastTarget = false; return image;
+        image.pixelsPerUnitMultiplier = 3; image.raycastTarget = false; HomeUi.StylePanelWood(image); return image;
     }
     TextMeshProUGUI SellLabel(Transform parent, string value, float x, float y, float w, float h, float size)
     {

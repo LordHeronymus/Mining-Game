@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public sealed class LoadingAudio : MonoBehaviour
 {
     const float HomeFadeOutSeconds = 2f;
-    const float YogaStartDelaySeconds = 1.3472964f;
+    const float YogaStartDelaySeconds = HomeFadeOutSeconds * .5f;
     const float YogaFadeInSeconds = 1.25f;
     static LoadingAudio instance;
     static LoadingAudioSettingsAsset settings;
@@ -17,6 +17,7 @@ public sealed class LoadingAudio : MonoBehaviour
         }
     }
     [SerializeField, HideInInspector] AudioSource yoga;
+    AudioSource loadingPickaxe;
     [SerializeField, HideInInspector] AudioSource[] homeSources = new AudioSource[2];
     int homeCurrent;
     bool homeRunning;
@@ -25,8 +26,7 @@ public sealed class LoadingAudio : MonoBehaviour
     float HomeLoopFade => homeSources[homeCurrent] && homeSources[homeCurrent].clip
         ? Mathf.Min(3f, homeSources[homeCurrent].clip.length / homeSources[homeCurrent].pitch * .25f) : .01f;
     float HomeGain => !homeRunning ? 0f : homeFadeOutAt >= 0f
-        ? homeFadeOutGain * (1f - Mathf.SmoothStep(0f, 1f,
-            FadeFraction(Time.unscaledTime - homeFadeOutAt, HomeFadeOutSeconds)))
+        ? homeFadeOutGain * HomeFadeGain(Time.unscaledTime - homeFadeOutAt)
         : Mathf.SmoothStep(0f, 1f, FadeFraction(Time.unscaledTime - homeStartedAt, 1f));
     float completedAt = -1f;
     bool loading;
@@ -50,6 +50,13 @@ public sealed class LoadingAudio : MonoBehaviour
 
     static float FadeFraction(float elapsed, float duration) => duration <= 0f ? 1f :
         Mathf.Clamp01(elapsed / duration);
+
+    static float HomeFadeGain(float elapsed)
+    {
+        // A quieter tail with zero slope at both ends; halfway is 25% gain.
+        float gain = 1f - Mathf.SmoothStep(0f, 1f, FadeFraction(elapsed, HomeFadeOutSeconds));
+        return gain * gain;
+    }
 
     static void EnsureInstance()
     {
@@ -79,6 +86,7 @@ public sealed class LoadingAudio : MonoBehaviour
         instance.completedAt = -1f;
         instance.yogaFadeInAt = -1f;
         instance.yoga.Stop();
+        if (instance.loadingPickaxe) instance.loadingPickaxe.Stop();
         instance.StopDistantDetails();
         var clip = Resources.Load<AudioClip>("Audio/HomescreenAmbience");
         if (!clip) return;
@@ -130,6 +138,7 @@ public sealed class LoadingAudio : MonoBehaviour
         EnsureInstance();
         if (!instance.yoga.clip || instance.yoga.isPlaying || instance.loadingTrackPrepared) return;
         instance.yoga.volume = 0f;
+        instance.yoga.pitch = AudioManager.TunedPitch(instance.yoga.clip, 1f, instance.yoga);
         instance.yoga.Play();
         instance.yoga.Pause();
         instance.loadingTrackPrepared = true;
@@ -140,6 +149,24 @@ public sealed class LoadingAudio : MonoBehaviour
         if (!instance || !instance.loading) return;
         instance.loading = false;
         instance.completedAt = Time.unscaledTime;
+    }
+
+    public static void PlayLoadingPickaxe(AudioClip clip, bool warm = false)
+    {
+        if (!clip || GameAudioLifecycle.IsStopping) return;
+        EnsureInstance();
+        if (!instance.loadingPickaxe)
+        {
+            instance.loadingPickaxe = instance.gameObject.AddComponent<AudioSource>();
+            instance.loadingPickaxe.playOnAwake = false;
+            instance.loadingPickaxe.spatialBlend = 0f;
+            instance.loadingPickaxe.ignoreListenerPause = true;
+        }
+        var source = instance.loadingPickaxe;
+        source.volume = instance.LoadingFadeOutGain();
+        source.pitch = warm ? 1f : AudioManager.TunedPitch(clip, 1f, source);
+        source.PlayOneShot(clip, warm ? 0f : AudioManager.TunedVolume(clip,
+            Settings ? Settings.pickaxeVolume : 1f, source));
     }
 
     void Update()
@@ -168,11 +195,11 @@ public sealed class LoadingAudio : MonoBehaviour
         }
         double now = AudioSettings.dspTime;
         float blend = Mathf.Clamp01((float)(now - homeNextStart) / HomeLoopFade);
-        float volume = AudioManager.AmbienceVolume * HomeGain;
-        homeSources[homeCurrent].volume = AudioManager.TunedAmbienceVolume(homeSources[homeCurrent].clip,
-            volume * HomeSourceVolume(homeSources[homeCurrent]) * Mathf.Cos(blend * Mathf.PI * .5f));
-        homeSources[1 - homeCurrent].volume = AudioManager.TunedAmbienceVolume(homeSources[1 - homeCurrent].clip,
-            volume * HomeSourceVolume(homeSources[1 - homeCurrent]) * Mathf.Sin(blend * Mathf.PI * .5f));
+        float volume = HomeGain;
+        homeSources[homeCurrent].volume = AudioManager.TunedMusicVolume(homeSources[homeCurrent].clip,
+            volume * HomeSourceVolume(homeSources[homeCurrent]) * Mathf.Cos(blend * Mathf.PI * .5f), homeSources[homeCurrent]);
+        homeSources[1 - homeCurrent].volume = AudioManager.TunedMusicVolume(homeSources[1 - homeCurrent].clip,
+            volume * HomeSourceVolume(homeSources[1 - homeCurrent]) * Mathf.Sin(blend * Mathf.PI * .5f), homeSources[1 - homeCurrent]);
         if (blend < 1f) return;
         homeSources[homeCurrent].Stop();
         homeCurrent = 1 - homeCurrent;
@@ -183,11 +210,13 @@ public sealed class LoadingAudio : MonoBehaviour
         next.PlayScheduled(homeNextStart);
     }
 
-    float LoadingTrackGain()
-    {
-        float gain = loading ? 1f : completedAt < 0f ? 0f :
+    float LoadingFadeOutGain() => loading ? 1f : completedAt < 0f ? 0f :
             1f - Mathf.SmoothStep(0f, 1f, FadeFraction(Time.unscaledTime - completedAt,
                 Settings ? Settings.yogaFadeOutSeconds : 5f));
+
+    float LoadingTrackGain()
+    {
+        float gain = LoadingFadeOutGain();
         if (yogaFadeInAt >= 0f)
             gain *= Mathf.SmoothStep(0f, 1f,
                 FadeFraction(Time.unscaledTime - yogaFadeInAt, YogaFadeInSeconds));
@@ -196,10 +225,17 @@ public sealed class LoadingAudio : MonoBehaviour
 
     void ApplyVolume()
     {
+        if (loadingPickaxe)
+        {
+            float pickaxeGain = LoadingFadeOutGain();
+            loadingPickaxe.volume = pickaxeGain;
+            if (pickaxeGain <= 0f && loadingPickaxe.isPlaying) loadingPickaxe.Stop();
+        }
         if (!yoga) return;
         float gain = LoadingTrackGain();
-        yoga.volume = AudioManager.TunedAmbienceVolume(yoga.clip,
-            AudioManager.AmbienceVolume * gain * (Settings ? Settings.yogaVolume : 1f));
+        if(gain>0f && yoga.clip && !yoga.isPlaying && !loadingTrackPrepared) yoga.pitch=AudioManager.TunedPitch(yoga.clip,1f,yoga);
+        yoga.volume = AudioManager.TunedMusicVolume(yoga.clip,
+            gain * (Settings ? Settings.yogaVolume : 1f), yoga);
         if (gain <= 0f && yoga.isPlaying) { yoga.Stop(); loadingTrackPrepared = false; }
         else if (gain > 0f && yoga.clip && !yoga.isPlaying)
         {
@@ -224,7 +260,7 @@ public sealed class LoadingAudio : MonoBehaviour
             {
                 float gain = distantVolumeGains.TryGetValue(source, out float savedGain) ? savedGain : 1f;
                 source.volume = AudioManager.TunedAmbienceVolume(source.clip,
-                    AudioManager.AmbienceVolume * HomeGain * gain);
+                    AudioManager.AmbienceVolume * HomeGain * gain, source);
             }
         if (!homeRunning || homeFadeOutAt >= 0f || loading) return;
         float rate = Settings ? Settings.distantPickaxesPerMinute : 10f;
@@ -256,15 +292,11 @@ public sealed class LoadingAudio : MonoBehaviour
             available.ignoreListenerPause = true;
             distantSources.Add(available);
         }
-        float spread = Mathf.Clamp01((Settings ? Settings.distantPickaxePitchSpreadPercent : 10f) / 100f);
-        var tuning = Settings ? Settings.FindHomeClip(clip) : null;
         available.clip = clip;
-        available.pitch = AudioManager.TunedPitch(clip, tuning != null ? tuning.SamplePitch() : Random.Range(1f - spread, 1f + spread));
-        float volumeSpread = Mathf.Clamp01((Settings ? Settings.distantPickaxeVolumeSpreadPercent : 15f) / 100f);
-        float volumeGain = tuning != null ? tuning.SampleVolume() :
-            (Settings ? Settings.distantPickaxeVolume : .5f) * Random.Range(1f - volumeSpread, 1f + volumeSpread);
+        available.pitch = AudioManager.TunedPitch(clip, 1f, available);
+        float volumeGain = 1f;
         distantVolumeGains[available] = volumeGain;
-        available.volume = AudioManager.TunedAmbienceVolume(clip, AudioManager.AmbienceVolume * HomeGain * volumeGain);
+        available.volume = AudioManager.TunedAmbienceVolume(clip, AudioManager.AmbienceVolume * HomeGain * volumeGain, available);
         available.Play();
     }
 
@@ -295,17 +327,17 @@ public sealed class LoadingAudio : MonoBehaviour
             source.ignoreListenerPause = true;
             instance.distantSources.Add(source);
         }
-        var tuning = Settings ? Settings.FindHomeClip(clip) : null;
-        float gain = tuning != null ? tuning.SampleVolume() : 1f;
+        float gain = 1f;
         source.clip = clip;
-        source.pitch = AudioManager.TunedPitch(clip, tuning != null ? tuning.SamplePitch() : Random.Range(.9f, 1.1f));
+        source.pitch = AudioManager.TunedPitch(clip, 1f, source);
         instance.distantVolumeGains[source] = gain;
-        source.volume = AudioManager.TunedAmbienceVolume(clip, AudioManager.AmbienceVolume * instance.HomeGain * gain);
+        source.volume = AudioManager.TunedAmbienceVolume(clip, AudioManager.AmbienceVolume * instance.HomeGain * gain, source);
         source.Play();
     }
 
     void OnDisable()
     {
+        if (loadingPickaxe) { loadingPickaxe.volume = 0f; loadingPickaxe.Stop(); }
         if (homePreview) homePreview.Stop();
         StopDistantDetails();
         if (yoga) { yoga.volume = 0f; yoga.Stop(); }
@@ -318,27 +350,9 @@ public sealed class LoadingAudio : MonoBehaviour
 
     void PrepareHomeLoop(AudioSource source)
     {
-        var tuning = Settings ? Settings.FindHomeClip(source.clip) : null;
-        source.pitch = AudioManager.TunedPitch(source.clip, tuning != null ? tuning.SamplePitch() : 1f);
-        homeVolumeGains[source] = tuning != null ? tuning.SampleVolume() : 1f;
+        source.pitch = AudioManager.TunedPitch(source.clip, 1f, source);
+        homeVolumeGains[source] = 1f;
     }
 
-    public static void PreviewHomeClip(HomeAudioClipTuning tuning)
-    {
-        if (GameAudioLifecycle.IsStopping || tuning == null || !tuning.clip) return;
-        EnsureInstance();
-        if (!instance.homePreview)
-        {
-            instance.homePreview = instance.gameObject.AddComponent<AudioSource>();
-            instance.homePreview.playOnAwake = false;
-            instance.homePreview.spatialBlend = 0f;
-            instance.homePreview.ignoreListenerPause = true;
-        }
-        var source = instance.homePreview;
-        source.Stop();
-        source.clip = tuning.clip;
-        source.pitch = AudioManager.TunedPitch(tuning.clip, tuning.SamplePitch());
-        source.volume = AudioManager.TunedAmbienceVolume(tuning.clip, AudioManager.AmbienceVolume * tuning.SampleVolume());
-        source.Play();
-    }
+    public static void PreviewHomeClip(HomeAudioClipTuning tuning) => GpsAudioPreview.Play(tuning?.clip);
 }

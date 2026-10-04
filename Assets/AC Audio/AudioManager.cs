@@ -81,7 +81,15 @@ public class AudioManager : MonoBehaviour
     public static float GetAmbienceVolume(AmbienceType type)
     {
         if (GameAudioLifecycle.IsStopping) return 0f;
-        if (!Instance) return PlayerSettings.Ambience * LoadingAudio.WorldAmbienceGain;
+        return AmbienceVolume * CategoryVolume(type) * LoadingAudio.WorldAmbienceGain;
+    }
+
+    public static float GetMusicVolume(AmbienceType type) =>
+        CategoryVolume(type) * LoadingAudio.WorldAmbienceGain;
+
+    static float CategoryVolume(AmbienceType type)
+    {
+        if (!Instance) return 1f;
         float category = type switch
         {
             AmbienceType.Surface => Instance.surfaceVolume,
@@ -91,7 +99,7 @@ public class AudioManager : MonoBehaviour
             AmbienceType.Cave => Instance.caveVolume,
             _ => 1f
         };
-        return AmbienceVolume * Mathf.Clamp01(category) * LoadingAudio.WorldAmbienceGain;
+        return Mathf.Clamp01(category);
     }
 
     public static float AmbienceVolume => GameAudioLifecycle.IsStopping ? 0f :
@@ -160,6 +168,8 @@ public class AudioManager : MonoBehaviour
     AudioClip grassLanding;
     AudioClip shopPaper;
     AudioClip medkitCloth;
+    AudioClip workshopFavoriteClip;
+    AudioClip workshopUnfavoriteClip;
     AudioClip deepLayerOreHitClip;
     AudioClip deepLayerStoneHitClip;
     AudioClip[] lightRubbleClips;
@@ -241,6 +251,20 @@ public class AudioManager : MonoBehaviour
         if (blockedMiningHitClip) PlayClip(blockedMiningHitClip, digSoundVolume, 0f);
     }
 
+    public void PlayWorkshopFavorite()
+    {
+        if (!workshopFavoriteClip)
+            workshopFavoriteClip = Resources.Load<AudioClip>("Audio/WorkshopFavorite");
+        if (workshopFavoriteClip) PlayClip(workshopFavoriteClip, 1f, 0f);
+    }
+
+    public void PlayWorkshopUnfavorite()
+    {
+        if (!workshopUnfavoriteClip)
+            workshopUnfavoriteClip = Resources.Load<AudioClip>("Audio/WorkshopUnfavorite");
+        if (workshopUnfavoriteClip) PlayClip(workshopUnfavoriteClip, 1f, 0f);
+    }
+
     public void GetClipTuning(AudioClip clip, out float volume, out float pitch, out float spread)
     {
         volume = pitch = 1f;
@@ -290,8 +314,8 @@ public class AudioManager : MonoBehaviour
         if (previewStop != null) StopCoroutine(previewStop);
         previewSource.Stop();
         previewSource.clip = clip;
-        previewSource.volume = TunedVolume(clip, volume);
-        previewSource.pitch = TunedPitch(clip, pitch);
+        previewSource.pitch = TunedPitch(clip, pitch, previewSource);
+        previewSource.volume = TunedVolume(clip, volume, previewSource);
         previewSource.Play();
         previewStop = StartCoroutine(StopPreviewAfterDelay());
     }
@@ -303,28 +327,20 @@ public class AudioManager : MonoBehaviour
         previewStop = null;
     }
 
-    public static float TunedVolume(AudioClip clip, float volume)
+    public static float TunedVolume(AudioClip clip, float volume, AudioSource source = null)
     {
-        if (GameAudioLifecycle.IsStopping) return 0f;
-        if (!Instance) return volume * PlayerSettings.Sfx;
-        Instance.GetClipTuning(clip, out float multiplier, out _, out _);
-        return volume * multiplier * PlayerSettings.Sfx;
+        return GameAudioLifecycle.IsStopping ? 0f : GpsAudio.Volume(clip, volume, source) * PlayerSettings.Sfx;
     }
 
-    public static float TunedAmbienceVolume(AudioClip clip, float volume)
+    public static float TunedAmbienceVolume(AudioClip clip, float volume, AudioSource source = null)
     {
-        if (GameAudioLifecycle.IsStopping) return 0f;
-        if (!Instance) return volume;
-        Instance.GetClipTuning(clip, out float multiplier, out _, out _);
-        return volume * multiplier;
+        return GameAudioLifecycle.IsStopping ? 0f : GpsAudio.Volume(clip, volume, source);
     }
 
-    public static float TunedPitch(AudioClip clip, float pitch)
-    {
-        if (!Instance) return pitch;
-        Instance.GetClipTuning(clip, out _, out float multiplier, out float spread);
-        return Mathf.Clamp(pitch * multiplier * Random.Range(1f - spread, 1f + spread), .1f, 3f);
-    }
+    public static float TunedMusicVolume(AudioClip clip, float volume, AudioSource source = null) =>
+        GameAudioLifecycle.IsStopping ? 0f : GpsAudio.Volume(clip, volume, source) * PlayerSettings.Music;
+
+    public static float TunedPitch(AudioClip clip, float pitch, AudioSource source = null) => GpsAudio.Pitch(clip, pitch, source);
 
     public AudioClip GetRandomFrogCroak()
     {
@@ -453,8 +469,8 @@ public class AudioManager : MonoBehaviour
     {
         if (!gameOverMusicSource || gameOverMusicSource.isPlaying) return;
         gameOverMusicSource.loop = false;
-        gameOverMusicSource.volume = TunedVolume(gameOverMusicSource.clip, 1f);
-        gameOverMusicSource.pitch = TunedPitch(gameOverMusicSource.clip, 1f);
+        gameOverMusicSource.pitch = TunedPitch(gameOverMusicSource.clip, 1f, gameOverMusicSource);
+        gameOverMusicSource.volume = TunedMusicVolume(gameOverMusicSource.clip, 1f, gameOverMusicSource);
         gameOverMusicSource.Play();
     }
 
@@ -477,7 +493,7 @@ public class AudioManager : MonoBehaviour
             }
             lowHealthHeartbeatSource.Stop();
             lowHealthHeartbeatSource.volume = TunedVolume(lowHealthHeartbeatSource.clip,
-                Mathf.Clamp01(lowHealthHeartbeatVolume));
+                Mathf.Clamp01(lowHealthHeartbeatVolume), lowHealthHeartbeatSource);
             return;
         }
         if (playing)
@@ -493,12 +509,13 @@ public class AudioManager : MonoBehaviour
                 lowHealthHeartbeatFade = null;
             }
             lowHealthHeartbeatSource.volume = TunedVolume(lowHealthHeartbeatSource.clip,
-                Mathf.Clamp01(lowHealthHeartbeatVolume));
+                Mathf.Clamp01(lowHealthHeartbeatVolume), lowHealthHeartbeatSource);
             if (starting || Time.unscaledTime - lastLowHealthHeartbeatTime >= interval)
             {
                 lowHealthHeartbeatSource.Stop();
                 lowHealthHeartbeatSource.pitch = TunedPitch(lowHealthHeartbeatSource.clip,
-                    Random.Range(1f - LowHealthHeartbeatPitchSpread, 1f + LowHealthHeartbeatPitchSpread));
+                    Random.Range(1f - LowHealthHeartbeatPitchSpread, 1f + LowHealthHeartbeatPitchSpread), lowHealthHeartbeatSource);
+                lowHealthHeartbeatSource.volume=TunedVolume(lowHealthHeartbeatSource.clip,Mathf.Clamp01(lowHealthHeartbeatVolume),lowHealthHeartbeatSource);
                 lowHealthHeartbeatSource.Play();
                 lastLowHealthHeartbeatTime = Time.unscaledTime;
             }
@@ -527,7 +544,7 @@ public class AudioManager : MonoBehaviour
         {
             lowHealthHeartbeatSource.Stop();
             lowHealthHeartbeatSource.volume = TunedVolume(lowHealthHeartbeatSource.clip,
-                Mathf.Clamp01(lowHealthHeartbeatVolume));
+                Mathf.Clamp01(lowHealthHeartbeatVolume), lowHealthHeartbeatSource);
         }
         lowHealthHeartbeatFade = null;
     }
@@ -661,8 +678,8 @@ public class AudioManager : MonoBehaviour
         source.clip = clip;
         source.loop = false;
         source.panStereo = 0f;
-        source.pitch = TunedPitch(clip, 1f);
-        source.volume = TunedVolume(clip, digSoundVolume);
+        source.pitch = TunedPitch(clip, 1f, source);
+        source.volume = TunedVolume(clip, digSoundVolume, source);
         source.Play();
         float startFraction = rubbleSettings ? Mathf.Clamp01(rubbleSettings.nextClipStartPercent / 100f) : .5f;
         nextLightRubbleStart = AudioSettings.dspTime + clip.length / source.pitch * startFraction;
@@ -680,10 +697,10 @@ public class AudioManager : MonoBehaviour
         ambienceSources.Remove(source);
         float pitch = Mathf.Max(.01f, sound != null ? sound.pitch : 1f) * Mathf.Clamp(tuning.pitch, .5f, 2f);
         float spread = Mathf.Clamp01(tuning.pitchSpread);
-        source.pitch = TunedPitch(clip, pitch * Random.Range(1f - spread, 1f + spread));
+        source.pitch = TunedPitch(clip, pitch * Random.Range(1f - spread, 1f + spread), source);
         source.clip = clip;
         source.volume = TunedVolume(clip, (sound != null ? sound.volume : 1f) * Mathf.Clamp01(tuning.volume) *
-            (IsDigSound(type) ? digSoundVolume : 1f));
+            (IsDigSound(type) ? digSoundVolume : 1f), source);
         source.panStereo = 0f;
         source.Play();
     }
@@ -699,9 +716,9 @@ public class AudioManager : MonoBehaviour
         ambienceSources.Remove(source);
         source.pitch = TunedPitch(clip, dispersion
             ? sound.pitch + Random.Range(-dispersionAmount, dispersionAmount)
-            : sound.pitch);
+            : sound.pitch, source);
         source.clip = clip;
-        source.volume = TunedVolume(clip, sound.volume);
+        source.volume = TunedVolume(clip, sound.volume, source);
         source.panStereo = 0f;
         source.Play();
         activeCraftingSounds.Add((source, clip));
@@ -724,10 +741,10 @@ public class AudioManager : MonoBehaviour
             if (!sr) return;
             ambienceSources.Remove(sr);
             sr.pitch = TunedPitch(clip, dispersion
-                ? s.pitch + Random.Range(-dispersionAmount, dispersionAmount) : s.pitch);
+                ? s.pitch + Random.Range(-dispersionAmount, dispersionAmount) : s.pitch, sr);
 
             sr.clip = clip;
-            sr.volume = TunedVolume(clip, s.volume * (IsDigSound(type) ? digSoundVolume : 1f));
+            sr.volume = TunedVolume(clip, s.volume * (IsDigSound(type) ? digSoundVolume : 1f), sr);
             sr.panStereo = 0f;
             sr.Play();
             return;
@@ -768,18 +785,20 @@ public class AudioManager : MonoBehaviour
         }
         if (ambience) ambienceSources[source] = (Mathf.Clamp01(volume), ambienceType);
         float effectiveVolume = Mathf.Clamp01(volume) * (ambience ? GetAmbienceVolume(ambienceType) : 1f);
-        source.volume = ambience ? TunedAmbienceVolume(clip, effectiveVolume) : TunedVolume(clip, effectiveVolume);
+        source.pitch = TunedPitch(clip, Mathf.Clamp(pitch, .5f, 2f), source);
+        source.volume = ambience ? TunedAmbienceVolume(clip, effectiveVolume, source) : TunedVolume(clip, effectiveVolume, source);
         source.panStereo = Mathf.Clamp(pan, -1f, 1f);
-        source.pitch = TunedPitch(clip, Mathf.Clamp(pitch, .5f, 2f));
         source.Play();
     }
 
     void LateUpdate()
     {
+        if (gameOverMusicSource && gameOverMusicSource.isPlaying)
+            gameOverMusicSource.volume = TunedMusicVolume(gameOverMusicSource.clip, 1f, gameOverMusicSource);
         foreach (var entry in ambienceSources)
             if (entry.Key && entry.Key.isPlaying)
                 entry.Key.volume = TunedAmbienceVolume(entry.Key.clip,
-                    entry.Value.volume * GetAmbienceVolume(entry.Value.type));
+                    entry.Value.volume * GetAmbienceVolume(entry.Value.type), entry.Key);
     }
 
     void ExtendPool()

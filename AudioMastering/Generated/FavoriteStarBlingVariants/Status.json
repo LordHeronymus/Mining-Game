@@ -1,0 +1,167 @@
+{
+  "flow_id": "p0QXjysXmqfub9xlcn73",
+  "flow_created": false,
+  "url": "https://elevenlabs.io/app/flows/p0QXjysXmqfub9xlcn73?mode=switchWorkspace&oobCode=e88ddddac1ab41ffbbba337e69499d88",
+  "flow_url": "https://elevenlabs.io/app/flows/p0QXjysXmqfub9xlcn73?mode=switchWorkspace&oobCode=e88ddddac1ab41ffbbba337e69499d88",
+  "session_id": "PbmCouLUoP5zftxRWmOC",
+  "generations": [
+    {
+      "id": "Nib4vpZr4GcVEgFH7RnT",
+      "status": "completed",
+      "model_id": "eleven_text_to_sound_v2",
+      "modality": "audio",
+      "prompt": "One short satisfying bling sound for activating a favorite star in a game UI. A clear warm brass bell note with a gently rounded but defined attack, a tiny pleasant metallic overtone and a short clean",
+      "duration_secs": 1.0,
+      "created_at_unix_ms": 1791140277271,
+      "price": {
+        "credits": 3.333,
+        "price_cents": 0.0606,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "YlTkuNfjYwLxHMTZjdHs",
+      "status": "completed",
+      "model_id": "eleven_text_to_sound_v2",
+      "modality": "audio",
+      "prompt": "One short cheerful bling UI confirmation sound: two quick closely spaced rising notes, like a miniature polished brass chime, with a lightly metallic finish. Clear tactile onset, balanced warm body, a",
+      "duration_secs": 1.0,
+      "created_at_unix_ms": 1791140277272,
+      "price": {
+        "credits": 3.333,
+        "price_cents": 0.0606,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "JSJJceVgotWsM79TP3Kd",
+      "status": "completed",
+      "model_id": "eleven_text_to_sound_v2",
+      "modality": "audio",
+      "prompt": "A single compact rewarding favorite-star bling. A small polished metal token gently tapped, immediately producing a clear mellow bell-like ding with a subtle bright metallic glint. Defined rounded ons",
+      "duration_secs": 1.0,
+      "created_at_unix_ms": 1791140277272,
+      "price": {
+        "credits": 3.333,
+        "price_cents": 0.0606,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "oUqmnjsnFPYAEzOmZ3bu",
+      "status": "completed",
+      "model_id": "eleven_text_to_sound_v2",
+      "modality": "audio",
+      "prompt": "One elegant short metallic bling for a favorite star lighting up. A clear rounded bell plink followed by a tiny uplifting harmonic shimmer, like a little golden music-box chime. Crisp enough to be sat",
+      "duration_secs": 1.0,
+      "created_at_unix_ms": 1791140277273,
+      "price": {
+        "credits": 3.333,
+        "price_cents": 0.0606,
+        "cost_fiat_currency": "usd"
+      }
+    }
+  ],
+  "all_completed": true,
+  "has_failures": false,
+  "session_ids": [
+    "PbmCouLUoP5zftxRWmOC",
+    "fCtjEWYQQJbo95TcAsxt",
+    "ry3mOoSgBRDlRKxdaoav",
+    "3u3c3hW7BdB3SUFJzAkj"
+  ],
+  "media": [
+    {
+      "generation_id": "Nib4vpZr4GcVEgFH7RnT",
+      "kind": "audio",
+      "url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/PbmCouLUoP5zftxRWmOC/Nib4vpZr4GcVEgFH7RnT/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185800Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=b15aef96815b15bccd8d15876bef0b3756381fadcf6fe856efa35380044583e051ecf14944ab68fa245b0d7093597a25da00250fda29744b8fa5725ef48d371c53fc48fde53eb189bf1e0a57531f5ba7dd6ad6ea95ebfd062a2a7049de66d9d28c82d4bc1f841b0d988562f7f4b9c2cb188332d58a2b99fb1dbd1a49e0bf2f322b7fa11287f70657a22883a1ec76ee9420edfc39ddc43d7781b8fb36975ca99ced5b09bada6259b9c011eb7d976e822233cfb2d72dbb29765a695793556a5a44d111740c4b08557e52a15e425ac4bc271d6a4d0257de8db0fbedcc86477c993fa943f131af36c4ccd0de105eefeee1ab5e9a24f568c6295af054b52ad537f5f9",
+      "prompt": "One short satisfying bling sound for activating a favorite star in a game UI. A clear warm brass bell note with a gently rounded but defined attack, a tiny pleasant metallic overtone and a short clean ringing tail. Medium register, bright enough to feel rewarding but smooth and friendly. Compact single event. No sharp piercing high notes, no hiss, no harsh impact, no music or speech.",
+      "duration_secs": 1.0,
+      "master_url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/PbmCouLUoP5zftxRWmOC/Nib4vpZr4GcVEgFH7RnT/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185800Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=b15aef96815b15bccd8d15876bef0b3756381fadcf6fe856efa35380044583e051ecf14944ab68fa245b0d7093597a25da00250fda29744b8fa5725ef48d371c53fc48fde53eb189bf1e0a57531f5ba7dd6ad6ea95ebfd062a2a7049de66d9d28c82d4bc1f841b0d988562f7f4b9c2cb188332d58a2b99fb1dbd1a49e0bf2f322b7fa11287f70657a22883a1ec76ee9420edfc39ddc43d7781b8fb36975ca99ced5b09bada6259b9c011eb7d976e822233cfb2d72dbb29765a695793556a5a44d111740c4b08557e52a15e425ac4bc271d6a4d0257de8db0fbedcc86477c993fa943f131af36c4ccd0de105eefeee1ab5e9a24f568c6295af054b52ad537f5f9",
+      "model_id": "eleven_text_to_sound_v2",
+      "settings": [
+        {
+          "label": "Duration seconds",
+          "value": "1.0"
+        },
+        {
+          "label": "Prompt influence",
+          "value": "0.85"
+        },
+        {
+          "label": "Loop",
+          "value": "False"
+        }
+      ]
+    },
+    {
+      "generation_id": "YlTkuNfjYwLxHMTZjdHs",
+      "kind": "audio",
+      "url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/fCtjEWYQQJbo95TcAsxt/YlTkuNfjYwLxHMTZjdHs/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185800Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=7edddd8e3c04a900ccb868a76da46514fbcbeccec45feec7dfeed02cd38ad909f437920c5bba91b26138da7ab41edf6d73da5ea7ea96d57d7251d89984e7c029712852728fbed31d2dafb8a871d309b6b0c360621a5582cc72727dfa4f96d95800131b0b395705a98142151aa52c2a71ad05ac5b66eae69c236aef72cb3cd4836934e000ee2a5adb1b7ade6da7715c9826cca2e7e831e5af4d61ce1a785c2680f9c1844ff321aa534ce7b9ac5285481ab2321a7b4d0226d60c3c6d8d837e71f068f66837c4d6636fb7e3ca4d4e6917c44f56747e265c655f6550b4838eba6dacb1aab5e699365c00642f9e5b7939201b22d123b5a4754c8638939166e77e4c87",
+      "prompt": "One short cheerful bling UI confirmation sound: two quick closely spaced rising notes, like a miniature polished brass chime, with a lightly metallic finish. Clear tactile onset, balanced warm body, a little restrained sparkle, and a brief smooth decay. A satisfying golden favorite-star sound. Not muffled, not piercing. No background, speech, music track or harsh treble.",
+      "duration_secs": 1.0,
+      "master_url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/fCtjEWYQQJbo95TcAsxt/YlTkuNfjYwLxHMTZjdHs/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185800Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=7edddd8e3c04a900ccb868a76da46514fbcbeccec45feec7dfeed02cd38ad909f437920c5bba91b26138da7ab41edf6d73da5ea7ea96d57d7251d89984e7c029712852728fbed31d2dafb8a871d309b6b0c360621a5582cc72727dfa4f96d95800131b0b395705a98142151aa52c2a71ad05ac5b66eae69c236aef72cb3cd4836934e000ee2a5adb1b7ade6da7715c9826cca2e7e831e5af4d61ce1a785c2680f9c1844ff321aa534ce7b9ac5285481ab2321a7b4d0226d60c3c6d8d837e71f068f66837c4d6636fb7e3ca4d4e6917c44f56747e265c655f6550b4838eba6dacb1aab5e699365c00642f9e5b7939201b22d123b5a4754c8638939166e77e4c87",
+      "model_id": "eleven_text_to_sound_v2",
+      "settings": [
+        {
+          "label": "Duration seconds",
+          "value": "1.0"
+        },
+        {
+          "label": "Prompt influence",
+          "value": "0.85"
+        },
+        {
+          "label": "Loop",
+          "value": "False"
+        }
+      ]
+    },
+    {
+      "generation_id": "JSJJceVgotWsM79TP3Kd",
+      "kind": "audio",
+      "url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/ry3mOoSgBRDlRKxdaoav/JSJJceVgotWsM79TP3Kd/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185800Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=46b3a4936e3688086a2539b4b32f9b3cd25e1ab0dba01ef99234beeb487ddca30061dd9f5357017b970d0f0ae79c9402e01e9a053135bd61421f3c859798190e766563f55722b0bdba1a68c89c0189c1b5a7d3584c6d8b168981bc5d4a8430e006146419c292b7398fc0b746bcb04b9b8e62e4301ecd8832ae23d10e1b18f3e58d11db017ffb45be97acf266fa355f661e6b09bf74ca7a8d9f2a37ac7c8de6b8c71bb6ef82ab0373ccfbd82640777e8e99002a4b5f09fdce32fe76e5cf0c00ecc56033ba404a861bbe6382dab4c12849f90c2a7550b05826706c121e5a383b8c8dd95a7a1e8a0f972c10986431aa8d691eba11c4ab5924c2ff0ce753cba8c451",
+      "prompt": "A single compact rewarding favorite-star bling. A small polished metal token gently tapped, immediately producing a clear mellow bell-like ding with a subtle bright metallic glint. Defined rounded onset, pleasant warm midrange resonance and a neat short tail. Friendly premium game UI sound. No dull thud, harsh clang, piercing whistle, speech or background.",
+      "duration_secs": 1.0,
+      "master_url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/ry3mOoSgBRDlRKxdaoav/JSJJceVgotWsM79TP3Kd/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185800Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=46b3a4936e3688086a2539b4b32f9b3cd25e1ab0dba01ef99234beeb487ddca30061dd9f5357017b970d0f0ae79c9402e01e9a053135bd61421f3c859798190e766563f55722b0bdba1a68c89c0189c1b5a7d3584c6d8b168981bc5d4a8430e006146419c292b7398fc0b746bcb04b9b8e62e4301ecd8832ae23d10e1b18f3e58d11db017ffb45be97acf266fa355f661e6b09bf74ca7a8d9f2a37ac7c8de6b8c71bb6ef82ab0373ccfbd82640777e8e99002a4b5f09fdce32fe76e5cf0c00ecc56033ba404a861bbe6382dab4c12849f90c2a7550b05826706c121e5a383b8c8dd95a7a1e8a0f972c10986431aa8d691eba11c4ab5924c2ff0ce753cba8c451",
+      "model_id": "eleven_text_to_sound_v2",
+      "settings": [
+        {
+          "label": "Duration seconds",
+          "value": "1.0"
+        },
+        {
+          "label": "Prompt influence",
+          "value": "0.85"
+        },
+        {
+          "label": "Loop",
+          "value": "False"
+        }
+      ]
+    },
+    {
+      "generation_id": "oUqmnjsnFPYAEzOmZ3bu",
+      "kind": "audio",
+      "url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/3u3c3hW7BdB3SUFJzAkj/oUqmnjsnFPYAEzOmZ3bu/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185800Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=658507123822113f7b207ee9ddf5bb0d07eaa092fffe39b1db10e7dc4b1d0cd7c658b47c9c4c1501f45a9f33e28493bf7d04d39d75d635ca72739972360fdc4cc261e55134081d96e999a114fc2bcab6bbd03dca129358653ea8962f421ae4f1fd339c1e8799dbc34b8bcfabb1c6d97fa7aa01b14fd50591fcb275630d14b3d4c695376b684cc0e1cff5839156c94eaabe9e262a952e816c1c1087bad685f5d8f84ca92ed0eacead7a54b0eb786632d9bdf51a5fd583d0c1af5b21be99b7394adc5faa7571014786a4ab4a56a4259dd031f27b007f8e842d841bc97498cf9ebd7b9e95b020645ae9dc559857a7ace1878087e180d4b2ea7849b176222b555cec",
+      "prompt": "One elegant short metallic bling for a favorite star lighting up. A clear rounded bell plink followed by a tiny uplifting harmonic shimmer, like a little golden music-box chime. Crisp enough to be satisfying, lightly metallic, warm and smooth, with a short controlled ringing decay. Single event, no sharp snap, no piercing high sparkle, no music or voice.",
+      "duration_secs": 1.0,
+      "master_url": "https://storage.googleapis.com/xi-backend/database/workspace/e88ddddac1ab41ffbbba337e69499d88/content_generation/3u3c3hW7BdB3SUFJzAkj/oUqmnjsnFPYAEzOmZ3bu/content.mp3?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20261004%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261004T185800Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=658507123822113f7b207ee9ddf5bb0d07eaa092fffe39b1db10e7dc4b1d0cd7c658b47c9c4c1501f45a9f33e28493bf7d04d39d75d635ca72739972360fdc4cc261e55134081d96e999a114fc2bcab6bbd03dca129358653ea8962f421ae4f1fd339c1e8799dbc34b8bcfabb1c6d97fa7aa01b14fd50591fcb275630d14b3d4c695376b684cc0e1cff5839156c94eaabe9e262a952e816c1c1087bad685f5d8f84ca92ed0eacead7a54b0eb786632d9bdf51a5fd583d0c1af5b21be99b7394adc5faa7571014786a4ab4a56a4259dd031f27b007f8e842d841bc97498cf9ebd7b9e95b020645ae9dc559857a7ace1878087e180d4b2ea7849b176222b555cec",
+      "model_id": "eleven_text_to_sound_v2",
+      "settings": [
+        {
+          "label": "Duration seconds",
+          "value": "1.0"
+        },
+        {
+          "label": "Prompt influence",
+          "value": "0.85"
+        },
+        {
+          "label": "Loop",
+          "value": "False"
+        }
+      ]
+    }
+  ]
+}

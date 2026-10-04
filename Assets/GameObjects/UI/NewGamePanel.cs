@@ -22,6 +22,7 @@ public sealed class NewGamePanel : MonoBehaviour
         var shade = HomeUi.Image("Shade", transform, Vector2.zero, Vector2.zero);
         HomeUi.Stretch(shade.rectTransform); shade.color = new Color(0, 0, 0, .72f); shade.raycastTarget = true;
         layout = HomeUi.Rect("New Game Layout", transform, Vector2.zero, new Vector2(900, 600));
+        HomeUi.Image("Board Backing", layout, Vector2.zero, new Vector2(800, 500)).color = new Color32(23, 12, 7, 255);
         HomeUi.Image("Board", layout, Vector2.zero, new Vector2(860, 560), "Panel");
         HomeUi.Label("Title", layout, "Neues Spiel", new Vector2(0, 180), new Vector2(680, 75), 48);
         HomeUi.Label("Name Label", layout, "Name", new Vector2(0, 68), new Vector2(660, 45), 30);
@@ -39,7 +40,7 @@ public sealed class NewGamePanel : MonoBehaviour
         nameField.caretColor = new Color32(222, 174, 91, 255); nameField.customCaretColor = true;
         nameField.caretWidth = 2; nameField.caretBlinkRate = .8f; nameField.onFocusSelectAll = false;
         nameField.enabled = true;
-        LichtfadenCaret.Apply(nameField);
+        HomeUi.StyleInputField(nameField);
         HomeUi.Button("Cancel New Game", layout, "Abbrechen", new Vector2(-180, -162), new Vector2(310, 78), Close);
         start = HomeUi.Button("Start New Game", layout, "Starten", new Vector2(180, -162), new Vector2(310, 78), StartGame, true);
         nameField.onValueChanged.AddListener(_ => Refresh());

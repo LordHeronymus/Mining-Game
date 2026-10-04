@@ -18,7 +18,6 @@ public sealed class LoadingCrystalVisual : MonoBehaviour
     Image burst, afterglow, nucleus;
     Material liquid;
     AudioClip hitClip;
-    AudioSource hitSource;
     int lastAudibleStroke = -1;
     float previousElapsed;
 
@@ -159,15 +158,16 @@ public sealed class LoadingCrystalVisual : MonoBehaviour
 
     void AnimateTwinkles(float elapsed)
     {
+        float frequency = Mathf.Clamp(GpsSettings.Preferences.loadingTwinkleFrequency, 0f, 5f);
         for (int i = 0; i < twinkles.Length; i++)
         {
-            float period = 3.2f + i * .29f;
+            float period = (3.2f + i * .29f) / Mathf.Max(.001f, frequency);
             float clock = Mathf.Max(0, elapsed) + i * 2.713f;
             int cycle = Mathf.FloorToInt(clock / period);
             float variation = .5f + .5f * Mathf.Sin(cycle * 7.13f + i * 2.31f);
-            float duration = .8f + variation * .4f;
+            float duration = Mathf.Min(.8f + variation * .4f, period * .8f);
             float age = Mathf.Repeat(clock, period);
-            float envelope = age < duration ? Mathf.Pow(Mathf.Sin(age / duration * Mathf.PI), 2) : 0;
+            float envelope = frequency > 0f && age < duration ? Mathf.Pow(Mathf.Sin(age / duration * Mathf.PI), 2) : 0;
             float brightness = envelope * (.9f + variation * .1f);
             twinkles[i].color = new Color(1, 1, 1, brightness);
             twinkles[i].rectTransform.localScale = Vector3.one * (.55f + envelope * (.65f + variation * .2f));
@@ -204,34 +204,24 @@ public sealed class LoadingCrystalVisual : MonoBehaviour
         if (!Application.isPlaying || GameAudioLifecycle.IsStopping) return;
         EnsureImpactSound();
         if (!hitClip) return;
-        hitSource.pitch = AudioManager.TunedPitch(hitClip, 1f);
-        hitSource.PlayOneShot(hitClip, AudioManager.TunedVolume(hitClip,
-            LoadingAudio.Settings ? LoadingAudio.Settings.pickaxeVolume : 1f));
+        LoadingAudio.PlayLoadingPickaxe(hitClip);
     }
 
     void EnsureImpactSound()
     {
         if (!hitClip) hitClip = Resources.Load<AudioClip>("Audio/LoadingPickaxeHit");
         if (!hitClip) return;
-        if (!hitSource)
-        {
-            hitSource = gameObject.AddComponent<AudioSource>();
-            hitSource.playOnAwake = false;
-            hitSource.spatialBlend = 0f;
-            hitSource.ignoreListenerPause = true;
-        }
     }
 
     public void WarmImpactSound()
     {
         if (GameAudioLifecycle.IsStopping) return;
         EnsureImpactSound();
-        if (hitClip) hitSource.PlayOneShot(hitClip, 0f);
+        if (hitClip) LoadingAudio.PlayLoadingPickaxe(hitClip, warm: true);
     }
 
     void OnDisable()
     {
-        if (hitSource) hitSource.Stop();
         lastAudibleStroke = -1;
         previousElapsed = 0f;
     }

@@ -102,6 +102,7 @@ public sealed class TorchFlame : MonoBehaviour
         velocity.enabled = true;
         velocity.x = new ParticleSystem.MinMaxCurve(-.055f, .055f);
         velocity.y = new ParticleSystem.MinMaxCurve(minRise, maxRise);
+        velocity.z = new ParticleSystem.MinMaxCurve(0f, 0f);
 
         var color = particles.colorOverLifetime;
         color.enabled = true;

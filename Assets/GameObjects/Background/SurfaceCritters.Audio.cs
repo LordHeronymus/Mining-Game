@@ -55,7 +55,7 @@ public sealed partial class SurfaceCritters
         }
         callingFrog = chosen;
         croakSource.clip = clip;
-        croakSource.pitch = AudioManager.TunedPitch(clip, 1f);
+        croakSource.pitch = AudioManager.TunedPitch(clip, 1f, croakSource);
         ApplyCroakVolume(camera, chosen);
         croakSource.Play();
         float variation = Mathf.Clamp(-Mathf.Log(1f - (float)croakRandom.NextDouble()), .1f, 4f);
@@ -66,7 +66,7 @@ public sealed partial class SurfaceCritters
     void ApplyCroakVolume(Camera camera, Critter animal)
     {
         croakSource.volume = AudioManager.TunedAmbienceVolume(croakSource.clip,
-            Mathf.Clamp01(croakVolume) * AudioManager.GetAmbienceVolume(AmbienceType.Frogs));
+            Mathf.Clamp01(croakVolume) * AudioManager.GetAmbienceVolume(AmbienceType.Frogs), croakSource);
         croakSource.panStereo = Mathf.Clamp((camera.WorldToViewportPoint(
             new Vector3(animal.x, animal.y, 0)).x - .5f) * 1.4f, -.7f, .7f);
     }

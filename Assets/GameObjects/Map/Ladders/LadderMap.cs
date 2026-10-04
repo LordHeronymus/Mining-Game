@@ -48,20 +48,28 @@ public sealed class LadderMap : MonoBehaviour
         Vector2.Distance(player, Map.Terrain.GetCellCenterWorld(cell)) <= reach;
 
     public bool TryPlace(Vector3Int cell, InventoryManager inventory, Vector2 player, float reach)
+        => TryPlace(cell, inventory, player, reach, ladderItem);
+
+    public bool TryPlace(Vector3Int cell, InventoryManager inventory, Vector2 player, float reach, ItemSO materialItem)
     {
-        if (GameplayInputBlocker.IsBlocked || !inventory || !ladderItem || !CanPlace(cell) || !InReach(cell, player, reach)) return false;
-        if (!inventory.TryRemove(ladderItem)) return false;
-        EnsureTiles().SetTile(cell, segment);
+        if (GameplayInputBlocker.IsBlocked || !inventory || !materialItem || !CanPlace(cell) || !InReach(cell, player, reach)) return false;
+        if (materialItem.item != Item.Ladder && materialItem.item != Item.IronLadder) return false;
+        var tile = materialItem.item == Item.IronLadder ? Resources.Load<Tile>("Exotics/IronLadderTile") : segment;
+        if (!tile || !inventory.TryRemove(materialItem)) return false;
+        EnsureTiles().SetTile(cell, tile);
         AudioManager.Instance?.Play(SoundType.LadderPlace, true);
         return true;
     }
 
     public bool TryRemove(Vector3Int cell, InventoryManager inventory, Vector2 player, float reach)
     {
-        if (GameplayInputBlocker.IsBlocked || !inventory || !ladderItem || !Has(cell) || !InReach(cell, player, reach) ||
-            !inventory.CanAdd(ladderItem)) return false;
+        var ironTile = Resources.Load<Tile>("Exotics/IronLadderTile");
+        var returnedItem = Has(cell) && ironTile && tiles.GetTile(cell) == ironTile
+            ? StartingResourcesSettings.Resolve((int)Item.IronLadder) : ladderItem;
+        if (GameplayInputBlocker.IsBlocked || !inventory || !returnedItem || !Has(cell) || !InReach(cell, player, reach) ||
+            !inventory.CanAdd(returnedItem)) return false;
         tiles.SetTile(cell, null);
-        inventory.Add(ladderItem);
+        inventory.Add(returnedItem);
         AudioManager.Instance?.Play(SoundType.LadderRemove, true);
         return true;
     }

@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-public sealed class GpsEditorView
+public sealed partial class GpsEditorView
 {
     readonly HashSet<string> expanded = new();
     readonly GameplaySettingsWindow window;
@@ -13,8 +13,10 @@ public sealed class GpsEditorView
     public GpsEditorView(GameplaySettingsWindow owner) => window = owner;
     public void Draw(string tab)
     {
+        if(tab=="Audio") { DrawAudioCatalog(); if(!Foldout("Audio/Advanced","Ablauf und Mischung"))return; }
         foreach (string title in GpsSchema.Sections.Where(section => section.tab == tab).Select(section => section.title).Distinct())
         {
+            if(tab=="Audio" && (title=="Einzelclips" || title=="Gesamtpegel"))continue;
             using (new EditorGUILayout.VerticalScope(Theme.Card))
             {
                 if (!Foldout(tab + "/" + title, title)) continue;

@@ -39,6 +39,9 @@ using UnityEngine;
 [Serializable] public sealed class RunSaveState
 {
     public int version = 1, seed, width, height;
+    public MetaRunState progression;
+    public ExoticWorldState exotics;
+    public SavedPlacedLight[] placedLights;
     public GpsValue[] generationSettings;
     public long savedUtc;
     public float playedSeconds, energy;

@@ -3,6 +3,14 @@ using UnityEngine;
 
 public static class RecipeUnlocks
 {
+    static readonly HashSet<int> exoticLearned = new();
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetExotics() => exoticLearned.Clear();
+    public static bool LearnExotic(CraftingRecipe recipe)
+    {
+        if (!recipe || !recipe.exotic || !recipe.output) return false;
+        return exoticLearned.Add((int)recipe.output.item);
+    }
     static readonly Item[] EnergyUpgradeItems = {
         Item.CrystalPendant, Item.CopperEnergyBracelet, Item.EnergyStorageVial, Item.RuneBelt,
         Item.CrystalHeart, Item.CrystalHarness, Item.TravelMonolith
@@ -25,7 +33,7 @@ public static class RecipeUnlocks
     const string ObsidianPickaxeKey = "workbench.recipe.obsidian-pickaxe.unlocked";
     const string MythrilPickaxeKey = "workbench.recipe.mythril-pickaxe.unlocked";
     const string DiamondPickaxeKey = "workbench.recipe.diamond-pickaxe.unlocked";
-    public static bool IsShopRecipe(CraftingRecipe recipe) => recipe && recipe.output &&
+    public static bool IsShopRecipe(CraftingRecipe recipe) => recipe && recipe.output && !recipe.exotic &&
         (IsEnergyUpgrade(recipe.output.item) || recipe.output.item switch
     {
         Item.Medkit or Item.Backpack or Item.LoadBelt or Item.HeavyDutyBoots or Item.ReinforcedBackpack or Item.SpringGreaves or Item.LoadFrame or Item.Exoskeleton or Item.IronPickaxe or Item.SteelPickaxe or Item.TitaniumPickaxe or
@@ -34,7 +42,7 @@ public static class RecipeUnlocks
     });
 
     public static bool IsUnlocked(CraftingRecipe recipe) =>
-        !recipe || !recipe.output || (IsEnergyUpgrade(recipe.output.item)
+        !recipe || !recipe.output || (recipe.exotic ? exoticLearned.Contains((int)recipe.output.item) : IsEnergyUpgrade(recipe.output.item)
             ? PlayerPrefs.GetInt(EnergyUpgradeKey(recipe.output.item), 0) == 1 : recipe.output.item switch
         {
             Item.Medkit => IsMedkitUnlocked,
@@ -213,6 +221,7 @@ public static class RecipeUnlocks
 
     public static void ResetRun()
     {
+        exoticLearned.Clear();
         foreach (var item in EnergyUpgradeItems) PlayerPrefs.DeleteKey(EnergyUpgradeKey(item));
         PlayerPrefs.DeleteKey(MedkitKey);
         PlayerPrefs.DeleteKey(BackpackKey);
@@ -235,7 +244,7 @@ public static class RecipeUnlocks
 
     public static int[] CaptureRunState()
     {
-        var ids = new List<int>();
+        var ids = new List<int>(exoticLearned);
         foreach (var recipe in Resources.LoadAll<CraftingRecipe>("WorkbenchRecipes"))
             if (IsShopRecipe(recipe) && IsUnlocked(recipe) && !ids.Contains((int)recipe.output.item)) ids.Add((int)recipe.output.item);
         return ids.ToArray();
@@ -245,6 +254,10 @@ public static class RecipeUnlocks
         ResetRun();
         var set = new HashSet<int>(ids ?? System.Array.Empty<int>());
         foreach (var recipe in Resources.LoadAll<CraftingRecipe>("WorkbenchRecipes"))
-            if (recipe && recipe.output && set.Contains((int)recipe.output.item)) Unlock(recipe);
+            if (recipe && recipe.output && set.Contains((int)recipe.output.item))
+            {
+                if (recipe.exotic) LearnExotic(recipe);
+                else Unlock(recipe);
+            }
     }
 }

@@ -30,6 +30,7 @@ public class ShopPanel : MonoBehaviour
         sellPage.gameObject.SetActive(true);
         buyPage.gameObject.SetActive(false);
         UpdateTabAppearance(true);
+        foreach (var button in GetComponentsInChildren<Button>(true)) HomeClickAudio.Bind(button);
     }
 
     void Update()
@@ -80,7 +81,6 @@ public class ShopPanel : MonoBehaviour
     public void ShowSellPage()
     {
         ShopVisualTheme.Ensure(transform).UseBuyLayout(false);
-        AudioManager.Instance.Play(SoundType.UI_Click);
         buyPage.gameObject.SetActive(false);
         sellPage.gameObject.SetActive(true);
         sellText.color = tabHighlight;
@@ -91,7 +91,6 @@ public class ShopPanel : MonoBehaviour
     public void ShowBuyPage()
     {
         ShopVisualTheme.Ensure(transform).UseBuyLayout(true);
-        AudioManager.Instance.Play(SoundType.UI_Click);
         sellPage.gameObject.SetActive(false);
         buyPage.gameObject.SetActive(true);
         buyText.color = tabHighlight;
@@ -101,8 +100,20 @@ public class ShopPanel : MonoBehaviour
 
     private void UpdateTabAppearance(bool selling)
     {
-        if (sellTabBackground) sellTabBackground.color = selling ? activeTabColor : inactiveTabColor;
-        if (buyTabBackground) buyTabBackground.color = selling ? inactiveTabColor : activeTabColor;
+        var theme = ShopVisualTheme.Ensure(transform);
+        StyleTab(sellText, "SellTabFrame", selling, theme);
+        StyleTab(buyText, "BuyTabFrame", !selling, theme);
+        if (sellTabBackground) sellTabBackground.color = Color.clear;
+        if (buyTabBackground) buyTabBackground.color = Color.clear;
+    }
+    void StyleTab(TextMeshProUGUI text, string frameName, bool chosen, ShopVisualTheme theme)
+    {
+        var button = text ? text.GetComponent<Button>() : null;
+        var frame = transform.Find(frameName)?.GetComponent<Image>();
+        if (!button || !frame) return;
+        button.targetGraphic = frame;
+        GoldButtonFeedback.Apply(button, theme.CardFrame, theme.SelectedFrame, frame).SetChosen(chosen);
+        text.color = HomeUi.Cream;
     }
 
 }

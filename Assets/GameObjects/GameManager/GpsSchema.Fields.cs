@@ -23,8 +23,14 @@ public static partial class GpsSchema
         ["item"] = "Item", ["itemId"] = "Item", ["amount"] = "Anzahl", ["money"] = "Startgeld", ["items"] = "Startitems",
         ["scale"] = "Icon-Skalierung X/Y", ["offset"] = "Icon-Versatz X/Y", ["flipX"] = "Horizontal spiegeln", ["flipY"] = "Vertikal spiegeln",
         ["tile"] = "Sprite-Tile", ["chancePercent"] = "Fundchance pro Zelle (%)", ["cash"] = "Geld ($)", ["artifactPoints"] = "Artefaktpunkte",
-        ["clip"] = "Clip", ["volume"] = "Lautstärke (%)", ["pitch"] = "Pitch (%)", ["pitchSpread"] = "Pitch-Streuung (%)",
-        ["volumeSpread"] = "Lautstärke-Spread ± (%)",
+        ["clip"] = "Clip", ["volume"] = "Lautstärke (%)", ["pitch"] = "Pitch (%)", ["pitchSpread"] = "Pitch-Streuung ± (%)",
+        ["volumeSpread"] = "Lautstärkestreuung ± (%)",
+        ["xpMultiplier"] = "XP-Multiplikator", ["depthStep"] = "Tiefenstufe (Blöcke)",
+        ["depthBaseXp"] = "Tiefen-XP am Anfang", ["depthIncrementXp"] = "XP-Zuwachs pro Tiefenstufe",
+        ["depthMaxXp"] = "Maximale XP pro Tiefenstufe", ["explorationRegionSize"] = "Erkundungsgebiet (Blöcke)",
+        ["explorationCellThreshold"] = "Entdeckte Zellen pro Gebiet", ["explorationXp"] = "Erkundungs-XP",
+        ["resourceXpMultiplier"] = "Ressourcen-XP-Multiplikator", ["discoveryXp"] = "Entdeckungs-XP",
+        ["efficiencyMaxBonus"] = "Maximaler Effizienzbonus", ["efficiencyReferenceXpPerMinute"] = "Effizienzreferenz (XP/min)",
         ["layerIndex"] = "Layer", ["breaking"] = "Bruch", ["soundType"] = "Soundtyp", ["clipIndex"] = "Clip", ["tuning"] = "Klang",
     };
     public static GpsFieldSpec ChildSpec(GpsValue node, Type parent)

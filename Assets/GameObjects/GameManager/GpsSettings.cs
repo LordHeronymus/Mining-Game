@@ -175,6 +175,21 @@ public static class GpsSettings
         savedJson=JsonUtility.ToJson(committed);Warning=null;dirty=savedJson!=JsonUtility.ToJson(document);
         Saved?.Invoke();Changed?.Invoke();return true;
     }
+    public static void PreviewMasterVolume(float value)
+    {
+        float volume = Mathf.Clamp01(value);
+        if (Mathf.Approximately(Preferences.masterVolume, volume)) return;
+        Preferences.masterVolume = volume;
+        AudioListener.volume = volume;
+        dirty = true;
+    }
+    public static void PreviewMusicVolume(float value)
+    {
+        float volume = Mathf.Clamp01(value);
+        if (Mathf.Approximately(Preferences.musicVolume, volume)) return;
+        Preferences.musicVolume = volume;
+        dirty = true;
+    }
     static bool Persist(GpsDocument data, out string error)
     {
         error=null;
@@ -346,6 +361,7 @@ public static class GpsSettings
                 var workbench=Object.FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include);
                 if (workbench && workbench.IsOpen) { workbench.RefreshRecipeSettings(recipe); workbench.RefreshRecipeIcons(); }
                 Object.FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include)?.RefreshHotbarIconLayouts();
+                Object.FindFirstObjectByType<InventoryUI>(FindObjectsInactive.Include)?.RefreshIconLayouts();
             }
         }
         finally { applying = false; }

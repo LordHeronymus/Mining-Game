@@ -1,0 +1,821 @@
+[
+  {
+    "clip": "Vogelruf 01",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897563334528627e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Vogelruf 02",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896575596859194e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Vogelruf 03",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.189690164160595e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Vogelruf 04",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897307172770155e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "PlaceTorch 01",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897131196522692e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "RemoveTorch 01",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896832426139259e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "MetalHitBlunt",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897045532061057e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Energiewarnung",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897280288025724e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Altar-Ambiente",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897556839723933e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Lade-Spitzhacke",
+    "ffmpeg_true_peak": -1.1,
+    "max_waveform_error": 1.1897008354855299e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Ger\u00f6ll 01",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.189521319153175e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "alert",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897475928404622e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "H\u00f6hlen-Ambiente",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897644945635388e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "H\u00f6hlen-Tribal-Musik",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896679463774262e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Geisterfl\u00fcstern 01",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897644918226757e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Geisterfl\u00fcstern 02",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897625474114617e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Geisterfl\u00fcstern 03",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897575677433103e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Fallende Steine 01",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897640519999031e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Fallende Steine 02",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897520676290574e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Kiesrutsch 01",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897642919855563e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Kiesrutsch 02",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.189758653889859e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Sandrieseln 01",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896655910392795e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Sandrieseln 02",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1813124520254625e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Wiesen-Ambiente",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897645296396475e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Untergrund-Ambiente",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897567925300834e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Wind",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897645681244878e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "click",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1846814931219113e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "door",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1843886382756352e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "DryGrass",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897301897165712e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Hurt",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897605356470109e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "ClayBreak L1L2",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896880716677494e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Dirt Crumble",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1889180004387434e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "DirtHit 01",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1893650066424968e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "DirtHit 02",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897143638306407e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "DirtHit 03",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1891118730650296e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "DirtHit 04",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896947300221727e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "DirtHit 05",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.18898226954961e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "DirtHit 06",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897297174170984e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "OreBreak",
+    "ffmpeg_true_peak": -1.1,
+    "max_waveform_error": 1.1897377031472312e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Pickaxe2",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.189663463019297e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Stone Thud",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1892978853123015e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "StoneBreak",
+    "ffmpeg_true_peak": -1.3,
+    "max_waveform_error": 1.1896617724618808e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "StoneBreak L3",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896695417679126e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "TransitionStone Crumble",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1895718959181734e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Mining",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1892935397606053e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Mining2",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1895867776945401e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Money v1",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897399646021434e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Ore Digging",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1893600580792363e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Pickaxe 1",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1895947419487962e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "pickaxe 3",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897397975135782e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "recharge",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896839266500869e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "OldTreeFalls",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897643612934078e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Bling",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897500790114535e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Crafting",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896333132477288e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Crafting2",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897549322126277e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "DingLight",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897645192495772e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "ItemInBag",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897558986718197e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Wood 01",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1893501976507903e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Wood 02",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896800243549333e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Wood 03",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.18778758051441e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Wood 04",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1893518226877009e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Wood 05",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1895259230398914e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "LadderRemove",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897561241758225e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "WoodChopping 01",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896989188069085e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "WoodChopping 02",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896501729558029e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "WoodChopping 03",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1889543022336468e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "WoodChopping 04",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.189674394899698e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "WoodChopping 05",
+    "ffmpeg_true_peak": -1.1,
+    "max_waveform_error": 1.1897377041880652e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "ArtifactCollected",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897489748946555e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "BoneBreaking 01",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.189763253681142e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Cloth1",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897210333566832e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Ding4",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897107872471668e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Game-over-Musik",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897586660314374e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Men\u00fcklick",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1846814931219113e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Homescreen-Musik",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.189763924047682e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "HotbarError",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897618353561239e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Hurt2",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897624013768038e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Ger\u00f6ll 02",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.189758091768578e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Ger\u00f6ll 03",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896341524375575e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Lade-Ambiente",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897645685321478e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "OreBreakV3",
+    "ffmpeg_true_peak": -1.1,
+    "max_waveform_error": 1.1897109622460711e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Paper1",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896440960112997e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "PickaxeHitL3Plus",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897522128601068e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "PickaxeStoneHitL3Plus",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896175101944184e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Herzschlag",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897550700190607e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Altar aufladen",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897510499014885e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Altar vollst\u00e4ndig geladen",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.189722422245687e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "WalkOnGrass",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897394070620182e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Froschquaken 01",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896349200180012e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Froschquaken 02",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1893314889876994e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Froschquaken 03",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1893923351768976e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Froschquaken 04",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896232883501501e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Froschquaken 05",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.189755037822593e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Froschquaken 06",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896875021233377e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Froschquaken 07",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.189602265002157e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Entfernte Spitzhacke 01",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897633377805361e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Entfernte Spitzhacke 02",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.189694803643837e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Entfernte Spitzhacke 03",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1885945920813573e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Entfernte Spitzhacke 04",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.188890842163115e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Entfernte Spitzhacke 05",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1893653063810294e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Entfernte Spitzhacke 06",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896025384899866e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Entfernte Spitzhacke 07",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1894811687701567e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Entfernte Spitzhacke 08",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.189390062689144e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Wassertropfen 02",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897042396721846e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "Wassertropfen 03",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896761011650353e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "ArtifactCollected Old",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897645635361442e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "FrogCroak 01",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.189715855623441e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "FrogCroak 02",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896618984374996e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "FrogCroak 03",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1896937510136318e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "HeartBeating-loop",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897569163199506e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "ErdkruemelRollen",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897521169472458e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "GravelSlide",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897642919855563e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "SandrieselnFein",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1894412432766899e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "SandrieselnSchuebe",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.189625872255462e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "LowEnergyBip Old",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897280288025724e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "OreBreak Old",
+    "ffmpeg_true_peak": -1.3,
+    "max_waveform_error": 1.1896617724618808e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  },
+  {
+    "clip": "epic upgrade boom",
+    "ffmpeg_true_peak": -1.2,
+    "max_waveform_error": 1.1897634105879646e-07,
+    "hash_ok": true,
+    "timing_ok": true
+  }
+]

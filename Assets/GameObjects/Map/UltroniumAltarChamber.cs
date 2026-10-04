@@ -260,12 +260,12 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
         {
             altarAmbienceCurrent=0;
             var first=altarAmbienceSources[altarAmbienceCurrent];
-            first.pitch=AudioManager.TunedPitch(altarAmbienceClip,1f);
+            first.pitch=AudioManager.TunedPitch(altarAmbienceClip,1f, first);
             first.volume=0f;
             first.Play();
             altarAmbienceNextStart=now+AltarAmbienceSegmentDuration(first)-crossfade;
             var next=altarAmbienceSources[1-altarAmbienceCurrent];
-            next.pitch=AudioManager.TunedPitch(altarAmbienceClip,1f);
+            next.pitch=AudioManager.TunedPitch(altarAmbienceClip,1f, next);
             next.volume=0f;
             next.PlayScheduled(altarAmbienceNextStart);
             altarAmbienceRunning=true;
@@ -277,11 +277,11 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
         }
         float loopBlend=altarAmbienceTransitioning ? Mathf.SmoothStep(0f,1f,
             Mathf.Clamp01((float)(now-altarAmbienceTransitionStart)/Mathf.Max(.01f,crossfade))) : 0f;
-        float ambienceVolume=AudioManager.TunedAmbienceVolume(altarAmbienceClip,
+        float ambienceVolume=(
             altarAmbienceGain*AudioManager.GetAmbienceVolume(AmbienceType.Cave));
         float angle=loopBlend*Mathf.PI*.5f;
-        altarAmbienceSources[altarAmbienceCurrent].volume=ambienceVolume*Mathf.Cos(angle);
-        altarAmbienceSources[1-altarAmbienceCurrent].volume=ambienceVolume*Mathf.Sin(angle);
+        altarAmbienceSources[altarAmbienceCurrent].volume=AudioManager.TunedAmbienceVolume(altarAmbienceClip,ambienceVolume*Mathf.Cos(angle),altarAmbienceSources[altarAmbienceCurrent]);
+        altarAmbienceSources[1-altarAmbienceCurrent].volume=AudioManager.TunedAmbienceVolume(altarAmbienceClip,ambienceVolume*Mathf.Sin(angle),altarAmbienceSources[1-altarAmbienceCurrent]);
         if(altarAmbienceTransitioning && loopBlend>=1f)
         {
             altarAmbienceSources[altarAmbienceCurrent].Stop();
@@ -290,7 +290,7 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
             altarAmbienceNextStart=altarAmbienceTransitionStart+
                 AltarAmbienceSegmentDuration(altarAmbienceSources[altarAmbienceCurrent])-crossfade;
             var next=altarAmbienceSources[1-altarAmbienceCurrent];
-            next.pitch=AudioManager.TunedPitch(altarAmbienceClip,1f);
+            next.pitch=AudioManager.TunedPitch(altarAmbienceClip,1f, next);
             next.volume=0f;
             next.PlayScheduled(altarAmbienceNextStart);
         }
@@ -565,6 +565,7 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
         velocity.enabled=true; velocity.space=ParticleSystemSimulationSpace.World;
         velocity.x=new ParticleSystem.MinMaxCurve(-.1f*CellSize,.1f*CellSize);
         velocity.y=new ParticleSystem.MinMaxCurve(.1f*CellSize,.34f*CellSize);
+        velocity.z=new ParticleSystem.MinMaxCurve(0f,0f);
         var color=buttonMotes.colorOverLifetime; color.enabled=true;
         var gradient=new Gradient();
         gradient.SetKeys(new[]{new GradientColorKey(Color.white,0f),

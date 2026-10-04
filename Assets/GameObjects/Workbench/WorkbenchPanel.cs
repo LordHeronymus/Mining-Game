@@ -165,6 +165,8 @@ public sealed class WorkbenchPanel : MonoBehaviour
     public void RefreshRecipeIcons()
     {
         foreach (var row in rows) ApplyRecipeIconLayout(row.recipe, row.icon);
+        if (SelectedRecipe && outputIcon)
+            ApplyRecipeIconLayout(SelectedRecipe, outputIcon.rectTransform, new Vector2(1245f, -342.5f));
     }
 
     public void SetFilter(bool onlyCraftable)
@@ -201,6 +203,8 @@ public sealed class WorkbenchPanel : MonoBehaviour
         if (favorite) PlayerPrefs.SetInt(recipe.FavoriteKey, 1);
         else PlayerPrefs.DeleteKey(recipe.FavoriteKey);
         PlayerPrefs.Save();
+        if (favorite) AudioManager.Instance?.PlayWorkshopFavorite();
+        else AudioManager.Instance?.PlayWorkshopUnfavorite();
         foreach (var row in rows) if (row.recipe == recipe) row.favorite = favorite;
         Refresh();
     }
@@ -250,10 +254,11 @@ public sealed class WorkbenchPanel : MonoBehaviour
     void Refresh()
     {
         if (!layout) return;
-        for (int i = 0; i < categoryTabs.Count; i++) categoryTabs[i].sprite = i == (int)SelectedCategory ? actionSprite : rowSprite;
+        for (int i = 0; i < categoryTabs.Count; i++) GoldButtonFeedback.Select(categoryTabs[i], i == (int)SelectedCategory);
         craftableCheck.filled = OnlyCraftable;
+        GoldButtonFeedback.Select(craftableCheck.transform.parent.GetComponent<Image>(), OnlyCraftable);
         craftableCheck.SetVerticesDirty();
-        favoriteFilter.sprite = OnlyFavorites ? selectedRowSprite : rowSprite;
+        GoldButtonFeedback.Select(favoriteFilter, OnlyFavorites);
         favoriteFilterStar.filled = OnlyFavorites;
         favoriteFilterStar.SetVerticesDirty();
         string query = SearchQuery.Trim();
@@ -263,6 +268,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
         foreach (var row in rows)
         {
             row.star.filled = row.favorite;
+            GoldButtonFeedback.Select(row.star.transform.parent.GetComponent<Image>(), row.favorite);
             row.star.color = row.favorite ? new Color32(255, 199, 70, 255) : Muted;
             row.star.SetVerticesDirty();
             bool show = RecipeUnlocks.IsUnlocked(row.recipe) && !CraftingService.IsOwnedPowerup(row.recipe, inventory)
@@ -282,7 +288,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
         recipeContent.sizeDelta = new Vector2(GridWidth, Mathf.Max(GridHeight, ((visible + 3) / 4) * RowPitch - (RowPitch - CardHeight)));
         emptyText.gameObject.SetActive(visible == 0);
         if (!selectionVisible) { SelectedRecipe = first; Quantity = 1; }
-        foreach (var row in rows) row.image.sprite = row.recipe == SelectedRecipe ? selectedRowSprite : rowSprite;
+        foreach (var row in rows) GoldButtonFeedback.Select(row.image, row.recipe == SelectedRecipe);
         details.gameObject.SetActive(SelectedRecipe);
         if (!SelectedRecipe) return;
         quantityControls.gameObject.SetActive(SelectedRecipe.output.category != ItemCategory.Powerup);
@@ -308,7 +314,9 @@ public sealed class WorkbenchPanel : MonoBehaviour
                 ingredientScroll.StopMovement(); ingredientScroll.verticalNormalizedPosition = 1;
             }
             outputIcon.sprite = SelectedRecipe.output.icon;
+            ApplyRecipeIconLayout(SelectedRecipe, outputIcon.rectTransform, new Vector2(1245f, -342.5f));
             outputName.text = SelectedRecipe.output.displayName;
+            outputName.color = SelectedRecipe.exotic ? ExoticDesign.Cyan : Cream;
         }
         int max = CraftingService.GetMaxCraftable(SelectedRecipe, inventory);
         Quantity = Mathf.Clamp(Quantity, 1, Mathf.Max(1, max));
@@ -380,7 +388,10 @@ public sealed class WorkbenchPanel : MonoBehaviour
         {
             var category = (CraftingRecipe.RecipeCategory)i;
             var tab = Button("Category_" + category, layout, categories[i], 524 + i * 158, 137, 148, 49, () => SetCategory(category));
-            tab.GetComponentInChildren<TextMeshProUGUI>().fontSizeMax = 25;
+            var label = tab.GetComponentInChildren<TextMeshProUGUI>();
+            label.fontSizeMax = 25;
+            if (category == CraftingRecipe.RecipeCategory.Tools)
+                label.rectTransform.anchoredPosition += Vector2.down * 3f;
             categoryTabs.Add(tab.GetComponent<Image>());
         }
         favoriteFilter = Button("Favorites", layout, "", 1166, 137, 49, 49, () => SetFavoritesOnly(!OnlyFavorites)).GetComponent<Image>();
@@ -398,10 +409,11 @@ public sealed class WorkbenchPanel : MonoBehaviour
         {
             if (!recipe || !recipe.output) continue;
             var button = Button(recipe.name, recipeContent, "", 0, 0, CardWidth, CardHeight, () => SelectRecipe(recipe));
+            if (recipe.exotic) ExoticDesign.AddSeal(button.transform, new Vector2(-65, 65), 25);
             var iconArea = Rect("Icon Area", button.transform, 2, 10, 174, 130);
             var icon = Icon(iconArea, recipe.output.icon, 20, 12, 134, 106);
             ApplyRecipeIconLayout(recipe, icon.rectTransform);
-            var name = Label(button.transform, recipe.output.displayName, 10, 140, CardWidth - 20, 30, 23, TextAlignmentOptions.Midline);
+            var name = Label(button.transform, recipe.output.displayName, 14, 128, CardWidth - 28, 28, 21, TextAlignmentOptions.Midline);
             name.fontSizeMin = 15;
             var favorite = Button("Favorite", button.transform, "", CardWidth - 36, 5, 32, 32, () => ToggleFavorite(recipe));
             favorite.GetComponent<Image>().color = Color.clear;
@@ -415,8 +427,6 @@ public sealed class WorkbenchPanel : MonoBehaviour
         var shader = Resources.Load<Shader>("Workbench/ItemGlow");
         if (shader) { glowMaterial = new Material(shader); glow.material = glowMaterial; }
         else glow.color = Color.clear;
-        var ornament = Rect("Preview Ornament", details, 1050, 240, 390, 252).gameObject.AddComponent<WorkbenchPreviewOrnament>();
-        ornament.color = new Color(1, .72f, .28f, .52f); ornament.raycastTarget = false;
         outputIcon = Icon(details, null, 1110, 235, 270, 215);
         outputName = Label(details, "", 1000, 455, 490, 44, 39, TextAlignmentOptions.Midline);
         resultText = Label(details, "", 1000, 499, 490, 34, 24, TextAlignmentOptions.Midline);
@@ -446,10 +456,16 @@ public sealed class WorkbenchPanel : MonoBehaviour
 
     public static void ApplyRecipeIconLayout(CraftingRecipe recipe, RectTransform icon)
     {
-        if (!recipe || !icon) return;
-        var settings = recipe.CardIconLayout;
+        ApplyRecipeIconLayout(recipe, icon, new Vector2(87f, -65f));
+    }
+
+    public static void ApplyRecipeIconLayout(CraftingRecipe recipe, RectTransform icon, Vector2 center)
+    {
+        if (!icon) return;
+        var settings = recipe ? recipe.CardIconLayout : new CraftingRecipe.RecipeIconLayout { scale = Vector2.one };
         icon.pivot = new Vector2(.5f, .5f);
-        icon.anchoredPosition = new Vector2(87f + settings.offset.x, -65f + settings.offset.y);
+        icon.anchoredPosition = center + new Vector2(settings.offset.x * icon.rect.width / 134f,
+            settings.offset.y * icon.rect.height / 106f);
         icon.localScale = new Vector3(settings.scale.x * (settings.flipX ? -1f : 1f),
             settings.scale.y * (settings.flipY ? -1f : 1f), 1f);
     }
@@ -488,7 +504,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
         searchField.characterLimit = 80;
         searchField.lineType = TMP_InputField.LineType.SingleLine;
         searchField.customCaretColor = true; searchField.caretColor = Cream;
-        LichtfadenCaret.Apply(searchField);
+        HomeUi.StyleInputField(searchField, true);
         searchField.onValueChanged.AddListener(SetSearch);
     }
 
@@ -543,6 +559,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
         image.type = sprite ? Image.Type.Sliced : Image.Type.Simple;
         image.pixelsPerUnitMultiplier = 5;
         image.raycastTarget = false;
+        HomeUi.StylePanelWood(image);
         return image;
     }
 
@@ -579,12 +596,14 @@ public sealed class WorkbenchPanel : MonoBehaviour
         image.raycastTarget = true;
         var button = image.gameObject.AddComponent<Button>();
         button.targetGraphic = image;
+        GoldButtonFeedback.Apply(button, rowSprite, selectedRowSprite);
         button.navigation = new Navigation { mode = Navigation.Mode.None };
         var colors = button.colors;
         colors.highlightedColor = new Color(1.12f, 1.08f, 1f);
         colors.pressedColor = new Color(.8f, .7f, .6f);
         colors.disabledColor = new Color(.45f, .45f, .45f);
         button.colors = colors;
+        HomeClickAudio.Bind(button);
         button.onClick.AddListener(action);
         Label(image.transform, caption, 8, 0, width - 16, height, 29, TextAlignmentOptions.Center);
         return button;

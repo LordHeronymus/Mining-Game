@@ -42,7 +42,7 @@ public class TileMiner : MonoBehaviour
     private float nextGrassCutTime;
     private float grassSwingUntil;
     private bool grassClickConsumed;
-    private bool smartCursor = true;
+    private bool smartCursor = false;
     private Vector3Int? highlightedCell;
     private Vector3Int? highlightedPointerCell;
     private bool highlightedSmartCursor;
@@ -176,6 +176,20 @@ public class TileMiner : MonoBehaviour
 
         Vector3 mouseWorld = _cam.ScreenToWorldPoint(Input.mousePosition);
         mouseWorld.z = 0f;
+        var boulder = BoulderField.At(mouseWorld);
+        if (boulder)
+        {
+            ClearHighlight(); ClearTreeGlow(); ClearGrassSelection();
+            UpdateToolCursor(ToolCursor.None);
+            if (stats && GameBindings.Held(GameAction.Mine) &&
+                Vector2.Distance(transform.position, boulder.HitPoint) <= stats.Reach)
+            {
+                mining = true; miningTargetActive = true;
+                MiningTarget = boulder.HitPoint;
+                if (TryBeginMiningHit(continuedMining)) boulder.Hit();
+            }
+            return;
+        }
         if (grassClickConsumed)
         {
             ClearHighlight();
@@ -496,14 +510,46 @@ public class TileMiner : MonoBehaviour
         }
         float orientationScale = Mathf.Abs(highlightMap.orientationMatrix.lossyScale.x);
         float frameScale = orientationScale / Mathf.Max(.001f, highlightMap.cellSize.x);
-        normalHighlightTile = CreateAssetHighlightTile("Normal Cursor", "Cursor/NormalCursorFrame", frameScale);
-        smartHighlightTile = CreateAssetHighlightTile("Smart Cursor", "Cursor/SmartCursorFrame", frameScale);
+        normalHighlightTile = CreateHighlightTile("Normal Cursor", false, frameScale);
+        smartHighlightTile = CreateHighlightTile("Smart Cursor", true, frameScale);
     }
 
-    static Tile CreateAssetHighlightTile(string name, string resourcePath, float frameScale)
+    static Tile CreateHighlightTile(string name, bool cornersOnly, float frameScale)
     {
-        var texture = Resources.Load<Texture2D>(resourcePath);
-        if (!texture) return null;
+        const int resolution = 512;
+        const float halfFrame = .425f;
+        const float armLength = .85f * .22f;
+        var texture = new Texture2D(resolution, resolution, TextureFormat.RGBA32, true)
+        {
+            name = name + " Texture",
+            hideFlags = HideFlags.HideAndDontSave
+        };
+        var pixels = new Color[resolution * resolution];
+        for (int y = 0; y < resolution; y++)
+        for (int x = 0; x < resolution; x++)
+        {
+            var p = new Vector2(Mathf.Abs((x + .5f) / resolution - .5f),
+                Mathf.Abs((y + .5f) / resolution - .5f));
+            float end = cornersOnly ? halfFrame - armLength : 0f;
+            var horizontal = new Vector2(Mathf.Clamp(p.x, end, halfFrame), halfFrame);
+            var vertical = new Vector2(halfFrame, Mathf.Clamp(p.y, end, halfFrame));
+            float horizontalDistance = Vector2.Distance(p, horizontal);
+            float verticalDistance = Vector2.Distance(p, vertical);
+            bool nearestHorizontal = horizontalDistance < verticalDistance;
+            float distance = Mathf.Min(horizontalDistance, verticalDistance);
+            float taper = cornersOnly ? Mathf.SmoothStep(0f, 1f,
+                ((nearestHorizontal ? horizontal.x : vertical.y) - end) / armLength) : 1f;
+            float width = cornersOnly ? Mathf.Lerp(.0006f, .006f, taper) : .0045f;
+            float core = 1f - Mathf.SmoothStep(0f, 1f,
+                Mathf.InverseLerp(width - .001f, width + .001f, distance));
+            float halo = Mathf.Exp(-distance * distance / (.012f * .012f)) * .28f;
+            float alpha = Mathf.Max(core * .98f, halo) * (cornersOnly ? taper : 1f);
+            var color = Color.Lerp(new Color(1f, .57f, .12f), new Color(1f, .86f, .4f), core);
+            color.a = alpha;
+            pixels[y * resolution + x] = color;
+        }
+        texture.SetPixels(pixels);
+        texture.Apply(true, true);
         texture.filterMode = FilterMode.Trilinear;
         texture.wrapMode = TextureWrapMode.Clamp;
         // The gold outline spans 85% of the texture; the remaining space holds its soft halo.
@@ -526,6 +572,7 @@ public class TileMiner : MonoBehaviour
         if (!tile) return;
         if (tile.sprite)
         {
+            Destroy(tile.sprite.texture);
             Destroy(tile.sprite);
         }
         Destroy(tile);
@@ -597,11 +644,11 @@ public class TileMiner : MonoBehaviour
     }
 
     // One transaction for rewards, effects and both render layers. Effects read the cell before removal.
-    public bool CompleteMining(Vector3Int cell)
+    public bool CompleteMining(Vector3Int cell, bool explosive = false)
     {
         if (map && map.IsCellProtected(cell)) return false;
         if (!tilemap || !tilemap.HasTile(cell)) return false;
-        if (!CanMineBlock(cell)) return false;
+        if (!explosive && !CanMineBlock(cell)) return false;
         var block = GetBlock(cell);
         var ore = map ? map.GetOreAt(cell) : null;
         var artifact = map ? map.GetArtifactAt(cell) : null;
@@ -614,6 +661,7 @@ public class TileMiner : MonoBehaviour
         if (block && block.itemDrop && amount > 0 &&
             (!inventory || !inventory.CanAdd(block.itemDrop, amount))) return false;
         if (block && block.itemDrop && amount > 0) inventory.Add(block.itemDrop, amount);
+        MetaProgressionRuntime.RecordMining(cell, block && block.itemDrop ? block.itemDrop : null, amount, artifact);
         int points = BlockRegistry.GetPoints(block, ore);
         Vector2 minedPosition = tilemap.GetCellCenterWorld(cell);
         OnBlockMined?.Invoke(minedPosition, points);

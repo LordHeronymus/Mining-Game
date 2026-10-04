@@ -1,0 +1,938 @@
+[
+  {
+    "path": "Assets/Resources/BirdChirps/BirdChirp_01.wav",
+    "guid": "9a7de517d555400f9601e06fdfd04a7e",
+    "name": "Vogelruf 01",
+    "category": "Tiere",
+    "volume": 0.800000011920929,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/BirdChirps/BirdChirp_02.wav",
+    "guid": "d5cb81569a1d45b7a5562e3d5cfd07e9",
+    "name": "Vogelruf 02",
+    "category": "Tiere",
+    "volume": 0.800000011920929,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/BirdChirps/BirdChirp_03.wav",
+    "guid": "e5a6750511344a82a6947a85f3622b5c",
+    "name": "Vogelruf 03",
+    "category": "Tiere",
+    "volume": 0.800000011920929,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/BirdChirps/BirdChirp_04.wav",
+    "guid": "954408e019f243ff84daa68c758ad9e6",
+    "name": "Vogelruf 04",
+    "category": "Tiere",
+    "volume": 0.800000011920929,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Torches/PlaceTorch_01.wav",
+    "guid": "0d8a0d89d40ee6b4a88475b0d14c65ea",
+    "name": "PlaceTorch 01",
+    "category": "Bauen und Pflanzen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Torches/RemoveTorch_01.wav",
+    "guid": "281c17b147ba2f04bbd0646fc1354a0a",
+    "name": "RemoveTorch 01",
+    "category": "Bauen und Pflanzen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/MetalHitBlunt.wav",
+    "guid": "a96c0bd74afe00d42b6c065c1ad4b85d",
+    "name": "MetalHitBlunt",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/LowEnergyBip.wav",
+    "guid": "20c086e45f332dc458b0dab570701a5a",
+    "name": "Energiewarnung",
+    "category": "Spieler und Gesundheit",
+    "volume": 0.25,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/UltroniumAltarAmbience.wav",
+    "guid": "2c103af800e987443a72f2ca5ea716ee",
+    "name": "Altar-Ambiente",
+    "category": "Altar",
+    "volume": 0.38999998569488525,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/LoadingPickaxeHit.wav",
+    "guid": "c3fcae6935dabec43b5577ed0fc44d9b",
+    "name": "Lade-Spitzhacke",
+    "category": "Ladebildschirm",
+    "volume": 0.73000001907348633,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/LightRubble01.wav",
+    "guid": "a4b89e5ae3ea6304a97ad7b1e084d6e2",
+    "name": "Geröll 01",
+    "category": "Geröll",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/alert.wav",
+    "guid": "2b831b337fe77be4e8e6c752d466fb27",
+    "name": "alert",
+    "category": "Shop und UI",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Ambience/CaveAmbience.mp3",
+    "guid": "8b8cf15dba7953248bf04c6e3412ded4",
+    "name": "Höhlen-Ambiente",
+    "category": "Umgebung",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Ambience/CaveTribalSong.wav",
+    "guid": "6ef7394397cafa145b5c03ad63ddb709",
+    "name": "Höhlen-Tribal-Musik",
+    "category": "Umgebung",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Ambience/GhostWhispers/dragon-studio-creepy-ghost-sound-487677.mp3",
+    "guid": "db75d99273639714aa8b630bccbd9664",
+    "name": "Geisterflüstern 01",
+    "category": "Untergrund-Details",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Ambience/GhostWhispers/ghost whisper.mp3",
+    "guid": "b8d18c896beb1fe48a3e77cf982de260",
+    "name": "Geisterflüstern 02",
+    "category": "Untergrund-Details",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Ambience/GhostWhispers/ghost1.mp3",
+    "guid": "bbaa1574a0786074a8b028b073e8ddb2",
+    "name": "Geisterflüstern 03",
+    "category": "Untergrund-Details",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Ambience/Layer1Details/freesound_community-rocks-6129.mp3",
+    "guid": "204e2315bfbb4744383d35fa322274d0",
+    "name": "Fallende Steine 01",
+    "category": "Untergrund-Details",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Ambience/Layer1Details/freesound_community-stones-falling-6375.mp3",
+    "guid": "1fef2fc821db98040809720b16de6b39",
+    "name": "Fallende Steine 02",
+    "category": "Untergrund-Details",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Ambience/Layer1Details/gravel slide.mp3",
+    "guid": "67f489b4dd04fa946a23110bfc7dc2bb",
+    "name": "Kiesrutsch 01",
+    "category": "Untergrund-Details",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Ambience/Layer1Details/gravel_slide_trocken_variante.mp3",
+    "guid": "2631be0872fc60d478566faac3fed5dd",
+    "name": "Kiesrutsch 02",
+    "category": "Untergrund-Details",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Ambience/Layer1Details/Sandrieseln_02_Weich_Laenger_weicher_Ausklang.wav",
+    "guid": "5dfc8fa2c1b18c94d98307b109e19e6d",
+    "name": "Sandrieseln 01",
+    "category": "Untergrund-Details",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Ambience/Layer1Details/Sandrieseln_03_Zwei_Schuebe_weicher_Ausklang_laut.wav",
+    "guid": "4f6149eb5e2682c458fea699936e103d",
+    "name": "Sandrieseln 02",
+    "category": "Untergrund-Details",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Ambience/MeadowAmbience.mp3",
+    "guid": "2f0bce0d3c54a2540bf41f9cd50b8bbc",
+    "name": "Wiesen-Ambiente",
+    "category": "Umgebung",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Ambience/UndergroundClay.wav",
+    "guid": "a392f9923b0463744add90dfebbb65eb",
+    "name": "Untergrund-Ambiente",
+    "category": "Umgebung",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Ambience/WindAmbience.mp3",
+    "guid": "0052a48ee2cb1084eb97f1792eecf361",
+    "name": "Wind",
+    "category": "Umgebung",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/click.wav",
+    "guid": "fae931fb89e1309499c2bf2610cbe419",
+    "name": "click",
+    "category": "Shop und UI",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/door.wav",
+    "guid": "189ca89c0c5ba974484c32b33692c881",
+    "name": "door",
+    "category": "Shop und UI",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Grass/DryGrass.mp3",
+    "guid": "e8ccbf6a598fa344ba389282895e2a64",
+    "name": "DryGrass",
+    "category": "Bauen und Pflanzen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Hurt.wav",
+    "guid": "cd7a73148ae4aad4fbfd3e2e03042f99",
+    "name": "Hurt",
+    "category": "Spieler und Gesundheit",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining/ClayBreak_L1L2.wav",
+    "guid": "12850712a40fd9c4c9f9b24832e26b67",
+    "name": "ClayBreak L1L2",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining/Dirt_Crumble.wav",
+    "guid": "107ac3de248d26947bbc6f917418b600",
+    "name": "Dirt Crumble",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining/DirtHits/DirtHit_01.wav",
+    "guid": "112610f69aaa34841946ad822adff6ca",
+    "name": "DirtHit 01",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining/DirtHits/DirtHit_02.wav",
+    "guid": "fa7846fa02348a7469f81090bf6e618e",
+    "name": "DirtHit 02",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining/DirtHits/DirtHit_03.wav",
+    "guid": "415490ee8070920408732067b79754f8",
+    "name": "DirtHit 03",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining/DirtHits/DirtHit_04.wav",
+    "guid": "0593b5cd40d7f6844ac1762ae49037f7",
+    "name": "DirtHit 04",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining/DirtHits/DirtHit_05.wav",
+    "guid": "19b70ef0133cbf44b87e26ae5824f49f",
+    "name": "DirtHit 05",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining/DirtHits/DirtHit_06.wav",
+    "guid": "1d173552b66bc694997df7f98a4e9170",
+    "name": "DirtHit 06",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining/OreBreak.wav",
+    "guid": "6f973ea3974977947ada9bf699e5493a",
+    "name": "OreBreak",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining/Pickaxe2.wav",
+    "guid": "961fe52b92b24de48af263bfb8ce562c",
+    "name": "Pickaxe2",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining/Stone_Thud.wav",
+    "guid": "7bf82cb00f9ab9d47b6ba45935f91a9d",
+    "name": "Stone Thud",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining/StoneBreak.wav",
+    "guid": "0d479eb0c7b4b5342a626cd910484773",
+    "name": "StoneBreak",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining/StoneBreak_L3.wav",
+    "guid": "c0ed43e1cc855694bbf6024b44061805",
+    "name": "StoneBreak L3",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining/TransitionStone_Crumble.wav",
+    "guid": "29a576bf8ce35a143a6536688792ffce",
+    "name": "TransitionStone Crumble",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining.wav",
+    "guid": "2bbc662060df397469f27ba8ce97cc05",
+    "name": "Mining",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Mining2.wav",
+    "guid": "371a2835022069a45b95281d49130ac6",
+    "name": "Mining2",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Money v1.wav",
+    "guid": "1d63e9063d19d41429cf6925a15b8368",
+    "name": "Money v1",
+    "category": "Shop und UI",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Ore Digging.wav",
+    "guid": "356bd62bef0274942a3c0e74fc87673c",
+    "name": "Ore Digging",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Pickaxe 1.wav",
+    "guid": "659ba493410026342ab11953e2c9615b",
+    "name": "Pickaxe 1",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/pickaxe 3.wav",
+    "guid": "8a64251b0775f3b4592176acbb97ce28",
+    "name": "pickaxe 3",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/recharge.wav",
+    "guid": "821039f32e4183b4ca488bd55c1fd01c",
+    "name": "recharge",
+    "category": "Spieler und Gesundheit",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Trees/OldTreeFalls.mp3",
+    "guid": "c85072ca8c160c0458c74357a58911c0",
+    "name": "OldTreeFalls",
+    "category": "Bauen und Pflanzen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/UI/Bling.mp3",
+    "guid": "a7cccc1ca6efc9b409ced37a112ce91b",
+    "name": "Bling",
+    "category": "Shop und UI",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/UI/Crafting.wav",
+    "guid": "1974ff0bed5db83479585db9693976fd",
+    "name": "Crafting",
+    "category": "Shop und UI",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/UI/Crafting2.wav",
+    "guid": "1d73f8c16f72b2340be3641e729d7490",
+    "name": "Crafting2",
+    "category": "Shop und UI",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/UI/DingLight.mp3",
+    "guid": "5515fb34272c0e347a0638b9c5c60b50",
+    "name": "DingLight",
+    "category": "Shop und UI",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/UI/ItemInBag.mp3",
+    "guid": "f8ad356b30559dc4f97ea6a5df754ef9",
+    "name": "ItemInBag",
+    "category": "Shop und UI",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Wood/LadderPlace/Wood_01.wav",
+    "guid": "46cd43fcda63c8b4e9020e369733fd63",
+    "name": "Wood 01",
+    "category": "Bauen und Pflanzen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Wood/LadderPlace/Wood_02.wav",
+    "guid": "c915004dd297c054db895be073ca5cc9",
+    "name": "Wood 02",
+    "category": "Bauen und Pflanzen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Wood/LadderPlace/Wood_03.wav",
+    "guid": "96f68f030b80a5845a2888cacaa71b12",
+    "name": "Wood 03",
+    "category": "Bauen und Pflanzen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Wood/LadderPlace/Wood_04.wav",
+    "guid": "be3882af98f5178479a8e8f9b31e18d8",
+    "name": "Wood 04",
+    "category": "Bauen und Pflanzen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Wood/LadderPlace/Wood_05.wav",
+    "guid": "79da76b3ebc32c84db7210b928cb4fe7",
+    "name": "Wood 05",
+    "category": "Bauen und Pflanzen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Wood/LadderRemove.wav",
+    "guid": "ffcece7b00a6c2e499bfd5efa92f4acb",
+    "name": "LadderRemove",
+    "category": "Bauen und Pflanzen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/WoodChopping/WoodChopping_01.wav",
+    "guid": "6b55e5774acdb4e4184c4ba64d9477dd",
+    "name": "WoodChopping 01",
+    "category": "Bauen und Pflanzen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/WoodChopping/WoodChopping_02.wav",
+    "guid": "cb6317f1b1a383341806dfcc8658ee60",
+    "name": "WoodChopping 02",
+    "category": "Bauen und Pflanzen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/WoodChopping/WoodChopping_03.wav",
+    "guid": "3b7c9b77f192c7b4eaf0f4210baca682",
+    "name": "WoodChopping 03",
+    "category": "Bauen und Pflanzen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/WoodChopping/WoodChopping_04.wav",
+    "guid": "03eabd021c7fbb247b02545f95d50988",
+    "name": "WoodChopping 04",
+    "category": "Bauen und Pflanzen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/WoodChopping/WoodChopping_05.wav",
+    "guid": "00d6563d8e95ba14aaa3d7c85dbf9208",
+    "name": "WoodChopping 05",
+    "category": "Bauen und Pflanzen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/ArtifactCollected.wav",
+    "guid": "4383923a40a6a6e40b5ed30d3a1984a9",
+    "name": "ArtifactCollected",
+    "category": "Shop und UI",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/BoneBreaking_01.mp3",
+    "guid": "f4f47d7c12ca08a46a56d04db63734ff",
+    "name": "BoneBreaking 01",
+    "category": "Spieler und Gesundheit",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/Cloth1.wav",
+    "guid": "4464a10f870455e4fa2370208a648af1",
+    "name": "Cloth1",
+    "category": "Spieler und Gesundheit",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/Ding4.wav",
+    "guid": "bb425449475cc61479df426bcb21be62",
+    "name": "Ding4",
+    "category": "Shop und UI",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/GameOverMusic.wav",
+    "guid": "45498591e999f0941899b11150f8147c",
+    "name": "Game-over-Musik",
+    "category": "Spieler und Gesundheit",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/HomeClick.wav",
+    "guid": "627e6f6b877e5874e89a01894d63f3bf",
+    "name": "Menüklick",
+    "category": "Shop und UI",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/HomescreenAmbience.wav",
+    "guid": "1f67f6fcf834761418cf997d1d25f6da",
+    "name": "Homescreen-Musik",
+    "category": "Homescreen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/HotbarError.mp3",
+    "guid": "33d7eba132d89ad44ba25586e1ad61e0",
+    "name": "HotbarError",
+    "category": "Shop und UI",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/Hurt2.wav",
+    "guid": "7575acb5dae46a241ae0d8c7e29b0b6b",
+    "name": "Hurt2",
+    "category": "Spieler und Gesundheit",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/LightRubble02.wav",
+    "guid": "ccdd73218df811c4b8c0126e829e8fbf",
+    "name": "Geröll 02",
+    "category": "Geröll",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/LightRubble03.wav",
+    "guid": "72f882a481351f440b6d199556d1aadb",
+    "name": "Geröll 03",
+    "category": "Geröll",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/LoadingYogaAmbience.mp3",
+    "guid": "70d928afe9378e14ca59d28ee5220ce3",
+    "name": "Lade-Ambiente",
+    "category": "Ladebildschirm",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/OreBreakV3.wav",
+    "guid": "dddb56184226bb74d9e08b7f3a12a6d5",
+    "name": "OreBreakV3",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/Paper1.wav",
+    "guid": "192150a0f6a8c0b46a0bb33305d3cae0",
+    "name": "Paper1",
+    "category": "Shop und UI",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/PickaxeHitL3Plus.wav",
+    "guid": "13417bbca45d6e74c8206aaf69bf468e",
+    "name": "PickaxeHitL3Plus",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/PickaxeStoneHitL3Plus.wav",
+    "guid": "39a37d8748127444b9e2847c604c38ec",
+    "name": "PickaxeStoneHitL3Plus",
+    "category": "Abbau",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/SingleHeartBeat.wav",
+    "guid": "70257bf73205928488c278313da05ea1",
+    "name": "Herzschlag",
+    "category": "Spieler und Gesundheit",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/UltroniumChargeUp.wav",
+    "guid": "ec3cc61b045a650429316d5ffd83c91a",
+    "name": "Altar aufladen",
+    "category": "Altar",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/UltroniumFullCharge.wav",
+    "guid": "1d90479b59d59bf40aae03633b7dc2e6",
+    "name": "Altar vollständig geladen",
+    "category": "Altar",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/WalkOnGrass.mp3",
+    "guid": "d354f0b76d4482649b8e873d241a81f7",
+    "name": "WalkOnGrass",
+    "category": "Tiere",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/FrogCroaks/Frog_01.wav",
+    "guid": "67f1737f5433bc74f8cc0538c2beecb1",
+    "name": "Froschquaken 01",
+    "category": "Tiere",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/FrogCroaks/Frog_02.wav",
+    "guid": "7d277eeb83114974ab06bc818355981c",
+    "name": "Froschquaken 02",
+    "category": "Tiere",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/FrogCroaks/Frog_03.wav",
+    "guid": "dd68d055ed8dadb48a2f63373b2d1d36",
+    "name": "Froschquaken 03",
+    "category": "Tiere",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/FrogCroaks/Frog_04.wav",
+    "guid": "7bc6f4f6e669eed4ca48adb9769628da",
+    "name": "Froschquaken 04",
+    "category": "Tiere",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/FrogCroaks/Frog_05.wav",
+    "guid": "35fede82a4b19b442a95b785ea475708",
+    "name": "Froschquaken 05",
+    "category": "Tiere",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/FrogCroaks/Frog_06.wav",
+    "guid": "71619f9cda1827249ba7aec0d699787d",
+    "name": "Froschquaken 06",
+    "category": "Tiere",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/FrogCroaks/Frog_07.wav",
+    "guid": "e590abe6e0fdb6a44a7d3e90b90bd974",
+    "name": "Froschquaken 07",
+    "category": "Tiere",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe01.wav",
+    "guid": "80816eb163e52d14eb3f698ddf91c817",
+    "name": "Entfernte Spitzhacke 01",
+    "category": "Homescreen",
+    "volume": 0.800000011920929,
+    "volumeSpread": 0.15000000596046448
+  },
+  {
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe02.wav",
+    "guid": "8abf80becb7861549b87e0b078c34974",
+    "name": "Entfernte Spitzhacke 02",
+    "category": "Homescreen",
+    "volume": 0.800000011920929,
+    "volumeSpread": 0.15000000596046448
+  },
+  {
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe03.wav",
+    "guid": "82fd0828f354eba4781cbaa40fcfad74",
+    "name": "Entfernte Spitzhacke 03",
+    "category": "Homescreen",
+    "volume": 0.800000011920929,
+    "volumeSpread": 0.15000000596046448
+  },
+  {
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe04.wav",
+    "guid": "93eaa6e4787b3bf42b86498f5c14241b",
+    "name": "Entfernte Spitzhacke 04",
+    "category": "Homescreen",
+    "volume": 0.800000011920929,
+    "volumeSpread": 0.15000000596046448
+  },
+  {
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe05.wav",
+    "guid": "0640c8aefddab5e469939ff7fb03a22a",
+    "name": "Entfernte Spitzhacke 05",
+    "category": "Homescreen",
+    "volume": 0.800000011920929,
+    "volumeSpread": 0.15000000596046448
+  },
+  {
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe06.wav",
+    "guid": "db1435b5eab394b42bef39a5f1d5c026",
+    "name": "Entfernte Spitzhacke 06",
+    "category": "Homescreen",
+    "volume": 0.800000011920929,
+    "volumeSpread": 0.15000000596046448
+  },
+  {
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe07.wav",
+    "guid": "62b1710d58cfecc4d9f6296864128733",
+    "name": "Entfernte Spitzhacke 07",
+    "category": "Homescreen",
+    "volume": 0.800000011920929,
+    "volumeSpread": 0.15000000596046448
+  },
+  {
+    "path": "Assets/Resources/Audio/HomeDistantPickaxe08.wav",
+    "guid": "b09ba81f7db5beb4cae304e78d208a79",
+    "name": "Entfernte Spitzhacke 08",
+    "category": "Homescreen",
+    "volume": 0.800000011920929,
+    "volumeSpread": 0.15000000596046448
+  },
+  {
+    "path": "Assets/Resources/Audio/HomeWaterdrop02.wav",
+    "guid": "c29b78611774193418367cd9acd24aa2",
+    "name": "Wassertropfen 02",
+    "category": "Homescreen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/Resources/Audio/HomeWaterdrop03.wav",
+    "guid": "c218a5e599ce4954f90b03d17eef722e",
+    "name": "Wassertropfen 03",
+    "category": "Homescreen",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Archive/ArtifactCollected_Old.mp3",
+    "guid": "34ea2eaa2a9ffee4bb96e0466ed701b3",
+    "name": "ArtifactCollected Old",
+    "category": "Archiv",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Archive/GeneratedFrogCroaks/FrogCroak_01.wav",
+    "guid": "50f94d81d9e9a8a47a55b7a98b572fe3",
+    "name": "FrogCroak 01",
+    "category": "Archiv",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Archive/GeneratedFrogCroaks/FrogCroak_02.wav",
+    "guid": "76aa57f9baacc554f912e24f7a6f5d75",
+    "name": "FrogCroak 02",
+    "category": "Archiv",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Archive/GeneratedFrogCroaks/FrogCroak_03.wav",
+    "guid": "450fcdc15347da649815ad71ae1915fb",
+    "name": "FrogCroak 03",
+    "category": "Archiv",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Archive/HeartBeating-loop.wav",
+    "guid": "d434b1f682c9a044d977fa5fc7f4238d",
+    "name": "HeartBeating-loop",
+    "category": "Archiv",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Archive/Layer1Details/ErdkruemelRollen.wav",
+    "guid": "f4d27f17f642f9141bbbb5d614d141ab",
+    "name": "ErdkruemelRollen",
+    "category": "Archiv",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Archive/Layer1Details/GravelSlide.mp3",
+    "guid": "6f3d75fe726061b48b686a90b2add179",
+    "name": "GravelSlide",
+    "category": "Archiv",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Archive/Layer1Details/SandrieselnFein.wav",
+    "guid": "cabde2a7470c8ac4abb2f7ae3976bc16",
+    "name": "SandrieselnFein",
+    "category": "Archiv",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Archive/Layer1Details/SandrieselnSchuebe.wav",
+    "guid": "b325a1fa139c7554d9b7a98336848112",
+    "name": "SandrieselnSchuebe",
+    "category": "Archiv",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Archive/LowEnergyBip_Old.wav",
+    "guid": "8391e3becb9e421ca2047c04daf1e658",
+    "name": "LowEnergyBip Old",
+    "category": "Archiv",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/AC Audio/Archive/Mining/OreBreak_Old.wav",
+    "guid": "7c179888d6c5d854f84a04c01646ba9e",
+    "name": "OreBreak Old",
+    "category": "Archiv",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  },
+  {
+    "path": "Assets/ZZZ New Assets/epic upgrade boom.mp3",
+    "guid": "40d79d65a6a40954ca6cb271c41ac456",
+    "name": "epic upgrade boom",
+    "category": "Weitere Clips",
+    "volume": 1.0,
+    "volumeSpread": 0.0
+  }
+]

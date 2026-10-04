@@ -21,6 +21,7 @@ public class InventoryUI : MonoBehaviour
     RectTransform layout, content;
     ScrollRect scroll;
     InventoryManager inventory;
+    WorkbenchPanel workbench;
     Image footerIcon;
     TextMeshProUGUI footerName, footerCount;
     TextMeshProUGUI cargoWeight;
@@ -127,6 +128,7 @@ public class InventoryUI : MonoBehaviour
     public void SetFilter(int filter) { Filter = Mathf.Clamp(filter, 0, 3); scroll.verticalNormalizedPosition = 1; Refresh(); }
     public void SortItems() { alphabetical = !alphabetical; Refresh(); }
     public void SelectItem(ItemSO item) { SelectedItem = item; Refresh(); }
+    public void RefreshIconLayouts() { if (IsOpen) Refresh(); }
     public bool TryUseMedkit(ItemSO item)
     {
         if (!IsOpen || !item || item.item != Item.Medkit) return false;
@@ -225,6 +227,7 @@ public class InventoryUI : MonoBehaviour
                 : Cream;
         }
         if (!IsOpen || !content) return;
+        if (!workbench) workbench = FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include);
         var items = inventory ? inventory.GetSnapshot().Where(p => p.Key && p.Key.category != ItemCategory.Powerup &&
             p.Value > 0 && (Filter == 0 || Category(p.Key) == Filter)).ToList()
             : new List<KeyValuePair<ItemSO, int>>();
@@ -239,7 +242,10 @@ public class InventoryUI : MonoBehaviour
             var c = cells[i]; c.rect.gameObject.SetActive(i < capacity);
             c.item = i < items.Count ? items[i].Key : null;
             c.icon.enabled = c.item; c.icon.sprite = c.item ? c.item.icon : null;
-            c.selection.enabled = c.item && c.item == SelectedItem;
+            WorkbenchPanel.ApplyRecipeIconLayout(c.item && workbench ? workbench.FindRecipeForOutput(c.item) : null,
+                c.icon.rectTransform, new Vector2(82f, -78f));
+            c.selection.enabled = false;
+            GoldButtonFeedback.Select(c.button.GetComponent<Image>(), c.item && c.item == SelectedItem);
             c.badge.gameObject.SetActive(c.item); c.button.interactable = c.item;
             if (c.item)
             {
@@ -248,8 +254,10 @@ public class InventoryUI : MonoBehaviour
             }
         }
         content.sizeDelta = new Vector2(1230, Mathf.Max(492, capacity / 7 * 168 - 12));
-        for (int i = 0; i < tabs.Count; i++) tabs[i].sprite = Filter == i ? actionSprite : rowSprite;
+        for (int i = 0; i < tabs.Count; i++) GoldButtonFeedback.Select(tabs[i], Filter == i);
         footerIcon.enabled = SelectedItem; footerIcon.sprite = SelectedItem ? SelectedItem.icon : null;
+        WorkbenchPanel.ApplyRecipeIconLayout(SelectedItem && workbench ? workbench.FindRecipeForOutput(SelectedItem) : null,
+            footerIcon.rectTransform, new Vector2(58f, -48f));
         footerName.text = SelectedItem ? SelectedItem.displayName : "";
         footerCount.text = SelectedItem ? "Bestand <color=#FFBC4F>" + Count(inventory.GetCount(SelectedItem)) + "</color>" : "";
     }
@@ -279,7 +287,7 @@ public class InventoryUI : MonoBehaviour
     {
         var image = Rect(name, parent, x, y, w, h).gameObject.AddComponent<Image>();
         image.sprite = sprite; image.type = sprite && sprite.border.sqrMagnitude > 0 ? Image.Type.Sliced : Image.Type.Simple;
-        image.raycastTarget = false; return image;
+        image.raycastTarget = false; HomeUi.StylePanelWood(image); return image;
     }
     TextMeshProUGUI Label(Transform parent, string text, float x, float y, float w, float h, float size, TextAlignmentOptions align = TextAlignmentOptions.MidlineLeft)
     {
@@ -292,6 +300,9 @@ public class InventoryUI : MonoBehaviour
     {
         var image = Panel(name, parent, x, y, w, h, rowSprite); image.raycastTarget = true;
         var button = image.gameObject.AddComponent<Button>(); button.targetGraphic = image; button.onClick.AddListener(action);
+        image.sprite = HomeUi.Sprite("SaveButton");
+        image.pixelsPerUnitMultiplier = image.sprite.rect.height / h;
+        GoldButtonFeedback.Apply(button, HomeUi.Sprite("SaveButton"), HomeUi.Sprite("SaveActive"));
         var colors = button.colors; colors.highlightedColor = new Color(1, .92f, .77f); colors.pressedColor = new Color(.8f, .7f, .55f); button.colors = colors;
         button.navigation = new Navigation { mode = Navigation.Mode.None };
         if (text.Length > 0) Label(image.transform, text, 0, 0, w, h, 30, TextAlignmentOptions.Midline);
@@ -338,10 +349,11 @@ public class InventoryUI : MonoBehaviour
     {
         var button = Button("Slot " + index, content, "", index % 7 * 177.5f, index / 7 * 168, 164, 156, () => { });
         button.GetComponent<Image>().sprite = slotSprite;
+        GoldButtonFeedback.Apply(button, slotSprite, selectionSprite);
         var colors = button.colors; colors.disabledColor = Color.white; button.colors = colors;
         var c = new Cell { rect = (RectTransform)button.transform, button = button };
         c.selection = Panel("Selection", c.rect, 0, 0, 164, 156, selectionSprite);
-        c.icon = Panel("Item", c.rect, 15, 12, 134, 128, null); c.icon.preserveAspect = true;
+        c.icon = Panel("Item", c.rect, 15, 25, 134, 106, null); c.icon.preserveAspect = true;
         c.badge = Panel("Count Badge", c.rect, 0, 0, 52, 40, badgeSprite).rectTransform;
         c.badge.anchorMin = c.badge.anchorMax = new Vector2(1, 0); c.badge.pivot = new Vector2(1, 0); c.badge.anchoredPosition = new Vector2(-7, 8);
         c.count = Label(c.badge, "", 0, 0, 52, 40, 27, TextAlignmentOptions.Midline);

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public static class HomeClickAudio
 {
@@ -10,7 +11,19 @@ public static class HomeClickAudio
 
     public static void Play()
     {
-        if (!Application.isPlaying || GameAudioLifecycle.IsStopping || !MainMenuController.IsVisible) return;
+        if (MainMenuController.IsVisible) PlayUi();
+    }
+
+    public static void Bind(Button button)
+    {
+        if (!button) return;
+        button.onClick.RemoveListener(PlayUi);
+        button.onClick.AddListener(PlayUi);
+    }
+
+    public static void PlayUi()
+    {
+        if (!Application.isPlaying || GameAudioLifecycle.IsStopping) return;
         if (!clip) clip = Resources.Load<AudioClip>("Audio/HomeClick");
         if (!clip) return;
         if (!source)
@@ -22,7 +35,7 @@ public static class HomeClickAudio
             source.spatialBlend = 0f;
             source.ignoreListenerPause = true;
         }
-        source.pitch = AudioManager.TunedPitch(clip, 1f);
-        source.PlayOneShot(clip, AudioManager.TunedVolume(clip, 1f));
+        source.pitch = AudioManager.TunedPitch(clip, 1f, source);
+        source.PlayOneShot(clip, AudioManager.TunedVolume(clip, 1f, source));
     }
 }

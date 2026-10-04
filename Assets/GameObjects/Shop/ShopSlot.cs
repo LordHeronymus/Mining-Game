@@ -23,6 +23,7 @@ public class ShopSlot : MonoBehaviour
     {
         iconImage = icon; itemName = nameLabel; countText = countLabel; countBadge = badge;
         wideBackground = background; button = action; normalCard = normal; selectedCard = selected;
+        GoldButtonFeedback.Apply(button, normal, selected, background);
     }
 
     private SellPage shop;                                   // Referenz auf ShopUI für Callbacks
@@ -41,6 +42,7 @@ public class ShopSlot : MonoBehaviour
         if (button)
         {
             button.onClick.RemoveAllListeners();
+            HomeClickAudio.Bind(button);
             button.onClick.AddListener(() => shop.HandleItemClick(Item));
         }
 
@@ -51,7 +53,7 @@ public class ShopSlot : MonoBehaviour
     public void SetSelected(bool selected)
     {
         if (selectionFrame) selectionFrame.enabled = selected;
-        if (wideBackground) wideBackground.sprite = selected ? selectedCard : normalCard;
+        if (wideBackground) GoldButtonFeedback.Select(wideBackground, selected);
     }
 
     /// <summary> Falls nur Anzeige aktualisiert werden soll (z. B. nach Verkauf). </summary>

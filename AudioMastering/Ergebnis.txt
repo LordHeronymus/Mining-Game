@@ -1,0 +1,68 @@
+Audioabgleich vom 04.10.2026
+
+Umfang: 117 Clips (106 außerhalb des Archivs, 11 Archivclips).
+60 Dateien angehoben, 57 wegen hoher Spitzen abgesenkt.
+Größte Verstärkung: +33,95 dB. Größte Absenkung: -5,95 dB.
+22 MP3-Quellen in PCM-WAV überführt; alle Ausgaben sind 24-Bit-WAV.
+Die MP3-Konvertierung vermeidet einen zusätzlichen verlustbehafteten Encoding-Schritt;
+sie kann verlorene Informationen der ursprünglichen MP3 nicht zurückholen.
+
+Maximalpegel und Abgleich sind getrennt:
+1. Jede Datei wird linear auf einen sicheren Maximalpegel gebracht.
+   Grenze -1 dBTP; zusätzliche 0,21 dB Mess-/Decoderreserve.
+2. Die GPS-Cliplautstärken gleichen die wahrgenommene Grundlautstärke an.
+   Größtmöglicher gemeinsamer Pegel je Gruppe ohne Kompression oder Clipping,
+   unter Einbeziehung der maximal positiven Lautstärkestreuung:
+   Effekte: -25,48 LU (100-ms-K-gewichtete, gegatete Messung).
+   Durchgehende Ambiente: -25,29 LUFS.
+   Musik: -18,52 LUFS.
+   Archiv: -19,89 LU (100-ms-Messung).
+   Die 100-ms-Effektmessung ist ausdrücklich kein standardkonformer 400-ms-LUFS-Wert.
+   Sie verhindert, dass längere stille Enden kurze Treffer unnötig abwerten.
+
+Die bisherigen nicht stummen individuellen GPS-Cliplautstärken wurden durch
+die Messwerte ersetzt. Bereits stumme Clips bleiben stumm. Pitch, beide Spreads,
+Kategoriepegel, Layerpegel, allgemeine Lautstärke und zeitliche Abläufe bleiben
+unverändert. Diese absichtlichen Mischfaktoren wirken weiterhin zusätzlich.
+100 % bedeutet maximaler sicherer Dateipegel, nicht gleiche Lautheit aller Clips.
+
+Prüfungen:
+- 117 Quellen und Metadateien mit SHA-256 gesichert.
+- 117 Ausgaben ohne neue abgeschnittene Samples; Samplerate, Kanäle und
+  Samplesanzahl der decodierten Quelle erhalten. MP3-Encoderpadding wird
+  durch den Decoder entfernt (beim Kiesrutsch zuvor in Unity zusätzlich 66 ms).
+- Zweite unabhängige Messung mit FFmpeg: höchster Dateipegel -1,1 dBTP.
+- Änderung der Wellenform ausschließlich durch konstanten Gain und
+  24-Bit-Quantisierung, maximaler Abweichungsfehler < 1,2e-7.
+- Alle 117 Unity-Decoder-Ausgaben geprüft, auch vier Streaming-Clips.
+  15 Importe auf PCM umgestellt, da die bisherige Kompression Spitzen erhöhte.
+  Höchster gemessener Unity-Decoder-Pegel: -1,107 dBTP.
+  Ursprüngliche Streaming-/Hintergrund-Ladeeinstellungen nach Prüfung restauriert.
+- 36 konservative Überlagerungsproben aus Unity-decodierten Daten, mit
+  maximalem Volume-Spread und drei Pitch-Extremen: höchstens -0,716 dBTP.
+  Dies ist keine Garantie für beliebig viele gleichzeitig laufende Quellen.
+- Alle GUIDs erhalten; alle 117 GPS-Werte nach Reload korrekt; Profil gültig.
+- Laufendes Gameplay: CameraFollow/Clamp aktiv, Ziel Player, Audiokatalog 117.
+
+Ein bereits in der Originalaufnahme abgeschnittenes Signal kann durch reine
+Pegeländerung nicht rekonstruiert werden. 35 Originale enthielten Samples an
+oder außerhalb der digitalen Vollaussteuerung; dies ist im CSV protokolliert.
+Keine automatische Kompression, Rauschunterdrückung oder De-Clipping-Reparatur.
+Der Abgleich basiert auf Messungen; eine subjektive Hörabnahme steht aus.
+
+Dateien:
+report.csv                    Werte pro Clip und alter/neuer Pegel
+manifest.json / applied.json  Gain, Hashes, Ziele, Pfade und GUIDs
+verification.json             unabhängige Datei-/Wellenformprüfungen
+unity-*-peaks.json            Unity-Decoderprüfungen
+mix-checks.json               36 Überlagerungsproben
+Originals/                   unveränderte Audios, Metadaten und GPS-Sicherungen
+Candidates/                  geprüfte neue Audiodateien
+
+Werkzeuge unter Tools/:
+audio_mastering.py analyze/render/verify: reproduzierbare Verarbeitung vor Import.
+ApplyAudioMastering.cs: Unity-Pipeline eval_file; übernimmt geprüften Batch.
+RestoreAudioMastering.cs: explizite Rücknahme über Unity-Pipeline eval_file.
+Die Rücknahme bricht bei später geänderten Audios oder Cliplautstärken ab;
+andere GPS-Felder werden nicht aus der alten Gesamtsicherung überschrieben.
+Python-Abhängigkeiten: numpy, scipy, soundfile, pyloudnorm, imageio-ffmpeg.

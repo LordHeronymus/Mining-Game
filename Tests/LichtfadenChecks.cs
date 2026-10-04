@@ -58,11 +58,18 @@ public sealed class LichtfadenProbe:MonoBehaviour {
  string old=field.text;bool selectAll=field.onFocusSelectAll;field.onFocusSelectAll=false;
  field.text="Tiefenreise";field.Select();field.ActivateInputField();yield return null;field.caretPosition=field.text.Length;yield return null;yield return null;
  var visual=field.GetComponentInChildren<LichtfadenGraphic>();
- Check(field.isFocused && visual && visual.Opacity>0 && visual.canvasRenderer.GetMesh().vertexCount==74 && !visual.raycastTarget,name+" renders glow mesh while paused");
+ Check(field.isFocused && visual && visual.Opacity>0 && visual.canvasRenderer.GetMesh().vertexCount==4 && !visual.raycastTarget,name+" renders glow mesh while paused");
  var native=field.textComponent.transform.parent.GetComponentInChildren<TMP_SelectionCaret>();
  Check((visual.transform.TransformPoint(visual.Top)-native.transform.TransformPoint(visual.Top)).sqrMagnitude<.0001f,name+" aligns with TMP caret coordinates");
  float minimum=1,maximum=0;for(int i=0;i<35;i++){minimum=Mathf.Min(minimum,visual.Opacity);maximum=Mathf.Max(maximum,visual.Opacity);yield return new WaitForSecondsRealtime(.05f);}
- Check(maximum-minimum>.4f,name+" smooth pulse uses unscaled time");
+ Check(maximum-minimum>.8f && minimum>=0 && minimum<.01f,name+" smooth pulse uses unscaled time");
+ // Type and move the caret near the pulse minimum: neither action may jump back to full brightness.
+ float deadline=Time.unscaledTime+2;
+ while(visual.Opacity>.1f && Time.unscaledTime<deadline)yield return null;
+ field.text+="x";field.caretPosition=field.text.Length;yield return null;yield return null;
+ Check(visual.Opacity<.4f,name+" typing preserves the ongoing fade");
+ field.caretPosition=Mathf.Max(0,field.caretPosition-1);yield return null;yield return null;
+ Check(visual.Opacity<.4f,name+" moving caret preserves the ongoing fade");
  field.selectionAnchorPosition=0;field.selectionFocusPosition=3;yield return null;yield return null;
  Check(visual.Opacity==0,name+" hides caret during text selection");
  field.caretPosition=field.text.Length;yield return null;
@@ -71,6 +78,8 @@ public sealed class LichtfadenProbe:MonoBehaviour {
  Check(point.x>=field.textViewport.rect.xMin-2 && point.x<=field.textViewport.rect.xMax+2,name+" follows horizontal text scroll");
  field.text="";field.caretPosition=0;yield return null;yield return null;
  Check(visual.Opacity>0 && visual.Top.y>visual.Bottom.y,name+" empty field has caret");
+ Vector3 emptyPosition=field.textViewport.InverseTransformPoint(visual.transform.TransformPoint(visual.Bottom));
+ Check(emptyPosition.x-field.textViewport.rect.xMin>=10.9f,name+" empty field reserves the full left glow");
  field.text=old;field.onFocusSelectAll=selectAll;
  }
  void Cleanup(){GameSaveSystem.TestDirectory=previous;restored=true;Object.Destroy(gameObject);}

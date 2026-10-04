@@ -28,6 +28,7 @@ public sealed class GameVictoryPanel : MonoBehaviour
     TextMeshProUGUI depthValue;
     TextMeshProUGUI pointsValue;
     TextMeshProUGUI moneyValue;
+
     RectTransform moneyCoin;
     Button retryButton;
     TMP_FontAsset font;
@@ -35,7 +36,7 @@ public sealed class GameVictoryPanel : MonoBehaviour
 
     public static void Show()
     {
-        if (current || GameOverPanel.IsOpen) return;
+        if (current || GameOverPanel.IsOpen || ExpeditionResultPanel.IsOpen) return;
         var gameOver = Object.FindFirstObjectByType<GameOverPanel>(FindObjectsInactive.Include);
         var canvas = gameOver ? gameOver.GetComponentInParent<Canvas>() : null;
         if (!canvas) canvas = Object.FindFirstObjectByType<Canvas>();
@@ -94,6 +95,7 @@ public sealed class GameVictoryPanel : MonoBehaviour
         var hud = Object.FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include);
         depthValue.text = (hud ? hud.DepthMeters : 0).ToString("N0", German) + " m";
         pointsValue.text = (stats ? stats.Points : 0).ToString("N0", German);
+
         string money = ShopMoneyFormatter.Format(stats ? stats.Money : 0);
         if (moneyValue.text == money) return;
         moneyValue.text = money;
@@ -125,46 +127,18 @@ public sealed class GameVictoryPanel : MonoBehaviour
         panel.localScale = Vector3.one;
     }
 
-    void Restart()
+    void ContinueToResults()
     {
-        CloseForTransition();
-        retryButton.interactable = false;
-        StartCoroutine(RestartRun());
-    }
-
-    IEnumerator RestartRun()
-    {
-        int sceneIndex = SceneManager.GetActiveScene().buildIndex;
-        var stats = StatsManager.Instance ? StatsManager.Instance : Object.FindFirstObjectByType<StatsManager>();
-        if (stats) Destroy(stats.gameObject);
-        yield return null;
-        LoadingScreen.LoadScene(sceneIndex);
-    }
-
-    void ReturnToMainMenu()
-    {
-        CloseForTransition();
-        const string mainMenuScene = "MainMenu";
-        if (Application.CanStreamedLevelBeLoaded(mainMenuScene))
-        {
-            RunNavigation.MainMenu();
-            return;
-        }
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
-    }
-
-    void CloseForTransition()
-    {
+        if (!IsOpen || ExpeditionResultPanel.IsOpen || RunNavigation.IsTransitioning) return;
+        var result = ExpeditionResultPanel.Show(transform.parent);
+        if (!result) return;
+        StopAllCoroutines();
         IsOpen = false;
-        GameplayInputBlocker.SetBlocked(this, false);
-        Time.timeScale = 1f;
+        group.alpha = 0;
         group.blocksRaycasts = group.interactable = false;
+        GameplayInputBlocker.SetBlocked(this, false);
+        Time.timeScale = 0;
     }
-
     void Build()
     {
         var root = (RectTransform)transform;
@@ -181,7 +155,8 @@ public sealed class GameVictoryPanel : MonoBehaviour
         panel = CreateRect("Game Won Panel", root, Vector2.zero, new Vector2(1120f, 635f));
         panel.anchorMin = panel.anchorMax = panel.pivot = new Vector2(.5f, .5f);
         var image = panel.gameObject.AddComponent<Image>();
-        image.sprite = Resources.Load<Sprite>("GameWonPanel");
+        image.sprite = Resources.Load<Sprite>("Progression/GameWonContinue") ?? Resources.Load<Sprite>("GameWonPanel");
+        HomeUi.StylePanelWood(image);
         image.preserveAspect = true;
         image.raycastTarget = false;
 
@@ -201,8 +176,7 @@ public sealed class GameVictoryPanel : MonoBehaviour
         moneyValue.fontSizeMin = 30f;
         moneyValue.fontSizeMax = 43f;
 
-        retryButton = AddButton("Retry", panel, new Vector2(-207f, -211f), new Vector2(384f, 78f), "Nochmal spielen", Restart);
-        AddButton("Main Menu", panel, new Vector2(207f, -211f), new Vector2(360f, 78f), "Zum Hauptmenü", ReturnToMainMenu);
+        retryButton = AddButton("Continue", panel, new Vector2(0f, -211f), new Vector2(805f, 82f), "Weiter", ContinueToResults);
     }
 
     Button AddButton(string objectName, Transform parent, Vector2 position, Vector2 size, string label, UnityEngine.Events.UnityAction action)
@@ -228,6 +202,8 @@ public sealed class GameVictoryPanel : MonoBehaviour
         var text = AddText("Label", rect, new Vector2(0f, 6f), size, 34f, ButtonTextColor);
         text.text = label;
         text.raycastTarget = false;
+        button.gameObject.AddComponent<HomeButtonFeedback>().animateScale = false;
+        HomeUi.StyleSaveButton(button, 34);
         return button;
     }
 

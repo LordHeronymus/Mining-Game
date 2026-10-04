@@ -44,6 +44,7 @@ Shader "Mining Game/Map Darkness"
             {
                 float darkness = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv).a;
                 darkness = min(darkness, 1 - MapLocalLight(input.worldPos));
+                darkness *= MapSurfaceDarknessFade(input.uv);
                 return half4(0, 0, 0, darkness);
             }
             ENDHLSL

@@ -53,7 +53,7 @@ public sealed class ShopVisualTheme : MonoBehaviour
     {
         foreach (var state in buyChrome) state.Restore();
         var image = GetComponent<Image>();
-        if (image) image.sprite = buyBackground;
+        if (image) { image.sprite = buyBackground; HomeUi.StylePanelWood(image); }
     }
 
     public static ShopVisualTheme Ensure(Transform shop)
@@ -76,7 +76,7 @@ public sealed class ShopVisualTheme : MonoBehaviour
         ActionFrame = Slice(sheet, "Shop Action", 38, 890, 1178, 275);
         var background = GetComponent<Image>();
         buyBackground = Resources.Load<Sprite>("Shop/BuyBackground-v2");
-        if (background) background.sprite = buyBackground;
+        if (background) { background.sprite = buyBackground; HomeUi.StylePanelWood(background); }
         foreach (var text in GetComponentsInChildren<TextMeshProUGUI>(true)) Style(text);
         var title = transform.Find("ShopTitle")?.GetComponent<TextMeshProUGUI>();
         if (title) { Place(title.rectTransform, 875, 35, 810, 126); title.fontSize = 88; title.alignment = TextAlignmentOptions.Midline; }
@@ -129,7 +129,7 @@ public sealed class ShopVisualTheme : MonoBehaviour
     {
         Position(name, x, y, w, h);
         var image = transform.Find(name)?.GetComponent<Image>();
-        if (image) { image.sprite = sprite; image.type = Image.Type.Sliced; image.pixelsPerUnitMultiplier = 4; image.color = Color.white; }
+        if (image) { image.sprite = sprite; image.type = Image.Type.Sliced; image.pixelsPerUnitMultiplier = 4; image.color = Color.white; HomeUi.StylePanelWood(image); }
     }
     void Position(string name, float x, float y, float w, float h)
     {

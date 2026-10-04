@@ -10,11 +10,11 @@ using UnityEngine.UI;
 public sealed class SettingsPanel : MonoBehaviour
 {
     enum Tab { Audio, Keys, Display }
-    static readonly Color Cream = new Color32(255, 245, 229, 255);
-    static readonly Color Dim = new Color32(78, 48, 34, 255);
-    static readonly Color Orange = new Color32(193, 63, 10, 255);
-    static readonly Color Gold = new Color32(245, 166, 60, 255);
-    static readonly Color Line = new Color32(138, 91, 61, 255);
+    static readonly Color Cream = HomeUi.Cream;
+    static readonly Color Gold = new Color32(222, 174, 91, 255);
+    static readonly Color Line = new Color32(148, 104, 49, 255);
+    const float BoardWidth = 1480, BoardHeight = 840;
+    const float PageWidth = 972, PageHeight = 568, RowHeight = 56;
     static readonly KeyCode[] KeyCodes = (KeyCode[])Enum.GetValues(typeof(KeyCode));
     readonly List<Button> tabButtons = new();
     readonly List<TextMeshProUGUI> bindingTexts = new();
@@ -22,8 +22,6 @@ public sealed class SettingsPanel : MonoBehaviour
     RectTransform layout;
     GameObject audioPage, keyPage, displayPage;
     TMP_FontAsset font;
-    Material fontMaterial;
-    Sprite rowSprite, selectedSprite, actionSprite;
     GameAction? capturing;
     int captureSlot, captureFrame;
     float previousTimeScale = 1f;
@@ -59,17 +57,7 @@ public sealed class SettingsPanel : MonoBehaviour
     {
         for (int i = transform.childCount - 1; i >= 0; i--)
             DestroyImmediate(transform.GetChild(i).gameObject);
-        var workbench = FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include);
-        if (workbench)
-        {
-            font = workbench.font; fontMaterial = workbench.fontMaterial;
-            rowSprite = workbench.rowSprite; selectedSprite = workbench.selectedRowSprite;
-            actionSprite = workbench.actionSprite;
-        }
-        if (!font) font = Resources.Load<TMP_FontAsset>("ArtifactDiscovery/TitleFont");
-        if (!rowSprite) rowSprite = HomeUi.Sprite("Button");
-        if (!selectedSprite) selectedSprite = HomeUi.Sprite("Active");
-        if (!actionSprite) actionSprite = HomeUi.Sprite("Active");
+        font = Resources.Load<TMP_FontAsset>("ArtifactDiscovery/TitleFont");
         group = GetComponent<CanvasGroup>();
         if (!group) group = gameObject.AddComponent<CanvasGroup>();
         Build();
@@ -107,7 +95,7 @@ public sealed class SettingsPanel : MonoBehaviour
 
     public void Open()
     {
-        if (open) return;
+        if (!Application.isPlaying || open) return;
         open = true;
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;
@@ -116,10 +104,12 @@ public sealed class SettingsPanel : MonoBehaviour
         GameplayInputBlocker.SetBlocked(this, true);
         InfoPanel.Instance?.ShowPanel(false);
         SetTab(current);
+        RefreshBindingTexts();
     }
 
     void Close()
     {
+        foreach (var pending in GetComponentsInChildren<SettingsSliderCommit>(true)) pending.Commit();
         capturing = null;
         open = false;
         SetVisible(false);
@@ -138,32 +128,39 @@ public sealed class SettingsPanel : MonoBehaviour
 
     void Build()
     {
-        var scrim = Image("Scrim", transform, 0, 0, 0, 0, null, new Color(0, 0, 0, .25f));
+        var scrim = Image("Scrim", transform, 0, 0, 0, 0, null, new Color(0, 0, 0, .68f));
         Stretch(scrim.rectTransform);
         scrim.raycastTarget = true;
-        layout = Rect("Layout", transform, 0, 0, 1640, 960);
+        layout = Rect("Layout", transform, 0, 0, BoardWidth, BoardHeight);
         layout.anchorMin = layout.anchorMax = layout.pivot = new Vector2(.5f, .5f);
         layout.anchoredPosition = Vector2.zero;
-        var background = Image("Background", layout, 0, 0, 1640, 960,
-            Resources.Load<Sprite>("Settings/SettingsPanelCutout"), Color.white);
+        Image("Board Backing", layout, 30, 30, BoardWidth - 60, BoardHeight - 60, null, new Color32(23, 12, 7, 255));
+        var background = Image("Background", layout, 0, 0, BoardWidth, BoardHeight,
+            HomeUi.Sprite("Panel"), Color.white);
         background.raycastTarget = true;
-        Label(layout, "Einstellungen", 560, 42, 520, 75, 50, TextAlignmentOptions.Center);
-        Button("Schließen", layout, "×", 1485, 116, 58, 58, Close, true);
+        Label(layout, "Einstellungen", 80, 38, 1320, 76, 49, TextAlignmentOptions.Center);
+        Image("Navigation Divider", layout, 376, 136, 2, 562, null, Line);
         string[] names = { "Audio", "Tastenbelegung", "Anzeige" };
+        const float navigationTop = 114, navigationBottom = 700, tabSpacing = 100, tabHeight = 68;
+        float firstTabY = (navigationTop + navigationBottom - tabHeight - (names.Length - 1) * tabSpacing) * .5f;
         for (int i = 0; i < names.Length; i++)
         {
             var tab = (Tab)i;
-            tabButtons.Add(Button("Tab " + names[i], layout, names[i], 190 + i * 420, 205, 400, 56,
+            tabButtons.Add(Button("Tab " + names[i], layout, names[i], 64, firstTabY + i * tabSpacing, 280, tabHeight,
                 () => SetTab(tab)));
         }
-        audioPage = Rect("Audio", layout, 0, 0, 1640, 960).gameObject;
-        keyPage = Rect("Tastenbelegung", layout, 0, 0, 1640, 960).gameObject;
-        displayPage = Rect("Anzeige", layout, 0, 0, 1640, 960).gameObject;
+        audioPage = Rect("Audio", layout, 424, 136, PageWidth, PageHeight).gameObject;
+        keyPage = Rect("Tastenbelegung", layout, 424, 136, PageWidth, PageHeight).gameObject;
+        displayPage = Rect("Anzeige", layout, 424, 136, PageWidth, PageHeight).gameObject;
         BuildAudio(); BuildKeys(); BuildDisplay();
-        status = Label(layout, "", 560, 795, 520, 48, 20, TextAlignmentOptions.Center);
-        status.color = new Color32(255, 191, 98, 255);
-        Button("Standard", layout, "Standard", 190, 795, 310, 56, RestoreDefaults);
-        Button("Fortsetzen", layout, "Fortsetzen", 1140, 795, 310, 56, Close, true);
+        const float footerButtonWidth = 280, footerButtonGap = 668 - 360 - footerButtonWidth;
+        float footerButtonsStart = keyPage.GetComponent<RectTransform>().anchoredPosition.x + 360 + (250 - footerButtonWidth) * .5f;
+        status = Label(layout, "", 424, 706, footerButtonsStart - 424 - 24, 54, 20, TextAlignmentOptions.Left);
+        status.color = Gold;
+        Button("Standard", layout, "Standard", footerButtonsStart, 700,
+            footerButtonWidth, 68, RestoreDefaults);
+        Button("Fortsetzen", layout, "Fortsetzen", footerButtonsStart + footerButtonWidth + footerButtonGap, 700,
+            footerButtonWidth, 68, Close, true);
         Fit(); SetTab(Tab.Keys);
     }
 
@@ -176,76 +173,83 @@ public sealed class SettingsPanel : MonoBehaviour
         displayPage.SetActive(tab == Tab.Display);
         for (int i = 0; i < tabButtons.Count; i++)
         {
-            var image = tabButtons[i].GetComponent<Image>();
-            image.sprite = i == (int)tab ? actionSprite : rowSprite;
-            image.color = Color.white;
+            tabButtons[i].GetComponent<HomeButtonFeedback>().primary = i == (int)tab;
+            tabButtons[i].GetComponent<HomeButtonFeedback>().selectionManaged = true;
         }
         if (status) status.text = "";
     }
 
     void BuildAudio()
     {
-        AddSlider(audioPage.transform, "Gesamtlautstärke", 336, () => PlayerSettings.Master,
-            value => PlayerSettings.Master = value, 0f, 1f, true);
-        AddSlider(audioPage.transform, "Ambiente", 446, () => PlayerSettings.Ambience,
+        const float rowSpacing = 100, rowHeight = 68;
+        float navigationCenterY = (114 + 700) * .5f;
+        float firstRowY = navigationCenterY + audioPage.GetComponent<RectTransform>().anchoredPosition.y - 1.5f * rowSpacing - rowHeight * .5f;
+        AddSlider(audioPage.transform, "Gesamtlautstärke", firstRowY, () => PlayerSettings.Master,
+            GpsSettings.PreviewMasterVolume, 0f, 1f, true, SaveMasterVolume);
+        AddSlider(audioPage.transform, "Musik", firstRowY + rowSpacing, () => PlayerSettings.Music,
+            GpsSettings.PreviewMusicVolume, 0f, 1f, true, SaveMusicVolume);
+        AddSlider(audioPage.transform, "Ambiente", firstRowY + 2 * rowSpacing, () => PlayerSettings.Ambience,
             value => PlayerSettings.Ambience = value, 0f, 1f, true);
-        AddSlider(audioPage.transform, "Effekte", 556, () => PlayerSettings.Sfx,
+        AddSlider(audioPage.transform, "Effekte", firstRowY + 3 * rowSpacing, () => PlayerSettings.Sfx,
             value => PlayerSettings.Sfx = value, 0f, 1f, true);
     }
 
     void BuildDisplay()
     {
-        Label(displayPage.transform, "Vollbild", 245, 365, 570, 54, 28);
+        const float rowSpacing = 148, rowHeight = 68;
+        float firstRowY = (PageHeight - rowSpacing - rowHeight) * .5f;
+        Label(displayPage.transform, "Vollbild", 16, firstRowY, 340, rowHeight, 28);
         var fullscreen = Button("Vollbild", displayPage.transform, PlayerSettings.Fullscreen ? "Ein" : "Aus",
-            1040, 365, 330, 54, null);
+            668, firstRowY, 250, rowHeight, null);
         fullscreen.onClick.AddListener(() =>
         {
             PlayerSettings.Fullscreen = !PlayerSettings.Fullscreen;
             fullscreen.GetComponentInChildren<TextMeshProUGUI>().text = PlayerSettings.Fullscreen ? "Ein" : "Aus";
         });
-        AddSlider(displayPage.transform, "UI-Größe", 490, () => PlayerSettings.UiScale,
+        AddSlider(displayPage.transform, "UI-Größe", firstRowY + rowSpacing, () => PlayerSettings.UiScale,
             value => PlayerSettings.UiScale = value, .8f, 1.2f, false);
     }
 
     void BuildKeys()
     {
-        Label(keyPage.transform, "Aktion", 180, 274, 440, 38, 26);
-        Label(keyPage.transform, "Taste 1", 670, 274, 355, 38, 26, TextAlignmentOptions.Center);
-        Label(keyPage.transform, "Taste 2", 1110, 274, 355, 38, 26, TextAlignmentOptions.Center);
-        Image("HeaderLine", keyPage.transform, 180, 315, 1300, 2, null, Line);
-        var viewport = Rect("KeyViewport", keyPage.transform, 180, 323, 1300, 450);
-        viewport.gameObject.AddComponent<RectMask2D>();
-        var content = Rect("KeyRows", viewport, 0, 0, 1300, GameBindings.Entries.Length * 50);
+        Label(keyPage.transform, "Aktion", 16, 0, 328, 42, 26);
+        Label(keyPage.transform, "Taste 1", 360, 0, 250, 42, 26, TextAlignmentOptions.Center);
+        Label(keyPage.transform, "Taste 2", 668, 0, 250, 42, 26, TextAlignmentOptions.Center);
+        Image("HeaderLine", keyPage.transform, 0, 46, 936, 1, null, Line);
+        var viewport = Rect("KeyViewport", keyPage.transform, 0, 54, 936, 504);
+        viewport.gameObject.AddComponent<RectMask2D>().softness = new Vector2Int(0, 12);
+        var content = Rect("KeyRows", viewport, 0, 0, 936, GameBindings.Entries.Length * RowHeight);
         int n = 0;
         foreach (var entry in GameBindings.Entries)
         {
 #if !UNITY_EDITOR && !DEVELOPMENT_BUILD
             if (entry.action == GameAction.DebugPanel) continue;
 #endif
-            int y = n++ * 50;
-            Image("Row", content, 0, y, 1300, 48, null,
-                n % 2 == 0 ? new Color32(44, 25, 17, 188) : new Color32(53, 30, 19, 188));
-            Label(content, entry.label, 16, y + 4, 450, 42, 23);
+            float y = n++ * RowHeight;
+            Image("Row", content, 0, y, 936, RowHeight, null, new Color(0, 0, 0, .12f));
+            Image("Row Divider", content, 0, y + RowHeight - 1, 936, 1, null, new Color( .58f, .41f, .19f, .22f));
+            Label(content, entry.label, 16, y + 6, 328, 44, 23);
             for (int slot = 0; slot < 2; slot++)
             {
                 int capturedSlot = slot;
                 var button = Button("Bind " + entry.action + " " + slot, content,
                     GameBindings.Display(GameBindings.Get(entry.action, slot)),
-                    slot == 0 ? 490 : 930, y + 5, 355, 40,
+                    slot == 0 ? 360 : 668, y + 6, 250, 44,
                     () => BeginCapture(entry.action, capturedSlot));
                 bindingTexts.Add(button.GetComponentInChildren<TextMeshProUGUI>());
             }
         }
-        content.sizeDelta = new Vector2(1300, n * 50);
+        content.sizeDelta = new Vector2(936, n * RowHeight);
+        viewport.gameObject.AddComponent<Image>().color = Color.clear;
         var scroll = viewport.gameObject.AddComponent<ScrollRect>();
         scroll.content = content; scroll.viewport = viewport;
         scroll.horizontal = false; scroll.vertical = true;
         scroll.movementType = ScrollRect.MovementType.Clamped;
         scroll.scrollSensitivity = 38;
-        var track = Image("Scrollbar", keyPage.transform, 1495, 323, 17, 450, rowSprite, Color.white);
+        var track = Image("Scrollbar", keyPage.transform, 952, 54, 6, 504, null, new Color(0, 0, 0, .35f));
         track.raycastTarget = true;
-        var area = Rect("Sliding Area", track.transform, 3, 3, 11, 444);
-        var handle = Image("Handle", area, 0, 0, 11, 444, selectedSprite, Color.white);
+        var area = Rect("Sliding Area", track.transform, 0, 0, 6, 504);
+        var handle = Image("Handle", area, 0, 0, 6, 504, null, Gold);
         handle.raycastTarget = true;
         Stretch(handle.rectTransform);
         var bar = track.gameObject.AddComponent<Scrollbar>();
@@ -311,6 +315,7 @@ public sealed class SettingsPanel : MonoBehaviour
         foreach (var slider in audioPage.GetComponentsInChildren<Slider>(true)) slider.value = slider.name switch
         {
             "Gesamtlautstärke" => PlayerSettings.Master,
+            "Musik" => PlayerSettings.Music,
             "Ambiente" => PlayerSettings.Ambience,
             _ => PlayerSettings.Sfx
         };
@@ -321,27 +326,56 @@ public sealed class SettingsPanel : MonoBehaviour
     }
 
     void AddSlider(Transform parent, string title, float y, Func<float> get, Action<float> set,
-        float min, float max, bool percent)
+        float min, float max, bool percent, Func<bool> commit = null)
     {
-        Label(parent, title, 245, y, 570, 54, 28);
-        var rail = Image(title, parent, 820, y + 15, 440, 24, rowSprite, Dim);
-        var fill = Image("Fill", rail.transform, 4, 4, 428, 16, null, Orange);
-        fill.rectTransform.anchorMin = Vector2.zero; fill.rectTransform.anchorMax = new Vector2(1, 1);
-        fill.rectTransform.offsetMin = new Vector2(4, 4); fill.rectTransform.offsetMax = new Vector2(-4, -4);
-        var handle = Image("Handle", rail.transform, 0, -7, 28, 38, selectedSprite, Gold);
-        var slider = rail.gameObject.AddComponent<Slider>();
+        Label(parent, title, 16, y, 340, 68, 28);
+        var root = Rect(title, parent, 360, y + 12, 450, 44);
+        var hitArea = Image("Hit Area", root, 0, 0, 450, 44, null, Color.clear);
+        hitArea.raycastTarget = true;
+        var rail = Image("Rail", root, 0, 13, 450, 18, HomeUi.Sprite("SaveButton"), Color.white);
+        rail.pixelsPerUnitMultiplier = rail.sprite.rect.height / 18f;
+        var fillArea = Rect("Fill Area", root, 11, 20, 428, 4);
+        var fill = Image("Fill", fillArea, 0, 0, 428, 4, null, Gold);
+        Stretch(fill.rectTransform);
+        var handleArea = Rect("Handle Area", root, 11, 0, 428, 44);
+        var handle = Image("Handle", handleArea, 0, 0, 22, 32, HomeUi.Sprite("SaveHandle"), Color.white);
+        handle.rectTransform.pivot = new Vector2(.5f, .5f);
+        // Slider stretches the handle vertically across its movement area.
+        handle.rectTransform.sizeDelta = new Vector2(22, -12);
+        handle.raycastTarget = rail.raycastTarget = true;
+        var slider = root.gameObject.AddComponent<Slider>();
         slider.minValue = min; slider.maxValue = max;
         slider.fillRect = fill.rectTransform; slider.handleRect = handle.rectTransform;
         slider.targetGraphic = handle;
         slider.navigation = new Navigation { mode = Navigation.Mode.None };
-        var number = Label(parent, "", 1280, y, 150, 54, 26, TextAlignmentOptions.Right);
+        SettingsSliderCommit pending = null;
+        if (commit != null)
+        {
+            pending = root.gameObject.AddComponent<SettingsSliderCommit>();
+            pending.Save = commit;
+        }
+        var number = Label(parent, "", 834, y, 84, 68, 26, TextAlignmentOptions.Right);
         slider.onValueChanged.AddListener(value =>
         {
             set(value);
+            if (pending) pending.MarkChanged();
             number.text = percent ? Mathf.RoundToInt(value * 100) + " %" : Mathf.RoundToInt(value * 100) + " %";
         });
-        slider.value = get();
+        slider.SetValueWithoutNotify(get());
         number.text = Mathf.RoundToInt(get() * 100) + " %";
+    }
+    bool SaveMusicVolume()
+    {
+        bool saved = GpsSettings.SavePreference("musicVolume", out string error);
+        if (!saved && status) status.text = error;
+        return saved;
+    }
+
+    bool SaveMasterVolume()
+    {
+        bool saved = GpsSettings.SavePreference("masterVolume", out string error);
+        if (!saved && status) status.text = error;
+        return saved;
     }
 
     RectTransform Rect(string name, Transform parent, float x, float y, float w, float h)
@@ -366,16 +400,17 @@ public sealed class SettingsPanel : MonoBehaviour
         var image = Rect(name, parent, x, y, w, h).gameObject.AddComponent<Image>();
         image.sprite = sprite; image.type = sprite && sprite.border.sqrMagnitude > 0 ? UnityEngine.UI.Image.Type.Sliced : UnityEngine.UI.Image.Type.Simple;
         image.color = color; image.raycastTarget = false;
+        HomeUi.StylePanelWood(image);
         return image;
     }
 
     TextMeshProUGUI Label(Transform parent, string caption, float x, float y, float w, float h,
         float size, TextAlignmentOptions alignment = TextAlignmentOptions.Left)
     {
-        var label = Rect("Label", parent, x, y, w, h).gameObject.AddComponent<TextMeshProUGUI>();
-        label.font = font;
-        if (fontMaterial) label.fontSharedMaterial = fontMaterial;
-        label.text = caption; label.color = Cream; label.fontStyle = FontStyles.Bold;
+        var label = HomeUi.Label("Label", parent, caption, Vector2.zero, new Vector2(w, h), size);
+        label.rectTransform.anchorMin = label.rectTransform.anchorMax = label.rectTransform.pivot = new Vector2(0, 1);
+        label.rectTransform.anchoredPosition = new Vector2(x, -y);
+        label.font = font; label.color = Cream; label.fontStyle = FontStyles.Normal;
         label.fontSize = size; label.enableAutoSizing = true;
         label.fontSizeMin = size * .65f; label.fontSizeMax = size;
         label.alignment = alignment; label.textWrappingMode = TextWrappingModes.NoWrap;
@@ -387,14 +422,28 @@ public sealed class SettingsPanel : MonoBehaviour
     Button Button(string name, Transform parent, string caption, float x, float y, float w, float h,
         Action action, bool primary = false)
     {
-        var image = Image(name, parent, x, y, w, h, primary ? actionSprite : rowSprite, Color.white);
-        image.raycastTarget = true;
-        var button = image.gameObject.AddComponent<Button>();
-        button.targetGraphic = image;
+        var button = HomeUi.Button(name, parent, caption, Vector2.zero, new Vector2(w, h), action, primary);
+        var rect = button.GetComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0, 1);
+        rect.anchoredPosition = new Vector2(x, -y);
         button.navigation = new Navigation { mode = Navigation.Mode.None };
-        button.onClick.AddListener(HomeClickAudio.Play);
-        if (action != null) button.onClick.AddListener(() => action());
-        Label(image.transform, caption, 8, 0, w - 16, h, h <= 48 ? 22 : 27, TextAlignmentOptions.Center);
+        HomeUi.StyleSaveButton(button, h <= 48 ? 22 : 23);
         return button;
     }
+}
+
+public sealed class SettingsSliderCommit : MonoBehaviour, IPointerUpHandler, IEndDragHandler, IDeselectHandler
+{
+    public Func<bool> Save;
+    bool pending;
+    public void MarkChanged() => pending = true;
+    public void Commit()
+    {
+        if (pending && Save != null && Save()) pending = false;
+    }
+    public void OnPointerUp(PointerEventData data) => Commit();
+    public void OnEndDrag(PointerEventData data) => Commit();
+    public void OnDeselect(BaseEventData data) => Commit();
+    void OnDisable() => Commit();
+    void OnApplicationQuit() => Commit();
 }

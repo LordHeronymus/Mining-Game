@@ -168,8 +168,6 @@ public partial class SellPage : MonoBehaviour
 
     public void SelectItem(ItemSO item)
     {
-        AudioManager.Instance?.Play(SoundType.UI_Click);
-
         _selected = item;
 
         ApplySelectionHighlight();
@@ -321,7 +319,6 @@ public partial class SellPage : MonoBehaviour
         int have = InventoryManager.Instance.GetCount(_selected);
         if (have <= 0) return;
 
-        AudioManager.Instance?.Play(SoundType.UI_Click);
         int q = Mathf.Min(qty, have);
         ShopManager.Instance?.TrySell(_selected, q);
         Rebuild();           // Liste & Counts sofort aktualisieren
@@ -333,7 +330,6 @@ public partial class SellPage : MonoBehaviour
         int have = InventoryManager.Instance.GetCount(_selected);
         if (have <= 0) return;
 
-        AudioManager.Instance?.Play(SoundType.UI_Click);
         ShopManager.Instance?.TrySell(_selected, have);
         Rebuild();
     }
@@ -341,7 +337,6 @@ public partial class SellPage : MonoBehaviour
     private void SellAll()
     {
         if (!_selected) return;
-        AudioManager.Instance?.Play(SoundType.UI_Click);
         ShopManager.Instance?.SellAll();
         Rebuild();
     }

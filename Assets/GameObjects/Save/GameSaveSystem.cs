@@ -7,6 +7,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -111,9 +112,10 @@ public static class GameSaveSystem
         CancelPendingLoad(); PlayedSeconds = 0;
         ActiveSlot = slot; HasPendingNewRun = true; InitialSaveError = null;
         ActiveRunName = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
+        MetaProgression.BeginRun(Guid.NewGuid().ToString("N"));
         return true;
     }
-    public static void LeaveRun() { ActiveSlot = -1; ActiveRunName = null; HasPendingNewRun = false; }
+    public static void LeaveRun() { MetaProgression.EndRun(); ActiveSlot = -1; ActiveRunName = null; HasPendingNewRun = false; }
 
     public static IEnumerator SaveNewRunForLoading(MonoBehaviour owner)
     {
@@ -231,8 +233,13 @@ public static class GameSaveSystem
                 }
                 expanded.Position = 0;
                 using var reader = new BinaryReader(expanded, Encoding.UTF8, true);
-                var state = JsonUtility.FromJson<RunSaveState>(reader.ReadString());
+                var state = ParseRunState(reader.ReadString());
                 Validate(state);
+                // A legacy run keeps its identity across slot copies and receives neutral bonuses.
+                NormalizeDates(summary);
+                if (state.progression == null)
+                    state.progression = new MetaRunState { runId = "legacy-" + summary.createdUtc + "-" + state.seed + "-" + state.width + "-" + state.height,
+                        loadout = new MetaLoadout() };
                 var layers = new Layer[4];
                 for (int i = 0; i < layers.Length; i++) layers[i] = ReadLayer(reader, catalog, state);
                 if (expanded.Position != expanded.Length) throw new InvalidDataException();
@@ -245,6 +252,46 @@ public static class GameSaveSystem
         return false;
     }
     public static void CancelPendingLoad() => pending = null;
+
+    // Unity's inline serializer materializes missing serializable class fields. Read actual
+    // root-property presence first, so old saves keep optional sections absent while a
+    // malformed section that really exists still reaches its strict semantic validator.
+    internal static RunSaveState ParseRunState(string json)
+    {
+        bool progression = false, exotics = false, placedLights = false;
+        using (var text = new StringReader(json ?? ""))
+        using (var reader = new JsonTextReader(text) { DateParseHandling = DateParseHandling.None, MaxDepth = 128 })
+        {
+            if (!reader.Read() || reader.TokenType != JsonToken.StartObject) throw new InvalidDataException("Ungültige Spielstanddaten.");
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            bool ended = false;
+            while (reader.Read())
+            {
+                if (reader.TokenType == JsonToken.EndObject && reader.Depth == 0) { ended = true; break; }
+                if (reader.TokenType != JsonToken.PropertyName || reader.Depth != 1 ||
+                    !(reader.Value is string name) || !names.Add(name) || !reader.Read())
+                    throw new InvalidDataException("Ungültige Spielstandfelder.");
+                if (name == "progression" || name == "exotics" || name == "placedLights")
+                {
+                    JsonToken expected = name == "placedLights" ? JsonToken.StartArray : JsonToken.StartObject;
+                    if (reader.TokenType != expected && reader.TokenType != JsonToken.Null)
+                        throw new InvalidDataException("Ungültiger optionaler Spielstandbereich.");
+                    bool present = reader.TokenType != JsonToken.Null;
+                    if (name == "progression") progression = present;
+                    else if (name == "exotics") exotics = present;
+                    else placedLights = present;
+                }
+                reader.Skip();
+            }
+            if (!ended || reader.Read()) throw new InvalidDataException("Ungültiger Abschluss der Spielstanddaten.");
+        }
+        var state = JsonUtility.FromJson<RunSaveState>(json);
+        if (state == null) throw new InvalidDataException("Ungültige Spielstanddaten.");
+        if (!progression) state.progression = null;
+        if (!exotics) state.exotics = null;
+        if (!placedLights) state.placedLights = null;
+        return state;
+    }
 
     public static IEnumerator Save(int slot, MonoBehaviour owner, Action<bool, string> complete)
         => SaveRun(slot, owner, complete, false, false);
@@ -322,6 +369,9 @@ public static class GameSaveSystem
         var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement>();
         var hud = UnityEngine.Object.FindFirstObjectByType<CompactHud>();
         var state = new RunSaveState { seed = map.ActiveSeed, width = map.GeneratedWidth, height = map.GeneratedHeight,
+            progression = MetaProgression.CaptureRunState(),
+            exotics = ExoticWorldContent.Ensure(map).CaptureState(),
+            placedLights = PlacedTorch.Capture(map),
             generationSettings = GpsSettings.CaptureGeneration(map),
             savedUtc = DateTime.UtcNow.Ticks, playedSeconds = PlayedSeconds, playerPosition = player.transform.position,
             playerVelocity = player.GetComponent<Rigidbody2D>().linearVelocity, facingLeft = player.transform.localScale.x < 0,
@@ -330,7 +380,7 @@ public static class GameSaveSystem
             altar = map.AltarChamber.CaptureState(), discovery = map.GetComponent<PlayerMapDiscovery>()?.CaptureState(),
             hotbar = hud ? hud.slots.Select(x => x ? (int)x.item : -1).ToArray() : Array.Empty<int>(), selectedSlot = hud ? hud.SelectedSlot : 0,
             mining = player.GetComponent<TileMiner>()?.CaptureRunState(),
-            torches = PlacedTorch.Active.Where(x => x && x.OwnerMap == map).Select(x => x.Cell).ToArray(),
+            torches = PlacedTorch.Active.Where(x => x && x.OwnerMap == map && !x.IsLavaLamp).Select(x => x.Cell).ToArray(),
             storage = UnityEngine.Object.FindObjectsByType<SurfaceStorageBuilding>(FindObjectsSortMode.None)
                 .Select(x => new SavedStorage { key = StorageKey(x.transform), items = x.CaptureRunState() }).ToArray(),
             forest = UnityEngine.Object.FindFirstObjectByType<SurfaceTrees>()?.CaptureRunState(),
@@ -405,6 +455,7 @@ public static class GameSaveSystem
     public static IEnumerator RestorePending(MapGenerator map)
     {
         var run = pending; pending = null;
+        MetaProgression.BeginRun(run.state.progression.runId, run.state.progression);
         LoadingProgress.Configure(run.state.width, run.state.height); LoadingProgress.SetStage(1);
         GpsSettings.RestoreGeneration(map, run.state.generationSettings);
         map.BeginSavedMapRestore(run.state.seed, run.state.width, run.state.height);
@@ -471,8 +522,11 @@ public static class GameSaveSystem
         UnityEngine.Object.FindFirstObjectByType<EnergyManager>().energy = Mathf.Clamp(run.state.energy, 0, StatsManager.Instance.MaxEnergy);
         UnityEngine.Object.FindFirstObjectByType<CompactHud>()?.RestoreRunSlots(run.state.hotbar, run.state.selectedSlot);
         if (run.state.discovery != null) map.GetComponent<PlayerMapDiscovery>()?.RestoreState(run.state.discovery);
+        if (run.state.exotics == null) yield return ExoticWorldContent.Ensure(map).GenerateSteps();
+        else ExoticWorldContent.Ensure(map).RestoreState(run.state.exotics);
         var torchItem = StartingResourcesSettings.Resolve((int)Item.Torche);
-        foreach (var cell in run.state.torches ?? Array.Empty<Vector3Int>()) PlacedTorch.CreateAt(map, torchItem, cell);
+        if (run.state.placedLights != null) PlacedTorch.Restore(map, run.state.placedLights);
+        else foreach (var cell in run.state.torches ?? Array.Empty<Vector3Int>()) PlacedTorch.CreateAt(map, torchItem, cell);
         PlayedSeconds = run.state.playedSeconds;
         RunNavigation.EnsurePlayerCamera(player.transform);
         Physics2D.SyncTransforms();
@@ -514,6 +568,19 @@ public static class GameSaveSystem
             throw new InvalidDataException("Ungültiger Spielstand.");
         if (state.generationSettings != null && !GpsSettings.ValidateGeneration(state.generationSettings, state.width, state.height, out var generationError))
             throw new InvalidDataException(generationError);
+        if (!MetaProgression.ValidateRunState(state.progression))
+            throw new InvalidDataException("Ungültiger Fortschritt im Spielstand.");
+        ExoticWorldContent.ValidateState(state.exotics, state.width, state.height);
+        if (state.placedLights != null)
+        {
+            if (state.placedLights.Length > MaxCells) throw new InvalidDataException("Zu viele Lichtquellen.");
+            var occupied = new HashSet<Vector3Int>();
+            foreach (var light in state.placedLights)
+                if ((light.itemId != (int)Item.Torche && light.itemId != (int)Item.LavaLamp) || !occupied.Add(light.cell) ||
+                    light.cell.z != 0 || light.cell.x < -state.width / 2 || light.cell.x >= state.width - state.width / 2 ||
+                    light.cell.y < 1 - state.height || light.cell.y > 4)
+                    throw new InvalidDataException("Ungültige Lichtquelle im Spielstand.");
+        }
         foreach (var item in state.inventory.items ?? Array.Empty<SavedItem>())
             if (item.count < 0 || !StartingResourcesSettings.Resolve(item.id)) throw new InvalidDataException("Unbekanntes Inventar-Item.");
         foreach (int id in (state.inventory.owned ?? Array.Empty<int>()).Concat(state.inventory.powerups ?? Array.Empty<int>()))

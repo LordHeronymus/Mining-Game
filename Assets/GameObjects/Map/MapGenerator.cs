@@ -728,6 +728,7 @@ public class MapGenerator : MonoBehaviour
         }
         LoadingProgress.SetStage(7);
         FinishGeneration(true);
+        yield return ExoticWorldContent.Ensure(this).GenerateSteps();
         LoadingProgress.Report(.5f);
         yield return null;
         yield return new WaitForEndOfFrame();

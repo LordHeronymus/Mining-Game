@@ -2,7 +2,7 @@ using UnityEngine;
 
 public enum Item
 {
-    //next 51
+    //next 54; serialized values must never be reordered.
 
     Coal = 3,
     Copper = 0,
@@ -56,6 +56,9 @@ public enum Item
     CrystalHeart = 48,
     CrystalHarness = 49,
     TravelMonolith = 50,
+    IronLadder = 51,
+    LavaLamp = 52,
+    PercussionHammer = 53,
 }
 
 public enum ItemCategory
@@ -87,7 +90,7 @@ public class ItemSO : ScriptableObject
     public bool HasFixedZeroWeight => item == Item.Axe || item == Item.Scythe ||
         item == Item.CopperPickaxe || item == Item.IronPickaxe || item == Item.SteelPickaxe ||
         item == Item.TitaniumPickaxe || item == Item.TungstenPickaxe ||
-        item == Item.ObsidianPickaxe || item == Item.MythrilPickaxe || item == Item.DiamondPickaxe;
+        item == Item.ObsidianPickaxe || item == Item.MythrilPickaxe || item == Item.DiamondPickaxe || item == Item.PercussionHammer;
 
     public float EffectiveWeight => HasFixedZeroWeight || float.IsNaN(weight) || float.IsInfinity(weight)
         ? 0f : Mathf.Max(0f, weight);

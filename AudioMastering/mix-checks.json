@@ -1,0 +1,182 @@
+[
+  {
+    "scenario": "Dirt hit 1 + break + underground",
+    "pitch_extreme": -1,
+    "true_peak": -7.636261448846823
+  },
+  {
+    "scenario": "Dirt hit 1 + break + underground",
+    "pitch_extreme": 0,
+    "true_peak": -7.636261448846823
+  },
+  {
+    "scenario": "Dirt hit 1 + break + underground",
+    "pitch_extreme": 1,
+    "true_peak": -7.636261448846823
+  },
+  {
+    "scenario": "Dirt hit 2 + break + underground",
+    "pitch_extreme": -1,
+    "true_peak": -9.939961839940002
+  },
+  {
+    "scenario": "Dirt hit 2 + break + underground",
+    "pitch_extreme": 0,
+    "true_peak": -9.939961839940002
+  },
+  {
+    "scenario": "Dirt hit 2 + break + underground",
+    "pitch_extreme": 1,
+    "true_peak": -9.939961839940002
+  },
+  {
+    "scenario": "Dirt hit 3 + break + underground",
+    "pitch_extreme": -1,
+    "true_peak": -9.974720189287744
+  },
+  {
+    "scenario": "Dirt hit 3 + break + underground",
+    "pitch_extreme": 0,
+    "true_peak": -9.974720189287744
+  },
+  {
+    "scenario": "Dirt hit 3 + break + underground",
+    "pitch_extreme": 1,
+    "true_peak": -9.974720189287744
+  },
+  {
+    "scenario": "Dirt hit 4 + break + underground",
+    "pitch_extreme": -1,
+    "true_peak": -9.043384957158136
+  },
+  {
+    "scenario": "Dirt hit 4 + break + underground",
+    "pitch_extreme": 0,
+    "true_peak": -9.043384957158136
+  },
+  {
+    "scenario": "Dirt hit 4 + break + underground",
+    "pitch_extreme": 1,
+    "true_peak": -9.043384957158136
+  },
+  {
+    "scenario": "Dirt hit 5 + break + underground",
+    "pitch_extreme": -1,
+    "true_peak": -8.648735301697792
+  },
+  {
+    "scenario": "Dirt hit 5 + break + underground",
+    "pitch_extreme": 0,
+    "true_peak": -8.648735301697792
+  },
+  {
+    "scenario": "Dirt hit 5 + break + underground",
+    "pitch_extreme": 1,
+    "true_peak": -8.648735301697792
+  },
+  {
+    "scenario": "Dirt hit 6 + break + underground",
+    "pitch_extreme": -1,
+    "true_peak": -9.668650328134715
+  },
+  {
+    "scenario": "Dirt hit 6 + break + underground",
+    "pitch_extreme": 0,
+    "true_peak": -9.668650328134715
+  },
+  {
+    "scenario": "Dirt hit 6 + break + underground",
+    "pitch_extreme": 1,
+    "true_peak": -9.668650328134715
+  },
+  {
+    "scenario": "Stone hit + break + cave",
+    "pitch_extreme": -1,
+    "true_peak": -1.566531059451561
+  },
+  {
+    "scenario": "Stone hit + break + cave",
+    "pitch_extreme": 0,
+    "true_peak": -1.566531059451561
+  },
+  {
+    "scenario": "Stone hit + break + cave",
+    "pitch_extreme": 1,
+    "true_peak": -1.566531059451561
+  },
+  {
+    "scenario": "Ore hit + break + cave",
+    "pitch_extreme": -1,
+    "true_peak": -1.9845569775582237
+  },
+  {
+    "scenario": "Ore hit + break + cave",
+    "pitch_extreme": 0,
+    "true_peak": -1.9845569775582237
+  },
+  {
+    "scenario": "Ore hit + break + cave",
+    "pitch_extreme": 1,
+    "true_peak": -1.9845569775582237
+  },
+  {
+    "scenario": "Loading hit + music",
+    "pitch_extreme": -1,
+    "true_peak": -8.06108166253641
+  },
+  {
+    "scenario": "Loading hit + music",
+    "pitch_extreme": 0,
+    "true_peak": -7.651592091586451
+  },
+  {
+    "scenario": "Loading hit + music",
+    "pitch_extreme": 1,
+    "true_peak": -7.772225256361861
+  },
+  {
+    "scenario": "Home music + two distant hits + water",
+    "pitch_extreme": -1,
+    "true_peak": -0.7160602823509364
+  },
+  {
+    "scenario": "Home music + two distant hits + water",
+    "pitch_extreme": 0,
+    "true_peak": -1.0530101970962287
+  },
+  {
+    "scenario": "Home music + two distant hits + water",
+    "pitch_extreme": 1,
+    "true_peak": -2.076093135900496
+  },
+  {
+    "scenario": "Crafting overlap + collect",
+    "pitch_extreme": -1,
+    "true_peak": -9.075789591755964
+  },
+  {
+    "scenario": "Crafting overlap + collect",
+    "pitch_extreme": 0,
+    "true_peak": -9.075789591755964
+  },
+  {
+    "scenario": "Crafting overlap + collect",
+    "pitch_extreme": 1,
+    "true_peak": -9.075789591755964
+  },
+  {
+    "scenario": "Fall hurt + bones + heartbeat",
+    "pitch_extreme": -1,
+    "true_peak": -7.123928824264362
+  },
+  {
+    "scenario": "Fall hurt + bones + heartbeat",
+    "pitch_extreme": 0,
+    "true_peak": -7.123928824264362
+  },
+  {
+    "scenario": "Fall hurt + bones + heartbeat",
+    "pitch_extreme": 1,
+    "true_peak": -7.123928824264362
+  }
+]

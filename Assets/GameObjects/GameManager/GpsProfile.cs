@@ -23,8 +23,10 @@ public sealed class GpsProfile : ScriptableObject
 [Serializable] public sealed class GpsPreferences
 {
     public StartingResourcesData startingResources = new();
+    public MetaProgressionSettings metaProgression = new();
     public float panelBackdropAlpha = .55f, panelElementAlpha = 1f;
-    public float hotbarVerticalOffset, hotbarHoldDuration = .5f, masterVolume = 1f;
+    public float loadingTwinkleFrequency = 1f;
+    public float hotbarVerticalOffset, hotbarHoldDuration = .5f, masterVolume = 1f, musicVolume = 1f;
 }
 [Serializable] public sealed class GpsRecord
 {

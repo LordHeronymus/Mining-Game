@@ -20,7 +20,7 @@ public sealed class GpsRuntimeHost : MonoBehaviour
     }
 }
 
-public sealed class GpsRuntimePanel : MonoBehaviour
+public sealed partial class GpsRuntimePanel : MonoBehaviour
 {
     static GpsRuntimePanel instance;
     public static bool IsOpen => instance && instance.gameObject.activeSelf;
@@ -48,7 +48,7 @@ public sealed class GpsRuntimePanel : MonoBehaviour
         if (!instance)
         {
             HomeUi.EnsureEventSystem();
-            var root = new GameObject("Gameplay Settings", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            var root = new GameObject("Debug Settings", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             Object.DontDestroyOnLoad(root);
             var canvas = root.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 29000;
             var scaler = root.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -61,6 +61,7 @@ public sealed class GpsRuntimePanel : MonoBehaviour
     }
     public static void Close()
     {
+        GpsAudioPreview.Stop();
         if (!instance) return;
         if (EventSystem.current?.currentSelectedGameObject)
         { EventSystem.current.SetSelectedGameObject(null); }
@@ -75,7 +76,7 @@ public sealed class GpsRuntimePanel : MonoBehaviour
         card = Rect("Card", transform, Vector2.zero, new Vector2(1780, 990));
         card.anchorMin = card.anchorMax = card.pivot = new Vector2(.5f, .5f); card.anchoredPosition = Vector2.zero;
         card.gameObject.AddComponent<Image>().color = Panel;
-        title = Label(card, "Gameplay Settings", new Vector2(28, -25), new Vector2(650, 38), 28);
+        title = Label(card, "Debug Settings", new Vector2(28, -25), new Vector2(650, 38), 28);
         Button(card, "Speichern", new Vector2(1450, -26), new Vector2(145, 38), Save);
         Button(card, "Schließen", new Vector2(1600, -26), new Vector2(145, 38), Close);
         var tabs = TabLabels;
@@ -115,7 +116,7 @@ public sealed class GpsRuntimePanel : MonoBehaviour
     {
         if (!card) return;
         backdrop.color = new Color(0, 0, 0, GpsSettings.Preferences.panelBackdropAlpha);
-        title.text = "Gameplay Settings" + (GpsSettings.HasUnsavedChanges ? " *" : "");
+        title.text = "Debug Settings" + (GpsSettings.HasUnsavedChanges ? " *" : "");
         var group = card.GetComponent<CanvasGroup>(); if (!group) group=card.gameObject.AddComponent<CanvasGroup>();
         group.alpha = GpsSettings.Preferences.panelElementAlpha;
         if (building) return;
@@ -132,8 +133,11 @@ public sealed class GpsRuntimePanel : MonoBehaviour
         building = true; refreshValues.Clear();
         for (int i = content.childCount - 1; i >= 0; i--) { var child = content.GetChild(i); child.gameObject.SetActive(false); Object.Destroy(child.gameObject); }
         rowY = 0;
+        bool showAudioOptions=true;
+        if(tab=="Audio") { BuildAudioCatalog(); showAudioOptions=Header("Audio/Advanced","Ablauf und Mischung",0); }
         foreach (string section in GpsSchema.Sections.Where(section => section.tab == tab).Select(section => section.title).Distinct())
         {
+            if(tab=="Audio" && (!showAudioOptions || section=="Einzelclips" || section=="Gesamtpegel"))continue;
             var fields = GpsSchema.SectionFields(tab, section).ToArray();
             if (fields.Length == 0) continue;
             string sectionKey = tab + "/" + section;
@@ -394,7 +398,7 @@ public sealed class GpsRuntimePanel : MonoBehaviour
         var input = image.gameObject.AddComponent<TMP_InputField>(); input.targetGraphic = image;
         var viewport = Rect("Text Area", image.transform, Vector2.zero, size); viewport.gameObject.AddComponent<RectMask2D>();
         input.textViewport = viewport; input.textComponent = Label(viewport, "", new Vector2(8, 0), size - new Vector2(16, 0), 20);
-        LichtfadenCaret.Apply(input);
+        HomeUi.StyleInputField(input);
         input.SetTextWithoutNotify(value ?? ""); input.onEndEdit.AddListener(text => submit(text)); return input;
     }
     void Dropdown(Vector2 position, string[] labels, int selected, Action<int> submit)

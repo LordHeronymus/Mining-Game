@@ -1,0 +1,97 @@
+{
+  "flow": {
+    "flow_id": "nCjXb86QFZYYoOZzye8j",
+    "name": "Workshop Favorite Star - Four Soft Variants",
+    "url": "https://elevenlabs.io/app/flows/nCjXb86QFZYYoOZzye8j?mode=switchWorkspace&oobCode=e88ddddac1ab41ffbbba337e69499d88"
+  },
+  "nodes": [
+    "wnbwHZzrly8jVIaQCzcU",
+    "2CiZ1J4GdGACKlFLfxby",
+    "6dgNWC1DwBb5CZU1kt9Z",
+    "xwSuf8kyMRVnnuUi0T7A"
+  ],
+  "prompts": [
+    "A single very gentle short UI confirmation for a golden favorite star. A small warm bronze chime softly struck with a felt mallet: rounded pillowy onset, mellow low-mid metallic resonance, cozy satisfying soft bloom and silky quick decay. Restrained intimate game interface sound, about half a second of ringing. The metal sounds cushioned and warm, not bright. No click, snap, sharp ting, high piercing overtones, sparkling hiss, music or voice.",
+    "A single soft satisfying favorite-star UI sound, two tiny rounded rising notes of a muted brass music box in a warm middle register. Smooth felt-soft onset, subtle velvety metal resonance, a gentle uplifting golden glow, very brief silky decay. Quiet polished comforting confirmation, close and clean. No sharp impact, no bright bells, no high treble sparkle, no percussive click, no music track, no speech.",
+    "A short cozy tactile UI confirmation sound for selecting a favorite star: one soft rounded bronze plonk, with a low warm bell body and a faint smooth middle-register harmonic. Damped metal gently tapped through a felt pad, cushioned attack, pleasing mellow resonance that softly melts away. Small elegant friendly event. No bright ting, sharp transient, high-pitched whistle, glitter, rattle, voice or background.",
+    "A single gentle magical favorite-star activation sound. A soft warm rounded metallic hum-chime swelling very briefly into a comforting mellow middle-register two-tone harmony, then fading smoothly, like a miniature muted bronze singing bowl. Satisfying subtle golden warmth, velvety and relaxed, compact game UI sound. Soft onset without any hard hit. No sharp bells, piercing frequencies, bright shimmer, click, hiss, music or voice."
+  ],
+  "run": {
+    "flow_id": "nCjXb86QFZYYoOZzye8j",
+    "flow_created": false,
+    "url": "https://elevenlabs.io/app/flows/nCjXb86QFZYYoOZzye8j?vs=viewstate_01m444bjsaf8yvs1w3dbvpe6pz&mode=switchWorkspace&oobCode=e88ddddac1ab41ffbbba337e69499d88",
+    "flow_url": "https://elevenlabs.io/app/flows/nCjXb86QFZYYoOZzye8j?mode=switchWorkspace&oobCode=e88ddddac1ab41ffbbba337e69499d88",
+    "results": [
+      {
+        "success": true,
+        "node_id": "wnbwHZzrly8jVIaQCzcU",
+        "session_id": "1BhfHNw0zDIAiqF08SvO",
+        "credit_costs": {
+          "RufoN7S6kkct8j4aBALT": 3.333
+        }
+      },
+      {
+        "success": true,
+        "node_id": "2CiZ1J4GdGACKlFLfxby",
+        "session_id": "sLJ55uLORnNVOmcVNG6M",
+        "credit_costs": {
+          "d9GKDCAOGYaufJ8gB6KV": 3.333
+        }
+      },
+      {
+        "success": true,
+        "node_id": "6dgNWC1DwBb5CZU1kt9Z",
+        "session_id": "1epZNIrbvihl6Xq2Q9Sq",
+        "credit_costs": {
+          "ejuTPVQu9qdtGEKzOIQv": 3.333
+        }
+      },
+      {
+        "success": true,
+        "node_id": "xwSuf8kyMRVnnuUi0T7A",
+        "session_id": "yl6oZ1fgBN7pEh2wj0j9",
+        "credit_costs": {
+          "RFHtdpKVkV9mKGAs0F2e": 3.333
+        }
+      }
+    ],
+    "summary": {
+      "nodes_run": 4,
+      "generations_started": 4,
+      "failed": 0,
+      "generations_by_node": {
+        "wnbwHZzrly8jVIaQCzcU": 1,
+        "2CiZ1J4GdGACKlFLfxby": 1,
+        "6dgNWC1DwBb5CZU1kt9Z": 1,
+        "xwSuf8kyMRVnnuUi0T7A": 1
+      }
+    },
+    "session_ids": [
+      "1BhfHNw0zDIAiqF08SvO",
+      "sLJ55uLORnNVOmcVNG6M",
+      "1epZNIrbvihl6Xq2Q9Sq",
+      "yl6oZ1fgBN7pEh2wj0j9"
+    ],
+    "pending": [
+      {
+        "generation_id": "RufoN7S6kkct8j4aBALT",
+        "kind": "audio"
+      },
+      {
+        "generation_id": "d9GKDCAOGYaufJ8gB6KV",
+        "kind": "audio"
+      },
+      {
+        "generation_id": "ejuTPVQu9qdtGEKzOIQv",
+        "kind": "audio"
+      },
+      {
+        "generation_id": "RFHtdpKVkV9mKGAs0F2e",
+        "kind": "audio"
+      }
+    ],
+    "poll_after_seconds": 3,
+    "notes": "Not finished yet. If a generation view is shown it tracks progress and polls by itself, so there is nothing to do here. Only call creative_get_flow_run_status yourself if no view appeared: wait poll_after_seconds, then call it with this flow_id and session_ids, repeating until all_completed or has_failures is true.",
+    "view_state_id": "viewstate_01m444bjsaf8yvs1w3dbvpe6pz"
+  }
+}

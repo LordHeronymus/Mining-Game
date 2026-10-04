@@ -1,0 +1,8 @@
+{
+  "generator": "Built-in image_gen",
+  "prompt": "Precise-object-edit: Remove ONLY the two empty rectangular button plates at the bottom of this game UI panel, including their brass borders, colored surfaces and shadows. Fill their entire former area with continuous matching natural brown horizontal wooden planks of the surrounding panel, with NO new button or label. Preserve all remaining pixels/design as closely as possible: outer frame, four steel corner plates, lanterns, upper decorative helmet/pickaxes, exact headline, three statistics boxes and labels Tiefe/Punkte/Münzen, canvas proportions, sizing and placements. The lower portion under the three statistics boxes must now be a blank wooden footer for a runtime button. Preserve genuine transparency outside original silhouette. This is a surgical cleanup, not a redesign.",
+  "assets": [
+    "GameOverContinue.png",
+    "GameWonContinue.png"
+  ]
+}

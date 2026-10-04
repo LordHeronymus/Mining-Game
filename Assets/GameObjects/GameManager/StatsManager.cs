@@ -26,8 +26,8 @@ public class StatsManager : MonoBehaviour
 
     public float MoveSpeed;
     public float MovementWeightFactor => InventoryManager.Instance ? InventoryManager.Instance.MovementWeightFactor : 1f;
-    public float EffectiveMoveSpeed => MoveSpeed * GameplayTestSettings.MovementMultiplier * MovementWeightFactor;
-    public float JumpHeightBlocks => baseStats.jumpHeightBlocks;
+    public float EffectiveMoveSpeed => MoveSpeed * MetaProgression.CurrentLoadout.movementMultiplier * GameplayTestSettings.MovementMultiplier * MovementWeightFactor;
+    public float JumpHeightBlocks => baseStats.jumpHeightBlocks * MetaProgression.CurrentLoadout.jumpMultiplier;
     public float MiningSpeedMultiplier { get; set; } = 1f;
     public float MiningSpeed => GameplaySettings.BaseDiggingSpeed * MiningSpeedMultiplier;
     [Header("Health")]
@@ -41,7 +41,7 @@ public class StatsManager : MonoBehaviour
     [Range(0f, 1f)] public float bloodEdgeIntensity = 1f;
     [Min(.1f)] public float heartbeatFlashIntervalSeconds = 1.2f;
     [Range(-1f, 1f)] public float heartbeatFlashOffsetSeconds = .12f;
-    public float MaxHealth => Mathf.Max(1f, initialHealth);
+    public float MaxHealth => Mathf.Max(1f, initialHealth) * MetaProgression.CurrentLoadout.healthMultiplier;
     public float Health { get; private set; }
     public float HeartbeatIntervalSeconds => CalculateHeartbeatIntervalSeconds(Health / MaxHealth, heartbeatFlashIntervalSeconds);
     public event Action<float, float> OnHealthChanged;
@@ -59,7 +59,7 @@ public class StatsManager : MonoBehaviour
         if (!baseStats) return;
         float initial = baseStats.maxEnergy;
         if (float.IsNaN(initial) || float.IsInfinity(initial)) initial = 100f;
-        MaxEnergy = Mathf.Max(1f, initial) * (InventoryManager.Instance
+        MaxEnergy = Mathf.Max(1f, initial) * MetaProgression.CurrentLoadout.energyMultiplier * (InventoryManager.Instance
             ? InventoryManager.Instance.EnergyCapacityMultiplier : 1f);
     }
 
@@ -115,6 +115,9 @@ public class StatsManager : MonoBehaviour
                 var item = StartingResourcesSettings.Resolve(resource.itemId);
                 if (item && resource.amount > 0) inventory.AddStartingItem(item, resource.amount);
             }
+            var loadout = MetaProgression.CurrentLoadout;
+            if (loadout.startingTorches > 0) inventory.AddStartingItem(StartingResourcesSettings.Resolve((int)Item.Torche), loadout.startingTorches);
+            if (loadout.startingLadders > 0) inventory.AddStartingItem(StartingResourcesSettings.Resolve((int)Item.Ladder), loadout.startingLadders);
         }
         var hud = FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include);
         if (hud)
@@ -151,6 +154,7 @@ public class StatsManager : MonoBehaviour
         if (HasWon || GameOverPanel.IsOpen || Health <= 0f || !altar || !altar.IsCompleting ||
             altar.DepositedUltronium < Mathf.Max(1, ultroniumRequiredToWin)) return false;
         HasWon = true;
+        MetaProgressionRuntime.RecordVictory();
         GameVictoryPanel.Show();
         return true;
     }
@@ -276,7 +280,7 @@ public class StatsManager : MonoBehaviour
         ArtifactPoints = 0;
         HasWon = false;
         collectedArtifactTypes.Clear();
-        Money = StartingResourcesSettings.Load().money;
+        Money = (int)Math.Min(int.MaxValue, (long)StartingResourcesSettings.Load().money + MetaProgression.CurrentLoadout.startMoney);
         HUDPoints.Instance?.UpdatePoints(Money, PointType.Money);
         OnMoneyChanged?.Invoke(Money);
 

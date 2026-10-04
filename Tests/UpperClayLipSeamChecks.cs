@@ -11,21 +11,25 @@ public static class UpperClayLipSeamChecks
         var background = UnityEngine.Object.FindFirstObjectByType<FixedUndergroundBackground>();
         var lip = AssetDatabase.LoadAssetAtPath<Texture2D>(root + "UpperClayLip_L1Seamless.png");
         var clay = AssetDatabase.LoadAssetAtPath<Texture2D>(root + "UpperClay.png");
-        if (!background || !lip || !clay || background.material.GetTexture("_CapTex") != lip)
+        var material = background ? background.material :
+            AssetDatabase.LoadAssetAtPath<Material>(root + "FixedUnderground.mat");
+        if (!material || !lip || !clay || material.GetTexture("_CapTex") != lip)
             throw new Exception("The matched soil lip is not active");
         var importer = (TextureImporter)AssetImporter.GetAtPath(root + "UpperClayLip_L1Seamless.png");
         if (importer.maxTextureSize < lip.width || importer.mipmapEnabled ||
-            importer.wrapModeU != TextureWrapMode.Mirror ||
-            importer.wrapModeV != TextureWrapMode.Mirror)
+            importer.wrapModeU != TextureWrapMode.Repeat ||
+            importer.wrapModeV != TextureWrapMode.Clamp)
             throw new Exception("The lip importer changes its baked L1 edge pixels");
 
         var lipPixels = Load(root + "UpperClayLip_L1Seamless.png");
         var clayPixels = Load(root + "UpperClay.png");
         try
         {
-            float capHeight = background.material.GetVector("_CapSize").y;
-            float topOffset = background.material.GetFloat("_CapTopOffset");
-            float clayV = Mirror((topOffset - capHeight) / background.textureHeight);
+            float capHeight = material.GetVector("_CapSize").y;
+            float topOffset = material.GetFloat("_CapTopOffset");
+            clayPixels.wrapMode = TextureWrapMode.Repeat;
+            float clayV = Mathf.Repeat((capHeight - topOffset) /
+                (background ? background.textureHeight : 11f), 1f);
             float maximumDifference = 0f;
             for (int x = 0; x < lipPixels.width; x += 11)
             {
@@ -41,10 +45,20 @@ public static class UpperClayLipSeamChecks
             }
             if (maximumDifference > 2f / 255f)
                 throw new Exception("The lip bottom no longer matches L1: " + maximumDifference);
-            if (ShaderUtil.ShaderHasError(background.material.shader))
+            float maximumSideDifference = 0f;
+            for (int y = 96; y < lipPixels.height; y++)
+            {
+                Color left = lipPixels.GetPixel(0, y), right = lipPixels.GetPixel(lipPixels.width - 1, y);
+                maximumSideDifference = Mathf.Max(maximumSideDifference,
+                    Mathf.Abs(left.r - right.r), Mathf.Abs(left.g - right.g),
+                    Mathf.Abs(left.b - right.b), Mathf.Abs(left.a - right.a));
+            }
+            if (maximumSideDifference > 1f / 255f)
+                throw new Exception("The lip's repeated side edges or silhouette do not match");
+            if (ShaderUtil.ShaderHasError(material.shader))
                 throw new Exception("Underground shader has errors");
             return new { passed = true, maximumPixelDifference = maximumDifference,
-                lipWidth = lipPixels.width, samples = (lipPixels.width + 10) / 11 };
+                maximumSideDifference, lipWidth = lipPixels.width, samples = (lipPixels.width + 10) / 11 };
         }
         finally
         {
@@ -62,6 +76,4 @@ public static class UpperClayLipSeamChecks
         return texture;
     }
 
-    static float Mirror(float value)
-        => 1f - Mathf.Abs(Mathf.Repeat(value * .5f, 1f) * 2f - 1f);
 }

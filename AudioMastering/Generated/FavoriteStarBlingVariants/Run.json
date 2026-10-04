@@ -1,0 +1,97 @@
+{
+  "flow": {
+    "flow_id": "p0QXjysXmqfub9xlcn73",
+    "name": "Workshop Favorite Star - Four Bling Variants",
+    "url": "https://elevenlabs.io/app/flows/p0QXjysXmqfub9xlcn73?mode=switchWorkspace&oobCode=e88ddddac1ab41ffbbba337e69499d88"
+  },
+  "nodes": [
+    "yylJc8RjYlmXbqo9c8D7",
+    "SAZh4EDjnlepPiaJxBt6",
+    "PdHaImatbwm2FjkGNZMn",
+    "9SNGGtT5Za9CI9ga0LnN"
+  ],
+  "prompts": [
+    "One short satisfying bling sound for activating a favorite star in a game UI. A clear warm brass bell note with a gently rounded but defined attack, a tiny pleasant metallic overtone and a short clean ringing tail. Medium register, bright enough to feel rewarding but smooth and friendly. Compact single event. No sharp piercing high notes, no hiss, no harsh impact, no music or speech.",
+    "One short cheerful bling UI confirmation sound: two quick closely spaced rising notes, like a miniature polished brass chime, with a lightly metallic finish. Clear tactile onset, balanced warm body, a little restrained sparkle, and a brief smooth decay. A satisfying golden favorite-star sound. Not muffled, not piercing. No background, speech, music track or harsh treble.",
+    "A single compact rewarding favorite-star bling. A small polished metal token gently tapped, immediately producing a clear mellow bell-like ding with a subtle bright metallic glint. Defined rounded onset, pleasant warm midrange resonance and a neat short tail. Friendly premium game UI sound. No dull thud, harsh clang, piercing whistle, speech or background.",
+    "One elegant short metallic bling for a favorite star lighting up. A clear rounded bell plink followed by a tiny uplifting harmonic shimmer, like a little golden music-box chime. Crisp enough to be satisfying, lightly metallic, warm and smooth, with a short controlled ringing decay. Single event, no sharp snap, no piercing high sparkle, no music or voice."
+  ],
+  "run": {
+    "flow_id": "p0QXjysXmqfub9xlcn73",
+    "flow_created": false,
+    "url": "https://elevenlabs.io/app/flows/p0QXjysXmqfub9xlcn73?vs=viewstate_01m444fb1eepcbbpj1j34w7t5w&mode=switchWorkspace&oobCode=e88ddddac1ab41ffbbba337e69499d88",
+    "flow_url": "https://elevenlabs.io/app/flows/p0QXjysXmqfub9xlcn73?mode=switchWorkspace&oobCode=e88ddddac1ab41ffbbba337e69499d88",
+    "results": [
+      {
+        "success": true,
+        "node_id": "yylJc8RjYlmXbqo9c8D7",
+        "session_id": "PbmCouLUoP5zftxRWmOC",
+        "credit_costs": {
+          "Nib4vpZr4GcVEgFH7RnT": 3.333
+        }
+      },
+      {
+        "success": true,
+        "node_id": "SAZh4EDjnlepPiaJxBt6",
+        "session_id": "fCtjEWYQQJbo95TcAsxt",
+        "credit_costs": {
+          "YlTkuNfjYwLxHMTZjdHs": 3.333
+        }
+      },
+      {
+        "success": true,
+        "node_id": "PdHaImatbwm2FjkGNZMn",
+        "session_id": "ry3mOoSgBRDlRKxdaoav",
+        "credit_costs": {
+          "JSJJceVgotWsM79TP3Kd": 3.333
+        }
+      },
+      {
+        "success": true,
+        "node_id": "9SNGGtT5Za9CI9ga0LnN",
+        "session_id": "3u3c3hW7BdB3SUFJzAkj",
+        "credit_costs": {
+          "oUqmnjsnFPYAEzOmZ3bu": 3.333
+        }
+      }
+    ],
+    "summary": {
+      "nodes_run": 4,
+      "generations_started": 4,
+      "failed": 0,
+      "generations_by_node": {
+        "yylJc8RjYlmXbqo9c8D7": 1,
+        "SAZh4EDjnlepPiaJxBt6": 1,
+        "PdHaImatbwm2FjkGNZMn": 1,
+        "9SNGGtT5Za9CI9ga0LnN": 1
+      }
+    },
+    "session_ids": [
+      "PbmCouLUoP5zftxRWmOC",
+      "fCtjEWYQQJbo95TcAsxt",
+      "ry3mOoSgBRDlRKxdaoav",
+      "3u3c3hW7BdB3SUFJzAkj"
+    ],
+    "pending": [
+      {
+        "generation_id": "Nib4vpZr4GcVEgFH7RnT",
+        "kind": "audio"
+      },
+      {
+        "generation_id": "YlTkuNfjYwLxHMTZjdHs",
+        "kind": "audio"
+      },
+      {
+        "generation_id": "JSJJceVgotWsM79TP3Kd",
+        "kind": "audio"
+      },
+      {
+        "generation_id": "oUqmnjsnFPYAEzOmZ3bu",
+        "kind": "audio"
+      }
+    ],
+    "poll_after_seconds": 3,
+    "notes": "Not finished yet. If a generation view is shown it tracks progress and polls by itself, so there is nothing to do here. Only call creative_get_flow_run_status yourself if no view appeared: wait poll_after_seconds, then call it with this flow_id and session_ids, repeating until all_completed or has_failures is true.",
+    "view_state_id": "viewstate_01m444fb1eepcbbpj1j34w7t5w"
+  }
+}

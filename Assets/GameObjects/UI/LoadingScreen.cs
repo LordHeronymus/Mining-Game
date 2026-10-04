@@ -210,7 +210,7 @@ public sealed class LoadingScreen : MonoBehaviour
         group.alpha = 0f;
         presented = false;
         TransitionPhase = "BlackCompletion";
-        double revealAt = Time.realtimeSinceStartupAsDouble + .5;
+        double revealAt = Time.realtimeSinceStartupAsDouble + .2;
         while (Time.realtimeSinceStartupAsDouble < revealAt) yield return null;
         TransitionPhase = "GameplayFadeIn";
         yield return FadeFromBlack();

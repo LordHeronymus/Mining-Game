@@ -13,6 +13,15 @@ SAMPLER(sampler_AltarMask);
 float4 _AltarRect;
 float4 _AltarMaskSize;
 
+float MapSurfaceDarknessFade(float2 maskUV)
+{
+    // The first texel is centred half a cell below the surface. Extend the
+    // daylight transition to zero darkness at the upper edge of the mask.
+    if (_TerrainOcclusionSize.y <= 0) return 1;
+    float depth = (1 - maskUV.y) * _TerrainOcclusionSize.y;
+    return smoothstep(0, .5, depth);
+}
+
 float MapAltarShellVisibility(float2 source, float2 destination)
 {
     float2 size = _AltarMaskSize.xy;

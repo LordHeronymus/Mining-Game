@@ -20,7 +20,11 @@ public sealed class StartingResourcesData
 {
     public int version = 1;
     public int money = 100;
-    public StartingItemAmount[] items = { new StartingItemAmount((int)Item.Torche, 5) };
+    public StartingItemAmount[] items =
+    {
+        new StartingItemAmount((int)Item.Torche, 5),
+        new StartingItemAmount((int)Item.Ladder, 10)
+    };
 }
 
 public static class StartingResourcesSettings

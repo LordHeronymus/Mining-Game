@@ -16,6 +16,7 @@ public sealed class PlayerLadder : MonoBehaviour
     SpriteRenderer preview;
     CompactHud hotbar;
     float gravity, reattachAt;
+    static bool IsLadder(ItemSO item) => item && (item.item == Item.Ladder || item.item == Item.IronLadder);
 
     void Awake()
     {
@@ -33,11 +34,11 @@ public sealed class PlayerLadder : MonoBehaviour
         var selected = hotbar ? hotbar.SelectedItem : null;
         if (GameBindings.Down(GameAction.QuickLadder) && hotbar)
         {
-            int ladderSlot = System.Array.FindIndex(hotbar.slots, item => item && item.item == Item.Ladder) + 1;
+            int ladderSlot = System.Array.FindIndex(hotbar.slots, item => IsLadder(item) && InventoryManager.Instance && InventoryManager.Instance.GetCount(item) > 0) + 1;
             if (ladderSlot > 0) hotbar.SelectSlot(hotbar.SelectedSlot == ladderSlot ? 0 : ladderSlot);
             selected = hotbar.SelectedItem;
         }
-        if (GameBindings.Down(GameAction.Settings) && hotbar && selected && selected.item == Item.Ladder)
+        if (GameBindings.Down(GameAction.Settings) && hotbar && IsLadder(selected))
         {
             hotbar.SelectSlot(0);
             selected = null;
@@ -46,32 +47,40 @@ public sealed class PlayerLadder : MonoBehaviour
         Vector3 world = view.ScreenToWorldPoint(Input.mousePosition);
         world.z = 0;
         var inventory = InventoryManager.Instance;
+        var buildTerrain = ladders ? ladders.Map.Terrain : null;
+        float blockWidth = buildTerrain ? Vector3.Distance(buildTerrain.CellToWorld(Vector3Int.zero), buildTerrain.CellToWorld(Vector3Int.right)) : 1f;
+        float buildReach = stats.Reach + MetaProgression.CurrentLoadout.buildReachBonus * blockWidth;
         if (GameBindings.Down(GameAction.Remove))
         {
-            if (PlacedTorch.TryRemoveAt(world, transform.position, stats.Reach)) return;
+            if (PlacedTorch.TryRemoveAt(world, transform.position, buildReach)) return;
             if (ladders)
-                ladders.TryRemove(ladders.Map.Terrain.WorldToCell(world), inventory, transform.position, stats.Reach);
+                ladders.TryRemove(ladders.Map.Terrain.WorldToCell(world), inventory, transform.position, buildReach);
         }
         if (GameBindings.Down(GameAction.Place) && selected)
         {
-            if (selected.item == Item.Ladder && ladders)
+            if (IsLadder(selected) && ladders)
             {
                 var cell = ladders.Map.Terrain.WorldToCell(world);
-                ladders.TryPlace(cell, inventory, transform.position, stats.Reach);
+                ladders.TryPlace(cell, inventory, transform.position, buildReach, selected);
             }
-            else if (selected.item == Item.Torche)
+            else if (selected.item == Item.Torche || selected.item == Item.LavaLamp)
             {
                 var map = ladders ? ladders.Map : FindFirstObjectByType<MapGenerator>();
-                PlacedTorch.TryPlace(map, selected, world, transform.position, stats.Reach);
+                PlacedTorch.TryPlace(map, selected, world, transform.position, buildReach);
+            }
+            else if (selected.item == Item.Dynamite)
+            {
+                var map = ladders ? ladders.Map : FindFirstObjectByType<MapGenerator>();
+                PlacedDynamite.TryPlace(map, selected, world, transform.position, stats.Reach);
             }
         }
 
-        bool showLadderPreview = BuildMode && ladders && selected && selected.item == Item.Ladder;
+        bool showLadderPreview = BuildMode && ladders && IsLadder(selected);
         if (!showLadderPreview) { HidePreview(); return; }
         var previewCell = ladders.Map.Terrain.WorldToCell(world);
-        bool reachable = ladders.InReach(previewCell, transform.position, stats.Reach);
+        bool reachable = ladders.InReach(previewCell, transform.position, buildReach);
         bool occupied = ladders.Has(previewCell);
-        bool valid = reachable && ladders.CanPlace(previewCell) && inventory && inventory.GetCount(ladders.ladderItem) > 0;
+        bool valid = reachable && ladders.CanPlace(previewCell) && inventory && inventory.GetCount(selected) > 0;
         ShowPreview(previewCell, valid ? new Color(.55f, 1, .55f, .65f) :
             occupied && reachable ? new Color(1, .8f, .3f, .7f) : new Color(1, .25f, .25f, .5f));
     }
@@ -136,7 +145,9 @@ public sealed class PlayerLadder : MonoBehaviour
             preview.sortingOrder = 20;
             preview.sharedMaterial = ladders.ladderMaterial;
         }
-        preview.sprite = ladders.segment.sprite;
+        var selected = hotbar ? hotbar.SelectedItem : null;
+        var iron = selected && selected.item == Item.IronLadder ? Resources.Load<UnityEngine.Tilemaps.Tile>("Exotics/IronLadderTile") : null;
+        preview.sprite = iron ? iron.sprite : ladders.segment.sprite;
         preview.transform.localScale = ladders.Map.Terrain.orientationMatrix.lossyScale;
         preview.transform.position = ladders.Map.Terrain.GetCellCenterWorld(cell);
         preview.color = color;

@@ -1,0 +1,702 @@
+fileFormatVersion: 2
+guid: a5beaf205b0ffbf42b3f5f33b72586b0
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 4625501315940781252
+    second: UpgradeTabs_0
+  - first:
+      213: -6816506093938122080
+    second: UpgradeTabs_1
+  - first:
+      213: 3746303981658076314
+    second: UpgradeTabs_2
+  - first:
+      213: -455901343024510821
+    second: UpgradeTabs_3
+  - first:
+      213: -1107003166862315563
+    second: UpgradeTabs_4
+  - first:
+      213: 6124134439252858858
+    second: UpgradeTabs_5
+  - first:
+      213: 462063994277290033
+    second: UpgradeTabs_6
+  - first:
+      213: 2258668325159948543
+    second: UpgradeTabs_7
+  - first:
+      213: 2740002964442330535
+    second: UpgradeTabs_8
+  - first:
+      213: 3070810701397469924
+    second: UpgradeTabs_9
+  - first:
+      213: -1040805985842029369
+    second: UpgradeTabs_10
+  - first:
+      213: 8936808547116791571
+    second: UpgradeTabs_11
+  - first:
+      213: -1758983193256946930
+    second: UpgradeTabs_12
+  - first:
+      213: 8403225199111350921
+    second: UpgradeTabs_13
+  - first:
+      213: 199942442318682167
+    second: UpgradeTabs_14
+  - first:
+      213: 255666913120738477
+    second: UpgradeTabs_15
+  - first:
+      213: -1005088791461936774
+    second: UpgradeTabs_16
+  - first:
+      213: -7068860245502189521
+    second: UpgradeTabs_17
+  - first:
+      213: -8593156479913065427
+    second: UpgradeTabs_18
+  - first:
+      213: 5836567203612933503
+    second: UpgradeTabs_19
+  - first:
+      213: 8309198505532939710
+    second: UpgradeTabs_20
+  - first:
+      213: 6037860691754857852
+    second: UpgradeTabs_21
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: UpgradeTabs_0
+      rect:
+        serializedVersion: 2
+        x: 943
+        y: 1277
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4cc80cc90f4113040800000000000000
+      internalID: 4625501315940781252
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_1
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 847
+        width: 1190
+        height: 406
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a2688da2d7e661a0800000000000000
+      internalID: -6816506093938122080
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_2
+      rect:
+        serializedVersion: 2
+        x: 365
+        y: 1223
+        width: 7
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a947c5f5f9b8df330800000000000000
+      internalID: 3746303981658076314
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_3
+      rect:
+        serializedVersion: 2
+        x: 764
+        y: 1219
+        width: 43
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b98866cd4205ca9f0800000000000000
+      internalID: -455901343024510821
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_4
+      rect:
+        serializedVersion: 2
+        x: 876
+        y: 1237
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5df60f12c7223a0f0800000000000000
+      internalID: -1107003166862315563
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_5
+      rect:
+        serializedVersion: 2
+        x: 942
+        y: 1221
+        width: 83
+        height: 41
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae7176053db4df450800000000000000
+      internalID: 6124134439252858858
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_6
+      rect:
+        serializedVersion: 2
+        x: 731
+        y: 1211
+        width: 18
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 130656231c4996600800000000000000
+      internalID: 462063994277290033
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_7
+      rect:
+        serializedVersion: 2
+        x: 441
+        y: 1189
+        width: 16
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff0d592ffd6685f10800000000000000
+      internalID: 2258668325159948543
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_8
+      rect:
+        serializedVersion: 2
+        x: 363
+        y: 872
+        width: 13
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a53a13dd22760620800000000000000
+      internalID: 2740002964442330535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_9
+      rect:
+        serializedVersion: 2
+        x: 852
+        y: 880
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4eaa3452016bd9a20800000000000000
+      internalID: 3070810701397469924
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_10
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 840
+        width: 11
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7cc19c568705e81f0800000000000000
+      internalID: -1040805985842029369
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_11
+      rect:
+        serializedVersion: 2
+        x: 616
+        y: 854
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 317329c360ce50c70800000000000000
+      internalID: 8936808547116791571
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_12
+      rect:
+        serializedVersion: 2
+        x: 721
+        y: 841
+        width: 30
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e039900fa16d697e0800000000000000
+      internalID: -1758983193256946930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_13
+      rect:
+        serializedVersion: 2
+        x: 1046
+        y: 852
+        width: 17
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 98aa4a0ebc04e9470800000000000000
+      internalID: 8403225199111350921
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_14
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 398
+        width: 1212
+        height: 452
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 738dde9879656c200800000000000000
+      internalID: 199942442318682167
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_15
+      rect:
+        serializedVersion: 2
+        x: 213
+        y: 844
+        width: 12
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dacd161f3bf4c8300800000000000000
+      internalID: 255666913120738477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_16
+      rect:
+        serializedVersion: 2
+        x: 747
+        y: 838
+        width: 6
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a714f21c1153d02f0800000000000000
+      internalID: -1005088791461936774
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_17
+      rect:
+        serializedVersion: 2
+        x: 1005
+        y: 828
+        width: 16
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2026f32f0d56ed90800000000000000
+      internalID: -7068860245502189521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_18
+      rect:
+        serializedVersion: 2
+        x: 193
+        y: 443
+        width: 9
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d248f63c5b9feb880800000000000000
+      internalID: -8593156479913065427
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_19
+      rect:
+        serializedVersion: 2
+        x: 615
+        y: 444
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7d3b0fb2f6aff050800000000000000
+      internalID: 5836567203612933503
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_20
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 71
+        width: 5
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ebd5f7a4404305370800000000000000
+      internalID: 8309198505532939710
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UpgradeTabs_21
+      rect:
+        serializedVersion: 2
+        x: 13
+        y: 0
+        width: 1195
+        height: 398
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c75b7572f4acac350800000000000000
+      internalID: 6037860691754857852
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      UpgradeTabs_0: 4625501315940781252
+      UpgradeTabs_1: -6816506093938122080
+      UpgradeTabs_10: -1040805985842029369
+      UpgradeTabs_11: 8936808547116791571
+      UpgradeTabs_12: -1758983193256946930
+      UpgradeTabs_13: 8403225199111350921
+      UpgradeTabs_14: 199942442318682167
+      UpgradeTabs_15: 255666913120738477
+      UpgradeTabs_16: -1005088791461936774
+      UpgradeTabs_17: -7068860245502189521
+      UpgradeTabs_18: -8593156479913065427
+      UpgradeTabs_19: 5836567203612933503
+      UpgradeTabs_2: 3746303981658076314
+      UpgradeTabs_20: 8309198505532939710
+      UpgradeTabs_21: 6037860691754857852
+      UpgradeTabs_3: -455901343024510821
+      UpgradeTabs_4: -1107003166862315563
+      UpgradeTabs_5: 6124134439252858858
+      UpgradeTabs_6: 462063994277290033
+      UpgradeTabs_7: 2258668325159948543
+      UpgradeTabs_8: 2740002964442330535
+      UpgradeTabs_9: 3070810701397469924
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

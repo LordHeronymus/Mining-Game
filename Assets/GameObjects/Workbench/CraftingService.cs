@@ -30,6 +30,12 @@ public static class CraftingService
         if (!recipe.TryGetCosts(out var perBatch)) return false;
         var costs = new Dictionary<ItemSO, int>();
         foreach (var cost in perBatch) costs.Add(cost.Key, checked(cost.Value * batches));
-        return inventory.TryExchange(costs, recipe.output, checked(recipe.outputAmount * batches));
+        if (!inventory.TryExchange(costs, recipe.output, checked(recipe.outputAmount * batches))) return false;
+        if (MetaProgressionRuntime.RewardsAllowed)
+        {
+            MetaProgression.RecordCraft(recipe.output.item);
+            if (recipe.exotic) MetaProgression.RecordExoticCraft(recipe.output.item);
+        }
+        return true;
     }
 }

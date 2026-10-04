@@ -114,15 +114,18 @@ public class BuyPage : MonoBehaviour
         card.background = Panel("Blueprint " + item, content, 0, 0, CardWidth, CardHeight, normalFrame);
         card.rect = card.background.rectTransform; card.background.raycastTarget = true;
         var button = card.rect.gameObject.AddComponent<Button>(); button.targetGraphic = card.background;
+        GoldButtonFeedback.Apply(button, normalFrame, selectedFrame);
+        HomeClickAudio.Bind(button);
         button.onClick.AddListener(() => Select(card));
         var colors = button.colors; colors.highlightedColor = new Color(1f, .94f, .8f);
         colors.pressedColor = new Color(.8f, .7f, .52f); button.colors = colors;
-        card.icon = Panel("Blueprint", card.rect, 18, 22, 260, 196, card.sprite);
+        card.icon = Panel("Blueprint", card.rect, 18, 22, 260, 176, card.sprite);
         ShopVisualTheme.CenterImage(card.icon);
-        card.name = Label(card.rect, recipe.output.displayName, 16, 221, 264, 48, 31);
+        card.name = Label(card.rect, recipe.output.displayName, 30, 202, 236, 38, 31);
         card.name.alignment = TextAlignmentOptions.Midline;
-        card.name.textWrappingMode = TextWrappingModes.Normal;
-        card.name.enableAutoSizing = true; card.name.fontSizeMin = 24; card.name.fontSizeMax = 31;
+        card.name.textWrappingMode = TextWrappingModes.NoWrap;
+        card.name.overflowMode = TextOverflowModes.Ellipsis;
+        card.name.enableAutoSizing = true; card.name.fontSizeMin = 18; card.name.fontSizeMax = 31;
         card.priceText = Label(card.rect, "", 30, 272, 185, 38, 36);
         card.coin = Panel("Price Coin", card.rect, 215, 272, 38, 38, coin);
         ShopVisualTheme.CenterImage(card.coin);
@@ -132,7 +135,7 @@ public class BuyPage : MonoBehaviour
     }
     void Select(RecipeCard card)
     {
-        selected = card; AudioManager.Instance?.Play(SoundType.UI_Click); Refresh(); RefreshMaterials();
+        selected = card; Refresh(); RefreshMaterials();
     }
     void Purchase()
     {
@@ -153,20 +156,20 @@ public class BuyPage : MonoBehaviour
         {
             var card = ordered[i]; bool unlocked = card.isUnlocked();
             Place(card.rect, i % Columns * (CardWidth + GapX), i / Columns * (CardHeight + GapY), CardWidth, CardHeight);
-            card.background.sprite = card == selected ? selectedFrame : normalFrame;
+            GoldButtonFeedback.Select(card.background, card == selected);
             card.icon.color = unlocked ? new Color(.72f, .66f, .57f, 1f) : Color.white;
             card.name.color = unlocked ? Muted : Cream;
             card.check.gameObject.SetActive(unlocked); card.coin.gameObject.SetActive(!unlocked);
             card.priceText.text = unlocked ? "Freigeschaltet" : ShopMoneyFormatter.Format(card.price);
             bool canAfford = observedStats && observedStats.CanAffordMoney(card.price);
-            card.priceText.fontSize = unlocked ? 27 : 36;
+            card.priceText.fontSize = unlocked ? 25 : 32;
             card.priceText.color = unlocked ? Muted : canAfford ? Cream : Unaffordable;
             float priceWidth = Mathf.Min(210, card.priceText.GetPreferredValues(card.priceText.text).x);
             float start = (CardWidth - priceWidth - (unlocked ? 35 : 45)) * .5f;
-            Place(card.priceText.rectTransform, start + (unlocked ? 35 : 0), 272, priceWidth + 2, 38);
-            Place(card.coin.rectTransform, start + priceWidth + 7, 272, 38, 38);
+            Place(card.priceText.rectTransform, start + (unlocked ? 35 : 0), 247, priceWidth + 2, 34);
+            Place(card.coin.rectTransform, start + priceWidth + 7, 247, 34, 34);
             ShopVisualTheme.CenterImage(card.coin);
-            Place(card.check.rectTransform, start, 277, 28, 28);
+            Place(card.check.rectTransform, start, 250, 28, 28);
         }
         content.sizeDelta = new Vector2(ListWidth, Mathf.Max(ListHeight, Mathf.Ceil(ordered.Length / (float)Columns) * (CardHeight + GapY) - GapY));
         detailPanel.SetActive(selected != null);
@@ -225,6 +228,8 @@ public class BuyPage : MonoBehaviour
         AddScrollbar(materialScroll, detail, 619, 655, 10, 192);
         var action = Panel("Buy Blueprint", detail, 40, 881, 564, 98, actionFrame); action.raycastTarget = true;
         purchaseButton = action.gameObject.AddComponent<Button>(); purchaseButton.targetGraphic = action;
+        GoldButtonFeedback.Apply(purchaseButton, normalFrame, selectedFrame);
+        HomeClickAudio.Bind(purchaseButton);
         purchaseButton.onClick.AddListener(Purchase);
         var colors = purchaseButton.colors; colors.disabledColor = new Color(.48f, .44f, .38f, 1f);
         colors.highlightedColor = new Color(1f, .95f, .78f); colors.pressedColor = new Color(.8f, .65f, .45f);
@@ -248,7 +253,7 @@ public class BuyPage : MonoBehaviour
         searchField.placeholder = placeholder; searchField.targetGraphic = panel;
         searchField.characterLimit = 80; searchField.lineType = TMP_InputField.LineType.SingleLine;
         searchField.customCaretColor = true; searchField.caretColor = Cream;
-        LichtfadenCaret.Apply(searchField);
+        HomeUi.StyleInputField(searchField, true);
         searchField.onValueChanged.AddListener(SetSearch);
     }
     ScrollRect ScrollArea(Transform parent, string name, float x, float y, float w, float h, out RectTransform items)
@@ -281,7 +286,7 @@ public class BuyPage : MonoBehaviour
     {
         var image = Rect(name, parent, x, y, w, h).gameObject.AddComponent<Image>(); image.sprite = sprite;
         image.type = sprite && sprite.border.sqrMagnitude > 0 ? Image.Type.Sliced : Image.Type.Simple;
-        image.pixelsPerUnitMultiplier = 3f; image.raycastTarget = false; return image;
+        image.pixelsPerUnitMultiplier = 3f; image.raycastTarget = false; HomeUi.StylePanelWood(image); return image;
     }
     TextMeshProUGUI Label(Transform parent, string value, float x, float y, float w, float h, float size)
     {

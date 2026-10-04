@@ -23,6 +23,7 @@ public sealed class GameOverPanel : MonoBehaviour
     TextMeshProUGUI depthValue;
     TextMeshProUGUI pointsValue;
     TextMeshProUGUI moneyValue;
+
     RectTransform moneyCoin;
     Button retryButton;
     StatsManager observedStats;
@@ -68,11 +69,14 @@ public sealed class GameOverPanel : MonoBehaviour
 
     void OnHealthChanged(float health, float maximum)
     {
-        if (health <= 0f && !IsOpen && !GameVictoryPanel.IsOpen) Show();
+        if (health <= 0f && !IsOpen && !GameVictoryPanel.IsOpen && !ExpeditionResultPanel.IsOpen) Show();
     }
 
     public void Show()
     {
+        if (LoadingProgress.Active || RunNavigation.IsTransitioning) return;
+        MetaProgression.RecordRunFinished(false);
+        MetaProgression.Save();
         RefreshValues();
 
         IsOpen = true;
@@ -94,6 +98,7 @@ public sealed class GameOverPanel : MonoBehaviour
         var hud = FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include);
         depthValue.text = (hud ? hud.DepthMeters : 0).ToString("N0", German) + " m";
         pointsValue.text = (stats ? stats.Points : 0).ToString("N0", German);
+
         string money = ShopMoneyFormatter.Format(stats ? stats.Money : 0);
         if (moneyValue.text != money)
         {
@@ -129,48 +134,18 @@ public sealed class GameOverPanel : MonoBehaviour
         fade = null;
     }
 
-    void Restart()
+    void ContinueToResults()
     {
-        CloseForTransition();
-        retryButton.interactable = false;
-        StartCoroutine(RestartRun());
-    }
-
-    IEnumerator RestartRun()
-    {
-        int sceneIndex = SceneManager.GetActiveScene().buildIndex;
-        var stats = StatsManager.Instance ? StatsManager.Instance : FindFirstObjectByType<StatsManager>();
-        if (stats) Destroy(stats.gameObject);
-        yield return null;
-        LoadingScreen.LoadScene(sceneIndex);
-    }
-
-    void ReturnToMainMenu()
-    {
-        CloseForTransition();
-        const string mainMenuScene = "MainMenu";
-        if (Application.CanStreamedLevelBeLoaded(mainMenuScene))
-        {
-            RunNavigation.MainMenu();
-            return;
-        }
-
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
-    }
-
-    void CloseForTransition()
-    {
+        if (!IsOpen || ExpeditionResultPanel.IsOpen || RunNavigation.IsTransitioning) return;
+        var result = ExpeditionResultPanel.Show(transform.parent);
+        if (!result) return;
+        StopAllCoroutines();
         IsOpen = false;
-        GameplayInputBlocker.SetBlocked(this, false);
-        AudioManager.Instance?.StopGameOverMusic();
-        Time.timeScale = 1f;
+        group.alpha = 0;
         group.blocksRaycasts = group.interactable = false;
+        GameplayInputBlocker.SetBlocked(this, false);
+        Time.timeScale = 0;
     }
-
     void Build()
     {
         var root = GetComponent<RectTransform>();
@@ -190,7 +165,8 @@ public sealed class GameOverPanel : MonoBehaviour
         panel = CreateRect("Game Over Panel", root, Vector2.zero, new Vector2(1120f, 635f));
         panel.anchorMin = panel.anchorMax = panel.pivot = new Vector2(.5f, .5f);
         var panelImage = panel.gameObject.AddComponent<Image>();
-        panelImage.sprite = Resources.Load<Sprite>("GameOverPanelNoCoin") ?? panelSprite;
+        panelImage.sprite = Resources.Load<Sprite>("Progression/GameOverContinue") ?? Resources.Load<Sprite>("GameOverPanelNoCoin") ?? panelSprite;
+        HomeUi.StylePanelWood(panelImage);
         panelImage.preserveAspect = true;
         panelImage.raycastTarget = false;
 
@@ -210,8 +186,7 @@ public sealed class GameOverPanel : MonoBehaviour
         moneyValue.fontSizeMin = 30f;
         moneyValue.fontSizeMax = 43f;
 
-        retryButton = AddButton("Retry", panel, new Vector2(-207f, -211f), new Vector2(384f, 78f), "Nochmal versuchen", Restart);
-        AddButton("Main Menu", panel, new Vector2(207f, -211f), new Vector2(360f, 78f), "Zum Hauptmenü", ReturnToMainMenu);
+        retryButton = AddButton("Continue", panel, new Vector2(0f, -211f), new Vector2(805f, 82f), "Weiter", ContinueToResults);
     }
 
     Button AddButton(string objectName, Transform parent, Vector2 position, Vector2 size, string label, UnityEngine.Events.UnityAction action)
@@ -239,6 +214,8 @@ public sealed class GameOverPanel : MonoBehaviour
         text.text = label;
         text.rectTransform.anchoredPosition = new Vector2(0f, 6f);
         text.raycastTarget = false;
+        button.gameObject.AddComponent<HomeButtonFeedback>().animateScale = false;
+        HomeUi.StyleSaveButton(button, 34);
         return button;
     }
 

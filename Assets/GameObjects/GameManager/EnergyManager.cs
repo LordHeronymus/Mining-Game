@@ -50,7 +50,7 @@ public class EnergyManager : MonoBehaviour
 
     void Update()
     {
-        if (LoadingProgress.Active)
+        if (LoadingProgress.Active || RunNavigation.IsTransitioning)
         {
             if (lowEnergySource && lowEnergySource.isPlaying) lowEnergySource.Stop();
             return;
@@ -64,7 +64,7 @@ public class EnergyManager : MonoBehaviour
         energy = Mathf.Min(energy, stats.MaxEnergy);
         float consumption = idleConsumtion;
         if (playerMovement.IsMoving) consumption += moveConsumption;
-        if (tileMiner.IsMingin) consumption += diggingConsumption;
+        if (tileMiner.IsMingin) consumption += diggingConsumption * MetaProgression.CurrentLoadout.miningEnergyMultiplier;
         consumption *= consumptionMultiplier;
 
         if (!GameplayTestSettings.NoEnergyConsume)
@@ -118,8 +118,8 @@ public class EnergyManager : MonoBehaviour
 
         if (Time.time < nextLowEnergyBeepTime) return;
         lowEnergySource.pitch = AudioManager.TunedPitch(lowEnergyBeep,
-            Mathf.Lerp(1f, 1.25f, urgency));
-        lowEnergySource.volume = AudioManager.TunedVolume(lowEnergyBeep, 1f);
+            Mathf.Lerp(1f, 1.25f, urgency), lowEnergySource);
+        lowEnergySource.volume = AudioManager.TunedVolume(lowEnergyBeep, 1f, lowEnergySource);
         lowEnergySource.Play();
         nextLowEnergyBeepTime = Time.time + interval;
     }

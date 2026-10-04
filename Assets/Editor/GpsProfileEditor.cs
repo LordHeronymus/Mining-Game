@@ -124,14 +124,6 @@ public static class GpsProfileEditor
             record.fields.Add(GpsCodec.Read(spec.name, fieldType, GpsCodec.Get(target, spec.name), asset => Register(asset, profile)));
         }
     }
-    static void PopulateClips(GpsProfile profile, GpsDocument data)
-    {
-        var record = data.records.Find(entry => entry.type == typeof(AudioClipTuningSettingsAsset).AssemblyQualifiedName);
-        if (record == null) return;
-        var clips = record.fields.Find(field => field.name == "clips");
-        foreach (var entry in profile.assets.Where(entry => entry.asset is AudioClip).ToArray())
-            if (!clips.children.Any(child => child.children.Find(field => field.name == "clip")?.text == entry.key))
-                clips.children.Add(GpsCodec.Read(clips.children.Count.ToString(), typeof(AudioClipTuningEntry), new AudioClipTuningEntry { clip = (AudioClip)entry.asset }, asset => Register(asset, profile)));
-    }
+    static void PopulateClips(GpsProfile profile, GpsDocument data) => GpsAudioCatalogEditor.Populate(profile,data);
     static void Migrate(GpsProfile profile, GpsDocument data) => GpsLegacyImport.Import(data,profile,Application.persistentDataPath);
 }

@@ -1,0 +1,1 @@
+PASS: generated clip loaded; GPS entry present; adding favorite plays sound; removing favorite is silent; volume and pitch spread applied.
