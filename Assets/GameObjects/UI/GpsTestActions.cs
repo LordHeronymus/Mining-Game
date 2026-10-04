@@ -2,6 +2,7 @@ using UnityEngine;
 
 public static class GpsTestActions
 {
+    public static void PreviewLevelUp() => GameplayLevelUpPresentation.Preview();
     public static void SetHealth(float health) => StatsManager.Instance?.SetHealthForDebug(health);
     public static void DrainEnergy() { var energy = Object.FindFirstObjectByType<EnergyManager>(); if (energy && energy.stats) energy.DrainEnergy(energy.stats.MaxEnergy * .1f); }
     public static void FillEnergy() { var energy = Object.FindFirstObjectByType<EnergyManager>(); if (energy && energy.stats) energy.energy = energy.stats.MaxEnergy; }

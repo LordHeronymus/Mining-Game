@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-public static class MetaProgression
+public static partial class MetaProgression
 {
     const int FormatVersion = 1, MaxFileBytes = 64 * 1024 * 1024;
     const double WorkWindow = 300d;
@@ -61,7 +61,7 @@ public static class MetaProgression
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void Reset()
     {
-        ClearSession(); testDirectory = null; Changed = null;
+        ClearSession(); testDirectory = null; Changed = null; ChallengeTestUtc = null;
     }
     static void ClearSession()
     {
@@ -235,6 +235,7 @@ public static class MetaProgression
         depth = Mathf.Clamp(depth, 0, 100000);
         if (depth <= run.maxDepth) return;
         int previous = run.maxDepth / run.settings.depthStep, next = depth / run.settings.depthStep;
+        RecordPeriodProgress("depth", depth - run.maxDepth);
         run.maxDepth = depth;
         double reward = 0d;
         for (int step = previous; step < next; step++) reward += Math.Min(run.settings.depthMaxXp, run.settings.depthBaseXp + step * (double)run.settings.depthIncrementXp);
@@ -246,6 +247,7 @@ public static class MetaProgression
         string id = regionX + ":" + regionY;
         if (!regions.Add(id)) return;
         run.regions.Add(id);
+        RecordPeriodProgress("regions", 1);
         double depthFactor = 1d + Math.Min(1d, Math.Max(0, depth) / 1000d) * .6d;
         AwardProgress(run.settings.explorationXp * depthFactor); CheckChallenges(); MarkChanged(false);
     }
@@ -269,12 +271,19 @@ public static class MetaProgression
         }
         int next = (int)Math.Min(10000000L, counter.count + (long)count);
         double reward = weight * (Math.Pow(next, .8d) - Math.Pow(counter.count, .8d)) * run.settings.resourceXpMultiplier;
+        RecordPeriodProgress("resources", next - counter.count);
+        if (item == Item.Copper) RecordPeriodProgress("copper", next - counter.count);
+        if (item == Item.Coal) RecordPeriodProgress("coal", next - counter.count);
+        if (item == Item.Iron) RecordPeriodProgress("iron", next - counter.count);
+        if (item == Item.Silver) RecordPeriodProgress("silver", next - counter.count);
+        if (item == Item.Gold) RecordPeriodProgress("gold", next - counter.count);
         counter.count = next; AwardProgress(reward); CheckChallenges(); MarkChanged(false);
     }
     public static void RecordDiscovery(string id)
     {
         if (!HasRun() || run.ended || string.IsNullOrWhiteSpace(id) || id.Length > 160 || !discoveries.Add(id)) return;
-        run.discoveries.Add(id); AwardProgress(run.settings.discoveryXp); CheckChallenges(); MarkChanged(true);
+        run.discoveries.Add(id); RecordPeriodProgress("discoveries", 1);
+        AwardProgress(run.settings.discoveryXp); CheckChallenges(); MarkChanged(true);
     }
     public static void RecordCraft(Item item)
     {
@@ -322,7 +331,7 @@ public static class MetaProgression
         foreach (var challenge in MetaProgressionCatalog.Challenges) {
             if (!challenge.permanent && !run.objectiveIds.Contains(challenge.id)) continue;
             var completed = challenge.permanent ? profile.completedMilestones : run.completedObjectives;
-            if (completed.Contains(challenge.id) || Metric(challenge.metric, run) < challenge.target) continue;
+            if (completed.Contains(challenge.id) || (challenge.permanent ? LifetimeMetric(challenge.metric) : Metric(challenge.metric, run)) < challenge.target) continue;
             completed.Add(challenge.id);
             if (challenge.permanent) { run.milestones.Add(challenge.id); run.milestoneXp += challenge.xp; milestone = true; }
             else run.challengeXp += challenge.xp;
@@ -347,21 +356,36 @@ public static class MetaProgression
             default: return 0;
         }
     }
+    static int LifetimeMetric(string metric)
+    {
+        if (!metric.StartsWith("total-", StringComparison.Ordinal))
+            return profile.runs.Select(value => Metric(metric, value)).DefaultIfEmpty(0).Max();
+        string unit = metric.Substring(6);
+        // Recipe milestones count unique recipes across all runs; ores/regions/discoveries
+        // accumulate from deduplicated run ledgers that survive deletion of save slots.
+        if (unit == "exotics") return profile.runs.SelectMany(r => r.exoticCrafts).Distinct().Count();
+        Item? ore = unit switch { "coal" => Item.Coal, "copper" => Item.Copper, "iron" => Item.Iron,
+            "silver" => Item.Silver, "gold" => Item.Gold, _ => null };
+        long total = ore.HasValue
+            ? profile.runs.Sum(r => r.resources.Where(c => c.item == (int)ore.Value).Sum(c => (long)c.count))
+            : profile.runs.Sum(r => (long)Metric(unit, r));
+        return (int)Math.Min(int.MaxValue, total);
+    }
     public static MetaChallengeProgress[] GetChallenges()
     {
         EnsureLoaded(); var result = new List<MetaChallengeProgress>();
         foreach (var definition in MetaProgressionCatalog.Challenges) {
             if (!definition.permanent && (run == null || !run.objectiveIds.Contains(definition.id))) continue;
-            int current = definition.permanent ? profile.runs.Select(value => Metric(definition.metric, value)).DefaultIfEmpty(0).Max() : Metric(definition.metric, run);
+            int current = definition.permanent ? LifetimeMetric(definition.metric) : Metric(definition.metric, run);
             bool completed = definition.permanent ? profile.completedMilestones.Contains(definition.id) : run.completedObjectives.Contains(definition.id);
-            result.Add(new MetaChallengeProgress { id = definition.id, name = definition.name, current = Math.Min(definition.target, completed ? definition.target : current), target = definition.target, xp = definition.xp, completed = completed, permanent = definition.permanent });
+            result.Add(new MetaChallengeProgress { id = definition.id, name = definition.name, metric = definition.metric, current = Math.Min(definition.target, completed ? definition.target : current), target = definition.target, xp = definition.xp, completed = completed, permanent = definition.permanent });
         }
         return result.ToArray();
     }
 
     static void RecalculateTotal()
     {
-        long total = 0;
+        long total = profile.periodRewardXp;
         foreach (var state in profile.runs) {
             state.earnedXp = (long)Math.Floor(state.progressXp + state.efficiencyXp) + state.challengeXp + state.milestoneXp;
             total += (long)Math.Floor(state.progressXp + state.efficiencyXp) + state.challengeXp;
@@ -515,6 +539,8 @@ public static class MetaProgression
     {
         var copy = new MetaProfile { version = source.version, revision = source.revision, totalXp = source.totalXp,
             upgrades = CopyRanks(source.upgrades), completedMilestones = new List<string>(source.completedMilestones),
+            periodRewardXp = source.periodRewardXp, challengeClockUtc = source.challengeClockUtc,
+            challengePeriods = Clone(source.challengePeriods),
             runs = new List<MetaRunState>(source.runs.Count) };
         foreach (var state in source.runs) {
             var copied = new MetaRunState { version = state.version, runId = state.runId, loadout = CopyLoadout(state.loadout),
@@ -574,7 +600,8 @@ public static class MetaProgression
         if (value == null || value.version != FormatVersion || value.revision < 0 || value.totalXp < 0 || value.totalXp > 1000000000000L || value.runs == null || value.runs.Count > 20000 || value.upgrades == null || value.upgrades.Count > MetaProgressionCatalog.Upgrades.Length || !ValidStrings(value.completedMilestones, 100)) return false;
         if (value.runs.Any(entry => !ValidateRun(entry)) || value.runs.Select(entry => entry.runId).Distinct().Count() != value.runs.Count) return false;
         if (value.completedMilestones.Any(id => MetaProgressionCatalog.Challenge(id)?.permanent != true)) return false;
-        double expectedTotal = value.runs.Sum(entry => Math.Floor(entry.progressXp + entry.efficiencyXp) + entry.challengeXp) + value.completedMilestones.Sum(id => (long)MetaProgressionCatalog.Challenge(id).xp);
+        if (!ValidatePeriods(value)) return false;
+        double expectedTotal = value.periodRewardXp + value.runs.Sum(entry => Math.Floor(entry.progressXp + entry.efficiencyXp) + entry.challengeXp) + value.completedMilestones.Sum(id => (long)MetaProgressionCatalog.Challenge(id).xp);
         if (expectedTotal != value.totalXp || expectedTotal > 1000000000000d || value.runs.Any(entry => entry.milestones.Any(id => !value.completedMilestones.Contains(id)))) return false;
         var seen = new HashSet<string>();
         int power = 0, comfort = 0;

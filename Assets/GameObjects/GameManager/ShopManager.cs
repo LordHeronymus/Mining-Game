@@ -68,6 +68,7 @@ public class ShopManager : MonoBehaviour
         if (!inv.TryRemove(item, qty)) return false;
 
         StatsManager.Instance.AddMoney(value);
+        if (MetaProgressionRuntime.RewardsAllowed) MetaProgression.RecordSale(value);
         OnItemSold?.Invoke(item, qty, value);
 
         if (qty > 1) StartCoroutine(SellSound(qty));
@@ -103,6 +104,7 @@ public class ShopManager : MonoBehaviour
         if (total > 0)
         {
             StatsManager.Instance.AddMoney(total);
+            if (MetaProgressionRuntime.RewardsAllowed) MetaProgression.RecordSale(total);
             OnSellAll?.Invoke(total);
         }
 

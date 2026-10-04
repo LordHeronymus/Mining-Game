@@ -34,6 +34,7 @@ public static class CraftingService
         if (MetaProgressionRuntime.RewardsAllowed)
         {
             MetaProgression.RecordCraft(recipe.output.item);
+            MetaProgression.RecordCraftedAmount(recipe.output.item, checked(recipe.outputAmount * batches), recipe.exotic);
             if (recipe.exotic) MetaProgression.RecordExoticCraft(recipe.output.item);
         }
         return true;

@@ -358,6 +358,8 @@ public static partial class GpsSchema
             new GpsFieldSpec("discoveryIconYOffset", "Icon Y-Versatz")),
         new GpsSectionSpec("UI", "Ladescreen", typeof(GpsPreferences), "",
             new GpsFieldSpec("loadingTwinkleFrequency", "Funkelfrequenz (%)", min: 0f, max: 5f, factor: 100f)),
+        new GpsSectionSpec("UI", "Level-up", typeof(GpsPreferences), "",
+            new GpsFieldSpec("levelUpAnimationOffsetSeconds", "Animationsversatz zur Audio (s)", min: -5f, max: 5f)),
         new GpsSectionSpec("UI", "Hotbar", typeof(GpsPreferences), "",
             new GpsFieldSpec("hotbarHoldDuration", "Drag-Haltezeit (s)", min: 0f, max: 2f)),
         new GpsSectionSpec("UI", "UI Map", typeof(PlayerMapDiscovery), "",

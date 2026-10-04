@@ -21,6 +21,11 @@ public static class UpgradeTileArt
 
     public static Sprite Icon(string id)
     {
+        if (id == "money")
+        {
+            var coins = Resources.LoadAll<Sprite>("GameOverCoin");
+            return coins.Length > 0 ? coins[0] : null;
+        }
         if (id == "ladders" || id == "torches" || id == "capacity" || id == "reach") {
             var item = id switch { "ladders" => Item.Ladder, "torches" => Item.Torche, "capacity" => Item.Backpack, _ => Item.BridgePart };
             foreach (var recipe in ExoticCatalog.AllRecipes)

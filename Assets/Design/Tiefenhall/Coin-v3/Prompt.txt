@@ -1,0 +1,3 @@
+Built-in image_gen; transparent_background=true.
+Reference: Reference.png (user-provided UI crop).
+Create one isolated front-facing upright gold currency coin matching the reference, with two embossed crossed mining pickaxes, smooth warm yellow-gold face, polished double concentric raised gold rims, subtle bevel and dark brown engraved shadow lines. Clean hand-painted fantasy UI style. No angled thick coin, gritty texture, external glow, wood, text or numerals. Tight transparent margin, crisp silhouette, fully transparent background.

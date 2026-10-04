@@ -128,14 +128,14 @@ public sealed class ProgressionTimeline : MonoBehaviour, IScrollHandler, IBeginD
         visibleLevels.Clear();
         int index=milestones.BinarySearch(focusLevel);
         int past=index>0 ? milestones[index-1] : 0;
-        if(!resultMode) foreach(var recipe in ExoticCatalog.Recipes)
-            if(recipe.metaUnlockLevel<focusLevel) past=recipe.metaUnlockLevel;
+        if(!resultMode) foreach(var recipe in ExoticBlueprintCatalog.Entries)
+            if(recipe.Level<focusLevel) past=recipe.Level;
         if(resultMode && index>1) visibleLevels.Add(milestones[index-2]);
         if(past>0) visibleLevels.Add(past);
         visibleLevels.Add(focusLevel);
         for(int i=index+1;i<milestones.Count && visibleLevels.Count<5;i++) visibleLevels.Add(milestones[i]);
         int last=visibleLevels[visibleLevels.Count-1], future=0;
-        foreach(var recipe in ExoticCatalog.Recipes) if(recipe.metaUnlockLevel>last) { future=recipe.metaUnlockLevel; break; }
+        foreach(var recipe in ExoticBlueprintCatalog.Entries) if(recipe.Level>last) { future=recipe.Level; break; }
         if(future==0) { int p=milestones.BinarySearch(last)+1; if(p<milestones.Count) future=milestones[p]; }
         if(future>last) visibleLevels.Add(future);
         previous.interactable=focusLevel>1; next.interactable=focusLevel<1000;
@@ -145,9 +145,9 @@ public sealed class ProgressionTimeline : MonoBehaviour, IScrollHandler, IBeginD
     }
     public static int PowerAt(int level)=>MetaProgressionCatalog.EarnedPowerPoints(level)-MetaProgressionCatalog.EarnedPowerPoints(level-1);
     public static int ComfortAt(int level)=>MetaProgressionCatalog.EarnedComfortPoints(level)-MetaProgressionCatalog.EarnedComfortPoints(level-1);
-    static List<CraftingRecipe> RecipesAt(int level)
+    static List<ExoticBlueprintInfo> RecipesAt(int level)
     {
-        var result=new List<CraftingRecipe>(); foreach(var recipe in ExoticCatalog.Recipes) if(recipe.metaUnlockLevel==level) result.Add(recipe); return result;
+        var result=new List<ExoticBlueprintInfo>(); foreach(var recipe in ExoticBlueprintCatalog.Entries) if(recipe.Level==level) result.Add(recipe); return result;
     }
     void Draw()
     {
@@ -181,16 +181,17 @@ public sealed class ProgressionTimeline : MonoBehaviour, IScrollHandler, IBeginD
                 // Current catalog has one recipe per level; stack additional entries if extended.
                 for(int r=0;r<recipes.Count;r++) {
                     var recipe=recipes[r];
-                    var card=ProgressionArt.Image("Blueprint "+recipe.exoticId,root,new Vector2(0,34+r*8),new Vector2(207,261),7);
+                    var card=ProgressionArt.Image("Blueprint "+recipe.Id,root,new Vector2(0,34+r*8),new Vector2(207,261),7);
                     if(!reached && level!=NextBlueprint()) card.color=new Color(.63f,.69f,.72f,1);
+                    ExoticBlueprintTooltip.Attach(card.gameObject,recipe);
                     ExoticDesign.AddSeal(card.transform,new Vector2(-74,99),24);
                     ProgressionArt.Text("Rarity",card.transform,"EXOTISCH",new Vector2(16,98),new Vector2(144,27),19).color=ExoticDesign.Cyan;
-                    var icon=HomeUi.Image("Item",card.transform,new Vector2(0,18),new Vector2(143,137)); icon.sprite=recipe.output.icon; icon.preserveAspect=true;
-                    ProgressionArt.Text("Name",card.transform,recipe.output.displayName,new Vector2(0,-66),new Vector2(181,35),26);
+                    var icon=HomeUi.Image("Item",card.transform,new Vector2(0,18),new Vector2(143,137)); icon.sprite=recipe.Icon; icon.preserveAspect=true;
+                    ProgressionArt.Text("Name",card.transform,recipe.Name,new Vector2(0,-66),new Vector2(181,35),26);
                     ProgressionArt.Text("Kind",card.transform,"Bauplan",new Vector2(0,-94),new Vector2(164,27),21);
                     if(resultMode && reached && level>newlyFromLevel) {
                         ProgressionArt.Text("New",card.transform,"NEU",new Vector2(61,65),new Vector2(61,25),20).color=ProgressionArt.Gold;
-                        ProgressionArt.Text("Pool Unlock",root,"Im Fundpool",new Vector2(0,-103),new Vector2(200,24),20).color=ExoticDesign.Cyan;
+                        ProgressionArt.Text("Pool Unlock",root,recipe.Preview?"Vorschau":"Im Fundpool",new Vector2(0,-103),new Vector2(200,24),20).color=ExoticDesign.Cyan;
                     }
                 }
                 if(PowerAt(level)>0 || ComfortAt(level)>0)
@@ -202,7 +203,7 @@ public sealed class ProgressionTimeline : MonoBehaviour, IScrollHandler, IBeginD
             } else if(level==1000) ProgressionArt.Text("Maximum",root,"Maximum",new Vector2(0,0),new Vector2(213,40),31).color=ProgressionArt.Gold;
         }
     }
-    int NextBlueprint() { foreach(var recipe in ExoticCatalog.Recipes) if(recipe.metaUnlockLevel>displayedLevel) return recipe.metaUnlockLevel; return -1; }
+    int NextBlueprint() { foreach(var recipe in ExoticBlueprintCatalog.Entries) if(recipe.Level>displayedLevel) return recipe.Level; return -1; }
     public void Browse(int direction)
     {
         Focus(Mathf.Clamp(focusLevel + Math.Sign(direction) * 4, 1, MetaProgressionCatalog.MaxLevel));

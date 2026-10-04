@@ -59,12 +59,10 @@ public sealed class BlueprintCollectionPanel : MonoBehaviour
         float position=scroll.verticalNormalizedPosition;
         foreach(Transform child in content){child.gameObject.SetActive(false);Destroy(child.gameObject);}
         level.text="Level "+MetaProgression.Level; height=12;
-        var exotics=new List<CraftingRecipe>();var essentials=new List<CraftingRecipe>();
-        foreach(var recipe in ExoticCatalog.Recipes) if(recipe && recipe.output && !exotics.Contains(recipe)) exotics.Add(recipe);
+        var essentials=new List<CraftingRecipe>();
         foreach(var recipe in ExoticCatalog.AllRecipes) if(recipe && recipe.output && !recipe.exotic &&
             recipe.output.item!=Item.Nails && recipe.output.item!=Item.Fabric &&
             recipe.output.item!=Item.Rope && recipe.output.item!=Item.Steel && !essentials.Contains(recipe)) essentials.Add(recipe);
-        exotics.Sort((a,b)=>a.metaUnlockLevel.CompareTo(b.metaUnlockLevel));
         var pickaxes=new List<CraftingRecipe>();var energy=new List<CraftingRecipe>();
         var carrying=new List<CraftingRecipe>();var other=new List<CraftingRecipe>();
         foreach(var recipe in essentials)
@@ -79,13 +77,38 @@ public sealed class BlueprintCollectionPanel : MonoBehaviour
         energy.Sort((a,b)=>a.output.energyCapacityUpgradeLevel.CompareTo(b.output.energyCapacityUpgradeLevel));
         carrying.Sort((a,b)=>a.output.carryingCapacityUpgradeLevel.CompareTo(b.output.carryingCapacityUpgradeLevel));
         other.Sort((a,b)=>string.Compare(a.output.displayName,b.output.displayName,StringComparison.OrdinalIgnoreCase));
-        Section("Exotische Baupläne",exotics);
+        ExoticSection();
         Section("Spitzhacken",pickaxes); Section("Energie-Upgrades",energy);
         Section("Traglast-Upgrades",carrying); Section("Weitere essenzielle Baupläne",other);
         content.sizeDelta=new Vector2(0,Mathf.Max(scroll.viewport.rect.height,height));
         Canvas.ForceUpdateCanvases();scroll.verticalNormalizedPosition=position;
     }
 
+    void ExoticSection()
+    {
+        var entries=ExoticBlueprintCatalog.Entries;
+        var heading=At("Section Exotische Baupläne",new Vector2(0,-height-18),new Vector2(1310,36));
+        Text("Heading",heading,"Exotische Baupläne",new Vector2(-375,0),new Vector2(550,36),27,TextAlignmentOptions.Left).color=ExoticDesign.Cyan;
+        height+=48;
+        for(int index=0;index<entries.Count;index++)
+        {
+            var entry=entries[index];
+            var tile=At("Blueprint "+entry.Id,new Vector2((index%3-1)*446,-height-index/3*240-110),new Vector2(420,220));
+            if(!entry.Preview)BuildTile(tile,entry.Recipe);
+            else
+            {
+                var frame=HomeUi.Image("Frame",tile,Vector2.zero,tile.sizeDelta,"SelectionCardNormal");frame.pixelsPerUnitMultiplier=5.5f;frame.color=new Color(.52f,.79f,.9f,1);
+                var icon=HomeUi.Image("Icon",tile,new Vector2(0,40),new Vector2(103,91));icon.sprite=entry.Icon;icon.preserveAspect=true;
+                icon.color=MetaProgression.Level>=entry.Level?Color.white:new Color(.46f,.55f,.6f,1);
+                Text("Unlock Level",tile,"Level "+entry.Level,new Vector2(-100,73),new Vector2(150,31),23,TextAlignmentOptions.Left).color=ExoticDesign.Cyan;
+                ExoticDesign.AddSeal(tile,new Vector2(166,73),26);
+                var name=Text("Name",tile,entry.Name,new Vector2(0,-30),new Vector2(350,54),29,TextAlignmentOptions.Center);name.textWrappingMode=TextWrappingModes.Normal;name.fontSizeMin=22;
+                Text("State",tile,"Vorschau",new Vector2(0,-79),new Vector2(350,29),22,TextAlignmentOptions.Center).color=Muted;
+            }
+            ExoticBlueprintTooltip.Attach(tile.gameObject,entry);
+        }
+        height+=((entries.Count+2)/3)*240+14;
+    }
     void Section(string title,List<CraftingRecipe> recipes)
     {
         if(recipes.Count==0)return;

@@ -7,6 +7,7 @@ public sealed class HudGemBar : MaskableGraphic
     [SerializeField, Range(0f, 1f)] float fillAmount = 1f;
     [SerializeField] Color gemColor = new Color(.95f, .08f, .11f);
     float flashAmount;
+    public bool DecorativeEndCaps { get; set; } = true;
 
     public float FlashAmount
     {
@@ -42,10 +43,10 @@ public sealed class HudGemBar : MaskableGraphic
     {
         mesh.Clear();
         var rect = rectTransform.rect;
-        float scaleX = rect.width / 172f;
+        float scaleX = rect.width / (DecorativeEndCaps ? 172f : 148f);
         float scaleY = rect.height / 17f;
 
-        Vector2 Point(float x, float y) => new Vector2(rect.xMin + x * scaleX, rect.yMin + y * scaleY);
+        Vector2 Point(float x, float y) => new Vector2(rect.xMin + (x - (DecorativeEndCaps ? 0f : 12f)) * scaleX, rect.yMin + y * scaleY);
         void Quad(float x0, float y0, float x1, float y1, Color top, Color bottom)
         {
             int index = mesh.currentVertCount;
@@ -67,20 +68,26 @@ public sealed class HudGemBar : MaskableGraphic
                 Point(x + width - 3, y + height), Point(x + 3, y + height),
                 Point(x, y + height - 3), Point(x, y + 3)
             };
-            var center = Point(x + width * .48f, y + height * .56f);
+            // A flat bright face and separate bevels keep each jewel crisp at HUD size.
+            var inner = new[] {
+                Point(x+width*.28f,y+height*.23f), Point(x+width*.72f,y+height*.23f),
+                Point(x+width*.82f,y+height*.36f), Point(x+width*.82f,y+height*.64f),
+                Point(x+width*.72f,y+height*.77f), Point(x+width*.28f,y+height*.77f),
+                Point(x+width*.18f,y+height*.64f), Point(x+width*.18f,y+height*.36f) };
             var vertex = UIVertex.simpleVert;
-            vertex.position = center;
-            vertex.color = Color.Lerp(new Color(.11f, .065f, .055f), color * 1.22f, strength);
-            mesh.AddVert(vertex);
-            float[] lights = { .48f, .68f, .96f, .69f, .34f, .42f, .84f, .62f };
+            var face=Color.Lerp(new Color(.055f,.029f,.019f), color, strength);
+            for(int i=0;i<8;i++) { vertex.position=inner[i]; vertex.color=Color.Lerp(face,Color.white,(i>=3 && i<=6 ? .23f : .015f)*strength); mesh.AddVert(vertex); }
+            for(int i=1;i<7;i++) mesh.AddTriangle(start,start+i,start+i+1);
+            float[] lights = { .42f, .6f, .83f, 1.35f, 1.8f, 1.15f, .65f, .4f };
             for (int i = 0; i < points.Length; i++)
             {
-                vertex.position = points[i];
-                vertex.color = Color.Lerp(new Color(.12f, .075f, .06f), color * lights[i], strength);
-                mesh.AddVert(vertex);
+                int next=(i+1)%8, index=mesh.currentVertCount;
+                var bevel=lights[i]>1 ? Color.Lerp(color,Color.white,(lights[i]-1)*.8f) : color*lights[i];
+                bevel.a=1;
+                vertex.color=Color.Lerp(new Color(.10f,.059f,.026f),bevel,strength);
+                foreach(var point in new[]{points[i],points[next],inner[next],inner[i]}) { vertex.position=point; mesh.AddVert(vertex); }
+                mesh.AddTriangle(index,index+1,index+2); mesh.AddTriangle(index,index+2,index+3);
             }
-            for (int i = 0; i < points.Length; i++)
-                mesh.AddTriangle(start, start + 1 + i, start + 1 + (i + 1) % points.Length);
         }
 
         var bronze = Color.Lerp(new Color(.67f, .37f, .12f), new Color(1f, .84f, .58f), flashAmount);
@@ -91,10 +98,11 @@ public sealed class HudGemBar : MaskableGraphic
         {
             float x = 15 + i * 18f;
             float strength = Mathf.Clamp01(fillAmount * 8f - i);
-            Quad(x, 2, x + 16, 15, new Color(.40f, .22f, .10f), new Color(.17f, .09f, .055f));
-            Facet(x + 1, 3, 14, 11, Color.Lerp(gemColor, Color.white, flashAmount * .85f), strength);
+            Quad(x, 1, x + 16, 16, new Color(.85f, .57f, .20f), new Color(.32f, .17f, .055f));
+            Quad(x+.55f, 1.55f, x+15.45f, 15.45f, new Color(.025f,.012f,.009f),new Color(.07f,.029f,.01f));
+            Facet(x + 2, 2, 12, 13, Color.Lerp(gemColor, Color.white, flashAmount * .85f), strength);
             if (strength > 0f)
-                Quad(x + 4, 11, x + 11, 12, new Color(1f, .94f, .70f, .65f * strength),
+                Quad(x + 4, 12, x + 8, 12.7f, new Color(1f, .94f, .70f, .65f * strength),
                     new Color(1f, .94f, .70f, .12f * strength));
         }
 
@@ -111,7 +119,6 @@ public sealed class HudGemBar : MaskableGraphic
             for (int i = 0; i < 4; i++) mesh.AddTriangle(start, start + i + 1, start + (i + 1) % 4 + 1);
             Facet(x + 3, 5, 6, 7, new Color(1f, .80f, .30f), .9f);
         }
-        EndCap(0);
-        EndCap(160);
+        if (DecorativeEndCaps) { EndCap(0); EndCap(160); }
     }
 }

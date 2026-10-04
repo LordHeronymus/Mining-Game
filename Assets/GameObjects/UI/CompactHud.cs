@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-// Variant A: a shallow status strip, a fixed pickaxe slot and eight item slots.
+// Four hotbar-style status modules, a fixed pickaxe slot and eight item slots.
 public sealed class CompactHud : MonoBehaviour
 {
     public Sprite stripSprite, slotSprite, selectedSprite, badgeSprite, barSprite, heartSprite, boltSprite, coinSprite, pickaxeSprite;
@@ -33,6 +33,8 @@ public sealed class CompactHud : MonoBehaviour
             UnityEngine.Object.FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include)?.RefreshHotbarIconLayouts();
         }
     }
+    Sprite statusFrame;
+    void OnDestroy() { if (statusFrame) Destroy(statusFrame); }
     RectTransform top, hotbar;
     Transform hotbarOverlayParent;
     InventoryUI inventoryPanel;
@@ -137,7 +139,7 @@ public sealed class CompactHud : MonoBehaviour
         if (stats)
         {
             if (stats.Money != lastMoney) { lastMoney = stats.Money; moneyValue.text = ShopMoneyFormatter.Format(stats.Money); }
-            if (stats.Points != lastPoints) { lastPoints = stats.Points; pointsValue.text = "Punkte  " + Format(stats.Points); }
+            if (stats.Points != lastPoints) { lastPoints = stats.Points; pointsValue.text = Format(stats.Points); }
             healthFill.FillAmount = Mathf.Clamp01(stats.Health / Mathf.Max(1f, stats.MaxHealth));
             int currentHealth = Mathf.CeilToInt(stats.Health), maximumHealth = Mathf.CeilToInt(stats.MaxHealth);
             if (currentHealth != lastHealth || maximumHealth != lastMaxHealth)
@@ -184,7 +186,7 @@ public sealed class CompactHud : MonoBehaviour
         // One world unit corresponds to one metre; tile width is 0.5 world units.
         float surface = map && map.Terrain ? map.Terrain.CellToWorld(Vector3Int.up).y : 0;
         DepthMeters = player ? Mathf.Max(0, Mathf.FloorToInt(surface - player.transform.position.y)) : 0;
-        if (DepthMeters != lastDepth) { lastDepth = DepthMeters; depthValue.text = "Tiefe  " + Format(DepthMeters) + " m"; }
+        if (DepthMeters != lastDepth) { lastDepth = DepthMeters; depthValue.text = Format(DepthMeters) + " m"; }
     }
     void UpdateHeartbeatPulse(StatsManager stats)
     {
@@ -466,7 +468,9 @@ public sealed class CompactHud : MonoBehaviour
         if (!top || !hotbar) return;
         var rect = ((RectTransform)transform).rect;
         float scale = Mathf.Min(rect.width / 1920f, rect.height / 1080f);
-        top.localScale = hotbar.localScale = Vector3.one * scale;
+        hotbar.localScale = Vector3.one * scale;
+        // Match the approved compact HUD to the hotbar width, preserving its artwork proportions.
+        top.localScale = Vector3.one * (scale * hotbar.rect.width / top.rect.width);
         top.anchoredPosition = new Vector2(0, -12 * scale);
         hotbar.anchoredPosition = new Vector2(0, 16 * scale);
     }
@@ -493,24 +497,53 @@ public sealed class CompactHud : MonoBehaviour
     }
     HudGemBar Bar(string name, float y, Sprite icon, Color tint, string value, out TextMeshProUGUI text)
     {
-        var symbol=Image(name+" Icon",top,20,y-2,20,20,icon,Color.white); symbol.preserveAspect=true;
-        var fill=Rect(name+" Fill",top,51,y,223.6f,17).gameObject.AddComponent<HudGemBar>();
+        var symbol=Image(name+" Icon",top,20,y+2,36,36,icon,Color.white); symbol.preserveAspect=true;
+        var fill=Rect(name+" Fill",top,64,y,378,38).gameObject.AddComponent<HudGemBar>();
         fill.GemColor=tint;
+        fill.DecorativeEndCaps=false;
         fill.raycastTarget=false;
-        text=Text(name+" Value",top,value,279.4f,y-2,79.3f,21,13,TextAlignmentOptions.MidlineRight);
+        text=Text(name+" Value",top,value,330,y,92,24,14,TextAlignmentOptions.MidlineRight);
+        text.gameObject.SetActive(false);
         return fill;
+    }
+    void StatusModule(string name, float x, float width)
+    {
+        var source=HomeUi.Sprite("SelectionCardNormal");
+        if (!statusFrame)
+        {
+            var rect=source.rect; rect.x+=32; rect.y+=32; rect.width-=64; rect.height-=64;
+            statusFrame=Sprite.Create(source.texture,rect,new Vector2(.5f,.5f),100,0,SpriteMeshType.FullRect,new Vector4(160,160,160,160));
+            statusFrame.name="HUD Protected Corners";
+        }
+        var sprite=statusFrame;
+        var panel=Image(name,top,x,0,width,116,sprite,Color.white);
+        panel.type=UnityEngine.UI.Image.Type.Sliced;
+        panel.pixelsPerUnitMultiplier=sprite.rect.height/80f;
+        panel.raycastTarget=true;
+    }
+    TextMeshProUGUI StatusText(string name, string value, float x, float y, float width, float height, float size)
+    {
+        var text=Text(name,top,value,x,y,width,height,size,TextAlignmentOptions.Center);
+        var titleFont=Resources.Load<TMP_FontAsset>("ArtifactDiscovery/TitleFont");
+        if(titleFont) { text.font=titleFont; text.fontSharedMaterial=titleFont.material; }
+        text.fontStyle=FontStyles.Normal;
+        return text;
     }
     void Build()
     {
-        top=Rect("Status Strip",transform,0,12,971.2f,56); top.anchorMin=top.anchorMax=top.pivot=new Vector2(.5f,1);
-        Image("Wood Frame",top,0,0,971.2f,56,stripSprite,Color.white).raycastTarget=true;
-        healthFill=Bar("Health",11,heartSprite,new Color(.92f,.055f,.075f),"100 / 100",out healthValue);
-        energyFill=Bar("Energy",30,boltSprite,new Color(1,.68f,.035f),"",out energyValue);
-        foreach(float x in new[]{395.2f,577.2f,781.2f}) Image("Divider",top,x,12,2,32,null,new Color(.68f,.43f,.22f,.7f));
-        var coin=Image("Coin",top,419.2f,12,32,32,coinSprite,Color.white); coin.preserveAspect=true;
-        moneyValue=Text("Money",top,"",468f,8,100,40,21);
-        pointsValue=Text("Points",top,"",593.2f,8,172,40,20);
-        depthValue=Text("Depth",top,"",795.2f,8,154,40,20);
+        top=Rect("Status Strip",transform,0,12,971.2f,116); top.anchorMin=top.anchorMax=top.pivot=new Vector2(.5f,1);
+        StatusModule("Vitals Module",0,462);
+        StatusModule("Money Module",468,198);
+        StatusModule("Points Module",672,159);
+        StatusModule("Depth Module",837,134.2f);
+        healthFill=Bar("Health",16,heartSprite,new Color(.92f,.055f,.075f),"100 / 100",out healthValue);
+        energyFill=Bar("Energy",62,boltSprite,new Color(1,.68f,.035f),"",out energyValue);
+        var coin=Image("Coin",top,484,29,58,58,coinSprite,Color.white); coin.preserveAspect=true;
+        moneyValue=StatusText("Money","",549,27,104,62,36);
+        StatusText("Points Label","Punkte",682,19,139,32,27);
+        pointsValue=StatusText("Points","",682,49,139,48,37);
+        StatusText("Depth Label","Tiefe",847,19,114.2f,32,27);
+        depthValue=StatusText("Depth","",847,49,114.2f,48,37);
         hotbar=Rect("Hotbar",transform,0,0,658,66); hotbar.anchorMin=hotbar.anchorMax=hotbar.pivot=new Vector2(.5f,0);
         var pickaxe=Image("Slot 1",hotbar,0,0,66,66,slotSprite,Color.white); pickaxe.raycastTarget=true;
         var pickaxeButton=pickaxe.gameObject.AddComponent<Button>(); pickaxeButton.targetGraphic=pickaxe;

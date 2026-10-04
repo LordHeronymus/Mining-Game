@@ -9,7 +9,7 @@ TextureImporter:
   serializedVersion: 13
   mipmaps:
     mipMapMode: 0
-    enableMipMap: 1
+    enableMipMap: 0
     sRGBTexture: 1
     linearTexture: 0
     fadeOut: 0
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 2
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -116,10 +116,10 @@ TextureImporter:
       name: Gold Coin_0
       rect:
         serializedVersion: 2
-        x: 278
-        y: 107
-        width: 985
-        height: 862
+        x: 117
+        y: 106
+        width: 1015
+        height: 1073
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}

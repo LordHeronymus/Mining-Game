@@ -1,0 +1,520 @@
+fileFormatVersion: 2
+guid: c57bf36f6dbb9894198fd5cd7dd0bb04
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1529072192454820337
+    second: ChallengeAtlas_0
+  - first:
+      213: -6959834635418745150
+    second: ChallengeAtlas_1
+  - first:
+      213: -6018043540874458652
+    second: ChallengeAtlas_2
+  - first:
+      213: 601676644661749699
+    second: ChallengeAtlas_3
+  - first:
+      213: 7812831025942198637
+    second: ChallengeAtlas_4
+  - first:
+      213: -5339629327921095548
+    second: ChallengeAtlas_5
+  - first:
+      213: 1756408657925423598
+    second: ChallengeAtlas_6
+  - first:
+      213: -7602616436653005547
+    second: ChallengeAtlas_7
+  - first:
+      213: 2586309694152492293
+    second: ChallengeAtlas_8
+  - first:
+      213: 1920745214337598512
+    second: ChallengeAtlas_9
+  - first:
+      213: 6568290194820471895
+    second: ChallengeAtlas_10
+  - first:
+      213: -3934455044320234268
+    second: ChallengeAtlas_11
+  - first:
+      213: 8154511110729963146
+    second: ChallengeAtlas_12
+  - first:
+      213: -1885964510138682593
+    second: ChallengeAtlas_13
+  - first:
+      213: 308393080968631723
+    second: ChallengeAtlas_14
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ChallengeAtlas_0
+      rect:
+        serializedVersion: 2
+        x: 54
+        y: 653
+        width: 475
+        height: 341
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f18233ce0b583510800000000000000
+      internalID: 1529072192454820337
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChallengeAtlas_1
+      rect:
+        serializedVersion: 2
+        x: 590
+        y: 645
+        width: 435
+        height: 359
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c6c76c1643b96f90800000000000000
+      internalID: -6959834635418745150
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChallengeAtlas_2
+      rect:
+        serializedVersion: 2
+        x: 745
+        y: 653
+        width: 217
+        height: 179
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e90857d84d9b7ca0800000000000000
+      internalID: -6018043540874458652
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChallengeAtlas_3
+      rect:
+        serializedVersion: 2
+        x: 1030
+        y: 163
+        width: 487
+        height: 848
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3c766b278b5995800800000000000000
+      internalID: 601676644661749699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChallengeAtlas_4
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 293
+        width: 507
+        height: 333
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d697f678c60cc6c60800000000000000
+      internalID: 7812831025942198637
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChallengeAtlas_5
+      rect:
+        serializedVersion: 2
+        x: 560
+        y: 271
+        width: 453
+        height: 369
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48c5105ba63d5e5b0800000000000000
+      internalID: -5339629327921095548
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChallengeAtlas_6
+      rect:
+        serializedVersion: 2
+        x: 1478
+        y: 437
+        width: 11
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee1c0185e54006810800000000000000
+      internalID: 1756408657925423598
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChallengeAtlas_7
+      rect:
+        serializedVersion: 2
+        x: 1484
+        y: 421
+        width: 15
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51560c991a41e7690800000000000000
+      internalID: -7602616436653005547
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChallengeAtlas_8
+      rect:
+        serializedVersion: 2
+        x: 709
+        y: 23
+        width: 312
+        height: 283
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 505cb17c6fa64e320800000000000000
+      internalID: 2586309694152492293
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChallengeAtlas_9
+      rect:
+        serializedVersion: 2
+        x: 1211
+        y: 50
+        width: 169
+        height: 256
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 034cf9c889bd7aa10800000000000000
+      internalID: 1920745214337598512
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChallengeAtlas_10
+      rect:
+        serializedVersion: 2
+        x: 1432
+        y: 273
+        width: 27
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 75c94f3c121472b50800000000000000
+      internalID: 6568290194820471895
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChallengeAtlas_11
+      rect:
+        serializedVersion: 2
+        x: 36
+        y: 23
+        width: 623
+        height: 202
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e47c8a9bf10669c0800000000000000
+      internalID: -3934455044320234268
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChallengeAtlas_12
+      rect:
+        serializedVersion: 2
+        x: 978
+        y: 79
+        width: 17
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a86190896a4aa2170800000000000000
+      internalID: 8154511110729963146
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChallengeAtlas_13
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 47
+        width: 17
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f13b0323545b3d5e0800000000000000
+      internalID: -1885964510138682593
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChallengeAtlas_14
+      rect:
+        serializedVersion: 2
+        x: 1056
+        y: 53
+        width: 65
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ba5d25a8fd1a74400800000000000000
+      internalID: 308393080968631723
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      ChallengeAtlas_0: 1529072192454820337
+      ChallengeAtlas_1: -6959834635418745150
+      ChallengeAtlas_10: 6568290194820471895
+      ChallengeAtlas_11: -3934455044320234268
+      ChallengeAtlas_12: 8154511110729963146
+      ChallengeAtlas_13: -1885964510138682593
+      ChallengeAtlas_14: 308393080968631723
+      ChallengeAtlas_2: -6018043540874458652
+      ChallengeAtlas_3: 601676644661749699
+      ChallengeAtlas_4: 7812831025942198637
+      ChallengeAtlas_5: -5339629327921095548
+      ChallengeAtlas_6: 1756408657925423598
+      ChallengeAtlas_7: -7602616436653005547
+      ChallengeAtlas_8: 2586309694152492293
+      ChallengeAtlas_9: 1920745214337598512
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -4,6 +4,9 @@ Shader "Mining Game/Ore Overlay Lit"
     Properties
     {
         _OreScale("Ore Size", Range(0.5, 3)) = 1
+        [HideInInspector] _VeinEnabled("Connected Veins", Float) = 0
+        [HideInInspector] _VeinCells("Vein Neighbours", 2D) = "black" {}
+        [HideInInspector] _VeinRelief("Fissure Relief", 2D) = "black" {}
         _ReflectionStrength("Reflection Strength", Range(0, 6)) = 2.5
         _ShimmerStrength("Shimmer Strength", Range(0, 3)) = 0.12
         _EmbeddingStrength("Rock Embedding", Range(0, 1)) = 1
@@ -92,6 +95,10 @@ Shader "Mining Game/Ore Overlay Lit"
                 half4 _UltroniumGlowColor;
                 float4 _UniformStone;
                 float4 _TestBounds;
+                float _VeinEnabled;
+                float _VeinSeed;
+                float4 _VeinBounds;
+                float4 _VeinGrid;
             CBUFFER_END
 
             #if USE_SHAPE_LIGHT_TYPE_0
@@ -133,6 +140,7 @@ Shader "Mining Game/Ore Overlay Lit"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/CombinedShapeLightShared.hlsl"
 
             #include "TerrainMaterialSample.hlsl"
+            #include "OreVeinSurface.hlsl"
 
             half3 RichColor(half3 color)
             {
@@ -150,6 +158,13 @@ Shader "Mining Game/Ore Overlay Lit"
 
             half4 CombinedShapeLightFragment(Varyings i) : SV_Target
             {
+                if (_VeinEnabled > .5)
+                {
+                    float2 veinPosition = (i.positionWS.xy-_VeinGrid.zw)/_VeinGrid.xy;
+                    float2 veinData = VeinCell(floor(veinPosition));
+                    clip(veinData.x - .5);
+                    return ConnectedOreFragment(i,veinPosition,veinData);
+                }
                 clip(min(min(i.uv.x, i.uv.y), min(1 - i.uv.x, 1 - i.uv.y)));
                 half4 texel = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
                 // Solid crystal interiors, with antialiasing retained at the silhouette.
@@ -298,6 +313,10 @@ Shader "Mining Game/Ore Overlay Lit"
                 half4 _UltroniumGlowColor;
                 float4 _UniformStone;
                 float4 _TestBounds;
+                float _VeinEnabled;
+                float _VeinSeed;
+                float4 _VeinBounds;
+                float4 _VeinGrid;
             CBUFFER_END
 
             Varyings NormalsRenderingVertex(Attributes attributes)
@@ -392,6 +411,10 @@ Shader "Mining Game/Ore Overlay Lit"
                 half4 _UltroniumGlowColor;
                 float4 _UniformStone;
                 float4 _TestBounds;
+                float _VeinEnabled;
+                float _VeinSeed;
+                float4 _VeinBounds;
+                float4 _VeinGrid;
             CBUFFER_END
 
             Varyings UnlitVertex(Attributes attributes)

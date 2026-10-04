@@ -1,0 +1,17 @@
+{
+  "tool": "built-in image_gen",
+  "variants": [
+    {
+      "name": "01-natural",
+      "prompt": "Use case: precise-object-edit. Create one game-art prototype by editing the attached mining-game screenshot. Preserve its orthographic 2D view, brown rocky tile background, approximate ore deposit region and game-art scale. No text, no UI, no borders. Replace the loose orange crystal heaps with ore visibly embedded in rock; uneven stone lips occlude the minerals, no floating piles or uniform circular clusters. Retain sparse dark coal deposits on the left but embed them too. Match the existing painterly faceted game art; do not turn into a photograph. Variant 1: natural mineral inclusions. Muted burnt-orange and copper-red angular mineral flecks, tiny to medium fragments, scattered through irregular narrow fissures with occasional richer patches. Very little protrusion, non-emissive mineral facets with small restrained highlights. Subtle host-rock discoloration. Readable deposits but most of the image remains brown rock."
+    },
+    {
+      "name": "02-branching",
+      "prompt": "Use case: precise-object-edit. Create one game-art prototype by editing the attached mining-game screenshot. Preserve its orthographic 2D view, brown rocky tile background, approximate ore deposit region and game-art scale. No text, no UI, no borders. Replace the loose orange crystal heaps with ore visibly embedded in rock; uneven stone lips occlude the minerals, no floating piles or uniform circular clusters. Retain sparse dark coal deposits on the left but embed them too. Match the existing painterly faceted game art; do not turn into a photograph. Variant 2: branching crystal vein. A clearly connected irregular copper-orange vein extends from upper center down through central deposits, with narrow diagonal branches and tapered ends. Medium faceted orange crystals emerge partially from cracks at a few thicker nodes. Thin mineral seams bridge adjacent tiles, varied widths and spacing, dark crevice borders. Warm saturated mineral faces but no lava and no white glowing cores. Preserve game readability."
+    },
+    {
+      "name": "03-fantasy",
+      "prompt": "Use case: precise-object-edit. Create one game-art prototype by editing the attached mining-game screenshot. Preserve its orthographic 2D view, brown rocky tile background, approximate ore deposit region and game-art scale. No text, no UI, no borders. Replace the loose orange crystal heaps with ore visibly embedded in rock; uneven stone lips occlude the minerals, no floating piles or uniform circular clusters. Retain sparse dark coal deposits on the left but embed them too. Match the existing painterly faceted game art; do not turn into a photograph. Variant 3: restrained magical ore vein. Embedded dark ruby-orange crystals with amber inner light along a jagged branching seam through the central region. Small luminous fissures connect occasional larger partly buried crystals. Dark crystal bases, localized warm orange reflections only directly on nearby stone, modest soft glow and tiny bright accents. Most rock stays normally lit. Neither lava rivers nor loose gem heaps. Believable mineral geology translated into fantasy game art."
+    }
+  ]
+}
