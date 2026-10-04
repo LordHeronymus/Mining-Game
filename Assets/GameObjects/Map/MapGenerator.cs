@@ -10,6 +10,7 @@ public class MapGenerator : MonoBehaviour
     const int InitialGenerationRows = 128;
     const int StreamingRowsPerFrame = 4;
     const float OreSubstrateInfluence = .7f;
+    static readonly Unity.Profiling.ProfilerMarker LoadingSetupMarker = new("Loading.MapSetup");
     [Header("Map Size")]
     public int mapWidth = 100;
     public int mapHeight = 1000;
@@ -158,6 +159,7 @@ public class MapGenerator : MonoBehaviour
     int pendingGenerationRow;
     TileBase[] streamedTerrainRows;
     TileBase[] streamedOreRows;
+    TileBase[] streamedArtifactRows;
     bool[] pendingCaveMask;
     bool[] generatedCaveMask;
     int cachedCaveMaskWidth, cachedCaveMaskHeight;
@@ -221,6 +223,7 @@ public class MapGenerator : MonoBehaviour
 
     void Awake()
     {
+        GpsSettings.ApplyComponent(this);
         if (Application.isPlaying && !FindFirstObjectByType<SurfaceStorageBuilding>())
             SurfaceStorageBuilding.CreateNearShop(FindFirstObjectByType<ShopBuilding>(),
                 Resources.Load<Sprite>("SurfaceStorage/StorageHut"));
@@ -649,6 +652,7 @@ public class MapGenerator : MonoBehaviour
 
     public void GenerateMap(int? seedOverride = null)
     {
+        GpsSettings.ApplyGeneration(this);
         CancelStreamingGeneration();
         var data = PrepareGeneratedMap(seedOverride ?? ChooseGenerationSeed());
 #if UNITY_EDITOR
@@ -666,11 +670,15 @@ public class MapGenerator : MonoBehaviour
     IEnumerator GenerateMapInPlay()
     {
         if (!LoadingProgress.Active) LoadingScreen.Show();
+        while (!LoadingScreen.ContentVisible) yield return null;
+        // Do not combine Awake/Start scene activation with map restoration.
+        yield return null;
         if (GameSaveSystem.HasPendingLoad)
         {
             yield return GameSaveSystem.RestorePending(this);
             yield break;
         }
+        GpsSettings.ApplyGeneration(this);
         LoadingProgress.Configure(mapWidth, mapHeight);
         yield return null;
         MapGenerationSnapshot data = null;
@@ -683,6 +691,7 @@ public class MapGenerator : MonoBehaviour
         BeginTileApplication();
         IsGenerationStreaming = true;
         pendingGeneration = data;
+        var tileBudget = new LoadingWorkBudget();
         for (pendingGenerationRow = 0; pendingGenerationRow < data.height;)
         {
             // SetTilesBlock also queues native Tilemap work later in the frame.
@@ -690,8 +699,9 @@ public class MapGenerator : MonoBehaviour
             int rows = Mathf.Min(Mathf.Max(1, 1024 / data.width), data.height - pendingGenerationRow);
             ApplyTileRows(data, pendingGenerationRow, rows);
             pendingGenerationRow += rows;
+            tileBudget.ChargeTiles(rows * data.width * 3);
             LoadingProgress.Report(pendingGenerationRow / (float)data.height * .9f);
-            yield return null;
+            if (tileBudget.Expired) { yield return null; tileBudget.Restart(); }
         }
         var appearance = GetComponent<UniformStoneAppearance>();
         if (appearance && appearance.isActiveAndEnabled)
@@ -699,7 +709,8 @@ public class MapGenerator : MonoBehaviour
             var appearanceSteps = appearance.PrepareForLoading(data, value => LoadingProgress.Report(.9f + value * .09f));
             while (appearanceSteps.MoveNext()) yield return null;
         }
-        ActivateGeneratedMap(data);
+        InitializeGeneratedMapState(data);
+        yield return InvokeGeneratedForLoading();
         var surface = GetComponent<DirtSurfaceAppearance>();
         if (surface && surface.isActiveAndEnabled)
         {
@@ -720,6 +731,7 @@ public class MapGenerator : MonoBehaviour
         LoadingProgress.Report(.5f);
         yield return null;
         yield return new WaitForEndOfFrame();
+        yield return GameSaveSystem.SaveNewRunForLoading(this);
         LoadingProgress.Complete();
     }
     public void CompleteStreamingGeneration()
@@ -754,9 +766,15 @@ public class MapGenerator : MonoBehaviour
         MigrateOreDensitySettings();
         if (!registry || mapWidth <= 0 || mapHeight <= 0)
             throw new System.InvalidOperationException("Map generation requires a registry and positive dimensions.");
-        var sampler = new MapGenerationSampler(registry, usedSeed, mapHeight, layers, oreDensityCurve,
+        MapGenerationSampler sampler;
+        using (LoadingSetupMarker.Auto()) sampler = new MapGenerationSampler(registry, usedSeed, mapHeight, layers, oreDensityCurve,
             oreDensityMultiplierPercent, transitionThickness,
-            useOreSettings ? oreSettings ?? System.Array.Empty<OreDistributionSetting>() : null);
+            useOreSettings ? oreSettings ?? System.Array.Empty<OreDistributionSetting>() : null, prepareNoise: !loading);
+        if (loading)
+        {
+            var noise = sampler.PrepareNoiseSteps();
+            while (noise.MoveNext()) yield return null;
+        }
         for (int y = 0; y < mapHeight; y++)
         {
             var stone = sampler.GetStone(y);
@@ -776,6 +794,7 @@ public class MapGenerator : MonoBehaviour
         var caves = new bool[checked(mapWidth * mapHeight)];
         pendingCaveMask = caves;
         var blocks = new Block[checked(mapWidth * mapHeight)];
+        var preparationBudget = new LoadingWorkBudget();
         for (int y = 0; y < mapHeight; y++)
         {
             for (int x = 0; x < mapWidth; x++)
@@ -785,10 +804,11 @@ public class MapGenerator : MonoBehaviour
                 blocks[index] = chamber.IsOpen(cell) || caves[index] ? null :
                     chamber.IsShell(cell) ? sampler.GetBaseBlock(x, y) : sampler.GetBlock(x, y);
             }
-            if ((y & 7) == 7 || y == mapHeight - 1)
+            if (preparationBudget.Expired || y == mapHeight - 1)
             {
                 if (loading) LoadingProgress.Report((y + 1f) / mapHeight);
                 yield return null;
+                preparationBudget.Restart();
             }
         }
         if (loading) LoadingProgress.SetStage(2);
@@ -803,7 +823,9 @@ public class MapGenerator : MonoBehaviour
                 chamber.IsReserved(new Vector3Int(x + offsetX, -y, 0)),
             progress: loading ? LoadingProgress.Report : null);
         while (veinSteps.MoveNext()) yield return null;
-        var richness = OreVeins.Build(blocks, mapWidth, mapHeight, usedSeed);
+        OreRichness[] richness = null;
+        var richnessSteps = OreVeins.BuildSteps(blocks, mapWidth, mapHeight, usedSeed, value => richness = value);
+        while (richnessSteps.MoveNext()) yield return null;
         if (loading) LoadingProgress.SetStage(4);
         yield return null;
         var terrainTiles = new TileBase[blocks.Length];
@@ -867,10 +889,11 @@ public class MapGenerator : MonoBehaviour
             (previousBlocks, currentBlocks) = (currentBlocks, previousBlocks);
             (previousVariants, currentVariants) = (currentVariants, previousVariants);
             System.Array.Clear(currentBlocks, 0, currentBlocks.Length);
-            if ((y & 7) == 7 || y == mapHeight - 1)
+            if (preparationBudget.Expired || y == mapHeight - 1)
             {
                 if (loading) LoadingProgress.Report((y + 1f) / mapHeight);
                 yield return null;
+                preparationBudget.Restart();
             }
         }
 
@@ -956,10 +979,11 @@ public class MapGenerator : MonoBehaviour
             {
                 streamedTerrainRows = new TileBase[count];
                 streamedOreRows = new TileBase[count];
+                streamedArtifactRows = new TileBase[count];
             }
             terrain = streamedTerrainRows;
             ores = streamedOreRows;
-            artifacts = new TileBase[count];
+            artifacts = streamedArtifactRows;
             System.Array.Copy(data.terrainTiles, sourceOffset, terrain, 0, count);
             System.Array.Copy(data.oreTiles, sourceOffset, ores, 0, count);
             System.Array.Copy(data.artifactTiles, sourceOffset, artifacts, 0, count);
@@ -981,6 +1005,12 @@ public class MapGenerator : MonoBehaviour
 
     void ActivateGeneratedMap(MapGenerationSnapshot data)
     {
+        InitializeGeneratedMapState(data);
+        Generated?.Invoke();
+    }
+
+    void InitializeGeneratedMapState(MapGenerationSnapshot data)
+    {
         generatedSeed = data.seed;
         generatedWidth = data.width;
         generatedHeight = data.height;
@@ -993,15 +1023,30 @@ public class MapGenerator : MonoBehaviour
         SyncGrassFromTerrain();
         if (!IsGenerationStreaming) GetComponent<DirtSurfaceAppearance>()?.Apply();
 
-        Generated?.Invoke();
+    }
+
+    IEnumerator InvokeGeneratedForLoading()
+    {
+        var handlers = Generated?.GetInvocationList();
+        if (handlers == null) yield break;
+        foreach (System.Action handler in handlers)
+        {
+            yield return null;
+            handler();
+        }
     }
 
     void FinishGeneration(bool appearanceReady = false)
     {
         bool streamed = IsGenerationStreaming;
-        tilemap.CompressBounds();
-        oreOverlay.CompressBounds();
-        artifactOverlay.CompressBounds();
+        // Streaming already sets the intended rectangular world bounds. A
+        // synchronous scan only removes a few empty cells from compressed saves.
+        if (!Application.isPlaying)
+        {
+            tilemap.CompressBounds();
+            oreOverlay.CompressBounds();
+            artifactOverlay.CompressBounds();
+        }
         IsGenerationStreaming = false;
         generationRoutine = null;
         pendingGeneration = null;
@@ -1022,18 +1067,29 @@ public class MapGenerator : MonoBehaviour
     }
     public void FinishSavedMapRestore(TileBase[] restoredTerrain = null)
     {
+        var steps = FinishSavedMapRestoreSteps(restoredTerrain);
+        while (steps.MoveNext()) { }
+    }
+    public IEnumerator FinishSavedMapRestoreSteps(TileBase[] restoredTerrain = null)
+    {
         generatedCaveMask = new bool[generatedWidth * generatedHeight];
         bool hasSnapshot = restoredTerrain != null && restoredTerrain.Length == generatedCaveMask.Length;
+        var budget = new LoadingWorkBudget();
         for (int depth = 0; depth < generatedHeight; depth++)
+        {
             for (int x = 0; x < generatedWidth; x++)
                 generatedCaveMask[depth * generatedWidth + x] = hasSnapshot
                     ? !restoredTerrain[(generatedHeight - 1 - depth) * generatedWidth + x]
                     : !Terrain.HasTile(new Vector3Int(-generatedWidth / 2 + x, -depth));
+            if (budget.Expired) { yield return null; budget.Restart(); }
+        }
         cachedCaveMaskWidth = generatedWidth; cachedCaveMaskHeight = generatedHeight;
-        isGenerated = true; applyingGeneratedTiles = false; IsGenerationStreaming = false;
+        isGenerated = true; applyingGeneratedTiles = false;
         UpdateGrassOffset(); SyncGrassFromTerrain();
         if (!LoadingProgress.Active) GetComponent<DirtSurfaceAppearance>()?.Apply();
-        Generated?.Invoke(); GenerationCompleted?.Invoke();
+        yield return InvokeGeneratedForLoading();
+        IsGenerationStreaming = false;
+        GenerationCompleted?.Invoke();
     }
 
 #if UNITY_EDITOR

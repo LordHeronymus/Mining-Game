@@ -6,12 +6,12 @@ public sealed class HotbarSlotDrag : MonoBehaviour, IPointerDownHandler, IDragHa
     const string HoldDurationKey = "hotbar.dragHoldDuration";
     public static float HoldDuration
     {
-        get => Mathf.Clamp(PlayerPrefs.GetFloat(HoldDurationKey, .5f), 0f, 2f);
+        get => GpsSettings.Preferences.hotbarHoldDuration;
         set
         {
             if (float.IsNaN(value) || float.IsInfinity(value)) return;
-            PlayerPrefs.SetFloat(HoldDurationKey, Mathf.Clamp(value, 0f, 2f));
-            PlayerPrefs.Save();
+            var node=GpsSettings.GetValue("preferences","hotbarHoldDuration"); node.number=Mathf.Clamp(value,0,2);
+            GpsSettings.SetValue("preferences",node,out _);
         }
     }
 

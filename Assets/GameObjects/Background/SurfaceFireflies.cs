@@ -4,6 +4,8 @@ using UnityEngine;
 [DisallowMultipleComponent, DefaultExecutionOrder(1150)]
 public sealed class SurfaceFireflies : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     public MapGenerator map;
     public SkyController sky;
     public Material material;

@@ -54,6 +54,8 @@ public sealed class TiefenhallProbe : MonoBehaviour
     {
         Check(SceneManager.GetActiveScene().name == "MainMenu" && MainMenuController.IsVisible && !LoadingProgress.Active, "Home starts without gameplay loading screen");
         GameSaveSystem.TestDirectory = Path.GetFullPath("Temp/TiefenhallSaveChecks-" + DateTime.UtcNow.Ticks);
+        typeof(MainMenuController).GetMethod("Refresh", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .Invoke(FindFirstObjectByType<MainMenuController>(), null);
         Check(!Button("Continue").interactable, "Continue disabled without a save");
         Check(RaycastButton(Button("New Game")), "New game is a real raycastable button");
         Button("Settings").onClick.Invoke();
@@ -72,6 +74,10 @@ public sealed class TiefenhallProbe : MonoBehaviour
         Check(Button("New Game").transform.localScale.x > 1 && Button("New Game").GetComponent<Image>().sprite.name.Contains("Active"), "Hover animates scale and golden button state");
         feedback.OnPointerExit(new PointerEventData(EventSystem.current));
         Button("New Game").onClick.Invoke();
+        yield return null;
+        var setup = FindFirstObjectByType<NewGamePanel>();
+        setup.GetComponentInChildren<TMPro.TMP_InputField>().text = "Testlauf";
+        setup.GetComponentsInChildren<Button>().First(x => x.name == "Start New Game").onClick.Invoke();
         yield return Until(() => SceneManager.GetActiveScene().name == "SampleScene" && !LoadingProgress.Active && !RunNavigation.IsTransitioning, "new run");
         var map = FindFirstObjectByType<MapGenerator>(); var player = FindFirstObjectByType<PlayerMovement>();
         var camera = Camera.main.GetComponent<CameraFollow>();
@@ -149,12 +155,13 @@ public sealed class TiefenhallProbe : MonoBehaviour
         Button("Save").onClick.Invoke(); yield return null;
         Check(SaveSlotPanel.IsOpen && Button("Slot 2").interactable && RaycastButton(Button("Slot 2")), "Pause opens interactive manual save slots");
         Button("Back").onClick.Invoke(); yield return null;
+        int homeSlot = GameSaveSystem.ActiveSlot;
         Button("Home").onClick.Invoke();
         yield return Until(() => SceneManager.GetActiveScene().name == "MainMenu" && !RunNavigation.IsTransitioning, "saved return home");
-        Check(GameSaveSystem.GetSummary(0) != null && Button("Continue").interactable, "Return home creates autosave and enables Continue");
+        Check(GameSaveSystem.GetSummary(homeSlot) != null && Button("Continue").interactable, "Return home updates the active slot and enables Continue");
         Check(!StatsManager.Instance && !InventoryManager.Instance && !AudioManager.Instance && !GameplayInputBlocker.IsBlocked && Time.timeScale == 1, "Home has no persistent gameplay managers or input gates");
         Button("Continue").onClick.Invoke();
-        yield return Until(() => SceneManager.GetActiveScene().name == "SampleScene" && !LoadingProgress.Active && !RunNavigation.IsTransitioning, "continue autosave");
+        yield return Until(() => SceneManager.GetActiveScene().name == "SampleScene" && !LoadingProgress.Active && !RunNavigation.IsTransitioning, "continue saved run");
         Check(FindFirstObjectByType<MapGenerator>().ActiveSeed == seed, "Continue loads most recent actual run");
         GameSaveSystem.TestDirectory = null;
     }

@@ -15,6 +15,7 @@ public class CameraFollow : MonoBehaviour
 
     void Awake()
     {
+        GpsSettings.ApplyComponent(this);
         if (target) transform.position = DesiredPosition();
     }
 

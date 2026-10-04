@@ -62,6 +62,7 @@ public sealed class FirstLayerAmbience : MonoBehaviour
 
     void Awake()
     {
+        GpsSettings.ApplyComponent(this);
         for (int i = 0; i < sources.Length; i++)
         {
             sources[i] = gameObject.AddComponent<AudioSource>();

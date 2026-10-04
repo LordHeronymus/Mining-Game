@@ -5,6 +5,8 @@ using UnityEngine.Rendering.Universal;
 [DefaultExecutionOrder(1300)]
 public sealed class MinerPlayerVisual : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     public Material material;
     public SpriteRenderer legacySprite;
     public SkyController sky;

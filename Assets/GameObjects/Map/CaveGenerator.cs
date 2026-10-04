@@ -114,6 +114,7 @@ public static class CaveGenerator
         }
 
         float randomness = Mathf.Clamp01(settings.walkerStartRandomness);
+        var budget = new LoadingWorkBudget();
         for (int i = 0; i < roots; i++)
         {
             Vector2 start = ChooseStartPosition(result, width, height, maximumRadius,
@@ -142,9 +143,10 @@ public static class CaveGenerator
                     minimumRadius, maximumRadius, reserved, walkers,
                     maximumWalkersPerSystem - createdWalkers, ref random);
                 createdWalkers += walkers.Count - queuedBefore;
+                if (budget.Expired) { yield return null; budget.Restart(); }
             }
             progress?.Invoke(.8f * (i + 1f) / roots);
-            yield return null;
+            if (budget.Expired) { yield return null; budget.Restart(); }
         }
 
         var smoothing = SmoothSteps(result, width, height, minimumDepth, reserved, progress);
@@ -449,6 +451,7 @@ public static class CaveGenerator
         Func<int, int, bool> reserved, Action<float> progress)
     {
         var source = (bool[])caves.Clone();
+        var budget = new LoadingWorkBudget();
         for (int y = minimumDepth; y < height; y++)
         {
             for (int x = 0; x < width; x++)
@@ -466,10 +469,11 @@ public static class CaveGenerator
                 if (source[index] && neighbors <= 1) caves[index] = false;
                 else if (!source[index] && neighbors >= 7) caves[index] = true;
             }
-            if ((y & 15) == 15)
+            if (budget.Expired)
             {
                 progress?.Invoke(.8f + .2f * (y - minimumDepth + 1f) / (height - minimumDepth));
                 yield return null;
+                budget.Restart();
             }
         }
     }

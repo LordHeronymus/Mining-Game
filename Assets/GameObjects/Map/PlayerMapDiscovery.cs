@@ -7,6 +7,7 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(MapGenerator), typeof(MapLighting))]
 public sealed class PlayerMapDiscovery : MonoBehaviour
 {
+
     static readonly Unity.Profiling.ProfilerMarker ScanMarker = new Unity.Profiling.ProfilerMarker("Mining.Discovery");
     const int SaveVersion = 1;
 
@@ -70,7 +71,7 @@ public sealed class PlayerMapDiscovery : MonoBehaviour
     Vector3 viewportCenter, viewportRight, viewportUp;
     bool affineViewport;
 
-    void Awake() => ResolveDependencies();
+    void Awake() { GpsSettings.ApplyComponent(this); ResolveDependencies(); }
 
     void OnEnable()
     {

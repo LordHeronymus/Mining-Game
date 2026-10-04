@@ -20,6 +20,7 @@ public sealed class MapOverviewWindow : EditorWindow
     MapGenerator map;
     Tilemap tilemap;
     Texture2D texture;
+    Texture2D altarIcon;
     Color32[] pixels;
     BlockType[] types;
     readonly Dictionary<int, ArtifactTile> artifactCells = new();
@@ -70,6 +71,7 @@ public sealed class MapOverviewWindow : EditorWindow
         EditorApplication.projectChanged += OnProjectChanged;
         EditorSceneManager.activeSceneChangedInEditMode += OnSceneChanged;
         Undo.undoRedoPerformed += RequestBuild;
+        GpsSettings.Changed += OnGpsChanged;
         Tilemap.tilemapTileChanged += OnTilesChanged;
         TileMiner.OnBlockMined += OnBlockMined;
         pendingBuild = true;
@@ -82,6 +84,7 @@ public sealed class MapOverviewWindow : EditorWindow
         EditorApplication.projectChanged -= OnProjectChanged;
         EditorSceneManager.activeSceneChangedInEditMode -= OnSceneChanged;
         Undo.undoRedoPerformed -= RequestBuild;
+        GpsSettings.Changed -= OnGpsChanged;
         Tilemap.tilemapTileChanged -= OnTilesChanged;
         TileMiner.OnBlockMined -= OnBlockMined;
         DisposeTexture();
@@ -89,6 +92,8 @@ public sealed class MapOverviewWindow : EditorWindow
 
     void OnPlayModeChanged(PlayModeStateChange state)
     {
+        GpsSettings.Changed -= OnGpsChanged;
+        GpsSettings.Changed += OnGpsChanged;
         if (state == PlayModeStateChange.EnteredPlayMode)
         {
             TileMiner.OnBlockMined -= OnBlockMined;
@@ -97,6 +102,7 @@ public sealed class MapOverviewWindow : EditorWindow
         RequestBuild();
     }
     void OnProjectChanged() { if (!EditorApplication.isPlaying) RequestBuild(); }
+    void OnGpsChanged() { if (live) recolorAfterBuild=true; else RequestBuild(); }
     void OnSceneChanged(Scene previous, Scene next) => RequestBuild();
     void RequestBuild() { pendingBuild = true; Repaint(); }
 
@@ -114,6 +120,7 @@ public sealed class MapOverviewWindow : EditorWindow
 
     void UpdateOverview()
     {
+        if (EditorApplication.isPlaying && (LoadingProgress.Active || RunNavigation.IsTransitioning)) return;
         if (!map || !tilemap)
         {
             map = FindMap();
@@ -159,6 +166,7 @@ public sealed class MapOverviewWindow : EditorWindow
         if (EditorApplication.timeSinceStartup >= nextRepaint)
         {
             nextRepaint = EditorApplication.timeSinceStartup + 0.2;
+            if (live && recolorAfterBuild) { recolorAfterBuild=false; RecolorTexture(); }
             if (live) Repaint(); // Player marker, without repainting every game frame.
         }
     }
@@ -335,6 +343,8 @@ public sealed class MapOverviewWindow : EditorWindow
 
     void OnTilesChanged(Tilemap changedMap, Tilemap.SyncTile[] changes)
     {
+        if (EditorApplication.isPlaying && (LoadingProgress.Active || RunNavigation.IsTransitioning))
+        { pendingBuild = true; return; }
         if (!live || !map || (changedMap != tilemap && changedMap != map.OreOverlay) || !HasLiveMap() || changes == null) return;
         foreach (var change in changes)
             QueueCell(change.position);
@@ -416,6 +426,7 @@ public sealed class MapOverviewWindow : EditorWindow
         HandleInput(area);
         DrawMap(area);
         DrawArtifactMarkers(area);
+        DrawAltarMarker(area);
         DrawPlayerMarker(area);
         DrawStatus(area, position.height - 24);
         DrawLegend(new Rect(12, top, legendWidth, area.height));
@@ -443,6 +454,29 @@ public sealed class MapOverviewWindow : EditorWindow
             area.y + (view.yMax - uv.yMax) / view.height * area.height,
             uv.width / view.width * area.width, uv.height / view.height * area.height);
         GUI.DrawTextureWithTexCoords(visible, texture, uv, false);
+    }
+
+    void DrawAltarMarker(Rect area)
+    {
+        if (!map || !map.AltarChamber) return;
+        var chamber = live ? map.AltarChamber.Layout : previewChamber;
+        if (!chamber.valid) return;
+        if (!altarIcon) altarIcon = Resources.Load<Texture2D>("UltroniumAltar/Altar");
+        if (!altarIcon) return;
+
+        float u = (chamber.origin.x + width / 2 + .5f) / width;
+        float v = (height + chamber.origin.y) / (float)height;
+        float sx = (u - view.x) / view.width * area.width;
+        float sy = (view.yMax - v) / view.height * area.height;
+        float cellPixels = area.width / (width * view.width);
+        float iconWidth = Mathf.Clamp(cellPixels * 6.2f * Mathf.Clamp(map.altarSize, .25f, 3f), 36f, 96f);
+        float iconHeight = iconWidth * altarIcon.height / altarIcon.width;
+        var marker = new Rect(sx - iconWidth * .5f, sy - iconHeight, iconWidth, iconHeight);
+        if (!marker.Overlaps(new Rect(0, 0, area.width, area.height))) return;
+
+        GUI.BeginGroup(area);
+        GUI.DrawTexture(marker, altarIcon, ScaleMode.StretchToFill, true);
+        GUI.EndGroup();
     }
 
     void DrawArtifactMarkers(Rect area)

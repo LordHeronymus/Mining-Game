@@ -23,13 +23,13 @@ public sealed class CompactHud : MonoBehaviour
     const string HotbarIconVerticalOffsetKey = "workbench.hotbarIconVerticalOffset";
     public static float HotbarIconVerticalOffset
     {
-        get => PlayerPrefs.GetFloat(HotbarIconVerticalOffsetKey, 0f);
+        get => GpsSettings.Preferences.hotbarVerticalOffset;
         set
         {
             float next = Mathf.Clamp(value, -48f, 48f);
             if (Mathf.Approximately(next, HotbarIconVerticalOffset)) return;
-            PlayerPrefs.SetFloat(HotbarIconVerticalOffsetKey, next);
-            PlayerPrefs.Save();
+            var node=GpsSettings.GetValue("preferences","hotbarVerticalOffset"); node.number=next;
+            GpsSettings.SetValue("preferences",node,out _);
             UnityEngine.Object.FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include)?.RefreshHotbarIconLayouts();
         }
     }

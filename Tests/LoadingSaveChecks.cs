@@ -13,6 +13,10 @@ public static class LoadingSaveChecks
     static MapGenerator original;
     static int terrain, ores, artifacts, occupancy, seed, money;
     static float scale;
+    static Vector3Int customCell = new Vector3Int(12, -3);
+    static readonly Color customColor = new Color(.73f, .62f, .48f, 1f);
+    static readonly Matrix4x4 customMatrix = Matrix4x4.TRS(new Vector3(.04f, .02f, 0),
+        Quaternion.Euler(0, 0, 12), new Vector3(.93f, .96f, 1));
 
     public static object Main()
     {
@@ -24,6 +28,10 @@ public static class LoadingSaveChecks
         GameSaveSystem.TestDirectory = Path.GetFullPath(Path.Combine(Application.dataPath, "../Temp/LoadingSave-" + DateTime.UtcNow.Ticks));
         background = Application.runInBackground; Application.runInBackground = true;
         scale = Time.timeScale; Time.timeScale = 0;
+        if (!original.Terrain.HasTile(customCell)) throw new Exception("Custom-tile fixture must exist");
+        original.Terrain.SetTileFlags(customCell, TileFlags.None);
+        original.Terrain.SetColor(customCell, customColor);
+        original.Terrain.SetTransformMatrix(customCell, customMatrix);
         terrain = Hash(original.Terrain); ores = Hash(original.OreOverlay); artifacts = Hash(original.ArtifactOverlay);
         occupancy = MaskHash(original); seed = original.ActiveSeed; money = StatsManager.Instance.Money;
         began = EditorApplication.timeSinceStartup; waiting = false;
@@ -50,6 +58,9 @@ public static class LoadingSaveChecks
                 Hash(map.OreOverlay) != ores || Hash(map.ArtifactOverlay) != artifacts)
                 throw new Exception("Tile layers changed on reload");
             if (MaskHash(map) != occupancy) throw new Exception("Terrain material mask changed on reload");
+            if (map.Terrain.GetTileFlags(customCell) != TileFlags.None ||
+                map.Terrain.GetColor(customCell) != customColor || map.Terrain.GetTransformMatrix(customCell) != customMatrix)
+                throw new Exception("Custom tile flags/color/transform changed on reload");
             if (StatsManager.Instance.Money != money) throw new Exception("Run state changed");
             if (!player || !camera || !camera.GetComponent<CameraFollow>().enabled ||
                 camera.GetComponent<CameraFollow>().target != player.transform ||
@@ -59,7 +70,7 @@ public static class LoadingSaveChecks
             var properties = new MaterialPropertyBlock(); map.GetComponent<TilemapRenderer>().GetPropertyBlock(properties);
             if (properties.GetVector("_UniformStone").x <= 0 || !properties.GetTexture("_TestOccupancy"))
                 throw new Exception("Terrain material was not prepared");
-            Finish("PASS: Actual save/reload, identical terrain/ore/artifact tiles, identical material mask, run state, gameplay release and player camera. Test save is isolated under Temp.");
+            Finish("PASS: Actual save/reload, identical terrain/ore/artifact tiles, custom tile flags/color/transform, identical material mask, run state, gameplay release and player camera. Test save is isolated under Temp.");
         }
         catch (Exception error) { Finish("FAIL: " + error); }
     }

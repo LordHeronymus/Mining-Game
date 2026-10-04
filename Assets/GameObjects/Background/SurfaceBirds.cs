@@ -3,6 +3,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class SurfaceBirds : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     public Material material;
     [InspectorName("Blaugrau")] public Color color = new Color(.08f, .13f, .19f, .85f);
     [InspectorName("Graubraun")] public Color warmColor = new Color(.24f, .18f, .14f, .85f);

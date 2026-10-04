@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 [Serializable]
@@ -90,95 +91,55 @@ public static class GameplaySettingsStore
 
 public static class GameplaySettings
 {
-    static GameplaySettingsData current = new GameplaySettingsData();
-    static float defaultDiggingSpeed = 1.5f;
-    static float savedDiggingSpeed = 1.5f;
-    static bool initialized;
-    static LightingSettingsData defaultLighting;
-    static bool savedLightingOverride;
-    static string savedLightingJson;
-
     public static event Action Changed;
-    public static float BaseDiggingSpeed => current.baseDiggingSpeed;
-    public static bool HasUnsavedChanges => current.baseDiggingSpeed != savedDiggingSpeed ||
-        current.hasLightingOverride != savedLightingOverride ||
-        (current.hasLightingOverride && JsonUtility.ToJson(current.lighting) != savedLightingJson);
-    public static LightingSettingsData Lighting => (current.lighting ?? new LightingSettingsData()).Copy();
-    public static bool LightingAvailable => defaultLighting != null;
-    public static string LoadWarning { get; private set; }
-    public static string FilePath => Path.Combine(Application.persistentDataPath, "gameplay-settings.json");
-
+    public static void NotifyChanged() => Changed?.Invoke();
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetSession()
+    static void Reset() => Changed = null;
+    public static float BaseDiggingSpeed => (float)(GpsSettings.Document.records
+        .Find(record => record.type == typeof(PlayerBaseStats).AssemblyQualifiedName)?.fields.Find(field => field.name == "miningSpeed")?.number ?? 1.5);
+    public static bool HasUnsavedChanges => GpsSettings.HasUnsavedChanges;
+    public static string FilePath => GpsSettings.FilePath;
+    public static string LoadWarning => GpsSettings.Warning;
+    public static bool LightingAvailable => GpsSettings.Document.records.Exists(record => record.type == typeof(MapLighting).AssemblyQualifiedName);
+    static GpsRecord LightRecord => GpsSettings.Document.records.Find(record => record.type == typeof(MapLighting).AssemblyQualifiedName);
+    public static LightingSettingsData Lighting
     {
-        initialized = false;
-        current = new GameplaySettingsData();
-        defaultDiggingSpeed = savedDiggingSpeed = 1.5f;
-        Changed = null;
-        LoadWarning = null;
-        defaultLighting = null;
-        savedLightingOverride = false;
-        savedLightingJson = null;
+        get
+        {
+            var record = LightRecord;
+            float Number(string field, float fallback) => (float)(record?.fields.Find(node => node.name == field)?.number ?? fallback);
+            return new LightingSettingsData { enabled = record?.fields.Find(node => node.name == "lightingEnabled")?.flag ?? true,
+                daylight = Number("daylightStrength", 1), ambient = Number("ambientBrightness", 0), downLoss = Number("downwardLoss", .003f),
+                sideLoss = Number("sidewaysLoss", .08f), blockLoss = Number("blockLoss", .28f), strength = Number("exponentialStrength", 1) };
+        }
     }
-
-    public static void Initialize(float defaultSpeed)
-    {
-        if (initialized) return;
-        defaultDiggingSpeed = GameplaySettingsStore.IsValidSpeed(defaultSpeed) ? defaultSpeed : 1.5f;
-        current = new GameplaySettingsData { baseDiggingSpeed = defaultDiggingSpeed };
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        current = GameplaySettingsStore.Load(FilePath, defaultDiggingSpeed, out string warning);
-        LoadWarning = warning;
-        if (warning != null) Debug.LogWarning(warning);
-#endif
-        savedDiggingSpeed = current.baseDiggingSpeed;
-        savedLightingOverride = current.hasLightingOverride;
-        savedLightingJson = JsonUtility.ToJson(current.lighting);
-        initialized = true;
-        Changed?.Invoke();
-    }
-
+    public static void Initialize(float defaultSpeed) => GpsSettings.EnsureLoaded();
+    public static void RegisterLighting(LightingSettingsData defaults) => GpsSettings.EnsureLoaded();
     public static bool SetBaseDiggingSpeed(float value)
     {
         if (!GameplaySettingsStore.IsValidSpeed(value)) return false;
-        current.baseDiggingSpeed = value;
-        Changed?.Invoke();
-        return true;
+        var record = GpsSettings.Document.records.Find(record => record.type == typeof(PlayerBaseStats).AssemblyQualifiedName);
+        var node = record?.fields.Find(field => field.name == "miningSpeed")?.Copy();
+        if (node == null) return false; node.number = value;
+        bool changed = GpsSettings.SetValue(record.key, node, out _); if (changed) NotifyChanged(); return changed;
     }
-
-    public static void RegisterLighting(LightingSettingsData defaults)
-    {
-        defaultLighting = defaults.Copy();
-        if (!current.hasLightingOverride) current.lighting = defaults.Copy();
-        Changed?.Invoke();
-    }
-
     public static bool SetLighting(LightingSettingsData value)
     {
-        if (value == null || !value.IsValid || !LightingAvailable) return false;
-        if (JsonUtility.ToJson(value) == JsonUtility.ToJson(current.lighting)) return true;
-        current.lighting = value.Copy();
-        current.hasLightingOverride = true;
-        Changed?.Invoke();
-        return true;
+        if (value == null || !value.IsValid || LightRecord == null) return false;
+        var record = LightRecord;
+        var numbers = new System.Collections.Generic.Dictionary<string, float> { ["daylightStrength"] = value.daylight,
+            ["ambientBrightness"] = value.ambient, ["downwardLoss"] = value.downLoss, ["sidewaysLoss"] = value.sideLoss,
+            ["blockLoss"] = value.blockLoss, ["exponentialStrength"] = value.strength };
+        foreach (var field in record.fields.ToArray())
+        {
+            var node = field.Copy();
+            if (field.name == "lightingEnabled") node.flag = value.enabled;
+            else if (numbers.TryGetValue(field.name, out float number)) node.number = number;
+            else continue;
+            if (!GpsSettings.SetValue(record.key, node, out _)) return false;
+        }
+        NotifyChanged(); return true;
     }
-
-    public static void RestoreDefaults()
-    {
-        current.baseDiggingSpeed = defaultDiggingSpeed;
-        current.hasLightingOverride = false;
-        if (defaultLighting != null) current.lighting = defaultLighting.Copy();
-        Changed?.Invoke();
-    }
-
-    public static bool Save(out string error)
-    {
-        if (!GameplaySettingsStore.Save(FilePath, current, out error)) return false;
-        savedDiggingSpeed = current.baseDiggingSpeed;
-        savedLightingOverride = current.hasLightingOverride;
-        savedLightingJson = JsonUtility.ToJson(current.lighting);
-        LoadWarning = null;
-        Changed?.Invoke();
-        return true;
-    }
+    public static void RestoreDefaults() => GpsSettings.Reload();
+    public static bool Save(out string error) => GpsSettings.Save(out error);
 }

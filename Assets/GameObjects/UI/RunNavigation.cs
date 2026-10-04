@@ -19,24 +19,50 @@ public sealed class RunNavigation : MonoBehaviour
         }
     }
     public static void NewGame()
+        => NewGame(null);
+    public static void NewGame(string name)
     {
         if (IsTransitioning || GameSaveSystem.IsBusy) return;
-        GameSaveSystem.CancelPendingLoad(); GameSaveSystem.PlayedSeconds = 0;
-        IsTransitioning = true; Host.StartCoroutine(Transition(GameScene, true));
+        if (!GameSaveSystem.BeginNewRun(name)) return;
+        IsTransitioning = true; Host.StartCoroutine(Transition(GameScene, true, true));
     }
     public static bool LoadGame(int slot, out string error)
     {
         error = null;
-        if (IsTransitioning || !GameSaveSystem.PrepareLoad(slot, out error)) return false;
-        IsTransitioning = true; Host.StartCoroutine(Transition(GameScene, true)); return true;
+        if (IsTransitioning || GameSaveSystem.IsBusy) return false;
+        if (slot < 1 || slot > GameSaveSystem.MaxSlots) { error = "Spielstand konnte nicht geladen werden."; return false; }
+        IsTransitioning = true; Host.StartCoroutine(LoadValidated(slot)); return true;
+    }
+    static IEnumerator LoadValidated(int slot)
+    {
+        float previousScale = Time.timeScale;
+        yield return LoadingScreen.FadeToBlack();
+        if (!GameSaveSystem.PrepareLoad(slot, out string error))
+        {
+            yield return LoadingScreen.FadeFromBlack();
+            Time.timeScale = previousScale;
+            IsTransitioning = false;
+            var panel = FindFirstObjectByType<SaveSlotPanel>();
+            if (panel) panel.ShowLoadError(error);
+            else FindFirstObjectByType<MainMenuController>()?.ShowStatus(error);
+            yield break;
+        }
+        yield return Transition(GameScene, true, black: true);
     }
     public static void MainMenu()
     {
         if (IsTransitioning || GameSaveSystem.IsBusy) return;
         GameSaveSystem.CancelPendingLoad(); IsTransitioning = true; Host.StartCoroutine(Transition(MenuScene, false));
+        GameSaveSystem.LeaveRun();
     }
-    static IEnumerator Transition(string scene, bool loading)
+    static IEnumerator Transition(string scene, bool loading, bool newRun = false, bool black = false)
     {
+        if (loading)
+        {
+            if (!black) yield return LoadingScreen.FadeToBlack();
+            yield return LoadingScreen.Prepare();
+            yield return LoadingScreen.PrepareTransitionAudio();
+        }
         var roots = new HashSet<GameObject>();
         if (StatsManager.Instance) roots.Add(StatsManager.Instance.gameObject);
         if (InventoryManager.Instance) roots.Add(InventoryManager.Instance.gameObject);
@@ -49,6 +75,13 @@ public sealed class RunNavigation : MonoBehaviour
         {
             LoadingScreen.LoadScene(scene);
             while (LoadingProgress.Active) yield return null;
+            if (newRun && GameSaveSystem.InitialSaveError != null)
+            {
+                string error = GameSaveSystem.InitialSaveError;
+                GameSaveSystem.LeaveRun();
+                yield return Transition(MenuScene, false);
+                FindFirstObjectByType<MainMenuController>()?.ShowStatus(error);
+            }
         }
         else
         {

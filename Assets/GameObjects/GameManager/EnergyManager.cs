@@ -4,6 +4,8 @@ using UnityEngine.UI;
 
 public class EnergyManager : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     public StatsManager stats;
     public PlayerMovement playerMovement;
     public TileMiner tileMiner;

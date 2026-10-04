@@ -3,6 +3,8 @@ using System.Collections;
 
 public class EnergyMonolyth : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     [SerializeField] CanvasGroup panel;
     [SerializeField] EnergyManager energyManager;
     [SerializeField] StatsManager stats;

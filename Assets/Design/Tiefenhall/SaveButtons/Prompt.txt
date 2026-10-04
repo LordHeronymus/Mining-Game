@@ -1,0 +1,3 @@
+Built-in image_gen, approved reference: Approved-preview.png.
+Production prompt: Two equal horizontal button sprites, normal and selected, on transparent background. Dark warm wooden center, straight polished brass rails and compact angular riveted brass endcaps. Same geometry, selected has golden edge glow only. Uninterrupted dark wood center; no text or background panel. Preserve approved fantasy style and seamless joins.
+Output: Assets/Resources/Homescreen/SaveButtons.png

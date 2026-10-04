@@ -7,7 +7,9 @@ public sealed class HomeCaveVisual : MonoBehaviour
     RawImage image;
     RectTransform picture;
     Vector2 parallax;
+    int lastWaterImpact;
     public float AnimationTime { get; private set; }
+    void OnEnable() => lastWaterImpact = Mathf.FloorToInt((Time.unscaledTime - 6.2f) / 9.7f);
     void Awake()
     {
         var texture = Resources.Load<Texture2D>("Homescreen/CaveLake");
@@ -33,6 +35,10 @@ public sealed class HomeCaveVisual : MonoBehaviour
             Input.mousePosition.y / Mathf.Max(1, Screen.height) - .5f) : Vector2.zero;
         parallax = Vector2.Lerp(parallax, mouse, 1 - Mathf.Exp(-2f * Time.unscaledDeltaTime));
         AnimationTime = Time.unscaledTime;
+        // Same contact time and cycle as the lake shader; the three rings belong to one drop.
+        int impact = Mathf.FloorToInt((AnimationTime - 6.2f) / 9.7f);
+        if (impact > lastWaterImpact) LoadingAudio.PlayHomeWaterdrop();
+        lastWaterImpact = impact;
         material.SetFloat("_SceneTime", AnimationTime);
         material.SetVector("_Parallax", new Vector4(parallax.x * .012f, parallax.y * .009f, 0, 0));
     }

@@ -135,6 +135,15 @@ public static class OreVeins
     // Normalize each connected vein separately to make its core richer than its rim.
     public static OreRichness[] Build(Block[] blocks, int width, int height, int seed)
     {
+        OreRichness[] result = null;
+        var steps = BuildSteps(blocks, width, height, seed, value => result = value);
+        while (steps.MoveNext()) { }
+        return result;
+    }
+
+    public static System.Collections.IEnumerator BuildSteps(Block[] blocks, int width, int height, int seed,
+        Action<OreRichness[]> complete)
+    {
         if (width <= 0 || height <= 0 || blocks.Length != checked(width * height))
             throw new ArgumentException("Invalid vein grid dimensions.");
         int count = blocks.Length;
@@ -142,8 +151,10 @@ public static class OreVeins
         var distance = new int[count];
         var queue = new int[count];
         int head = 0, tail = 0;
+        var budget = new LoadingWorkBudget();
         for (int i = 0; i < count; i++)
         {
+            if ((i & 1023) == 1023 && budget.Expired) { yield return null; budget.Restart(); }
             var block = blocks[i];
             if (!block || !block.HasOreOverlays) continue;
             int x = i % width, y = i / width;
@@ -157,6 +168,7 @@ public static class OreVeins
         }
         while (head < tail)
         {
+            if ((head & 1023) == 1023 && budget.Expired) { yield return null; budget.Restart(); }
             int i = queue[head++], x = i % width, y = i / width;
             if (x > 0) Visit(i, i - 1);
             if (x + 1 < width) Visit(i, i + 1);
@@ -168,12 +180,14 @@ public static class OreVeins
         float offset = (Hash(seed, 0, 0, 0x314159u) & 0xffff) * .01f;
         for (int start = 0; start < count; start++)
         {
+            if ((start & 1023) == 1023 && budget.Expired) { yield return null; budget.Restart(); }
             if (distance[start] == 0 || visited[start]) continue;
             head = 0; tail = 0;
             queue[tail++] = start; visited[start] = true;
             int maxDistance = 1;
             while (head < tail)
             {
+                if ((head & 1023) == 1023 && budget.Expired) { yield return null; budget.Restart(); }
                 int i = queue[head++], x = i % width, y = i / width;
                 maxDistance = Math.Max(maxDistance, distance[i]);
                 if (x > 0) Connect(i, i - 1);
@@ -183,6 +197,7 @@ public static class OreVeins
             }
             for (int n = 0; n < tail; n++)
             {
+                if ((n & 1023) == 1023 && budget.Expired) { yield return null; budget.Restart(); }
                 int i = queue[n];
                 if (maxDistance == 1 || distance[i] == 1) continue;
                 float depth = (distance[i] - 1f) / (maxDistance - 1f);
@@ -193,7 +208,7 @@ public static class OreVeins
                     depth < .72f ? OreRichness.Medium : OreRichness.Rich;
             }
         }
-        return result;
+        complete(result);
 
         void Visit(int from, int to)
         {

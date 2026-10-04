@@ -17,10 +17,7 @@ public sealed class ArtifactTile : Tile
     {
         get
         {
-#if !UNITY_EDITOR
-            if (PlayerPrefs.HasKey("artifact.discovery.yOffset." + name))
-                return Mathf.Clamp(PlayerPrefs.GetFloat("artifact.discovery.yOffset." + name), -300f, 300f);
-#endif
+
             return Mathf.Clamp(discoveryIconYOffset, -300f, 300f);
         }
     }
@@ -29,13 +26,7 @@ public sealed class ArtifactTile : Tile
 
     public void SaveDiscoveryIconYOffset()
     {
-#if UNITY_EDITOR
-        UnityEditor.EditorUtility.SetDirty(this);
-        UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
-#else
-        PlayerPrefs.SetFloat("artifact.discovery.yOffset." + name, discoveryIconYOffset);
-        PlayerPrefs.Save();
-#endif
+        GpsSettings.Capture(this);
     }
 
     public Color ThemeColor => themeColor.a > 0f ? themeColor : name switch

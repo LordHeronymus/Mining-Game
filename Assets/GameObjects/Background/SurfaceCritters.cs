@@ -4,6 +4,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed partial class SurfaceCritters : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     public enum Species { Frog, Snail }
     [InspectorName("Tierart")] public Species species;
     public MapGenerator map;

@@ -5,14 +5,22 @@ using UnityEngine.UI;
 
 public static class PlayerSettings
 {
-    const string MasterKey = "settings.audio.master";
     const string AmbienceKey = "settings.audio.ambience";
     const string SfxKey = "settings.audio.sfx";
     const string FullscreenKey = "settings.display.fullscreen";
     const string UiScaleKey = "settings.display.uiScale";
     static readonly Dictionary<CanvasScaler, Vector2> References = new();
 
-    public static float Master { get => PlayerPrefs.GetFloat(MasterKey, 1f); set { PlayerPrefs.SetFloat(MasterKey, Mathf.Clamp01(value)); ApplyAudio(); PlayerPrefs.Save(); } }
+    public static float Master
+    {
+        get => GpsSettings.Preferences.masterVolume;
+        set
+        {
+            float volume=Mathf.Clamp01(value); if (Mathf.Approximately(Master,volume)) return;
+            var node=GpsSettings.GetValue("preferences","masterVolume");node.number=volume;
+            if (GpsSettings.SetValue("preferences",node,out _)) GpsSettings.SavePreference("masterVolume",out _);
+        }
+    }
     public static float Ambience { get => PlayerPrefs.GetFloat(AmbienceKey, 1f); set { PlayerPrefs.SetFloat(AmbienceKey, Mathf.Clamp01(value)); PlayerPrefs.Save(); } }
     public static float Sfx { get => PlayerPrefs.GetFloat(SfxKey, 1f); set { PlayerPrefs.SetFloat(SfxKey, Mathf.Clamp01(value)); PlayerPrefs.Save(); } }
     public static bool Fullscreen { get => PlayerPrefs.HasKey(FullscreenKey) ? PlayerPrefs.GetInt(FullscreenKey) != 0 : Screen.fullScreen; set { PlayerPrefs.SetInt(FullscreenKey, value ? 1 : 0); Screen.fullScreen = value; PlayerPrefs.Save(); } }
@@ -50,7 +58,7 @@ public static class PlayerSettings
 
     public static void RestoreDefaults()
     {
-        PlayerPrefs.DeleteKey(MasterKey); PlayerPrefs.DeleteKey(AmbienceKey); PlayerPrefs.DeleteKey(SfxKey);
+        Master=1; PlayerPrefs.DeleteKey(AmbienceKey); PlayerPrefs.DeleteKey(SfxKey);
         PlayerPrefs.DeleteKey(FullscreenKey); PlayerPrefs.DeleteKey(UiScaleKey);
         PlayerPrefs.Save();
         ApplyAudio(); Screen.fullScreen = true; ApplyUiScale();

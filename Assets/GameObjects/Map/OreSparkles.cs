@@ -6,6 +6,8 @@ using Unity.Profiling;
 [DisallowMultipleComponent, RequireComponent(typeof(Tilemap), typeof(MapGenerator))]
 public sealed class OreSparkles : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     public Material sparkleMaterial;
     [Min(0.1f)] public float intervalPerBlock = 3f;
     [Min(1f), InspectorName("Funkelintervall im Dunkeln (Faktor)")]

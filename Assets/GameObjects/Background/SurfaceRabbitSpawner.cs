@@ -4,6 +4,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class SurfaceRabbitSpawner : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     [InspectorName("Häschen-Einstellungen")] public SurfaceRabbit settings;
     [InspectorName("Spieler")] public Transform player;
     [InspectorName("Spawnintervall (s)")] public Vector2 spawnInterval = new Vector2(12,22);

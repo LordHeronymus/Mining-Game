@@ -392,6 +392,7 @@ public sealed class SettingsPanel : MonoBehaviour
         var button = image.gameObject.AddComponent<Button>();
         button.targetGraphic = image;
         button.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.onClick.AddListener(HomeClickAudio.Play);
         if (action != null) button.onClick.AddListener(() => action());
         Label(image.transform, caption, 8, 0, w - 16, h, h <= 48 ? 22 : 27, TextAlignmentOptions.Center);
         return button;

@@ -1,0 +1,4 @@
+<linker>
+  <!-- GPS uses the serialized field catalog in player builds, including private fields. -->
+  <assembly fullname="Assembly-CSharp" preserve="all" />
+</linker>

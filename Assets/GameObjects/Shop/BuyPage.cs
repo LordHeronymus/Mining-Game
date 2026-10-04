@@ -248,6 +248,7 @@ public class BuyPage : MonoBehaviour
         searchField.placeholder = placeholder; searchField.targetGraphic = panel;
         searchField.characterLimit = 80; searchField.lineType = TMP_InputField.LineType.SingleLine;
         searchField.customCaretColor = true; searchField.caretColor = Cream;
+        LichtfadenCaret.Apply(searchField);
         searchField.onValueChanged.AddListener(SetSearch);
     }
     ScrollRect ScrollArea(Transform parent, string name, float x, float y, float w, float h, out RectTransform items)

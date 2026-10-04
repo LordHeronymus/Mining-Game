@@ -24,9 +24,13 @@ public static class ConnectedOreVeins
 
         var original = (Block[])blocks.Clone();
         var frontierMarks = new int[blocks.Length];
+        var budget = new LoadingWorkBudget();
         int stamp = 0;
         for (int i = 0; i < blocks.Length; i++)
+        {
             if (IsOre(blocks[i])) blocks[i] = sampler.GetBaseBlock(i % width, i / width + depthOffset);
+            if ((i & 1023) == 1023 && budget.Expired) { yield return null; budget.Restart(); }
+        }
 
         for (int bandStart = 0; bandStart < height;)
         {
@@ -81,6 +85,7 @@ public static class ConnectedOreVeins
                     if (remaining - goal < minimum) goal = remaining;
                     int grown = Grow(origin, ore, goal, bandStart, bandEnd, indexSize);
                     remaining -= grown;
+                    if (budget.Expired) { yield return null; budget.Restart(); }
                 }
 
                 // The original cells are reserved for their ore. They guarantee that even
@@ -96,10 +101,14 @@ public static class ConnectedOreVeins
                 if (remaining != 0)
                     throw new InvalidOperationException("Connected vein growth could not preserve the ore budget.");
             }
-            foreach (var ore in ores) ConsolidateSmallVeins(ore, bandStart, bandEnd);
+            foreach (var ore in ores)
+            {
+                ConsolidateSmallVeins(ore, bandStart, bandEnd);
+                if (budget.Expired) { yield return null; budget.Restart(); }
+            }
             bandStart = bandEnd;
             progress?.Invoke(bandStart / (float)height);
-            yield return null;
+            if (budget.Expired) { yield return null; budget.Restart(); }
         }
 
         bool Available(int index, Block ore)

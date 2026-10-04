@@ -39,6 +39,7 @@ using UnityEngine;
 [Serializable] public sealed class RunSaveState
 {
     public int version = 1, seed, width, height;
+    public GpsValue[] generationSettings;
     public long savedUtc;
     public float playedSeconds, energy;
     public Vector3 playerPosition;

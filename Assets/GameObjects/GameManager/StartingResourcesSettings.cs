@@ -29,37 +29,14 @@ public static class StartingResourcesSettings
 
     public static StartingResourcesData Load()
     {
-        if (!PlayerPrefs.HasKey(Key)) return Defaults();
-        try
-        {
-            var data = JsonUtility.FromJson<StartingResourcesData>(PlayerPrefs.GetString(Key));
-            if (data == null || data.version != 1 || data.money < 0 || data.items == null)
-                return Defaults();
-            var clean = new List<StartingItemAmount>();
-            var totals = new Dictionary<int, long>();
-            foreach (var entry in data.items)
-            {
-                if (entry.amount <= 0 || !Resolve(entry.itemId)) continue;
-                long total = (totals.TryGetValue(entry.itemId, out var previous) ? previous : 0) + entry.amount;
-                if (total > int.MaxValue) total = int.MaxValue;
-                totals[entry.itemId] = total;
-            }
-            foreach (var entry in totals) clean.Add(new StartingItemAmount(entry.Key, (int)entry.Value));
-            data.items = clean.ToArray();
-            return data;
-        }
-        catch { return Defaults(); }
+        return JsonUtility.FromJson<StartingResourcesData>(JsonUtility.ToJson(GpsSettings.Preferences.startingResources));
     }
 
     public static void Save(int money, StartingItemAmount[] items)
     {
-        var data = new StartingResourcesData
-        {
-            money = Mathf.Max(0, money),
-            items = items ?? Array.Empty<StartingItemAmount>()
-        };
-        PlayerPrefs.SetString(Key, JsonUtility.ToJson(data));
-        PlayerPrefs.Save();
+        var data=new StartingResourcesData { money=Mathf.Max(0,money),items=items??Array.Empty<StartingItemAmount>() };
+        var value=GpsCodec.Read("startingResources",typeof(StartingResourcesData),data,GpsSettings.Profile.Key);
+        GpsSettings.SetValue("preferences",value,out _);
     }
 
     public static ItemSO Resolve(int itemId)

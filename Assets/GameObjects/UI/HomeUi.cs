@@ -18,6 +18,17 @@ public static class HomeUi
     public static Sprite Sprite(string part)
     {
         if (sprites.TryGetValue(part, out var found) && found) return found;
+        if (part == "SaveButton" || part == "SaveActive")
+        {
+            var texture = Resources.Load<Texture2D>("Homescreen/SaveButtons");
+            if (!texture) return null;
+            float xScale = texture.width / 2172f, yScale = texture.height / 724f;
+            var region = new Rect(68 * xScale, texture.height - ((part == "SaveActive" ? 363 : 48) + 270) * yScale,
+                2036 * xScale, 270 * yScale);
+            found = UnityEngine.Sprite.Create(texture, region, new Vector2(.5f, .5f), 100, 0,
+                SpriteMeshType.FullRect, new Vector4(185 * xScale, 48 * yScale, 185 * xScale, 48 * yScale));
+            found.name = part; sprites[part] = found; return found;
+        }
         var atlas = Resources.Load<Texture2D>("Homescreen/MenuAtlas"); if (!atlas) return null;
         // Atlas coordinates measured on the approved 1536x1024 source, from its upper-left corner.
         Rect box = part switch
@@ -39,6 +50,16 @@ public static class HomeUi
         var rect = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
         rect.SetParent(parent, false); rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, .5f);
         rect.sizeDelta = size; rect.anchoredPosition = position; return rect;
+    }
+    public static RectTransform Panel(string name, Transform parent)
+    {
+        var root = Rect(name, parent, Vector2.zero, Vector2.zero);
+        Stretch(root);
+        if (!Application.isPlaying) root.gameObject.hideFlags |= HideFlags.DontSaveInEditor;
+        var group = root.gameObject.AddComponent<CanvasGroup>();
+        group.alpha = Application.isPlaying ? 1 : 0;
+        group.interactable = group.blocksRaycasts = Application.isPlaying;
+        return root;
     }
     public static void Stretch(RectTransform rect)
     { rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.offsetMin = rect.offsetMax = Vector2.zero; }
@@ -62,7 +83,7 @@ public static class HomeUi
         var button = image.gameObject.AddComponent<Button>(); button.targetGraphic = image; button.transition = Selectable.Transition.None;
         Label("Label", image.transform, label, Vector2.zero, size - new Vector2(45, 10), Mathf.Min(36, size.y * .36f));
         var feedback = image.gameObject.AddComponent<HomeButtonFeedback>(); feedback.primary = primary;
-        button.onClick.AddListener(() => { feedback.Click(); action?.Invoke(); }); return button;
+        button.onClick.AddListener(() => { HomeClickAudio.Play(); feedback.Click(); action?.Invoke(); }); return button;
     }
     public static void Fit(RectTransform layout, Vector2 reference)
     {
@@ -79,23 +100,37 @@ public static class HomeUi
 public sealed class HomeButtonFeedback : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
 {
     public bool primary;
+    public string normalPart = "Button", activePart = "Active";
+    public bool animateScale = true;
     bool hovered, selected;
-    float amount, pressed;
-    Button button; Image image;
-    void Awake() { button = GetComponent<Button>(); image = GetComponent<Image>(); }
+    float amount, glow, pressed;
+    Button button; Image image, highlight;
+    void Awake()
+    {
+        button = GetComponent<Button>(); image = GetComponent<Image>();
+        highlight = HomeUi.Rect("Highlight", transform, Vector2.zero, Vector2.zero).gameObject.AddComponent<Image>();
+        HomeUi.Stretch(highlight.rectTransform); highlight.transform.SetAsFirstSibling();
+        highlight.raycastTarget = false; highlight.color = new Color(1, 1, 1, 0);
+    }
     public void OnPointerEnter(PointerEventData data) => hovered = true;
     public void OnPointerExit(PointerEventData data) => hovered = false;
     public void OnSelect(BaseEventData data) => selected = true;
     public void OnDeselect(BaseEventData data) => selected = false;
     public void Click() => pressed = .12f;
-    void OnDisable() { hovered = selected = false; amount = pressed = 0; transform.localScale = Vector3.one; }
+    void OnDisable() { hovered = selected = false; amount = glow = pressed = 0; transform.localScale = Vector3.one; if (highlight) highlight.color = new Color(1, 1, 1, 0); }
     void Update()
     {
         float target = button.interactable && (hovered || selected) ? 1 : 0;
         amount = Mathf.Lerp(amount, target, 1 - Mathf.Exp(-12 * Time.unscaledDeltaTime));
         pressed = Mathf.Max(0, pressed - Time.unscaledDeltaTime);
-        transform.localScale = Vector3.one * (1 + .018f * amount - (pressed > 0 ? .012f : 0));
-        image.sprite = HomeUi.Sprite(primary || amount > .2f ? "Active" : "Button");
+        transform.localScale = animateScale ? Vector3.one * (1 + .018f * amount - (pressed > 0 ? .012f : 0)) : Vector3.one;
+        glow = Mathf.Lerp(glow, button.interactable && (primary || hovered || selected) ? 1 : 0,
+            1 - Mathf.Exp(-9 * Time.unscaledDeltaTime));
+        image.sprite = HomeUi.Sprite(normalPart);
+        highlight.sprite = HomeUi.Sprite(activePart); highlight.type = image.type;
+        highlight.pixelsPerUnitMultiplier = image.pixelsPerUnitMultiplier;
+        highlight.preserveAspect = image.preserveAspect;
+        highlight.color = new Color(1, 1, 1, glow);
         image.color = button.interactable ? Color.Lerp(Color.white, new Color(1, .93f, .76f), amount * .2f) : new Color(.42f, .42f, .42f, .8f);
     }
 }

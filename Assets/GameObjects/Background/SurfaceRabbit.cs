@@ -3,6 +3,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class SurfaceRabbit : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     public MapGenerator map;
     public Material material;
     [Min(.2f), InspectorName("Grösse")] public float size = .85f;

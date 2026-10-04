@@ -17,7 +17,8 @@ public sealed class MapWorldBorders : MonoBehaviour
     public float RightLimit { get; private set; }
     public float TopLimit => topBorderY;
 
-    void Awake() { map = GetComponent<MapGenerator>(); EnsureWalls(); }
+    void Awake() {
+        GpsSettings.ApplyComponent(this); map = GetComponent<MapGenerator>(); EnsureWalls(); }
     void OnEnable() { if (!map) map = GetComponent<MapGenerator>(); map.Generated += Rebuild; Rebuild(); }
     void OnDisable() { if (map) map.Generated -= Rebuild; }
     void OnValidate() { sidePaddingCells = Mathf.Max(0, sidePaddingCells); if (!float.IsFinite(topBorderY)) topBorderY = 100f; Rebuild(); }
@@ -42,6 +43,7 @@ public sealed class MapWorldBorders : MonoBehaviour
         SetWall(rightWall, new Vector2(RightLimit + thickness * .5f, bottom + height * .5f), new Vector2(thickness, height));
         SetWall(topWall, new Vector2((LeftLimit + RightLimit) * .5f, topBorderY + thickness * .5f), new Vector2(width, thickness));
     }
+    public void RefreshBounds() => Rebuild();
 
     void EnsureWalls() { leftWall = EnsureWall("World Border Left"); rightWall = EnsureWall("World Border Right"); topWall = EnsureWall("World Border Top"); }
     BoxCollider2D EnsureWall(string name)

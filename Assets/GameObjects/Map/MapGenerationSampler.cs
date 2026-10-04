@@ -28,7 +28,8 @@ public sealed class MapGenerationSampler
 
     public MapGenerationSampler(BlockRegistry registry, int seed, int mapHeight, MapLayer[] layers = null,
         AnimationCurve oreDensityCurve = null, float oreDensityMultiplierPercent = 50f,
-        int transitionThickness = DefaultTransitionThickness, OreDistributionSetting[] oreSettings = null)
+        int transitionThickness = DefaultTransitionThickness, OreDistributionSetting[] oreSettings = null,
+        bool prepareNoise = true)
     {
         if (!registry) throw new ArgumentNullException(nameof(registry));
         if (mapHeight <= 0) throw new ArgumentOutOfRangeException(nameof(mapHeight));
@@ -75,7 +76,7 @@ public sealed class MapGenerationSampler
             noiseOffsets[i] = new Vector2(
                 (OreVeins.Hash(seed, (int)block.id, block.noiseSeedOffset, 0x4821u) & 0xffff) / 32f + .317f,
                 (OreVeins.Hash(seed, (int)block.id, block.noiseSeedOffset, 0x7253u) & 0xffff) / 32f + .731f);
-            noiseCdfs[i] = BuildCdf(scales[i], noiseOffsets[i]);
+            if (prepareNoise) noiseCdfs[i] = BuildCdf(scales[i], noiseOffsets[i]);
             dynamicNoiseCdfs[i] = new Dictionary<int, float[]>();
         }
         if (layers == null || layers.Length == 0) return;
@@ -149,6 +150,35 @@ public sealed class MapGenerationSampler
 
     static float CurveFactor(AnimationCurve curve, float progress) =>
         curve == null || curve.length == 0 ? 1f : Nonnegative(curve.Evaluate(progress));
+
+    public System.Collections.IEnumerator PrepareNoiseSteps()
+    {
+        for (int ore = 0; ore < noiseBlocks.Length; ore++)
+        {
+            if (noiseCdfs[ore] == null)
+            {
+                int index = ore;
+                var steps = BuildCdfSteps(scales[ore], noiseOffsets[ore], Bins, value => noiseCdfs[index] = value);
+                while (steps.MoveNext()) yield return null;
+            }
+            if (configuredVeinSizeByRow == null) continue;
+            var indices = new HashSet<int>();
+            for (int y = 0; y < densityByRow.Length; y++)
+            {
+                int row = y * noiseBlocks.Length + ore;
+                if (densityByRow[y] > 0 && configuredWeightsByRow[row] > 0)
+                    indices.Add(Mathf.Max(1, configuredVeinSizeByRow[row]));
+            }
+            foreach (int veinIndex in indices)
+            {
+                if (veinIndex == Mathf.RoundToInt(1f / scales[ore]) || dynamicNoiseCdfs[ore].ContainsKey(veinIndex)) continue;
+                int index = ore;
+                var steps = BuildCdfSteps(1f / veinIndex, noiseOffsets[ore], 96,
+                    value => dynamicNoiseCdfs[index].Add(veinIndex, value));
+                while (steps.MoveNext()) yield return null;
+            }
+        }
+    }
 
     int LayerIndex(int depth)
     {
@@ -264,7 +294,8 @@ public sealed class MapGenerationSampler
             float scale = 1f / Mathf.Max(1, veinIndex);
             float uniform;
             if (veinIndex == Mathf.RoundToInt(1f / scales[i]))
-                uniform = UniformNoise(SampleNoise(x, y, scales[i], noiseOffsets[i]), noiseCdfs[i]);
+                uniform = UniformNoise(SampleNoise(x, y, scales[i], noiseOffsets[i]),
+                    noiseCdfs[i] ??= BuildCdf(scales[i], noiseOffsets[i]));
             else
                 uniform = UniformNoise(SampleNoise(x, y, scale, noiseOffsets[i]), DynamicCdf(i, veinIndex));
             double score = -Math.Log(uniform) / weight;
@@ -314,9 +345,19 @@ public sealed class MapGenerationSampler
 
     static float[] BuildCdf(float scale, Vector2 offset, int samples = Bins)
     {
+        float[] result = null;
+        var steps = BuildCdfSteps(scale, offset, samples, value => result = value);
+        while (steps.MoveNext()) { }
+        return result;
+    }
+
+    static System.Collections.IEnumerator BuildCdfSteps(float scale, Vector2 offset, int samples, Action<float[]> complete)
+    {
         var histogram = new int[Bins];
         var cdf = new float[Bins + 1];
+        var budget = new LoadingWorkBudget();
         for (int x = 0; x < samples; x++)
+        {
             for (int y = 0; y < samples; y++)
             {
                 // Sample many periods even for large veins; retain lattice phase for index 1.
@@ -324,13 +365,15 @@ public sealed class MapGenerationSampler
                 int bin = Mathf.Clamp(Mathf.FloorToInt(noise * Bins), 0, Bins - 1);
                 histogram[bin]++;
             }
+            if (budget.Expired) { yield return null; budget.Restart(); }
+        }
         int sum = 0;
         for (int i = 0; i < Bins; i++)
         {
             sum += histogram[i];
             cdf[i + 1] = (float)sum / (samples * samples);
         }
-        return cdf;
+        complete(cdf);
     }
 
     static float UniformNoise(float noise, float[] cdf)

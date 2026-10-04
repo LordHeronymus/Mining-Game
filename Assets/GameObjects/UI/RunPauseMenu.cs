@@ -68,7 +68,9 @@ public sealed class RunPauseMenu : MonoBehaviour
     {
         if (GameSaveSystem.IsBusy) return;
         status.text = "Speichern …";
-        StartCoroutine(GameSaveSystem.Save(0, this, (ok, message) => { status.text = message; if (ok) RunNavigation.MainMenu(); }));
+        if (GameSaveSystem.ActiveSlot < 1) { SaveSlotPanel.Show(transform.parent, true); return; }
+        StartCoroutine(GameSaveSystem.Save(GameSaveSystem.ActiveSlot, this,
+            (ok, message) => { status.text = message; if (ok) RunNavigation.MainMenu(); }));
     }
     void Visible(bool show) { group.alpha = show ? 1 : 0; group.interactable = group.blocksRaycasts = show; }
     void OnRectTransformDimensionsChange() => HomeUi.Fit(layout, new Vector2(780, 930));

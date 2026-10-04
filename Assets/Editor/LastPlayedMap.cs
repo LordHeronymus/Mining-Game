@@ -42,7 +42,9 @@ public static class LastPlayedMap
     {
         if (!Application.isPlaying || string.IsNullOrEmpty(map.gameObject.scene.path)) return;
         if (!scheduledInitialCaptures.Add(map)) return;
-        EditorApplication.delayCall += () => CaptureInitialNow(map);
+        // Keep the immutable initial snapshot until Play stops. Compressing a
+        // complete editor preview during loading blocks the animated screen.
+        // Capture() flushes this queue before the runtime scene is removed.
     }
 
     static void CaptureInitialNow(MapGenerator map)

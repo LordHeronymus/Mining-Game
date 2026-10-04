@@ -9,9 +9,16 @@ public sealed class MainMenuController : MonoBehaviour
     TMPro.TextMeshProUGUI status;
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void Reset() => IsVisible = false;
+    System.Collections.IEnumerator Start()
+    {
+        yield return null;
+        yield return LoadingScreen.Prepare();
+    }
     void Awake()
     {
+        GameSaveSystem.MigrateLegacyAutomaticSave();
         IsVisible = true; Time.timeScale = 1; HomeUi.EnsureEventSystem();
+        LoadingAudio.StartHome();
         Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto); Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
         var canvas = GameObject.Find("ScreenCanvas");
         if (!canvas)
@@ -29,7 +36,7 @@ public sealed class MainMenuController : MonoBehaviour
         HomeUi.Image("Title Plaque", layout, new Vector2(-565, 380), new Vector2(508, 205), "Title");
         HomeUi.Label("Game Title", layout, "Tiefenhall", new Vector2(-565, 410), new Vector2(430, 95), 76);
         continueButton = HomeUi.Button("Continue", layout, "Fortsetzen", new Vector2(-565, 208), new Vector2(420, 102), Continue, true);
-        newGameButton = HomeUi.Button("New Game", layout, "Neues Spiel", new Vector2(-565, 88), new Vector2(420, 102), RunNavigation.NewGame);
+        newGameButton = HomeUi.Button("New Game", layout, "Neues Spiel", new Vector2(-565, 88), new Vector2(420, 102), () => NewGamePanel.Show(canvas.transform));
         HomeUi.Button("Save Games", layout, "Spielstände", new Vector2(-565, -32), new Vector2(420, 102), () => SaveSlotPanel.Show(canvas.transform, false));
         HomeUi.Button("Settings", layout, "Einstellungen", new Vector2(-565, -152), new Vector2(420, 102), () =>
             FindFirstObjectByType<SettingsPanel>(FindObjectsInactive.Include)?.Open());
@@ -42,10 +49,12 @@ public sealed class MainMenuController : MonoBehaviour
         int slot = GameSaveSystem.MostRecentSlot();
         if (slot >= 0 && !RunNavigation.LoadGame(slot, out string error)) status.text = error;
     }
+    public void ShowStatus(string message) { if (status) status.text = message; }
     void Refresh()
     {
         if (!continueButton) return;
         continueButton.interactable = GameSaveSystem.MostRecentSlot() >= 0;
+        newGameButton.interactable = GameSaveSystem.NextFreeSlot() > 0 && !GameSaveSystem.IsBusy;
         newGameButton.GetComponent<HomeButtonFeedback>().primary = !continueButton.interactable;
     }
     void OnRectTransformDimensionsChange() => Fit();

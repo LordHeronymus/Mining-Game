@@ -38,7 +38,7 @@ public sealed class TiefenhallUiProbe : MonoBehaviour
     IEnumerator Checks()
     {
         GameSaveSystem.TestDirectory = Directory.GetDirectories(Path.GetFullPath("Temp"), "TiefenhallSaveChecks-*").OrderBy(x => x).Last();
-        Check(RunNavigation.LoadGame(0, out _), "Isolated saved run loads");
+        Check(RunNavigation.LoadGame(GameSaveSystem.MostRecentSlot(), out _), "Isolated saved run loads");
         while (RunNavigation.IsTransitioning || LoadingProgress.Active) yield return null;
         var pause = FindFirstObjectByType<RunPauseMenu>(); pause.Open();
         Click(FindButton(pause.transform, "Save")); yield return null;
@@ -61,6 +61,7 @@ public sealed class TiefenhallUiProbe : MonoBehaviour
         Click(FindButton(pause.transform, "Load")); yield return null;
         slots = FindFirstObjectByType<SaveSlotPanel>();
         Click(FindButton(slots.transform, "Slot 2")); yield return null;
+        Click(FindButton(slots.transform, "Start Save")); yield return null;
         Click(FindButton(slots.transform, "Cancel")); yield return null;
         Check(!RunNavigation.IsTransitioning && !LoadingProgress.Active && SaveSlotPanel.IsOpen, "Cancel load leaves current run intact");
         Click(FindButton(slots.transform, "Back")); yield return null;

@@ -201,7 +201,16 @@ public sealed class LoadingCrystalVisual : MonoBehaviour
 
     void PlayImpactSound()
     {
-        if (!Application.isPlaying) return;
+        if (!Application.isPlaying || GameAudioLifecycle.IsStopping) return;
+        EnsureImpactSound();
+        if (!hitClip) return;
+        hitSource.pitch = AudioManager.TunedPitch(hitClip, 1f);
+        hitSource.PlayOneShot(hitClip, AudioManager.TunedVolume(hitClip,
+            LoadingAudio.Settings ? LoadingAudio.Settings.pickaxeVolume : 1f));
+    }
+
+    void EnsureImpactSound()
+    {
         if (!hitClip) hitClip = Resources.Load<AudioClip>("Audio/LoadingPickaxeHit");
         if (!hitClip) return;
         if (!hitSource)
@@ -211,9 +220,13 @@ public sealed class LoadingCrystalVisual : MonoBehaviour
             hitSource.spatialBlend = 0f;
             hitSource.ignoreListenerPause = true;
         }
-        hitSource.pitch = AudioManager.TunedPitch(hitClip, 1f);
-        hitSource.PlayOneShot(hitClip, AudioManager.TunedVolume(hitClip,
-            LoadingAudio.Settings ? LoadingAudio.Settings.pickaxeVolume : 1f));
+    }
+
+    public void WarmImpactSound()
+    {
+        if (GameAudioLifecycle.IsStopping) return;
+        EnsureImpactSound();
+        if (hitClip) hitSource.PlayOneShot(hitClip, 0f);
     }
 
     void OnDisable()

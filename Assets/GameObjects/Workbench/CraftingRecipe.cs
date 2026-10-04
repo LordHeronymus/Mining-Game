@@ -28,7 +28,6 @@ public sealed class CraftingRecipe : ScriptableObject
     [SerializeField, HideInInspector] string persistentId;
     [SerializeField, HideInInspector] bool customCardIconLayout;
     [SerializeField, HideInInspector] RecipeIconLayout cardIconLayout;
-    bool runtimeCardIconLayout;
     public string FavoriteKey => "workbench.favorite." + (string.IsNullOrEmpty(persistentId)
         ? (output ? ((int)output.item).ToString() : "none") + "." + name : persistentId);
     public RecipeCategory Category => category != RecipeCategory.Automatic ? category :
@@ -55,63 +54,20 @@ public sealed class CraftingRecipe : ScriptableObject
 
     public void SaveRecipeSettings()
     {
-#if UNITY_EDITOR
-        UnityEditor.EditorUtility.SetDirty(this);
-        UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
-#else
-        var data = new SavedRecipeSettings {
-            category = (int)category,
-            outputAmount = outputAmount,
-            ingredientItems = Array.ConvertAll(ingredients, ingredient => (int)ingredient.item.item),
-            ingredientAmounts = Array.ConvertAll(ingredients, ingredient => ingredient.amount)
-        };
-        PlayerPrefs.SetString(SavedSettingsKey, JsonUtility.ToJson(data));
-        PlayerPrefs.Save();
-#endif
+        GpsSettings.Capture(this);
     }
 
-#if !UNITY_EDITOR
-    void LoadSavedRecipeSettings()
-    {
-        string key = SavedSettingsKey;
-        if (!PlayerPrefs.HasKey(key)) return;
-        var data = JsonUtility.FromJson<SavedRecipeSettings>(PlayerPrefs.GetString(key));
-        if (data == null || data.version != 1 || data.outputAmount <= 0 || data.ingredientItems == null ||
-            data.ingredientAmounts == null || data.ingredientItems.Length == 0 ||
-            data.ingredientItems.Length != data.ingredientAmounts.Length || !Enum.IsDefined(typeof(RecipeCategory), data.category)) return;
-        var catalog = Resources.Load<ItemCatalog>("ItemCatalog");
-        if (!catalog) return;
-        var loadedIngredients = new CraftingIngredient[data.ingredientItems.Length];
-        for (int i = 0; i < loadedIngredients.Length; i++)
-        {
-            ItemSO item = Array.Find(catalog.items, candidate => candidate && (int)candidate.item == data.ingredientItems[i]);
-            if (!item || item == output || data.ingredientAmounts[i] <= 0) return;
-            loadedIngredients[i] = new CraftingIngredient(item, data.ingredientAmounts[i]);
-        }
-        SetRecipeSettings((RecipeCategory)data.category, data.outputAmount, loadedIngredients);
-    }
-#endif
+
 
     void OnEnable()
     {
-#if !UNITY_EDITOR
-        if (Application.isPlaying) LoadSavedRecipeSettings();
-#endif
     }
 
     public RecipeIconLayout CardIconLayout
     {
         get
         {
-            if (runtimeCardIconLayout) return cardIconLayout;
-#if !UNITY_EDITOR
-            string key = FavoriteKey + ".icon";
-            if (PlayerPrefs.HasKey(key))
-            {
-                var saved = JsonUtility.FromJson<RecipeIconLayout>(PlayerPrefs.GetString(key));
-                if (saved.scale.x > 0f && saved.scale.y > 0f) return saved;
-            }
-#endif
+
             return customCardIconLayout ? cardIconLayout : DefaultCardIconLayout(output ? output.item : default);
         }
     }
@@ -120,30 +76,18 @@ public sealed class CraftingRecipe : ScriptableObject
     {
         cardIconLayout = layout;
         customCardIconLayout = true;
-        runtimeCardIconLayout = true;
     }
 
     public void ResetCardIconLayout()
     {
         customCardIconLayout = false;
         cardIconLayout = default;
-        runtimeCardIconLayout = false;
-#if !UNITY_EDITOR
-        PlayerPrefs.DeleteKey(FavoriteKey + ".icon");
-#endif
+
     }
 
     public void SaveCardIconLayout()
     {
-#if UNITY_EDITOR
-        UnityEditor.EditorUtility.SetDirty(this);
-        UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
-#else
-        string key = FavoriteKey + ".icon";
-        if (customCardIconLayout) PlayerPrefs.SetString(key, JsonUtility.ToJson(cardIconLayout));
-        else PlayerPrefs.DeleteKey(key);
-        PlayerPrefs.Save();
-#endif
+        GpsSettings.Capture(this);
     }
 
     static RecipeIconLayout DefaultCardIconLayout(Item item)

@@ -12,7 +12,57 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ca2bf1ad2959c04584dabf83b6ae10d, type: 3}
   m_Name: LoadingAudioSettings
   m_EditorClassIdentifier: 
+  homeClips:
+  - clip: {fileID: 8300000, guid: 1f67f6fcf834761418cf997d1d25f6da, type: 3}
+    volume: 1
+    pitch: 1
+    volumeSpread: 0
+    pitchSpread: 0
+  - clip: {fileID: 8300000, guid: 80816eb163e52d14eb3f698ddf91c817, type: 3}
+    volume: 0.8
+    pitch: 1
+    volumeSpread: 0.15
+    pitchSpread: 0.1
+  - clip: {fileID: 8300000, guid: 8abf80becb7861549b87e0b078c34974, type: 3}
+    volume: 0.8
+    pitch: 1
+    volumeSpread: 0.15
+    pitchSpread: 0.1
+  - clip: {fileID: 8300000, guid: 82fd0828f354eba4781cbaa40fcfad74, type: 3}
+    volume: 0.8
+    pitch: 1
+    volumeSpread: 0.15
+    pitchSpread: 0.1
+  - clip: {fileID: 8300000, guid: 93eaa6e4787b3bf42b86498f5c14241b, type: 3}
+    volume: 0.8
+    pitch: 1
+    volumeSpread: 0.15
+    pitchSpread: 0.1
+  - clip: {fileID: 8300000, guid: 0640c8aefddab5e469939ff7fb03a22a, type: 3}
+    volume: 0.8
+    pitch: 1
+    volumeSpread: 0.15
+    pitchSpread: 0.1
+  - clip: {fileID: 8300000, guid: db1435b5eab394b42bef39a5f1d5c026, type: 3}
+    volume: 0.8
+    pitch: 1
+    volumeSpread: 0.15
+    pitchSpread: 0.1
+  - clip: {fileID: 8300000, guid: 62b1710d58cfecc4d9f6296864128733, type: 3}
+    volume: 0.8
+    pitch: 1
+    volumeSpread: 0.15
+    pitchSpread: 0.1
+  - clip: {fileID: 8300000, guid: b09ba81f7db5beb4cae304e78d208a79, type: 3}
+    volume: 0.8
+    pitch: 1
+    volumeSpread: 0.15
+    pitchSpread: 0.1
   yogaVolume: 0.6717
   pickaxeVolume: 0.8663
   worldFadeInSeconds: 2.5
   yogaFadeOutSeconds: 7
+  distantPickaxeVolume: 0.5
+  distantPickaxesPerMinute: 10
+  distantPickaxePitchSpreadPercent: 10
+  distantPickaxeVolumeSpreadPercent: 15

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 [ExecuteAlways, DisallowMultipleComponent, RequireComponent(typeof(MapGenerator))]
 public sealed class UniformStoneAppearance : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
     public Texture2D texture;
     public Texture2D dirtTexture;
     public Texture2D layerOneTexture;
@@ -158,7 +159,7 @@ public sealed class UniformStoneAppearance : MonoBehaviour
         var colors = new Color32[tiles.Length];
         var tileColors = new Dictionary<TileBase, Color32>();
         var sampler = new MapGenerationSampler(map.registry, seed, height, map.layers,
-            map.oreDensityCurve, map.oreDensityMultiplierPercent, map.transitionThickness);
+            map.oreDensityCurve, map.oreDensityMultiplierPercent, map.transitionThickness, prepareNoise: false);
         var budget = new LoadingWorkBudget();
         for (int i = 0; i < colors.Length; i++)
         {

@@ -6,6 +6,8 @@ using UnityEngine.UI;
 
 public sealed class ItemFeed : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     struct Pickup
     {
         public ItemSO item;

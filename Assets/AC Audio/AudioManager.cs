@@ -80,6 +80,7 @@ public class AudioManager : MonoBehaviour
 
     public static float GetAmbienceVolume(AmbienceType type)
     {
+        if (GameAudioLifecycle.IsStopping) return 0f;
         if (!Instance) return PlayerSettings.Ambience * LoadingAudio.WorldAmbienceGain;
         float category = type switch
         {
@@ -93,7 +94,8 @@ public class AudioManager : MonoBehaviour
         return AmbienceVolume * Mathf.Clamp01(category) * LoadingAudio.WorldAmbienceGain;
     }
 
-    public static float AmbienceVolume => (Instance ? Mathf.Clamp01(Instance.ambienceVolume) : 1f) * PlayerSettings.Ambience;
+    public static float AmbienceVolume => GameAudioLifecycle.IsStopping ? 0f :
+        (Instance ? Mathf.Clamp01(Instance.ambienceVolume) : 1f) * PlayerSettings.Ambience;
 
     public float GetVolume(AudioVolumeSetting setting) => setting switch
     {
@@ -255,10 +257,7 @@ public class AudioManager : MonoBehaviour
         var settings = ClipTuningSettings;
         if (!settings || !clip) return;
         settings.Set(clip, volume, pitch, spread);
-#if UNITY_EDITOR
-        UnityEditor.EditorUtility.SetDirty(settings);
-        UnityEditor.AssetDatabase.SaveAssetIfDirty(settings);
-#endif
+        GpsSettings.Capture(settings);
     }
 
     public void PreviewClip(AudioClip clip, float volume = 1f, float pitch = 1f)
@@ -306,6 +305,7 @@ public class AudioManager : MonoBehaviour
 
     public static float TunedVolume(AudioClip clip, float volume)
     {
+        if (GameAudioLifecycle.IsStopping) return 0f;
         if (!Instance) return volume * PlayerSettings.Sfx;
         Instance.GetClipTuning(clip, out float multiplier, out _, out _);
         return volume * multiplier * PlayerSettings.Sfx;
@@ -313,6 +313,7 @@ public class AudioManager : MonoBehaviour
 
     public static float TunedAmbienceVolume(AudioClip clip, float volume)
     {
+        if (GameAudioLifecycle.IsStopping) return 0f;
         if (!Instance) return volume;
         Instance.GetClipTuning(clip, out float multiplier, out _, out _);
         return volume * multiplier;
@@ -371,6 +372,7 @@ public class AudioManager : MonoBehaviour
 
     void Awake()
     {
+        GpsSettings.ApplyComponent(this);
         if (Instance && Instance != this) { Destroy(gameObject); return; }
         Instance = this; DontDestroyOnLoad(gameObject);
         for (int i = 0; i < initialPoolSize; i++) ExtendPool();
@@ -532,6 +534,7 @@ public class AudioManager : MonoBehaviour
 
     AudioSource GetFreeSource()
     {
+        if (GameAudioLifecycle.IsStopping) return null;
         foreach (var sr in pool) if (!sr.isPlaying) return sr;
         if (pool.Count < maxPoolSize) { ExtendPool(); return pool[^1]; }
 
@@ -620,14 +623,7 @@ public class AudioManager : MonoBehaviour
         tuning.pitch = Mathf.Clamp(pitch, .5f, 2f);
         tuning.pitchSpread = Mathf.Clamp(pitchSpread, 0f, .5f);
 
-#if UNITY_EDITOR
-        var settings = LayerMiningSettings;
-        if (settings)
-        {
-            UnityEditor.EditorUtility.SetDirty(settings);
-            UnityEditor.AssetDatabase.SaveAssetIfDirty(settings);
-        }
-#endif
+        GpsSettings.Capture(LayerMiningSettings);
     }
 
     public void PlayLayerMiningSound(int layerIndex, SoundType type, bool breaking)

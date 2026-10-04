@@ -10,6 +10,8 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(MapGenerator), typeof(Tilemap))]
 public sealed class MapLighting : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     static readonly Unity.Profiling.ProfilerMarker UpdateMarker = new Unity.Profiling.ProfilerMarker("Mining.Lighting");
     const int TextureUploadChunkSize = 32;
     public bool lightingEnabled = true;

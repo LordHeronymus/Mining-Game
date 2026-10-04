@@ -54,6 +54,7 @@ public partial class SellPage
         searchField.placeholder = placeholder; searchField.targetGraphic = search;
         searchField.characterLimit = 80; searchField.lineType = TMP_InputField.LineType.SingleLine;
         searchField.customCaretColor = true; searchField.caretColor = new Color32(255, 245, 229, 255);
+        LichtfadenCaret.Apply(searchField);
         searchField.onValueChanged.AddListener(SetSearch);
         var viewport = SellRect("Ores", root, 290, 297, 1250, ListHeight);
         viewport.gameObject.AddComponent<RectMask2D>(); viewport.gameObject.AddComponent<Image>().color = Color.clear;

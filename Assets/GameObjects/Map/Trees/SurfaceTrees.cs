@@ -3,6 +3,8 @@ using UnityEngine;
 
 public sealed class SurfaceTrees : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     [SerializeField] MapGenerator map;
     [SerializeField] ChoppableTree prefab;
     [SerializeField] Sprite[] variants;

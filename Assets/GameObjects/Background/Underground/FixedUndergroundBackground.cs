@@ -3,6 +3,8 @@ using UnityEngine;
 [ExecuteAlways,DisallowMultipleComponent,DefaultExecutionOrder(1450)]
 public sealed class FixedUndergroundBackground : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     public MapGenerator map;
     public ParallaxLayer nearHills;
     public Material material;

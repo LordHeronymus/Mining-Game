@@ -108,6 +108,7 @@ public class TileMiner : MonoBehaviour
 
     void Awake()
     {
+        GpsSettings.ApplyComponent(this);
         _cam = cam ? cam : Camera.main;
         map = tilemap ? tilemap.GetComponent<MapGenerator>() : null;
         if (map) map.Generated += ClearMiningProgress;

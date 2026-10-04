@@ -3,7 +3,7 @@ using UnityEngine;
 
 public static class GameplayInputBlocker
 {
-    private static readonly HashSet<MonoBehaviour> OpenPanels = new();
+    private static readonly HashSet<Behaviour> OpenPanels = new();
 
     public static bool IsBlocked
     {
@@ -21,7 +21,7 @@ public static class GameplayInputBlocker
         Time.timeScale = 1f;
     }
 
-    public static void SetBlocked(MonoBehaviour panel, bool blocked)
+    public static void SetBlocked(Behaviour panel, bool blocked)
     {
         if (!panel) return;
         if (blocked) OpenPanels.Add(panel);

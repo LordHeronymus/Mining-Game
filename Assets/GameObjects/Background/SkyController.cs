@@ -4,6 +4,8 @@ using UnityEngine;
 [ExecuteAlways, DisallowMultipleComponent, RequireComponent(typeof(ParallaxLayer)), DefaultExecutionOrder(1100)]
 public sealed class SkyController : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     public Sprite nightSky;
     [Min(0.01f), InspectorName("Night Sky Scale")] public float nightSkyScale = 1f;
     [Min(0.01f)] public float SkyFadeDuration = 3f;

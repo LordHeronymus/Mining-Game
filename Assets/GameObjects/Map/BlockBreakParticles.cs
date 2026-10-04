@@ -4,6 +4,8 @@ using UnityEngine.Tilemaps;
 [DisallowMultipleComponent, RequireComponent(typeof(Tilemap), typeof(MapGenerator))]
 public sealed class BlockBreakParticles : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     public Material debrisMaterial;
     public Material dustMaterial;
     public Material oreMaterial;

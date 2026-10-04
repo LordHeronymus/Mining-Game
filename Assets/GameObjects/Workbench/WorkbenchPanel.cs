@@ -488,6 +488,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
         searchField.characterLimit = 80;
         searchField.lineType = TMP_InputField.LineType.SingleLine;
         searchField.customCaretColor = true; searchField.caretColor = Cream;
+        LichtfadenCaret.Apply(searchField);
         searchField.onValueChanged.AddListener(SetSearch);
     }
 

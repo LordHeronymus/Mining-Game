@@ -5,6 +5,8 @@ using UnityEngine.Tilemaps;
 [ExecuteAlways]
 public sealed class SurfaceTallGrass : MonoBehaviour
 {
+    void Awake() => GpsSettings.ApplyComponent(this);
+
     [SerializeField] MapGenerator map;
     [SerializeField] Sprite sprite;
     [SerializeField] Sprite[] variants;
@@ -187,6 +189,11 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         respawnRandom = new System.Random(map.ActiveSeed ^ 0x6D925A1);
         ScheduleConversion();
         var trees = FindTrees();
+        var buildingBounds = new List<Vector2>();
+        foreach (var building in FindObjectsByType<ShopBuilding>(FindObjectsSortMode.None)) CacheBounds(building, buildingBounds);
+        foreach (var building in FindObjectsByType<WorkbenchBuilding>(FindObjectsSortMode.None)) CacheBounds(building, buildingBounds);
+        foreach (var building in FindObjectsByType<EnergyMonolyth>(FindObjectsSortMode.None)) CacheBounds(building, buildingBounds);
+        foreach (var building in FindObjectsByType<SurfaceStorageBuilding>(FindObjectsSortMode.None)) CacheBounds(building, buildingBounds);
         var candidates = new List<int>();
         int left = -width / 2;
         float spawnX = map.Terrain.GetCellCenterWorld(new Vector3Int(0, 0)).x;
@@ -234,7 +241,7 @@ public sealed class SurfaceTallGrass : MonoBehaviour
                     var cell = new Vector3Int(x, 0);
                     if (!map.Terrain.HasTile(cell) || !map.Terrain.HasTile(cell + Vector3Int.left) ||
                         !map.Terrain.HasTile(cell + Vector3Int.right) ||
-                        NearBuilding(map.Terrain.GetCellCenterWorld(cell).x) || (trees && trees.Protects(cell)))
+                        NearBuilding(map.Terrain.GetCellCenterWorld(cell).x, buildingBounds) || (trees && trees.Protects(cell)))
                         valid = false;
                     foreach (int existingX in sites)
                         if (Mathf.Abs(x - existingX) < Mathf.Max(2, minimumSpacing)) { valid = false; break; }
@@ -283,7 +290,7 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         RefreshSwaySettings();
         if (rebuildPending)
         {
-            if (map && map.IsGenerated) Rebuild();
+            if (map && map.IsGenerated && !map.IsGenerationStreaming) Rebuild();
             return;
         }
         if (!Application.isPlaying || !map || !map.IsGenerated || respawnRandom == null) return;
@@ -517,6 +524,18 @@ public sealed class SurfaceTallGrass : MonoBehaviour
             if (Overlaps(x, building.GetComponent<Collider2D>())) return true;
         foreach (var building in FindObjectsByType<SurfaceStorageBuilding>(FindObjectsSortMode.None))
             if (Overlaps(x, building.GetComponent<Collider2D>())) return true;
+        return false;
+    }
+
+    static void CacheBounds(Component building, List<Vector2> bounds)
+    {
+        var collider = building.GetComponent<Collider2D>();
+        if (collider) bounds.Add(new Vector2(collider.bounds.center.x, collider.bounds.extents.x + 1.5f));
+    }
+
+    static bool NearBuilding(float x, List<Vector2> bounds)
+    {
+        foreach (var range in bounds) if (Mathf.Abs(x - range.x) < range.y) return true;
         return false;
     }
 

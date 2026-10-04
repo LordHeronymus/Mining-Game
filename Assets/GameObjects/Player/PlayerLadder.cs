@@ -19,6 +19,7 @@ public sealed class PlayerLadder : MonoBehaviour
 
     void Awake()
     {
+        GpsSettings.ApplyComponent(this);
         body = GetComponent<Rigidbody2D>();
         bodyCollider = GetComponent<Collider2D>();
         view = Camera.main;

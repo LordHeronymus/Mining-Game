@@ -16,8 +16,12 @@ public static class GameSaveSystem
     const int MaxCells = 2000000;
     const int MaxFileBytes = 64 * 1024 * 1024;
     const int MaxExpandedBytes = 256 * 1024 * 1024;
-    public const int ManualSlots = 3;
+    public const int MaxSlots = 10;
     public static bool IsBusy { get; private set; }
+    public static int ActiveSlot { get; private set; } = -1;
+    public static string ActiveRunName { get; private set; }
+    public static bool HasPendingNewRun { get; private set; }
+    public static string InitialSaveError { get; private set; }
     public static float PlayedSeconds { get; set; }
     public static event Action SlotsChanged;
     static LoadedRun pending;
@@ -38,7 +42,9 @@ public static class GameSaveSystem
     [Serializable] public sealed class Summary
     {
         public int slot, depth, money, points;
+        public string name;
         public long savedUtc;
+        public long createdUtc, lastOpenedUtc;
         public float playedSeconds;
         public bool recovered;
     }
@@ -55,19 +61,102 @@ public static class GameSaveSystem
     static void Reset()
     {
         IsBusy = false; pending = null; PlayedSeconds = 0; SlotsChanged = null;
+        ActiveSlot = -1; ActiveRunName = null; HasPendingNewRun = false; InitialSaveError = null;
 #if UNITY_EDITOR
         TestDirectory = null;
 #endif
     }
     public static string SlotPath(int slot)
     {
-        if (slot < 0 || slot > ManualSlots) throw new ArgumentOutOfRangeException(nameof(slot));
+        if (slot < 0) throw new ArgumentOutOfRangeException(nameof(slot));
         return Path.Combine(DirectoryPath, "slot-" + slot + ".thsave");
     }
-    public static bool CanSave => !IsBusy && !LoadingProgress.Active && StatsManager.Instance &&
+    static bool CanCaptureRun => StatsManager.Instance &&
         StatsManager.Instance.Health > 0 && !StatsManager.Instance.HasWon && !UltroniumAltarChamber.VictorySequenceActive &&
         UnityEngine.Object.FindFirstObjectByType<EnergyManager>() is EnergyManager energy && energy.energy > 0 &&
         UnityEngine.Object.FindFirstObjectByType<MapGenerator>() is MapGenerator map && map.IsGenerated && !map.IsGenerationStreaming;
+    public static bool CanSave => !IsBusy && !LoadingProgress.Active && CanCaptureRun;
+
+    public static bool HasSlotData(int slot) => File.Exists(SlotPath(slot)) ||
+        File.Exists(SlotPath(slot) + ".bak") || File.Exists(SlotPath(slot) + ".tmp");
+
+    public static int[] OccupiedSlots()
+    {
+        var slots = new SortedSet<int>();
+        if (!Directory.Exists(DirectoryPath)) return Array.Empty<int>();
+        foreach (string path in Directory.EnumerateFiles(DirectoryPath, "slot-*.thsave*"))
+        {
+            string name = Path.GetFileName(path);
+            int suffix = name.IndexOf(".thsave", StringComparison.Ordinal);
+            if (suffix > 5 && (name.EndsWith(".thsave", StringComparison.Ordinal) ||
+                name.EndsWith(".thsave.bak", StringComparison.Ordinal) || name.EndsWith(".thsave.tmp", StringComparison.Ordinal)) &&
+                int.TryParse(name.Substring(5, suffix - 5), out int slot) && slot > 0 && slot <= MaxSlots) slots.Add(slot);
+        }
+        return slots.ToArray();
+    }
+    public static int NextFreeSlot()
+    {
+        int slot = 1;
+        foreach (int occupied in OccupiedSlots())
+        {
+            if (occupied > slot) break;
+            if (occupied == slot) slot++;
+        }
+        return slot <= MaxSlots ? slot : -1;
+    }
+    public static bool BeginNewRun(string name = null)
+    {
+        int slot = NextFreeSlot();
+        if (slot < 1 || IsBusy) return false;
+        CancelPendingLoad(); PlayedSeconds = 0;
+        ActiveSlot = slot; HasPendingNewRun = true; InitialSaveError = null;
+        ActiveRunName = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
+        return true;
+    }
+    public static void LeaveRun() { ActiveSlot = -1; ActiveRunName = null; HasPendingNewRun = false; }
+
+    public static IEnumerator SaveNewRunForLoading(MonoBehaviour owner)
+    {
+        if (!HasPendingNewRun) yield break;
+        yield return SaveRun(ActiveSlot, owner, (ok, message) => {
+            HasPendingNewRun = false; InitialSaveError = ok ? null : message;
+        }, true, true);
+    }
+
+    public static void MigrateLegacyAutomaticSave()
+    {
+        string legacy = SlotPath(0), marker = legacy + ".migrated";
+        if (File.Exists(marker) || (!File.Exists(legacy) && !File.Exists(legacy + ".bak"))) return;
+        foreach (string source in new[] { legacy, legacy + ".bak" })
+        {
+            try
+            {
+                if (!File.Exists(source)) continue;
+                ReadEnvelope(source, out var summary, out var compressed);
+                if (summary.slot != 0) continue;
+                int slot = NextFreeSlot(); if (slot < 1) return;
+                summary.slot = slot;
+                WriteEnvelopeAtomic(SlotPath(slot), JsonUtility.ToJson(summary), compressed, true);
+                File.WriteAllText(marker, slot.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                return;
+            }
+            catch (Exception error) { Debug.LogWarning("Tiefenhall: Alter Spielstand konnte nicht übernommen werden: " + error.Message); }
+        }
+    }
+
+    public static bool DeleteSlot(int slot, out string error)
+    {
+        error = "Spielstand konnte nicht gelöscht werden.";
+        if (slot < 1 || slot > MaxSlots || IsBusy || RunNavigation.IsTransitioning) return false;
+        try
+        {
+            string path = SlotPath(slot);
+            foreach (string file in new[] { path, path + ".bak", path + ".tmp" })
+                if (File.Exists(file)) File.Delete(file);
+            error = null; SlotsChanged?.Invoke(); return true;
+        }
+        catch (Exception exception) { Debug.LogWarning("Tiefenhall: Löschen fehlgeschlagen: " + exception.Message); return false; }
+    }
 
     public static Summary GetSummary(int slot)
     {
@@ -78,22 +167,51 @@ public static class GameSaveSystem
                 ReadEnvelope(path, out var summary, out _);
                 if (summary.slot != slot) continue;
                 summary.recovered = path.EndsWith(".bak", StringComparison.Ordinal);
+                NormalizeDates(summary);
                 return summary;
             }
             catch (Exception) { }
         return null;
     }
+    static void NormalizeDates(Summary summary)
+    {
+        if (summary.createdUtc <= 0 || summary.createdUtc > DateTime.MaxValue.Ticks) summary.createdUtc = summary.savedUtc;
+        if (summary.lastOpenedUtc <= 0 || summary.lastOpenedUtc > DateTime.MaxValue.Ticks) summary.lastOpenedUtc = summary.savedUtc;
+    }
+    public static bool RenameSlot(int slot, string name, out string error)
+    {
+        error = "Name konnte nicht gespeichert werden.";
+        if (IsBusy || RunNavigation.IsTransitioning || string.IsNullOrWhiteSpace(name) || name.Trim().Length > 40) return false;
+        if (!UpdateMetadata(slot, s => s.name = name.Trim(), out error)) return false;
+        if (slot == ActiveSlot) ActiveRunName = name.Trim();
+        return true;
+    }
+    static bool UpdateMetadata(int slot, Action<Summary> change, out string error)
+    {
+        error = "Spielstand konnte nicht aktualisiert werden.";
+        if (slot < 1 || slot > MaxSlots) return false;
+        try
+        {
+            var summary = GetSummary(slot); if (summary == null) return false;
+            ReadEnvelope(SlotPath(slot) + (summary.recovered ? ".bak" : ""), out var header, out var payload);
+            NormalizeDates(header); change(header); header.recovered = false;
+            WriteEnvelopeAtomic(SlotPath(slot), JsonUtility.ToJson(header), payload, false);
+            error = null; SlotsChanged?.Invoke(); return true;
+        }
+        catch (Exception ex) { Debug.LogWarning("Tiefenhall: Metadatenänderung fehlgeschlagen: " + ex.Message); return false; }
+    }
     public static int MostRecentSlot()
     {
         int slot = -1; long date = 0;
-        for (int i = 0; i <= ManualSlots; i++)
-        { var summary = GetSummary(i); if (summary != null && summary.savedUtc > date) { date = summary.savedUtc; slot = i; } }
+        foreach (int i in OccupiedSlots())
+        { var summary = GetSummary(i); if (summary != null && summary.lastOpenedUtc > date) { date = summary.lastOpenedUtc; slot = i; } }
         return slot;
     }
     public static bool PrepareLoad(int slot, out string error)
     {
+        using var measurement = new Unity.Profiling.ProfilerMarker("Loading.ValidateSave").Auto();
         error = "Spielstand konnte nicht geladen werden.";
-        if (IsBusy) return false;
+        if (IsBusy || slot < 1 || slot > MaxSlots) return false;
         foreach (string path in new[] { SlotPath(slot), SlotPath(slot) + ".bak" })
             try
             {
@@ -119,6 +237,8 @@ public static class GameSaveSystem
                 for (int i = 0; i < layers.Length; i++) layers[i] = ReadLayer(reader, catalog, state);
                 if (expanded.Position != expanded.Length) throw new InvalidDataException();
                 pending = new LoadedRun { state = state, layers = layers };
+                ActiveSlot = slot; HasPendingNewRun = false; InitialSaveError = null;
+                ActiveRunName = summary.name;
                 error = null; return true;
             }
             catch (Exception ex) { Debug.LogWarning("Tiefenhall: Spielstandprüfung fehlgeschlagen: " + ex.Message); }
@@ -127,8 +247,13 @@ public static class GameSaveSystem
     public static void CancelPendingLoad() => pending = null;
 
     public static IEnumerator Save(int slot, MonoBehaviour owner, Action<bool, string> complete)
+        => SaveRun(slot, owner, complete, false, false);
+
+    static IEnumerator SaveRun(int slot, MonoBehaviour owner, Action<bool, string> complete, bool createOnly, bool allowLoading)
     {
-        if (!CanSave) { complete?.Invoke(false, "Speichern ist gerade nicht möglich."); yield break; }
+        if (slot < 1 || slot > MaxSlots || IsBusy || !CanCaptureRun || (!allowLoading && LoadingProgress.Active))
+        { complete?.Invoke(false, "Speichern ist gerade nicht möglich."); yield break; }
+        if (createOnly && HasSlotData(slot)) { complete?.Invoke(false, "Speicherplatz ist bereits belegt."); yield break; }
         IsBusy = true;
         float previousScale = Time.timeScale;
         Time.timeScale = 0; GameplayInputBlocker.SetBlocked(owner, true);
@@ -138,14 +263,23 @@ public static class GameSaveSystem
         using var writer = new BinaryWriter(payload, Encoding.UTF8, true);
         RunSaveState state = null;
         IEnumerator capture = null;
+        Task<string> serialize = null;
         try
         {
             state = Capture();
-            writer.Write(JsonUtility.ToJson(state));
+            // Capture owns independent managed state, including discovery arrays.
+            // Unity's plain-data JSON serializer supports background threads.
+            serialize = Task.Run(() => JsonUtility.ToJson(state));
             var map = UnityEngine.Object.FindFirstObjectByType<MapGenerator>();
             capture = WriteLayers(writer, map, Resources.Load<SaveAssetCatalog>("SaveAssetCatalog"));
         }
         catch (Exception ex) { error = ex.Message; }
+        if (serialize != null)
+        {
+            while (!serialize.IsCompleted) yield return null;
+            try { writer.Write(serialize.GetAwaiter().GetResult()); }
+            catch (Exception ex) { error = ex.Message; }
+        }
         while (error == null && capture != null)
         {
             bool more = false;
@@ -158,11 +292,14 @@ public static class GameSaveSystem
             try
             {
                 writer.Flush(); byte[] bytes = payload.ToArray();
-                var summary = new Summary { slot = slot, savedUtc = state.savedUtc, money = state.stats.money,
+                var summary = new Summary { slot = slot, name = ActiveRunName, savedUtc = state.savedUtc, money = state.stats.money,
                     points = state.stats.points, playedSeconds = state.playedSeconds,
                     depth = UnityEngine.Object.FindFirstObjectByType<CompactHud>()?.DepthMeters ?? 0 };
+                var previous = createOnly ? null : GetSummary(slot);
+                summary.createdUtc = previous?.createdUtc ?? state.savedUtc;
+                summary.lastOpenedUtc = previous?.lastOpenedUtc ?? state.savedUtc;
                 string header = JsonUtility.ToJson(summary), path = SlotPath(slot);
-                task = Task.Run(() => WriteAtomic(path, header, bytes));
+                task = Task.Run(() => WriteAtomic(path, header, bytes, createOnly));
             }
             catch (Exception ex) { error = ex.Message; }
         }
@@ -174,7 +311,7 @@ public static class GameSaveSystem
         IsBusy = false; Time.timeScale = previousScale;
         // An open pause/slot panel owns its own input gate; do not release it here.
         if (!(owner is RunPauseMenu) && !(owner is SaveSlotPanel)) GameplayInputBlocker.SetBlocked(owner, false);
-        if (error == null) SlotsChanged?.Invoke();
+        if (error == null) { ActiveSlot = slot; SlotsChanged?.Invoke(); }
         else Debug.LogError("Tiefenhall: Speichern fehlgeschlagen: " + error);
         complete?.Invoke(error == null, error == null ? "Gespeichert" : "Spielstand konnte nicht gespeichert werden.");
     }
@@ -185,6 +322,7 @@ public static class GameSaveSystem
         var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement>();
         var hud = UnityEngine.Object.FindFirstObjectByType<CompactHud>();
         var state = new RunSaveState { seed = map.ActiveSeed, width = map.GeneratedWidth, height = map.GeneratedHeight,
+            generationSettings = GpsSettings.CaptureGeneration(map),
             savedUtc = DateTime.UtcNow.Ticks, playedSeconds = PlayedSeconds, playerPosition = player.transform.position,
             playerVelocity = player.GetComponent<Rigidbody2D>().linearVelocity, facingLeft = player.transform.localScale.x < 0,
             inventory = InventoryManager.Instance.CaptureRunState(), stats = StatsManager.Instance.CaptureRunState(),
@@ -209,25 +347,35 @@ public static class GameSaveSystem
         foreach (var tiles in new[] { map.Terrain, map.EnsureOreOverlay(), map.EnsureArtifactOverlay(), ladders ? ladders.EnsureTiles() : null })
         {
             var bounds = tiles ? tiles.cellBounds : new BoundsInt(0, 0, 0, 0, 0, 1);
-            var data = tiles ? tiles.GetTilesBlock(bounds) : Array.Empty<TileBase>();
-            if (data.Length > MaxCells) throw new InvalidDataException("Welt ist zu groß.");
-            var palette = new List<TileBase>(); var ids = new Dictionary<TileBase, int>();
-            foreach (var tile in data) if (tile && !ids.ContainsKey(tile)) { ids[tile] = palette.Count; palette.Add(tile); }
+            if ((long)bounds.size.x * bounds.size.y > MaxCells) throw new InvalidDataException("Welt ist zu groß.");
+            var palette = tiles ? new TileBase[tiles.GetUsedTilesCount()] : Array.Empty<TileBase>();
+            if (tiles) tiles.GetUsedTilesNonAlloc(palette);
+            var ids = new Dictionary<TileBase, int>();
+            for (int index = 0; index < palette.Length; index++) ids.Add(palette[index], index);
             writer.Write(bounds.xMin); writer.Write(bounds.yMin); writer.Write(bounds.size.x); writer.Write(bounds.size.y);
-            writer.Write(palette.Count); foreach (var tile in palette) writer.Write(catalog.Key(tile));
-            int i = 0;
-            foreach (var cell in bounds.allPositionsWithin)
+            writer.Write(palette.Length); foreach (var tile in palette) writer.Write(catalog.Key(tile));
+            var budget = new LoadingWorkBudget();
+            int rowsPerBatch = Mathf.Max(1, 1024 / Mathf.Max(1, bounds.size.x));
+            for (int row = 0; row < bounds.size.y; row += rowsPerBatch)
             {
-                var tile = data[i++]; writer.Write(tile ? ids[tile] : -1);
-                if (tile)
+                int rows = Mathf.Min(rowsPerBatch, bounds.size.y - row);
+                var batch = new BoundsInt(bounds.xMin, bounds.yMin + row, 0, bounds.size.x, rows, 1);
+                var data = tiles.GetTilesBlock(batch);
+                int i = 0;
+                foreach (var cell in batch.allPositionsWithin)
                 {
-                    var color = tiles.GetColor(cell); var matrix = tiles.GetTransformMatrix(cell);
-                    writer.Write((int)tiles.GetTileFlags(cell));
-                    bool custom = color != Color.white || matrix != Matrix4x4.identity; writer.Write(custom);
-                    if (custom)
-                    { writer.Write(color.r); writer.Write(color.g); writer.Write(color.b); writer.Write(color.a); for (int n = 0; n < 16; n++) writer.Write(matrix[n]); }
+                    var tile = data[i++]; writer.Write(tile ? ids[tile] : -1);
+                    if (tile)
+                    {
+                        var color = tiles.GetColor(cell); var matrix = tiles.GetTransformMatrix(cell);
+                        writer.Write((int)tiles.GetTileFlags(cell));
+                        bool custom = color != Color.white || matrix != Matrix4x4.identity; writer.Write(custom);
+                        if (custom)
+                        { writer.Write(color.r); writer.Write(color.g); writer.Write(color.b); writer.Write(color.a); for (int n = 0; n < 16; n++) writer.Write(matrix[n]); }
+                    }
+                    if ((i & 127) == 0 && budget.Expired) { yield return null; budget.Restart(); }
                 }
-                if (i % 8192 == 0) yield return null;
+                if (budget.Expired) { yield return null; budget.Restart(); }
             }
             yield return null;
         }
@@ -257,13 +405,16 @@ public static class GameSaveSystem
     public static IEnumerator RestorePending(MapGenerator map)
     {
         var run = pending; pending = null;
-        LoadingProgress.Configure(run.state.width, run.state.height); LoadingProgress.SetStage(5);
+        LoadingProgress.Configure(run.state.width, run.state.height); LoadingProgress.SetStage(1);
+        GpsSettings.RestoreGeneration(map, run.state.generationSettings);
         map.BeginSavedMapRestore(run.state.seed, run.state.width, run.state.height);
         map.AltarChamber.RestoreState(run.state.altar);
         var ladders = map.GetComponent<LadderMap>();
         var targets = new[] { map.Terrain, map.EnsureOreOverlay(), map.EnsureArtifactOverlay(), ladders ? ladders.EnsureTiles() : null };
+        var tileBudget = new LoadingWorkBudget();
         for (int n = 0; n < targets.Length; n++)
         {
+            LoadingProgress.SetStage(n + 1);
             var target = targets[n]; var layer = run.layers[n]; if (!target) continue;
             target.ClearAllTiles();
             int batchRows = Mathf.Max(1, 1024 / Mathf.Max(1, layer.bounds.size.x));
@@ -276,22 +427,33 @@ public static class GameSaveSystem
                 {
                     if (!layer.tiles[i]) continue;
                     var cell = new Vector3Int(layer.bounds.xMin + i % w, layer.bounds.yMin + i / w);
-                    target.SetTileFlags(cell, TileFlags.None);
-                    if (layer.custom.TryGetValue(i, out var custom)) { target.SetColor(cell, custom.color); target.SetTransformMatrix(cell, custom.matrix); }
+                    if (layer.custom.TryGetValue(i, out var custom))
+                    {
+                        target.SetTileFlags(cell, TileFlags.None);
+                        target.SetColor(cell, custom.color); target.SetTransformMatrix(cell, custom.matrix);
+                    }
                     target.SetTileFlags(cell, layer.flags[i]);
                 }
-                LoadingProgress.Report((n + row / (float)Mathf.Max(1, layer.bounds.size.y)) / 4f); yield return null;
+                tileBudget.ChargeTiles(block.Length);
+                LoadingProgress.Report((row + rows) / (float)Mathf.Max(1, layer.bounds.size.y));
+                if (tileBudget.Expired) { yield return null; tileBudget.Restart(); }
             }
-            target.CompressBounds();
         }
         // Let scene Start methods initialize defaults before applying the saved run.
+        LoadingProgress.SetStage(5);
         yield return null;
         var bounds = new BoundsInt(-run.state.width / 2, 1 - run.state.height, 0, run.state.width, run.state.height, 1);
+        var restored = new TileBase[3][];
+        for (int layer = 0; layer < restored.Length; layer++)
+        {
+            int index = layer;
+            yield return ExpandSavedLayer(run.layers[layer], bounds, value => restored[index] = value);
+        }
         var data = new MapGenerator.MapGenerationSnapshot(run.state.seed, run.state.width, run.state.height, bounds.xMin,
-            map.Terrain.GetTilesBlock(bounds), map.OreOverlay.GetTilesBlock(bounds), map.ArtifactOverlay.GetTilesBlock(bounds));
+            restored[0], restored[1], restored[2]);
         var appearance = map.GetComponent<UniformStoneAppearance>();
         if (appearance && appearance.isActiveAndEnabled) yield return appearance.PrepareForLoading(data);
-        map.FinishSavedMapRestore(data.terrainTiles);
+        yield return map.FinishSavedMapRestoreSteps(data.terrainTiles);
         var surface = map.GetComponent<DirtSurfaceAppearance>();
         if (surface && surface.isActiveAndEnabled) yield return surface.PrepareForLoading();
         InventoryManager.Instance.RestoreRunState(run.state.inventory);
@@ -320,7 +482,27 @@ public static class GameSaveSystem
         {
             yield return lighting.PrepareForLoading(data, LoadingProgress.Report);
         }
-        LoadingProgress.SetStage(7); yield return null; yield return new WaitForEndOfFrame(); LoadingProgress.Complete();
+        LoadingProgress.SetStage(7); yield return null; yield return new WaitForEndOfFrame();
+        UpdateMetadata(ActiveSlot, s => s.lastOpenedUtc = DateTime.UtcNow.Ticks, out _);
+        LoadingProgress.Complete();
+    }
+
+    static IEnumerator ExpandSavedLayer(Layer layer, BoundsInt bounds, Action<TileBase[]> complete)
+    {
+        if (layer.bounds == bounds) { complete(layer.tiles); yield break; }
+        var result = new TileBase[bounds.size.x * bounds.size.y];
+        int sourceX = Mathf.Max(0, bounds.xMin - layer.bounds.xMin);
+        int targetX = Mathf.Max(0, layer.bounds.xMin - bounds.xMin);
+        int count = Mathf.Min(layer.bounds.size.x - sourceX, bounds.size.x - targetX);
+        var budget = new LoadingWorkBudget();
+        if (count > 0)
+        for (int y = Mathf.Max(bounds.yMin, layer.bounds.yMin); y < Mathf.Min(bounds.yMax, layer.bounds.yMax); y++)
+        {
+            Array.Copy(layer.tiles, (y - layer.bounds.yMin) * layer.bounds.size.x + sourceX,
+                result, (y - bounds.yMin) * bounds.size.x + targetX, count);
+            if (budget.Expired) { yield return null; budget.Restart(); }
+        }
+        complete(result);
     }
     static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
     static void Validate(RunSaveState state)
@@ -330,6 +512,8 @@ public static class GameSaveSystem
             !Finite(state.playerPosition.x) || !Finite(state.playerPosition.y) || !Finite(state.playerVelocity.x) || !Finite(state.playerVelocity.y) ||
             !Finite(state.playedSeconds) || state.playedSeconds < 0 || state.stats.won || state.savedUtc <= 0 || state.savedUtc > DateTime.MaxValue.Ticks)
             throw new InvalidDataException("Ungültiger Spielstand.");
+        if (state.generationSettings != null && !GpsSettings.ValidateGeneration(state.generationSettings, state.width, state.height, out var generationError))
+            throw new InvalidDataException(generationError);
         foreach (var item in state.inventory.items ?? Array.Empty<SavedItem>())
             if (item.count < 0 || !StartingResourcesSettings.Resolve(item.id)) throw new InvalidDataException("Unbekanntes Inventar-Item.");
         foreach (int id in (state.inventory.owned ?? Array.Empty<int>()).Concat(state.inventory.powerups ?? Array.Empty<int>()))
@@ -342,18 +526,26 @@ public static class GameSaveSystem
         using var hash = SHA256.Create(); byte[] prefix = Encoding.UTF8.GetBytes(header);
         hash.TransformBlock(prefix, 0, prefix.Length, null, 0); hash.TransformFinalBlock(payload, 0, payload.Length); return hash.Hash;
     }
-    static void WriteAtomic(string path, string header, byte[] bytes)
+    static void WriteAtomic(string path, string header, byte[] bytes, bool createOnly = false)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path));
         byte[] compressed;
         using (var output = new MemoryStream())
         { using (var zip = new GZipStream(output, System.IO.Compression.CompressionLevel.Fastest, true)) zip.Write(bytes, 0, bytes.Length); compressed = output.ToArray(); }
+        WriteEnvelopeAtomic(path, header, compressed, createOnly);
+    }
+    static void WriteEnvelopeAtomic(string path, string header, byte[] compressed, bool createOnly)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path));
+        if (createOnly && (File.Exists(path) || File.Exists(path + ".bak") || File.Exists(path + ".tmp")))
+            throw new IOException("Speicherplatz ist bereits belegt.");
         string temporary = path + ".tmp";
-        using (var file = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
+        using (var file = new FileStream(temporary, createOnly ? FileMode.CreateNew : FileMode.Create, FileAccess.Write, FileShare.None))
         using (var writer = new BinaryWriter(file, Encoding.UTF8, true))
         { writer.Write(Magic); writer.Write(header); writer.Write(compressed.Length); writer.Write(Digest(header, compressed)); writer.Write(compressed); writer.Flush(); file.Flush(true); }
         // Replacement is atomic; retain the previous completed write as a recovery copy.
-        if (File.Exists(path)) File.Replace(temporary, path, path + ".bak");
+        if (createOnly) File.Move(temporary, path);
+        else if (File.Exists(path)) File.Replace(temporary, path, path + ".bak");
         else File.Move(temporary, path);
     }
     static void ReadEnvelope(string path, out Summary summary, out byte[] compressed)

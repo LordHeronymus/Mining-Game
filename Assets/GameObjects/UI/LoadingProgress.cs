@@ -7,6 +7,11 @@ public static class LoadingProgress
     public static readonly string[] Labels = { "Spielszene laden", "Terrain aufbauen", "Höhlen formen",
         "Erzadern verteilen", "Artefakte platzieren", "Altarkammer aufbauen", "Beleuchtung vorbereiten", "Spieler und UI bereitmachen" };
     static readonly float[] Defaults = { .15f, 1f, .5f, 2f, 1f, .3f, .7f, .2f };
+    static readonly string[] RestoreLabels = { "Spielszene laden", "Terrain wiederherstellen", "Erze wiederherstellen",
+        "Artefakte wiederherstellen", "Leitern wiederherstellen", "Spielwelt wiederherstellen", "Beleuchtung vorbereiten", "Spiel fortsetzen" };
+    static readonly float[] RestoreDefaults = { .15f, 2f, 1f, .5f, .1f, .7f, .7f, .2f };
+    public static bool Restoring { get; private set; }
+    public static string CurrentLabel => (Restoring ? RestoreLabels : Labels)[Stage];
     const string Registry = "LoadingCalibration.Keys.v1";
     static float[] weights = new float[8], durations = new float[8];
     static string profile;
@@ -23,8 +28,9 @@ public static class LoadingProgress
         Stage = 0; Target = 0; Ready = false; Active = false; profile = null;
     }
 
-    public static void Begin()
+    public static void Begin(bool restoring = false)
     {
+        Restoring = restoring;
         Active = true; Ready = false; Stage = 0; Target = 0f; profile = null;
         Array.Clear(durations, 0, durations.Length);
         started = Time.realtimeSinceStartupAsDouble;
@@ -33,14 +39,19 @@ public static class LoadingProgress
 
     public static void Configure(int width, int height)
     {
-        profile = $"LoadingCalibration.v1.{width}x{height}";
+        profile = $"LoadingCalibration.v1.{(Restoring ? "Restore." : "")}{width}x{height}";
+        var defaults = Restoring ? RestoreDefaults : Defaults;
         total = 0f;
         for (int i = 0; i < weights.Length; i++)
         {
-            float value = PlayerPrefs.GetFloat(profile + "." + i, Defaults[i]);
-            weights[i] = float.IsNaN(value) || float.IsInfinity(value) ? Defaults[i] : Mathf.Clamp(value, .005f, 600f);
+            float value = PlayerPrefs.GetFloat(profile + "." + i, defaults[i]);
+            weights[i] = float.IsNaN(value) || float.IsInfinity(value) ? defaults[i] : Mathf.Clamp(value, .005f, 600f);
             total += weights[i];
         }
+        // Old scene-load timings must not dominate progress after the preview
+        // terrain was removed from the scene. Reserve at most 3% for this phase.
+        float sceneWeight = Mathf.Min(weights[0], (total - weights[0]) * .03f / .97f);
+        total += sceneWeight - weights[0]; weights[0] = sceneWeight;
     }
 
     public static void SetStage(int stage)

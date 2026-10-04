@@ -82,6 +82,7 @@ public class StatsManager : MonoBehaviour
 
     void Awake()
     {
+        GpsSettings.ApplyComponent(this);
         if (Instance && Instance != this) { Destroy(gameObject); return; }
         Instance = this; DontDestroyOnLoad(gameObject);
         if (!baseStats)

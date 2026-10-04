@@ -51,6 +51,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Awake()
     {
+        GpsSettings.ApplyComponent(this);
         rb = GetComponent<Rigidbody2D>();
         col = GetComponent<Collider2D>();
         colliderWasEnabled = col && col.enabled;
