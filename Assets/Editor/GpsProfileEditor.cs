@@ -96,6 +96,7 @@ public static class GpsProfileEditor
                     }
                 }
             PopulateClips(profile, data);
+            ItemIconLayout.Migrate(data, profile);
             if (!GpsSettings.ValidateDocument(data, out string error)) throw new InvalidDataException(error);
             if (created || before != JsonUtility.ToJson(data) || assetCount != profile.assets.Count)
             {

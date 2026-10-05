@@ -1,0 +1,3 @@
+Visual critic, 2026-10-05, current scope: exposed copper carpet only. Grid-shaped outside boundaries intentionally excluded; terrain cover deferred by user.
+Initial test: clearly repeated bright block/dark underside in staggered rows; no hard cell seams; some soft patch transitions; copper looked opaque and metallic.
+Final test after broader source-window selection, variable scale and limited rotation: conspicuous regular motif rows gone. Similar individual facets remain without dominant repetition. No disturbing inner cell seams in L2; occasional soft transitions, no obvious ghosting/doubled outlines. Material reads as warm opaque copper. Acceptable exposed base surface.

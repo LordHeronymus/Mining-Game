@@ -402,6 +402,7 @@ public sealed class CompactHud : MonoBehaviour
     static string Format(int value) => value < 1000000 ? value.ToString("N0", German) : ShopMoneyFormatter.Format(value);
     void RefreshItems()
     {
+        if (!selections[0]) return;
         if (SelectedSlot > 0 && !IsKnownHotbarItem(slots[SelectedSlot - 1]))
         {
             SelectedSlot = 0;
@@ -417,6 +418,7 @@ public sealed class CompactHud : MonoBehaviour
             var pickaxeRect = pickaxeIcon.rectTransform;
             pickaxeRect.anchorMin = pickaxeRect.anchorMax = pickaxeRect.pivot = new Vector2(.5f, .5f);
             pickaxeRect.anchoredPosition = new Vector2(0f, HotbarIconVerticalOffset);
+            ItemIconLayout.Apply(equippedPickaxe, pickaxeRect, new Vector2(0f, HotbarIconVerticalOffset));
         }
         for (int i = 0; i < 8; i++)
         {
@@ -453,14 +455,8 @@ public sealed class CompactHud : MonoBehaviour
     }
     void ApplyHotbarIconLayout(ItemSO item, RectTransform icon)
     {
-        var recipe = item && workbench ? workbench.FindRecipeForOutput(item) : null;
-        var settings = recipe ? recipe.CardIconLayout :
-            new CraftingRecipe.RecipeIconLayout { scale = Vector2.one };
         icon.anchorMin = icon.anchorMax = icon.pivot = new Vector2(.5f, .5f);
-        icon.anchoredPosition = new Vector2(settings.offset.x * (48f / 134f),
-            settings.offset.y * (48f / 106f) + HotbarIconVerticalOffset);
-        icon.localScale = new Vector3(settings.scale.x * (settings.flipX ? -1f : 1f),
-            settings.scale.y * (settings.flipY ? -1f : 1f), 1f);
+        ItemIconLayout.Apply(item, icon, new Vector2(0, HotbarIconVerticalOffset));
     }
     void OnRectTransformDimensionsChange() => Fit();
     void Fit()

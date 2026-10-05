@@ -141,7 +141,10 @@ public sealed class SaveSlotPanel : MonoBehaviour
             }
             buttons[i].interactable = !GameSaveSystem.IsBusy && (saving ? GameSaveSystem.CanSave : true);
         }
-        if (!ordered.Contains(selectedSlot)) selectedSlot = saving || ordered.Length == 0 ? -1 : ordered[0];
+        if (!ordered.Contains(selectedSlot)) {
+            int homeSelection = FindFirstObjectByType<MainMenuController>()?.SelectedSaveSlot ?? -1;
+            selectedSlot = saving || ordered.Length == 0 ? -1 : ordered.Contains(homeSelection) ? homeSelection : ordered[0];
+        }
         int rows = (ordered.Length + Columns - 1) / Columns;
         slotList.sizeDelta = new Vector2(0, Mathf.Max(scroll.viewport.rect.height, rows == 0 ? 0 : TilePadding * 2 + (rows - 1) * RowStep + TileHeight));
         RefreshSelection();
@@ -159,6 +162,7 @@ public sealed class SaveSlotPanel : MonoBehaviour
     }
     void RefreshSelection()
     {
+        if (!saving) FindFirstObjectByType<MainMenuController>()?.SelectSave(selectedSlot);
         for (int i = 0; i < slots.Count; i++)
         {
             var feedback = buttons[i].GetComponent<HomeButtonFeedback>();

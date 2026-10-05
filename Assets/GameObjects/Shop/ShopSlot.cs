@@ -17,12 +17,14 @@ public class ShopSlot : MonoBehaviour
     Image wideBackground;
     Sprite normalCard, selectedCard;
     TextMeshProUGUI itemName;
+    Vector2 iconCenter;
 
     public void ConfigureWideCard(Image icon, TextMeshProUGUI nameLabel, TextMeshProUGUI countLabel,
         Image badge, Image background, Button action, Sprite normal, Sprite selected)
     {
         iconImage = icon; itemName = nameLabel; countText = countLabel; countBadge = badge;
         wideBackground = background; button = action; normalCard = normal; selectedCard = selected;
+        iconCenter = icon.rectTransform.anchoredPosition;
         GoldButtonFeedback.Apply(button, normal, selected, background);
     }
 
@@ -37,6 +39,7 @@ public class ShopSlot : MonoBehaviour
         if (itemName) itemName.text = item ? item.displayName : "";
 
         if (iconImage) { iconImage.sprite = item ? item.icon : null; iconImage.enabled = item && item.icon; }
+        RefreshIconLayout();
         UpdateCountDisplay(count);
 
         if (button)
@@ -47,6 +50,11 @@ public class ShopSlot : MonoBehaviour
         }
 
         SetSelected(false);
+    }
+
+    public void RefreshIconLayout()
+    {
+        if (wideBackground && iconImage) ShopVisualTheme.ApplyOreIconLayout(iconImage, Item, iconCenter);
     }
 
     /// <summary> Visuelles Highlight umschalten. </summary>

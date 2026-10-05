@@ -165,7 +165,7 @@ public class InventoryUI : MonoBehaviour
             ? rootCanvas.worldCamera : null;
         if (!draggedIcon || !RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 coordinateRoot, screenPosition, eventCamera, out var local)) return;
-        draggedIcon.rectTransform.anchoredPosition = local;
+        ItemIconLayout.Apply(draggedItem, draggedIcon.rectTransform, local);
     }
     public void EndItemDrag(Vector2 screenPosition)
     {
@@ -242,8 +242,11 @@ public class InventoryUI : MonoBehaviour
             var c = cells[i]; c.rect.gameObject.SetActive(i < capacity);
             c.item = i < items.Count ? items[i].Key : null;
             c.icon.enabled = c.item; c.icon.sprite = c.item ? c.item.icon : null;
-            WorkbenchPanel.ApplyRecipeIconLayout(c.item && workbench ? workbench.FindRecipeForOutput(c.item) : null,
-                c.icon.rectTransform, new Vector2(82f, -78f));
+            if (c.item)
+                ShopVisualTheme.ApplyOreIconLayout(c.icon, c.item, new Vector2(82f, -78f));
+            else
+                WorkbenchPanel.ApplyRecipeIconLayout(c.item && workbench ? workbench.FindRecipeForOutput(c.item) : null,
+                    c.icon.rectTransform, new Vector2(82f, -78f));
             c.selection.enabled = false;
             GoldButtonFeedback.Select(c.button.GetComponent<Image>(), c.item && c.item == SelectedItem);
             c.badge.gameObject.SetActive(c.item); c.button.interactable = c.item;
@@ -256,8 +259,11 @@ public class InventoryUI : MonoBehaviour
         content.sizeDelta = new Vector2(1230, Mathf.Max(492, capacity / 7 * 168 - 12));
         for (int i = 0; i < tabs.Count; i++) GoldButtonFeedback.Select(tabs[i], Filter == i);
         footerIcon.enabled = SelectedItem; footerIcon.sprite = SelectedItem ? SelectedItem.icon : null;
-        WorkbenchPanel.ApplyRecipeIconLayout(SelectedItem && workbench ? workbench.FindRecipeForOutput(SelectedItem) : null,
-            footerIcon.rectTransform, new Vector2(58f, -48f));
+        if (SelectedItem)
+            ShopVisualTheme.ApplyOreIconLayout(footerIcon, SelectedItem, new Vector2(58f, -48f));
+        else
+            WorkbenchPanel.ApplyRecipeIconLayout(SelectedItem && workbench ? workbench.FindRecipeForOutput(SelectedItem) : null,
+                footerIcon.rectTransform, new Vector2(58f, -48f));
         footerName.text = SelectedItem ? SelectedItem.displayName : "";
         footerCount.text = SelectedItem ? "Bestand <color=#FFBC4F>" + Count(inventory.GetCount(SelectedItem)) + "</color>" : "";
     }

@@ -5,6 +5,8 @@ public sealed class MainMenuController : MonoBehaviour
 {
     public static bool IsVisible { get; private set; }
     RectTransform layout;
+    HomeCaveVisual landscape;
+    public int SelectedSaveSlot { get; private set; } = -1;
     Button continueButton, newGameButton;
     TMPro.TextMeshProUGUI status, progressionLabel;
     static readonly Vector2 MenuButtonSize = new Vector2(420, 102);
@@ -38,7 +40,7 @@ public sealed class MainMenuController : MonoBehaviour
             scaler.referenceResolution = new Vector2(1920, 1080); scaler.matchWidthOrHeight = .5f;
         }
         var background = HomeUi.Rect("Cave Landscape", canvas.transform, Vector2.zero, Vector2.zero);
-        HomeUi.Stretch(background); background.gameObject.AddComponent<HomeCaveVisual>();
+        HomeUi.Stretch(background); landscape = background.gameObject.AddComponent<HomeCaveVisual>();
         layout = HomeUi.Rect("Home Layout", canvas.transform, Vector2.zero, new Vector2(1920, 1080));
         var board = HomeUi.Image("Menu Board", layout, new Vector2(-565, 50), new Vector2(500, 900), "Panel");
         board.pixelsPerUnitMultiplier = 1.5f;
@@ -86,7 +88,7 @@ public sealed class MainMenuController : MonoBehaviour
     }
     void Continue()
     {
-        int slot = GameSaveSystem.MostRecentSlot();
+        int slot = SelectedSaveSlot;
         if (slot >= 0 && !RunNavigation.LoadGame(slot, out string error)) status.text = error;
     }
     public void ShowStatus(string message) { if (status) status.text = message; }
@@ -97,9 +99,17 @@ public sealed class MainMenuController : MonoBehaviour
     void Refresh()
     {
         if (!continueButton) return;
+        if (GameSaveSystem.GetSummary(SelectedSaveSlot < 1 ? 1 : SelectedSaveSlot) == null || SelectedSaveSlot < 1)
+            SelectedSaveSlot = GameSaveSystem.MostRecentSlot();
+        SelectSave(SelectedSaveSlot);
         continueButton.interactable = GameSaveSystem.MostRecentSlot() >= 0;
         newGameButton.interactable = GameSaveSystem.NextFreeSlot() > 0 && !GameSaveSystem.IsBusy;
         newGameButton.GetComponent<HomeButtonFeedback>().primary = false;
+    }
+    public void SelectSave(int slot)
+    {
+        SelectedSaveSlot = slot;
+        landscape?.SetLayer(slot > 0 ? GameSaveSystem.GetHomeLayer(slot) : 1);
     }
     void OnRectTransformDimensionsChange() => Fit();
     void Fit() => HomeUi.Fit(layout, new Vector2(1920, 1080));

@@ -25,6 +25,7 @@ public class BuyPage : MonoBehaviour
     Material fontMaterial;
     Sprite normalFrame, selectedFrame, actionFrame, coin;
     Image preview;
+    Vector2 previewCenter;
     GameObject detailPanel;
     TextMeshProUGUI detailName, purchaseLabel, moneyText;
     Button purchaseButton;
@@ -94,6 +95,7 @@ public class BuyPage : MonoBehaviour
         observedStats = null;
     }
     void OnMoneyChanged(int _) => Refresh();
+    public void RefreshIconLayouts() { if (isActiveAndEnabled) { Refresh(); RefreshMaterials(); } }
     public void SetSearch(string query)
     {
         SearchQuery = query ?? "";
@@ -155,6 +157,7 @@ public class BuyPage : MonoBehaviour
         for (int i = 0; i < ordered.Length; i++)
         {
             var card = ordered[i]; bool unlocked = card.isUnlocked();
+            ItemIconLayout.Apply(card.recipe.output, card.icon.rectTransform, new Vector2(148, -110));
             Place(card.rect, i % Columns * (CardWidth + GapX), i / Columns * (CardHeight + GapY), CardWidth, CardHeight);
             GoldButtonFeedback.Select(card.background, card == selected);
             card.icon.color = unlocked ? new Color(.72f, .66f, .57f, 1f) : Color.white;
@@ -179,6 +182,7 @@ public class BuyPage : MonoBehaviour
             purchaseButton.interactable = false; return;
         }
         preview.sprite = selected.sprite; detailName.text = selected.recipe.output.displayName;
+        ItemIconLayout.Apply(selected.recipe.output, preview.rectTransform, previewCenter);
         bool owned = selected.isUnlocked();
         bool canAffordSelected = observedStats && observedStats.CanAffordMoney(selected.price);
         string formattedPrice = ShopMoneyFormatter.Format(selected.price);
@@ -199,6 +203,7 @@ public class BuyPage : MonoBehaviour
             i++; row.pixelsPerUnitMultiplier = 5; materialRows.Add(row.gameObject);
             var icon = Panel("Icon", row.transform, 14, 16, 56, 58, cost.Key.icon);
             ShopVisualTheme.CenterImage(icon);
+            ItemIconLayout.Apply(cost.Key, icon.rectTransform, icon.rectTransform.anchoredPosition);
             var name = Label(row.transform, cost.Key.displayName, 80, 10, 142, 70, 28);
             name.enableAutoSizing = true; name.fontSizeMin = 19; name.fontSizeMax = 28;
             name.textWrappingMode = TextWrappingModes.Normal;
@@ -218,6 +223,7 @@ public class BuyPage : MonoBehaviour
         detailPanel = detail.gameObject;
         preview = Panel("Selected Blueprint", detail, 97, 38, 450, 405, null);
         ShopVisualTheme.CenterImage(preview);
+        previewCenter = preview.rectTransform.anchoredPosition;
         detailName = Label(detail, "", 27, 443, 590, 69, 50);
         detailName.alignment = TextAlignmentOptions.Midline;
         detailName.enableAutoSizing = true; detailName.fontSizeMin = 32; detailName.fontSizeMax = 50;

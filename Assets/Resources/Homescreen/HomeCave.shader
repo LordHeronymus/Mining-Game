@@ -1,6 +1,6 @@
 Shader "Tiefenhall/HomeCave"
 {
-    Properties { _MainTex("Cave", 2D) = "white" {} _SceneTime("Time", Float) = 0 _Parallax("Parallax", Vector) = (0,0,0,0) }
+    Properties { _MainTex("Cave", 2D) = "white" {} _SceneTime("Time", Float) = 0 _Parallax("Parallax", Vector) = (0,0,0,0) _CaveEffects("L3 Effects", Float) = 1 }
     SubShader
     {
         Tags { "Queue"="Transparent" "RenderType"="Transparent" "IgnoreProjector"="True" }
@@ -13,7 +13,7 @@ Shader "Tiefenhall/HomeCave"
             #include "UnityCG.cginc"
             struct appdata { float4 vertex:POSITION; float2 uv:TEXCOORD0; float4 color:COLOR; };
             struct v2f { float4 vertex:SV_POSITION; float2 uv:TEXCOORD0; float4 color:COLOR; };
-            sampler2D _MainTex; float _SceneTime; float4 _Parallax;
+            sampler2D _MainTex; float _SceneTime, _CaveEffects; float4 _Parallax;
             v2f vert(appdata v) { v2f o; o.vertex=UnityObjectToClipPos(v.vertex); o.uv=v.uv; o.color=v.color; return o; }
             float zone(float2 uv, float2 center, float2 radius) { float2 p=(uv-center)/radius; return exp(-dot(p,p)*2); }
             float insideLake(float2 p)
@@ -35,6 +35,7 @@ Shader "Tiefenhall/HomeCave"
                 float water=insideLake(uv);
                 // The approved deep lake stays flat; movement comes from light and occasional drips.
                 fixed4 c=tex2D(_MainTex,uv)*i.color;
+                if(_CaveEffects<.5) return c;
                 float crystals=zone(uv,float2(.382,.576),float2(.06,.105))+zone(uv,float2(.73,.587),float2(.053,.075))+
                     zone(uv,float2(.95,.523),float2(.04,.071))+zone(uv,float2(.649,.475),float2(.032,.044));
                 float blue=saturate(c.b-c.r-.09);

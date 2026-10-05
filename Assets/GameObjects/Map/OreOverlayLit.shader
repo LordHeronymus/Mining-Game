@@ -7,6 +7,12 @@ Shader "Mining Game/Ore Overlay Lit"
         [HideInInspector] _VeinEnabled("Connected Veins", Float) = 0
         [HideInInspector] _VeinCells("Vein Neighbours", 2D) = "black" {}
         [HideInInspector] _VeinRelief("Fissure Relief", 2D) = "black" {}
+        [HideInInspector] _CopperCarpet("Continuous Copper", 2D) = "black" {}
+        [HideInInspector] _CopperOutlineField("Copper Combined Contour", 2D) = "black" {}
+
+        [HideInInspector] _CopperCoverEnabled("Copper Earth Cover", Float) = 1
+        [HideInInspector] _CopperSurfacePass("Copper Surface Pass", Float) = 0
+        [HideInInspector] _CopperCarpetEnabled("Copper Carpet", Float) = 0
         _ReflectionStrength("Reflection Strength", Range(0, 6)) = 2.5
         _ShimmerStrength("Shimmer Strength", Range(0, 3)) = 0.12
         _EmbeddingStrength("Rock Embedding", Range(0, 1)) = 1
@@ -44,6 +50,7 @@ Shader "Mining Game/Ore Overlay Lit"
             #include "UltroniumPulse.hlsl"
 
             #pragma vertex CombinedShapeLightVertex
+            #pragma target 3.5
             #pragma fragment CombinedShapeLightFragment
 
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/ShapeLightShared.hlsl"
@@ -96,6 +103,9 @@ Shader "Mining Game/Ore Overlay Lit"
                 float4 _UniformStone;
                 float4 _TestBounds;
                 float _VeinEnabled;
+                float _CopperCarpetEnabled;
+                float _CopperCoverEnabled;
+                float _CopperSurfacePass;
                 float _VeinSeed;
                 float4 _VeinBounds;
                 float4 _VeinGrid;
@@ -125,7 +135,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 UNITY_SKINNED_VERTEX_COMPUTE(v);
 
                 SetUpSpriteInstanceProperties();
-                v.positionOS = UnityFlipSprite(v.positionOS, unity_SpriteProps.xy);
+                if(_CopperSurfacePass<.5) v.positionOS = UnityFlipSprite(v.positionOS, unity_SpriteProps.xy);
                 o.positionCS = TransformObjectToHClip(v.positionOS);
                 o.positionWS = TransformObjectToWorld(v.positionOS);
                 o.uv = (v.uv - 0.5) / max(_OreScale, 0.01) + 0.5;
@@ -133,6 +143,7 @@ Shader "Mining Game/Ore Overlay Lit"
 
                 o.ultronium = step(v.color.a, .99h);
                 o.color = v.color * _Color * unity_SpriteColor;
+                if(_CopperSurfacePass>.5)o.color=1;
                 if (o.ultronium > .5h) o.color.a = _Color.a * unity_SpriteColor.a;
                 return o;
             }
@@ -158,6 +169,14 @@ Shader "Mining Game/Ore Overlay Lit"
 
             half4 CombinedShapeLightFragment(Varyings i) : SV_Target
             {
+                if(_CopperSurfacePass>.5)
+                {
+                    clip(_CopperCarpetEnabled-.5);
+                    float2 p=(i.positionWS.xy-_VeinGrid.zw)/_VeinGrid.xy;
+                    clip(.1-abs(VeinCell(floor(p)).x-3));
+                    clip(CopperCarpetHost(i.positionWS.xy)?1:-1);
+                    return CopperCarpetFragment(i,p);
+                }
                 if (_VeinEnabled > .5)
                 {
                     float2 veinPosition = (i.positionWS.xy-_VeinGrid.zw)/_VeinGrid.xy;
@@ -314,6 +333,9 @@ Shader "Mining Game/Ore Overlay Lit"
                 float4 _UniformStone;
                 float4 _TestBounds;
                 float _VeinEnabled;
+                float _CopperCarpetEnabled;
+                float _CopperCoverEnabled;
+                float _CopperSurfacePass;
                 float _VeinSeed;
                 float4 _VeinBounds;
                 float4 _VeinGrid;
@@ -344,6 +366,7 @@ Shader "Mining Game/Ore Overlay Lit"
 
             half4 NormalsRenderingFragment(Varyings i) : SV_Target
             {
+                clip(.5-_CopperSurfacePass);
                 clip(min(min(i.uv.x, i.uv.y), min(1 - i.uv.x, 1 - i.uv.y)));
                 half4 texel = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
                 texel.a = lerp(texel.a, smoothstep(.04h, .7h, texel.a), i.ultronium);
@@ -412,6 +435,9 @@ Shader "Mining Game/Ore Overlay Lit"
                 float4 _UniformStone;
                 float4 _TestBounds;
                 float _VeinEnabled;
+                float _CopperCarpetEnabled;
+                float _CopperCoverEnabled;
+                float _CopperSurfacePass;
                 float _VeinSeed;
                 float4 _VeinBounds;
                 float4 _VeinGrid;
@@ -437,6 +463,7 @@ Shader "Mining Game/Ore Overlay Lit"
 
             float4 UnlitFragment(Varyings i) : SV_Target
             {
+                clip(.5-_CopperSurfacePass);
                 clip(min(min(i.uv.x, i.uv.y), min(1 - i.uv.x, 1 - i.uv.y)));
                 float4 mainTex = i.color * SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
                 mainTex.a = lerp(mainTex.a, smoothstep(.04h, .7h, mainTex.a), i.ultronium);

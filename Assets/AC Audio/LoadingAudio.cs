@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public sealed class LoadingAudio : MonoBehaviour
+public sealed partial class LoadingAudio : MonoBehaviour
 {
     const float HomeFadeOutSeconds = 2f;
     const float YogaStartDelaySeconds = HomeFadeOutSeconds * .5f;
@@ -88,6 +88,7 @@ public sealed class LoadingAudio : MonoBehaviour
         instance.yoga.Stop();
         if (instance.loadingPickaxe) instance.loadingPickaxe.Stop();
         instance.StopDistantDetails();
+        instance.StopMeadow(); instance.meadowGain = 0;
         var clip = Resources.Load<AudioClip>("Audio/HomescreenAmbience");
         if (!clip) return;
         for (int i = 0; i < 2; i++)
@@ -174,6 +175,7 @@ public sealed class LoadingAudio : MonoBehaviour
         if (GameAudioLifecycle.IsStopping) return;
         ApplyVolume();
         UpdateHome();
+        UpdateMeadow();
         UpdateDistantDetails();
     }
 
@@ -255,6 +257,7 @@ public sealed class LoadingAudio : MonoBehaviour
 
     void UpdateDistantDetails()
     {
+        if (homeLayer <= 1) { StopDistantDetails(); return; }
         foreach (var source in distantSources)
             if (source && source.isPlaying)
             {
@@ -309,7 +312,7 @@ public sealed class LoadingAudio : MonoBehaviour
 
     public static void PlayHomeWaterdrop()
     {
-        if (GameAudioLifecycle.IsStopping || !instance || !instance.homeRunning ||
+        if (GameAudioLifecycle.IsStopping || !instance || instance.homeLayer != 3 || !instance.homeRunning ||
             instance.loading || instance.homeFadeOutAt >= 0f || !MainMenuController.IsVisible) return;
         if (instance.waterdropClips == null)
             instance.waterdropClips = new[] { Resources.Load<AudioClip>("Audio/HomeWaterdrop02"),
@@ -337,6 +340,7 @@ public sealed class LoadingAudio : MonoBehaviour
 
     void OnDisable()
     {
+        StopMeadow(); meadowGain = 0;
         if (loadingPickaxe) { loadingPickaxe.volume = 0f; loadingPickaxe.Stop(); }
         if (homePreview) homePreview.Stop();
         StopDistantDetails();

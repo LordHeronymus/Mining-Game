@@ -52,6 +52,7 @@ public static class GpsSettings
             try { GpsFileStore.Save(FilePath,document); } catch(Exception ex) { Warning="GPS speichern fehlgeschlagen: "+ex.Message; }
         }
 #endif
+        ItemIconLayout.Migrate(document, profile);
         savedJson = JsonUtility.ToJson(document);
 #if UNITY_EDITOR
         var committed = UnityEditor.SessionState.GetString("GPS.Committed", "");
@@ -356,6 +357,18 @@ public static class GpsSettings
                 target.GetType().GetMethod("OnEnable", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)?.Invoke(target, null);
             if (target is MapLighting) GameplaySettings.NotifyChanged();
             if (target is ItemSO || target is UpgradeSettings) { InventoryManager.Instance?.NotifyWeightChanged(); StatsManager.Instance?.RefreshEnergyCapacity(); }
+            if (target is ItemSO shopItem && (node.name.StartsWith("icon", StringComparison.Ordinal) || node.name.StartsWith("shopIcon", StringComparison.Ordinal)))
+            {
+                foreach (var slot in Object.FindObjectsByType<ShopSlot>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                    if (slot.Item == shopItem) slot.RefreshIconLayout();
+                foreach (var page in Object.FindObjectsByType<SellPage>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                    page.RefreshIconLayouts();
+                foreach (var inventory in Object.FindObjectsByType<InventoryUI>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                    inventory.RefreshIconLayouts();
+                Object.FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include)?.RefreshHotbarIconLayouts();
+                Object.FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include)?.RefreshRecipeIcons();
+                Object.FindFirstObjectByType<BuyPage>(FindObjectsInactive.Include)?.RefreshIconLayouts();
+            }
             if (target is CraftingRecipe recipe)
             {
                 var workbench=Object.FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include);

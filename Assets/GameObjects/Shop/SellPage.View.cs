@@ -70,6 +70,7 @@ public partial class SellPage
         if (shader) { itemGlowMaterial = new Material(shader); glow.material = itemGlowMaterial; } else glow.color = Color.clear;
         selectedOreIcon = SellFrame("Selected Ore", details, 97, 38, 450, 405, null);
         ShopVisualTheme.CenterImage(selectedOreIcon);
+        selectedIconCenter = selectedOreIcon.rectTransform.anchoredPosition;
         oreNameText = SellLabel(details, "", 27, 443, 590, 69, 50);
         oreNameText.alignment = TextAlignmentOptions.Midline;
         SellLabel(details, "Erz", 27, 510, 590, 44, 31).alignment = TextAlignmentOptions.Midline;

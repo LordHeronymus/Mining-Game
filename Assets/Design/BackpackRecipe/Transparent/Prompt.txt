@@ -1,0 +1,1 @@
+Remove only the solid black background outside the irregular parchment silhouette. Preserve parchment, torn and curled edges, ink sketches, arrows and backpack artwork. Output with fully transparent background, without black fringe.

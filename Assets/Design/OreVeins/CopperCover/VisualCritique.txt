@@ -1,0 +1,3 @@
+2026-10-05 — Independent visual comparison, current implementation against generated reference.
+The terrain surface is continuous. First pass still had rectangular endpoints and round, pipe-like openings. Refinement added larger angular erosion, terrain-facet response and a short directional contact shadow.
+Final verdict: suitable first playable iteration; conspicuous rectangular endings largely broken up. Remaining differences: edges sometimes finely frayed instead of large broken rock lips; cover depth restrained; more thin links and small pockets than broad reference exposures. Do not claim a pixel-identical implementation of the concept image.

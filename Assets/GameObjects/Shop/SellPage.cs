@@ -20,6 +20,7 @@ public partial class SellPage : MonoBehaviour
     [SerializeField] private TextMeshProUGUI totalWorthText;
     [SerializeField] private TextMeshProUGUI moneyText;
     [SerializeField] private Image selectedOreIcon;
+    Vector2 selectedIconCenter;
 
     [Header("Buttons")]
     [SerializeField] private Button sell1Button;
@@ -233,10 +234,16 @@ public partial class SellPage : MonoBehaviour
         {
             selectedOreIcon.sprite = _selected.icon;
             selectedOreIcon.enabled = _selected.icon;
+            RefreshIconLayouts();
         }
         if (oreWorthText) oreWorthText.text = ShopMoneyFormatter.Format(worth);
         if (countText) countText.text = ShopMoneyFormatter.Format(count);
         if (totalWorthText) totalWorthText.text = ShopMoneyFormatter.Format(total);
+    }
+
+    public void RefreshIconLayouts()
+    {
+        if (selectedOreIcon) ShopVisualTheme.ApplyOreIconLayout(selectedOreIcon, _selected, selectedIconCenter);
     }
 
     private void UpdateButtons()

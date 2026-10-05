@@ -9,7 +9,10 @@ public sealed class OreVeinField : IDisposable
     public Texture2D Texture { get; private set; }
     public BoundsInt Bounds { get; private set; }
     public int Revision { get; private set; }
+
     bool dirty = true;
+    bool containsCopper;
+    readonly CopperOutlineField copperOutline = new CopperOutlineField();
     Tilemap source;
     Tilemap substrate;
 
@@ -19,7 +22,8 @@ public sealed class OreVeinField : IDisposable
     {
         if (dirty || (map != source && map != substrate) || changes == null) return;
         foreach (var change in changes)
-            if (Bounds.Contains(change.position)) { dirty = true; return; }
+            // A visible copper tree may continue beyond this camera's buffer.
+            if (containsCopper || Bounds.Contains(change.position)) { dirty = true; return; }
     }
 
     public bool Prepare(MapGenerator map, Camera camera)
@@ -36,8 +40,8 @@ public sealed class OreVeinField : IDisposable
         if (width > 512 || height > 512) return false;
         if (!Texture || source != map.OreOverlay || substrate != terrain ||
             Bounds.size.x != width || Bounds.size.y != height ||
-            lo.x < Bounds.xMin + 3 || lo.y < Bounds.yMin + 3 ||
-            hi.x >= Bounds.xMax - 3 || hi.y >= Bounds.yMax - 3)
+            lo.x < Bounds.xMin + 5 || lo.y < Bounds.yMin + 5 ||
+            hi.x >= Bounds.xMax - 5 || hi.y >= Bounds.yMax - 5)
         {
             var middle = terrain.WorldToCell(center);
             Bounds = new BoundsInt(middle.x - width / 2, middle.y - height / 2, 0, width, height, 1);
@@ -53,22 +57,27 @@ public sealed class OreVeinField : IDisposable
             }
             dirty = true;
         }
-        if (dirty) Rebuild();
+        if (dirty) Rebuild(map);
         return true;
     }
 
-    void Rebuild()
+    void Rebuild(MapGenerator map)
     {
         var ores = source.GetTilesBlock(Bounds);
         var terrain = substrate.GetTilesBlock(Bounds);
         var pixels = Texture.GetPixelData<Color32>(0);
+        containsCopper = false;
         for (int i = 0; i < ores.Length; i++)
         {
             var ore = ores[i] as OreTile;
             pixels[i] = ore && ore.block && terrain[i]
                 ? new Color32((byte)((int)ore.block.id + 1), (byte)((int)ore.richness + 1), 0, 255)
-                : default;
+                : new Color32(0,0,0,terrain[i]?(byte)255:(byte)0);
+            containsCopper |= pixels[i].r == (byte)((int)BlockType.CopperOre + 1);
         }
+        CopperVeinTopology.Fill(source, substrate, Bounds, pixels, map.ActiveSeed);
+        copperOutline.Build(pixels, Bounds.size.x, Bounds.size.y);
+
         Texture.Apply(false, false);
         dirty = false; Revision++;
     }
@@ -80,6 +89,8 @@ public sealed class OreVeinField : IDisposable
         var dy = map.Terrain.CellToWorld(Vector3Int.up) - origin;
         properties.SetFloat("_VeinEnabled", 1);
         properties.SetTexture("_VeinCells", Texture);
+        properties.SetTexture("_CopperOutlineField", copperOutline.Texture ? copperOutline.Texture : Texture2D.blackTexture);
+
         properties.SetVector("_VeinBounds", new Vector4(Bounds.xMin, Bounds.yMin, Bounds.size.x, Bounds.size.y));
         properties.SetVector("_VeinGrid", new Vector4(dx.x, dy.y, origin.x, origin.y));
         properties.SetFloat("_VeinSeed", (uint)map.ActiveSeed % 8191);
@@ -92,7 +103,10 @@ public sealed class OreVeinField : IDisposable
         return pixel.r - 1;
     }
 
-    public void Dispose() { ReleaseTexture(); source = substrate = null; dirty = true; }
+    public int CopperLinksAt(Vector3Int cell) => !Texture || !Bounds.Contains(cell) ? 0 :
+        Texture.GetPixelData<Color32>(0)[(cell.y-Bounds.yMin)*Bounds.size.x+cell.x-Bounds.xMin].b;
+
+    public void Dispose() { ReleaseTexture(); copperOutline.Dispose(); source = substrate = null; dirty = true; }
 
     void ReleaseTexture()
     {

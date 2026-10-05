@@ -1,0 +1,16 @@
+Organische Kupferader – visueller Kritik-Agent, 05.10.2026
+
+Referenz: Benutzerbild 3, codex-clipboard-3b04924d-6daf-4bf7-81dc-b010176deaf7.png.
+Bewertet wurden echte Unity-Renderings, keine generierten Ergebnis-Mockups.
+
+Erstkritik: Regelmäßige Zeilen/Spalten, rechtwinklige Brücken und helle geschlossene Erdkrümelränder. Die Gesamtkomposition musste vor den Einzelstücken geplant werden.
+Iteration 1: Gemeinsamer Hauptverlauf und wenige Körper. Abgelehnt wegen auseinandergerissener Verbindung, schwarzer Kabeloptik und transparenter Überdeckung.
+Iteration 2: Zellübergreifende Oberfläche und opake große Felsplatten. Grundform tragfähig; Platten wirkten noch wie gleichartige Querstege, Körper zu frei vor der Wand.
+Iteration 3: Seitliche gedrehte Felsüberdeckung, opake Basis, unterbrochene Äste, kantige Breitenvariation und weniger Endklumpen.
+
+Abschließendes Urteil zur natürlichen 13-Zellen-Ader bei (58,-35), Implemented/Natural-first-layer-copper.png:
+Die natürliche Kupferader wirkt deutlich organischer als vorher. Schräger Gesamtverlauf und unterschiedlich breite Öffnungen lassen das Blockraster kaum noch erkennen. Das andere Erz rechts zeigt zum Vergleich weiterhin die ältere Gestaltung.
+Verbleibende Abweichungen: Große Kupferkörper lesen teilweise als einzelne Kristallgruppen; Felsabdeckungen wirken stellenweise aufgesetzt. Einige Verbindungen sind zu gerade, insbesondere unten rechts. Zwischen großen Öffnungen ist der Zusammenhang teilweise schwach.
+Als erste zusammenhängend gestaltete Ader zum gemeinsamen Bewerten im Spiel brauchbar. Die Felsintegration erreicht die Vorlage noch nicht.
+
+Technisch: 53 Render-/Geometrieprüfungen und 31 isolierte Laufzeitprüfungen bestanden. Abbau schneidet die Oberfläche aus; das optionale gespeicherte copperVisuals-Feld hält die ursprüngliche Gesamtform über Save/Load hinweg fest. Bestehende Spielstände ohne das Feld planen die aktuelle Ader beim ersten Anzeigen. Keine Benutzer-Spielstände verändert.

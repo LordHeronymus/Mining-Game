@@ -149,6 +149,11 @@ public sealed class ShopVisualTheme : MonoBehaviour
         foreach (var sprite in sprites) if (sprite) Destroy(sprite);
         if (FontMaterial) Destroy(FontMaterial);
     }
+    public static void ApplyOreIconLayout(Image image, ItemSO item, Vector2 center)
+    {
+        if (image) ItemIconLayout.Apply(item, image.rectTransform, center);
+    }
+
     public static void CenterImage(Image image)
     {
         // PreserveAspect aligns its fitted quad using the RectTransform pivot.

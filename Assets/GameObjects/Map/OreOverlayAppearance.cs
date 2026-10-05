@@ -16,7 +16,10 @@ public sealed class OreOverlayAppearance : MonoBehaviour
     static readonly int PulseRateProperty = Shader.PropertyToID("_UltroniumPulsesPerMinute");
     readonly Dictionary<Camera, OreVeinField> veinFields = new();
     readonly List<Camera> expiredViews = new();
-    Texture2D fissureArt;
+    Texture2D fissureArt, copperCarpet;
+    public CopperDepositPlans CopperPlans { get; } = new CopperDepositPlans();
+    readonly CopperSurfaceRenderer copperSurface=new();
+    public MeshRenderer CopperSurface=>copperSurface.Renderer;
 
     public Material OverlayMaterial
     {
@@ -34,7 +37,9 @@ public sealed class OreOverlayAppearance : MonoBehaviour
     }
     void OnValidate() => appliedScale = -1;
 
-    void InvalidateVeins() { foreach (var field in veinFields.Values) field.Invalidate(); }
+    void InvalidateVeins() { CopperPlans.Clear(); foreach (var field in veinFields.Values) field.Invalidate(); }
+    public void RestoreCopperPlans(CopperDepositState[] saved)
+    {CopperPlans.Restore(saved);foreach(var field in veinFields.Values)field.Invalidate();}
     void VeinTilesChanged(Tilemap tiles, Tilemap.SyncTile[] changes)
     { foreach (var field in veinFields.Values) field.Changed(tiles, changes); }
 
@@ -42,6 +47,7 @@ public sealed class OreOverlayAppearance : MonoBehaviour
 
     public void PrepareVeins(Camera camera)
     {
+        copperSurface.Hide();
         if (!isActiveAndEnabled || !map || !map.OreOverlay || !camera || !overlayMaterial) return;
         if (!target) ApplyTo(map.OreOverlay.GetComponent<TilemapRenderer>());
         if (!target) return;
@@ -52,9 +58,13 @@ public sealed class OreOverlayAppearance : MonoBehaviour
         {
             if (!fissureArt) fissureArt = Resources.Load<Texture2D>("OreVeins/RockFissure");
             if (fissureArt) properties.SetTexture("_VeinRelief", fissureArt);
+            if (!copperCarpet) copperCarpet = Resources.Load<Texture2D>("OreVeins/CopperCarpet/Copper");
+            if (copperCarpet) properties.SetTexture("_CopperCarpet", copperCarpet);
+            properties.SetFloat("_CopperCarpetEnabled", copperCarpet ? 1 : 0);
             if (!veinFields.TryGetValue(camera, out var field))
                 veinFields.Add(camera, field = new OreVeinField());
-            if (field.Prepare(map, camera)) field.Bind(properties, map);
+            if (field.Prepare(map, camera))
+            {field.Bind(properties, map);copperSurface.Prepare(map,target,field,properties);}
             else properties.SetFloat("_VeinEnabled", 0);
         }
         else properties.SetFloat("_VeinEnabled", 0);
@@ -121,6 +131,7 @@ public sealed class OreOverlayAppearance : MonoBehaviour
 
     void OnDisable()
     {
+        copperSurface.Dispose();
         if (subscribedMap) subscribedMap.Generated -= InvalidateVeins;
         subscribedMap = null;
         Tilemap.tilemapTileChanged -= VeinTilesChanged;

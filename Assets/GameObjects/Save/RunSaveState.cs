@@ -59,4 +59,5 @@ using UnityEngine;
     public SavedMiningCell[] mining;
     public SavedForest forest;
     public SavedGrassland grass;
+    public CopperDepositState[] copperVisuals;
 }

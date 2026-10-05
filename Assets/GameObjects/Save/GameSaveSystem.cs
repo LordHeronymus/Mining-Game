@@ -43,6 +43,7 @@ public static class GameSaveSystem
     [Serializable] public sealed class Summary
     {
         public int slot, depth, money, points;
+        public int homeLayer;
         public string name;
         public long savedUtc;
         public long createdUtc, lastOpenedUtc;
@@ -209,6 +210,34 @@ public static class GameSaveSystem
         { var summary = GetSummary(i); if (summary != null && summary.lastOpenedUtc > date) { date = summary.lastOpenedUtc; slot = i; } }
         return slot;
     }
+    // Read-only legacy preview: never creates a pending load or updates a user's save.
+    public static int GetHomeLayer(int slot)
+    {
+        var summary = GetSummary(slot);
+        if (summary == null) return 1;
+        if (summary.homeLayer > 0) return summary.homeLayer;
+        foreach (string path in new[] { SlotPath(slot), SlotPath(slot) + ".bak" })
+            try {
+                if (!File.Exists(path)) continue;
+                ReadEnvelope(path, out var header, out var compressed);
+                if (header.slot != slot) continue;
+                using var packed = new MemoryStream(compressed);
+                using var zip = new GZipStream(packed, CompressionMode.Decompress);
+                using var reader = new BinaryReader(zip, Encoding.UTF8);
+                int length = 0, shift = 0;
+                byte b;
+                do {
+                    if (shift >= 35) throw new InvalidDataException();
+                    b = reader.ReadByte(); length |= (b & 127) << shift; shift += 7;
+                } while ((b & 128) != 0);
+                if (length < 0 || length > MaxExpandedBytes) throw new InvalidDataException();
+                byte[] json = reader.ReadBytes(length);
+                if (json.Length != length) throw new InvalidDataException();
+                var state = ParseRunState(Encoding.UTF8.GetString(json));
+                return HomeLandscape.LayerAtDepth(state.progression?.maxDepth ?? summary.depth, state.generationSettings);
+            } catch (Exception) { }
+        return HomeLandscape.LayerAtDepth(summary.depth);
+    }
     public static bool PrepareLoad(int slot, out string error)
     {
         using var measurement = new Unity.Profiling.ProfilerMarker("Loading.ValidateSave").Auto();
@@ -341,7 +370,8 @@ public static class GameSaveSystem
                 writer.Flush(); byte[] bytes = payload.ToArray();
                 var summary = new Summary { slot = slot, name = ActiveRunName, savedUtc = state.savedUtc, money = state.stats.money,
                     points = state.stats.points, playedSeconds = state.playedSeconds,
-                    depth = UnityEngine.Object.FindFirstObjectByType<CompactHud>()?.DepthMeters ?? 0 };
+                    depth = UnityEngine.Object.FindFirstObjectByType<CompactHud>()?.DepthMeters ?? 0,
+                    homeLayer = HomeLandscape.LayerAtDepth(state.progression?.maxDepth ?? 0, state.generationSettings) };
                 var previous = createOnly ? null : GetSummary(slot);
                 summary.createdUtc = previous?.createdUtc ?? state.savedUtc;
                 summary.lastOpenedUtc = previous?.lastOpenedUtc ?? state.savedUtc;
@@ -373,6 +403,7 @@ public static class GameSaveSystem
             exotics = ExoticWorldContent.Ensure(map).CaptureState(),
             placedLights = PlacedTorch.Capture(map),
             generationSettings = GpsSettings.CaptureGeneration(map),
+            copperVisuals = map.GetComponent<OreOverlayAppearance>().CopperPlans.Capture(),
             savedUtc = DateTime.UtcNow.Ticks, playedSeconds = PlayedSeconds, playerPosition = player.transform.position,
             playerVelocity = player.GetComponent<Rigidbody2D>().linearVelocity, facingLeft = player.transform.localScale.x < 0,
             inventory = InventoryManager.Instance.CaptureRunState(), stats = StatsManager.Instance.CaptureRunState(),
@@ -505,6 +536,7 @@ public static class GameSaveSystem
         var appearance = map.GetComponent<UniformStoneAppearance>();
         if (appearance && appearance.isActiveAndEnabled) yield return appearance.PrepareForLoading(data);
         yield return map.FinishSavedMapRestoreSteps(data.terrainTiles);
+        map.GetComponent<OreOverlayAppearance>().RestoreCopperPlans(run.state.copperVisuals);
         var surface = map.GetComponent<DirtSurfaceAppearance>();
         if (surface && surface.isActiveAndEnabled) yield return surface.PrepareForLoading();
         InventoryManager.Instance.RestoreRunState(run.state.inventory);

@@ -9,7 +9,7 @@ public sealed class GpsFieldSpec
     public string name, label;
     public float min = -float.MaxValue, max = float.MaxValue, factor = 1;
     public GpsApplyTime applyTime;
-    public bool hideInUi;
+    public bool hideInUi, invertBoolean;
     public GpsFieldSpec(string name, string label = null, float min = -float.MaxValue,
         float max = float.MaxValue, float factor = 1, GpsApplyTime applyTime = GpsApplyTime.Immediately)
     { this.name = name; this.label = label ?? name; this.min = min; this.max = max; this.factor = factor; this.applyTime = applyTime; }

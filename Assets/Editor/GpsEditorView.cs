@@ -9,6 +9,8 @@ public sealed partial class GpsEditorView
 {
     readonly HashSet<string> expanded = new();
     readonly GameplaySettingsWindow window;
+    string itemIconSearch = "";
+    int itemIconCategory;
     GpsEditorTheme Theme=>window.Theme;
     public GpsEditorView(GameplaySettingsWindow owner) => window = owner;
     public void Draw(string tab)
@@ -17,10 +19,22 @@ public sealed partial class GpsEditorView
         foreach (string title in GpsSchema.Sections.Where(section => section.tab == tab).Select(section => section.title).Distinct())
         {
             if(tab=="Audio" && (title=="Einzelclips" || title=="Gesamtpegel"))continue;
+            if (!GpsSchema.SectionFields(tab, title).Any()) continue;
             using (new EditorGUILayout.VerticalScope(Theme.Card))
             {
                 if (!Foldout(tab + "/" + title, title)) continue;
                 var fields = GpsSchema.SectionFields(tab, title).ToArray();
+                if (title == "Item-Icons")
+                {
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        GUILayout.Label("Items suchen", Theme.Label, GUILayout.Width(130));
+                        itemIconSearch = GUILayout.TextField(itemIconSearch, Theme.Field, GUILayout.Height(30));
+                        var filter = GUILayoutUtility.GetRect(220, 30, GUILayout.Width(220));
+                        itemIconCategory = Theme.Select(filter, itemIconCategory, ItemIconLayout.Categories);
+                    }
+                    fields = fields.Where(p => ItemIconLayout.Matches(GpsSettings.Profile.Resolve(p.record.assetKey) as ItemSO, itemIconSearch, itemIconCategory)).OrderBy(p => p.record.name).ToArray();
+                }
                 foreach (var group in fields.GroupBy(pair => pair.record.key))
                 {
                     var record = group.First().record;
@@ -35,6 +49,7 @@ public sealed partial class GpsEditorView
                         if (EditorGUI.EndChangeCheck())
                         { if (!GpsSettings.SetValue(record.key, root, out string error)) window.SetStatus(error); }
                     }
+                    if (title == "Item-Icons" && GpsSettings.Profile.Resolve(record.assetKey) is ItemSO ore) DrawShopIconPreview(ore);
                 }
             }
         }
@@ -130,7 +145,7 @@ public sealed partial class GpsEditorView
             }
             return;
         }
-        if(node.kind==GpsValueKind.Boolean){node.flag=Theme.Check(label,node.flag);return;}
+        if(node.kind==GpsValueKind.Boolean){node.flag=Theme.Check(label,node.flag ^ spec.invertBoolean) ^ spec.invertBoolean;return;}
         Theme.Row(label,out var control);
         switch (node.kind)
         {

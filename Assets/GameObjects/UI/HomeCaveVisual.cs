@@ -3,48 +3,88 @@ using UnityEngine.UI;
 
 public sealed class HomeCaveVisual : MonoBehaviour
 {
-    Material material;
-    RawImage image;
+    readonly Material[] materials = new Material[2];
+    readonly RawImage[] images = new RawImage[2];
     RectTransform picture;
-    Vector2 parallax;
-    int lastWaterImpact;
+    HomeCaveMotes motes;
+    Vector2 parallax, pointerTarget;
+    int current, lastWaterImpact;
+    bool blending;
+    public int Layer { get; private set; } = 1;
     public float AnimationTime { get; private set; }
+    public bool WaterEffectsEnabled => Layer == 3;
     void OnEnable() => lastWaterImpact = Mathf.FloorToInt((Time.unscaledTime - 6.2f) / 9.7f);
     void Awake()
     {
-        var texture = Resources.Load<Texture2D>("Homescreen/CaveLake");
-        picture = HomeUi.Rect("Cave Picture", transform, Vector2.zero, new Vector2(1920, 1080));
-        image = picture.gameObject.AddComponent<RawImage>(); image.texture = texture; image.raycastTarget = false;
+        picture = HomeUi.Rect("Landscape Picture", transform, Vector2.zero, new Vector2(1920,1080));
         var shader = Shader.Find("Tiefenhall/HomeCave");
-        if (shader) { material = new Material(shader); image.material = material; }
-        var motes = HomeUi.Rect("Cave Dust", picture, Vector2.zero, new Vector2(1920, 1080));
-        motes.gameObject.AddComponent<HomeCaveMotes>(); Fit();
+        for (int i=0; i<2; i++) {
+            var rect=HomeUi.Rect("Landscape " + i,picture,Vector2.zero,new Vector2(1920,1080));
+            images[i]=rect.gameObject.AddComponent<RawImage>(); images[i].raycastTarget=false;
+            if(shader) { materials[i]=new Material(shader); images[i].material=materials[i]; }
+            images[i].color=new Color(1,1,1,i==0 ? 1 : 0);
+        }
+        var dust=HomeUi.Rect("Cave Dust",picture,Vector2.zero,new Vector2(1920,1080));
+        motes=dust.gameObject.AddComponent<HomeCaveMotes>();
+        Apply(images[0],materials[0],1);motes.gameObject.SetActive(false);Fit();
     }
-    void Fit()
+    static Texture2D Texture(int layer) => Resources.Load<Texture2D>("Homescreen/Layer"+layer) ??
+        Resources.Load<Texture2D>(layer==1 ? "Homescreen/Layer1" : "Homescreen/CaveLake");
+    static void Apply(RawImage image,Material material,int layer) {
+        image.texture=Texture(layer);
+        if(material) material.SetFloat("_CaveEffects",layer==3 ? 1 : 0);
+    }
+    public void SetLayer(int layer)
     {
-        if (!picture) return;
-        var size = ((RectTransform)transform).rect.size;
-        float cover = Mathf.Max(size.x / 1920f, size.y / 1080f);
-        picture.localScale = Vector3.one * cover;
+        layer=Mathf.Max(1,layer); Layer=layer;
+        LoadingAudio.SetHomeLayer(layer);
+        var target=Texture(layer);
+        if(images[current].texture==target) {
+            if(materials[current])materials[current].SetFloat("_CaveEffects",layer==3 ? 1 : 0);
+        } else {
+            int next=1-current;
+            // A quick selection reversal continues from the currently visible blend.
+            float alpha=images[next].texture==target && blending ? 1-images[current].color.a : 0;
+            Apply(images[next],materials[next],layer);
+            images[next].color=new Color(1,1,1,alpha);
+            images[current].color=Color.white;
+            images[next].transform.SetAsLastSibling();
+            current=next;blending=true;
+        }
+        motes.gameObject.SetActive(layer==3);
+        motes.transform.SetAsLastSibling();
+        lastWaterImpact=Mathf.FloorToInt((Time.unscaledTime-6.2f)/9.7f);
     }
-    void OnRectTransformDimensionsChange() => Fit();
+    void Fit() {
+        if(!picture)return;
+        var size=((RectTransform)transform).rect.size;
+        picture.localScale=Vector3.one*Mathf.Max(size.x/1920f,size.y/1080f);
+    }
+    void OnRectTransformDimensionsChange()=>Fit();
     void Update()
     {
-        if (!material) return;
-        Vector2 mouse = Application.isFocused ? new Vector2(Input.mousePosition.x / Mathf.Max(1, Screen.width) - .5f,
-            Input.mousePosition.y / Mathf.Max(1, Screen.height) - .5f) : Vector2.zero;
-        parallax = Vector2.Lerp(parallax, mouse, 1 - Mathf.Exp(-2f * Time.unscaledDeltaTime));
-        AnimationTime = Time.unscaledTime;
-        // Same contact time and cycle as the lake shader; the three rings belong to one drop.
-        int impact = Mathf.FloorToInt((AnimationTime - 6.2f) / 9.7f);
-        if (impact > lastWaterImpact) LoadingAudio.PlayHomeWaterdrop();
-        lastWaterImpact = impact;
-        material.SetFloat("_SceneTime", AnimationTime);
-        material.SetVector("_Parallax", new Vector4(parallax.x * .012f, parallax.y * .009f, 0, 0));
+        Vector2 mouse=Input.mousePosition;
+        if(Application.isFocused && mouse.x>=0 && mouse.y>=0 && mouse.x<Screen.width && mouse.y<Screen.height)
+            pointerTarget=new Vector2(mouse.x/Mathf.Max(1,Screen.width)-.5f,mouse.y/Mathf.Max(1,Screen.height)-.5f);
+        parallax=Vector2.Lerp(parallax,pointerTarget,1-Mathf.Exp(-2f*Time.unscaledDeltaTime));
+        AnimationTime=Time.unscaledTime;
+        int impact=Mathf.FloorToInt((AnimationTime-6.2f)/9.7f);
+        if(WaterEffectsEnabled && impact>lastWaterImpact)LoadingAudio.PlayHomeWaterdrop();
+        lastWaterImpact=impact;
+        foreach(var material in materials)if(material) {
+            material.SetFloat("_SceneTime",AnimationTime);
+            material.SetVector("_Parallax",new Vector4(parallax.x*.012f,parallax.y*.009f,0,0));
+        }
+        if(blending) {
+            float alpha=Mathf.MoveTowards(images[current].color.a,1,Time.unscaledDeltaTime/.8f);
+            images[current].color=new Color(1,1,1,alpha);
+            if(alpha>=1) { images[1-current].color=new Color(1,1,1,0);blending=false; }
+        }
     }
-    void OnDestroy() { if (material) Destroy(material); }
+    void OnDestroy(){foreach(var material in materials)if(material)Destroy(material);}
 }
 
+[RequireComponent(typeof(CanvasRenderer))]
 public sealed class HomeCaveMotes : MaskableGraphic
 {
     Material dustMaterial;
@@ -76,3 +116,4 @@ public sealed class HomeCaveMotes : MaskableGraphic
     }
     protected override void OnDestroy() { base.OnDestroy(); if (dustMaterial) Destroy(dustMaterial); }
 }
+

@@ -14,6 +14,7 @@ public static class GpsFileStore
             {
                 var data=JsonUtility.FromJson<GpsDocument>(File.ReadAllText(candidate));
                 GpsAudioMigration.Merge(data,baseline,GpsSettings.Profile);
+                ItemIconLayout.Migrate(data,GpsSettings.Profile);
                 MergeMissing(data,baseline);
                 if(!GpsSettings.ValidateDocument(data,out string error)) throw new InvalidDataException(error);
                 if(candidate!=path) warning="GPS-Sicherung geladen.";

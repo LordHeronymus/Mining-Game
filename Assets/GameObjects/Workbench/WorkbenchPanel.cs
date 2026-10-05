@@ -167,6 +167,11 @@ public sealed class WorkbenchPanel : MonoBehaviour
         foreach (var row in rows) ApplyRecipeIconLayout(row.recipe, row.icon);
         if (SelectedRecipe && outputIcon)
             ApplyRecipeIconLayout(SelectedRecipe, outputIcon.rectTransform, new Vector2(1245f, -342.5f));
+        foreach (var row in ingredientRows)
+        {
+            var image = row.count ? row.count.transform.parent.Find("Icon")?.GetComponent<Image>() : null;
+            if (image) ItemIconLayout.Apply(row.item, image.rectTransform, new Vector2(30.5f, -31));
+        }
     }
 
     public void SetFilter(bool onlyCraftable)
@@ -304,7 +309,9 @@ public sealed class WorkbenchPanel : MonoBehaviour
                 foreach (var cost in costs)
                 {
                     var row = Panel("Ingredient_" + cost.Key.name, ingredientContent, i % 2 * 230, i / 2 * 72, 220, 62, rowSprite);
-                    Icon(row.transform, cost.Key.icon, 9, 10, 43, 42);
+                    var ingredientIcon = Icon(row.transform, cost.Key.icon, 9, 10, 43, 42);
+                    ShopVisualTheme.CenterImage(ingredientIcon);
+                    ItemIconLayout.Apply(cost.Key, ingredientIcon.rectTransform, ingredientIcon.rectTransform.anchoredPosition);
                     Label(row.transform, cost.Key.displayName, 60, 5, 146, 25, 23);
                     var count = Label(row.transform, "", 60, 30, 146, 25, 22, TextAlignmentOptions.MidlineLeft);
                     ingredientRows.Add(new IngredientRow { item = cost.Key, amount = cost.Value, count = count });
@@ -462,12 +469,8 @@ public sealed class WorkbenchPanel : MonoBehaviour
     public static void ApplyRecipeIconLayout(CraftingRecipe recipe, RectTransform icon, Vector2 center)
     {
         if (!icon) return;
-        var settings = recipe ? recipe.CardIconLayout : new CraftingRecipe.RecipeIconLayout { scale = Vector2.one };
         icon.pivot = new Vector2(.5f, .5f);
-        icon.anchoredPosition = center + new Vector2(settings.offset.x * icon.rect.width / 134f,
-            settings.offset.y * icon.rect.height / 106f);
-        icon.localScale = new Vector3(settings.scale.x * (settings.flipX ? -1f : 1f),
-            settings.scale.y * (settings.flipY ? -1f : 1f), 1f);
+        ItemIconLayout.Apply(recipe ? recipe.output : null, icon, center);
     }
 
     public CraftingRecipe FindRecipeForOutput(ItemSO item)

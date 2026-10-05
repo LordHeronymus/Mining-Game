@@ -62,7 +62,7 @@ public static partial class GpsSchema
         foreach (var section in Sections.Where(section => section.tab == tab && section.title == title))
             foreach (var record in GpsSettings.Records(section))
             {
-                if (section.source == typeof(ItemSO) && section.title == "Erzverkaufspreise" && GpsSettings.Profile.Resolve(record.assetKey) is ItemSO item && item.category != ItemCategory.Ore) continue;
+                if (section.source == typeof(ItemSO) && (section.title == "Erzverkaufspreise" || section.title == "Erz-Icons") && GpsSettings.Profile.Resolve(record.assetKey) is ItemSO item && item.category != ItemCategory.Ore) continue;
                 foreach (var field in section.fields)
                 {
                     if (section.source==typeof(Block) && field.name=="itemDrop" && GpsSettings.Profile.Resolve(record.assetKey) is Block block && !block.HasOreOverlays) continue;

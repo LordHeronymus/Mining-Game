@@ -78,6 +78,13 @@ public class ItemSO : ScriptableObject
     public string displayName;
     public Sprite icon;
     public Color themeColor = new Color(1f, .86f, .58f);
+    public Vector2 shopIconScale = new Vector2(.85f, .85f);
+    public Vector2 shopIconOffset;
+    public bool shopIconFlipX, shopIconFlipY;
+    public Vector2 iconScale = Vector2.one;
+    public Vector2 iconOffset;
+    public bool iconFlipX, iconFlipY;
+    public int iconLayoutVersion;
 
     [Header("Stats")]
     public int worth = 0;

@@ -81,10 +81,17 @@ half4 VeinOreSample(float2 uv)
     return c;
 }
 
+#include "CopperCarpetSurface.hlsl"
+
 half4 ConnectedOreFragment(Varyings i, float2 cellPosition, float2 cellData)
 {
     float2 cell = floor(cellPosition), anchor = VeinAnchor(cell);
     int type = (int)cellData.x - 1;
+    half4 output=0;
+    if(type==2 && CopperCarpetHost(i.positionWS.xy) && _CopperCarpetEnabled>.5)
+        output=0; // The complete copper surface is drawn once above the ore tilemap.
+    else
+    {
     bool coal = type == 7;
     bool gem = type == 8 || type == 16 || type == 18 || type == 19 || type == 13;
     half3 tint = VeinTint(type);
@@ -172,8 +179,8 @@ half4 ConnectedOreFragment(Varyings i, float2 cellPosition, float2 cellData)
     combined = lerp(combined,rock,ore.a*lip);
     combined += shimmer.rgb * _ShimmerStrength * (1-crystalAlpha) * .25h;
     half4 mask = SAMPLE_TEXTURE2D(_MaskTex,sampler_MaskTex,saturate(uv));
-    SurfaceData2D surfaceData;
-    InputData2D inputData;
+    SurfaceData2D surfaceData=(SurfaceData2D)0;
+    InputData2D inputData=(InputData2D)0;
     InitializeSurfaceData(combined*i.color.rgb,alpha*i.color.a,mask,surfaceData);
     InitializeInputData(i.uv,i.lightingUV,inputData);
     half4 lit = CombinedShapeLightShared(surfaceData,inputData);
@@ -187,6 +194,8 @@ half4 ConnectedOreFragment(Varyings i, float2 cellPosition, float2 cellData)
     lit.rgb += tint * glow * exposure * (core*(1-ore.a)*.8 + facet*crystalAlpha*.4);
     if(type==13) lit.rgb += (saturatedOre*.48h+_UltroniumGlowColor.rgb*facet*.12h) *
         _UltroniumGlow * exposure * crystalAlpha;
-    return lit;
+    output=lit;
+    }
+    return output;
 }
 #endif

@@ -34,6 +34,8 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
     Image backdrop;
     TMP_FontAsset font;
     string tab = GpsSchema.Tabs[0];
+    string itemIconSearch = "";
+    int itemIconCategory;
     float rowY;
     bool building, committing;
     static readonly Color Panel = new(.105f, .115f, .13f, 1f), Control = new(.17f, .18f, .2f, 1f), Accent = new(.78f, .63f, .35f, 1f);
@@ -142,6 +144,16 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
             if (fields.Length == 0) continue;
             string sectionKey = tab + "/" + section;
             if (!Header(sectionKey, section, 0)) continue;
+            if (section == "Item-Icons")
+            {
+                Label(content, "Items suchen", new Vector2(44, -rowY), new Vector2(190, 32), 20);
+                Input(content, new Vector2(250, -rowY), new Vector2(794, 32), itemIconSearch,
+                    value => { itemIconSearch = value; BuildPage(); });
+                Dropdown(new Vector2(1100, -rowY), ItemIconLayout.Categories, itemIconCategory,
+                    value => { itemIconCategory = value; BuildPage(); }, 560);
+                rowY += 46;
+                fields = fields.Where(p => ItemIconLayout.Matches(GpsSettings.Profile.Resolve(p.record.assetKey) as ItemSO, itemIconSearch, itemIconCategory)).OrderBy(p => p.record.name).ToArray();
+            }
             foreach (var group in fields.GroupBy(field => field.record.key))
             {
                 var record = group.First().record;
@@ -154,6 +166,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
                     DrawValue(record.key, root, root, entry.field, label, sectionKey + "/" + record.key + "/" + root.name, 1, null,
                         () => { committing=true; try { if (!GpsSettings.SetValue(record.key, root, out string error)) status.text = error; } finally { committing=false; } });
                 }
+                if (section == "Item-Icons" && GpsSettings.Profile.Resolve(record.assetKey) is ItemSO ore) BuildShopIconPreview(ore);
             }
         }
         if (tab == GpsSchema.TestTab) BuildTests();
@@ -166,6 +179,26 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         for (int i = 0; i < tabButtons.Count; i++) tabButtons[i].GetComponent<Image>().color = TabLabels[i] == tab ? Accent * .65f : Control;
         building = false; Refresh();
     }
+    void BuildShopIconPreview(ItemSO ore)
+    {
+        var card = Rect("Icon Preview", content, new Vector2(44, -rowY), new Vector2(608, 232));
+        var background = card.gameObject.AddComponent<Image>(); background.sprite = HomeUi.Sprite("SelectionCardNormal");
+        background.type = Image.Type.Sliced; background.pixelsPerUnitMultiplier = 5.5f; background.raycastTarget = false;
+        var icon = Rect("Ore", card, new Vector2(20, -18), new Vector2(260, 194)).gameObject.AddComponent<Image>();
+        icon.sprite = ore.icon; icon.raycastTarget = false; ShopVisualTheme.CenterImage(icon);
+        var center = icon.rectTransform.anchoredPosition;
+        ShopVisualTheme.ApplyOreIconLayout(icon, ore, center);
+        refreshValues.Add(() => { if (icon) ShopVisualTheme.ApplyOreIconLayout(icon, ore, center); });
+        var name = Label(card, ore.displayName, new Vector2(300, -28), new Vector2(282, 72), 43);
+        name.font = Resources.Load<TMP_FontAsset>("ArtifactDiscovery/TitleFont") ?? font;
+        var badge = Rect("Count", card, new Vector2(482, -155), new Vector2(100, 56));
+        var badgeImage = badge.gameObject.AddComponent<Image>(); badgeImage.sprite = HomeUi.Sprite("SelectionCardNormal");
+        badgeImage.type = Image.Type.Sliced; badgeImage.pixelsPerUnitMultiplier = 8; badgeImage.raycastTarget = false;
+        var count = Label(badge, "1", Vector2.zero, new Vector2(100, 56), 41); count.font = name.font;
+        count.alignment = TextAlignmentOptions.Midline;
+        rowY += 248;
+    }
+
     bool Header(string key, string label, int indent)
     {
         bool open = expanded.Contains(key);
@@ -244,7 +277,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         switch (node.kind)
         {
             case GpsValueKind.Boolean:
-                var toggleButton = Button(content, node.flag ? "An" : "Aus", new Vector2(inputX, -rowY), new Vector2(140, 30), () => { node.flag = !node.flag; commit(); BuildPage(); });
+                var toggleButton = Button(content, (node.flag ^ spec.invertBoolean) ? "An" : "Aus", new Vector2(inputX, -rowY), new Vector2(140, 30), () => { node.flag = !node.flag; commit(); BuildPage(); });
                 break;
             case GpsValueKind.Reference:
                 var choices = GpsSchema.Choices(GpsCodec.ResolveType(node.type));
@@ -402,20 +435,20 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         HomeUi.StyleInputField(input);
         input.SetTextWithoutNotify(value ?? ""); input.onEndEdit.AddListener(text => submit(text)); return input;
     }
-    void Dropdown(Vector2 position, string[] labels, int selected, Action<int> submit)
+    void Dropdown(Vector2 position, string[] labels, int selected, Action<int> submit, float width = 975)
     {
-        var image = Rect("Dropdown", content, position, new Vector2(975, 30)).gameObject.AddComponent<Image>(); image.color = Control;
+        var image = Rect("Dropdown", content, position, new Vector2(width, 30)).gameObject.AddComponent<Image>(); image.color = Control;
         var dropdown = image.gameObject.AddComponent<TMP_Dropdown>(); dropdown.targetGraphic = image;
-        dropdown.captionText = Label(image.transform, "", new Vector2(10, 0), new Vector2(950, 30), 20);
-        var template = Rect("Template", image.transform, new Vector2(0, -30), new Vector2(975, 270));
+        dropdown.captionText = Label(image.transform, "", new Vector2(10, 0), new Vector2(width - 25, 30), 20);
+        var template = Rect("Template", image.transform, new Vector2(0, -30), new Vector2(width, 270));
         template.gameObject.AddComponent<Image>().color = Panel;
         var viewport = Rect("Viewport", template, Vector2.zero, template.sizeDelta); viewport.gameObject.AddComponent<RectMask2D>();
-        var container = Rect("Content", viewport, Vector2.zero, new Vector2(975, 30));
-        var item = Rect("Item", container, Vector2.zero, new Vector2(975, 30));
+        var container = Rect("Content", viewport, Vector2.zero, new Vector2(width, 30));
+        var item = Rect("Item", container, Vector2.zero, new Vector2(width, 30));
         var itemImage = item.gameObject.AddComponent<Image>(); itemImage.color = Control;
         var toggle = item.gameObject.AddComponent<Toggle>(); toggle.targetGraphic = itemImage;
         var check = Rect("Check", item, new Vector2(4, -8), new Vector2(12, 12)).gameObject.AddComponent<Image>(); check.color = Accent; toggle.graphic = check;
-        dropdown.itemText = Label(item, "", new Vector2(24, 0), new Vector2(940, 30), 20);
+        dropdown.itemText = Label(item, "", new Vector2(24, 0), new Vector2(width - 35, 30), 20);
         var listScroll = template.gameObject.AddComponent<ScrollRect>(); listScroll.viewport = viewport; listScroll.content = container;
         listScroll.horizontal = false; listScroll.movementType = ScrollRect.MovementType.Clamped; listScroll.scrollSensitivity = 30;
         dropdown.template = template; template.gameObject.SetActive(false);
