@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -95,7 +96,14 @@ public sealed class MetaProgressionRuntime : MonoBehaviour
         var cell = map.Terrain.WorldToCell(player.transform.position);
         if (cell.x >= -map.GeneratedWidth / 2 && cell.x < map.GeneratedWidth - map.GeneratedWidth / 2 &&
             cell.y <= 0 && -cell.y < map.GeneratedHeight)
+        {
             MetaProgression.RecordDepth(Mathf.Max(0, -cell.y));
+            MetaProgression.RecordReachedMiningLayer(MiningLayerAt(cell, map.layers));
+        }
+        bool atSurface = cell.y >= 0;
+        int visitedLayer = atSurface ? 1 : MiningLayerAt(cell, map.layers);
+        if (cell.x >= -map.GeneratedWidth / 2 && cell.x < map.GeneratedWidth - map.GeneratedWidth / 2 && -cell.y < map.GeneratedHeight && visitedLayer > 0)
+            MetaProgression.RecordExplorationPosition(visitedLayer, atSurface);
         if (!altarDiscovered && map.AltarChamber && map.AltarChamber.CaptureState().placed &&
             Vector2.Distance(player.transform.position, map.AltarChamber.AltarPosition) <= 8f)
         {
@@ -112,6 +120,9 @@ public sealed class MetaProgressionRuntime : MonoBehaviour
         if (!map || x < 0 || x >= map.GeneratedWidth || depth <= 0 || depth >= map.GeneratedHeight) return;
         int index = depth * map.GeneratedWidth + x;
         if (!seen.Add(index)) return;
+        MetaProgression.RecordRevealedCell(x, depth, award);
+        if (discovery && discovery.TryGetSnapshot(x, depth, out _, out var visibleArtifact) && visibleArtifact)
+            MetaProgression.RecordArtifactSight(new Vector3Int(x - map.GeneratedWidth / 2, -depth, 0), visibleArtifact.name, award);
         var settings = currentRun.settings;
         int regionSize = settings.explorationRegionSize, threshold = settings.explorationCellThreshold;
         var key = new Vector2Int(x / regionSize, depth / regionSize);
@@ -120,13 +131,60 @@ public sealed class MetaProgressionRuntime : MonoBehaviour
         if (award) MetaProgression.RecordExploration(key.x, key.y, key.y * regionSize);
     }
 
-    public static void RecordMining(Vector3Int cell, ItemSO item, int count, ArtifactTile artifact)
+    public static bool IsSurfaceExcavation(Vector3Int cell, Block block, MapLayer[] layers, bool hasOre, bool hasArtifact)
+    {
+        if (cell.y > 0 || !block || (!block.IsStone && block.id != BlockType.Dirt) || hasOre || hasArtifact || layers == null) return false;
+        bool hasSurface = false;
+        int endDepth = int.MaxValue;
+        foreach (var layer in layers) {
+            if (layer == null) continue;
+            if (layer.startDepth == 0) hasSurface = true;
+            if (layer.startDepth > 0) endDepth = Mathf.Min(endDepth, layer.startDepth);
+        }
+        return hasSurface && -(long)cell.y < endDepth;
+    }
+
+    public static bool IsLayerTwoExcavation(Vector3Int cell, MapLayer[] layers)
+    {
+        if (cell.y > 0 || layers == null) return false;
+        var ordered = layers.Where(layer => layer != null).OrderBy(layer => layer.startDepth).ToArray();
+        if (ordered.Length < 2 || ordered[0].startDepth != 0 || ordered[1].startDepth <= 0) return false;
+        long depth = -(long)cell.y;
+        return depth >= ordered[1].startDepth && (ordered.Length < 3 || depth < ordered[2].startDepth);
+    }
+    public static bool IsLayerThreeExcavation(Vector3Int cell, MapLayer[] layers)
+    {
+        if (cell.y > 0 || layers == null) return false;
+        var ordered = layers.Where(layer => layer != null).OrderBy(layer => layer.startDepth).ToArray();
+        if (ordered.Length < 3 || ordered[0].startDepth != 0 || ordered[2].startDepth <= ordered[1].startDepth) return false;
+        long depth = -(long)cell.y;
+        return depth >= ordered[2].startDepth && (ordered.Length < 4 || depth < ordered[3].startDepth);
+    }
+    public static int MiningLayerAt(Vector3Int cell, MapLayer[] layers)
+    {
+        if (cell.y > 0 || layers == null) return 0;
+        var ordered = layers.Where(layer => layer != null).OrderBy(layer => layer.startDepth).ToArray();
+        if (ordered.Length == 0 || ordered[0].startDepth != 0) return 0;
+        long depth = -(long)cell.y;
+        int result = 0;
+        for (int i = 0; i < ordered.Length; i++) if (depth >= ordered[i].startDepth) result = i + 1;
+        return result;
+    }
+    public static void RecordMining(Vector3Int cell, ItemSO item, int count, ArtifactTile artifact,
+        Block block = null, MapLayer[] layers = null, bool hasOre = false)
     {
         if (!RewardsAllowed) return;
         string source = cell.x + ":" + cell.y;
         if (item && item.category == ItemCategory.Ore && count > 0)
             MetaProgression.RecordResource(item.item, count, source);
-        if (artifact) MetaProgression.RecordDiscovery("artifact:" + source);
+        if (artifact) {
+            MetaProgression.RecordDiscovery("artifact:" + source);
+            MetaProgression.RecordArtifact(cell, artifact.name);
+        }
+        if ((block || artifact || hasOre) && IsLayerTwoExcavation(cell, layers)) MetaProgression.RecordLayerTwoBlock(cell);
+        if ((block || artifact || hasOre) && IsLayerThreeExcavation(cell, layers)) MetaProgression.RecordLayerThreeBlock(cell);
+        if (block || artifact || hasOre) MetaProgression.RecordXxlLayerBlock(cell, MiningLayerAt(cell, layers));
+        if (IsSurfaceExcavation(cell, block, layers, hasOre, artifact != null)) MetaProgression.RecordSurfaceBlock(cell);
     }
 
     public static void RecordVictory()

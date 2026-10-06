@@ -30,9 +30,15 @@ public static class CraftingService
         if (!recipe.TryGetCosts(out var perBatch)) return false;
         var costs = new Dictionary<ItemSO, int>();
         foreach (var cost in perBatch) costs.Add(cost.Key, checked(cost.Value * batches));
+        int previousPickaxe = inventory.EquippedPickaxeLevel;
+        int previousEnergy = inventory.EnergyCapacityLevel;
+        int previousCarrying = inventory.CarryingCapacityLevel;
         if (!inventory.TryExchange(costs, recipe.output, checked(recipe.outputAmount * batches))) return false;
         if (MetaProgressionRuntime.RewardsAllowed)
         {
+            MetaProgression.RecordCraftUpgrade("pickaxe-upgrades", previousPickaxe, inventory.EquippedPickaxeLevel);
+            MetaProgression.RecordCraftUpgrade("energy-upgrades", previousEnergy, inventory.EnergyCapacityLevel);
+            MetaProgression.RecordCraftUpgrade("carrying-upgrades", previousCarrying, inventory.CarryingCapacityLevel);
             MetaProgression.RecordCraft(recipe.output.item);
             MetaProgression.RecordCraftedAmount(recipe.output.item, checked(recipe.outputAmount * batches), recipe.exotic);
             if (recipe.exotic) MetaProgression.RecordExoticCraft(recipe.output.item);

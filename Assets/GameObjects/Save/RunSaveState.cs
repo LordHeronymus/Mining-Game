@@ -24,11 +24,12 @@ using UnityEngine;
 [Serializable] public struct SavedTree
 {
     public int cell, variant, pendingWood;
+    public string harvestId;
     public Vector3 position;
     public float height, health, growth, sproutScale, sproutElapsed;
 }
 [Serializable] public sealed class SavedForest { public SavedTree[] trees; public float regrowth; }
-[Serializable] public struct SavedGrass { public int cell; public bool herb; }
+[Serializable] public struct SavedGrass { public int cell; public bool herb; public string harvestId; }
 [Serializable] public sealed class SavedGrassland
 {
     public SavedGrass[] patches;

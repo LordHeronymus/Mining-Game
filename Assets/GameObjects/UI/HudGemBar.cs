@@ -8,6 +8,8 @@ public sealed class HudGemBar : MaskableGraphic
     [SerializeField] Color gemColor = new Color(.95f, .08f, .11f);
     float flashAmount;
     public bool DecorativeEndCaps { get; set; } = true;
+    public bool RoundJewels { get; set; }
+    public override Texture mainTexture => RoundJewels && RoundHudArt.Atlas ? RoundHudArt.Atlas : base.mainTexture;
 
     public float FlashAmount
     {
@@ -42,6 +44,7 @@ public sealed class HudGemBar : MaskableGraphic
     protected override void OnPopulateMesh(VertexHelper mesh)
     {
         mesh.Clear();
+        if (RoundJewels) { PopulateRoundJewels(mesh); return; }
         var rect = rectTransform.rect;
         float scaleX = rect.width / (DecorativeEndCaps ? 172f : 148f);
         float scaleY = rect.height / 17f;
@@ -63,17 +66,17 @@ public sealed class HudGemBar : MaskableGraphic
             int start = mesh.currentVertCount;
             var points = new[]
             {
-                Point(x + 3, y), Point(x + width - 3, y),
-                Point(x + width, y + 3), Point(x + width, y + height - 3),
-                Point(x + width - 3, y + height), Point(x + 3, y + height),
-                Point(x, y + height - 3), Point(x, y + 3)
+                Point(x + 1.5f, y), Point(x + width - 1.5f, y),
+                Point(x + width, y + 1.5f), Point(x + width, y + height - 1.5f),
+                Point(x + width - 1.5f, y + height), Point(x + 1.5f, y + height),
+                Point(x, y + height - 1.5f), Point(x, y + 1.5f)
             };
             // A flat bright face and separate bevels keep each jewel crisp at HUD size.
             var inner = new[] {
-                Point(x+width*.28f,y+height*.23f), Point(x+width*.72f,y+height*.23f),
-                Point(x+width*.82f,y+height*.36f), Point(x+width*.82f,y+height*.64f),
-                Point(x+width*.72f,y+height*.77f), Point(x+width*.28f,y+height*.77f),
-                Point(x+width*.18f,y+height*.64f), Point(x+width*.18f,y+height*.36f) };
+                Point(x+width*.18f,y+height*.16f), Point(x+width*.82f,y+height*.16f),
+                Point(x+width*.87f,y+height*.22f), Point(x+width*.87f,y+height*.78f),
+                Point(x+width*.82f,y+height*.84f), Point(x+width*.18f,y+height*.84f),
+                Point(x+width*.13f,y+height*.78f), Point(x+width*.13f,y+height*.22f) };
             var vertex = UIVertex.simpleVert;
             var face=Color.Lerp(new Color(.055f,.029f,.019f), color, strength);
             for(int i=0;i<8;i++) { vertex.position=inner[i]; vertex.color=Color.Lerp(face,Color.white,(i>=3 && i<=6 ? .23f : .015f)*strength); mesh.AddVert(vertex); }
@@ -121,4 +124,31 @@ public sealed class HudGemBar : MaskableGraphic
         }
         if (DecorativeEndCaps) { EndCap(0); EndCap(160); }
     }
+    void PopulateRoundJewels(VertexHelper mesh)
+    {
+        var rect=rectTransform.rect;
+        float size=Mathf.Min(rect.height,rect.width/8.7f);
+        float step=(rect.width-size)/7f;
+        void Quad(float x,float y,float w,float h,Rect uv,Color tint)
+        {
+            int start=mesh.currentVertCount;
+            var v=UIVertex.simpleVert; v.color=tint;
+            v.position=new Vector2(x,y);v.uv0=new Vector2(uv.xMin,uv.yMin);mesh.AddVert(v);
+            v.position=new Vector2(x+w,y);v.uv0=new Vector2(uv.xMax,uv.yMin);mesh.AddVert(v);
+            v.position=new Vector2(x+w,y+h);v.uv0=new Vector2(uv.xMax,uv.yMax);mesh.AddVert(v);
+            v.position=new Vector2(x,y+h);v.uv0=new Vector2(uv.xMin,uv.yMax);mesh.AddVert(v);
+            mesh.AddTriangle(start,start+1,start+2);mesh.AddTriangle(start,start+2,start+3);
+        }
+        for(int i=0;i<8;i++)
+        {
+            float x=rect.xMin+i*step,y=rect.yMin+(rect.height-size)*.5f;
+            Quad(x,y,size,size,RoundHudArt.Empty,Color.white);
+            float strength=Mathf.Clamp01(fillAmount*8f-i);
+            var tint=Color.white; tint.a=strength;
+            if(strength>0)Quad(x,y,size,size,gemColor.r>gemColor.g*2 ? RoundHudArt.Red : RoundHudArt.Gold,tint);
+            if(strength>0 && flashAmount>0)Quad(x,y,size,size,RoundHudArt.Gold,new Color(1,1,1,strength*flashAmount*.65f));
+            if(i<7)Quad(x+size-1,y+size*.43f,step-size+2,size*.14f,RoundHudArt.Link,Color.white);
+        }
+    }
 }
+

@@ -16,12 +16,15 @@ public sealed class TallGrassPatch : MonoBehaviour
     int reachGlowLevel;
     public int SurfaceCellX { get; private set; }
     public bool IsHealingHerb { get; private set; }
+    public string HarvestId { get; private set; }
+    public void RestoreHarvestId(string id) => HarvestId = string.IsNullOrEmpty(id) ? "legacy-grass:" + SurfaceCellX : id;
     public int ReachGlowLevel => reachGlowLevel;
 
     public void Initialize(SurfaceTallGrass source, int cellX, bool isHealingHerb = false)
     {
         owner = source;
         SurfaceCellX = cellX;
+        HarvestId = System.Guid.NewGuid().ToString("N");
         IsHealingHerb = isHealingHerb;
         visual = GetComponent<SpriteRenderer>();
         var sprite = visual.sprite;

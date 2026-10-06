@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!28 &2800000
+Texture2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Measured copper tile cores
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 4
+  m_Width: 4
+  m_Height: 4
+  m_CompleteImageSize: 256
+  m_MipsStripped: 0
+  m_TextureFormat: 20
+  m_MipCount: 1
+  m_IsReadable: 1
+  m_IsPreProcessed: 0
+  m_IgnoreMipmapLimit: 1
+  m_MipmapLimitGroupName: 
+  m_StreamingMipmaps: 0
+  m_StreamingMipmapsPriority: 0
+  m_VTOnly: 0
+  m_AlphaIsTransparency: 0
+  m_ImageCount: 1
+  m_TextureDimension: 2
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 0
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 1
+    m_WrapV: 1
+    m_WrapW: 1
+  m_LightmapFormat: 0
+  m_ColorSpace: 0
+  m_PlatformBlob: 
+  image data: 256
+  _typelessdata: e716043f90d0093fecc4613e6424893fec7b043ffc2c113f87bb703e96a58a3fc3a2013f0000003fecc4613ef17e8d3fba66f53ea9b9053f4e4b683eb387883f3d5dfe3eba66f53ed58d5c3eb9618c3f36ab033f4dc5f33ed7386a3e1c7a863f0000003f4dc5f33e42e65c3e295c8f3f492fff3edf23f23e02695e3eacf28d3fe716043fcb48df3eaf10623e295c8f3fa1010b3f508ee23e0dc55d3e295c8f3fa301ee3e65a4ef3e8c99593e295c8f3f3460093f5b19e93e6ef1563eea7e873f8545033f79aed93e7c62323e295c8f3fc7be073fc428d33ede0b333e295c8f3f3d5dfe3ea101cb3ede0b333e295c8f3fdf23f23e9e6bd63e7f1c303e295c8f3f
+  m_StreamData:
+    serializedVersion: 2
+    offset: 0
+    size: 0
+    path: 

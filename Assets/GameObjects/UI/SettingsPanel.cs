@@ -197,7 +197,7 @@ public sealed class SettingsPanel : MonoBehaviour
     void BuildDisplay()
     {
         const float rowSpacing = 148, rowHeight = 68;
-        float firstRowY = (PageHeight - rowSpacing - rowHeight) * .5f;
+        float firstRowY = (PageHeight - 2 * rowSpacing - rowHeight) * .5f;
         Label(displayPage.transform, "Vollbild", 16, firstRowY, 340, rowHeight, 28);
         var fullscreen = Button("Vollbild", displayPage.transform, PlayerSettings.Fullscreen ? "Ein" : "Aus",
             668, firstRowY, 250, rowHeight, null);
@@ -208,6 +208,8 @@ public sealed class SettingsPanel : MonoBehaviour
         });
         AddSlider(displayPage.transform, "UI-Größe", firstRowY + rowSpacing, () => PlayerSettings.UiScale,
             value => PlayerSettings.UiScale = value, .8f, 1.2f, false);
+        AddSlider(displayPage.transform, "HUD-Größe", firstRowY + 2 * rowSpacing, () => PlayerSettings.HudScale,
+            value => PlayerSettings.HudScale = value, .5f, 1f, false);
     }
 
     void BuildKeys()
@@ -319,7 +321,8 @@ public sealed class SettingsPanel : MonoBehaviour
             "Ambiente" => PlayerSettings.Ambience,
             _ => PlayerSettings.Sfx
         };
-        foreach (var slider in displayPage.GetComponentsInChildren<Slider>(true)) slider.value = PlayerSettings.UiScale;
+        foreach (var slider in displayPage.GetComponentsInChildren<Slider>(true))
+            slider.value = slider.name == "HUD-Größe" ? PlayerSettings.HudScale : PlayerSettings.UiScale;
         var fullscreen = displayPage.transform.Find("Vollbild");
         if (fullscreen) fullscreen.GetComponentInChildren<TextMeshProUGUI>().text = PlayerSettings.Fullscreen ? "Ein" : "Aus";
         status.text = "";

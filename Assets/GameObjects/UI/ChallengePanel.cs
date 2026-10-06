@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Owned by the progression overview, which retains the pause and input lock.
+// The owner retains the pause and input lock while this panel is open.
 public sealed class ChallengePanel : MonoBehaviour
 {
     static readonly CultureInfo German = CultureInfo.GetCultureInfo("de-DE");
@@ -158,13 +158,19 @@ public sealed class ChallengePanel : MonoBehaviour
     static Sprite Icon(string metric)
     {
         if (metric.StartsWith("total-", StringComparison.Ordinal)) metric=metric.Substring(6);
+        if (metric == "artifacts-xxl" || metric == "specific-artifact-xxl" || metric == "artifacts" || metric == "specific-artifact") {
+            foreach (var sprite in Resources.LoadAll<Sprite>("ArtifactPointMedallions"))
+                if (sprite.name == "ArtifactPoint_Sun") return sprite;
+        }
         int part=metric switch {"resources"=>0,"depth"=>1,"crafted"=>2,"copper"=>3,"sales"=>4,"torches"=>5,_=>-1};
         if(part>=0)return ChallengeArt.Sprite(part);
         Item item = metric switch {
-            "depth" => Item.IronLadder, "rare" => Item.Diamond, "victory" => Item.Ultronium,
-            "exotics" => Item.PercussionHammer, "regions" or "discoveries" => Item.Torche,
-            "crafts" => Item.IronPickaxe, "resources" => Item.Gold, "coal"=>Item.Coal, "iron"=>Item.Iron,
-            "silver"=>Item.Silver,"gold"=>Item.Gold,"ladders"=>Item.IronLadder, _ => Item.CopperPickaxe
+            "depth" => Item.IronLadder, "rare" or "gems" or "gems-xxl" or "diamond" => Item.Diamond, "garnet" => Item.OrangeGarnet, "ruby" => Item.Ruby, "emerald" => Item.Emerald, "victory" or "ultronium-xxl" => Item.Ultronium,
+            "visited-layers" or "revealed-cells" or "altars-found" or "artifact-variety" or "round-trip" => Item.Torche, "exotics" => Item.PercussionHammer, "regions" or "discoveries" => Item.Torche,
+            "pickaxe-upgrades" or "tools-crafted" or "crafts" => Item.IronPickaxe, "gear-crafted" or "carrying-upgrades" => Item.Backpack, "dynamite-crafted" => Item.Dynamite, "medkits-crafted" => Item.Medkit, "energy-upgrades" => Item.EnergyStorageVial, "resources" => Item.Gold, "coal"=>Item.Coal, "iron"=>Item.Iron,
+            "silver"=>Item.Silver,"gold"=>Item.Gold,"ladders"=>Item.IronLadder,
+            "platinum"=>Item.Platinum,"titanium"=>Item.Titanium,"obsidian"=>Item.Obsidian,
+            "trees"=>Item.Axe,"grass"=>Item.Scythe,"surface-blocks" or "l2-blocks" or "l3-blocks" or "l4-xxl" or "l5-xxl"=>Item.CopperPickaxe,"artifacts"=>Item.Torche, _ => Item.CopperPickaxe
         };
         var catalog = Resources.Load<ItemCatalog>("ItemCatalog");
         if (catalog) foreach (var entry in catalog.items) if (entry && entry.item == item && entry.icon) return entry.icon;
@@ -175,12 +181,15 @@ public sealed class ChallengePanel : MonoBehaviour
     {
         if (metric.StartsWith("total-", StringComparison.Ordinal)) metric=metric.Substring(6);
         string unit = metric switch {
-            "depth" => "Blöcke Tiefe", "regions" => "Gebiete", "variety" => "Erzarten", "resources" => "Erze",
+            "visited-layers"=>"Schichten besucht", "revealed-cells"=>"Kartenfelder", "altars-found"=>"Altäre entdeckt", "artifact-variety"=>"Artefakttypen", "round-trip"=>challenge.subject ?? "Expeditionen", "depth" => "Blöcke Tiefe", "regions" => "Gebiete", "variety" => "Erzarten", "resources" => "Erze", "gems" or "gems-xxl" => "Edelsteine", "ultronium-xxl" => "Ultronium", "garnet" => "Granat", "ruby" => "Rubine", "emerald" => "Smaragde", "diamond" => "Diamanten",
             "crafted"=>"Gegenstände hergestellt","copper"=>"Kupfer","sales"=>"$ verkauft","torches"=>"Fackeln hergestellt",
-            "crafts" => "Herstellungen", "exotics" => "Exotics hergestellt", "rare" => "seltene Erzarten",
+            "dynamite-crafted"=>"Dynamit hergestellt", "medkits-crafted"=>"Medkits hergestellt", "pickaxe-upgrades"=>"Spitzhacken-Upgrades", "tools-crafted"=>"Werkzeuge hergestellt", "gear-crafted"=>"Ausrüstungen hergestellt", "energy-upgrades"=>"Energie-Upgrades", "carrying-upgrades"=>"Traglast-Upgrades", "crafts" => "Herstellungen", "exotics" => "Exotics hergestellt", "rare" => "seltene Erzarten",
             "discoveries" => "Entdeckungen", "victory" => "Siege",
-            "coal"=>"Kohle","iron"=>"Eisen","silver"=>"Silber","gold"=>"Gold","ladders"=>"Leitern hergestellt", _ => ""
+            "coal"=>"Kohle","iron"=>"Eisen","silver"=>"Silber","gold"=>"Gold","ladders"=>"Leitern hergestellt",
+            "platinum"=>"Platin","titanium"=>"Titan","obsidian"=>"Obsidian",
+            "trees"=>"Bäume gefällt","grass"=>"Grasbüschel geerntet","surface-blocks"=>"Oberflächenblöcke","l2-blocks"=>"Blöcke aus L2","l3-blocks"=>"Blöcke aus L3","l4-xxl"=>"Blöcke aus L4","l5-xxl"=>"Blöcke aus L5","artifacts" or "specific-artifact" or "artifacts-xxl" or "specific-artifact-xxl"=>"Artefakte abgebaut", _ => ""
         };
+        if ((metric == "specific-artifact" || metric == "specific-artifact-xxl") && !string.IsNullOrEmpty(challenge.subject)) unit = challenge.subject;
         return challenge.current.ToString("N0", German) + " / " + challenge.target.ToString("N0", German) + " " + unit;
     }
 

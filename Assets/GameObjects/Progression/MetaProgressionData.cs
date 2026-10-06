@@ -71,6 +71,7 @@ using UnityEngine;
 
 [Serializable] public sealed class MetaProfile
 {
+    public int reachedMiningLayer;
     public long periodRewardXp, challengeClockUtc;
     public List<MetaChallengePeriodState> challengePeriods = new();
     public int version = 1;
@@ -84,7 +85,7 @@ using UnityEngine;
 
 public sealed class MetaChallengeProgress
 {
-    public string id, name, metric;
+    public string id, name, metric, subject;
     public int current, target, xp;
     public bool completed, permanent;
 }

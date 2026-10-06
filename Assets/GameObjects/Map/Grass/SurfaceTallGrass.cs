@@ -58,7 +58,7 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     public SavedGrassland CaptureRunState()
     {
         var saved = new List<SavedGrass>();
-        foreach (var patch in patches.Values) if (patch) saved.Add(new SavedGrass { cell = patch.SurfaceCellX, herb = patch.IsHealingHerb });
+        foreach (var patch in patches.Values) if (patch) saved.Add(new SavedGrass { cell = patch.SurfaceCellX, herb = patch.IsHealingHerb, harvestId = patch.HarvestId });
         return new SavedGrassland { patches = saved.ToArray(), sites = sites.ToArray(), herbSites = new List<int>(healingHerbSites).ToArray(),
             respawn = Mathf.Max(0, nextRespawn - Time.time), conversion = float.IsPositiveInfinity(nextConversion) ? -1 : Mathf.Max(0, nextConversion - Time.time) };
     }
@@ -73,6 +73,7 @@ public sealed class SurfaceTallGrass : MonoBehaviour
             if (!map.Terrain.HasTile(new Vector3Int(saved.cell, 0)) || patches.ContainsKey(saved.cell)) continue;
             if (saved.herb) healingHerbSites.Add(saved.cell);
             Spawn(saved.cell, map.Terrain.GetCellCenterWorld(new Vector3Int(saved.cell, 0)).x);
+            if (patches.TryGetValue(saved.cell, out var restored)) restored.RestoreHarvestId(saved.harvestId);
         }
         nextRespawn = Time.time + state.respawn; nextConversion = state.conversion < 0 ? float.PositiveInfinity : Time.time + state.conversion;
     }
@@ -457,6 +458,8 @@ public sealed class SurfaceTallGrass : MonoBehaviour
             if (!particles) particles = gameObject.AddComponent<TallGrassCutParticles>();
             particles.Burst(patch.GetComponent<SpriteRenderer>().bounds);
         }
+        if (!patch.IsHealingHerb && MetaProgressionRuntime.RewardsAllowed)
+            MetaProgression.RecordSurfaceHarvest("grass", patch.HarvestId);
         RemovePatch(surfaceCellX);
         if (Application.isPlaying)
         {

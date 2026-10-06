@@ -16,7 +16,7 @@ public sealed class OreOverlayAppearance : MonoBehaviour
     static readonly int PulseRateProperty = Shader.PropertyToID("_UltroniumPulsesPerMinute");
     readonly Dictionary<Camera, OreVeinField> veinFields = new();
     readonly List<Camera> expiredViews = new();
-    Texture2D fissureArt, copperCarpet;
+    Texture2D fissureArt, copperCarpet, copperEarthWall, copperEarthTiles, copperEarthTileLayout;
     public CopperDepositPlans CopperPlans { get; } = new CopperDepositPlans();
     readonly CopperSurfaceRenderer copperSurface=new();
     public MeshRenderer CopperSurface=>copperSurface.Renderer;
@@ -60,7 +60,14 @@ public sealed class OreOverlayAppearance : MonoBehaviour
             if (fissureArt) properties.SetTexture("_VeinRelief", fissureArt);
             if (!copperCarpet) copperCarpet = Resources.Load<Texture2D>("OreVeins/CopperCarpet/Copper");
             if (copperCarpet) properties.SetTexture("_CopperCarpet", copperCarpet);
+            if (!copperEarthWall) copperEarthWall = Resources.Load<Texture2D>("OreVeins/CopperEarthWall/EarthWall");
+            if (copperEarthWall) properties.SetTexture("_CopperEarthWall", copperEarthWall);
             properties.SetFloat("_CopperCarpetEnabled", copperCarpet ? 1 : 0);
+            if (!copperEarthTiles) copperEarthTiles = Resources.Load<Texture2D>("OreVeins/CopperEarthTiles/Atlas");
+            if (copperEarthTiles) properties.SetTexture("_CopperEarthTiles", copperEarthTiles);
+            if (!copperEarthTileLayout) copperEarthTileLayout = Resources.Load<Texture2D>("OreVeins/CopperEarthTiles/Layout");
+            if (copperEarthTileLayout) properties.SetTexture("_CopperEarthTileLayout", copperEarthTileLayout);
+            properties.SetFloat("_CopperEarthTilesEnabled", copperEarthTiles && copperEarthTileLayout ? 1 : 0);
             if (!veinFields.TryGetValue(camera, out var field))
                 veinFields.Add(camera, field = new OreVeinField());
             if (field.Prepare(map, camera))

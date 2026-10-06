@@ -9,8 +9,14 @@ Shader "Mining Game/Ore Overlay Lit"
         [HideInInspector] _VeinRelief("Fissure Relief", 2D) = "black" {}
         [HideInInspector] _CopperCarpet("Continuous Copper", 2D) = "black" {}
         [HideInInspector] _CopperOutlineField("Copper Combined Contour", 2D) = "black" {}
+        [HideInInspector] _CopperEarthWall("Copper Earth Wall", 2D) = "black" {}
+        [HideInInspector] _CopperEarthTiles("Copper Earth Tiles", 2D) = "black" {}
+        [HideInInspector] _CopperEarthTileLayout("Copper Tile Cores", 2D) = "black" {}
+        [HideInInspector] _CopperEarthTilesEnabled("Copper Earth Tiles Enabled", Float) = 0
 
         [HideInInspector] _CopperCoverEnabled("Copper Earth Cover", Float) = 1
+        [HideInInspector] _CopperRecessDepth("Copper Earth Step", Float) = 2
+        [HideInInspector] _CopperWallHeight("Copper Wall Height", Float) = 0.34
         [HideInInspector] _CopperSurfacePass("Copper Surface Pass", Float) = 0
         [HideInInspector] _CopperCarpetEnabled("Copper Carpet", Float) = 0
         _ReflectionStrength("Reflection Strength", Range(0, 6)) = 2.5
@@ -104,7 +110,10 @@ Shader "Mining Game/Ore Overlay Lit"
                 float4 _TestBounds;
                 float _VeinEnabled;
                 float _CopperCarpetEnabled;
+                float _CopperEarthTilesEnabled;
                 float _CopperCoverEnabled;
+                float _CopperRecessDepth;
+                float _CopperWallHeight;
                 float _CopperSurfacePass;
                 float _VeinSeed;
                 float4 _VeinBounds;
@@ -171,9 +180,21 @@ Shader "Mining Game/Ore Overlay Lit"
             {
                 if(_CopperSurfacePass>.5)
                 {
-                    clip(_CopperCarpetEnabled-.5);
+                    clip(max(_CopperCarpetEnabled,_CopperEarthTilesEnabled)-.5);
                     float2 p=(i.positionWS.xy-_VeinGrid.zw)/_VeinGrid.xy;
-                    clip(.1-abs(VeinCell(floor(p)).x-3));
+                    float type=VeinCell(floor(p)).x;
+                    bool copper=abs(type-3)<.1;
+                    if(CopperEarthTileHost(i.positionWS.xy))
+                    {
+                        clip(copper?1:-1);
+                        return CopperEarthTileFragment(i,p);
+                    }
+                    // The upper earth face may extend over the occupied host
+                    // immediately above copper. Never paint over another ore.
+                    float heightReserve=min(.75,clamp(_CopperWallHeight,.08,.71)+.04);
+                    bool upperHost=_CopperRecessDepth>1.5 && _CopperCoverEnabled>.5 && type<.5
+                        && abs(VeinCell(floor(p-float2(0,heightReserve))).x-3)<.1;
+                    clip(copper || upperHost?1:-1);
                     clip(CopperCarpetHost(i.positionWS.xy)?1:-1);
                     return CopperCarpetFragment(i,p);
                 }
@@ -334,7 +355,10 @@ Shader "Mining Game/Ore Overlay Lit"
                 float4 _TestBounds;
                 float _VeinEnabled;
                 float _CopperCarpetEnabled;
+                float _CopperEarthTilesEnabled;
                 float _CopperCoverEnabled;
+                float _CopperRecessDepth;
+                float _CopperWallHeight;
                 float _CopperSurfacePass;
                 float _VeinSeed;
                 float4 _VeinBounds;
@@ -436,7 +460,10 @@ Shader "Mining Game/Ore Overlay Lit"
                 float4 _TestBounds;
                 float _VeinEnabled;
                 float _CopperCarpetEnabled;
+                float _CopperEarthTilesEnabled;
                 float _CopperCoverEnabled;
+                float _CopperRecessDepth;
+                float _CopperWallHeight;
                 float _CopperSurfacePass;
                 float _VeinSeed;
                 float4 _VeinBounds;

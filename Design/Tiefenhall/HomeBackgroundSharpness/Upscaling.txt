@@ -1,0 +1,11 @@
+Source: Assets/Resources/Homescreen/Layer1.png, original backed up as Layer1-original.png.
+Input: 1672x941. Output: 6688x3764 (4x each axis).
+Local neural super-resolution: Real-ESRGAN ncnn Vulkan v0.2.0, model realesrgan-x4plus, tile 256.
+Official executable: https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan/releases/tag/v0.2.0
+Official model bundle: https://github.com/xinntao/Real-ESRGAN/releases/tag/v0.2.5.0
+No image-generation redesign. Neural reconstruction can synthesize edge details; this is an upscaled asset, not native 6K art.
+Output master: Layer1-upscaled-x4.png.
+Unity: retain original asset GUID, max 8192, uncompressed, no mipmaps, NPOT None.
+
+06.10.2026: Same neural 4x upscale applied to Layer2, CaveLake (L3), Layer4, Layer5, Layer6. Each original 1672x941; each output/import 6688x3764 RGB24. Originals and x4 masters retained here. All six actual Homescreen layer switches verified and QHD screenshots visually inspected. L3 water effects exclusive; layer audio selection verified. Reports: Temp/HomeAllUpscaleImport.json and Temp/HomeAllUpscalePreview.txt.
+

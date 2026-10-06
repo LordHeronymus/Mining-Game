@@ -9,6 +9,8 @@ public static class PlayerSettings
     const string SfxKey = "settings.audio.sfx";
     const string FullscreenKey = "settings.display.fullscreen";
     const string UiScaleKey = "settings.display.uiScale";
+    const string HudScaleKey = "settings.display.hudScale";
+    public const float DefaultHudScale = .8f;
     static readonly Dictionary<CanvasScaler, Vector2> References = new();
 
     public static float Master
@@ -25,6 +27,21 @@ public static class PlayerSettings
     public static float Sfx { get => PlayerPrefs.GetFloat(SfxKey, 1f); set { PlayerPrefs.SetFloat(SfxKey, Mathf.Clamp01(value)); PlayerPrefs.Save(); } }
     public static bool Fullscreen { get => PlayerPrefs.HasKey(FullscreenKey) ? PlayerPrefs.GetInt(FullscreenKey) != 0 : Screen.fullScreen; set { PlayerPrefs.SetInt(FullscreenKey, value ? 1 : 0); Screen.fullScreen = value; PlayerPrefs.Save(); } }
     public static float UiScale { get => PlayerPrefs.GetFloat(UiScaleKey, 1f); set { PlayerPrefs.SetFloat(UiScaleKey, Mathf.Clamp(value, .8f, 1.2f)); ApplyUiScale(); PlayerPrefs.Save(); } }
+    public static float HudScale
+    {
+        get => Mathf.Clamp(PlayerPrefs.GetFloat(HudScaleKey, DefaultHudScale), .5f, 1f);
+        set
+        {
+            PlayerPrefs.SetFloat(HudScaleKey, Mathf.Clamp(value, .5f, 1f));
+            ApplyHudScale();
+            PlayerPrefs.Save();
+        }
+    }
+    public static void ApplyHudScale()
+    {
+        foreach (var hud in Object.FindObjectsByType<CompactHud>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            hud.RefreshHudScale();
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Initialize()
@@ -72,8 +89,10 @@ public static class PlayerSettings
     {
         Master=1; Music=1; PlayerPrefs.DeleteKey(AmbienceKey); PlayerPrefs.DeleteKey(SfxKey);
         PlayerPrefs.DeleteKey(FullscreenKey); PlayerPrefs.DeleteKey(UiScaleKey);
+        PlayerPrefs.DeleteKey(HudScaleKey);
         PlayerPrefs.Save();
         ApplyAudio(); Screen.fullScreen = true; ApplyUiScale();
+        ApplyHudScale();
         GameBindings.RestoreDefaults();
     }
 }

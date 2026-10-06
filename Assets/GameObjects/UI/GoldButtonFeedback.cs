@@ -10,6 +10,7 @@ public sealed class GoldButtonFeedback : MonoBehaviour, IPointerEnterHandler, IP
     Button button;
     Image image, highlight, fillLayer;
     Sprite normal, hover, chosenSprite, requestedNormal, requestedHover;
+    Material artworkMaterial, artworkHoverMaterial, artworkSelectedMaterial;
     bool card, labelsStyled;
     bool hovered, focused, selectionManaged;
     float glow, fill;
@@ -59,6 +60,14 @@ public sealed class GoldButtonFeedback : MonoBehaviour, IPointerEnterHandler, IP
         highlight.color = new Color(1, 1, 1, 0);
     }
     public void SetChosen(bool chosen) { selectionManaged = true; Chosen = chosen; }
+    public void SetArtwork(Sprite baseSprite, Sprite hoverSprite, Sprite selectedSprite, Material baseMaterial = null, Material hoverMaterial = null, Material selectedMaterial = null)
+    {
+        if (!baseSprite || !hoverSprite || !selectedSprite) return;
+        normal = baseSprite; hover = hoverSprite; chosenSprite = selectedSprite;
+        image.sprite = normal; highlight.sprite = hover; fillLayer.sprite = chosenSprite;
+        artworkMaterial = baseMaterial; artworkHoverMaterial = hoverMaterial; artworkSelectedMaterial = selectedMaterial;
+        image.material = artworkMaterial; highlight.material = artworkHoverMaterial; fillLayer.material = artworkSelectedMaterial;
+    }
     public void OnPointerEnter(PointerEventData data) => hovered = true;
     public void OnPointerExit(PointerEventData data) => hovered = false;
     public void OnSelect(BaseEventData data) => focused = true;
@@ -70,7 +79,7 @@ public sealed class GoldButtonFeedback : MonoBehaviour, IPointerEnterHandler, IP
         glow = Mathf.Lerp(glow, enabled && (hovered || focused || Chosen) ? 1 : 0, 1 - Mathf.Exp(-9 * Time.unscaledDeltaTime));
         fill = Mathf.Lerp(fill, enabled && (Chosen || !selectionManaged && focused && !hovered) ? 1 : 0, 1 - Mathf.Exp(-9 * Time.unscaledDeltaTime));
         image.sprite = normal;
-        image.type = Image.Type.Sliced; image.material = null;
+        image.type = Image.Type.Sliced; image.material = artworkMaterial;
         var size = image.rectTransform.rect.size;
         image.pixelsPerUnitMultiplier = normal.rect.height / Mathf.Max(1, card ? Mathf.Min(size.x, size.y) : size.y);
         if (!labelsStyled)
@@ -112,3 +121,4 @@ public sealed class GoldButtonFeedback : MonoBehaviour, IPointerEnterHandler, IP
         }
     }
 }
+

@@ -24,7 +24,7 @@ public class InventoryManager : MonoBehaviour
     public float CarryingCapacity => (upgradeSettings ? upgradeSettings.GetCarryingCapacity(carryingCapacityLevel) : 30f) + MetaProgression.CurrentLoadout.carryCapacityBonus;
     public float MaximumWeight => CarryingCapacity * 3f;
     public ItemSO EquippedPickaxe { get; private set; }
-    int EquippedPickaxeLevel
+    public int EquippedPickaxeLevel
     {
         get
         {

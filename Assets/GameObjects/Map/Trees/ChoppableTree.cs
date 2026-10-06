@@ -47,14 +47,16 @@ public sealed class ChoppableTree : MonoBehaviour
     int reachGlowLevel;
 
     public int SurfaceCellX { get; private set; }
+    string harvestId;
     public SavedTree CaptureRunState(int variant) => new SavedTree { cell = SurfaceCellX, variant = variant,
         position = transform.position, height = fullHeight, health = health, growth = sizeBonusRatio,
         sproutScale = sprouting ? transform.localScale.y / Mathf.Max(.001f, fullScale) : 1f,
-        sproutElapsed = sproutElapsed, pendingWood = pendingWoodYield };
+        sproutElapsed = sproutElapsed, pendingWood = pendingWoodYield, harvestId = harvestId };
     public string SourceSpriteName => swaySprite ? swaySprite.name.Replace(" Sway", "") : "";
     public bool IsFalling => falling;
     public void RestoreRunState(SavedTree state)
     {
+        harvestId = string.IsNullOrEmpty(state.harvestId) ? "legacy-tree:" + state.cell : state.harvestId;
         health = state.health; sizeBonusRatio = Mathf.Clamp(state.growth, 0, maximumSizeBonusRatio);
         pendingWoodYield = state.pendingWood;
         transform.localScale = Vector3.one * fullScale * Mathf.Clamp(state.sproutScale, .05f, 1f) * GrowthFactor;
@@ -94,6 +96,7 @@ public sealed class ChoppableTree : MonoBehaviour
     {
         owner = forest;
         SurfaceCellX = surfaceCellX;
+        harvestId = System.Guid.NewGuid().ToString("N");
         wood = woodItem;
         health = Mathf.Max(1, hitPoints);
         woodMin = Mathf.Clamp(minWood, 1, 9999);
@@ -203,7 +206,10 @@ public sealed class ChoppableTree : MonoBehaviour
         EmitSplinters();
         AudioManager.Instance?.Play(SoundType.WoodChop, true);
         shake = .13f;
-        if (health <= 0f) StartCoroutine(Fall(attackerPosition.x < transform.position.x ? -1 : 1));
+        if (health <= 0f) {
+            if (MetaProgressionRuntime.RewardsAllowed) MetaProgression.RecordSurfaceHarvest("trees", harvestId);
+            StartCoroutine(Fall(attackerPosition.x < transform.position.x ? -1 : 1));
+        }
     }
 
     void EmitSplinters()

@@ -26,7 +26,7 @@ public static class AdditionalChallengesChecks
             MetaProgression.ChallengeTestUtc=new DateTime(2026,10,5,10,0,0,DateTimeKind.Utc);
             foreach(var period in new[]{ChallengePeriod.Daily,ChallengePeriod.Weekly,ChallengePeriod.Lifetime}) {
                 var list=MetaProgression.GetChallenges(period);
-                Check(list.Length==(period==ChallengePeriod.Lifetime?17:16),period+" count");
+                Check(list.Length==(period==ChallengePeriod.Lifetime?17:period==ChallengePeriod.Daily?8:16),period+" count");
                 Check(list.Select(c=>c.id).Distinct().Count()==list.Length,period+" unique stable IDs");
                 Check(list.All(c=>c.target>0&&c.xp>0),period+" achievable positive targets/rewards");
             }
@@ -45,8 +45,8 @@ public static class AdditionalChallengesChecks
             Check(MetaProgression.GetChallenges(ChallengePeriod.Lifetime).First(c=>c.id=="lifetime-ores").completed,
                 "Lifetime ores combine deduplicated ledgers");
             var daily=MetaProgression.GetChallenges(ChallengePeriod.Daily);
-            Check(daily.First(c=>c.id=="Daily-resources").completed&&daily.First(c=>c.id=="Daily-large-haul").completed,
-                "One event advances both resource tiers");
+            Check(!daily.Any(c=>c.id=="Daily-resources") || !daily.Any(c=>c.id=="Daily-large-haul"),
+                "Alternative resource tiers never selected together");
             long rewards=MetaProgression.Profile.periodRewardXp, xp=MetaProgression.TotalXp;
             MetaProgression.RecordResource(Item.Gold,250,"gold-B");
             Check(rewards==MetaProgression.Profile.periodRewardXp&&xp==MetaProgression.TotalXp,"Replay of ore source grants no second reward");
@@ -54,6 +54,23 @@ public static class AdditionalChallengesChecks
             for(int i=0;i<25;i++)MetaProgression.RecordDiscovery("discovery-"+i);
             MetaProgression.RecordCraftedAmount(Item.Ladder,100);
             MetaProgression.RecordCraftedAmount(Item.Torche,20);
+            for(int i=0;i<100;i++){MetaProgression.RecordSurfaceHarvest("trees","tree-"+i);MetaProgression.RecordSurfaceHarvest("grass","grass-"+i);} for(int i=0;i<500;i++)MetaProgression.RecordSurfaceBlock(new Vector3Int(i,0,0));for (int artifactIndex = 0; artifactIndex < 25; artifactIndex++) MetaProgression.RecordArtifact(new Vector3Int(artifactIndex, -10, 0), "Artifact_" + (MetaProgression.Profile.challengePeriods.First(p => p.period == 0).dailyArtifactType + 1).ToString("D2"));
+            for (int layerIndex = 0; layerIndex < 600; layerIndex++) MetaProgression.RecordLayerTwoBlock(new Vector3Int(layerIndex, -40, 0));
+            for (int layerThreeIndex = 0; layerThreeIndex < 750; layerThreeIndex++) MetaProgression.RecordLayerThreeBlock(new Vector3Int(layerThreeIndex, -160, 0));
+            foreach (var gemFixture in new[] { Item.OrangeGarnet, Item.Ruby, Item.Emerald, Item.Diamond }) MetaProgression.RecordResource(gemFixture, 100, "gem-fixture-" + gemFixture);
+            MetaProgression.RecordCraftedAmount(Item.Axe, 10);
+            foreach (var gearFixture in new[] { Item.Backpack, Item.LoadBelt, Item.CrystalPendant }) MetaProgression.RecordCraftedAmount(gearFixture, 1);
+            foreach (var upgradeMetric in new[] { "pickaxe-upgrades", "energy-upgrades", "carrying-upgrades" }) { MetaProgression.RecordCraftUpgrade(upgradeMetric, 1, 2); MetaProgression.RecordCraftUpgrade(upgradeMetric, 2, 3); }
+            MetaProgression.RecordCraftedAmount(Item.Dynamite, 20);
+            MetaProgression.RecordCraftedAmount(Item.Medkit, 10);
+            for (int revealIndex = 0; revealIndex < 1000; revealIndex++) MetaProgression.RecordRevealedCell(revealIndex, 2);
+            MetaProgression.RecordExplorationPosition(1, true);
+            for (int visitLayer = 2; visitLayer <= 5; visitLayer++) MetaProgression.RecordExplorationPosition(visitLayer, false);
+            MetaProgression.RecordExplorationPosition(1, true);
+            for (int artifactType = 1; artifactType <= 5; artifactType++) MetaProgression.RecordArtifact(new Vector3Int(artifactType, -70, 0), "Artifact_" + artifactType.ToString("D2"));
+            MetaProgression.RecordDiscovery("altar");
+            MetaProgression.RecordDepth(1000);MetaProgression.RecordSale(20000);
+            foreach(var item in new[]{Item.Platinum,Item.Titanium,Item.Obsidian}) MetaProgression.RecordResource(item,500,"extra-"+item);
             foreach(var item in new[]{Item.IronLadder,Item.LavaLamp,Item.PercussionHammer}) {
                 MetaProgression.RecordCraftedAmount(item,1,true);
                 MetaProgression.RecordExoticCraft(item);
@@ -63,7 +80,7 @@ public static class AdditionalChallengesChecks
                 MetaProgression.RecordVictory();MetaProgression.EndRun();
             }
             foreach(var period in new[]{ChallengePeriod.Daily,ChallengePeriod.Weekly}) {
-                var list=MetaProgression.GetChallenges(period).Skip(6).ToArray();
+                var list=period==ChallengePeriod.Daily ? MetaProgression.GetChallenges(period) : MetaProgression.GetChallenges(period).Skip(6).ToArray();
                 foreach(var c in list)Check(c.completed,period+" reachable: "+c.id);
             }
             foreach(var c in MetaProgression.GetChallenges(ChallengePeriod.Lifetime).Where(c=>c.id.StartsWith("lifetime-")))
@@ -95,7 +112,7 @@ public static class AdditionalChallengesChecks
             bool valid=(bool)typeof(MetaProgression).GetMethod("TryRead",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,args);
             Check(valid,"Previous six-counter profile accepted");
             var migrated=(MetaProfile)args[1];
-            Check(migrated.challengePeriods[0].counters.Length==16&&migrated.challengePeriods[0].rewarded.Take(6).All(v=>v),
+            Check(migrated.challengePeriods[0].counters.Length==52&&migrated.challengePeriods[0].rewarded.Take(6).All(v=>v),
                 "Migration preserves original six completions");
             Check(migrated.challengePeriods[0].counters.Skip(6).All(v=>v==0)&&migrated.periodRewardXp==900,
                 "New goals start empty and earned XP stays intact");

@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-// Four hotbar-style status modules, a fixed pickaxe slot and eight item slots.
+// The approved V1 corner plaques and a shared nine-socket tool tray.
 public sealed class CompactHud : MonoBehaviour
 {
     public Sprite stripSprite, slotSprite, selectedSprite, badgeSprite, barSprite, heartSprite, boltSprite, coinSprite, pickaxeSprite;
@@ -33,9 +33,11 @@ public sealed class CompactHud : MonoBehaviour
             UnityEngine.Object.FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include)?.RefreshHotbarIconLayouts();
         }
     }
-    Sprite statusFrame;
-    void OnDestroy() { if (statusFrame) Destroy(statusFrame); }
-    RectTransform top, hotbar;
+    RectTransform top, counters, hotbar;
+    const float HotbarHeight = 144f, SocketSize = 110f, SlotGap = 8f, HotbarPadding = 32f;
+    const float SocketVisibleInsets = 10f * SocketSize / 156f;
+    const float PickaxeGap = (SlotGap + SocketVisibleInsets) * 3f - SocketVisibleInsets;
+    const float HotbarWidth = HotbarPadding * 2f + SocketSize * 9f + SlotGap * 7f + PickaxeGap;
     Transform hotbarOverlayParent;
     InventoryUI inventoryPanel;
     CanvasGroup visibility;
@@ -124,6 +126,7 @@ public sealed class CompactHud : MonoBehaviour
     }
     void LateUpdate()
     {
+        RefreshHotbarSpacing();
         if (draggedSlot > 0) MoveDraggedIcon(Input.mousePosition);
         var stats = StatsManager.Instance;
         if (observedStats != stats)
@@ -459,16 +462,30 @@ public sealed class CompactHud : MonoBehaviour
         ItemIconLayout.Apply(item, icon, new Vector2(0, HotbarIconVerticalOffset));
     }
     void OnRectTransformDimensionsChange() => Fit();
+    public void RefreshHudScale() => Fit();
+    void RefreshHotbarSpacing()
+    {
+        if (!hotbar || Mathf.Approximately(hotbar.sizeDelta.x, HotbarWidth)) return;
+        hotbar.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, HotbarWidth);
+        for (int i = 0; i < 9; i++)
+        {
+            var slot = hotbar.Find("Slot " + (i + 1)) as RectTransform;
+            if (!slot) continue;
+            float x = i == 0 ? HotbarPadding : HotbarPadding + SocketSize + PickaxeGap + (i - 1) * (SocketSize + SlotGap);
+            slot.anchoredPosition = new Vector2(x, slot.anchoredPosition.y);
+        }
+    }
     void Fit()
     {
-        if (!top || !hotbar) return;
+        if (!top || !counters || !hotbar) return;
         var rect = ((RectTransform)transform).rect;
-        float scale = Mathf.Min(rect.width / 1920f, rect.height / 1080f);
+        float scale = Mathf.Min(rect.width / 1920f, rect.height / 1080f) *
+            (PlayerSettings.HudScale / PlayerSettings.DefaultHudScale);
         hotbar.localScale = Vector3.one * scale;
-        // Match the approved compact HUD to the hotbar width, preserving its artwork proportions.
-        top.localScale = Vector3.one * (scale * hotbar.rect.width / top.rect.width);
-        top.anchoredPosition = new Vector2(0, -12 * scale);
-        hotbar.anchoredPosition = new Vector2(0, 16 * scale);
+        top.localScale = counters.localScale = Vector3.one * scale;
+        top.anchoredPosition = new Vector2(18 * scale, -14 * scale);
+        counters.anchoredPosition = new Vector2(-18 * scale, -14 * scale);
+        hotbar.anchoredPosition = new Vector2(0, 26 * scale);
     }
     RectTransform Rect(string name, Transform parent, float x, float y, float w, float h)
     {
@@ -486,85 +503,110 @@ public sealed class CompactHud : MonoBehaviour
     TextMeshProUGUI Text(string name, Transform parent, string value, float x, float y, float w, float h, float size, TextAlignmentOptions align = TextAlignmentOptions.Midline)
     {
         var t=Rect(name,parent,x,y,w,h).gameObject.AddComponent<TextMeshProUGUI>();
-        t.font=font; t.fontSharedMaterial=fontMaterial; t.fontStyle=FontStyles.Bold; t.color=Cream;
+        var titleFont=Resources.Load<TMP_FontAsset>("ArtifactDiscovery/TitleFont");
+        t.font=titleFont ? titleFont : font;
+        t.fontSharedMaterial=titleFont ? titleFont.material : fontMaterial;
+        t.fontStyle=FontStyles.Normal; t.color=Cream;
         t.text=value; t.fontSize=size; t.alignment=align; t.textWrappingMode=TextWrappingModes.NoWrap; t.raycastTarget=false;
         t.enableAutoSizing=true; t.fontSizeMin=size*.72f; t.fontSizeMax=size;
         return t;
     }
     HudGemBar Bar(string name, float y, Sprite icon, Color tint, string value, out TextMeshProUGUI text)
     {
-        var symbol=Image(name+" Icon",top,20,y+2,36,36,icon,Color.white); symbol.preserveAspect=true;
-        var fill=Rect(name+" Fill",top,64,y,378,38).gameObject.AddComponent<HudGemBar>();
+        var symbol=Image(name+" Icon",top,4,y,40,46,name=="Health" ? RoundHudArt.Heart : RoundHudArt.Bolt,Color.white); symbol.preserveAspect=true;
+        symbol.rectTransform.pivot=new Vector2(.5f,.5f);
+        symbol.rectTransform.anchoredPosition=new Vector2(24,-(y+25));
+        var fill=Rect(name+" Fill",top,49,y,439,50).gameObject.AddComponent<HudGemBar>();
         fill.GemColor=tint;
+        fill.RoundJewels=true;
         fill.DecorativeEndCaps=false;
         fill.raycastTarget=false;
         text=Text(name+" Value",top,value,330,y,92,24,14,TextAlignmentOptions.MidlineRight);
         text.gameObject.SetActive(false);
         return fill;
     }
-    void StatusModule(string name, float x, float width)
+    Image Frame(string name, Transform parent, float width, float height, string art, float cornerHeight)
     {
-        var source=HomeUi.Sprite("SelectionCardNormal");
-        if (!statusFrame)
-        {
-            var rect=source.rect; rect.x+=32; rect.y+=32; rect.width-=64; rect.height-=64;
-            statusFrame=Sprite.Create(source.texture,rect,new Vector2(.5f,.5f),100,0,SpriteMeshType.FullRect,new Vector4(160,160,160,160));
-            statusFrame.name="HUD Protected Corners";
-        }
-        var sprite=statusFrame;
-        var panel=Image(name,top,x,0,width,116,sprite,Color.white);
+        var sprite=Resources.Load<Sprite>("HUDv1/"+art);
+        var panel=Image(name,parent,0,0,width,height,sprite ? sprite : HomeUi.Sprite("SelectionCardNormal"),Color.white);
         panel.type=UnityEngine.UI.Image.Type.Sliced;
-        panel.pixelsPerUnitMultiplier=sprite.rect.height/80f;
+        panel.pixelsPerUnitMultiplier=panel.sprite.rect.height/cornerHeight;
+        panel.material=HudV1Art.DarkWood(panel.sprite);
         panel.raycastTarget=true;
+        return panel;
     }
     TextMeshProUGUI StatusText(string name, string value, float x, float y, float width, float height, float size)
     {
-        var text=Text(name,top,value,x,y,width,height,size,TextAlignmentOptions.Center);
-        var titleFont=Resources.Load<TMP_FontAsset>("ArtifactDiscovery/TitleFont");
-        if(titleFont) { text.font=titleFont; text.fontSharedMaterial=titleFont.material; }
-        text.fontStyle=FontStyles.Normal;
-        return text;
+        return Text(name,counters,value,x,y,width,height,size,TextAlignmentOptions.Center);
+    }
+    void CounterDivider(float x)
+    {
+        var sprite=Resources.Load<Sprite>("HUDv1/Divider");
+        Image("Brass Divider",counters,x+3,13,6,80,sprite,Color.white);
+        var cap=Resources.Load<Sprite>("HUDv1/DividerCap");
+        Image("Divider Top",counters,x,7,12,13,cap,Color.white);
+        var bottom=Image("Divider Bottom",counters,x,86,12,13,cap,Color.white);
+        bottom.rectTransform.localScale=new Vector3(1,-1,1);
+        bottom.rectTransform.anchoredPosition+=new Vector2(0,-13);
+    }
+    Image Socket(string name, float x)
+    {
+        var normal=Resources.Load<Sprite>("HUDv1/SocketNormal");
+        var hover=Resources.Load<Sprite>("HUDv1/SocketHover");
+        var chosen=Resources.Load<Sprite>("HUDv1/SocketSelected");
+        var bg=Image(name,hotbar,x,17,SocketSize,SocketSize,normal ? normal : slotSprite,Color.white);
+        bg.raycastTarget=true;
+        var button=bg.gameObject.AddComponent<Button>(); button.targetGraphic=bg;
+        var feedback=GoldButtonFeedback.Apply(button,slotSprite,selectedSprite);
+        if(normal && hover && chosen) feedback.SetArtwork(normal,normal,normal,HudV1Art.DarkWood(normal),HudV1Art.SocketHover(normal),HudV1Art.SocketSelected(normal,chosen));
+        button.navigation=new Navigation {mode=Navigation.Mode.None};
+        return bg;
     }
     void Build()
     {
-        top=Rect("Status Strip",transform,0,12,971.2f,116); top.anchorMin=top.anchorMax=top.pivot=new Vector2(.5f,1);
-        StatusModule("Vitals Module",0,462);
-        StatusModule("Money Module",468,198);
-        StatusModule("Points Module",672,159);
-        StatusModule("Depth Module",837,134.2f);
-        healthFill=Bar("Health",16,heartSprite,new Color(.92f,.055f,.075f),"100 / 100",out healthValue);
-        energyFill=Bar("Energy",62,boltSprite,new Color(1,.68f,.035f),"",out energyValue);
-        var coin=Image("Coin",top,484,29,58,58,coinSprite,Color.white); coin.preserveAspect=true;
-        moneyValue=StatusText("Money","",549,27,104,62,36);
-        StatusText("Points Label","Punkte",682,19,139,32,27);
-        pointsValue=StatusText("Points","",682,49,139,48,37);
-        StatusText("Depth Label","Tiefe",847,19,114.2f,32,27);
-        depthValue=StatusText("Depth","",847,49,114.2f,48,37);
-        hotbar=Rect("Hotbar",transform,0,0,658,66); hotbar.anchorMin=hotbar.anchorMax=hotbar.pivot=new Vector2(.5f,0);
-        var pickaxe=Image("Slot 1",hotbar,0,0,66,66,slotSprite,Color.white); pickaxe.raycastTarget=true;
-        var pickaxeButton=pickaxe.gameObject.AddComponent<Button>(); pickaxeButton.targetGraphic=pickaxe;
-        GoldButtonFeedback.Apply(pickaxeButton, slotSprite, selectedSprite);
-        pickaxeButton.navigation=new Navigation {mode=Navigation.Mode.None}; pickaxeButton.onClick.AddListener(()=>SelectSlot(0));
-        selections[0]=Image("Selection",pickaxe.transform,0,0,66,66,selectedSprite,Color.white);
-        var pickaxeImage=Image("Pickaxe",pickaxe.transform,9,9,48,48,pickaxeSprite,Color.white); pickaxeImage.preserveAspect=true;
+        top=Rect("Status Strip",transform,0,0,500,114);
+        top.anchorMin=top.anchorMax=top.pivot=new Vector2(0,1);
+        healthFill=Bar("Health",2,heartSprite,new Color(.92f,.055f,.075f),"100 / 100",out healthValue);
+        energyFill=Bar("Energy",56,boltSprite,new Color(1,.68f,.035f),"",out energyValue);
+        counters=Rect("Counters",transform,0,0,596,106);
+        counters.anchorMin=counters.anchorMax=counters.pivot=new Vector2(1,1);
+        Frame("Counter Frame",counters,596,106,"Vitals",85);
+        CounterDivider(224); CounterDivider(410);
+        var coin=Image("Coin",counters,38,25,58,58,coinSprite,Color.white); coin.preserveAspect=true;
+        moneyValue=StatusText("Money","",110,20,105,66,36);
+        StatusText("Points Label","Punkte",243,16,149,29,27);
+        pointsValue=StatusText("Points","",243,45,149,46,37);
+        StatusText("Depth Label","Tiefe",430,16,137,29,27);
+        depthValue=StatusText("Depth","",430,45,137,46,37);
+        hotbar=Rect("Hotbar",transform,0,0,HotbarWidth,HotbarHeight);
+        hotbar.anchorMin=hotbar.anchorMax=hotbar.pivot=new Vector2(.5f,0);
+        var tray=hotbar.gameObject.AddComponent<Image>();
+        tray.sprite=Resources.Load<Sprite>("HUDv1/Tray");
+        tray.type=UnityEngine.UI.Image.Type.Sliced;
+        tray.pixelsPerUnitMultiplier=tray.sprite ? tray.sprite.rect.height/102f : 1;
+        tray.material=HudV1Art.DarkWood(tray.sprite);
+        tray.raycastTarget=true;
+        var pickaxe=Socket("Slot 1",HotbarPadding);
+        var pickaxeButton=pickaxe.GetComponent<Button>();
+        pickaxeButton.onClick.AddListener(()=>SelectSlot(0));
+        selections[0]=Image("Selection",pickaxe.transform,0,0,SocketSize,SocketSize,selectedSprite,Color.white);
+        var pickaxeImage=Image("Pickaxe",pickaxe.transform,12,12,86,86,pickaxeSprite,Color.white); pickaxeImage.preserveAspect=true;
         pickaxeIcon=pickaxeImage;
         for(int i=0;i<8;i++)
         {
-            int index=i+1; var bg=Image("Slot "+(i+2),hotbar,86+i*72,0,66,66,slotSprite,Color.white); bg.raycastTarget=true;
-            buttons[i]=bg.gameObject.AddComponent<Button>(); buttons[i].targetGraphic=bg;
-            GoldButtonFeedback.Apply(buttons[i], slotSprite, selectedSprite);
-            buttons[i].navigation=new Navigation {mode=Navigation.Mode.None};
+            int index=i+1; var bg=Socket("Slot "+(i+2),HotbarPadding+SocketSize+PickaxeGap+i*(SocketSize+SlotGap));
+            buttons[i]=bg.GetComponent<Button>();
             slotDrags[i] = bg.gameObject.AddComponent<HotbarSlotDrag>();
             slotDrags[i].hud = this; slotDrags[i].slotIndex = index;
             int slot = i;
             buttons[i].onClick.AddListener(()=> { if (!slotDrags[slot].ConsumeClick()) ActivateHotbarSlot(index); });
-            selections[i+1]=Image("Selection",bg.transform,0,0,66,66,selectedSprite,Color.white);
-            icons[i]=Image("Item",bg.transform,9,9,48,48,null,Color.white); icons[i].preserveAspect=true;
-            Text("Key",bg.transform,(i+1).ToString(),7,5,15,17,15);
-            var badge=Image("Count Badge",bg.transform,20,46,40,16,badgeSprite,Color.white);
+            selections[i+1]=Image("Selection",bg.transform,0,0,SocketSize,SocketSize,selectedSprite,Color.white);
+            icons[i]=Image("Item",bg.transform,12,12,86,86,null,Color.white); icons[i].preserveAspect=true;
+            Text("Key",bg.transform,(i+1).ToString(),10,5,26,29,27,TextAlignmentOptions.TopLeft);
+            var badge=Image("Count Badge",bg.transform,0,0,40,27,null,new Color(0,0,0,0));
             badge.rectTransform.anchorMin=badge.rectTransform.anchorMax=badge.rectTransform.pivot=new Vector2(1,0);
-            badge.rectTransform.anchoredPosition=new Vector2(-6,4);
-            counts[i]=Text("Count",badge.transform,"",0,0,32,16,13,TextAlignmentOptions.Midline);
+            badge.rectTransform.anchoredPosition=new Vector2(-9,8);
+            counts[i]=Text("Count",badge.transform,"",0,0,32,27,25,TextAlignmentOptions.BottomRight);
             counts[i].enableAutoSizing=false;
             counts[i].rectTransform.anchorMin=Vector2.zero;
             counts[i].rectTransform.anchorMax=Vector2.one;
@@ -574,3 +616,10 @@ public sealed class CompactHud : MonoBehaviour
         Fit();
     }
 }
+
+
+
+
+
+
+

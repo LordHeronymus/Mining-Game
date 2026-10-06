@@ -19,7 +19,9 @@ public sealed class ChallengePeriodsProbe:MonoBehaviour {
  const string Output="Assets/Design/Tiefenhall/ChallengePeriods/UpgradeStyle";
  string previous;DateTime? previousClock;MetaProgressionPanel owner;int checks;bool clean;
  void Check(bool ok,string label){if(!ok)throw new Exception(label);File.AppendAllText(Report,"PASS "+(++checks)+" "+label+"\n");}
- int Count(ChallengePeriod period,string metric)=>MetaProgression.GetChallenges(period).First(c=>c.metric==metric).current;
+ int Count(ChallengePeriod period,string metric)=>MetaProgression.GetChallenges(period).FirstOrDefault(c=>c.metric==metric)?.current ?? 0;
+ // Fixed valid draw for this event/UI fixture; randomized draws have their own regression suite.
+ void CoreDaily(){MetaProgression.GetChallenges(ChallengePeriod.Daily);var day=MetaProgression.Profile.challengePeriods.First(p=>p.period==0);day.dailySelection=new[]{0,1,2,3,4,5,10,13};day.dailyVariants=new int[52];}
  IEnumerator Start() {
   previous=MetaProgression.TestDirectory;previousClock=MetaProgression.ChallengeTestUtc;
   MetaProgression.TestDirectory=Path.GetFullPath("Temp/ChallengeV3-"+DateTime.UtcNow.Ticks);
@@ -36,32 +38,34 @@ public sealed class ChallengePeriodsProbe:MonoBehaviour {
  IEnumerator Run() {
   MetaProgression.ChallengeTestUtc=new DateTime(2026,10,5,10,0,0,DateTimeKind.Utc);
   MetaProgression.BeginRun("period-core");
-  Check(MetaProgression.GetChallenges(ChallengePeriod.Daily).Length==16,"Sixteen daily tasks");
+  CoreDaily();
+  Check(MetaProgression.GetChallenges(ChallengePeriod.Daily).Length==8,"Eight daily tasks");
   Check(MetaProgression.GetChallenges(ChallengePeriod.Weekly).Length==16,"Sixteen weekly tasks");
   Check(MetaProgression.GetChallenges(ChallengePeriod.Lifetime).Length==17,"Seventeen lifetime milestones");
   MetaProgression.RecordResource(Item.Copper,50,"core-source");
   Check(Count(ChallengePeriod.Daily,"resources")==50 && Count(ChallengePeriod.Weekly,"resources")==50,"Mining feeds both periods");
-  Check(MetaProgression.Profile.periodRewardXp==250,"Daily ore and copper rewards exactly once");
+  Check(MetaProgression.Profile.periodRewardXp==1000,"Two small daily tasks reward exactly once");
   MetaProgression.RecordResource(Item.Copper,50,"core-source");
-  Check(Count(ChallengePeriod.Weekly,"resources")==50 && MetaProgression.Profile.periodRewardXp==250,"Stable source deduplicates replay");
+  Check(Count(ChallengePeriod.Weekly,"resources")==50 && MetaProgression.Profile.periodRewardXp==1000,"Stable source deduplicates replay");
   MetaProgression.RecordDepth(100);MetaProgression.RecordDepth(100);
   Check(Count(ChallengePeriod.Weekly,"depth")==100,"Repeated depth is not double counted");
   MetaProgression.RecordCraftedAmount(Item.Torche,3);MetaProgression.RecordCraftedAmount(Item.IronPickaxe,2);
   MetaProgression.RecordSale(1000);
   Check(MetaProgression.GetChallenges(ChallengePeriod.Daily).Take(6).All(c=>c.completed),"Original six event counters complete");
-  Check(MetaProgression.Profile.periodRewardXp==900,"Daily rewards sum to 900");
+  Check(MetaProgression.Profile.periodRewardXp==3000,"Six small daily rewards sum to 3000");
   var saved=MetaProgression.CaptureRunState();
   Check(MetaProgression.Save(),"Profile save succeeds");
   long xp=MetaProgression.TotalXp;
   MetaProgression.Reload();MetaProgression.BeginRun("period-core",saved);
-  Check(MetaProgression.TotalXp==xp && MetaProgression.Profile.periodRewardXp==900,"Reload retains period XP without duplicate awards");
+  Check(MetaProgression.TotalXp==xp && MetaProgression.Profile.periodRewardXp==3000,"Reload retains period XP without duplicate awards");
   Check(MetaProgression.GetChallenges(ChallengePeriod.Daily).Take(6).All(c=>c.completed),"Reload retains counters and completed flags");
   MetaProgression.ChallengeTestUtc=new DateTime(2026,10,6,10,0,0,DateTimeKind.Utc);
+  CoreDaily();
   Check(Count(ChallengePeriod.Daily,"resources")==0,"Daily rollover clears daily counters");
   Check(Count(ChallengePeriod.Weekly,"resources")==50,"Daily rollover preserves weekly counters");
-  Check(MetaProgression.Profile.periodRewardXp==900,"Rollover preserves earned XP");
+  Check(MetaProgression.Profile.periodRewardXp==3000,"Rollover preserves earned XP");
   MetaProgression.RecordResource(Item.Copper,50,"next-day-source");
-  Check(MetaProgression.Profile.periodRewardXp==1150,"Next day grants fresh daily reward");
+  Check(MetaProgression.Profile.periodRewardXp==4000,"Next day grants fresh daily reward");
   MetaProgression.ChallengeTestUtc=new DateTime(2026,10,5,10,0,0,DateTimeKind.Utc);
   Check(MetaProgression.GetChallenges(ChallengePeriod.Daily).First(c=>c.metric=="resources").completed,"Clock rollback cannot reopen previous day");
   MetaProgression.ChallengeTestUtc=new DateTime(2026,10,12,10,0,0,DateTimeKind.Utc);
@@ -78,6 +82,7 @@ public sealed class ChallengePeriodsProbe:MonoBehaviour {
   MetaProgression.TestDirectory=Path.GetFullPath("Temp/ChallengeV3-view-"+DateTime.UtcNow.Ticks);
   MetaProgression.ChallengeTestUtc=new DateTime(2026,10,5,12,0,0,DateTimeKind.Utc);
   MetaProgression.BeginRun("v3-preview");
+  CoreDaily();
   MetaProgression.RecordResource(Item.Iron,10,"iron");MetaProgression.RecordResource(Item.Copper,8,"copper");
   MetaProgression.RecordDepth(42);MetaProgression.RecordCraftedAmount(Item.Torche,3);MetaProgression.RecordSale(350);
   MetaProgression.EndRun();
@@ -87,19 +92,19 @@ public sealed class ChallengePeriodsProbe:MonoBehaviour {
   var panel=Object.FindFirstObjectByType<ChallengePanel>();
   Check(panel!=null,"Real overview button opens V3");
   var scroll=panel.GetComponentInChildren<ScrollRect>();
-  Check(scroll.content.Cast<Transform>().Count(t=>t.gameObject.activeSelf)==16,"Sixteen daily cards present");
-  Check(scroll.verticalScrollbar.gameObject.activeInHierarchy,"Sixteen cards have scrollbar");
+  Check(scroll.content.Cast<Transform>().Count(t=>t.gameObject.activeSelf)==8,"Eight daily cards present");
+  Check(scroll.verticalScrollbar.gameObject.activeInHierarchy,"Eight cards have scrollbar");
   Check(panel.GetComponentsInChildren<Button>().Count(b=>b.name.StartsWith("Challenge Tab"))==3,"Three real category controls");
   var tile=scroll.content.Find("Challenge Daily-resources");
   Check(tile.Find("Icon").GetComponent<Image>().sprite.name=="Challenge Art 0","Freestanding reference icon");
-  Check(tile.Find("XP Plaque/Reward").GetComponent<TMP_Text>().text=="+150 XP","XP plaque displays live reward");
+  Check(tile.Find("XP Plaque/Reward").GetComponent<TMP_Text>().text=="+500 XP","XP plaque displays live small reward");
   var fill=tile.Find("Progress Track/Interior/Progress Fill").GetComponent<RectTransform>();
   Check(Mathf.Abs(fill.anchorMax.x-.36f)<.001f,"Progress fill matches 18 of 50");
   Check(scroll.content.Find("Challenge Daily-torches/Completed")!=null,"Completed card has gold seal");
   Check(panel.GetComponentsInChildren<TMP_Text>().All(t=>!t.isTextOverflowing),"Visible text fits");
   yield return new WaitForEndOfFrame();Save("Challenges-V3-Daily");
   scroll.verticalNormalizedPosition=0;yield return null;Canvas.ForceUpdateCanvases();
-  var lastDaily=scroll.content.Find("Challenge Daily-production").GetComponent<RectTransform>();
+  var lastDaily=scroll.content.Find("Challenge Daily-ladders").GetComponent<RectTransform>();
   var bounds=RectTransformUtility.CalculateRelativeRectTransformBounds(scroll.viewport,lastDaily);
   Check(bounds.min.y>=scroll.viewport.rect.yMin && bounds.max.y<=scroll.viewport.rect.yMax,"Last added daily tile fully accessible by scrolling");
   yield return new WaitForEndOfFrame();Save("Challenges-V3-Daily-Additional");

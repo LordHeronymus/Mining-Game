@@ -12,7 +12,7 @@ public static class HomeLandscapeSession {
   }
   EditorSettings.enterPlayModeOptionsEnabled=false;
   EditorSceneManager.playModeStartScene=AssetDatabase.LoadAssetAtPath<SceneAsset>("Assets/Scenes/MainMenu.unity");
-  EditorApplication.EnterPlaymode();return "Fresh MainMenu start; original scene preserved";
+  return "MainMenu start prepared; original scene preserved";
  }
  public static object Finish() {
   if(EditorApplication.isPlaying)throw new System.Exception("Stop first");
@@ -25,3 +25,4 @@ public static class HomeLandscapeSession {
   return new {scene=UnityEngine.SceneManagement.SceneManager.GetActiveScene().path,reload=EditorSettings.enterPlayModeOptionsEnabled,options=(int)EditorSettings.enterPlayModeOptions,save=GameSaveSystem.TestDirectory,meta=MetaProgression.TestDirectory};
  }
 }
+

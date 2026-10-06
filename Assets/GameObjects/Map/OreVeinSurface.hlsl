@@ -82,13 +82,15 @@ half4 VeinOreSample(float2 uv)
 }
 
 #include "CopperCarpetSurface.hlsl"
+#include "CopperEarthTiles.hlsl"
 
 half4 ConnectedOreFragment(Varyings i, float2 cellPosition, float2 cellData)
 {
     float2 cell = floor(cellPosition), anchor = VeinAnchor(cell);
     int type = (int)cellData.x - 1;
     half4 output=0;
-    if(type==2 && CopperCarpetHost(i.positionWS.xy) && _CopperCarpetEnabled>.5)
+    if(type==2 && ((CopperCarpetHost(i.positionWS.xy) && _CopperCarpetEnabled>.5) ||
+        CopperEarthTileHost(i.positionWS.xy)))
         output=0; // The complete copper surface is drawn once above the ore tilemap.
     else
     {

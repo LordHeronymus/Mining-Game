@@ -277,12 +277,28 @@ public static partial class MetaProgression
         if (item == Item.Iron) RecordPeriodProgress("iron", next - counter.count);
         if (item == Item.Silver) RecordPeriodProgress("silver", next - counter.count);
         if (item == Item.Gold) RecordPeriodProgress("gold", next - counter.count);
+        if (item == Item.Platinum) RecordPeriodProgress("platinum", next - counter.count);
+        if (item == Item.Titanium) RecordPeriodProgress("titanium", next - counter.count);
+        if (item == Item.Obsidian) RecordPeriodProgress("obsidian", next - counter.count);
+        if (item == Item.OrangeGarnet || item == Item.Ruby || item == Item.Emerald || item == Item.Diamond)
+        {
+            RecordPeriodProgress("gems", next - counter.count);
+            RecordPeriodProgress("gems-xxl", next - counter.count);
+            RecordXxlGem(item, next - counter.count);
+        }
+        if (item == Item.Ultronium) RecordPeriodProgress("ultronium-xxl", next - counter.count);
+        if (item == Item.OrangeGarnet) RecordPeriodProgress("garnet", next - counter.count);
+        if (item == Item.Ruby) RecordPeriodProgress("ruby", next - counter.count);
+        if (item == Item.Emerald) RecordPeriodProgress("emerald", next - counter.count);
+        if (item == Item.Diamond) RecordPeriodProgress("diamond", next - counter.count);
+        RecordSpecificXxlOre(item, next - counter.count);
         counter.count = next; AwardProgress(reward); CheckChallenges(); MarkChanged(false);
     }
     public static void RecordDiscovery(string id)
     {
         if (!HasRun() || run.ended || string.IsNullOrWhiteSpace(id) || id.Length > 160 || !discoveries.Add(id)) return;
         run.discoveries.Add(id); RecordPeriodProgress("discoveries", 1);
+        if (id == "altar") RecordPeriodProgress("altars-found", 1);
         AwardProgress(run.settings.discoveryXp); CheckChallenges(); MarkChanged(true);
     }
     public static void RecordCraft(Item item)
@@ -539,8 +555,8 @@ public static partial class MetaProgression
     {
         var copy = new MetaProfile { version = source.version, revision = source.revision, totalXp = source.totalXp,
             upgrades = CopyRanks(source.upgrades), completedMilestones = new List<string>(source.completedMilestones),
-            periodRewardXp = source.periodRewardXp, challengeClockUtc = source.challengeClockUtc,
-            challengePeriods = Clone(source.challengePeriods),
+            reachedMiningLayer = source.reachedMiningLayer, periodRewardXp = source.periodRewardXp, challengeClockUtc = source.challengeClockUtc,
+            challengePeriods = source.challengePeriods.Select(state => Clone(state)).ToList(),
             runs = new List<MetaRunState>(source.runs.Count) };
         foreach (var state in source.runs) {
             var copied = new MetaRunState { version = state.version, runId = state.runId, loadout = CopyLoadout(state.loadout),
@@ -597,7 +613,7 @@ public static partial class MetaProgression
     }
     static bool ValidateProfile(MetaProfile value)
     {
-        if (value == null || value.version != FormatVersion || value.revision < 0 || value.totalXp < 0 || value.totalXp > 1000000000000L || value.runs == null || value.runs.Count > 20000 || value.upgrades == null || value.upgrades.Count > MetaProgressionCatalog.Upgrades.Length || !ValidStrings(value.completedMilestones, 100)) return false;
+        if (value == null || value.version != FormatVersion || value.reachedMiningLayer < 0 || value.reachedMiningLayer > 100 || value.revision < 0 || value.totalXp < 0 || value.totalXp > 1000000000000L || value.runs == null || value.runs.Count > 20000 || value.upgrades == null || value.upgrades.Count > MetaProgressionCatalog.Upgrades.Length || !ValidStrings(value.completedMilestones, 100)) return false;
         if (value.runs.Any(entry => !ValidateRun(entry)) || value.runs.Select(entry => entry.runId).Distinct().Count() != value.runs.Count) return false;
         if (value.completedMilestones.Any(id => MetaProgressionCatalog.Challenge(id)?.permanent != true)) return false;
         if (!ValidatePeriods(value)) return false;
