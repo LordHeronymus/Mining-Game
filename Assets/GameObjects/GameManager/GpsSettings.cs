@@ -237,7 +237,8 @@ public static class GpsSettings
         if (!GameplaySettingsStore.IsValidSpeed((float)(data.records.FirstOrDefault(record => record.type == typeof(PlayerBaseStats).AssemblyQualifiedName)?.fields.Find(field => field.name == "miningSpeed")?.number ?? 1.5)))
         { error = "Ungültige Abbaugeschwindigkeit."; return false; }
         if (!GameplayTestSettings.IsValid(data.tests.diggingMultiplier) || !GameplayTestSettings.IsValidMovementMultiplier(data.tests.movementMultiplier) ||
-            !GameplayTestSettings.IsValidSmartCursorStrokeWidth(data.tests.smartCursorStrokeWidth) || !Enum.IsDefined(typeof(GameplayDayNightMode), data.tests.dayNightMode))
+            !GameplayTestSettings.IsValidSmartCursorStrokeWidth(data.tests.smartCursorStrokeWidth) || !Enum.IsDefined(typeof(GameplayDayNightMode), data.tests.dayNightMode) ||
+            !Enum.IsDefined(typeof(HomescreenBackgroundMode), data.tests.homescreenBackground))
         { error = "Ungültige Testeinstellungen."; return false; }
         return ValidateRelationships(data, out error);
     }

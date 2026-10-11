@@ -17,6 +17,8 @@ public static class HomeLandscape
     }
     public static AudioClip MeadowClip {
         get {
+            var wind = Resources.Load<AudioClip>("Audio/HomeL1Wind");
+            if (wind) return wind;
             var record=GpsSettings.Document.records.Find(r=>r.type==typeof(SurfaceAmbience).AssemblyQualifiedName);
             return GpsSettings.Profile.Resolve(record?.fields.Find(v=>v.name=="clip")?.text) as AudioClip ??
                 GpsSettings.Profile.assets.Select(a=>a.asset).OfType<AudioClip>().FirstOrDefault(c=>c.name=="MeadowAmbience");

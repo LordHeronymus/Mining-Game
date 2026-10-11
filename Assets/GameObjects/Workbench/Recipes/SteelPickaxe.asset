@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: SteelPickaxe
   m_EditorClassIdentifier: 
   category: 1
+  exotic: 0
+  exoticId: 
+  metaUnlockLevel: 1
   persistentId: 612eccd38e5e7d54f85bb09acdb4135f
   customCardIconLayout: 1
   cardIconLayout:

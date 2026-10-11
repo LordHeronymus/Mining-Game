@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: SpringGreaves
   m_EditorClassIdentifier: 
   category: 1
+  exotic: 0
+  exoticId: 
+  metaUnlockLevel: 1
   persistentId: 77c73e6e128e4f3fa5ce7ab625845843
   customCardIconLayout: 0
   cardIconLayout:

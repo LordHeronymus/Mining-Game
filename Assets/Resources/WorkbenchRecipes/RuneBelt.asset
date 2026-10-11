@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: RuneBelt
   m_EditorClassIdentifier: 
   category: 1
+  exotic: 0
+  exoticId: 
+  metaUnlockLevel: 1
   persistentId: 7f68bc4be295f6c4d9f2963742873531
   customCardIconLayout: 0
   cardIconLayout:

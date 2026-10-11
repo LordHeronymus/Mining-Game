@@ -1,0 +1,10 @@
+Approved 11.10.2026: second L2 cleanup image, attachment 3bfb9ffc.
+Attachment pixels match Layer2-cleaned-v1.png (final pass exec-655165c3).
+Source retained as Layer2-approved.png, 1672x941 RGB.
+Master: Layer2-approved-x4.png, 6688x3764 RGB, matching previous production dimensions.
+Upscale: Real-ESRGAN ncnn Vulkan v0.2.0, realesrgan-x4plus, scale 4, tile 256, PNG.
+No new image generation or composition edits during installation.
+Generation/edit prompts retained in Layer2-cleaned-v1.prompt.txt.
+Production destination: Assets/Resources/Homescreen/Layer2.png, existing GUID preserved.
+Unity requirements: Max 8192, uncompressed RGB24, no mipmaps, NPOT None, sRGB.
+Previous production file backed up as Layer2-before-install.png before replacement.

@@ -19,10 +19,12 @@ public sealed class GameplayTestSettingsData
     public bool testModeDisabled;
     public bool discardPlayedMap;
     public GameplayDayNightMode dayNightMode;
+    public HomescreenBackgroundMode homescreenBackground;
 }
 
 public enum GameplayTestMode { God, NoEnergyConsume, Fly, NoClip, NoWeight, GlobalLighting, Active, KeepMap, InfiniteMoney, CameraFollow }
 public enum GameplayDayNightMode { Automatic, Day, Night }
+public enum HomescreenBackgroundMode { Auto, L1, L2, L3, L4, L5, L6 }
 
 // Compatibility API; all values and persistence belong to the shared GPS profile.
 public static class GameplayTestSettings
@@ -59,6 +61,15 @@ public static class GameplayTestSettings
     }
     public static GameplayDayNightMode ConfiguredDayNightMode => Data.dayNightMode;
     public static GameplayDayNightMode EffectiveDayNightMode => GameplayDayNightMode.Automatic;
+    public static int ResolveHomescreenLayer(int automaticLayer)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        var mode = Data.homescreenBackground;
+        if (!Data.testModeDisabled && mode != HomescreenBackgroundMode.Auto &&
+            Enum.IsDefined(typeof(HomescreenBackgroundMode), mode)) return (int)mode;
+#endif
+        return automaticLayer;
+    }
     public static bool GetConfiguredMode(GameplayTestMode mode) => mode switch
     {
         GameplayTestMode.Active => !Data.testModeDisabled,

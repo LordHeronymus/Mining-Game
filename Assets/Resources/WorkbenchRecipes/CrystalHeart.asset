@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: CrystalHeart
   m_EditorClassIdentifier: 
   category: 1
+  exotic: 0
+  exoticId: 
+  metaUnlockLevel: 1
   persistentId: 78927f42790ec7344890590e275990c0
   customCardIconLayout: 0
   cardIconLayout:

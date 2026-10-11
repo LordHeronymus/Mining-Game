@@ -1,0 +1,4 @@
+Source: Four ElevenLabs eleven_text_to_sound_v2 takes, 15 seconds each, flow l7OJzjoDxlZJOXZu1VYZ.
+Prompt: A few gentle distant blackbird and robin chirps, soft rounded natural woodland birdsong in short phrases separated by long quiet pauses, clean isolated recording with silent background, no piercing squeals, no hiss, no wind, no water, no insects, no music.
+User reported background buzzing in all takes. CleanHomeBirds.py applies stereo-linked spectral reduction based on quiet frames and persistent per-bin noise, removes low hum, adds short edge fades; no added sounds or new generation. Original MP3s retained. PCM24 WAV previews outside Assets. No Unity implementation.
+Measured quiet-window reduction: V1 26.3dB, V2 11.3dB, V3 24.6dB, V4 22.8dB. Loud-window level change below 0.04dB. Listening approval pending.

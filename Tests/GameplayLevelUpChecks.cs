@@ -48,7 +48,7 @@ public sealed class GameplayLevelUpProbe:MonoBehaviour {
   AwardTo(25);yield return null;yield return new WaitForSecondsRealtime(.35f);
   Check(view.IsShowing&&view.FromLevel==24&&view.ToLevel==25,"Live XP event shows 24 to 25");
   Check(Label("Reward").text=="+1 Powerup-Punkt","Actual power point reward");
-  Check(sound.clip&&UnityEditor.AssetDatabase.AssetPathToGUID(UnityEditor.AssetDatabase.GetAssetPath(sound.clip))=="40d79d65a6a40954ca6cb271c41ac456"&&sound.isPlaying&&view.AudioPlayCount==1,"Original audio GUID plays once");
+  Check(sound.clip==Resources.Load<LevelUpPresentationAssets>("Progression/LevelUpPresentation").sound&&sound.clip.name=="LevelUp-ElevenLabs"&&Mathf.Abs(sound.clip.length-2.205f)<.01f&&sound.isPlaying&&view.AudioPlayCount==1,"Selected trimmed ElevenLabs audio plays once with live level-up");
   Check(Time.timeScale==1&&!GameplayInputBlocker.IsBlocked,"Celebration does not pause or block gameplay");
   Check(group.alpha>.99f&&Label("Level").text=="25","Medallion readable at full opacity");
   Check(view.GetComponentsInChildren<Image>().Any(i=>i.sprite&&i.sprite.name=="LevelUpMedallion"),"Generated medallion sprite loaded");
@@ -64,9 +64,9 @@ public sealed class GameplayLevelUpProbe:MonoBehaviour {
   Check(view.AudioPlayCount==1&&view.ToLevel==28,"Duplicate discovery does not replay");
   yield return new WaitForSecondsRealtime(3.1f);
   Check(!view.IsShowing&&group.alpha==0,"Visual fades after duration");
-  Check(sound.isPlaying,"Long audio tail continues after visual");
+  Check(!sound.isPlaying,"Short selected audio finishes naturally before visual ends");
   AwardTo(29);yield return new WaitForSecondsRealtime(.4f);
-  Check(view.IsShowing&&view.ToLevel==29&&view.AudioPlayCount==2&&view.GetComponents<AudioSource>().Length==1,"New level fades old tail and uses one audio source");
+  Check(view.IsShowing&&view.ToLevel==29&&view.AudioPlayCount==2&&view.GetComponents<AudioSource>().Length==1,"New level plays selected audio on the same single source");
   bool saved=false;yield return GameSaveSystem.Save(GameSaveSystem.ActiveSlot,this,(ok,message)=>saved=ok);Check(saved,"Isolated world saves");
   Check(RunNavigation.LoadGame(GameSaveSystem.ActiveSlot,out _),"Real save reload accepted");yield return Ready();CameraCheck("Reload");
   Check(!view.IsShowing&&group.alpha==0&&!sound.isPlaying&&view.AudioPlayCount==2,"Loading saved XP never replays celebration");
@@ -81,6 +81,9 @@ public sealed class GameplayLevelUpProbe:MonoBehaviour {
   int plays=view.AudioPlayCount;yield return new WaitForSecondsRealtime(3f);MetaProgression.RecordDiscovery("at-cap");yield return null;
   Check(!view.IsShowing&&view.AudioPlayCount==plays,"XP at level cap stays silent");
   RunNavigation.MainMenu();yield return Ready();Check(group.alpha==0&&!sound.isPlaying,"Scene exit clears all presentation");
+  Check(GameplayLevelUpPresentation.Preview(),"Testsettings preview starts");yield return new WaitForSecondsRealtime(.2f);
+  Check(group.alpha>.9f&&sound.isPlaying&&sound.clip.name=="LevelUp-ElevenLabs","Preview also uses selected audio when animation appears");
+  view.enabled=false;view.enabled=true;
   File.AppendAllText(Report,"COMPLETE "+checks+" checks\n");
  }
  void Cleanup(){if(clean)return;clean=true;GameplayInputBlocker.SetBlocked(this,false);Time.timeScale=oldScale;MetaProgression.EndRun();MetaProgression.TestDirectory=meta;GameSaveSystem.TestDirectory=save;JsonUtility.FromJsonOverwrite(gps,GpsSettings.Document.tests);Object.Destroy(gameObject);}

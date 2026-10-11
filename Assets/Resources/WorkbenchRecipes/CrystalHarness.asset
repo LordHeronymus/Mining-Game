@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: CrystalHarness
   m_EditorClassIdentifier: 
   category: 1
+  exotic: 0
+  exoticId: 
+  metaUnlockLevel: 1
   persistentId: d09d219a1d65032409fe9e28761290c5
   customCardIconLayout: 0
   cardIconLayout:

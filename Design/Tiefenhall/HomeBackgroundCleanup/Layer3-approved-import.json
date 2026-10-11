@@ -1,0 +1,14 @@
+{
+  "source": "Design/Tiefenhall/HomeBackgroundCleanup/Layer3-approved-x4.png",
+  "asset": "Assets/Resources/Homescreen/CaveLake.png",
+  "guid": "67ab5e52273fefb4a8044bdcbee0b9cf",
+  "width": 6688,
+  "height": 3764,
+  "importedWidth": 6688,
+  "importedHeight": 3764,
+  "format": "RGB24",
+  "mipmapCount": 1,
+  "maxTextureSize": 8192,
+  "compression": "Uncompressed",
+  "sha256": "311137CCB3FC2CD5794D6ABEC9C5ACD59636C5B895EBC7F37D0F2B8BA8C67BE3"
+}

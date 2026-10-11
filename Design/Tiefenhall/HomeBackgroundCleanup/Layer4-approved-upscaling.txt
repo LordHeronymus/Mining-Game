@@ -1,0 +1,11 @@
+Approved 11.10.2026: L4 V1, Layer4-cleaned-v1.png (first correction pass, not V2).
+Source retained as Layer4-approved.png, 1672x941 RGB.
+Master: Layer4-approved-x4.png, 6688x3764 RGB, matching previous production dimensions.
+Upscale: Real-ESRGAN ncnn Vulkan v0.2.0, realesrgan-x4plus, scale 4, tile 256, PNG.
+No new image generation or composition edits during installation.
+Generation/edit prompts retained in Layer4-cleanup.prompt.txt.
+Production destination: Assets/Resources/Homescreen/Layer4.png, original GUID preserved.
+Unity import verified: full 6688x3764 RGB24, Max8192, uncompressed, no mipmaps, NPOT None, sRGB.
+Production PNG hash matches master. Report: Layer4-approved-import.json.
+Previous production file retained as Layer4-before-install.png.
+Rock/crystal closeups inspected after upscale; layer selection/parallax/audio code unchanged.

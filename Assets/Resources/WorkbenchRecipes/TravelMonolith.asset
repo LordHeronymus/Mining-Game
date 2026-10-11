@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: TravelMonolith
   m_EditorClassIdentifier: 
   category: 1
+  exotic: 0
+  exoticId: 
+  metaUnlockLevel: 1
   persistentId: ce5db5055529f254594a19d0f7fa7512
   customCardIconLayout: 0
   cardIconLayout:

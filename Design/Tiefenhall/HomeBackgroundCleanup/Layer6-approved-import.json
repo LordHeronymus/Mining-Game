@@ -1,0 +1,14 @@
+{
+  "source": "Design/Tiefenhall/HomeBackgroundCleanup/Layer6-approved-x4.png",
+  "asset": "Assets/Resources/Homescreen/Layer6.png",
+  "guid": "a6e021d59e0aecd45b312cf06cce3ff3",
+  "width": 6688,
+  "height": 3764,
+  "importedWidth": 6688,
+  "importedHeight": 3764,
+  "format": "RGB24",
+  "mipmapCount": 1,
+  "maxTextureSize": 8192,
+  "compression": "Uncompressed",
+  "sha256": "5A05C4335F83301299EE78A33B39A891FC188AE485F583E7A2060383B7FE39BB"
+}

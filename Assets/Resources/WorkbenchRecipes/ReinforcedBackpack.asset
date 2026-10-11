@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: ReinforcedBackpack
   m_EditorClassIdentifier: 
   category: 1
+  exotic: 0
+  exoticId: 
+  metaUnlockLevel: 1
   persistentId: e9c6908ce05c43a5a5814a8c9cb92df7
   customCardIconLayout: 0
   cardIconLayout:

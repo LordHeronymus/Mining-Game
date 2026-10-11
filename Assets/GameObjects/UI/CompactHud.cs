@@ -83,6 +83,12 @@ public sealed class CompactHud : MonoBehaviour
     }
     void OnDisable()
     {
+        draggedSlot = -1;
+        if (dragIcon)
+        {
+            dragIcon.gameObject.SetActive(false);
+            dragIcon.transform.SetParent(transform, false);
+        }
         if (hotbar && hotbar.parent != transform)
         {
             hotbar.SetParent(transform, false);
@@ -280,7 +286,16 @@ public sealed class CompactHud : MonoBehaviour
         if (persist) SaveSlotLayout();
         RefreshItems();
     }
-    public bool CanReorderSlot(int index) => !GameplayInputBlocker.IsBlocked && index >= 1 && index <= 8 &&
+    bool CanReorderHotbar
+    {
+        get
+        {
+            if (!inventoryPanel) inventoryPanel = UnityEngine.Object.FindFirstObjectByType<InventoryUI>(FindObjectsInactive.Include);
+            return !GameplayInputBlocker.IsBlocked ||
+                (inventoryPanel && inventoryPanel.IsOpen && !GameplayInputBlocker.IsBlockedExcept(inventoryPanel));
+        }
+    }
+    public bool CanReorderSlot(int index) => CanReorderHotbar && index >= 1 && index <= 8 &&
         IsKnownHotbarItem(slots[index - 1]);
     public static bool IsHotbarItem(ItemSO item) => item &&
         (item.item == Item.Torche || item.item == Item.LavaLamp || item.item == Item.Dynamite || item.item == Item.Ladder || item.item == Item.IronLadder ||
@@ -318,6 +333,7 @@ public sealed class CompactHud : MonoBehaviour
             dragIcon.preserveAspect = true;
         }
         dragIcon.sprite = slots[index - 1].icon;
+        dragIcon.transform.SetParent(hotbar.parent, false);
         dragIcon.color = new Color(1f, 1f, 1f, .9f);
         dragIcon.gameObject.SetActive(true);
         dragIcon.transform.SetAsLastSibling();
@@ -327,7 +343,7 @@ public sealed class CompactHud : MonoBehaviour
     }
     public void EndHotbarDrag(int sourceIndex, Vector2 screenPosition)
     {
-        if (draggedSlot != sourceIndex) { CancelHotbarDrag(); return; }
+        if (draggedSlot != sourceIndex || !CanReorderSlot(sourceIndex)) { CancelHotbarDrag(); return; }
         var eventData = new PointerEventData(EventSystem.current) { position = screenPosition };
         var hits = new System.Collections.Generic.List<RaycastResult>();
         EventSystem.current.RaycastAll(eventData, hits);
@@ -355,9 +371,9 @@ public sealed class CompactHud : MonoBehaviour
     }
     void MoveDraggedIcon(Vector2 screenPosition)
     {
-        if (!dragIcon || !RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)transform,
-            screenPosition, null, out var local)) return;
-        dragIcon.rectTransform.anchoredPosition = local;
+        if (!dragIcon || !RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)dragIcon.transform.parent,
+            screenPosition, HotbarEventCamera(), out var local)) return;
+        ItemIconLayout.Apply(slots[draggedSlot - 1], dragIcon.rectTransform, local);
     }
     const string SlotLayoutVersion = "CompactHud.SlotLayoutVersion";
     const string SlotLayoutPrefix = "CompactHud.Slot.";

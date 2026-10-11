@@ -53,12 +53,14 @@ public sealed class GameplayLevelUpPresentation : MonoBehaviour
         assets=Resources.Load<LevelUpPresentationAssets>("Progression/LevelUpPresentation");
         if(assets && assets.sound)assets.sound.LoadAudioData();
         var canvas=gameObject.AddComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceOverlay;canvas.sortingOrder=100;
+        canvas.additionalShaderChannels|=AdditionalCanvasShaderChannels.TexCoord1;
         var scaler=gameObject.AddComponent<CanvasScaler>();scaler.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution=new Vector2(1920,1080);scaler.screenMatchMode=CanvasScaler.ScreenMatchMode.Expand;
         group=gameObject.AddComponent<CanvasGroup>();group.alpha=0;group.blocksRaycasts=false;group.interactable=false;
         medal=HomeUi.Rect("Level Up Medallion",transform,new Vector2(0,-263),new Vector2(360,360));
         medal.anchorMin=medal.anchorMax=new Vector2(.5f,1);
         backGlow=Glow("Gold aura",false);
+        backGlow.SetSilhouette(assets?assets.medallion:null,360);
         var art=HomeUi.Image("Medallion",medal,Vector2.zero,new Vector2(360,360));art.sprite=assets?assets.medallion:null;art.preserveAspect=true;
         var title=ProgressionArt.Text("Title",medal,"LEVEL\nAUFSTIEG",new Vector2(0,66),new Vector2(218,62),26);
         title.textWrappingMode=TextWrappingModes.Normal;title.lineSpacing=-12;
@@ -74,7 +76,7 @@ public sealed class GameplayLevelUpPresentation : MonoBehaviour
     }
     LevelUpGlowGraphic Glow(string name,bool front)
     {
-        var rect=HomeUi.Rect(name,medal,Vector2.zero,new Vector2(450,450));
+        var rect=HomeUi.Rect(name,medal,Vector2.zero,new Vector2(600,600));
         var graphic=rect.gameObject.AddComponent<LevelUpGlowGraphic>();graphic.front=front;graphic.raycastTarget=false;return graphic;
     }
     void OnEnable(){MetaProgression.Changed+=Observe;SceneManager.sceneLoaded+=SceneLoaded;}

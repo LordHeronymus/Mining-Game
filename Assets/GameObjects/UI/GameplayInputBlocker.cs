@@ -27,4 +27,12 @@ public static class GameplayInputBlocker
         if (blocked) OpenPanels.Add(panel);
         else OpenPanels.Remove(panel);
     }
+
+    public static bool IsBlockedExcept(Behaviour allowedPanel)
+    {
+        OpenPanels.RemoveWhere(panel => !panel);
+        foreach (var panel in OpenPanels)
+            if (panel != allowedPanel) return true;
+        return false;
+    }
 }

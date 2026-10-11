@@ -1,0 +1,61 @@
+Isolated save directory: C:\IT\GameDev\Git Repos\Mining Game\Temp\CopperAllLayersRun-639273348242764884
+PASS Fresh isolated run saved
+PASS Fresh start: player follow and world clamp active
+PASS Fresh generation: combined copper/earth tiles are bound
+PASS Fresh generation: complete copper/rock tiles are bound
+PASS Fresh generation: active terrain edge masks are bound
+PASS Captured actual gameplay scene Runtime-all-layers-before
+PASS Live cursor mode 0 above copper in family 1
+PASS Live cursor mode 0 above copper in family 2
+PASS Live cursor mode 0 above copper in family 3
+PASS Live cursor mode 0 above copper in family 4
+PASS Live cursor mode 0 above copper in family 5
+PASS Captured actual gameplay scene Runtime-Cursor-Normal
+PASS Live cursor mode 1 above copper in family 1
+PASS Live cursor mode 1 above copper in family 2
+PASS Live cursor mode 1 above copper in family 3
+PASS Live cursor mode 1 above copper in family 4
+PASS Live cursor mode 1 above copper in family 5
+PASS Captured actual gameplay scene Runtime-Cursor-Smart
+PASS Real mining removes terrain and copper tile
+PASS Real mining preserves neighbouring ore identity and richness
+PASS Real mining removes copper in host family 1
+PASS Neighbour copper survives in host family 1
+PASS Real mining removes copper in host family 2
+PASS Neighbour copper survives in host family 2
+PASS Real mining removes copper in host family 3
+PASS Neighbour copper survives in host family 3
+PASS Real mining removes copper in host family 4
+PASS Neighbour copper survives in host family 4
+PASS Real mining removes copper in host family 5
+PASS Neighbour copper survives in host family 5
+PASS Captured actual gameplay scene Runtime-all-layers-mined
+PASS GPU lookup removes mined copper and preserves neighbour
+PASS Unchanged views reuse cached metadata
+PASS After mining: player follow and world clamp active
+PASS Modified world saved: Gespeichert
+PASS Isolated save loads: 
+PASS Save restore: combined copper/earth tiles are bound
+PASS Save restore: complete copper/rock tiles are bound
+PASS Save restore: active terrain edge masks are bound
+PASS Copper richness survives save/load
+PASS Mined cell remains empty after loading
+PASS Host and copper identity survive restore for family 1 richness 1
+PASS Host and copper identity survive restore for family 1 richness 2
+PASS Host and copper identity survive restore for family 1 richness 3
+PASS Host and copper identity survive restore for family 2 richness 1
+PASS Host and copper identity survive restore for family 2 richness 2
+PASS Host and copper identity survive restore for family 2 richness 3
+PASS Host and copper identity survive restore for family 3 richness 1
+PASS Host and copper identity survive restore for family 3 richness 2
+PASS Host and copper identity survive restore for family 3 richness 3
+PASS Host and copper identity survive restore for family 4 richness 1
+PASS Host and copper identity survive restore for family 4 richness 2
+PASS Host and copper identity survive restore for family 4 richness 3
+PASS Host and copper identity survive restore for family 5 richness 1
+PASS Host and copper identity survive restore for family 5 richness 2
+PASS Host and copper identity survive restore for family 5 richness 3
+PASS Captured actual gameplay scene Runtime-all-layers-restored
+PASS After restore: player follow and world clamp active
+PASS Returned to homescreen
+ALL PASSED

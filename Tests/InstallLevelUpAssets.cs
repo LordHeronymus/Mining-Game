@@ -17,7 +17,7 @@ public static class InstallLevelUpAssets
   var error=AssetDatabase.MoveAsset("Assets/ZZZ New Assets/epic upgrade boom.wav",audio);
   if(!string.IsNullOrEmpty(error))throw new Exception(error);
  }
- settings.sound=AssetDatabase.LoadAssetAtPath<AudioClip>(audio);
+ settings.sound=AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/AC Audio/UI/LevelUp-ElevenLabs.wav")??AssetDatabase.LoadAssetAtPath<AudioClip>(audio);
  settings.impactSeconds=.16f;
  if(settings.sound){settings.sound.LoadAudioData();var data=new float[Mathf.Min(settings.sound.samples,(int)(settings.sound.frequency*.45f))*settings.sound.channels];if(settings.sound.GetData(data,0)){double largest=0;int block=settings.sound.frequency*settings.sound.channels/50;for(int i=0;i+block<data.Length;i+=block){double sum=0;for(int j=i;j<i+block;j++)sum+=data[j]*data[j];if(sum>largest){largest=sum;settings.impactSeconds=Mathf.Clamp((float)i/settings.sound.channels/settings.sound.frequency,.04f,.4f);}}}}
  EditorUtility.SetDirty(settings);AssetDatabase.SaveAssetIfDirty(settings);

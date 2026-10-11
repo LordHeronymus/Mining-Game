@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: TitaniumPickaxe
   m_EditorClassIdentifier: 
   category: 0
+  exotic: 0
+  exoticId: 
+  metaUnlockLevel: 1
   persistentId: 7b2525d464feb3a4abd4500e63e8ceda
   customCardIconLayout: 1
   cardIconLayout:

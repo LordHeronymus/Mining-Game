@@ -1,0 +1,15 @@
+{
+  "provider": "ElevenLabs",
+  "model": "eleven_text_to_sound_v2",
+  "flow_id": "n4GN2ViEZmTeRL3gTQ5J",
+  "generation_id": "e7D4EDcXpIwC0O2cb6NC",
+  "selected_variation": 2,
+  "source": "LevelUp-ElevenLabs-V2-original.mp3",
+  "output": "LevelUp-ElevenLabs-V2-cut.wav",
+  "removed_seconds": 0.795,
+  "duration_seconds": 2.204988662131519,
+  "sample_rate": 44100,
+  "channels": 2,
+  "boundary_fade_seconds": 0.005,
+  "unchanged_interior_verified": true
+}

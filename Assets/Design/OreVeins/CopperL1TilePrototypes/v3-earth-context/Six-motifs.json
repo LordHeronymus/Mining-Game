@@ -1,0 +1,44 @@
+{
+  "sourceAtlas": "Assets/Design/OreVeins/CopperL1Branches/Sources (six full opaque 3x3 paintings)",
+  "slotCoordinates": "sheet phases: zero-based column and row, row 0 at bottom",
+  "motifs": [
+    {
+      "name": "Small-1",
+      "richness": "Small",
+      "sourceSheet": "Assets/Design/OreVeins/CopperL1Branches/Sources/Small-1.png"
+    },
+    {
+      "name": "Small-2",
+      "richness": "Small",
+      "sourceSheet": "Assets/Design/OreVeins/CopperL1Branches/Sources/Small-2.png"
+    },
+    {
+      "name": "Medium-1",
+      "richness": "Medium",
+      "sourceSheet": "Assets/Design/OreVeins/CopperL1Branches/Sources/Medium-1.png"
+    },
+    {
+      "name": "Medium-2",
+      "richness": "Medium",
+      "sourceSheet": "Assets/Design/OreVeins/CopperL1Branches/Sources/Medium-2.png"
+    },
+    {
+      "name": "Large-1",
+      "richness": "Rich",
+      "sourceSheet": "Assets/Design/OreVeins/CopperL1Branches/Sources/Large-1.png"
+    },
+    {
+      "name": "Large-2",
+      "richness": "Rich",
+      "sourceSheet": "Assets/Design/OreVeins/CopperL1Branches/Sources/Large-2.png"
+    }
+  ],
+  "earthPhases": 9,
+  "plannedCombinedTiles": 54,
+  "combinedTilesBaked": true,
+  "combinedAtlas": "Assets/Resources/OreVeins/CopperEarthTiles/Combined.png",
+  "combinedLayout": "nine earth phases left to right; six motifs bottom to top in listed order",
+  "tilePixels": 418,
+  "paddingPixels": 16,
+  "fixedL1Sizes": true
+}

@@ -49,6 +49,8 @@ public class TileMiner : MonoBehaviour
     private readonly List<Vector3Int> highlightedCells = new();
     private Tile normalHighlightTile, smartHighlightTile;
     private Material highlightMaterial, originalHighlightMaterial;
+    private TilemapRenderer highlightRenderer;
+    private int originalHighlightLayer, originalHighlightOrder;
     private Texture2D scytheCursorTexture;
     private ToolCursor activeCursor;
     static readonly List<UnityEngine.EventSystems.RaycastResult> uiRaycasts = new();
@@ -140,7 +142,12 @@ public class TileMiner : MonoBehaviour
         if (highlightMaterial)
         {
             var renderer = highlightMap ? highlightMap.GetComponent<TilemapRenderer>() : null;
-            if (renderer) renderer.sharedMaterial = originalHighlightMaterial;
+            if (renderer)
+            {
+                renderer.sharedMaterial = originalHighlightMaterial;
+                renderer.sortingLayerID = originalHighlightLayer;
+                renderer.sortingOrder = originalHighlightOrder;
+            }
             Destroy(highlightMaterial);
         }
         DestroyHighlightTile(normalHighlightTile);
@@ -445,6 +452,7 @@ public class TileMiner : MonoBehaviour
     void ShowHighlight(Vector3Int cell, Vector3Int pointerCell)
     {
         if (!highlightMap || !normalHighlightTile || !tilemap.HasTile(cell)) { ClearHighlight(); return; }
+        EnsureHighlightSorting();
         if (highlightedCell == cell && highlightedPointerCell == pointerCell &&
             highlightedSmartCursor == smartCursor)
         {
@@ -500,6 +508,9 @@ public class TileMiner : MonoBehaviour
         var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
         if (renderer && shader)
         {
+            highlightRenderer = renderer;
+            originalHighlightLayer = renderer.sortingLayerID;
+            originalHighlightOrder = renderer.sortingOrder;
             originalHighlightMaterial = renderer.sharedMaterial;
             highlightMaterial = new Material(shader)
             {
@@ -507,11 +518,39 @@ public class TileMiner : MonoBehaviour
                 hideFlags = HideFlags.HideAndDontSave
             };
             renderer.sharedMaterial = highlightMaterial;
+            EnsureHighlightSorting();
         }
         float orientationScale = Mathf.Abs(highlightMap.orientationMatrix.lossyScale.x);
         float frameScale = orientationScale / Mathf.Max(.001f, highlightMap.cellSize.x);
         normalHighlightTile = CreateHighlightTile("Normal Cursor", false, frameScale);
         smartHighlightTile = CreateHighlightTile("Smart Cursor", true, frameScale);
+    }
+
+    void EnsureHighlightSorting()
+    {
+        if (!highlightRenderer || !tilemap) return;
+        var terrainRenderer = tilemap.GetComponent<TilemapRenderer>();
+        if (!terrainRenderer) return;
+        // Terrain, ore and the copper surface occupy the next two orders.
+        // Reserve the cursor above them even before the surface is constructed.
+        int layer = terrainRenderer.sortingLayerID;
+        int order = terrainRenderer.sortingOrder + 2;
+        void Above(Renderer renderer, int extra = 0)
+        {
+            if (!renderer) return;
+            int value = SortingLayer.GetLayerValueFromID(renderer.sortingLayerID);
+            int current = SortingLayer.GetLayerValueFromID(layer);
+            if (value > current) { layer = renderer.sortingLayerID; order = renderer.sortingOrder + extra; }
+            else if (value == current) order = Mathf.Max(order, renderer.sortingOrder + extra);
+        }
+        if (map)
+        {
+            Above(map.OreOverlay ? map.OreOverlay.GetComponent<TilemapRenderer>() : null, 1);
+            Above(map.ArtifactOverlay ? map.ArtifactOverlay.GetComponent<TilemapRenderer>() : null);
+            Above(map.GetComponent<OreOverlayAppearance>()?.CopperSurface);
+        }
+        highlightRenderer.sortingLayerID = layer;
+        highlightRenderer.sortingOrder = order + 1;
     }
 
     static Tile CreateHighlightTile(string name, bool cornersOnly, float frameScale)

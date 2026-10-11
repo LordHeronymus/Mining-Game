@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: EnergyStorageVial
   m_EditorClassIdentifier: 
   category: 1
+  exotic: 0
+  exoticId: 
+  metaUnlockLevel: 1
   persistentId: 9fecaa560b7680b4b902e869d9c9758b
   customCardIconLayout: 0
   cardIconLayout:

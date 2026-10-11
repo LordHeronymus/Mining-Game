@@ -7,21 +7,32 @@ public sealed class LevelUpGlowGraphic : MaskableGraphic
 {
     public bool front;
     Material glowMaterial;
+    Sprite silhouette;
+    float sealSize=360;
+    static readonly Vector2[] HaloCorners={new(-300,-300),new(-300,300),new(300,300),new(300,-300)};
     float seconds, impact=.16f;
     protected override void Awake(){base.Awake();var shader=Resources.Load<Shader>("Progression/LevelUpGlow");if(shader){glowMaterial=new Material(shader){hideFlags=HideFlags.HideAndDontSave};material=glowMaterial;}}
     protected override void OnDestroy(){base.OnDestroy();if(glowMaterial)Destroy(glowMaterial);}
+    public void SetSilhouette(Sprite sprite,float size)
+    {
+        silhouette=sprite;sealSize=size;
+        if(sprite && glowMaterial){var r=sprite.rect;var t=sprite.texture;glowMaterial.SetTexture("_SealTex",t);glowMaterial.SetVector("_SealRect",new Vector4(r.x/t.width,r.y/t.height,r.width/t.width,r.height/t.height));glowMaterial.SetFloat("_SealSize",size);}
+        SetVerticesDirty();
+    }
     public void Animate(float time,float peak){seconds=time;impact=peak;SetVerticesDirty();}
     protected override void OnPopulateMesh(VertexHelper v)
     {
         v.Clear();float pulse=Mathf.Exp(-Mathf.Max(0,seconds-impact)*3.8f);
         if(!front)
         {
-            Ring(v,151,220,new Color(1,.61f,.13f,.12f+.17f*pulse));
+            // Blur the actual painted silhouette, including the pointed ornaments.
+            // The light touches every edge instead of beginning at a detached circular radius.
+            if(silhouette)SilhouetteHalo(v,new Color(1,.58f,.065f,.78f+.16f*pulse));
             for(int i=0;i<24;i++)
             {
                 float a=i*Mathf.PI*2/24+.13f*Mathf.Sin(i*2.1f);
                 var d=new Vector2(Mathf.Cos(a),Mathf.Sin(a));var n=new Vector2(-d.y,d.x);
-                Triangle(v,d*148+n*3,d*(181+24*pulse+13*Mathf.Sin(i*7)),d*148-n*3,new Color(1,.73f,.26f,.08f+.17f*pulse));
+                Triangle(v,d*120+n*5,d*(235+26*pulse+18*Mathf.Sin(i*7)),d*120-n*5,new Color(1,.78f,.32f,.045f+.065f*pulse));
             }
         }
         // Elliptical orbit split around the medallion, with a bright travelling leading point.
@@ -43,7 +54,7 @@ public sealed class LevelUpGlowGraphic : MaskableGraphic
             {
                 float cycle=Mathf.Repeat(seconds*.63f+i*.173f,1);
                 float a=i*2.39996f;
-                float radius=148+cycle*(25+(i%4)*9);
+                float radius=154+cycle*(65+(i%4)*15);
                 var p=new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius+Vector2.up*cycle*13;
                 float alpha=Mathf.Sin(cycle*Mathf.PI)*(.55f+.3f*pulse);
                 Star(v,p,2f+(i%3)*1.1f,new Color(1,.85f,.35f,alpha));
@@ -69,12 +80,13 @@ public sealed class LevelUpGlowGraphic : MaskableGraphic
         Stroke(v,p+Vector2.left*size,p+Vector2.right*size,.9f,c);Stroke(v,p+Vector2.down*size,p+Vector2.up*size,.9f,c);
         int k=v.currentVertCount;v.AddVert(p+Vector2.left*size*.45f,c,Vector2.zero);v.AddVert(p+Vector2.up*size*.45f,c,Vector2.zero);v.AddVert(p+Vector2.right*size*.45f,c,Vector2.zero);v.AddVert(p+Vector2.down*size*.45f,c,Vector2.zero);v.AddTriangle(k,k+1,k+2);v.AddTriangle(k,k+2,k+3);
     }
-    static void Ring(VertexHelper v,float inner,float outer,Color c)
+    void SilhouetteHalo(VertexHelper v,Color tint)
     {
-        for(int i=0;i<80;i++)
+        int start=v.currentVertCount;
+        foreach(var p in HaloCorners)
         {
-            float a=i*Mathf.PI*2/80,b=(i+1)*Mathf.PI*2/80;var da=new Vector2(Mathf.Cos(a),Mathf.Sin(a));var db=new Vector2(Mathf.Cos(b),Mathf.Sin(b));int k=v.currentVertCount;var clear=c;clear.a=0;
-            v.AddVert(da*inner,c,Vector2.zero);v.AddVert(db*inner,c,Vector2.zero);v.AddVert(db*outer,clear,Vector2.zero);v.AddVert(da*outer,clear,Vector2.zero);v.AddTriangle(k,k+1,k+2);v.AddTriangle(k,k+2,k+3);
+            var vertex=UIVertex.simpleVert;vertex.position=p;vertex.color=tint;vertex.uv0=p/sealSize+Vector2.one*.5f;vertex.uv1=new Vector2(1,0);v.AddVert(vertex);
         }
+        v.AddTriangle(start,start+1,start+2);v.AddTriangle(start,start+2,start+3);
     }
 }

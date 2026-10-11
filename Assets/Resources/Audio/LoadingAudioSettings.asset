@@ -58,11 +58,21 @@ MonoBehaviour:
     pitch: 1
     volumeSpread: 0.15
     pitchSpread: 0.1
+  - clip: {fileID: 8300000, guid: c29b78611774193418367cd9acd24aa2, type: 3}
+    volume: 1
+    pitch: 1
+    volumeSpread: 0
+    pitchSpread: 0.1
+  - clip: {fileID: 8300000, guid: c218a5e599ce4954f90b03d17eef722e, type: 3}
+    volume: 1
+    pitch: 1
+    volumeSpread: 0
+    pitchSpread: 0.1
   yogaVolume: 0.6717
   pickaxeVolume: 0.8663
   worldFadeInSeconds: 2.5
   yogaFadeOutSeconds: 7
-  distantPickaxeVolume: 0.5
+  distantPickaxeVolume: 0.8
   distantPickaxesPerMinute: 10
   distantPickaxePitchSpreadPercent: 10
   distantPickaxeVolumeSpreadPercent: 15

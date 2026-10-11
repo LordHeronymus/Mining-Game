@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Keeps the original clip reference (and its GPS tuning/GUID) available in player builds.
+// Keeps the selected level-up artwork and clip available in player builds.
 public sealed class LevelUpPresentationAssets : ScriptableObject
 {
     public Sprite medallion;

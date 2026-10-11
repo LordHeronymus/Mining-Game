@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: ObsidianPickaxe
   m_EditorClassIdentifier: 
   category: 0
+  exotic: 0
+  exoticId: 
+  metaUnlockLevel: 1
   persistentId: 64a39261157d57e48bbe5642a5bf1a21
   customCardIconLayout: 1
   cardIconLayout:

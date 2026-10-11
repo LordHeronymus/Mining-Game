@@ -16,7 +16,8 @@ public sealed class OreOverlayAppearance : MonoBehaviour
     static readonly int PulseRateProperty = Shader.PropertyToID("_UltroniumPulsesPerMinute");
     readonly Dictionary<Camera, OreVeinField> veinFields = new();
     readonly List<Camera> expiredViews = new();
-    Texture2D fissureArt, copperCarpet, copperEarthWall, copperEarthTiles, copperEarthTileLayout;
+    Texture2D fissureArt, copperCarpet, copperEarthWall, copperEarthCombined;
+    Texture2DArray copperRockCombined;
     public CopperDepositPlans CopperPlans { get; } = new CopperDepositPlans();
     readonly CopperSurfaceRenderer copperSurface=new();
     public MeshRenderer CopperSurface=>copperSurface.Renderer;
@@ -63,11 +64,12 @@ public sealed class OreOverlayAppearance : MonoBehaviour
             if (!copperEarthWall) copperEarthWall = Resources.Load<Texture2D>("OreVeins/CopperEarthWall/EarthWall");
             if (copperEarthWall) properties.SetTexture("_CopperEarthWall", copperEarthWall);
             properties.SetFloat("_CopperCarpetEnabled", copperCarpet ? 1 : 0);
-            if (!copperEarthTiles) copperEarthTiles = Resources.Load<Texture2D>("OreVeins/CopperEarthTiles/Atlas");
-            if (copperEarthTiles) properties.SetTexture("_CopperEarthTiles", copperEarthTiles);
-            if (!copperEarthTileLayout) copperEarthTileLayout = Resources.Load<Texture2D>("OreVeins/CopperEarthTiles/Layout");
-            if (copperEarthTileLayout) properties.SetTexture("_CopperEarthTileLayout", copperEarthTileLayout);
-            properties.SetFloat("_CopperEarthTilesEnabled", copperEarthTiles && copperEarthTileLayout ? 1 : 0);
+            if (!copperEarthCombined) copperEarthCombined = Resources.Load<Texture2D>("OreVeins/CopperEarthTiles/Combined");
+            if (copperEarthCombined) properties.SetTexture("_CopperEarthCombined", copperEarthCombined);
+            properties.SetFloat("_CopperEarthTilesEnabled", copperEarthCombined ? 1 : 0);
+            if (!copperRockCombined) copperRockCombined = Resources.Load<Texture2DArray>("OreVeins/CopperRockTiles/Combined");
+            if (copperRockCombined) properties.SetTexture("_CopperRockCombined", copperRockCombined);
+            properties.SetFloat("_CopperRockTilesEnabled", copperRockCombined && copperRockCombined.depth == 4 ? 1 : 0);
             if (!veinFields.TryGetValue(camera, out var field))
                 veinFields.Add(camera, field = new OreVeinField());
             if (field.Prepare(map, camera))
@@ -130,6 +132,10 @@ public sealed class OreOverlayAppearance : MonoBehaviour
         target.GetPropertyBlock(properties);
         properties.SetVector("_UniformStone", terrain.GetVector("_UniformStone"));
         properties.SetVector("_TestBounds", terrain.GetVector("_TestBounds"));
+        properties.SetFloat("_UseTerrainMasks", terrain.GetFloat("_UseTerrainMasks"));
+        properties.SetFloat("_FrayedInset", terrain.GetFloat("_FrayedInset"));
+        properties.SetVector("_TerrainEdgeTuning", terrain.GetVector("_TerrainEdgeTuning"));
+        CopyTexture("_TerrainEdgeMasks");
         CopyTexture("_TestStoneTex"); CopyTexture("_SurfaceDirtTex");
         CopyTexture("_LayerOneTex"); CopyTexture("_LayerThreeTex"); CopyTexture("_LayerFourTex"); CopyTexture("_TestOccupancy");
         target.SetPropertyBlock(properties);

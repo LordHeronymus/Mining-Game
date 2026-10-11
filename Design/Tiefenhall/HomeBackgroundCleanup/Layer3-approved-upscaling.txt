@@ -1,0 +1,11 @@
+Approved 11.10.2026: L3 V2, Layer3-cleaned-v2.png (second correction pass).
+Source retained as Layer3-approved.png, 1672x941 RGB.
+Master: Layer3-approved-x4.png, 6688x3764 RGB, matching previous production dimensions.
+Upscale: Real-ESRGAN ncnn Vulkan v0.2.0, realesrgan-x4plus, scale 4, tile 256, PNG.
+No new image generation or composition edits during installation.
+Generation/edit prompts retained in Layer3-cleanup.prompt.txt.
+Production destination: Assets/Resources/Homescreen/CaveLake.png, existing GUID preserved.
+Unity import verified: Max8192, full 6688x3764 RGB24, uncompressed, no mipmaps, NPOT None, sRGB.
+Source/master and imported production PNG hashes match. Report: Layer3-approved-import.json.
+Previous production file retained as Layer3-before-install.png.
+L3 shader effects/audio/parallax code unchanged. Crystal and rock closeups inspected after upscale.

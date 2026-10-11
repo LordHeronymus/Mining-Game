@@ -1,0 +1,5 @@
+Approved source: Layer6-cleaned-v1.png, 1672x941.
+Local Real-ESRGAN x4plus upscale: Layer6-approved-x4.png, 6688x3764.
+Downsample mean RGB difference: 3.3388 / 2.6012 / 3.1035.
+Rock detail visually reviewed. Unity HomeCleanedLayer6BackgroundInstall passed full Resources resolution, RGB24, max8192, uncompressed/no mipmaps, retained GUID and matching SHA256. Report: Layer6-approved-import.json.
+No Play Mode or scene changes. Editor coordinated and released.

@@ -1,0 +1,4 @@
+Source: ElevenLabs eleven_text_to_sound_v2, generation SQZghrcaDyDIejnRKSDd, loop enabled, 30 seconds.
+Prompt: Gentle steady breeze softly rustling meadow grass and fir needles, calm airy outdoor ambience with slow subtle natural variations, no strong gusts, no whistling, no birds, no insects, no water, no voices, no music, seamless continuous loop.
+User requested removal of harsh high-frequency hiss while retaining the wind.
+Local processing: Tools/CleanHomeWind.py. Original retained, separate 30s and 60s PCM24 WAV versions. No Unity implementation yet.

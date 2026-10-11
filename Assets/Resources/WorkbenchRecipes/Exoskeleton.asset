@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: Exoskeleton
   m_EditorClassIdentifier: 
   category: 1
+  exotic: 0
+  exoticId: 
+  metaUnlockLevel: 1
   persistentId: cadca602a7fb2ec479ca247f5e6b8841
   customCardIconLayout: 0
   cardIconLayout:

@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: HeavyDutyBoots
   m_EditorClassIdentifier: 
   category: 1
+  exotic: 0
+  exoticId: 
+  metaUnlockLevel: 1
   persistentId: dd054978b513440e9e6842db59a1b3d3
   customCardIconLayout: 0
   cardIconLayout:

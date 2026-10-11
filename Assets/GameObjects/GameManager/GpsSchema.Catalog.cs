@@ -393,6 +393,7 @@ public static partial class GpsSchema
             new GpsFieldSpec("infiniteMoney", "Unbegrenztes Geld"),
             new GpsFieldSpec("globalLighting", "Global Lighting")),
         new GpsSectionSpec("Testeinstellungen", "Entwicklung", typeof(GameplayTestSettingsData), "",
+            new GpsFieldSpec("homescreenBackground", "Homescreen-Hintergrund"),
             new GpsFieldSpec("cameraFollow", "Camera Follow"),
             new GpsFieldSpec("discardPlayedMap", "Map nach Play-Stopp verwerfen")),
     };

@@ -1,0 +1,34 @@
+[
+  {
+    "variant": 1,
+    "generationId": "BXVXhEEL5m4nrhJHu621",
+    "seconds": 15.0,
+    "quietReductionDb": -26.295069286475183,
+    "loudChangeDb": -0.015444003766866193,
+    "peak": 0.5009137222012948
+  },
+  {
+    "variant": 2,
+    "generationId": "xwbtkOhVSrrhHngZ6ZKX",
+    "seconds": 15.0,
+    "quietReductionDb": -11.260558683474995,
+    "loudChangeDb": -0.039294877299452274,
+    "peak": 0.7113838305185134
+  },
+  {
+    "variant": 3,
+    "generationId": "Z9LTsh5PRHU0tbP7dvGi",
+    "seconds": 15.0,
+    "quietReductionDb": -24.627298088189868,
+    "loudChangeDb": -0.003675728163751698,
+    "peak": 0.7297761411508488
+  },
+  {
+    "variant": 4,
+    "generationId": "L7Qw07aX3N4qKXuPNJDQ",
+    "seconds": 15.0,
+    "quietReductionDb": -22.78292563064429,
+    "loudChangeDb": -0.013367411710047525,
+    "peak": 0.7249796474966486
+  }
+]

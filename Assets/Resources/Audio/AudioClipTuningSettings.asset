@@ -14,46 +14,836 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clips:
   - clip: {fileID: 8300000, guid: 9a7de517d555400f9601e06fdfd04a7e, type: 3}
-    volume: 0.8
+    category: Tiere
+    displayName: Vogelruf 01
+    volume: 0.09905488
     pitch: 1
     pitchSpread: 0.06
+    volumeSpread: 0
   - clip: {fileID: 8300000, guid: d5cb81569a1d45b7a5562e3d5cfd07e9, type: 3}
-    volume: 0.8
+    category: Tiere
+    displayName: Vogelruf 02
+    volume: 0.10319607
     pitch: 1
     pitchSpread: 0.06
+    volumeSpread: 0
   - clip: {fileID: 8300000, guid: e5a6750511344a82a6947a85f3622b5c, type: 3}
-    volume: 0.8
+    category: Tiere
+    displayName: Vogelruf 03
+    volume: 0.10115701
     pitch: 1
     pitchSpread: 0.06
+    volumeSpread: 0
   - clip: {fileID: 8300000, guid: 954408e019f243ff84daa68c758ad9e6, type: 3}
-    volume: 0.8
+    category: Tiere
+    displayName: Vogelruf 04
+    volume: 0.097873904
     pitch: 1
     pitchSpread: 0.06
+    volumeSpread: 0
   - clip: {fileID: 8300000, guid: 0d8a0d89d40ee6b4a88475b0d14c65ea, type: 3}
-    volume: 1
+    category: Bauen und Pflanzen
+    displayName: PlaceTorch 01
+    volume: 0.4090552
     pitch: 1
     pitchSpread: 0.1
+    volumeSpread: 0
   - clip: {fileID: 8300000, guid: 281c17b147ba2f04bbd0646fc1354a0a, type: 3}
-    volume: 1
+    category: Bauen und Pflanzen
+    displayName: RemoveTorch 01
+    volume: 0.4829468
     pitch: 1
     pitchSpread: 0.1
+    volumeSpread: 0
   - clip: {fileID: 8300000, guid: a96c0bd74afe00d42b6c065c1ad4b85d, type: 3}
-    volume: 1
+    category: Abbau
+    displayName: MetalHitBlunt
+    volume: 0.4
     pitch: 1
     pitchSpread: 0.09
+    volumeSpread: 0
   - clip: {fileID: 8300000, guid: 20c086e45f332dc458b0dab570701a5a, type: 3}
-    volume: 0.25
+    category: Spieler und Gesundheit
+    displayName: Energiewarnung
+    volume: 0.116706446
     pitch: 1
     pitchSpread: 0
+    volumeSpread: 0
   - clip: {fileID: 8300000, guid: 2c103af800e987443a72f2ca5ea716ee, type: 3}
-    volume: 0.39
+    category: Altar
+    displayName: Altar-Ambiente
+    volume: 0.18292356
     pitch: 1
     pitchSpread: 0
+    volumeSpread: 0
   - clip: {fileID: 8300000, guid: c3fcae6935dabec43b5577ed0fc44d9b, type: 3}
-    volume: 0.73
+    category: Ladebildschirm
+    displayName: Lade-Spitzhacke
+    volume: 0.451762
     pitch: 1.1
     pitchSpread: 0.04
+    volumeSpread: 0
   - clip: {fileID: 8300000, guid: a4b89e5ae3ea6304a97ad7b1e084d6e2, type: 3}
-    volume: 1
+    category: "Ger\xF6ll"
+    displayName: "Ger\xF6ll 01"
+    volume: 0.5097473
     pitch: 0.61
     pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 2b831b337fe77be4e8e6c752d466fb27, type: 3}
+    category: Shop und UI
+    displayName: alert
+    volume: 0.23405053
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 8b8cf15dba7953248bf04c6e3412ded4, type: 3}
+    category: Umgebung
+    displayName: "H\xF6hlen-Ambiente"
+    volume: 1
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 6ef7394397cafa145b5c03ad63ddb709, type: 3}
+    category: Umgebung
+    displayName: "H\xF6hlen-Tribal-Musik"
+    volume: 1
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: db75d99273639714aa8b630bccbd9664, type: 3}
+    category: Untergrund-Details
+    displayName: "Geisterfl\xFCstern 01"
+    volume: 0.22241816
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: b8d18c896beb1fe48a3e77cf982de260, type: 3}
+    category: Untergrund-Details
+    displayName: "Geisterfl\xFCstern 02"
+    volume: 0.29189542
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: bbaa1574a0786074a8b028b073e8ddb2, type: 3}
+    category: Untergrund-Details
+    displayName: "Geisterfl\xFCstern 03"
+    volume: 0.2130849
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 204e2315bfbb4744383d35fa322274d0, type: 3}
+    category: Untergrund-Details
+    displayName: Fallende Steine 01
+    volume: 0.6175654
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 1fef2fc821db98040809720b16de6b39, type: 3}
+    category: Untergrund-Details
+    displayName: Fallende Steine 02
+    volume: 0.28655505
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 67f489b4dd04fa946a23110bfc7dc2bb, type: 3}
+    category: Untergrund-Details
+    displayName: Kiesrutsch 01
+    volume: 0.34714863
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 2631be0872fc60d478566faac3fed5dd, type: 3}
+    category: Untergrund-Details
+    displayName: Kiesrutsch 02
+    volume: 0.5300628
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 5dfc8fa2c1b18c94d98307b109e19e6d, type: 3}
+    category: Untergrund-Details
+    displayName: Sandrieseln 01
+    volume: 0.22778235
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 4f6149eb5e2682c458fea699936e103d, type: 3}
+    category: Untergrund-Details
+    displayName: Sandrieseln 02
+    volume: 0.21769607
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 2f0bce0d3c54a2540bf41f9cd50b8bbc, type: 3}
+    category: Umgebung
+    displayName: Wiesen-Ambiente
+    volume: 0.6877646
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: a392f9923b0463744add90dfebbb65eb, type: 3}
+    category: Umgebung
+    displayName: Untergrund-Ambiente
+    volume: 0.27572885
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 0052a48ee2cb1084eb97f1792eecf361, type: 3}
+    category: Umgebung
+    displayName: Wind
+    volume: 0.55082965
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: fae931fb89e1309499c2bf2610cbe419, type: 3}
+    category: Shop und UI
+    displayName: click
+    volume: 0.42881966
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 189ca89c0c5ba974484c32b33692c881, type: 3}
+    category: Shop und UI
+    displayName: door
+    volume: 0.17531078
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: e8ccbf6a598fa344ba389282895e2a64, type: 3}
+    category: Bauen und Pflanzen
+    displayName: DryGrass
+    volume: 0.29731733
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: cd7a73148ae4aad4fbfd3e2e03042f99, type: 3}
+    category: Spieler und Gesundheit
+    displayName: Hurt
+    volume: 0.12410057
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 12850712a40fd9c4c9f9b24832e26b67, type: 3}
+    category: Abbau
+    displayName: ClayBreak L1L2
+    volume: 0.45
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 107ac3de248d26947bbc6f917418b600, type: 3}
+    category: Abbau
+    displayName: Dirt Crumble
+    volume: 0.55
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 112610f69aaa34841946ad822adff6ca, type: 3}
+    category: Abbau
+    displayName: DirtHit 01
+    volume: 0.45
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: fa7846fa02348a7469f81090bf6e618e, type: 3}
+    category: Abbau
+    displayName: DirtHit 02
+    volume: 0.45
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 415490ee8070920408732067b79754f8, type: 3}
+    category: Abbau
+    displayName: DirtHit 03
+    volume: 0.4
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 0593b5cd40d7f6844ac1762ae49037f7, type: 3}
+    category: Abbau
+    displayName: DirtHit 04
+    volume: 0.4
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 19b70ef0133cbf44b87e26ae5824f49f, type: 3}
+    category: Abbau
+    displayName: DirtHit 05
+    volume: 0.31435606
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 1d173552b66bc694997df7f98a4e9170, type: 3}
+    category: Abbau
+    displayName: DirtHit 06
+    volume: 0.27387136
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 6f973ea3974977947ada9bf699e5493a, type: 3}
+    category: Abbau
+    displayName: OreBreak
+    volume: 0.4
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 961fe52b92b24de48af263bfb8ce562c, type: 3}
+    category: Abbau
+    displayName: Pickaxe2
+    volume: 0.20963022
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 7bf82cb00f9ab9d47b6ba45935f91a9d, type: 3}
+    category: Abbau
+    displayName: Stone Thud
+    volume: 0.49527797
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 0d479eb0c7b4b5342a626cd910484773, type: 3}
+    category: Abbau
+    displayName: StoneBreak
+    volume: 0.5077987
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: c0ed43e1cc855694bbf6024b44061805, type: 3}
+    category: Abbau
+    displayName: StoneBreak L3
+    volume: 0.21603277
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 29a576bf8ce35a143a6536688792ffce, type: 3}
+    category: Abbau
+    displayName: TransitionStone Crumble
+    volume: 0.40565565
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 2bbc662060df397469f27ba8ce97cc05, type: 3}
+    category: Abbau
+    displayName: Mining
+    volume: 0.52505445
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 371a2835022069a45b95281d49130ac6, type: 3}
+    category: Abbau
+    displayName: Mining2
+    volume: 0.45909706
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 1d63e9063d19d41429cf6925a15b8368, type: 3}
+    category: Shop und UI
+    displayName: Money v1
+    volume: 0.46805045
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 356bd62bef0274942a3c0e74fc87673c, type: 3}
+    category: Abbau
+    displayName: Ore Digging
+    volume: 0.54276067
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 659ba493410026342ab11953e2c9615b, type: 3}
+    category: Abbau
+    displayName: Pickaxe 1
+    volume: 0.32242116
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 8a64251b0775f3b4592176acbb97ce28, type: 3}
+    category: Abbau
+    displayName: pickaxe 3
+    volume: 0.35415137
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 821039f32e4183b4ca488bd55c1fd01c, type: 3}
+    category: Spieler und Gesundheit
+    displayName: recharge
+    volume: 0.22581746
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: c85072ca8c160c0458c74357a58911c0, type: 3}
+    category: Bauen und Pflanzen
+    displayName: OldTreeFalls
+    volume: 0.69425875
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: a7cccc1ca6efc9b409ced37a112ce91b, type: 3}
+    category: Shop und UI
+    displayName: Bling
+    volume: 0.14584982
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 1974ff0bed5db83479585db9693976fd, type: 3}
+    category: Shop und UI
+    displayName: Crafting
+    volume: 0.24530879
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 1d73f8c16f72b2340be3641e729d7490, type: 3}
+    category: Shop und UI
+    displayName: Crafting2
+    volume: 0.26336375
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 5515fb34272c0e347a0638b9c5c60b50, type: 3}
+    category: Shop und UI
+    displayName: DingLight
+    volume: 0.38979307
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: f8ad356b30559dc4f97ea6a5df754ef9, type: 3}
+    category: Shop und UI
+    displayName: ItemInBag
+    volume: 0.5910714
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 46cd43fcda63c8b4e9020e369733fd63, type: 3}
+    category: Bauen und Pflanzen
+    displayName: Wood 01
+    volume: 0.62578815
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: c915004dd297c054db895be073ca5cc9, type: 3}
+    category: Bauen und Pflanzen
+    displayName: Wood 02
+    volume: 0.59384775
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 96f68f030b80a5845a2888cacaa71b12, type: 3}
+    category: Bauen und Pflanzen
+    displayName: Wood 03
+    volume: 0.67331105
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: be3882af98f5178479a8e8f9b31e18d8, type: 3}
+    category: Bauen und Pflanzen
+    displayName: Wood 04
+    volume: 0.5888597
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 79da76b3ebc32c84db7210b928cb4fe7, type: 3}
+    category: Bauen und Pflanzen
+    displayName: Wood 05
+    volume: 0.47710824
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: ffcece7b00a6c2e499bfd5efa92f4acb, type: 3}
+    category: Bauen und Pflanzen
+    displayName: LadderRemove
+    volume: 0.19689278
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 6b55e5774acdb4e4184c4ba64d9477dd, type: 3}
+    category: Bauen und Pflanzen
+    displayName: WoodChopping 01
+    volume: 0.25378212
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: cb6317f1b1a383341806dfcc8658ee60, type: 3}
+    category: Bauen und Pflanzen
+    displayName: WoodChopping 02
+    volume: 0.3420195
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 3b7c9b77f192c7b4eaf0f4210baca682, type: 3}
+    category: Bauen und Pflanzen
+    displayName: WoodChopping 03
+    volume: 0.5410117
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 03eabd021c7fbb247b02545f95d50988, type: 3}
+    category: Bauen und Pflanzen
+    displayName: WoodChopping 04
+    volume: 0.3246846
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 00d6563d8e95ba14aaa3d7c85dbf9208, type: 3}
+    category: Bauen und Pflanzen
+    displayName: WoodChopping 05
+    volume: 0.2743014
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 4383923a40a6a6e40b5ed30d3a1984a9, type: 3}
+    category: Shop und UI
+    displayName: ArtifactCollected
+    volume: 0.16992117
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: f4f47d7c12ca08a46a56d04db63734ff, type: 3}
+    category: Spieler und Gesundheit
+    displayName: BoneBreaking 01
+    volume: 0.3409659
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 4464a10f870455e4fa2370208a648af1, type: 3}
+    category: Spieler und Gesundheit
+    displayName: Cloth1
+    volume: 0.5185462
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: bb425449475cc61479df426bcb21be62, type: 3}
+    category: Shop und UI
+    displayName: Ding4
+    volume: 0.3927414
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 45498591e999f0941899b11150f8147c, type: 3}
+    category: Spieler und Gesundheit
+    displayName: Game-over-Musik
+    volume: 0.33934048
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 627e6f6b877e5874e89a01894d63f3bf, type: 3}
+    category: Shop und UI
+    displayName: "Men\xFCklick"
+    volume: 0.42881966
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 1f67f6fcf834761418cf997d1d25f6da, type: 3}
+    category: Homescreen
+    displayName: Homescreen-Musik
+    volume: 0.2
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 33d7eba132d89ad44ba25586e1ad61e0, type: 3}
+    category: Shop und UI
+    displayName: HotbarError
+    volume: 0.18858965
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 7575acb5dae46a241ae0d8c7e29b0b6b, type: 3}
+    category: Spieler und Gesundheit
+    displayName: Hurt2
+    volume: 0.13089754
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: ccdd73218df811c4b8c0126e829e8fbf, type: 3}
+    category: "Ger\xF6ll"
+    displayName: "Ger\xF6ll 02"
+    volume: 0.50535154
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 72f882a481351f440b6d199556d1aadb, type: 3}
+    category: "Ger\xF6ll"
+    displayName: "Ger\xF6ll 03"
+    volume: 0.9688928
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 70d928afe9378e14ca59d28ee5220ce3, type: 3}
+    category: Ladebildschirm
+    displayName: Lade-Ambiente
+    volume: 0.23900731
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: dddb56184226bb74d9e08b7f3a12a6d5, type: 3}
+    category: Abbau
+    displayName: OreBreakV3
+    volume: 0.28
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 192150a0f6a8c0b46a0bb33305d3cae0, type: 3}
+    category: Shop und UI
+    displayName: Paper1
+    volume: 0.42169848
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 13417bbca45d6e74c8206aaf69bf468e, type: 3}
+    category: Abbau
+    displayName: PickaxeHitL3Plus
+    volume: 0.24311908
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 39a37d8748127444b9e2847c604c38ec, type: 3}
+    category: Abbau
+    displayName: PickaxeStoneHitL3Plus
+    volume: 0.44040412
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 70257bf73205928488c278313da05ea1, type: 3}
+    category: Spieler und Gesundheit
+    displayName: Herzschlag
+    volume: 0.29691416
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: ec3cc61b045a650429316d5ffd83c91a, type: 3}
+    category: Altar
+    displayName: Altar aufladen
+    volume: 0.20746386
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 1d90479b59d59bf40aae03633b7dc2e6, type: 3}
+    category: Altar
+    displayName: "Altar vollst\xE4ndig geladen"
+    volume: 0.1548519
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: d354f0b76d4482649b8e873d241a81f7, type: 3}
+    category: Tiere
+    displayName: WalkOnGrass
+    volume: 0.23603733
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 67f1737f5433bc74f8cc0538c2beecb1, type: 3}
+    category: Tiere
+    displayName: Froschquaken 01
+    volume: 0.22465678
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 7d277eeb83114974ab06bc818355981c, type: 3}
+    category: Tiere
+    displayName: Froschquaken 02
+    volume: 0.30977878
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: dd68d055ed8dadb48a2f63373b2d1d36, type: 3}
+    category: Tiere
+    displayName: Froschquaken 03
+    volume: 0.27112925
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 7bc6f4f6e669eed4ca48adb9769628da, type: 3}
+    category: Tiere
+    displayName: Froschquaken 04
+    volume: 0.2691778
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 35fede82a4b19b442a95b785ea475708, type: 3}
+    category: Tiere
+    displayName: Froschquaken 05
+    volume: 0.3111423
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 71619f9cda1827249ba7aec0d699787d, type: 3}
+    category: Tiere
+    displayName: Froschquaken 06
+    volume: 0.3027416
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: e590abe6e0fdb6a44a7d3e90b90bd974, type: 3}
+    category: Tiere
+    displayName: Froschquaken 07
+    volume: 0.28056696
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 80816eb163e52d14eb3f698ddf91c817, type: 3}
+    category: Homescreen
+    displayName: Entfernte Spitzhacke 01
+    volume: 0.15
+    pitch: 1
+    pitchSpread: 0.1
+    volumeSpread: 0.15
+  - clip: {fileID: 8300000, guid: 8abf80becb7861549b87e0b078c34974, type: 3}
+    category: Homescreen
+    displayName: Entfernte Spitzhacke 02
+    volume: 0.5
+    pitch: 1
+    pitchSpread: 0.1
+    volumeSpread: 0.15
+  - clip: {fileID: 8300000, guid: 82fd0828f354eba4781cbaa40fcfad74, type: 3}
+    category: Homescreen
+    displayName: Entfernte Spitzhacke 03
+    volume: 0.45
+    pitch: 1
+    pitchSpread: 0.1
+    volumeSpread: 0.15
+  - clip: {fileID: 8300000, guid: 93eaa6e4787b3bf42b86498f5c14241b, type: 3}
+    category: Homescreen
+    displayName: Entfernte Spitzhacke 04
+    volume: 0.35
+    pitch: 1
+    pitchSpread: 0.1
+    volumeSpread: 0.15
+  - clip: {fileID: 8300000, guid: 0640c8aefddab5e469939ff7fb03a22a, type: 3}
+    category: Homescreen
+    displayName: Entfernte Spitzhacke 05
+    volume: 0.5
+    pitch: 1
+    pitchSpread: 0.1
+    volumeSpread: 0.15
+  - clip: {fileID: 8300000, guid: db1435b5eab394b42bef39a5f1d5c026, type: 3}
+    category: Homescreen
+    displayName: Entfernte Spitzhacke 06
+    volume: 0.55
+    pitch: 1
+    pitchSpread: 0.1
+    volumeSpread: 0.15
+  - clip: {fileID: 8300000, guid: 62b1710d58cfecc4d9f6296864128733, type: 3}
+    category: Homescreen
+    displayName: Entfernte Spitzhacke 07
+    volume: 0.35
+    pitch: 1
+    pitchSpread: 0.1
+    volumeSpread: 0.15
+  - clip: {fileID: 8300000, guid: b09ba81f7db5beb4cae304e78d208a79, type: 3}
+    category: Homescreen
+    displayName: Entfernte Spitzhacke 08
+    volume: 0.55
+    pitch: 1
+    pitchSpread: 0.1
+    volumeSpread: 0.15
+  - clip: {fileID: 8300000, guid: c29b78611774193418367cd9acd24aa2, type: 3}
+    category: Homescreen
+    displayName: Wassertropfen 02
+    volume: 0.15
+    pitch: 1
+    pitchSpread: 0.1
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: c218a5e599ce4954f90b03d17eef722e, type: 3}
+    category: Homescreen
+    displayName: Wassertropfen 03
+    volume: 0.2
+    pitch: 1
+    pitchSpread: 0.1
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 34ea2eaa2a9ffee4bb96e0466ed701b3, type: 3}
+    category: Archiv
+    displayName: ArtifactCollected Old
+    volume: 0.40008107
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 50f94d81d9e9a8a47a55b7a98b572fe3, type: 3}
+    category: Archiv
+    displayName: FrogCroak 01
+    volume: 1
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 76aa57f9baacc554f912e24f7a6f5d75, type: 3}
+    category: Archiv
+    displayName: FrogCroak 02
+    volume: 0.9617974
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 450fcdc15347da649815ad71ae1915fb, type: 3}
+    category: Archiv
+    displayName: FrogCroak 03
+    volume: 0.89682627
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: d434b1f682c9a044d977fa5fc7f4238d, type: 3}
+    category: Archiv
+    displayName: HeartBeating-loop
+    volume: 0.7765647
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: f4d27f17f642f9141bbbb5d614d141ab, type: 3}
+    category: Archiv
+    displayName: ErdkruemelRollen
+    volume: 0.651321
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 6f3d75fe726061b48b686a90b2add179, type: 3}
+    category: Archiv
+    displayName: GravelSlide
+    volume: 0.66017956
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: cabde2a7470c8ac4abb2f7ae3976bc16, type: 3}
+    category: Archiv
+    displayName: SandrieselnFein
+    volume: 0.33877337
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: b325a1fa139c7554d9b7a98336848112, type: 3}
+    category: Archiv
+    displayName: SandrieselnSchuebe
+    volume: 0.36462402
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 8391e3becb9e421ca2047c04daf1e658, type: 3}
+    category: Archiv
+    displayName: LowEnergyBip Old
+    volume: 0.22194299
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 7c179888d6c5d854f84a04c01646ba9e, type: 3}
+    category: Archiv
+    displayName: OreBreak Old
+    volume: 0.96569103
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: 40d79d65a6a40954ca6cb271c41ac456, type: 3}
+    category: Shop und UI
+    displayName: LevelUp
+    volume: 0.3325665
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: b2ac87773aa46984eb26b33fc0c18b27, type: 3}
+    category: Shop und UI
+    displayName: Workshop-Favorit
+    volume: 0.23317729
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  - clip: {fileID: 8300000, guid: c1cc4a6a98197df4aa500bbdd1e89f8f, type: 3}
+    category: Shop und UI
+    displayName: Workshop-Favorit entfernen
+    volume: 0.23317729
+    pitch: 1
+    pitchSpread: 0
+    volumeSpread: 0
+  catalogVersion: 1

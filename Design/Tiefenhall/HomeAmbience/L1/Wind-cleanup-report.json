@@ -1,0 +1,11 @@
+{
+  "sampleRate": 44100,
+  "channels": 2,
+  "sourceSeconds": 30.0,
+  "outputSeconds": 60.0,
+  "peak": 0.040697556444665356,
+  "windBodyChangeDb": -8.80168941221218e-06,
+  "highHissChangeDb": -35.7409083619927,
+  "seamDelta": 0.0,
+  "processing": "Original ElevenLabs recording; circular FFT high-shelf -20dB above 3.2kHz, soft lowpass 4.2kHz, 12ms seam repair; repeated twice."
+}

@@ -1,0 +1,5 @@
+
+FAIL System.Exception: Mixed richness: rendered copper-cell dirt matches ordinary dirt HSV, delta=(-0.0020, 0.0690, 0.0325), actual=(0.0686, 0.6700, 0.5534), host=(0.0706, 0.6010, 0.5209), samples=73237
+  at CopperFullCellVisualChecks.Check (System.Boolean condition, System.String message) [0x00026] in C:\IT\GameDev\Git Repos\Mining Game\Tests\CopperFullCellVisualChecks.cs:19 
+  at CopperFullCellVisualChecks+<>c__DisplayClass3_1.<Main>g__CheckEarthTone|6 (UnityEngine.Color32[] rendered, System.String richness, CopperFullCellVisualChecks+<>c__DisplayClass3_0& ) [0x0018c] in C:\IT\GameDev\Git Repos\Mining Game\Tests\CopperFullCellVisualChecks.cs:139 
+  at CopperFullCellVisualChecks.Main (System.Int32 testLayer) [0x0092d] in C:\IT\GameDev\Git Repos\Mining Game\Tests\CopperFullCellVisualChecks.cs:143 

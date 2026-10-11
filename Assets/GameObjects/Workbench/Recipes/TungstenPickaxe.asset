@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: TungstenPickaxe
   m_EditorClassIdentifier: 
   category: 1
+  exotic: 0
+  exoticId: 
+  metaUnlockLevel: 1
   persistentId: a810d5264a02f804abcbf7f456eb67e3
   customCardIconLayout: 1
   cardIconLayout:

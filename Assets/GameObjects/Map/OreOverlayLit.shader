@@ -12,7 +12,14 @@ Shader "Mining Game/Ore Overlay Lit"
         [HideInInspector] _CopperEarthWall("Copper Earth Wall", 2D) = "black" {}
         [HideInInspector] _CopperEarthTiles("Copper Earth Tiles", 2D) = "black" {}
         [HideInInspector] _CopperEarthTileLayout("Copper Tile Cores", 2D) = "black" {}
+        [HideInInspector] _CopperEarthCombined("Combined Earth Copper Tiles", 2D) = "black" {}
+        [HideInInspector] _CopperRockCombined("Combined Rock Copper Tiles", 2DArray) = "" {}
+        [HideInInspector] _UseTerrainMasks("Use terrain masks", Float) = 0
+        [HideInInspector] _FrayedInset("Frayed edge inset", Float) = 0
+        [HideInInspector] _TerrainEdgeTuning("Terrain edge tuning", Vector) = (1,1,1,0)
+        [HideInInspector] _TerrainEdgeMasks("Terrain edge masks", 2DArray) = "" {}
         [HideInInspector] _CopperEarthTilesEnabled("Copper Earth Tiles Enabled", Float) = 0
+        [HideInInspector] _CopperRockTilesEnabled("Copper Rock Tiles Enabled", Float) = 0
 
         [HideInInspector] _CopperCoverEnabled("Copper Earth Cover", Float) = 1
         [HideInInspector] _CopperRecessDepth("Copper Earth Step", Float) = 2
@@ -111,6 +118,10 @@ Shader "Mining Game/Ore Overlay Lit"
                 float _VeinEnabled;
                 float _CopperCarpetEnabled;
                 float _CopperEarthTilesEnabled;
+                float _CopperRockTilesEnabled;
+                float _UseTerrainMasks;
+                float _FrayedInset;
+                float4 _TerrainEdgeTuning;
                 float _CopperCoverEnabled;
                 float _CopperRecessDepth;
                 float _CopperWallHeight;
@@ -180,7 +191,7 @@ Shader "Mining Game/Ore Overlay Lit"
             {
                 if(_CopperSurfacePass>.5)
                 {
-                    clip(max(_CopperCarpetEnabled,_CopperEarthTilesEnabled)-.5);
+                    clip(max(max(_CopperCarpetEnabled,_CopperEarthTilesEnabled),_CopperRockTilesEnabled)-.5);
                     float2 p=(i.positionWS.xy-_VeinGrid.zw)/_VeinGrid.xy;
                     float type=VeinCell(floor(p)).x;
                     bool copper=abs(type-3)<.1;
@@ -356,6 +367,10 @@ Shader "Mining Game/Ore Overlay Lit"
                 float _VeinEnabled;
                 float _CopperCarpetEnabled;
                 float _CopperEarthTilesEnabled;
+                float _CopperRockTilesEnabled;
+                float _UseTerrainMasks;
+                float _FrayedInset;
+                float4 _TerrainEdgeTuning;
                 float _CopperCoverEnabled;
                 float _CopperRecessDepth;
                 float _CopperWallHeight;
@@ -461,6 +476,10 @@ Shader "Mining Game/Ore Overlay Lit"
                 float _VeinEnabled;
                 float _CopperCarpetEnabled;
                 float _CopperEarthTilesEnabled;
+                float _CopperRockTilesEnabled;
+                float _UseTerrainMasks;
+                float _FrayedInset;
+                float4 _TerrainEdgeTuning;
                 float _CopperCoverEnabled;
                 float _CopperRecessDepth;
                 float _CopperWallHeight;

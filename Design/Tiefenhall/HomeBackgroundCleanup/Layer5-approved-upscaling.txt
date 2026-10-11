@@ -1,0 +1,5 @@
+Approved source: Layer5-cleaned-v2.png, 1672x941.
+Local Real-ESRGAN x4plus upscale: Layer5-approved-x4.png, 6688x3764.
+Downsample color difference mean RGB: 2.4396 / 2.0763 / 2.3690.
+Rock/lava crops visually reviewed. Unity run_script HomeCleanedLayer5BackgroundInstall passed: full Resources dimensions, RGB24, max8192, uncompressed, no mipmaps, retained GUID and matching SHA256. Report Layer5-approved-import.json.
+No Play Mode or scene changes. Editor coordination completed.

@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: DiamondPickaxe
   m_EditorClassIdentifier: 
   category: 0
+  exotic: 0
+  exoticId: 
+  metaUnlockLevel: 1
   persistentId: 340b5f4d353871a4eab332cb7233e51b
   customCardIconLayout: 1
   cardIconLayout:

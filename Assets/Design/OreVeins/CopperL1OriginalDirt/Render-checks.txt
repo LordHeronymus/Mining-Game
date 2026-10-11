@@ -1,0 +1,125 @@
+PASS Mixed richness: original dirt geometry and pixels match actual ground, samples=45830, mean RGB delta=2.167, worst=36
+PASS Mixed richness: original soil at copper-cell boundaries matches actual neighbouring ground, samples=11556, mean RGB delta=2.176
+PASS Mixed richness: rendered copper-cell dirt matches ordinary dirt HSV, delta=(-0.0003, 0.0030, -0.0032), actual=(0.0709, 0.5972, 0.5471), host=(0.0713, 0.5942, 0.5502), samples=83654
+PASS Normal coordinates: complete cells match baked original-dirt artwork, mean RGB error=17.62
+PASS Normal coordinates: authored peripheral copper retained 10160/12983
+PASS Normal coordinates: authored interior copper retained 9273/10760
+PASS Normal coordinates: original orientation matches better than any rotation or reflection (872.3 vs 3769.5)
+PASS Small: rendered copper-cell dirt matches ordinary dirt HSV, delta=(-0.0002, 0.0025, -0.0042), actual=(0.0709, 0.5983, 0.5386), host=(0.0711, 0.5958, 0.5428), samples=90150
+PASS Small: original dirt geometry and pixels match actual ground, samples=45830, mean RGB delta=2.019, worst=28
+PASS Small: original soil at copper-cell boundaries matches actual neighbouring ground, samples=11556, mean RGB delta=2.025
+PASS Medium: rendered copper-cell dirt matches ordinary dirt HSV, delta=(-0.0003, 0.0024, -0.0025), actual=(0.0709, 0.5978, 0.5434), host=(0.0712, 0.5954, 0.5459), samples=86688
+PASS Medium: original dirt geometry and pixels match actual ground, samples=45830, mean RGB delta=2.489, worst=36
+PASS Medium: original soil at copper-cell boundaries matches actual neighbouring ground, samples=11556, mean RGB delta=2.472
+PASS Large: rendered copper-cell dirt matches ordinary dirt HSV, delta=(-0.0004, 0.0034, -0.0026), actual=(0.0710, 0.5964, 0.5540), host=(0.0714, 0.5930, 0.5566), samples=78693
+PASS Large: original dirt geometry and pixels match actual ground, samples=45830, mean RGB delta=2.042, worst=29
+PASS Large: original soil at copper-cell boundaries matches actual neighbouring ground, samples=11556, mean RGB delta=2.015
+PASS Production shader compiles
+PASS Real renderer binds complete earth/copper atlas
+PASS Visible copper bands span at least 30% of cell in both axes (2, 9, 0): 757 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (3, 9, 0): 1445 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (4, 8, 0): 1025 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (5, 8, 0): 1023 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (6, 7, 0): 935 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (6, 6, 0): 1445 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (7, 7, 0): 1322 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (7, 6, 0): 1009 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (8, 6, 0): 758 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (8, 5, 0): 1025 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (9, 6, 0): 1181 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (9, 5, 0): 1114 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (10, 5, 0): 467 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (10, 4, 0): 1321 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (11, 5, 0): 1342 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (12, 4, 0): 1025 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (13, 3, 0): 553 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (7, 7, 0): 1322 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (7, 8, 0): 973 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (6, 9, 0): 1445 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (10, 3, 0): 773 pixels
+PASS Visible copper bands span at least 30% of cell in both axes (9, 2, 0): 894 pixels
+PASS Terrain centre remains opaque (2, 9, 0)
+PASS One complete opaque earth/copper tile (2, 9, 0)
+PASS Terrain centre remains opaque (3, 9, 0)
+PASS One complete opaque earth/copper tile (3, 9, 0)
+PASS Terrain centre remains opaque (4, 8, 0)
+PASS One complete opaque earth/copper tile (4, 8, 0)
+PASS Terrain centre remains opaque (5, 8, 0)
+PASS One complete opaque earth/copper tile (5, 8, 0)
+PASS Terrain centre remains opaque (6, 7, 0)
+PASS One complete opaque earth/copper tile (6, 7, 0)
+PASS Terrain centre remains opaque (6, 6, 0)
+PASS One complete opaque earth/copper tile (6, 6, 0)
+PASS Terrain centre remains opaque (7, 7, 0)
+PASS One complete opaque earth/copper tile (7, 7, 0)
+PASS Terrain centre remains opaque (7, 6, 0)
+PASS One complete opaque earth/copper tile (7, 6, 0)
+PASS Terrain centre remains opaque (8, 6, 0)
+PASS One complete opaque earth/copper tile (8, 6, 0)
+PASS Terrain centre remains opaque (8, 5, 0)
+PASS One complete opaque earth/copper tile (8, 5, 0)
+PASS Terrain centre remains opaque (9, 6, 0)
+PASS One complete opaque earth/copper tile (9, 6, 0)
+PASS Terrain centre remains opaque (9, 5, 0)
+PASS One complete opaque earth/copper tile (9, 5, 0)
+PASS Terrain centre remains opaque (10, 5, 0)
+PASS One complete opaque earth/copper tile (10, 5, 0)
+PASS Terrain centre remains opaque (10, 4, 0)
+PASS One complete opaque earth/copper tile (10, 4, 0)
+PASS Terrain centre remains opaque (11, 5, 0)
+PASS One complete opaque earth/copper tile (11, 5, 0)
+PASS Terrain centre remains opaque (12, 4, 0)
+PASS One complete opaque earth/copper tile (12, 4, 0)
+PASS Terrain centre remains opaque (13, 3, 0)
+PASS One complete opaque earth/copper tile (13, 3, 0)
+PASS Terrain centre remains opaque (7, 7, 0)
+PASS One complete opaque earth/copper tile (7, 7, 0)
+PASS Terrain centre remains opaque (7, 8, 0)
+PASS One complete opaque earth/copper tile (7, 8, 0)
+PASS Terrain centre remains opaque (6, 9, 0)
+PASS One complete opaque earth/copper tile (6, 9, 0)
+PASS Terrain centre remains opaque (10, 3, 0)
+PASS One complete opaque earth/copper tile (10, 3, 0)
+PASS Terrain centre remains opaque (9, 2, 0)
+PASS One complete opaque earth/copper tile (9, 2, 0)
+PASS Terrain centres remain opaque at ore size 0.5
+PASS Fixed baked earth borders at ore size 0.5
+PASS Terrain centres remain opaque at ore size 1.35
+PASS Fixed baked earth borders at ore size 1.35
+PASS Terrain centres remain opaque at ore size 3
+PASS Fixed baked earth borders at ore size 3
+PASS Repeated rendering is stable
+PASS Copper artwork stays fixed in world coordinates
+PASS Negative coordinates: complete cells match baked original-dirt artwork, mean RGB error=17.92
+PASS Negative coordinates: authored peripheral copper retained 8829/11756
+PASS Negative coordinates: authored interior copper retained 11794/13417
+PASS Negative coordinates: original orientation matches better than any rotation or reflection (886.4 vs 3884.5)
+PASS Texture quality 0: complete cells match baked original-dirt artwork, mean RGB error=17.92
+PASS Texture quality 0: authored peripheral copper retained 8829/11756
+PASS Texture quality 0: authored interior copper retained 11794/13417
+PASS Texture quality 0: original orientation matches better than any rotation or reflection (886.4 vs 3884.5)
+PASS Texture quality 2: complete cells match baked original-dirt artwork, mean RGB error=17.92
+PASS Texture quality 2: authored peripheral copper retained 8829/11756
+PASS Texture quality 2: authored interior copper retained 11794/13417
+PASS Texture quality 2: original orientation matches better than any rotation or reflection (886.4 vs 3884.5)
+PASS Mining removes every ore pixel in the mined cell
+PASS Mining only changes neighbour terrain cut and bevel
+PASS Production terrain edge masks exist
+PASS Production masked mining edge leaves no copper in the hole and preserves neighbour core
+PASS Copper has no emission in total darkness
+PASS Copper reacts to real light colour
+PASS Real renderer binds four complete rock/copper families
+PASS All five host families render distinct rock artwork
+PASS Bilinear layer transitions preserve each cell's own host artwork
+PASS Real normal cursor sorts above copper surface
+PASS Cursor mode 0 visible over copper on side 0: 568/568
+PASS Cursor mode 0 visible over copper on side 1: 590/590
+PASS Cursor mode 0 visible over copper on side 2: 526/526
+PASS Cursor mode 0 visible over copper on side 3: 498/498
+PASS Real smart cursor sorts above copper surface
+PASS Cursor mode 1 visible over copper on side 0: 180/181
+PASS Cursor mode 1 visible over copper on side 1: 164/164
+PASS Cursor mode 1 visible over copper on side 2: 114/114
+PASS Cursor mode 1 visible over copper on side 3: 115/115
+PASS Other ore types retain their existing representation
+ALL PASSED

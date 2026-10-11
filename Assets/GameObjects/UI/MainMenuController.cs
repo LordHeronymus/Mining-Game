@@ -6,6 +6,7 @@ public sealed class MainMenuController : MonoBehaviour
     public static bool IsVisible { get; private set; }
     RectTransform layout;
     HomeCaveVisual landscape;
+    bool landscapeInitialized;
     public int SelectedSaveSlot { get; private set; } = -1;
     Button continueButton, newGameButton;
     TMPro.TextMeshProUGUI status, progressionLabel;
@@ -59,6 +60,7 @@ public sealed class MainMenuController : MonoBehaviour
         MenuButton("Quit", "Beenden", -315, RunNavigation.Quit);
         status = HomeUi.Label("Status", layout, "", new Vector2(-565, -430), new Vector2(620, 40), 22);
         GameSaveSystem.SlotsChanged += Refresh;
+        GpsSettings.Changed += RefreshLandscape;
         MetaProgression.Changed += RefreshProgression; RefreshProgression();
         Refresh(); Fit();
     }
@@ -109,9 +111,17 @@ public sealed class MainMenuController : MonoBehaviour
     public void SelectSave(int slot)
     {
         SelectedSaveSlot = slot;
-        landscape?.SetLayer(slot > 0 ? GameSaveSystem.GetHomeLayer(slot) : 1);
+        RefreshLandscape();
+    }
+    void RefreshLandscape()
+    {
+        if (!landscape) return;
+        int automatic = SelectedSaveSlot > 0 ? GameSaveSystem.GetHomeLayer(SelectedSaveSlot) : 1;
+        int layer = GameplayTestSettings.ResolveHomescreenLayer(automatic);
+        if (!landscapeInitialized || landscape.Layer != layer) landscape.SetLayer(layer);
+        landscapeInitialized = true;
     }
     void OnRectTransformDimensionsChange() => Fit();
     void Fit() => HomeUi.Fit(layout, new Vector2(1920, 1080));
-    void OnDestroy() { IsVisible = false; GameSaveSystem.SlotsChanged -= Refresh; MetaProgression.Changed -= RefreshProgression; }
+    void OnDestroy() { IsVisible = false; GameSaveSystem.SlotsChanged -= Refresh; MetaProgression.Changed -= RefreshProgression; GpsSettings.Changed -= RefreshLandscape; }
 }
