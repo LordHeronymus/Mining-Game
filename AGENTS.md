@@ -38,9 +38,9 @@ Die vollständige Änderungshistorie steht in `Docs/Changelog.md`. Dort nur bei 
 Mehrere Agenten (Claude Code, Codex, Claude Cowork) arbeiten am selben Repo. Koordination läuft über `Docs/Arbeitsstand.md`:
 
 1. **Vor dem Start** `Docs/Arbeitsstand.md` lesen. Überschneidet sich die geplante Arbeit mit einem aktiven Eintrag (gleiche Dateien/Systeme) oder ist der Editor belegt: nicht loslegen, sondern den Benutzer fragen.
-2. **Eintragen** unter „Aktiv“: Agent, Aufgabe, Branch, betroffene Dateien/Systeme, Editor ja/nein, Startzeit.
-3. **Editor:** Nur ein Agent nutzt den Unity Editor gleichzeitig (Play-Mode, `run_script`, Szenenänderungen). Belegung in der Tabelle „Unity Editor“ eintragen und danach sofort wieder freigeben.
-4. **Branch:** Jede Aufgabe auf einem eigenen Branch (`claude/<thema>`, `codex/<thema>`), nicht direkt auf `main`. Zusammenführen nur nach Freigabe durch den Benutzer.
+2. **Eintragen** unter „Aktiv“: Agent, Aufgabe, Branch, Arbeitsordner, betroffene Dateien/Systeme, Editor ja/nein, Startzeit.
+3. **Editor:** Jeder Arbeitsordner hat seinen eigenen Unity Editor. Pro Ordner nutzt nur ein Agent den Editor gleichzeitig (Play-Mode, `run_script`, Szenenänderungen). Belegung in der Tabelle „Unity Editor“ mit Ordner eintragen und danach sofort wieder freigeben.
+4. **Branches und Arbeitsordner:** `main` ist der stabile Stand und wird nie direkt bearbeitet. Jede Aufgabe läuft auf einem eigenen Branch von `main` (`claude/<thema>`, `codex/<thema>`). Gleichzeitig laufende Chats arbeiten je in einem eigenen Arbeitsordner (git worktree): `Mining Game` und `Mining Game 2` nebeneinander unter `Git Repos`, weitere mit `git worktree add "../Mining Game <n>" -b <agent>/<thema> main`. Ein Branch ist immer nur in einem Ordner ausgecheckt; einen neuen Branch im eigenen Ordner mit `git switch -c <agent>/<thema> main` beginnen (vorher `git fetch`). Ein neuer Ordner importiert beim ersten Öffnen in Unity die komplette Library (etwa 12 GB, dauert) und braucht eine eigene, nicht versionierte `.mcp.json` mit seinem Projektpfad. Vor dem Zusammenführen `main` in den Branch holen und Konflikte dort lösen; nach `main` erst nach Freigabe durch den Benutzer.
 5. **Abschluss:** Eigenen Eintrag aus „Aktiv“ entfernen, einen Satz unter „Zuletzt abgeschlossen“ ergänzen (max. 10 Einträge, älteste löschen), Changelog-Eintrag in `Docs/Changelog.md`.
 6. Veraltete Einträge (älter als 24 h) nicht selbst löschen, sondern den Benutzer darauf hinweisen.
 7. Gibt es keinen aktiven Konflikt, keine Rückfragen oder Abschlussmeldungen an andere Agenten.
