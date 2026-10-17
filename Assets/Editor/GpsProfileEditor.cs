@@ -64,7 +64,7 @@ public static class GpsProfileEditor
                 foreach (string guid in AssetDatabase.FindAssets("t:" + type.Name))
                 {
                     string path = AssetDatabase.GUIDToAssetPath(guid);
-                    if (path.Contains("_SceneBackups") || path.Contains("/Archive/")) continue;
+                    if (path.Contains("/Archive/")) continue;
                     var asset = AssetDatabase.LoadAssetAtPath(path, type);
                     if (asset is CraftingRecipe recipe && !recipe.TryGetCosts(out _)) continue;
                     if (asset) Capture(asset, profile, data);
@@ -72,7 +72,7 @@ public static class GpsProfileEditor
             foreach (string guid in AssetDatabase.FindAssets("t:AudioClip"))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
-                if (!path.Contains("_SceneBackups") && !path.Contains("/Archive/")) Register(AssetDatabase.LoadAssetAtPath<AudioClip>(path), profile);
+                if (!path.Contains("/Archive/")) Register(AssetDatabase.LoadAssetAtPath<AudioClip>(path), profile);
             }
             var components = Resources.FindObjectsOfTypeAll<Component>().Where(component => component && component.gameObject.scene.IsValid()).ToArray();
             foreach (var type in GpsSchema.Sections.Select(section => section.source).Distinct().Where(type => typeof(Component).IsAssignableFrom(type)))
@@ -101,7 +101,7 @@ public static class GpsProfileEditor
             if (created || before != JsonUtility.ToJson(data) || assetCount != profile.assets.Count)
             {
                 if (!wasUnsaved) { GpsSettings.Save(out error); if (error != null) throw new InvalidOperationException(error); }
-                else { profile.documentJson = JsonUtility.ToJson(data, true); EditorUtility.SetDirty(profile); GpsSettings.NotifyConfigurationChanged(); }
+                else { profile.documentJson = GpsSettings.AssetJson(data); EditorUtility.SetDirty(profile); GpsSettings.NotifyConfigurationChanged(); }
             }
         }
         finally { if (extra.IsValid()) EditorSceneManager.CloseScene(extra, true); }

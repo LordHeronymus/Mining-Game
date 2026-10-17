@@ -257,7 +257,8 @@ public sealed partial class LoadingAudio : MonoBehaviour
 
     void UpdateDistantDetails()
     {
-        if (homeLayer <= 1) { StopDistantDetails(); return; }
+        if (homeLayer <= 1) { if (!float.IsPositiveInfinity(nextDistantAt)) StopDistantDetails(); return; }
+        if (!homeRunning && float.IsPositiveInfinity(nextDistantAt)) return;
         foreach (var source in distantSources)
             if (source && source.isPlaying)
             {

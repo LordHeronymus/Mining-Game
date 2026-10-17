@@ -32,7 +32,7 @@ public static class MetaVictoryRuntimeChecks
 public sealed class MetaVictoryRuntimeProbe : MonoBehaviour
 {
     const string Report = "Temp/MetaVictoryRuntimeChecks.txt";
-    const string Screenshot = "Assets/Design/Tiefenhall/Metaprogression/Progression-Victory.png";
+    const string Screenshot = "Design/Tiefenhall/Metaprogression/Progression-Victory.png";
     string saveDirectory, profileDirectory;
     int checks;
     bool ScopeValid => GameSaveSystem.TestDirectory == saveDirectory && MetaProgression.DirectoryPath == profileDirectory;

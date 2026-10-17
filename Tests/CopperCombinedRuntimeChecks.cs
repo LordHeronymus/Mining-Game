@@ -24,7 +24,7 @@ public static class CopperCombinedRuntimeChecks
 public sealed class CopperCombinedRuntimeProbe:MonoBehaviour
 {
     const string Report="Temp/CopperCombinedRuntimeChecks.txt";
-    const string Output="Assets/Design/OreVeins/CopperL1Branches/Implemented";
+    const string Output="Design/OreVeins/CopperL1Branches/Implemented";
     string previousSave,previousMeta,directory;bool restored,previousBackground;
     void Check(bool value,string message){if(!value)throw new Exception(message);File.AppendAllText(Report,"PASS "+message+"\n");}
     IEnumerator Start()

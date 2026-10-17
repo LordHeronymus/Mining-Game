@@ -454,6 +454,31 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    void Start() => StartCoroutine(WarmGameplayClips());
+
+    // Decompress-on-load clips decode synchronously on their first play: the first hit in a new layer stalled
+    // a gameplay frame by up to 15 ms. Decode the short effect clips ahead in small slices while the game loads;
+    // a long clip would stall a whole loading frame instead.
+    System.Collections.IEnumerator WarmGameplayClips()
+    {
+        var clips = new List<AudioClip> { DeepLayerOreHitClip, DeepLayerStoneHitClip, blockedMiningHitClip };
+        clips.AddRange(LightRubbleClips);
+        foreach (var sound in soundLookup.Values)
+        {
+            clips.Add(sound.clip);
+            if (sound.variants != null) clips.AddRange(sound.variants);
+        }
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        foreach (var clip in clips)
+        {
+            if (!clip || clip.loadState != AudioDataLoadState.Unloaded || clip.length > 3f) continue;
+            clip.LoadAudioData();
+            if (clock.Elapsed.TotalMilliseconds < 2) continue;
+            yield return null;
+            clock.Restart();
+        }
+    }
+
     public bool TryGetLowHealthHeartbeatPlayback(out float positionSeconds, out float durationSeconds)
     {
         positionSeconds = durationSeconds = 0f;
@@ -660,17 +685,26 @@ public class AudioManager : MonoBehaviour
         StartCoroutine(PlayLightRubbleAfterDelay(Random.Range(minimum, maximum)));
     }
 
+    AudioClip[] LightRubbleClips
+    {
+        get
+        {
+            if (lightRubbleClips == null)
+            {
+                lightRubbleClips = new AudioClip[3];
+                for (int i = 0; i < lightRubbleClips.Length; i++)
+                    lightRubbleClips[i] = Resources.Load<AudioClip>($"Audio/LightRubble{i + 1:00}");
+            }
+            return lightRubbleClips;
+        }
+    }
+
     System.Collections.IEnumerator PlayLightRubbleAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
         if (AudioSettings.dspTime < nextLightRubbleStart) yield break;
-        if (lightRubbleClips == null)
-        {
-            lightRubbleClips = new AudioClip[3];
-            for (int i = 0; i < lightRubbleClips.Length; i++)
-                lightRubbleClips[i] = Resources.Load<AudioClip>($"Audio/LightRubble{i + 1:00}");
-        }
-        var clip = lightRubbleClips[Random.Range(0, lightRubbleClips.Length)];
+        var clips = LightRubbleClips;
+        var clip = clips[Random.Range(0, clips.Length)];
         if (!clip) yield break;
         var source = GetFreeSource();
         if (!source) yield break;

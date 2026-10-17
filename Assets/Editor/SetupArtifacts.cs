@@ -7,7 +7,7 @@ using UnityEngine.Tilemaps;
 
 public static class SetupArtifacts
 {
-    const string Sheet = "Assets/Design/ArtifactsConcept-10.png";
+    const string Sheet = "Assets/GameObjects/Map/Artifacts/ArtifactsConcept-10.png";
     const string Folder = "Assets/GameObjects/Map/Artifacts";
     static readonly string[] Names =
     {

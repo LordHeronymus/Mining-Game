@@ -67,8 +67,8 @@ public static class FrayedTerrainChecks
                 camera.Render();RenderTexture.active=target;pixels.ReadPixels(new Rect(0,0,1000,1000),0,0);pixels.Apply();return pixels.GetPixels32();
             }
             camera.backgroundColor=new Color(.14f,.065f,.027f,1);
-            var rubble=goMap.AddComponent<TerrainEdgeRubble>();rubble.Apply(props,camera);
-            Render();File.WriteAllBytes("Assets/Design/FrayedTerrain-before.png",pixels.EncodeToPNG());
+            var rubble=goMap.AddComponent<TerrainEdgeRubble>();rubble.Apply(props,true,camera);
+            Render();File.WriteAllBytes("Design/FrayedTerrain-before.png",pixels.EncodeToPNG());
             var oldVisual=goMap.transform.Find("Terrain edge rubble");UnityEngine.Object.DestroyImmediate(rubble);if(oldVisual)UnityEngine.Object.DestroyImmediate(oldVisual.gameObject);
             props.SetFloat("_FrayedInset",.18f);
             foreach(var r in terrain)r.SetPropertyBlock(props);
@@ -77,10 +77,10 @@ public static class FrayedTerrainChecks
             var meshRenderer=goMap.transform.Find("Frayed terrain edges").GetComponent<MeshRenderer>();
             if(mesh.vertexCount==0)throw new Exception("No frayed geometry");
             Render();
-            const string preview="Assets/Design/FrayedTerrain-after.png";
+            const string preview="Design/FrayedTerrain-after.png";
             File.WriteAllBytes(preview,pixels.EncodeToPNG());AssetDatabase.ImportAsset(preview);
             int oldVertices=mesh.vertexCount;var previousVertices=mesh.vertices;
-            map.Terrain.SetTile(new Vector3Int(2,3,0),null);typeof(TerrainFrayedEdges).GetMethod("Changed",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(frayed,new object[]{map.Terrain,new Tilemap.SyncTile[0]});frayed.Apply(props,camera);
+            map.Terrain.SetTile(new Vector3Int(2,3,0),null);typeof(TerrainFrayedEdges).GetMethod("Changed",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(frayed,new object[]{map.Terrain,default(Unity.Collections.NativeArray<Vector3Int>)});frayed.Apply(props,camera);
             bool changed=mesh.vertexCount!=oldVertices;var currentVertices=mesh.vertices;for(int i=0;!changed&&i<currentVertices.Length;i++)changed=currentVertices[i]!=previousVertices[i];if(!changed)throw new Exception("Mining did not rebuild exposed edges");
             camera.backgroundColor=Color.clear;light.intensity=0;var dark=Render();
             foreach(var c in dark)if(c.r>1||c.g>1||c.b>1)throw new Exception("Terrain emits light");

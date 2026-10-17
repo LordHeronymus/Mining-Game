@@ -16,7 +16,6 @@ public static class GpsAudioCatalogEditor
         foreach(string guid in AssetDatabase.FindAssets("t:AudioClip",new[]{"Assets"}))
         {
             string path=AssetDatabase.GUIDToAssetPath(guid);
-            if(path.Contains("_SceneBackups"))continue;
             foreach(var clip in AssetDatabase.LoadAllAssetsAtPath(path).OfType<AudioClip>())
             {
                 string key=GpsProfileEditor.Register(clip,profile);

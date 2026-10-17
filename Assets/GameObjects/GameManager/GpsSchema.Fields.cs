@@ -33,15 +33,25 @@ public static partial class GpsSchema
         ["efficiencyMaxBonus"] = "Maximaler Effizienzbonus", ["efficiencyReferenceXpPerMinute"] = "Effizienzreferenz (XP/min)",
         ["layerIndex"] = "Layer", ["breaking"] = "Bruch", ["soundType"] = "Soundtyp", ["clipIndex"] = "Clip", ["tuning"] = "Klang",
     };
+    // Attribute lookups never change while the scripts are loaded; validation asks for the same child fields often.
+    static readonly Dictionary<System.Reflection.FieldInfo, (string inspectorName, RangeAttribute range, MinAttribute min)> fieldAttributes = new();
+    static (string inspectorName, RangeAttribute range, MinAttribute min) Attributes(System.Reflection.FieldInfo field)
+    {
+        if (!fieldAttributes.TryGetValue(field, out var result))
+            fieldAttributes.Add(field, result = (
+                field.GetCustomAttributes(typeof(InspectorNameAttribute), true).Cast<InspectorNameAttribute>().FirstOrDefault()?.displayName,
+                field.GetCustomAttributes(typeof(RangeAttribute), true).FirstOrDefault() as RangeAttribute,
+                field.GetCustomAttributes(typeof(MinAttribute), true).FirstOrDefault() as MinAttribute));
+        return result;
+    }
     public static GpsFieldSpec ChildSpec(GpsValue node, Type parent)
     {
         var field = parent == null ? null : GpsCodec.Field(parent, node.name);
-        string label = ChildLabels.TryGetValue(node.name, out var text) ? text :
-            field?.GetCustomAttributes(typeof(InspectorNameAttribute), true).Cast<InspectorNameAttribute>().FirstOrDefault()?.displayName ?? node.name;
+        var attributes = field == null ? default : Attributes(field);
+        string label = ChildLabels.TryGetValue(node.name, out var text) ? text : attributes.inspectorName ?? node.name;
         var result = new GpsFieldSpec(node.name, label);
-        if (field?.GetCustomAttributes(typeof(RangeAttribute), true).FirstOrDefault() is RangeAttribute range)
-        { result.min = range.min; result.max = range.max; }
-        if (field?.GetCustomAttributes(typeof(MinAttribute), true).FirstOrDefault() is MinAttribute min) result.min = Mathf.Max(result.min, min.min);
+        if (attributes.range is RangeAttribute range) { result.min = range.min; result.max = range.max; }
+        if (attributes.min is MinAttribute min) result.min = Mathf.Max(result.min, min.min);
         if (node.name == "volume" || node.name == "pitch" || node.name == "pitchSpread" || node.name == "volumeSpread") result.factor = 100f;
         if (node.name == "amount") result.min = 1;
         if (node.name == "money" || node.name == "cash" || node.name == "artifactPoints" || node.name == "layerIndex" || node.name == "clipIndex") result.min = 0;

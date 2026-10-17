@@ -46,7 +46,7 @@ public class ExoticPreviewProbe:MonoBehaviour {
  owner.Close();owner=null;yield return null;Check(!GameplayInputBlocker.IsBlocked,"Input ownership restored");
  File.AppendAllText(Report,"COMPLETE "+count+" checks\n");
  }
- void Shot(string name){var t=ScreenCapture.CaptureScreenshotAsTexture();File.WriteAllBytes("Assets/Design/Tiefenhall/ExoticBlueprints/"+name+".png",t.EncodeToPNG());Object.Destroy(t);}
+ void Shot(string name){var t=ScreenCapture.CaptureScreenshotAsTexture();File.WriteAllBytes("Design/Tiefenhall/ExoticBlueprints/"+name+".png",t.EncodeToPNG());Object.Destroy(t);}
  void Cleanup(){if(cleaned)return;cleaned=true;if(owner)owner.Close();MetaProgression.TestDirectory=previous;Destroy(gameObject);}
  void OnDestroy(){Cleanup();}
 }

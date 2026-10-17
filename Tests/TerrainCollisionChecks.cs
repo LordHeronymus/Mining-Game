@@ -67,13 +67,13 @@ public static class TerrainCollisionChecks
                 camera.Render();RenderTexture.active=target;pixels.ReadPixels(new Rect(0,0,1000,1000),0,0);pixels.Apply();return pixels.GetPixels32();
             }
             camera.backgroundColor=new Color(.14f,.065f,.027f,1);
-            Render();File.WriteAllBytes("Assets/Design/TerrainMasks-before.png",pixels.EncodeToPNG());
+            Render();File.WriteAllBytes("Design/TerrainMasks-before.png",pixels.EncodeToPNG());
             props.SetFloat("_UseTerrainMasks",1);
             props.SetVector("_TerrainEdgeTuning",new Vector4(1.5f,1,1,0));
             props.SetTexture("_TerrainEdgeMasks",Resources.Load<Texture2DArray>("TerrainEdgeMasks"));
             foreach(var r in terrain)r.SetPropertyBlock(props);
             var before=Render();
-            const string preview="Assets/Design/TerrainMasks-after.png";
+            const string preview="Design/TerrainMasks-after.png";
             File.WriteAllBytes(preview,pixels.EncodeToPNG());AssetDatabase.ImportAsset(preview);
             foreach(var existingCollider in goMap.GetComponents<Collider2D>())existingCollider.enabled=false;
             var shapes=new TerrainCollisionShape(source,map.Terrain);

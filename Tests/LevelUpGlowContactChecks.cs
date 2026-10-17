@@ -11,7 +11,7 @@ public static class LevelUpGlowContactChecks {
  public static object Main(){if(!Application.isPlaying||!MainMenuController.IsVisible||GameplayInputBlocker.IsBlocked)throw new Exception("Start in free MainMenu");var go=new GameObject("Level Up Contact Probe");Object.DontDestroyOnLoad(go);go.AddComponent<LevelUpContactProbe>();return "Started";}
 }
 public sealed class LevelUpContactProbe:MonoBehaviour {
- const string Report="Temp/LevelUpGlowContactChecks.txt",Folder="Assets/Design/Tiefenhall/LevelUpV2/Contact";
+ const string Report="Temp/LevelUpGlowContactChecks.txt",Folder="Design/Tiefenhall/LevelUpV2/Contact";
  string save,meta;bool clean;int checks;GpsDocument original;GpsProfile profile;string committed;bool dirty;
  void Check(bool ok,string label){if(!ok)throw new Exception(label);File.AppendAllText(Report,"PASS "+(++checks)+" "+label+"\n");}
  IEnumerator Start(){save=GameSaveSystem.TestDirectory;meta=MetaProgression.TestDirectory;original=GpsSettings.Document;profile=GpsSettings.Profile;committed=GpsSettings.CommittedJson;dirty=GpsSettings.HasUnsavedChanges;

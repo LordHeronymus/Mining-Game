@@ -249,7 +249,7 @@ public sealed class CopperShallowWallRuntimeProbe : MonoBehaviour
             {
                 map.GetComponent<OreOverlayAppearance>().PrepareVeins(view);view.Render();RenderTexture.active=target;
                 pixels.ReadPixels(new Rect(0,0,900,1100),0,0);pixels.Apply();
-                File.WriteAllBytes("Assets/Design/OreVeins/CopperEarthWall/ShallowReference/Implemented/"+name+".png",pixels.EncodeToPNG());
+                File.WriteAllBytes("Design/OreVeins/CopperEarthWall/ShallowReference/Implemented/"+name+".png",pixels.EncodeToPNG());
             }
             Render("Natural-L"+layer+"-copper");var current=pixels.GetPixels32();
             legacy=true;Render("Natural-L"+layer+"-before");legacy=false;
@@ -306,7 +306,7 @@ public sealed class CopperShallowWallRuntimeProbe : MonoBehaviour
             if(darkness)darkness.enabled=false;
             view.targetTexture=target;map.GetComponent<OreOverlayAppearance>().PrepareVeins(view);
             view.Render();RenderTexture.active=target;pixels.ReadPixels(new Rect(0,0,900,1100),0,0);pixels.Apply();
-            const string path="Assets/Design/OreVeins/CopperEarthWall/ShallowReference/Implemented/Runtime-copper.png";
+            const string path="Design/OreVeins/CopperEarthWall/ShallowReference/Implemented/Runtime-copper.png";
             File.WriteAllBytes(path,pixels.EncodeToPNG());
             int visible=0;foreach(var pixel in pixels.GetPixels32())if(pixel.r>40 || pixel.g>40 || pixel.b>40)visible++;
             Check(visible>pixels.width*pixels.height/2,"Rendered a visible copper/dirt fixture in the actual gameplay scene with verification lighting");

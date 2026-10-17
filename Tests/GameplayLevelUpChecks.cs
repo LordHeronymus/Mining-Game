@@ -52,7 +52,7 @@ public sealed class GameplayLevelUpProbe:MonoBehaviour {
   Check(Time.timeScale==1&&!GameplayInputBlocker.IsBlocked,"Celebration does not pause or block gameplay");
   Check(group.alpha>.99f&&Label("Level").text=="25","Medallion readable at full opacity");
   Check(view.GetComponentsInChildren<Image>().Any(i=>i.sprite&&i.sprite.name=="LevelUpMedallion"),"Generated medallion sprite loaded");
-  yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot("Assets/Design/Tiefenhall/LevelUpV2/Implemented.png");yield return null;
+  yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot("Design/Tiefenhall/LevelUpV2/Implemented.png");yield return null;
   float age=view.Elapsed;GameplayInputBlocker.SetBlocked(this,true);Time.timeScale=0;yield return new WaitForSecondsRealtime(.3f);
   Check(group.alpha==0&&Mathf.Abs(view.Elapsed-age)<.03f&&!sound.isPlaying,"Pause hides visual and suspends animation/audio");
   GameplayInputBlocker.SetBlocked(this,false);Time.timeScale=1;yield return null;yield return null;

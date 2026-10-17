@@ -13,6 +13,13 @@ Shader "Mining Game/Ore Overlay Lit"
         [HideInInspector] _CopperEarthTiles("Copper Earth Tiles", 2D) = "black" {}
         [HideInInspector] _CopperEarthTileLayout("Copper Tile Cores", 2D) = "black" {}
         [HideInInspector] _CopperEarthCombined("Combined Earth Copper Tiles", 2D) = "black" {}
+        [HideInInspector] _CopperL1Sprite("L1 Copper Sprite", 2D) = "black" {}
+        [HideInInspector] _CopperL1Large("L1 Large Copper Sprite", 2D) = "black" {}
+        [HideInInspector] _CopperL1Small("L1 Small Copper Sprite", 2D) = "black" {}
+        [HideInInspector] _CopperL2Small("L2 Small Copper Sprite", 2D) = "black" {}
+        [HideInInspector] _CopperL2Medium("L2 Medium Copper Sprite", 2D) = "black" {}
+        [HideInInspector] _CopperL2Large("L2 Large Copper Sprite", 2D) = "black" {}
+        [HideInInspector] _CopperL2SpritesEnabled("L2 Copper Sprites Enabled", Float) = 0
         [HideInInspector] _CopperRockCombined("Combined Rock Copper Tiles", 2DArray) = "" {}
         [HideInInspector] _UseTerrainMasks("Use terrain masks", Float) = 0
         [HideInInspector] _FrayedInset("Frayed edge inset", Float) = 0
@@ -118,6 +125,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 float _VeinEnabled;
                 float _CopperCarpetEnabled;
                 float _CopperEarthTilesEnabled;
+                float _CopperL2SpritesEnabled;
                 float _CopperRockTilesEnabled;
                 float _UseTerrainMasks;
                 float _FrayedInset;
@@ -367,6 +375,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 float _VeinEnabled;
                 float _CopperCarpetEnabled;
                 float _CopperEarthTilesEnabled;
+                float _CopperL2SpritesEnabled;
                 float _CopperRockTilesEnabled;
                 float _UseTerrainMasks;
                 float _FrayedInset;
@@ -476,6 +485,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 float _VeinEnabled;
                 float _CopperCarpetEnabled;
                 float _CopperEarthTilesEnabled;
+                float _CopperL2SpritesEnabled;
                 float _CopperRockTilesEnabled;
                 float _UseTerrainMasks;
                 float _FrayedInset;

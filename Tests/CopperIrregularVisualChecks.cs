@@ -13,7 +13,7 @@ using Object = UnityEngine.Object;
 
 public static class CopperIrregularVisualChecks
 {
-    const string Output = "Assets/Design/OreVeins/CopperIrregular/Implemented";
+    const string Output = "Design/OreVeins/CopperIrregular/Implemented";
     static readonly List<string> passed = new();
     static void Check(bool condition, string message)
     { if (!condition) throw new Exception(message); passed.Add(message); }

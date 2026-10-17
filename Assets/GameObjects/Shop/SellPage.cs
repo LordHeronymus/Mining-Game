@@ -262,10 +262,7 @@ public partial class SellPage : MonoBehaviour
         {
             foreach (var kv in InventoryManager.Instance.GetSnapshot())
             {
-                if (kv.Key != null
-                    && kv.Key.category == ItemCategory.Ore
-                    && kv.Key.worth > 0
-                    && kv.Value > 0)
+                if (ShopManager.IsSellable(kv.Key) && kv.Value > 0)
                 {
                     canSellAny = true;
                     break;

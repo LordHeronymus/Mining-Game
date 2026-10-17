@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -41,6 +42,10 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     readonly Dictionary<int, TallGrassPatch> patches = new();
     readonly List<int> sites = new();
     readonly HashSet<int> healingHerbSites = new();
+    // A rebuilt grassland creates its patches a few per frame; hundreds of new objects at once stalled the
+    // loading screen. Sites and herbs are decided at once, so the grassland is the same.
+    const int SpawnsPerFrame = 20;
+    readonly List<int> pendingSpawns = new();
     Transform generatedRoot;
     System.Random respawnRandom;
     float nextRespawn;
@@ -57,6 +62,7 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     public IEnumerable<TallGrassPatch> ActivePatches => patches.Values;
     public SavedGrassland CaptureRunState()
     {
+        SpawnPending(int.MaxValue);
         var saved = new List<SavedGrass>();
         foreach (var patch in patches.Values) if (patch) saved.Add(new SavedGrass { cell = patch.SurfaceCellX, herb = patch.IsHealingHerb, harvestId = patch.HarvestId });
         return new SavedGrassland { patches = saved.ToArray(), sites = sites.ToArray(), herbSites = new List<int>(healingHerbSites).ToArray(),
@@ -102,14 +108,14 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     {
         if (!map) map = GetComponent<MapGenerator>();
         if (map) map.Generated += RequestRebuild;
-        Tilemap.tilemapTileChanged += OnTilesChanged;
+        Tilemap.tilemapPositionsChanged += OnTilesChanged;
         RequestRebuild();
     }
 
     void OnDisable()
     {
         if (map) map.Generated -= RequestRebuild;
-        Tilemap.tilemapTileChanged -= OnTilesChanged;
+        Tilemap.tilemapPositionsChanged -= OnTilesChanged;
         rebuildPending = false;
         Clear();
     }
@@ -169,12 +175,12 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         patch.transform.position += Vector3.up * (bottom - renderer.bounds.min.y);
     }
 
-    void OnTilesChanged(Tilemap source, Tilemap.SyncTile[] changes)
+    void OnTilesChanged(Tilemap source, NativeArray<Vector3Int> positions)
     {
-        if (!map || source != map.Terrain || changes == null) return;
-        foreach (var change in changes)
-            if (change.position.y == 0 && !source.HasTile(change.position))
-                RemovePatch(change.position.x);
+        if (!map || source != map.Terrain) return;
+        foreach (var position in positions)
+            if (position.y == 0 && !source.HasTile(position))
+                RemovePatch(position.x);
     }
 
     public void Rebuild()
@@ -282,8 +288,16 @@ public sealed class SurfaceTallGrass : MonoBehaviour
             return order != 0 ? order : a.CompareTo(b);
         });
         for (int i = 0; i < herbCount; i++) healingHerbSites.Add(ranked[i]);
-        foreach (int x in candidates)
-            Spawn(x, map.Terrain.GetCellCenterWorld(new Vector3Int(x, 0)).x);
+        pendingSpawns.AddRange(candidates);
+        if (!Application.isPlaying) SpawnPending(int.MaxValue);
+    }
+
+    void SpawnPending(int limit)
+    {
+        int count = Mathf.Min(limit, pendingSpawns.Count);
+        for (int i = 0; i < count; i++)
+            Spawn(pendingSpawns[i], map.Terrain.GetCellCenterWorld(new Vector3Int(pendingSpawns[i], 0)).x);
+        pendingSpawns.RemoveRange(0, count);
     }
 
     void Update()
@@ -291,9 +305,10 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         RefreshSwaySettings();
         if (rebuildPending)
         {
-            if (map && map.IsGenerated && !map.IsGenerationStreaming) Rebuild();
+            if (map && map.IsGenerated && !map.IsGenerationStreaming) { Rebuild(); SpawnPending(SpawnsPerFrame); }
             return;
         }
+        if (pendingSpawns.Count > 0) { SpawnPending(SpawnsPerFrame); return; }
         if (!Application.isPlaying || !map || !map.IsGenerated || respawnRandom == null) return;
         if (scheduledConversionRate != ConversionRate) ScheduleConversion();
         if (Time.time >= nextConversion)
@@ -496,17 +511,22 @@ public sealed class SurfaceTallGrass : MonoBehaviour
 
     void RemovePatch(int x)
     {
-        if (!patches.Remove(x, out var patch) || !patch) return;
-        healingHerbSites.Remove(x);
-        patch.gameObject.SetActive(false);
-        if (Application.isPlaying) Destroy(patch.gameObject);
-        else DestroyImmediate(patch.gameObject);
+        if (pendingSpawns.Remove(x)) healingHerbSites.Remove(x);
+        else
+        {
+            if (!patches.Remove(x, out var patch) || !patch) return;
+            healingHerbSites.Remove(x);
+            patch.gameObject.SetActive(false);
+            if (Application.isPlaying) Destroy(patch.gameObject);
+            else DestroyImmediate(patch.gameObject);
+        }
         if (Application.isPlaying && patches.Count < sites.Count) ScheduleRespawn();
     }
 
     void Clear()
     {
         patches.Clear();
+        pendingSpawns.Clear();
         if (!generatedRoot) return;
         generatedRoot.gameObject.SetActive(false);
         if (Application.isPlaying) Destroy(generatedRoot.gameObject);

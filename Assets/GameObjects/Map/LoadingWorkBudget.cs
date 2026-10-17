@@ -2,9 +2,10 @@ using System.Diagnostics;
 using UnityEngine;
 
 // A loading slice leaves time for the UI, rendering and engine-side Tilemap work.
+// The slice adapts so that whole loading frames stay within a 120 Hz frame (8.3 ms).
 public sealed class LoadingWorkBudget
 {
-    public const double TargetFrameMilliseconds = 1000.0 / 60;
+    public const double TargetFrameMilliseconds = 1000.0 / 120;
     static double milliseconds = 4;
     static int frame = -1, queuedCells;
     static long began;
@@ -33,7 +34,7 @@ public sealed class LoadingWorkBudget
     }
     public static void ObserveFrame(float seconds)
     {
-        // Allow a small timing tolerance around the 60 Hz refresh interval.
+        // Allow a small timing tolerance around the target frame interval.
         double elapsed = seconds * 1000;
         if (elapsed > TargetFrameMilliseconds + .5) milliseconds = System.Math.Max(.75, milliseconds * .8);
         else if (elapsed <= TargetFrameMilliseconds + .25) milliseconds = System.Math.Min(4, milliseconds + .1);

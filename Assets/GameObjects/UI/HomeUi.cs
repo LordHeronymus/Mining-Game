@@ -276,22 +276,21 @@ public sealed class HomeButtonFeedback : MonoBehaviour, IPointerEnterHandler, IP
     void Update()
     {
         float target = button.interactable && (hovered || selected) ? 1 : 0;
-        amount = Mathf.Lerp(amount, target, 1 - Mathf.Exp(-12 * Time.unscaledDeltaTime));
+        amount = GoldButtonFeedback.Approach(amount, target, 12);
         pressed = Mathf.Max(0, pressed - Time.unscaledDeltaTime);
-        transform.localScale = animateScale ? Vector3.one * (1 + .018f * amount - (pressed > 0 ? .012f : 0)) : Vector3.one;
-        glow = Mathf.Lerp(glow, button.interactable && (primary || hovered || selected) ? 1 : 0,
-            1 - Mathf.Exp(-9 * Time.unscaledDeltaTime));
+        var scale = animateScale ? Vector3.one * (1 + .018f * amount - (pressed > 0 ? .012f : 0)) : Vector3.one;
+        if (transform.localScale != scale) transform.localScale = scale;
+        glow = GoldButtonFeedback.Approach(glow, button.interactable && (primary || hovered || selected) ? 1 : 0, 9);
         image.sprite = HomeUi.Sprite(normalPart);
         highlight.sprite = HomeUi.Sprite(activePart); highlight.type = image.type;
         fill = pressOnlySelection
             ? button.IsInteractable() && (pointerHeld && hovered || selected && Input.GetButton("Submit")) ? 1 : 0
-            : Mathf.Lerp(fill, button.IsInteractable() && (primary || !selectionManaged && selected && !hovered) ? 1 : 0,
-                1 - Mathf.Exp(-9 * Time.unscaledDeltaTime));
+            : GoldButtonFeedback.Approach(fill, button.IsInteractable() && (primary || !selectionManaged && selected && !hovered) ? 1 : 0, 9);
         chosenImage.sprite = HomeUi.Sprite(normalPart.StartsWith("SelectionCard") ? "SelectionCardSelected" : "SaveSelected"); chosenImage.type = image.type;
-        chosenImage.pixelsPerUnitMultiplier = image.pixelsPerUnitMultiplier;
+        GoldButtonFeedback.SetPixelsPerUnit(chosenImage, image.pixelsPerUnitMultiplier);
         chosenImage.preserveAspect = image.preserveAspect;
         chosenImage.color = new Color(1, 1, 1, fill);
-        highlight.pixelsPerUnitMultiplier = image.pixelsPerUnitMultiplier;
+        GoldButtonFeedback.SetPixelsPerUnit(highlight, image.pixelsPerUnitMultiplier);
         highlight.preserveAspect = image.preserveAspect;
         highlight.color = new Color(1, 1, 1, glow);
         image.color = button.interactable ? Color.Lerp(Color.white, new Color(1, .93f, .76f), amount * .2f) : new Color(.42f, .42f, .42f, .8f);

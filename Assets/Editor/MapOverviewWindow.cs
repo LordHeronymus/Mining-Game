@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.Collections;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -72,7 +73,7 @@ public sealed class MapOverviewWindow : EditorWindow
         EditorSceneManager.activeSceneChangedInEditMode += OnSceneChanged;
         Undo.undoRedoPerformed += RequestBuild;
         GpsSettings.Changed += OnGpsChanged;
-        Tilemap.tilemapTileChanged += OnTilesChanged;
+        Tilemap.tilemapPositionsChanged += OnTilesChanged;
         TileMiner.OnBlockMined += OnBlockMined;
         pendingBuild = true;
     }
@@ -85,7 +86,7 @@ public sealed class MapOverviewWindow : EditorWindow
         EditorSceneManager.activeSceneChangedInEditMode -= OnSceneChanged;
         Undo.undoRedoPerformed -= RequestBuild;
         GpsSettings.Changed -= OnGpsChanged;
-        Tilemap.tilemapTileChanged -= OnTilesChanged;
+        Tilemap.tilemapPositionsChanged -= OnTilesChanged;
         TileMiner.OnBlockMined -= OnBlockMined;
         DisposeTexture();
     }
@@ -341,13 +342,13 @@ public sealed class MapOverviewWindow : EditorWindow
         }
     }
 
-    void OnTilesChanged(Tilemap changedMap, Tilemap.SyncTile[] changes)
+    void OnTilesChanged(Tilemap changedMap, NativeArray<Vector3Int> positions)
     {
         if (EditorApplication.isPlaying && (LoadingProgress.Active || RunNavigation.IsTransitioning))
         { pendingBuild = true; return; }
-        if (!live || !map || (changedMap != tilemap && changedMap != map.OreOverlay) || !HasLiveMap() || changes == null) return;
-        foreach (var change in changes)
-            QueueCell(change.position);
+        if (!live || !map || (changedMap != tilemap && changedMap != map.OreOverlay) || !HasLiveMap()) return;
+        foreach (var position in positions)
+            QueueCell(position);
     }
 
     void OnBlockMined(Vector2 position, int points)

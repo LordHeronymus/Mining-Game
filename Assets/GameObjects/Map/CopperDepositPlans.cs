@@ -9,6 +9,9 @@ public sealed class CopperDepositState
     public Vector3Int[] cells;
     public Vector4[] segments, widths, bodies, details, covers;
     public float phase;
+    // Lookup for the vein topology; built once per deposit, not saved.
+    [NonSerialized] HashSet<Vector3Int> cellSet;
+    public HashSet<Vector3Int> CellSet => cellSet ??= new HashSet<Vector3Int>(cells ?? Array.Empty<Vector3Int>());
 }
 
 // Plan the full deposit once. Mining cuts its surface, never recomposes the surviving vein.

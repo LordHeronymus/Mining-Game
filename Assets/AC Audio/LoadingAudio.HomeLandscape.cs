@@ -19,6 +19,9 @@ public sealed partial class LoadingAudio
     }
     void UpdateMeadow()
     {
+        // The landscape ambience only plays on the homescreen. Its clip and volume lookups search the GPS
+        // document and must not run every frame during loading and gameplay once both loops have faded out.
+        if(!homeRunning && !meadowRunning && !layer2Running)return;
         UpdateHomeAmbience(meadowSources,1,HomeLandscape.MeadowClip,HomeLandscape.MeadowVolume*HomeLandscape.SurfaceVolume,
             ref meadowCurrent,ref meadowGain,ref meadowNextStart,ref meadowRunning);
         UpdateHomeAmbience(layer2Sources,2,HomeLandscape.Layer2Clip,HomeLandscape.Layer2Volume*HomeLandscape.UndergroundVolume,

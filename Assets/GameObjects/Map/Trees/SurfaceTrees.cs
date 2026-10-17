@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public sealed class SurfaceTrees : MonoBehaviour
 {
@@ -133,19 +134,25 @@ public sealed class SurfaceTrees : MonoBehaviour
 
     bool TryPlant(bool mature)
     {
+        // Buildings and trees do not move while a site is chosen. Read their positions once instead of on each
+        // of up to 96 attempts; a forest of 32 trees otherwise cost tens of thousands of transform reads.
+        // Finding the buildings is itself costly, so a whole forest planted in one frame shares one lookup.
+        if (buildingBoundsFrame != Time.frameCount) { CacheBuildingBounds(); buildingBoundsFrame = Time.frameCount; }
+        treePositions.Clear();
+        foreach (var tree in trees) if (tree) treePositions.Add(tree.transform.position.x);
+        var terrain = map.Terrain;
+        float requiredSpacing = Mathf.Max(minimumTreeSpacing, terrain.layoutGrid.cellSize.x);
         int leftCell = -map.GeneratedWidth / 2 + 2;
         int rightCell = leftCell + map.GeneratedWidth - 4;
+        ReadSurface(terrain, leftCell - 1, rightCell);
         for (int attempt = 0; attempt < 96; attempt++)
         {
             var cell = new Vector3Int(random.Next(leftCell, rightCell), 0);
-            if (!map.Terrain.HasTile(cell) || !map.Terrain.HasTile(cell + Vector3Int.right) ||
-                !map.Terrain.HasTile(cell + Vector3Int.left)) continue;
-            float x = map.Terrain.GetCellCenterWorld(cell).x;
+            if (!SurfaceTile(cell.x) || !SurfaceTile(cell.x + 1) || !SurfaceTile(cell.x - 1)) continue;
+            float x = SurfaceCenter(terrain, cell.x);
             if (!FreeOfBuildings(x) || Mathf.Abs(x) < 4f) continue;
             float nearest = float.PositiveInfinity;
-            foreach (var tree in trees)
-                if (tree) nearest = Mathf.Min(nearest, Mathf.Abs(tree.transform.position.x - x));
-            float requiredSpacing = Mathf.Max(minimumTreeSpacing, map.Terrain.layoutGrid.cellSize.x);
+            foreach (float treeX in treePositions) nearest = Mathf.Min(nearest, Mathf.Abs(treeX - x));
             if (nearest < requiredSpacing) continue;
             float preferredSpacing = Mathf.Max(16f, requiredSpacing * 4f);
             float distanceFactor = Mathf.Clamp01(
@@ -157,7 +164,7 @@ public sealed class SurfaceTrees : MonoBehaviour
             var grown = Instantiate(prefab, transform);
             grown.name = "Baum " + (trees.Count + 1);
             grown.Initialize(this, cell.x, sprite, wood,
-                new Vector3(x, map.Terrain.CellToWorld(new Vector3Int(cell.x, 1)).y, 0),
+                new Vector3(x, terrain.CellToWorld(new Vector3Int(cell.x, 1)).y, 0),
                 treeHeight * Mathf.Lerp(.9f, 1.1f, (float)random.NextDouble()),
                 hitsToFell, Mathf.Max(1, woodYieldMin),
                 Mathf.Max(woodYieldMin, woodYieldMax),
@@ -172,21 +179,54 @@ public sealed class SurfaceTrees : MonoBehaviour
         return false;
     }
 
-    bool FreeOfBuildings(float x)
+    // Centre and keep-out half width of every building collider, and the x position of every tree.
+    readonly List<Vector2> buildingBounds = new();
+    int buildingBoundsFrame = -1;
+    readonly List<float> treePositions = new();
+    // Surface row of the planting range: one block read, cell centres resolved once each.
+    TileBase[] surfaceTiles = System.Array.Empty<TileBase>();
+    float[] surfaceCenters = System.Array.Empty<float>();
+    int surfaceLeft;
+
+    void ReadSurface(Tilemap terrain, int left, int right)
     {
-        foreach (var building in FindObjectsByType<ShopBuilding>(FindObjectsSortMode.None))
-            if (TooClose(x, building.GetComponent<Collider2D>())) return false;
-        foreach (var building in FindObjectsByType<WorkbenchBuilding>(FindObjectsSortMode.None))
-            if (TooClose(x, building.GetComponent<Collider2D>())) return false;
-        foreach (var building in FindObjectsByType<EnergyMonolyth>(FindObjectsSortMode.None))
-            if (TooClose(x, building.GetComponent<Collider2D>())) return false;
-        foreach (var building in FindObjectsByType<SurfaceStorageBuilding>(FindObjectsSortMode.None))
-            if (TooClose(x, building.GetComponent<Collider2D>())) return false;
-        return true;
+        int width = Mathf.Max(0, right - left + 1);
+        if (surfaceTiles.Length != width) { surfaceTiles = new TileBase[width]; surfaceCenters = new float[width]; }
+        surfaceLeft = left;
+        terrain.GetTilesBlockNonAlloc(new BoundsInt(left, 0, 0, width, 1, 1), surfaceTiles);
+        for (int i = 0; i < width; i++) surfaceCenters[i] = float.NaN;
     }
 
-    static bool TooClose(float x, Collider2D collider) => collider &&
-        Mathf.Abs(x - collider.bounds.center.x) < collider.bounds.extents.x + 4.75f;
+    bool SurfaceTile(int x) => surfaceTiles[x - surfaceLeft];
+
+    float SurfaceCenter(Tilemap terrain, int x)
+    {
+        ref float center = ref surfaceCenters[x - surfaceLeft];
+        if (float.IsNaN(center)) center = terrain.GetCellCenterWorld(new Vector3Int(x, 0)).x;
+        return center;
+    }
+
+    void CacheBuildingBounds()
+    {
+        buildingBounds.Clear();
+        foreach (var building in FindObjectsByType<ShopBuilding>(FindObjectsSortMode.None)) AddBuildingBounds(building);
+        foreach (var building in FindObjectsByType<WorkbenchBuilding>(FindObjectsSortMode.None)) AddBuildingBounds(building);
+        foreach (var building in FindObjectsByType<EnergyMonolyth>(FindObjectsSortMode.None)) AddBuildingBounds(building);
+        foreach (var building in FindObjectsByType<SurfaceStorageBuilding>(FindObjectsSortMode.None)) AddBuildingBounds(building);
+    }
+
+    void AddBuildingBounds(Component building)
+    {
+        var collider = building.GetComponent<Collider2D>();
+        if (collider) buildingBounds.Add(new Vector2(collider.bounds.center.x, collider.bounds.extents.x + 4.75f));
+    }
+
+    bool FreeOfBuildings(float x)
+    {
+        foreach (var range in buildingBounds)
+            if (Mathf.Abs(x - range.x) < range.y) return false;
+        return true;
+    }
 
     public void TreeFelled(ChoppableTree tree)
     {

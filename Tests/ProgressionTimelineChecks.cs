@@ -20,7 +20,7 @@ public static class ProgressionTimelineChecks
 }
 public sealed class ProgressionTimelineRunner:MonoBehaviour
 {
-    const string Report="Temp/ProgressionTimelineChecks.txt", Output="Assets/Design/Tiefenhall/ProgressionTimelinePrototypes/Implemented";
+    const string Report="Temp/ProgressionTimelineChecks.txt", Output="Design/Tiefenhall/ProgressionTimelinePrototypes/Implemented";
     string directory, oldSave, oldMeta, oldTests; int checks; bool cleaned;
     void Check(bool value,string name) { if(!value)throw new Exception(name); File.AppendAllText(Report,"PASS "+(++checks)+" "+name+"\n"); }
     Button Find(Component panel,string name)=>panel.GetComponentsInChildren<Button>(true).First(b=>b.name==name);

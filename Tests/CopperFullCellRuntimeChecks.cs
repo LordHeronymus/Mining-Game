@@ -24,7 +24,7 @@ public static class CopperFullCellRuntimeChecks
 public sealed class CopperFullCellRuntimeProbe:MonoBehaviour
 {
     const string Report="Temp/CopperFullCellRuntimeChecks.txt";
-    const string Output="Assets/Design/OreVeins/CopperAllLayers/FullCellImplemented";
+    const string Output="Design/OreVeins/CopperAllLayers/FullCellImplemented";
     string previousSave,previousMeta,directory;bool restored,previousBackground;
     void Check(bool value,string message){if(!value)throw new Exception(message);File.AppendAllText(Report,"PASS "+message+"\n");}
     IEnumerator Start()

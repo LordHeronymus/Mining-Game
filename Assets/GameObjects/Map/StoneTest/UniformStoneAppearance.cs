@@ -3,6 +3,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Tilemaps;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 
 [ExecuteAlways, DisallowMultipleComponent, RequireComponent(typeof(MapGenerator))]
 public sealed class UniformStoneAppearance : MonoBehaviour
@@ -41,6 +42,7 @@ public sealed class UniformStoneAppearance : MonoBehaviour
     public void RefreshAppearance()
     {
         if(!this||!isActiveAndEnabled)return;
+        propertiesDirty = true;
         LateUpdate();
 #if UNITY_EDITOR
         UnityEditor.SceneView.RepaintAll();
@@ -50,8 +52,8 @@ public sealed class UniformStoneAppearance : MonoBehaviour
     {
         map = GetComponent<MapGenerator>();
         map.Generated += Rebuild;
-        Tilemap.tilemapTileChanged += Changed;
-        rebuild = true;
+        Tilemap.tilemapPositionsChanged += Changed;
+        rebuild = true; propertiesDirty = true;
         var rubble=GetComponent<TerrainEdgeRubble>();if(rubble)rubble.enabled=true;
     }
     void Rebuild()
@@ -59,15 +61,15 @@ public sealed class UniformStoneAppearance : MonoBehaviour
         if (preparedForStreamingGeneration) { preparedForStreamingGeneration = false; return; }
         rebuild = true;
     }
-    void Changed(Tilemap source, Tilemap.SyncTile[] changes)
+    void Changed(Tilemap source, NativeArray<Vector3Int> positions)
     {
         if (!map || source != map.Terrain || !occupancy || rebuild ||
             (Application.isPlaying && map.IsGenerationStreaming)) return;
-        foreach (var change in changes)
+        foreach (var position in positions)
         {
-            int x = change.position.x - left, y = change.position.y - bottom;
+            int x = position.x - left, y = position.y - bottom;
             if (x < 0 || y < 0 || x >= occupancy.width || y >= occupancy.height) continue;
-            var tile = source.GetTile(change.position);
+            var tile = source.GetTile(position);
             var color = TileColor(tile);
             if (!tile)
             {
@@ -90,6 +92,21 @@ public sealed class UniformStoneAppearance : MonoBehaviour
             }
         }
     }
+    static readonly Unity.Profiling.ProfilerMarker UploadMarker = new("Mining.TerrainUpload"),
+        PropertiesMarker = new("Mining.TerrainProperties"), RubbleMarker = new("Mining.TerrainRubble");
+    static readonly int TestStoneTexId = Shader.PropertyToID("_TestStoneTex"), SurfaceDirtTexId = Shader.PropertyToID("_SurfaceDirtTex"),
+        LayerOneTexId = Shader.PropertyToID("_LayerOneTex"), LayerThreeTexId = Shader.PropertyToID("_LayerThreeTex"),
+        LayerFourTexId = Shader.PropertyToID("_LayerFourTex"), TestOccupancyId = Shader.PropertyToID("_TestOccupancy"),
+        UniformStoneId = Shader.PropertyToID("_UniformStone"), TestBoundsId = Shader.PropertyToID("_TestBounds"),
+        UseTerrainMasksId = Shader.PropertyToID("_UseTerrainMasks"), TerrainEdgeTuningId = Shader.PropertyToID("_TerrainEdgeTuning"),
+        TerrainEdgeMasksId = Shader.PropertyToID("_TerrainEdgeMasks"), FrayedInsetId = Shader.PropertyToID("_FrayedInset");
+    // The terrain properties only change with the occupancy texture or a tuning change (GPS/Inspector call
+    // RefreshAppearance). Pushing them to three renderers and every rubble chunk each frame cost up to several ms.
+    bool propertiesDirty = true;
+    const int UploadPatchSize = 32;
+    TilemapRenderer terrainRenderer, appliedArtifactRenderer;
+    OreOverlayAppearance appliedOreOverlay;
+
     void LateUpdate()
     {
         if (!map || !map.uniformTestStone || !texture) return;
@@ -101,41 +118,52 @@ public sealed class UniformStoneAppearance : MonoBehaviour
             var steps = BuildOccupancy(tiles, width, height, map.ActiveSeed);
             while (steps.MoveNext()) { }
         }
-        if (fullUpload)
+        using (UploadMarker.Auto())
         {
-            occupancy.Apply(false, false);
-            fullUpload = false;
-            dirtyRegion = false;
+            if (fullUpload)
+            {
+                occupancy.Apply(false, false);
+                fullUpload = false;
+                dirtyRegion = false;
+            }
+            else if (dirtyRegion) UploadOccupancyRegion();
         }
-        else if (dirtyRegion) UploadOccupancyRegion();
-        var renderer = GetComponent<TilemapRenderer>();
-        properties ??= new MaterialPropertyBlock();
-        renderer.GetPropertyBlock(properties);
-        properties.SetTexture("_TestStoneTex", texture);
-        properties.SetTexture("_SurfaceDirtTex", dirtTexture ? dirtTexture : texture);
-        properties.SetTexture("_LayerOneTex", layerOneTexture ? layerOneTexture : texture);
-        properties.SetTexture("_LayerThreeTex", layerThreeTexture ? layerThreeTexture : texture);
-        properties.SetTexture("_LayerFourTex", layerFourTexture ? layerFourTexture : layerThreeTexture ? layerThreeTexture : texture);
-        properties.SetTexture("_TestOccupancy", occupancy);
-        var origin = map.Terrain.CellToWorld(Vector3Int.zero);
-        properties.SetVector("_UniformStone", new Vector4(map.Terrain.layoutGrid.cellSize.x, 3f, origin.x, origin.y));
-        properties.SetVector("_TestBounds", new Vector4(left, bottom, occupancy.width, occupancy.height));
+        using var measure = PropertiesMarker.Auto();
         if(useTerrainMasks&&!edgeMasks)edgeMasks=Resources.Load<Texture2DArray>("TerrainEdgeMasks");
         bool masked=useTerrainMasks&&edgeMasks;
-        properties.SetFloat("_UseTerrainMasks",masked?1:0);
-        properties.SetVector("_TerrainEdgeTuning",new Vector4(Mathf.Clamp(edgeDepth,0,2),
-            Mathf.Clamp(edgeIrregularity,0,2),Mathf.Clamp(edgeRounding,0,2),0));
-        if(edgeMasks)properties.SetTexture("_TerrainEdgeMasks",edgeMasks);
-        properties.SetFloat("_FrayedInset",useFrayedEdges&&!masked?.18f:0);
-        renderer.SetPropertyBlock(properties);
-        GetComponent<OreOverlayAppearance>()?.ApplyTerrain(properties);
-        if (map.ArtifactOverlay)
-            ArtifactOverlayAppearance.ApplyTerrain(map.ArtifactOverlay.GetComponent<TilemapRenderer>(),
-                properties, map.artifactEmbeddingStrength);
+        var oreOverlay = GetComponent<OreOverlayAppearance>();
+        var artifactRenderer = map.ArtifactOverlay ? map.ArtifactOverlay.GetComponent<TilemapRenderer>() : null;
+        if (oreOverlay != appliedOreOverlay || artifactRenderer != appliedArtifactRenderer) propertiesDirty = true;
+        bool pushed = propertiesDirty;
+        if (propertiesDirty)
+        {
+            if (!terrainRenderer) terrainRenderer = GetComponent<TilemapRenderer>();
+            properties ??= new MaterialPropertyBlock();
+            terrainRenderer.GetPropertyBlock(properties);
+            properties.SetTexture(TestStoneTexId, texture);
+            properties.SetTexture(SurfaceDirtTexId, dirtTexture ? dirtTexture : texture);
+            properties.SetTexture(LayerOneTexId, layerOneTexture ? layerOneTexture : texture);
+            properties.SetTexture(LayerThreeTexId, layerThreeTexture ? layerThreeTexture : texture);
+            properties.SetTexture(LayerFourTexId, layerFourTexture ? layerFourTexture : layerThreeTexture ? layerThreeTexture : texture);
+            properties.SetTexture(TestOccupancyId, occupancy);
+            var origin = map.Terrain.CellToWorld(Vector3Int.zero);
+            properties.SetVector(UniformStoneId, new Vector4(map.Terrain.layoutGrid.cellSize.x, 3f, origin.x, origin.y));
+            properties.SetVector(TestBoundsId, new Vector4(left, bottom, occupancy.width, occupancy.height));
+            properties.SetFloat(UseTerrainMasksId,masked?1:0);
+            properties.SetVector(TerrainEdgeTuningId,new Vector4(Mathf.Clamp(edgeDepth,0,2),
+                Mathf.Clamp(edgeIrregularity,0,2),Mathf.Clamp(edgeRounding,0,2),0));
+            if(edgeMasks)properties.SetTexture(TerrainEdgeMasksId,edgeMasks);
+            properties.SetFloat(FrayedInsetId,useFrayedEdges&&!masked?.18f:0);
+            terrainRenderer.SetPropertyBlock(properties);
+            oreOverlay?.ApplyTerrain(properties);
+            if (artifactRenderer) ArtifactOverlayAppearance.ApplyTerrain(artifactRenderer, properties, map.artifactEmbeddingStrength);
+            appliedOreOverlay = oreOverlay; appliedArtifactRenderer = artifactRenderer;
+            propertiesDirty = false;
+        }
         var rubble=GetComponent<TerrainEdgeRubble>();
         if(!rubble)rubble=gameObject.AddComponent<TerrainEdgeRubble>();
         rubble.enabled=rubbleAmount>0;
-        if(rubble.enabled)rubble.Apply(properties);
+        if(rubble.enabled)using(RubbleMarker.Auto())rubble.Apply(properties, pushed);
         var frayed=GetComponent<TerrainFrayedEdges>();
         if(useFrayedEdges&&!masked&&!frayed)frayed=gameObject.AddComponent<TerrainFrayedEdges>();
         if(frayed){frayed.enabled=useFrayedEdges&&!masked;if(frayed.enabled)frayed.Apply(properties);}
@@ -184,7 +212,7 @@ public sealed class UniformStoneAppearance : MonoBehaviour
             }
         }
         occupancy.SetPixels32(colors);
-        rebuild = false; fullUpload = true; dirtyRegion = false;
+        rebuild = false; fullUpload = true; dirtyRegion = false; propertiesDirty = true;
         progress?.Invoke(1f);
     }
 
@@ -203,28 +231,24 @@ public sealed class UniformStoneAppearance : MonoBehaviour
             dirtyRegion = false;
             return;
         }
-        if ((long)width * height * 2 >= (long)occupancy.width * occupancy.height)
+        // Mining edits a few cells per frame. One reusable patch texture avoids creating a texture whenever
+        // the size of the edited region changes; larger edits upload the whole occupancy texture.
+        if (width > UploadPatchSize || height > UploadPatchSize)
         {
             occupancy.Apply(false, false);
             dirtyRegion = false;
             return;
         }
-        if (!occupancyUpload || occupancyUpload.width != width || occupancyUpload.height != height)
-        {
-            if (occupancyUpload)
-            {
-                if (Application.isPlaying) Destroy(occupancyUpload); else DestroyImmediate(occupancyUpload);
-            }
-            occupancyUpload = new Texture2D(width, height, TextureFormat.RGBA32, false, true)
+        if (!occupancyUpload)
+            occupancyUpload = new Texture2D(UploadPatchSize, UploadPatchSize, TextureFormat.RGBA32, false, true)
             { name = "Terrain occupancy update", hideFlags = HideFlags.HideAndDontSave, filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
-        }
         try
         {
             var sourcePixels = occupancy.GetPixelData<Color32>(0);
             var patchPixels = occupancyUpload.GetPixelData<Color32>(0);
             for (int y = 0; y < height; y++)
             for (int x = 0; x < width; x++)
-                patchPixels[y * width + x] = sourcePixels[(dirtyMinY + y) * occupancy.width + dirtyMinX + x];
+                patchPixels[y * UploadPatchSize + x] = sourcePixels[(dirtyMinY + y) * occupancy.width + dirtyMinX + x];
             occupancyUpload.Apply(false, false);
             Graphics.CopyTexture(occupancyUpload, 0, 0, 0, 0, width, height,
                 occupancy, 0, 0, dirtyMinX, dirtyMinY);
@@ -239,7 +263,7 @@ public sealed class UniformStoneAppearance : MonoBehaviour
     void OnDisable()
     {
         if (map) map.Generated -= Rebuild;
-        Tilemap.tilemapTileChanged -= Changed;
+        Tilemap.tilemapPositionsChanged -= Changed;
         var renderer = GetComponent<TilemapRenderer>();
         var properties = new MaterialPropertyBlock(); renderer.GetPropertyBlock(properties);
         properties.SetFloat("_UseTerrainMasks",0);

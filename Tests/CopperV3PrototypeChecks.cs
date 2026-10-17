@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class CopperV3PrototypeChecks
 {
-    const string Root="Assets/Design/OreVeins/CopperL1OriginalDirt/V3/";
+    const string Root="Design/OreVeins/CopperL1OriginalDirt/V3/";
     static bool Metal(Color c)=>c.r>.35f && c.r-c.b>.16f && (c.r-c.g)/Mathf.Max(.001f,c.r-c.b)>.65f;
     public static string Main(bool validate=false)
     {

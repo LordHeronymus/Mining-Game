@@ -16,7 +16,6 @@ public static class TiefenhallSetup
         var catalog = AssetDatabase.LoadAssetAtPath<SaveAssetCatalog>(path);
         if (!catalog) { catalog = ScriptableObject.CreateInstance<SaveAssetCatalog>(); AssetDatabase.CreateAsset(catalog, path); }
         catalog.tiles = AssetDatabase.FindAssets("t:TileBase", new[] { "Assets" })
-            .Where(guid => !AssetDatabase.GUIDToAssetPath(guid).StartsWith("Assets/_SceneBackups/"))
             .OrderBy(guid => guid).Select(guid => new SaveAssetCatalog.Entry { key = guid,
                 tile = AssetDatabase.LoadAssetAtPath<TileBase>(AssetDatabase.GUIDToAssetPath(guid)) }).Where(x => x.tile).ToArray();
         EditorUtility.SetDirty(catalog); AssetDatabase.SaveAssets();

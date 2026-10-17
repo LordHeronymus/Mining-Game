@@ -70,6 +70,17 @@ public static class LoadingProgress
         Target = Mathf.Max(Target, Mathf.Min(.995f, (complete + weights[Stage] * Mathf.Clamp01(fraction)) / total));
     }
 
+    // Called once per frame by the loading screen. Stages report progress in bursts (or only at their end);
+    // estimating from the calibrated stage duration keeps the bar moving between reports. The estimate
+    // approaches the end of the stage asymptotically, so a slower-than-calibrated stage never overshoots.
+    public static void Advance()
+    {
+        if (!Active || Ready || total <= 0f) return;
+        float expected = Mathf.Max(.05f, weights[Stage]);
+        float elapsed = (float)(Time.realtimeSinceStartupAsDouble - started);
+        Report(.95f * (1f - Mathf.Exp(-1.8f * elapsed / expected)));
+    }
+
     public static void Complete()
     {
         if (!Active || Ready) return;

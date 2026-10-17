@@ -12,7 +12,7 @@ public static object Main(){if(!Application.isPlaying || !MainMenuController.IsV
 }
 public sealed class GoldSelectionRunner:MonoBehaviour {
 string previous, previousMeta, directory;bool restored;
-const string Output="Assets/Design/Tiefenhall/SelectionBevels/Implemented";
+const string Output="Design/Tiefenhall/SelectionBevels/Implemented";
 void Check(bool value,string message){if(!value)throw new Exception(message);File.AppendAllText("Temp/GoldSelectionChecks.txt",message+"\n");}
 IEnumerator Start(){
 previous=GameSaveSystem.TestDirectory;previousMeta=MetaProgression.TestDirectory;

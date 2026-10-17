@@ -3,12 +3,22 @@
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
 #
 .utmp/
-# Automatic scene backups stay local; the working scene is versioned separately.
+# Automatic scene backups stay local, outside Assets so Unity does not import them.
+/SceneBackups/
 /Assets/_SceneBackups/
 /Assets/_SceneBackups.meta
 /[Ll]ibrary/
 /[Tt]emp/
+/Assets/Temp/
 /Assets/Temp.meta
+# Local player builds and tool caches
+/Build Tests/
+/output/
+__pycache__/
+*.pyc
+# Unity Performance Testing writes these at test time
+/Assets/Resources/PerformanceTestRun*.json
+/Assets/Resources/PerformanceTestRun*.json.meta
 /[Oo]bj/
 /[Bb]uild/
 /[Bb]uilds/

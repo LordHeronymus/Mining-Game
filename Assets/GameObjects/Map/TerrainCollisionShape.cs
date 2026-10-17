@@ -59,12 +59,13 @@ public sealed class TerrainCollisionShape
     {
         unchecked{uint h=(uint)cell.x*73856093u^(uint)cell.y*19349663u;h^=h>>16;return (int)(h%12);}
     }
+    // Bit i of Neighbours is set when the cell at NeighbourOffsets[i] is open.
+    public static readonly Vector3Int[] NeighbourOffsets={Vector3Int.left,Vector3Int.right,Vector3Int.down,Vector3Int.up,
+        new Vector3Int(-1,-1),new Vector3Int(-1,1),new Vector3Int(1,-1),new Vector3Int(1,1)};
     public int Neighbours(Vector3Int cell)
     {
         int bits=0;
-        var offsets=new[]{Vector3Int.left,Vector3Int.right,Vector3Int.down,Vector3Int.up,
-            new Vector3Int(-1,-1),new Vector3Int(-1,1),new Vector3Int(1,-1),new Vector3Int(1,1)};
-        for(int i=0;i<8;i++)if(!source.HasTile(cell+offsets[i]))bits|=1<<i;
+        for(int i=0;i<8;i++)if(!source.HasTile(cell+NeighbourOffsets[i]))bits|=1<<i;
         if(cell.y==0)bits&=~(8|32|128);
         return bits;
     }

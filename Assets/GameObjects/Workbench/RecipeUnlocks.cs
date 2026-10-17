@@ -242,10 +242,19 @@ public static class RecipeUnlocks
         PlayerPrefs.Save();
     }
 
+    // Pickaxe recipes live outside Resources/WorkbenchRecipes and are only listed in the CraftingCatalog.
+    static HashSet<CraftingRecipe> SavedRecipes()
+    {
+        var recipes = new HashSet<CraftingRecipe>();
+        foreach (var recipe in ExoticCatalog.AllRecipes) if (recipe) recipes.Add(recipe);
+        foreach (var recipe in Resources.LoadAll<CraftingRecipe>("WorkbenchRecipes")) if (recipe) recipes.Add(recipe);
+        return recipes;
+    }
+
     public static int[] CaptureRunState()
     {
         var ids = new List<int>(exoticLearned);
-        foreach (var recipe in Resources.LoadAll<CraftingRecipe>("WorkbenchRecipes"))
+        foreach (var recipe in SavedRecipes())
             if (IsShopRecipe(recipe) && IsUnlocked(recipe) && !ids.Contains((int)recipe.output.item)) ids.Add((int)recipe.output.item);
         return ids.ToArray();
     }
@@ -253,7 +262,7 @@ public static class RecipeUnlocks
     {
         ResetRun();
         var set = new HashSet<int>(ids ?? System.Array.Empty<int>());
-        foreach (var recipe in Resources.LoadAll<CraftingRecipe>("WorkbenchRecipes"))
+        foreach (var recipe in SavedRecipes())
             if (recipe && recipe.output && set.Contains((int)recipe.output.item))
             {
                 if (recipe.exotic) LearnExotic(recipe);

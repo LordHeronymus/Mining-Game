@@ -36,7 +36,8 @@ public class BuyPage : MonoBehaviour
 
     sealed class RecipeCard
     {
-        public int price;
+        // Read live so the card shows what TryBuyRecipe charges after a GPS change.
+        public int price => recipe ? recipe.ShopPrice : 0;
         public Func<bool> isUnlocked, purchase;
         public CraftingRecipe recipe;
         public Sprite sprite;
@@ -109,7 +110,7 @@ public class BuyPage : MonoBehaviour
     {
         var recipe = recipes.FirstOrDefault(r => r.output.item == item);
         if (!recipe) return;
-        var card = new RecipeCard { recipe = recipe, price = recipe.ShopPrice,
+        var card = new RecipeCard { recipe = recipe,
             isUnlocked = () => RecipeUnlocks.IsUnlocked(recipe),
             purchase = () => ShopManager.Instance && ShopManager.Instance.TryBuyRecipe(recipe),
             sprite = Resources.Load<Sprite>("Shop/" + spriteName) };

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -114,7 +115,7 @@ public sealed class MapLighting : MonoBehaviour
             if (miner) headlamp = miner.headlamp;
         }
         map.GenerationCompleted += RequestRebuild;
-        Tilemap.tilemapTileChanged += TilesChanged;
+        Tilemap.tilemapPositionsChanged += TilesChanged;
         PlacedTorch.Changed += OnTorchChanged;
         rebuild = true;
     }
@@ -122,7 +123,7 @@ public sealed class MapLighting : MonoBehaviour
     void OnDisable()
     {
         if (map) map.GenerationCompleted -= RequestRebuild;
-        Tilemap.tilemapTileChanged -= TilesChanged;
+        Tilemap.tilemapPositionsChanged -= TilesChanged;
         PlacedTorch.Changed -= OnTorchChanged;
         ReleaseResources();
         ReleaseUltroniumLights();
@@ -210,11 +211,11 @@ public sealed class MapLighting : MonoBehaviour
         if (ownerMap == map) torchFieldDirty = true;
     }
 
-    void TilesChanged(Tilemap source, Tilemap.SyncTile[] changes)
+    void TilesChanged(Tilemap source, NativeArray<Vector3Int> positions)
     {
-        if (source != tiles || field == null || rebuild || changes == null ||
+        if (source != tiles || field == null || rebuild ||
             !map || !map.IsGenerated || map.IsGenerationStreaming) return;
-        foreach (var change in changes) changed.Add(change.position);
+        foreach (var position in positions) changed.Add(position);
         nextOreRefresh = 0f;
     }
 

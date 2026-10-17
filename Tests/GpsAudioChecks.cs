@@ -57,7 +57,7 @@ public static class GpsAudioChecks
             Check(Math.Abs(upgradedEntry.children.Find(v=>v.name=="volume").number-.3)<.0001,"Legacy homescreen and global gains combined once");
             string upgradedJson=JsonUtility.ToJson(upgraded);GpsAudioMigration.Merge(upgraded,baseline,profile);
             Check(upgradedJson==JsonUtility.ToJson(upgraded),"Migration idempotent");
-            GpsFileStore.Save("Temp/GpsAudio-roundtrip.json",upgraded);var roundtrip=GpsFileStore.Load("Temp/GpsAudio-roundtrip.json",baseline,out warning);
+            GpsFileStore.Save("Temp/GpsAudio-roundtrip.json",upgraded,baseline);var roundtrip=GpsFileStore.Load("Temp/GpsAudio-roundtrip.json",baseline,out warning);
             Check(warning==null && JsonUtility.ToJson(roundtrip)==JsonUtility.ToJson(upgraded),"All tuning and metadata survive save/reload");
             File.WriteAllText("Temp/GpsAudioChecks.txt","PASS ("+checks.Count+")\n"+string.Join("\n",checks));return "PASS ("+checks.Count+")";
         }

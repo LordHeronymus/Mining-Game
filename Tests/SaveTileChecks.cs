@@ -14,7 +14,7 @@ public static class SaveTileChecks {
 }
 public sealed class SaveTileProbe:MonoBehaviour {
  string previous,previousMeta,dir;bool restored;int checks;
- const string Output="Assets/Design/Tiefenhall/SaveTilePrototypes/Implemented";
+ const string Output="Design/Tiefenhall/SaveTilePrototypes/Implemented";
  static readonly BindingFlags Hidden=BindingFlags.NonPublic|BindingFlags.Static;
  void Check(bool value,string text){if(!value)throw new Exception(text);checks++;File.AppendAllText("Temp/SaveTileChecks.txt",text+"\n");}
  Button Button(Component root,string name)=>root.GetComponentsInChildren<Button>(true).First(b=>b.name==name);

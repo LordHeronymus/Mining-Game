@@ -20,7 +20,7 @@ public static class CopperFullCellVisualChecks
     public static string Main(int testLayer=1)
     {
         if(Application.isPlaying)throw new Exception("Edit mode required");
-        Output="Assets/Design/OreVeins/CopperAllLayers/FullCellImplemented/L"+testLayer;passed.Clear();Directory.CreateDirectory(Output);
+        Output="Design/OreVeins/CopperAllLayers/FullCellImplemented/L"+testLayer;passed.Clear();Directory.CreateDirectory(Output);
         var previous=SceneManager.GetActiveScene();
         var sourceScene=SceneManager.GetSceneByPath("Assets/Scenes/SampleScene.unity");
         bool opened=!sourceScene.IsValid() || !sourceScene.isLoaded;
@@ -101,8 +101,8 @@ public static class CopperFullCellVisualChecks
             var copper=map.registry.GetById(BlockType.CopperOre);
             var sheets=new Texture2D[6];
             var names=new[]{"Small-1","Small-2","Medium-1","Medium-2","Large-1","Large-2"};
-            string sourceFolder=testLayer==1?"Assets/Design/OreVeins/CopperL1Branches/Sources":
-                "Assets/Design/OreVeins/CopperAllLayers/Sources/"+new[]{"Clay","Gray","Warm","Deep"}[testLayer-2];
+            string sourceFolder=testLayer==1?"Design/OreVeins/CopperL1Branches/Sources":
+                "Design/OreVeins/CopperAllLayers/Sources/"+new[]{"Clay","Gray","Warm","Deep"}[testLayer-2];
             for(int m=0;m<6;m++){
                 sheets[m]=new Texture2D(2,2,TextureFormat.RGBA32,true);disposables.Add(sheets[m]);
                 sheets[m].LoadImage(File.ReadAllBytes(sourceFolder+"/"+names[m]+".png"));sheets[m].Apply(true,false);
@@ -122,7 +122,7 @@ public static class CopperFullCellVisualChecks
             var richnessTiles=new[]{copper.smallOre[0],copper.mediumOre[0],copper.richOre[0]};
             if(testLayer==1){
                 var before=new Texture2D(2,2,TextureFormat.RGBA32,false);disposables.Add(before);
-                before.LoadImage(File.ReadAllBytes("Assets/Design/OreVeins/CopperL1DirtMatch/Before-whole-vein.png"));var prior=before.GetPixels32();
+                before.LoadImage(File.ReadAllBytes("Design/OreVeins/CopperL1DirtMatch/Before-whole-vein.png"));var prior=before.GetPixels32();
                 bool Core(Color32 c)=>c.r-c.b>60 && (c.r-c.g)/(float)Mathf.Max(1,c.r-c.b)>.71f;
                 int corePixels=0;double error=0;
                 foreach(var cell in cells)for(int y=6;y<74;y++)for(int x=6;x<74;x++){

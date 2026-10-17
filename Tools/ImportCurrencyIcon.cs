@@ -8,7 +8,7 @@ public static class ImportCurrencyIcon
 {
     public static object Main()
     {
-        const string source = "Assets/Design/Tiefenhall/Coin-v3/Coin.png";
+        const string source = "Design/Tiefenhall/Coin-v3/Coin.png";
         var texture = new Texture2D(2, 2);
         ImageConversion.LoadImage(texture, File.ReadAllBytes(source));
         int left=texture.width, bottom=texture.height, right=0, top=0;

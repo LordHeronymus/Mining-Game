@@ -21,7 +21,7 @@ public sealed class GpsSectionSpec
     public GpsFieldSpec[] fields;
     public GpsSectionSpec(string tab, string title, Type source, string role, params GpsFieldSpec[] fields)
     { this.tab = tab; this.title = title; this.source = source; this.role = role; this.fields = fields; }
-    public bool Matches(GpsRecord record) => record.type == source.AssemblyQualifiedName &&
+    public bool Matches(GpsRecord record) => record.type == GpsCodec.TypeName(source) &&
         (string.IsNullOrEmpty(role) || record.key.EndsWith(":" + role, StringComparison.Ordinal));
 }
 public static partial class GpsSchema

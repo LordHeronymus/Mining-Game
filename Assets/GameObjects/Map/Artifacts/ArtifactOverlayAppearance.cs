@@ -29,6 +29,7 @@ public static class ArtifactOverlayAppearance
         CopyTexture("_SurfaceDirtTex");
         CopyTexture("_LayerOneTex");
         CopyTexture("_LayerThreeTex");
+        CopyTexture("_LayerFourTex");
         CopyTexture("_TestOccupancy");
         renderer.SetPropertyBlock(properties);
 

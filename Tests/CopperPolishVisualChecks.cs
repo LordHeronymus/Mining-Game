@@ -13,7 +13,7 @@ using Object = UnityEngine.Object;
 
 public static class CopperPolishVisualChecks
 {
-    const string Output = "Assets/Design/OreVeins/CopperPolishV2/Implemented";
+    const string Output = "Design/OreVeins/CopperPolishV2/Implemented";
     static readonly List<string> passed = new();
     static void Check(bool condition, string message)
     { if (!condition) throw new Exception(message); passed.Add(message); }

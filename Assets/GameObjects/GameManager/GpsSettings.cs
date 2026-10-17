@@ -10,7 +10,7 @@ public static class GpsSettings
     public const string ResourceName = "Gameplay/GpsProfile";
     static GpsProfile profile;
     static GpsDocument document;
-    static string savedJson;
+    static string savedJson, shippedJson;
     static bool applying, dirty;
     public static event Action Changed;
     public static event Action Saved;
@@ -26,7 +26,7 @@ public static class GpsSettings
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void Reset()
-    { profile = null; document = null; savedJson = null; Warning = null; Changed = null; Saved = null; applying = false; dirty=false; }
+    { profile = null; document = null; savedJson = null; shippedJson = null; Warning = null; Changed = null; Saved = null; applying = false; dirty=false; }
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void StartRuntime()
     {
@@ -40,17 +40,31 @@ public static class GpsSettings
     {
         if (document != null) return;
         profile = Resources.Load<GpsProfile>(ResourceName);
+        shippedJson = profile ? profile.documentJson : null;
         document = profile && !string.IsNullOrWhiteSpace(profile.documentJson)
             ? JsonUtility.FromJson<GpsDocument>(profile.documentJson) : new GpsDocument();
         document ??= new GpsDocument();
 #if !UNITY_EDITOR
         bool existing=File.Exists(FilePath) || File.Exists(FilePath+".bak");
-        document=GpsFileStore.Load(FilePath,document,out var warning); Warning=warning;
+        document=GpsFileStore.Load(FilePath,document,out var warning,out bool legacyFormat); Warning=warning;
         if(!existing && profile)
         {
             GpsLegacyImport.Import(document,profile,Application.persistentDataPath);
             try { GpsFileStore.Save(FilePath,document); } catch(Exception ex) { Warning="GPS speichern fehlgeschlagen: "+ex.Message; }
         }
+        else if(legacyFormat && warning==null)
+        {
+#if !DEVELOPMENT_BUILD
+            // Release players can only change personal preferences; every other value in an old full
+            // copy is a stale shipped value and must not hide the current profile.
+            var shipped=ShippedDocument();
+            foreach(string field in PersonalPreferences) GpsCodec.Set(shipped.preferences,field,GpsCodec.Get(document.preferences,field));
+            document=shipped;
+#endif
+            try { GpsFileStore.Save(FilePath,document); } catch(Exception ex) { Warning="GPS speichern fehlgeschlagen: "+ex.Message; }
+        }
+#else
+        LoadPersonalPreferences(document);
 #endif
         ItemIconLayout.Migrate(document, profile);
         savedJson = JsonUtility.ToJson(document);
@@ -60,9 +74,60 @@ public static class GpsSettings
 #endif
         dirty = savedJson != JsonUtility.ToJson(document);
     }
+    // Volume is chosen per player. In the editor it lives in EditorPrefs so it never ships in the profile asset.
+    static readonly string[] PersonalPreferences = { nameof(GpsPreferences.masterVolume), nameof(GpsPreferences.musicVolume) };
+    // The profile as loaded, before player overrides. Edit-mode changes write through to the asset, so the
+    // live documentJson is not a stable baseline there.
+    public static GpsDocument ShippedDocument()
+    {
+        var source = profile ? profile : Resources.Load<GpsProfile>(ResourceName);
+        string json = shippedJson ?? (source ? source.documentJson : null);
+        var shipped = !string.IsNullOrWhiteSpace(json) ? JsonUtility.FromJson<GpsDocument>(json) : null;
+        shipped ??= new GpsDocument();
+        ItemIconLayout.Migrate(shipped, source);
+        return shipped;
+    }
+    // Swaps the personal values out in place instead of copying: a JSON round trip would shift doubles in the last digit.
+    public static string AssetJson(GpsDocument data)
+    {
+        var personal = PersonalPreferences.Select(field => GpsCodec.Get(data.preferences, field)).ToArray();
+        var defaults = new GpsPreferences();
+        try
+        {
+            foreach (string field in PersonalPreferences) GpsCodec.Set(data.preferences, field, GpsCodec.Get(defaults, field));
+            return JsonUtility.ToJson(data, true);
+        }
+        finally { for (int i = 0; i < PersonalPreferences.Length; i++) GpsCodec.Set(data.preferences, PersonalPreferences[i], personal[i]); }
+    }
+#if UNITY_EDITOR
+    static string PersonalPreferenceKey(string field) => "MiningGame.GPS." + field;
+    static void LoadPersonalPreferences(GpsDocument data)
+    {
+        foreach (string field in PersonalPreferences)
+        {
+            string key = PersonalPreferenceKey(field);
+            // First run after the move: keep the value that was stored in the profile until now.
+            if (!UnityEditor.EditorPrefs.HasKey(key)) UnityEditor.EditorPrefs.SetFloat(key, (float)GpsCodec.Get(data.preferences, field));
+            GpsCodec.Set(data.preferences, field, Mathf.Clamp01(UnityEditor.EditorPrefs.GetFloat(key)));
+        }
+    }
+    static void SavePersonalPreferences(GpsDocument data)
+    {
+        foreach (string field in PersonalPreferences)
+            UnityEditor.EditorPrefs.SetFloat(PersonalPreferenceKey(field), (float)GpsCodec.Get(data.preferences, field));
+    }
+#endif
+    public static bool IsValidOverride(GpsRecord record, GpsValue node)
+    {
+        if (record == null || node == null) return false;
+        var spec = GpsSchema.Spec(record, node.name);
+        var type = GpsCodec.MemberType(GpsCodec.ResolveType(record.type) ?? typeof(object), node.name);
+        return spec != null && type != null && GpsCodec.Validate(node, out _) && GpsCodec.ValidateShape(node, type, out _) &&
+            ValidateBounds(node, spec, out _) && ValidateReferences(node, out _);
+    }
     public static void UseProfile(GpsProfile source, GpsDocument data)
     {
-        profile = source; document = data;
+        profile = source; document = data; shippedJson = source ? source.documentJson : null;
         savedJson = JsonUtility.ToJson(data); Warning = null; dirty=false;
     }
     public static void ReloadCommitted()
@@ -70,7 +135,7 @@ public static class GpsSettings
 #if UNITY_EDITOR
         profile = Resources.Load<GpsProfile>(ResourceName);
         string json = UnityEditor.SessionState.GetString("GPS.Committed", profile ? profile.documentJson : "");
-        if (profile && !string.IsNullOrEmpty(json)) profile.documentJson = json;
+        if (profile && !string.IsNullOrEmpty(json)) profile.documentJson = AssetJson(JsonUtility.FromJson<GpsDocument>(json));
 #endif
         Reload();
     }
@@ -134,7 +199,7 @@ public static class GpsSettings
         if (key == "tests") ApplyTestConfiguration();
 #if UNITY_EDITOR
         if (!Application.isPlaying && profile)
-        { profile.documentJson = JsonUtility.ToJson(document, true); UnityEditor.EditorUtility.SetDirty(profile); }
+        { profile.documentJson = AssetJson(document); UnityEditor.EditorUtility.SetDirty(profile); }
 #endif
         dirty=true;
         Changed?.Invoke();
@@ -200,7 +265,8 @@ public static class GpsSettings
 #if UNITY_EDITOR
             if (!profile) throw new InvalidOperationException("GPS-Profil fehlt.");
             UnityEditor.Undo.RecordObject(profile, "GPS speichern");
-            profile.documentJson = json;
+            profile.documentJson = AssetJson(data);
+            SavePersonalPreferences(data);
             UnityEditor.EditorUtility.SetDirty(profile);
             UnityEditor.AssetDatabase.SaveAssetIfDirty(profile);
             UnityEditor.SessionState.SetString("GPS.Committed", json);
@@ -319,18 +385,26 @@ public static class GpsSettings
     public static void RestoreGeneration(MapGenerator map, GpsValue[] fields)
     {
         if (fields == null) return; // Existing saves predate the optional generation snapshot.
-        foreach (var field in fields) ApplyField(map, field, false);
+        foreach (var field in NormalizeGeneration(fields)) ApplyField(map, field, false);
+    }
+    // Saves outlive schema changes: keep only fields that are still map-generation settings and bring
+    // each to the current layout, so adding a field to MapLayer or the ore settings keeps old saves loadable.
+    static GpsValue[] NormalizeGeneration(GpsValue[] fields)
+    {
+        var allowed = GpsSchema.Fields(typeof(MapGenerator)).Where(field => field.applyTime == GpsApplyTime.NewMap).Select(field => field.name).ToHashSet();
+        return fields.Where(field => field != null && allowed.Contains(field.name))
+            .Select(field => GpsCodec.Upgrade(field, GpsCodec.MemberType(typeof(MapGenerator), field.name), Profile.Key)).ToArray();
     }
     public static bool ValidateGeneration(GpsValue[] fields, int width, int height, out string error)
     {
         error = "Ungültige Karteneinstellungen im Spielstand.";
         var source = Document.records.Find(record => record.type == typeof(MapGenerator).AssemblyQualifiedName);
         if (source == null || fields == null || fields.Any(field => field == null) || fields.Select(field => field.name).Distinct().Count() != fields.Length) return false;
-        var allowed = GpsSchema.Fields(typeof(MapGenerator)).Where(field => field.applyTime == GpsApplyTime.NewMap).ToArray();
-        if (fields.Length == 0 || fields.Any(field => !allowed.Any(spec => spec.name == field.name)) ||
-            !fields.Any(field => field.name == "mapWidth") || !fields.Any(field => field.name == "mapHeight")) return false;
-        var record = JsonUtility.FromJson<GpsRecord>(JsonUtility.ToJson(source));
-        foreach (var field in fields) record.fields[record.fields.FindIndex(node => node.name == field.name)] = field.Copy();
+        fields = NormalizeGeneration(fields);
+        if (fields.Length == 0 || !fields.Any(field => field.name == "mapWidth") || !fields.Any(field => field.name == "mapHeight")) return false;
+        // Validation only reads the nodes; a separate field list keeps the profile's record unchanged.
+        var record = new GpsRecord { key = source.key, type = source.type, assetKey = source.assetKey, name = source.name, fields = new List<GpsValue>(source.fields) };
+        foreach (var field in fields) record.fields[record.fields.FindIndex(node => node.name == field.name)] = field;
         if (record.fields.Find(field => field.name == "mapWidth").number != width || record.fields.Find(field => field.name == "mapHeight").number != height) return false;
         return ValidateDocument(new GpsDocument { records = new List<GpsRecord> { record }, preferences = Preferences, tests = Tests }, out error);
     }

@@ -159,17 +159,22 @@ public static partial class MetaProgression
             int rank = GetRank(definition.id);
             if (rank > 0) result.ranks.Add(new MetaUpgradeRank { id = definition.id, rank = rank });
         }
-        result.healthMultiplier = 1f + GetRank("health") * .025f;
-        result.energyMultiplier = 1f + GetRank("energy") * .025f;
-        result.startMoney = GetRank("money") * 10;
-        result.movementMultiplier = 1f + GetRank("movement") * .01f;
-        result.jumpMultiplier = 1f + GetRank("jump") * .008f;
-        result.miningEnergyMultiplier = 1f - GetRank("mining") * .01f;
-        result.buildReachBonus = GetRank("reach") * .015f;
-        result.carryCapacityBonus = GetRank("capacity") * .4f;
-        result.startingTorches = GetRank("torches"); result.startingLadders = GetRank("ladders");
+        result.healthMultiplier = 1f + UpgradeEffect("health", GetRank("health"));
+        result.energyMultiplier = 1f + UpgradeEffect("energy", GetRank("energy"));
+        result.startMoney = Mathf.RoundToInt(UpgradeEffect("money", GetRank("money")));
+        result.movementMultiplier = 1f + UpgradeEffect("movement", GetRank("movement"));
+        result.jumpMultiplier = 1f + UpgradeEffect("jump", GetRank("jump"));
+        result.miningEnergyMultiplier = 1f - UpgradeEffect("mining", GetRank("mining"));
+        result.buildReachBonus = UpgradeEffect("reach", GetRank("reach"));
+        result.carryCapacityBonus = UpgradeEffect("capacity", GetRank("capacity"));
+        result.startingTorches = Mathf.RoundToInt(UpgradeEffect("torches", GetRank("torches")));
+        result.startingLadders = Mathf.RoundToInt(UpgradeEffect("ladders", GetRank("ladders")));
         return result;
     }
+    // Effects and their validation bounds both come from the catalog, so retuning a step or rank
+    // count cannot make existing loadouts invalid.
+    static float UpgradeEffect(string id, int rank) => MetaProgressionCatalog.Upgrade(id) is MetaUpgradeDefinition definition ? rank * definition.step : 0f;
+    static float MaxUpgradeEffect(string id) => MetaProgressionCatalog.Upgrade(id) is MetaUpgradeDefinition definition ? UpgradeEffect(id, definition.maxRank) : 0f;
 
     public static void BeginRun(string runId, MetaRunState saved = null)
     {
@@ -642,7 +647,12 @@ public static partial class MetaProgression
         if (value.challengeXp != value.completedObjectives.Sum(id => (long)MetaProgressionCatalog.Challenge(id).xp) || value.milestoneXp != value.milestones.Sum(id => (long)MetaProgressionCatalog.Challenge(id).xp)) return false;
         value.settings = value.settings.Sanitized();
         var loadout = value.loadout;
-        return InRange(loadout.healthMultiplier, 1f, 1.51f) && InRange(loadout.energyMultiplier, 1f, 1.51f) && InRange(loadout.movementMultiplier, 1f, 1.11f) && InRange(loadout.jumpMultiplier, 1f, 1.09f) && InRange(loadout.miningEnergyMultiplier, .79f, 1f) && InRange(loadout.buildReachBonus, 0f, .31f) && InRange(loadout.carryCapacityBonus, 0f, 10.01f) && loadout.startMoney >= 0 && loadout.startMoney <= 200 && loadout.startingTorches >= 0 && loadout.startingTorches <= 10 && loadout.startingLadders >= 0 && loadout.startingLadders <= 10 && loadout.ranks != null && loadout.ranks.Count <= MetaProgressionCatalog.Upgrades.Length && loadout.ranks.All(entry => entry != null && MetaProgressionCatalog.Upgrade(entry.id) is MetaUpgradeDefinition definition && entry.rank >= 0 && entry.rank <= definition.maxRank) && loadout.ranks.Select(entry => entry.id).Distinct().Count() == loadout.ranks.Count;
+        const float tolerance = .01f;
+        return InRange(loadout.healthMultiplier, 1f, 1f + MaxUpgradeEffect("health") + tolerance) && InRange(loadout.energyMultiplier, 1f, 1f + MaxUpgradeEffect("energy") + tolerance) &&
+            InRange(loadout.movementMultiplier, 1f, 1f + MaxUpgradeEffect("movement") + tolerance) && InRange(loadout.jumpMultiplier, 1f, 1f + MaxUpgradeEffect("jump") + tolerance) &&
+            InRange(loadout.miningEnergyMultiplier, 1f - MaxUpgradeEffect("mining") - tolerance, 1f) && InRange(loadout.buildReachBonus, 0f, MaxUpgradeEffect("reach") + tolerance) &&
+            InRange(loadout.carryCapacityBonus, 0f, MaxUpgradeEffect("capacity") + tolerance) && loadout.startMoney >= 0 && loadout.startMoney <= Mathf.RoundToInt(MaxUpgradeEffect("money")) &&
+            loadout.startingTorches >= 0 && loadout.startingTorches <= Mathf.RoundToInt(MaxUpgradeEffect("torches")) && loadout.startingLadders >= 0 && loadout.startingLadders <= Mathf.RoundToInt(MaxUpgradeEffect("ladders")) && loadout.ranks != null && loadout.ranks.Count <= MetaProgressionCatalog.Upgrades.Length && loadout.ranks.All(entry => entry != null && MetaProgressionCatalog.Upgrade(entry.id) is MetaUpgradeDefinition definition && entry.rank >= 0 && entry.rank <= definition.maxRank) && loadout.ranks.Select(entry => entry.id).Distinct().Count() == loadout.ranks.Count;
     }
     static bool Finite(double value) => !double.IsNaN(value) && !double.IsInfinity(value) && value >= 0d;
     static bool InRange(float value, float minimum, float maximum) => !float.IsNaN(value) && !float.IsInfinity(value) && value >= minimum && value <= maximum;

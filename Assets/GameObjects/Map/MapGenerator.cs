@@ -3,6 +3,7 @@ using UnityEngine.Tilemaps;
 using UnityEngine.Serialization;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 
 [RequireComponent(typeof(OreOverlayAppearance), typeof(DirtSurfaceAppearance))]
 public class MapGenerator : MonoBehaviour
@@ -239,13 +240,13 @@ public class MapGenerator : MonoBehaviour
 
     void OnEnable()
     {
-        Tilemap.tilemapTileChanged += TerrainChanged;
+        Tilemap.tilemapPositionsChanged += TerrainChanged;
         if (!Application.isPlaying || GetComponent<CaveFireflies>()) return;
         var fireflies = gameObject.AddComponent<CaveFireflies>();
         fireflies.map = this;
     }
 
-    void OnDisable() => Tilemap.tilemapTileChanged -= TerrainChanged;
+    void OnDisable() => Tilemap.tilemapPositionsChanged -= TerrainChanged;
 
     void OnValidate()
     {
@@ -355,21 +356,23 @@ public class MapGenerator : MonoBehaviour
             GenerateMap();
     }
 
-    void TerrainChanged(Tilemap source, Tilemap.SyncTile[] changes)
+    void TerrainChanged(Tilemap source, NativeArray<Vector3Int> positions)
     {
-        if (source != Terrain || changes == null) return;
-        foreach (var change in changes)
+        // Generated and restored maps set matching overlay rows themselves; checking every applied cell cost
+        // hundreds of thousands of native calls while loading.
+        if (source != Terrain || applyingGeneratedTiles) return;
+        foreach (var position in positions)
         {
-            if (!source.HasTile(change.position))
+            if (!source.HasTile(position))
             {
-                if (oreOverlay) oreOverlay.SetTile(change.position, null);
-                if (artifactOverlay) artifactOverlay.SetTile(change.position, null);
+                if (oreOverlay) oreOverlay.SetTile(position, null);
+                if (artifactOverlay) artifactOverlay.SetTile(position, null);
             }
-            if (!applyingGeneratedTiles && grassOverlay && change.position.y == 0)
+            if (grassOverlay && position.y == 0)
             {
-                RefreshGrassAt(change.position.x - 1);
-                RefreshGrassAt(change.position.x);
-                RefreshGrassAt(change.position.x + 1);
+                RefreshGrassAt(position.x - 1);
+                RefreshGrassAt(position.x);
+                RefreshGrassAt(position.x + 1);
             }
         }
     }
@@ -673,6 +676,7 @@ public class MapGenerator : MonoBehaviour
         while (!LoadingScreen.ContentVisible) yield return null;
         // Do not combine Awake/Start scene activation with map restoration.
         yield return null;
+        GameplayAssetPreload.Begin();
         if (GameSaveSystem.HasPendingLoad)
         {
             yield return GameSaveSystem.RestorePending(this);
@@ -1073,17 +1077,15 @@ public class MapGenerator : MonoBehaviour
     }
     public IEnumerator FinishSavedMapRestoreSteps(TileBase[] restoredTerrain = null)
     {
-        generatedCaveMask = new bool[generatedWidth * generatedHeight];
-        bool hasSnapshot = restoredTerrain != null && restoredTerrain.Length == generatedCaveMask.Length;
-        var budget = new LoadingWorkBudget();
-        for (int depth = 0; depth < generatedHeight; depth++)
-        {
-            for (int x = 0; x < generatedWidth; x++)
-                generatedCaveMask[depth * generatedWidth + x] = hasSnapshot
-                    ? !restoredTerrain[(generatedHeight - 1 - depth) * generatedWidth + x]
-                    : !Terrain.HasTile(new Vector3Int(-generatedWidth / 2 + x, -depth));
-            if (budget.Expired) { yield return null; budget.Restart(); }
-        }
+        // Rebuild the generated caves from seed, restored settings and altar layout (CaveGenerator has its
+        // own stable RNG). Treating every empty cell as cave would also count mined shafts and the altar room.
+        var caves = new bool[checked(generatedWidth * generatedHeight)];
+        var chamber = AltarChamber ? AltarChamber.Layout : default;
+        int offsetX = -generatedWidth / 2;
+        var caveSteps = CaveGenerator.GenerateSteps(caveGeneration, generatedSeed, generatedWidth, generatedHeight, caves,
+            reserved: (x, y) => chamber.IsReserved(new Vector3Int(x + offsetX, -y, 0)));
+        while (caveSteps.MoveNext()) yield return null;
+        generatedCaveMask = caves;
         cachedCaveMaskWidth = generatedWidth; cachedCaveMaskHeight = generatedHeight;
         isGenerated = true; applyingGeneratedTiles = false;
         UpdateGrassOffset(); SyncGrassFromTerrain();

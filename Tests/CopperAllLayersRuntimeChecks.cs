@@ -24,7 +24,7 @@ public static class CopperAllLayersRuntimeChecks
 public sealed class CopperAllLayersRuntimeProbe:MonoBehaviour
 {
     const string Report="Temp/CopperAllLayersRuntimeChecks.txt";
-    const string Output="Assets/Design/OreVeins/CopperAllLayers/Implemented";
+    const string Output="Design/OreVeins/CopperAllLayers/Implemented";
     string previousSave,previousMeta,directory;bool restored,previousBackground;
     void Check(bool value,string message){if(!value)throw new Exception(message);File.AppendAllText(Report,"PASS "+message+"\n");}
     IEnumerator Start()

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
 // Copper's visual skeleton is independent of gameplay tiles. Each complete deposit is
 // traversed so camera scrolling cannot change its branch layout. No persistent save data.
@@ -12,22 +11,36 @@ internal static class CopperVeinTopology
     const byte Copper = (byte)((int)BlockType.CopperOre + 1);
     struct Edge { public int a,b,side; public uint weight; }
 
-    public static void Fill(Tilemap ores, Tilemap terrain, BoundsInt bounds, NativeArray<Color32> pixels, int seed)
+    // Reused between rebuilds (main thread only), so a rebuild does not allocate per deposit.
+    static readonly HashSet<Vector3Int> visited = new();
+    static readonly List<Vector3Int> cells = new();
+    static readonly Dictionary<Vector3Int,int> indices = new();
+    static readonly List<Edge> edges = new();
+    static readonly System.Comparison<Edge> EdgeOrder = CompareEdges;
+    static int[] parents = new int[64];
+    static byte[] masks = new byte[64];
+
+    static int CompareEdges(Edge a, Edge b)
     {
-        var visited = new HashSet<Vector3Int>();
-        var cells = new List<Vector3Int>();
-        var indices = new Dictionary<Vector3Int,int>();
-        var edges = new List<Edge>();
-        bool HasCopper(Vector3Int p)
-        {
-            if(bounds.Contains(p))return pixels[(p.y-bounds.yMin)*bounds.size.x+p.x-bounds.xMin].r==Copper;
-            var ore=ores.GetTile<OreTile>(p);
-            return ore && ore.block && ore.block.id==BlockType.CopperOre && terrain.HasTile(p);
-        }
+        int v=a.weight.CompareTo(b.weight);if(v!=0)return v;
+        v=cells[a.a].y.CompareTo(cells[b.a].y);if(v!=0)return v;
+        v=cells[a.a].x.CompareTo(cells[b.a].x);return v!=0?v:a.side.CompareTo(b.side);
+    }
+
+    public static void Fill(MapGenerator map, BoundsInt bounds, NativeArray<Color32> pixels)
+    {
+        int seed=map.ActiveSeed;
+        var plans=map.GetComponent<OreOverlayAppearance>().CopperPlans;
+        HashSet<Vector3Int> planned=null;
+        visited.Clear();
+        bool HasCopper(Vector3Int p)=>planned.Contains(p);
         for(int y=bounds.yMin;y<bounds.yMax;y++)for(int x=bounds.xMin;x<bounds.xMax;x++)
         {
             var start=new Vector3Int(x,y,0);
-            if(!HasCopper(start) || !visited.Add(start))continue;
+            if(pixels[(y-bounds.yMin)*bounds.size.x+x-bounds.xMin].r!=Copper || !visited.Add(start))continue;
+            // Existing saved deposit cells retain the original topology after
+            // mining and reload. Rendering still clips to current ore occupancy.
+            planned=plans.Get(map,start).CellSet;
             cells.Clear();indices.Clear();edges.Clear();cells.Add(start);indices.Add(start,0);
             bool capped=false;
             for(int n=0;n<cells.Count;n++)
@@ -65,11 +78,9 @@ internal static class CopperVeinTopology
                 if(indices.TryGetValue(cells[n]+Steps[side],out int other))
                     edges.Add(new Edge {a=n,b=other,side=side,weight=Hash(cells[n],seed,side)});
             }
-            edges.Sort((a,b)=>{int v=a.weight.CompareTo(b.weight);if(v!=0)return v;
-                v=cells[a.a].y.CompareTo(cells[b.a].y);if(v!=0)return v;
-                v=cells[a.a].x.CompareTo(cells[b.a].x);return v!=0?v:a.side.CompareTo(b.side);});
-            var parents=new int[cells.Count];var masks=new byte[cells.Count];
-            for(int n=0;n<parents.Length;n++)parents[n]=n;
+            edges.Sort(EdgeOrder);
+            if(parents.Length<cells.Count){parents=new int[Mathf.NextPowerOfTwo(cells.Count)];masks=new byte[parents.Length];}
+            for(int n=0;n<cells.Count;n++){parents[n]=n;masks[n]=0;}
             int Root(int n){while(parents[n]!=n){parents[n]=parents[parents[n]];n=parents[n];}return n;}
             foreach(var edge in edges)
             {

@@ -110,7 +110,7 @@ public sealed class DynamiteRuntimeProbe : MonoBehaviour
         if (follow) follow.enabled = false; if (clamp) clamp.enabled = false;
         camera.orthographicSize = 3f; camera.transform.position = new Vector3(blastPoint.x, blastPoint.y + .4f, oldCameraPosition.z);
         yield return null; yield return new WaitForEndOfFrame();
-        string imagePath = "Assets/Design/Tiefenhall/Metaprogression/Dynamite-BeforeExplosion.png";
+        string imagePath = "Design/Tiefenhall/Metaprogression/Dynamite-BeforeExplosion.png";
         Directory.CreateDirectory(Path.GetDirectoryName(imagePath));
         var screenshot = ScreenCapture.CaptureScreenshotAsTexture(); File.WriteAllBytes(imagePath, screenshot.EncodeToPNG()); Object.Destroy(screenshot);
         camera.transform.position = oldCameraPosition; camera.orthographicSize = oldOrtho;

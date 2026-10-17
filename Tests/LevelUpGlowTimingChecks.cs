@@ -47,7 +47,7 @@ public sealed class LevelUpGlowTimingProbe:MonoBehaviour {
   Check(group.alpha>.95f&&sound.isPlaying,"Animation appears after positive delay");
   var lights=view.GetComponentsInChildren<LevelUpGlowGraphic>();Check(lights.Length==2&&lights.All(g=>g.material.shader.name=="UI/Tiefenhall/LevelUpGlow"&&g.material.shader.isSupported),"Both glow layers use supported additive shader");
   Check(lights.All(g=>g.canvasRenderer.GetMesh()!=null&&g.canvasRenderer.GetMesh().vertexCount>0),"Glow generates live orbit and halo geometry");
-  yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot("Assets/Design/Tiefenhall/LevelUpV2/Glow-implemented.png");yield return null;
+  yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot("Design/Tiefenhall/LevelUpV2/Glow-implemented.png");yield return null;
   Offset(-.8f);Preview();yield return new WaitForSecondsRealtime(.25f);int plays=view.AudioPlayCount;
   Check(group.alpha>.9f&&!sound.isPlaying,"Negative offset starts animation before sound");
   GameplayInputBlocker.SetBlocked(this,true);Time.timeScale=0;yield return new WaitForSecondsRealtime(.8f);Check(!sound.isPlaying&&view.AudioPlayCount==plays,"Paused deferred audio never starts early");

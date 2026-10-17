@@ -21,7 +21,7 @@ public static class MetaProgressionIntegrationChecks
 public sealed class MetaProgressionIntegrationRunner : MonoBehaviour
 {
     const string Report = "Temp/MetaProgressionIntegrationChecks.txt";
-    const string Output = "Assets/Design/Tiefenhall/Metaprogression";
+    const string Output = "Design/Tiefenhall/Metaprogression";
     string previousSave, previousMeta, previousTests, directory;
     int[] previousRecipes;
     bool cleaned;

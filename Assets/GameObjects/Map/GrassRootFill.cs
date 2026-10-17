@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using System.Collections.Generic;
+using Unity.Collections;
 
 [ExecuteAlways]
 public sealed class GrassRootFill : MonoBehaviour
@@ -15,26 +16,25 @@ public sealed class GrassRootFill : MonoBehaviour
     {
         if (!map) map = GetComponent<MapGenerator>();
         if (map) map.Generated += Invalidate;
-        Tilemap.tilemapTileChanged += Changed;
+        Tilemap.tilemapPositionsChanged += Changed;
         Invalidate();
     }
     void OnDisable()
     {
         if (map) map.Generated -= Invalidate;
-        Tilemap.tilemapTileChanged -= Changed;
+        Tilemap.tilemapPositionsChanged -= Changed;
         dirtyColumns.Clear();
     }
     void Invalidate() { dirty = true; dirtyColumns.Clear(); }
-    void Changed(Tilemap changed, Tilemap.SyncTile[] changes)
+    void Changed(Tilemap changed, NativeArray<Vector3Int> positions)
     {
-        if (dirty || !map || changes == null ||
-            (changed != map.Terrain && changed != map.GrassOverlay)) return;
-        foreach (var change in changes)
+        if (dirty || !map || (changed != map.Terrain && changed != map.GrassOverlay)) return;
+        foreach (var position in positions)
         {
-            if (change.position.y != 0 || change.position.z != 0) continue;
-            dirtyColumns.Add(change.position.x - 1);
-            dirtyColumns.Add(change.position.x);
-            dirtyColumns.Add(change.position.x + 1);
+            if (position.y != 0 || position.z != 0) continue;
+            dirtyColumns.Add(position.x - 1);
+            dirtyColumns.Add(position.x);
+            dirtyColumns.Add(position.x + 1);
         }
     }
     void LateUpdate()

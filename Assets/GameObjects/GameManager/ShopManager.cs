@@ -36,9 +36,12 @@ public class ShopManager : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
+    // The sell page lists ores only; every sell path uses the same rule so nothing hidden is sold.
+    public static bool IsSellable(ItemSO item) => item && item.category == ItemCategory.Ore && item.worth > 0;
+
     public bool CanSell(ItemSO item, int qty = 1)
     {
-        if (!item || item.worth <= 0 || qty <= 0) return false;
+        if (!IsSellable(item) || qty <= 0) return false;
         var inv = InventoryManager.Instance;
         if (!inv) return false;
         return inv.GetCount(item) >= qty;
@@ -89,7 +92,7 @@ public class ShopManager : MonoBehaviour
 
         var buffer = new List<(ItemSO item, int count)>();
         foreach (var kv in snap)
-            if (kv.Key && kv.Key.worth > 0 && kv.Value > 0)
+            if (IsSellable(kv.Key) && kv.Value > 0)
                 buffer.Add((kv.Key, kv.Value));
 
         foreach (var entry in buffer)
@@ -108,7 +111,7 @@ public class ShopManager : MonoBehaviour
             OnSellAll?.Invoke(total);
         }
 
-        StartCoroutine(SellSound(soldCount));
+        if (soldCount > 0) StartCoroutine(SellSound(soldCount));
         return total;
     }
 

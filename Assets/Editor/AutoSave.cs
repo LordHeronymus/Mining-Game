@@ -10,7 +10,8 @@ using System.Linq;
 public static class AutoSave
 {
     const double IntervalSec = 300;             // 5 Minuten
-    const string BackupFolder = "Assets/_SceneBackups";
+    // Ausserhalb von Assets: Unity importiert die Backups nicht, Git ignoriert den Ordner.
+    const string BackupFolder = "SceneBackups";
     const int MaxBackupsPerScene = 20;          // behalte die letzten 20
     static double next;
 
@@ -28,17 +29,15 @@ public static class AutoSave
         next = EditorApplication.timeSinceStartup + IntervalSec;
 
         var scene = EditorSceneManager.GetActiveScene();
-        if (!scene.IsValid() || (!scene.isDirty && !AssetDatabase.IsOpenForEdit(""))) return;
+        if (!scene.IsValid() || !scene.isDirty || string.IsNullOrEmpty(scene.path)) return;
 
-        EditorSceneManager.SaveOpenScenes();
+        if (!EditorSceneManager.SaveOpenScenes()) return;
         AssetDatabase.SaveAssets();
 
-        if (!Directory.Exists(BackupFolder)) Directory.CreateDirectory(BackupFolder);
-        var name = string.IsNullOrEmpty(scene.path) ? "UnsavedScene" : Path.GetFileNameWithoutExtension(scene.path);
-        var stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-        var backupPath = $"{BackupFolder}/{name}_{stamp}.unity";
-
-        EditorSceneManager.SaveScene(scene, backupPath, true);
+        Directory.CreateDirectory(BackupFolder);
+        var name = Path.GetFileNameWithoutExtension(scene.path);
+        var backupPath = $"{BackupFolder}/{name}_{DateTime.Now:yyyyMMdd_HHmmss}.unity";
+        File.Copy(scene.path, backupPath, true);
 
         var files = new DirectoryInfo(BackupFolder)
             .GetFiles($"{name}_*.unity")

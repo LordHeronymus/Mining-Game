@@ -183,10 +183,14 @@ public static partial class MetaProgression
             for (int i = 0; i < legacy.Length; i++)
                 if (state.rewarded[i]) state.awardedXp[i] = legacy[i];
         }
-        if (state.awardedXp.Length != 6 && state.awardedXp.Length != 16 && state.awardedXp.Length != 20 && state.awardedXp.Length != 22 && state.awardedXp.Length != 23 && state.awardedXp.Length != 24 && state.awardedXp.Length != 25 && state.awardedXp.Length != 26 && state.awardedXp.Length != 27 && state.awardedXp.Length != 29 && state.awardedXp.Length != 30 && state.awardedXp.Length != 31 && state.awardedXp.Length != 35 && state.awardedXp.Length != 40 && state.awardedXp.Length != 45 && state.awardedXp.Length != 47 && state.awardedXp.Length != PeriodMetrics.Length) return false;
+        if (!IsStoredPeriodLength(state.awardedXp.Length, 6)) return false;
         if (state.awardedXp.Length < PeriodMetrics.Length) Array.Resize(ref state.awardedXp, PeriodMetrics.Length);
         return true;
     }
+
+    // Period arrays are append-only, so every length from the first stored format up to the current
+    // pool is a valid older profile. Appending a task therefore never needs a whitelist update.
+    static bool IsStoredPeriodLength(int length, int firstFormatLength) => length >= firstFormatLength && length <= PeriodMetrics.Length;
 
     static DateTime ChallengeNow()
     {
@@ -525,7 +529,7 @@ public static partial class MetaProgression
             if (state == null || state.visitedLayerMask < 0 || state.visitedLayerMask > 31 || state.artifactVarietyMask < 0 || state.artifactVarietyMask > 1023 || state.expeditionPeakLayer < 0 || state.expeditionPeakLayer > 100 || (state.expeditionRunId != null && state.expeditionRunId.Length > 160) || state.oreTargetVersion < 0 || state.oreTargetVersion > 2 || state.dailyGemType < 0 || state.dailyGemType >= GemItems.Length || state.dailyOreType < 0 || state.dailyOreType >= XxlOreItems.Length || state.dailyArtifactType < 0 || state.dailyArtifactType >= 10 || state.period < 0 || state.period > 1 || state.startUtc < 0 ||
                 state.endUtc <= state.startUtc || state.endUtc > DateTime.MaxValue.Ticks ||
                 state.counters == null || state.rewarded == null || state.counters.Length != state.rewarded.Length ||
-                (state.counters.Length != 6 && state.counters.Length != 16 && state.counters.Length != 20 && state.counters.Length != 22 && state.counters.Length != 23 && state.counters.Length != 24 && state.counters.Length != 25 && state.counters.Length != 26 && state.counters.Length != 27 && state.counters.Length != 29 && state.counters.Length != 30 && state.counters.Length != 31 && state.counters.Length != 35 && state.counters.Length != 40 && state.counters.Length != 45 && state.counters.Length != 47 && state.counters.Length != PeriodMetrics.Length)) return false;
+                !IsStoredPeriodLength(state.counters.Length, 6)) return false;
             // Preserve legacy counters/rewards; appended pool entries start at zero.
             if (state.counters.Length < PeriodMetrics.Length) {
                 Array.Resize(ref state.counters, PeriodMetrics.Length);
@@ -535,7 +539,7 @@ public static partial class MetaProgression
             if (state.dailySelection != null && state.dailySelection.Length == 0) state.dailySelection = null;
             if (state.dailySelection != null && (state.period != 0 || !ValidDailySelection(state.dailySelection))) return false;
             if (state.dailyVariants == null || state.dailyVariants.Length == 0) state.dailyVariants = new int[PeriodMetrics.Length];
-            if (state.dailyVariants.Length == 20 || state.dailyVariants.Length == 22 || state.dailyVariants.Length == 23 || state.dailyVariants.Length == 24 || state.dailyVariants.Length == 25 || state.dailyVariants.Length == 26 || state.dailyVariants.Length == 27 || state.dailyVariants.Length == 29 || state.dailyVariants.Length == 30 || state.dailyVariants.Length == 31 || state.dailyVariants.Length == 35 || state.dailyVariants.Length == 40 || state.dailyVariants.Length == 45 || state.dailyVariants.Length == 47) Array.Resize(ref state.dailyVariants, PeriodMetrics.Length);
+            if (IsStoredPeriodLength(state.dailyVariants.Length, 20)) Array.Resize(ref state.dailyVariants, PeriodMetrics.Length);
             if (state.dailyVariants.Length != PeriodMetrics.Length || state.dailyVariants.Any(v => v < 0 || v > 1) ||
                 (state.period != 0 && state.dailyVariants.Any(v => v != 0))) return false;
             if (!EnsureAwardLedger(state)) return false;

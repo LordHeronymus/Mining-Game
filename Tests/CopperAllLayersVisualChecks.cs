@@ -20,7 +20,7 @@ public static class CopperAllLayersVisualChecks
     public static string Main(int testLayer=1)
     {
         if(Application.isPlaying)throw new Exception("Edit mode required");
-        Output="Assets/Design/OreVeins/CopperAllLayers/Implemented/L"+testLayer;passed.Clear();Directory.CreateDirectory(Output);
+        Output="Design/OreVeins/CopperAllLayers/Implemented/L"+testLayer;passed.Clear();Directory.CreateDirectory(Output);
         var previous=SceneManager.GetActiveScene();
         var sourceScene=SceneManager.GetSceneByPath("Assets/Scenes/SampleScene.unity");
         bool opened=!sourceScene.IsValid() || !sourceScene.isLoaded;

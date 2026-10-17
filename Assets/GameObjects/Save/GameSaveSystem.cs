@@ -339,13 +339,19 @@ public static class GameSaveSystem
         using var writer = new BinaryWriter(payload, Encoding.UTF8, true);
         RunSaveState state = null;
         IEnumerator capture = null;
-        Task<string> serialize = null;
+        Task<byte[]> serialize = null;
         try
         {
             state = Capture();
             // Capture owns independent managed state, including discovery arrays.
-            // Unity's plain-data JSON serializer supports background threads.
-            serialize = Task.Run(() => JsonUtility.ToJson(state));
+            // Unity's plain-data JSON serializer supports background threads; the text is also encoded there,
+            // exactly as BinaryWriter.Write(string) stores it, because a run's JSON takes several MB.
+            serialize = Task.Run(() =>
+            {
+                using var encoded = new MemoryStream();
+                using (var text = new BinaryWriter(encoded, Encoding.UTF8, true)) text.Write(JsonUtility.ToJson(state));
+                return encoded.ToArray();
+            });
             var map = UnityEngine.Object.FindFirstObjectByType<MapGenerator>();
             capture = WriteLayers(writer, map, Resources.Load<SaveAssetCatalog>("SaveAssetCatalog"));
         }

@@ -104,7 +104,7 @@ public class StatsManager : MonoBehaviour
         foreach (var altar in FindObjectsByType<UltroniumAltarChamber>(FindObjectsSortMode.None)) altar.ResetChargeForNewRun();
         foreach (var storage in FindObjectsByType<SurfaceStorageBuilding>(FindObjectsSortMode.None)) storage.ResetForNewRun();
         RecipeUnlocks.ResetRun();
-        Reset();
+        ResetRunValues();
         var inventory = InventoryManager.Instance;
         if (inventory)
         {
@@ -274,7 +274,8 @@ public class StatsManager : MonoBehaviour
             AudioManager.Instance.GetVolume(AudioVolumeSetting.DingLight), 0f);
     }
 
-    void Reset()
+    // Not named Reset: Unity calls Reset() on components in the editor, before baseStats exists.
+    void ResetRunValues()
     {
         Points = 0;
         ArtifactPoints = 0;

@@ -14,7 +14,7 @@ using Object = UnityEngine.Object;
 // Standalone Pipeline run_script fixture. No saved scene, material or user data is changed.
 public static class CopperEmbeddingVisualChecks
 {
-    const string Output = "Assets/Design/OreVeins/CopperEmbedding/Implemented";
+    const string Output = "Design/OreVeins/CopperEmbedding/Implemented";
     const int Width = 1120, Height = 960, CellPixels = 80;
     static readonly List<string> passed = new();
     static void Check(bool condition, string message)

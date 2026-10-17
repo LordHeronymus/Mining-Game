@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -17,8 +18,8 @@ public sealed class TerrainFrayedEdges : MonoBehaviour
     readonly List<Color> colors=new();
     readonly List<int> triangles=new();
     static readonly Vector3Int[] directions={Vector3Int.left,Vector3Int.right,Vector3Int.down,Vector3Int.up};
-    void OnEnable(){map=GetComponent<MapGenerator>();dirty=true;Tilemap.tilemapTileChanged+=Changed;}
-    void Changed(Tilemap tiles,Tilemap.SyncTile[] changes){if(map&&tiles==map.Terrain)dirty=true;}
+    void OnEnable(){map=GetComponent<MapGenerator>();dirty=true;Tilemap.tilemapPositionsChanged+=Changed;}
+    void Changed(Tilemap tiles,NativeArray<Vector3Int> positions){if(map&&tiles==map.Terrain)dirty=true;}
     public void Apply(MaterialPropertyBlock properties,Camera view=null)
     {
         var camera=view?view:Camera.main;
@@ -79,7 +80,7 @@ public sealed class TerrainFrayedEdges : MonoBehaviour
     }
     void OnDisable()
     {
-        Tilemap.tilemapTileChanged-=Changed;
+        Tilemap.tilemapPositionsChanged-=Changed;
         if(Application.isPlaying){if(visual)Destroy(visual);if(mesh)Destroy(mesh);}
         else{if(visual)DestroyImmediate(visual);if(mesh)DestroyImmediate(mesh);}
         visual=null;mesh=null;

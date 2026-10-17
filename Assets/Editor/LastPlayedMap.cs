@@ -13,6 +13,7 @@ public static class LastPlayedMap
 {
     const string Pending = "MiningGame.LastPlayedMaps";
     const string Initial = "MiningGame.InitialPlayedMaps";
+    const string Preview = "MiningGame.PreviewBeforePlay";
     static readonly HashSet<MapGenerator> scheduledInitialCaptures = new();
     static readonly Dictionary<MapGenerator, MapGenerator.MapGenerationSnapshot> initialSnapshots = new();
     static LastPlayedMap()
@@ -26,6 +27,7 @@ public static class LastPlayedMap
                 SessionState.EraseString(Pending);
                 scheduledInitialCaptures.Clear();
                 initialSnapshots.Clear();
+                StripPreviewForPlay();
             }
             if (state == PlayModeStateChange.ExitingPlayMode) Capture();
             if (state == PlayModeStateChange.EnteredEditMode) Restore();
@@ -66,6 +68,35 @@ public static class LastPlayedMap
         catch (Exception ex) { Debug.LogError("Ursprüngliche Map konnte nicht gesichert werden: " + ex.Message); }
     }
 
+    // Play Mode loads the gameplay scene as it is open in the editor. A restored preview of the last world would
+    // otherwise be integrated by the scene load and then cleared tile by tile behind the loading screen (hundreds of
+    // milliseconds and ~90 MB of tile-change data). Keep a copy and strip it; it returns after Play Mode.
+    static void StripPreviewForPlay()
+    {
+        SessionState.EraseString(Preview);
+        try
+        {
+            var files = new List<string>();
+            for (int i = 0; i < EditorSceneManager.sceneCount; i++)
+            {
+                var scene = EditorSceneManager.GetSceneAt(i);
+                if (!scene.isLoaded || string.IsNullOrEmpty(scene.path)) continue;
+                foreach (var root in scene.GetRootGameObjects())
+                foreach (var map in root.GetComponentsInChildren<MapGenerator>(true))
+                {
+                    if (!map.Terrain || map.Terrain.GetUsedTilesCount() == 0) continue;
+                    Directory.CreateDirectory("Library/LastPlayedMaps");
+                    string path = "Library/LastPlayedMaps/" + GlobalObjectId.GetGlobalObjectIdSlow(map) + ".preview.bin";
+                    Write(map, path);
+                    files.Add(path);
+                }
+                if (files.Count > 0) LoadingSceneData.Strip(scene);
+            }
+            if (files.Count > 0) SessionState.SetString(Preview, string.Join("\n", files));
+        }
+        catch (Exception ex) { Debug.LogError("Map-Vorschau konnte vor dem Play-Start nicht ausgelagert werden: " + ex.Message); }
+    }
+
     public static void Capture()
     {
         var maps = UnityEngine.Object.FindObjectsByType<MapGenerator>(FindObjectsSortMode.None);
@@ -74,9 +105,18 @@ public static class LastPlayedMap
         foreach (var map in new List<MapGenerator>(scheduledInitialCaptures))
             CaptureInitialNow(map);
         SessionState.EraseString(Pending);
+        // A Play session without a generated world (e.g. only the main menu) keeps the previous preview.
+        string fallback = SessionState.GetString(Preview, "");
+        SessionState.EraseString(Preview);
         if (!GameplayTestSettings.KeepMapInEditor)
         {
-            SessionState.SetString(Pending, SessionState.GetString(Initial, ""));
+            string initial = SessionState.GetString(Initial, "");
+            SessionState.SetString(Pending, string.IsNullOrEmpty(initial) ? fallback : initial);
+            return;
+        }
+        if (!Array.Exists(maps, map => map && map.IsGenerated && !string.IsNullOrEmpty(map.gameObject.scene.path)))
+        {
+            SessionState.SetString(Pending, fallback);
             return;
         }
         var files = new List<string>();

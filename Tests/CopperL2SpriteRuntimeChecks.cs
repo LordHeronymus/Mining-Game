@@ -1,0 +1,229 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using UnityEngine;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.Tilemaps;
+using Object=UnityEngine.Object;
+
+public static class CopperL2SpriteRuntimeChecks
+{
+    public static string Main()
+    {
+        if(!Application.isPlaying || !MainMenuController.IsVisible || RunNavigation.IsTransitioning)
+            throw new Exception("Free editor at homescreen required");
+        if(GameSaveSystem.TestDirectory!=null || MetaProgression.TestDirectory!=null)
+            throw new Exception("Another test owns the save scope");
+        var root=new GameObject("Copper earth tile runtime checks");Object.DontDestroyOnLoad(root);
+        root.AddComponent<CopperL2SpriteRuntimeProbe>();return "Started; report Temp/CopperL2SpriteRuntimeChecks.txt";
+    }
+}
+
+public sealed class CopperL2SpriteRuntimeProbe:MonoBehaviour
+{
+    const string Report="Temp/CopperL2SpriteRuntimeChecks.txt";
+    const string Output="Design/OreVeins/CopperL2Sprites/Runtime";
+    string previousSave,previousMeta,directory;bool restored,previousBackground;
+    void Check(bool value,string message){if(!value)throw new Exception(message);File.AppendAllText(Report,"PASS "+message+"\n");}
+    IEnumerator Start()
+    {
+        previousSave=GameSaveSystem.TestDirectory;previousMeta=MetaProgression.TestDirectory;
+        previousBackground=Application.runInBackground;Application.runInBackground=true;
+        directory=Path.GetFullPath("Temp/CopperAllLayersRun-"+DateTime.UtcNow.Ticks);
+        Directory.CreateDirectory(directory);GameSaveSystem.TestDirectory=directory;
+        MetaProgression.TestDirectory=Path.Combine(directory,"Profile");
+        File.WriteAllText(Report,"Isolated save directory: "+directory+"\n");
+        var stack=new Stack<IEnumerator>();stack.Push(Run());
+        while(stack.Count>0)
+        {
+            bool more=false;object current=null;Exception error=null;
+            try{more=stack.Peek().MoveNext();if(more)current=stack.Peek().Current;}catch(Exception e){error=e;}
+            if(error!=null)
+            {
+                File.AppendAllText(Report,"FAIL "+error);RunNavigation.MainMenu();
+                while(RunNavigation.IsTransitioning)yield return null;
+                Cleanup();yield break;
+            }
+            if(!more){stack.Pop();continue;}
+            if(current is IEnumerator nested)stack.Push(nested);else yield return current;
+        }
+        File.AppendAllText(Report,"ALL PASSED\n");Cleanup();
+    }
+    IEnumerator Ready()
+    {
+        float deadline=Time.realtimeSinceStartup+150;
+        while(RunNavigation.IsTransitioning || LoadingProgress.Active)
+        {if(Time.realtimeSinceStartup>deadline)throw new Exception("Loading timeout");yield return null;}
+        yield return null;
+    }
+    void CameraCheck(string phase)
+    {
+        var player=Object.FindFirstObjectByType<PlayerMovement>();var view=Camera.main;
+        Check(view && player && view.GetComponent<CameraFollow>().enabled &&
+            view.GetComponent<CameraFollow>().target==player.transform &&
+            view.GetComponent<CameraWorldBorderClamp>().enabled && GameplayTestSettings.CameraFollowEnabled,
+            phase+": player follow and world clamp active");
+    }
+    IEnumerator Run()
+    {
+        RunNavigation.NewGame("Kupfer-Kacheln-Test");yield return Ready();
+        Check(GameSaveSystem.ActiveSlot>0 && GameSaveSystem.InitialSaveError==null,"Fresh isolated run saved");
+        CameraCheck("Fresh start");
+        var map=Object.FindFirstObjectByType<MapGenerator>();
+        var visual=map.GetComponent<OreOverlayAppearance>();visual.PrepareVeins(Camera.main);
+        CheckBindings(map,"Fresh generation");
+        var player=Object.FindFirstObjectByType<PlayerMovement>();
+        int playerX=map.Terrain.WorldToCell(player.transform.position).x;
+        var offsets=new List<Vector2Int>(); for(int h=0;h<5;h++)for(int r=0;r<3;r++)offsets.Add(new Vector2Int(1+h*3,8-r*2));
+        var copper=map.registry.GetById(BlockType.CopperOre);
+        var cells=new List<Vector3Int>();
+        for(int x=playerX-8;x<playerX+8;x++)for(int y=-20;y<-8;y++)
+        {
+            var cell=new Vector3Int(x,y,0);var hostTiles=new TileBase[]{map.surfaceDirtTile,map.layerOneTile,map.uniformTestTile,map.layerThreeTile,map.layerFourTile}; map.Terrain.SetTile(cell,hostTiles[Mathf.Min(4,(x-playerX+8)/3)]);
+            map.OreOverlay.SetTile(cell,null);map.ArtifactOverlay?.SetTile(cell,null);
+        }
+        for(int n=0;n<offsets.Count;n++)
+        {
+            var cell=new Vector3Int(playerX-8+offsets[n].x,-20+offsets[n].y,0);cells.Add(cell);
+            map.OreOverlay.SetTile(cell,n%3==0?copper.smallOre[0]:n%3==1?copper.mediumOre[0]:copper.richOre[0]);
+        }
+        yield return null;map.GetComponent<UniformStoneAppearance>().RefreshAppearance();
+        Capture(map,new Vector3Int(playerX,-14,0),"Runtime-all-layers-before");
+        var remaining=cells[9];var removed=cells[10];var expected=map.GetOreAt(remaining);
+        var miner=Object.FindFirstObjectByType<TileMiner>();
+        bool oldEnabled=miner.enabled;var oldAlpha=miner.cursorPulseAlphaRange;float oldSize=miner.cursorPulseSize;
+        const BindingFlags cursorMembers=BindingFlags.Instance|BindingFlags.NonPublic;
+        var smart=typeof(TileMiner).GetField("smartCursor",cursorMembers);bool oldSmart=(bool)smart.GetValue(miner);
+        try
+        {
+            miner.enabled=false;miner.cursorPulseAlphaRange=Vector2.one;miner.cursorPulseSize=1;
+            var show=typeof(TileMiner).GetMethod("ShowHighlight",cursorMembers);
+            var highlight=(Tilemap)typeof(TileMiner).GetField("highlightMap",cursorMembers).GetValue(miner);
+            var renderer=highlight.GetComponent<TilemapRenderer>();
+            for(int mode=0;mode<2;mode++)
+            {
+                smart.SetValue(miner,mode==1);
+                for(int h=0;h<5;h++)
+                {
+                    var cell=cells[h*3+2];show.Invoke(miner,new object[]{cell,cell});
+                    visual.PrepareVeins(Camera.main);
+                    Check(highlight.HasTile(cell) && renderer.sortingLayerID==visual.CopperSurface.sortingLayerID &&
+                        renderer.sortingOrder>visual.CopperSurface.sortingOrder,
+                        "Live cursor mode "+mode+" above copper in family "+(h+1));
+                }
+                show.Invoke(miner,new object[]{cells[2],cells[2]});
+                Capture(map,new Vector3Int(playerX,-14,0),mode==0?"Runtime-Cursor-Normal":"Runtime-Cursor-Smart");
+            }
+        }
+        finally
+        {
+            typeof(TileMiner).GetMethod("ClearHighlight",cursorMembers).Invoke(miner,null);
+            smart.SetValue(miner,oldSmart);miner.cursorPulseAlphaRange=oldAlpha;miner.cursorPulseSize=oldSize;miner.enabled=oldEnabled;
+        }
+        var hit=typeof(TileMiner).GetMethod("ApplyMiningHit",BindingFlags.NonPublic|BindingFlags.Instance);
+        int hits=0;while(map.Terrain.HasTile(removed) && hits++<100)hit.Invoke(miner,new object[]{removed,.5f});
+        Check(!map.Terrain.HasTile(removed) && !map.OreOverlay.HasTile(removed),"Real mining removes terrain and copper tile");
+        Check(map.GetOreAt(remaining)==expected,"Real mining preserves neighbouring ore identity and richness");
+        for(int h=0;h<5;h++)
+        {
+            var remove=cells[h*3+1];int extraHits=0;
+            while(map.Terrain.HasTile(remove) && extraHits++<100)hit.Invoke(miner,new object[]{remove,.5f});
+            Check(!map.Terrain.HasTile(remove) && !map.OreOverlay.HasTile(remove),
+                "Real mining removes copper in host family "+(h+1));
+            Check(map.GetOreAt(cells[h*3])==copper.smallOre[0],"Neighbour copper survives in host family "+(h+1));
+        }
+        yield return null;map.GetComponent<UniformStoneAppearance>().RefreshAppearance();
+        Capture(map,new Vector3Int(playerX,-14,0),"Runtime-all-layers-mined");
+        using(var field=new OreVeinField())
+        {
+            var view=new GameObject("Copper metadata view",typeof(Camera)).GetComponent<Camera>();
+            try
+            {
+                view.enabled=false;view.orthographic=true;view.orthographicSize=6.6f;
+                view.transform.position=map.Terrain.GetCellCenterWorld(remaining)+Vector3.back*10;
+                field.Prepare(map,view);int revision=field.Revision;
+                Check(field.TypeAt(removed)==-1 && field.TypeAt(remaining)==(int)BlockType.CopperOre,"GPU lookup removes mined copper and preserves neighbour");
+                for(int n=0;n<60;n++)field.Prepare(map,view);
+                Check(field.Revision==revision,"Unchanged views reuse cached metadata");
+            }
+            finally{Object.Destroy(view.gameObject);}
+        }
+        CameraCheck("After mining");
+        var hostIdentity=new TileBase[cells.Count]; var oreIdentity=new TileBase[cells.Count];for(int n=0;n<cells.Count;n++){hostIdentity[n]=map.Terrain.GetTile(cells[n]);oreIdentity[n]=map.OreOverlay.GetTile(cells[n]);} int slot=GameSaveSystem.ActiveSlot;bool saved=false;string saveError=null;
+        yield return GameSaveSystem.Save(slot,this,(ok,error)=>{saved=ok;saveError=error;});
+        Check(saved,"Modified world saved: "+saveError);
+        RunNavigation.MainMenu();yield return Ready();
+        Check(RunNavigation.LoadGame(slot,out string error),"Isolated save loads: "+error);yield return Ready();
+        map=Object.FindFirstObjectByType<MapGenerator>();CheckBindings(map,"Save restore");
+        Check(map.GetOreAt(remaining)==expected,"Copper richness survives save/load");
+        Check(!map.Terrain.HasTile(removed) && !map.OreOverlay.HasTile(removed),"Mined cell remains empty after loading");
+        for(int n=0;n<cells.Count;n++)Check(map.Terrain.GetTile(cells[n])==hostIdentity[n] && map.OreOverlay.GetTile(cells[n])==oreIdentity[n], "Host and copper identity survive restore for family "+(n/3+1)+" richness "+(n%3+1)); Capture(map,new Vector3Int(playerX,-14,0),"Runtime-all-layers-restored");
+        CameraCheck("After restore");
+        // The main run mined Medium. Exercise the other two new L2 silhouettes
+        // after reload as well, without changing the saved fixture.
+        miner=Object.FindFirstObjectByType<TileMiner>();
+        foreach(int index in new[]{3,5})
+        {
+            var cell=cells[index];int count=0;
+            while(map.Terrain.HasTile(cell) && count++<100)hit.Invoke(miner,new object[]{cell,.5f});
+            Check(!map.Terrain.HasTile(cell) && !map.OreOverlay.HasTile(cell),
+                "Real mining removes restored L2 "+(index==3?"Small":"Large"));
+        }
+        RunNavigation.MainMenu();yield return Ready();Check(MainMenuController.IsVisible,"Returned to homescreen");
+    }
+    void CheckBindings(MapGenerator map,string phase)
+    {
+        map.GetComponent<OreOverlayAppearance>().PrepareVeins(Camera.main);
+        var p=new MaterialPropertyBlock();map.OreOverlay.GetComponent<TilemapRenderer>().GetPropertyBlock(p);
+        Check(p.GetFloat("_CopperEarthTilesEnabled")==1 && p.GetTexture("_CopperL1Sprite") && p.GetTexture("_CopperL1Sprite").name=="CopperEmbedded" && p.GetTexture("_CopperL1Large") && p.GetTexture("_CopperL1Large").name=="CopperLarge" && p.GetTexture("_CopperL1Small") && p.GetTexture("_CopperL1Small").name=="CopperSmall",
+            phase+": approved L1 copper sprite is bound");
+        Check(p.GetFloat("_CopperL2SpritesEnabled")==1 &&
+            p.GetTexture("_CopperL2Small") && p.GetTexture("_CopperL2Small").name=="CopperSmall" &&
+            p.GetTexture("_CopperL2Medium") && p.GetTexture("_CopperL2Medium").name=="CopperMedium" &&
+            p.GetTexture("_CopperL2Large") && p.GetTexture("_CopperL2Large").name=="CopperLarge",
+            phase+": all L2 copper sprites are bound"); Check(p.GetFloat("_CopperRockTilesEnabled")==1 && p.GetTexture("_CopperRockCombined") is Texture2DArray, phase+": complete copper/rock tiles are bound");
+        Check(p.GetFloat("_UseTerrainMasks")<.5f || p.GetTexture("_TerrainEdgeMasks"),
+            phase+": active terrain edge masks are bound");
+    }
+    void Capture(MapGenerator map,Vector3Int centre,string name)
+    {
+        Directory.CreateDirectory(Output);
+        var view=new GameObject("Copper earth verification camera",typeof(Camera)).GetComponent<Camera>();
+        view.CopyFrom(Camera.main);view.enabled=false;view.orthographic=true;view.orthographicSize=6.6f;
+        view.transform.position=map.Terrain.GetCellCenterWorld(centre)+Vector3.back*10;
+        var lights=Object.FindObjectsByType<Light2D>(FindObjectsSortMode.None);
+        var states=new bool[lights.Length];for(int n=0;n<lights.Length;n++){states[n]=lights[n].enabled;lights[n].enabled=false;}
+        var lamp=new GameObject("Copper verification lamp",typeof(Light2D)).GetComponent<Light2D>();
+        lamp.lightType=Light2D.LightType.Global;lamp.intensity=1;
+        var darkness=map.transform.Find("Daylight Overlay")?.GetComponent<MeshRenderer>();
+        bool darknessEnabled=darkness && darkness.enabled;
+        var target=new RenderTexture(1280,960,24,RenderTextureFormat.ARGB32);
+        var pixels=new Texture2D(1280,960,TextureFormat.RGBA32,false);var previous=RenderTexture.active;
+        try
+        {
+            if(darkness)darkness.enabled=false;
+            view.targetTexture=target;map.GetComponent<OreOverlayAppearance>().PrepareVeins(view);view.Render();
+            RenderTexture.active=target;pixels.ReadPixels(new Rect(0,0,1280,960),0,0);pixels.Apply();
+            File.WriteAllBytes(Output+"/"+name+".png",pixels.EncodeToPNG());
+            int visible=0;foreach(var c in pixels.GetPixels32())if(c.r>30 || c.g>30 || c.b>30)visible++;
+            Check(visible>pixels.width*pixels.height*.7,"Captured actual gameplay scene "+name);
+        }
+        finally
+        {
+            view.targetTexture=null;RenderTexture.active=previous;if(darkness)darkness.enabled=darknessEnabled;
+            lamp.enabled=false;for(int n=0;n<lights.Length;n++)if(lights[n])lights[n].enabled=states[n];
+            Object.Destroy(view.gameObject);Object.Destroy(lamp.gameObject);Object.Destroy(target);Object.Destroy(pixels);
+        }
+    }
+    void Cleanup()
+    {
+        if(restored)return;restored=true;
+        if(GameSaveSystem.TestDirectory==directory)GameSaveSystem.TestDirectory=previousSave;
+        if(directory!=null && MetaProgression.TestDirectory==Path.Combine(directory,"Profile"))MetaProgression.TestDirectory=previousMeta;
+        Application.runInBackground=previousBackground;Object.Destroy(gameObject);
+    }
+    void OnDestroy(){if(!restored)Cleanup();}
+}
+

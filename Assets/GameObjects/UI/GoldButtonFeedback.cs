@@ -76,12 +76,12 @@ public sealed class GoldButtonFeedback : MonoBehaviour, IPointerEnterHandler, IP
     {
         if (!image || !button || !highlight) return;
         bool enabled = button.IsInteractable();
-        glow = Mathf.Lerp(glow, enabled && (hovered || focused || Chosen) ? 1 : 0, 1 - Mathf.Exp(-9 * Time.unscaledDeltaTime));
-        fill = Mathf.Lerp(fill, enabled && (Chosen || !selectionManaged && focused && !hovered) ? 1 : 0, 1 - Mathf.Exp(-9 * Time.unscaledDeltaTime));
+        glow = Approach(glow, enabled && (hovered || focused || Chosen) ? 1 : 0, 9);
+        fill = Approach(fill, enabled && (Chosen || !selectionManaged && focused && !hovered) ? 1 : 0, 9);
         image.sprite = normal;
         image.type = Image.Type.Sliced; image.material = artworkMaterial;
         var size = image.rectTransform.rect.size;
-        image.pixelsPerUnitMultiplier = normal.rect.height / Mathf.Max(1, card ? Mathf.Min(size.x, size.y) : size.y);
+        SetPixelsPerUnit(image, normal.rect.height / Mathf.Max(1, card ? Mathf.Min(size.x, size.y) : size.y));
         if (!labelsStyled)
         {
             labelsStyled = true;
@@ -89,11 +89,24 @@ public sealed class GoldButtonFeedback : MonoBehaviour, IPointerEnterHandler, IP
         }
         image.color = enabled ? Color.white : new Color(.45f, .45f, .45f, .8f);
         highlight.type = image.type; highlight.preserveAspect = image.preserveAspect;
-        highlight.pixelsPerUnitMultiplier = image.pixelsPerUnitMultiplier;
+        SetPixelsPerUnit(highlight, image.pixelsPerUnitMultiplier);
         fillLayer.type = image.type; fillLayer.preserveAspect = image.preserveAspect;
-        fillLayer.pixelsPerUnitMultiplier = image.pixelsPerUnitMultiplier;
+        SetPixelsPerUnit(fillLayer, image.pixelsPerUnitMultiplier);
         highlight.color = new Color(1, 1, 1, glow);
         fillLayer.color = new Color(1, 1, 1, fill);
+    }
+
+    // Exponential approach that settles exactly on the target, so finished fades stop dirtying the mesh.
+    public static float Approach(float value, float target, float rate)
+    {
+        value = Mathf.Lerp(value, target, 1 - Mathf.Exp(-rate * Time.unscaledDeltaTime));
+        return Mathf.Abs(value - target) < .002f ? target : value;
+    }
+
+    // Image.pixelsPerUnitMultiplier rebuilds the mesh on every assignment, even with an unchanged value.
+    public static void SetPixelsPerUnit(Image target, float value)
+    {
+        if (target && target.pixelsPerUnitMultiplier != Mathf.Max(.01f, value)) target.pixelsPerUnitMultiplier = value;
     }
     void OnDisable()
     {

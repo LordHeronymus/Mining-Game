@@ -9,13 +9,34 @@ using Object = UnityEngine.Object;
 public static class GpsCodec
 {
     const BindingFlags Flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-    public static Type ResolveType(string name) => Type.GetType(name ?? "") ?? AppDomain.CurrentDomain.GetAssemblies()
-        .Select(assembly => assembly.GetType(name ?? "")).FirstOrDefault(type => type != null);
+    // Reflection results never change while the scripts are loaded. Validating a save walks hundreds of nodes,
+    // and resolving every type name or field again took most of a 20 ms frame. Main thread only.
+    static readonly Dictionary<string, Type> resolvedTypes = new();
+    static readonly Dictionary<Type, string> typeNames = new();
+    static readonly Dictionary<(Type, string), FieldInfo> fieldInfos = new();
+    static readonly Dictionary<Type, FieldInfo[]> serializableFields = new();
+    public static Type ResolveType(string name)
+    {
+        if (name == null) return null;
+        if (resolvedTypes.TryGetValue(name, out var cached)) return cached;
+        var type = Type.GetType(name) ?? AppDomain.CurrentDomain.GetAssemblies()
+            .Select(assembly => assembly.GetType(name)).FirstOrDefault(found => found != null);
+        if (type != null) resolvedTypes.Add(name, type);
+        return type;
+    }
+    public static string TypeName(Type type)
+    {
+        if (!typeNames.TryGetValue(type, out var name)) typeNames.Add(type, name = type.AssemblyQualifiedName);
+        return name;
+    }
     public static FieldInfo Field(Type type, string name)
     {
-        for (; type != null; type = type.BaseType)
-        { var field = type.GetField(name, Flags | BindingFlags.DeclaredOnly); if (field != null) return field; }
-        return null;
+        if (fieldInfos.TryGetValue((type, name), out var cached)) return cached;
+        FieldInfo result = null;
+        for (var current = type; current != null && result == null; current = current.BaseType)
+            result = current.GetField(name, Flags | BindingFlags.DeclaredOnly);
+        fieldInfos.Add((type, name), result);
+        return result;
     }
     public static Type MemberType(Type type, string name) => Field(type, name)?.FieldType ?? type.GetProperty(name, Flags)?.PropertyType;
     public static object Get(object target, string name) => Field(target.GetType(), name) is FieldInfo field
@@ -25,12 +46,17 @@ public static class GpsCodec
         if (Field(target.GetType(), name) is FieldInfo field) field.SetValue(target, value);
         else target.GetType().GetProperty(name, Flags)?.SetValue(target, value);
     }
-    public static IEnumerable<FieldInfo> SerializableFields(Type type) => type.GetFields(Flags)
-        .Where(field => !field.IsStatic && !field.IsInitOnly && !field.IsNotSerialized &&
-            (field.IsPublic || field.IsDefined(typeof(SerializeField), true)));
+    public static IReadOnlyList<FieldInfo> SerializableFields(Type type)
+    {
+        if (!serializableFields.TryGetValue(type, out var result))
+            serializableFields.Add(type, result = type.GetFields(Flags)
+                .Where(field => !field.IsStatic && !field.IsInitOnly && !field.IsNotSerialized &&
+                    (field.IsPublic || field.IsDefined(typeof(SerializeField), true))).ToArray());
+        return result;
+    }
     public static GpsValue Read(string name, Type type, object value, Func<Object, string> key)
     {
-        var node = new GpsValue { name = name, type = type.AssemblyQualifiedName };
+        var node = new GpsValue { name = name, type = TypeName(type) };
         if (typeof(Object).IsAssignableFrom(type)) { node.kind = GpsValueKind.Reference; node.text = key(value as Object); }
         else if (type.IsEnum) { node.kind = GpsValueKind.Enum; node.number = Convert.ToInt32(value); }
         else if (type == typeof(bool)) { node.kind = GpsValueKind.Boolean; node.flag = (bool)value; }
@@ -103,20 +129,45 @@ public static class GpsCodec
         foreach (var child in node.children) if (!Validate(child, out error, depth + 1)) return false;
         return true;
     }
-    public static bool ValidateShape(GpsValue node,Type expected,out string error)
-    {
-        error=null;
-        if(expected==null || node?.type!=expected.AssemblyQualifiedName) { error="GPS-Feldtyp stimmt nicht überein."; return false; }
-        var expectedKind=typeof(Object).IsAssignableFrom(expected) ? GpsValueKind.Reference : expected.IsEnum ? GpsValueKind.Enum :
+    static GpsValueKind KindOf(Type expected) =>
+        typeof(Object).IsAssignableFrom(expected) ? GpsValueKind.Reference : expected.IsEnum ? GpsValueKind.Enum :
             expected==typeof(bool) ? GpsValueKind.Boolean : expected==typeof(string) ? GpsValueKind.Text : expected==typeof(AnimationCurve) ? GpsValueKind.Curve :
             expected==typeof(Color) ? GpsValueKind.Color : expected==typeof(Vector2) || expected==typeof(Vector3) || expected==typeof(Vector4) || expected==typeof(Vector2Int) || expected==typeof(Vector3Int) ? GpsValueKind.Vector :
             expected.IsPrimitive || expected==typeof(decimal) ? (expected==typeof(float) || expected==typeof(double) || expected==typeof(decimal) ? GpsValueKind.Number : GpsValueKind.Integer) :
             expected.IsArray || typeof(IList).IsAssignableFrom(expected) ? GpsValueKind.Array : GpsValueKind.Object;
+    // Brings a stored value to the current field layout: fields added since get their code defaults and
+    // removed fields are dropped. A value of the wrong kind stays as it is, so validation still rejects it.
+    public static GpsValue Upgrade(GpsValue node,Type expected,Func<Object,string> key)
+    {
+        if(node==null || expected==null) return node;
+        if(ValidateShape(node,expected,out _)) return node;
+        var kind=KindOf(expected);
+        if(node.kind!=kind) return node;
+        var result=node.Copy(); result.type=TypeName(expected);
+        if(kind==GpsValueKind.Object)
+        {
+            var template=Read(node.name,expected,expected.IsValueType ? Activator.CreateInstance(expected) : null,key);
+            result.children=SerializableFields(expected).Select(field=>node.children.Find(child=>child.name==field.Name) is GpsValue saved
+                ? Upgrade(saved,field.FieldType,key) : template.children.Find(child=>child.name==field.Name)).ToList();
+        }
+        else if(kind==GpsValueKind.Array)
+        {
+            Type element=expected.IsArray ? expected.GetElementType() : expected.GetGenericArguments()[0];
+            result.children=node.children.Select(child=>Upgrade(child,element,key)).ToList();
+        }
+        else result.children.Clear();
+        return result;
+    }
+    public static bool ValidateShape(GpsValue node,Type expected,out string error)
+    {
+        error=null;
+        if(expected==null || node?.type!=TypeName(expected)) { error="GPS-Feldtyp stimmt nicht überein."; return false; }
+        var expectedKind=KindOf(expected);
         if(node.kind!=expectedKind) { error="Ungültige GPS-Feldstruktur."; return false; }
         if(node.kind==GpsValueKind.Object)
         {
-            var fields=SerializableFields(expected).ToArray();
-            if(node.children.Count!=fields.Length || node.children.GroupBy(child=>child.name).Any(group=>group.Count()!=1)) { error="Unvollständige GPS-Feldstruktur."; return false; }
+            var fields=SerializableFields(expected);
+            if(node.children.Count!=fields.Count || node.children.GroupBy(child=>child.name).Any(group=>group.Count()!=1)) { error="Unvollständige GPS-Feldstruktur."; return false; }
             foreach(var field in fields) if(!ValidateShape(node.children.Find(child=>child.name==field.Name),field.FieldType,out error)) return false;
         }
         else if(node.kind==GpsValueKind.Array)

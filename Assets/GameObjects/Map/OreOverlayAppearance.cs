@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.Rendering;
 using System.Collections.Generic;
+using Unity.Collections;
 
 [ExecuteAlways, DisallowMultipleComponent]
 public sealed class OreOverlayAppearance : MonoBehaviour
@@ -16,7 +17,8 @@ public sealed class OreOverlayAppearance : MonoBehaviour
     static readonly int PulseRateProperty = Shader.PropertyToID("_UltroniumPulsesPerMinute");
     readonly Dictionary<Camera, OreVeinField> veinFields = new();
     readonly List<Camera> expiredViews = new();
-    Texture2D fissureArt, copperCarpet, copperEarthWall, copperEarthCombined;
+    Texture2D fissureArt, copperCarpet, copperEarthWall, copperL1Sprite, copperL1Large, copperL1Small;
+    Texture2D copperL2Small, copperL2Medium, copperL2Large;
     Texture2DArray copperRockCombined;
     public CopperDepositPlans CopperPlans { get; } = new CopperDepositPlans();
     readonly CopperSurfaceRenderer copperSurface=new();
@@ -32,7 +34,7 @@ public sealed class OreOverlayAppearance : MonoBehaviour
     {
         appliedScale = -1;
         map = GetComponent<MapGenerator>();
-        Tilemap.tilemapTileChanged += VeinTilesChanged;
+        Tilemap.tilemapPositionsChanged += VeinTilesChanged;
         RenderPipelineManager.beginCameraRendering += BeforeCamera;
         Update();
     }
@@ -41,42 +43,64 @@ public sealed class OreOverlayAppearance : MonoBehaviour
     void InvalidateVeins() { CopperPlans.Clear(); foreach (var field in veinFields.Values) field.Invalidate(); }
     public void RestoreCopperPlans(CopperDepositState[] saved)
     {CopperPlans.Restore(saved);foreach(var field in veinFields.Values)field.Invalidate();}
-    void VeinTilesChanged(Tilemap tiles, Tilemap.SyncTile[] changes)
-    { foreach (var field in veinFields.Values) field.Changed(tiles, changes); }
+    void VeinTilesChanged(Tilemap tiles, NativeArray<Vector3Int> positions)
+    { foreach (var field in veinFields.Values) field.Changed(tiles, positions); }
 
     void BeforeCamera(ScriptableRenderContext context, Camera camera) => PrepareVeins(camera);
+
+    static readonly int UniformStoneId = Shader.PropertyToID("_UniformStone"), VeinEnabledId = Shader.PropertyToID("_VeinEnabled"),
+        VeinReliefId = Shader.PropertyToID("_VeinRelief"), CopperCarpetId = Shader.PropertyToID("_CopperCarpet"),
+        CopperEarthWallId = Shader.PropertyToID("_CopperEarthWall"), CopperCarpetEnabledId = Shader.PropertyToID("_CopperCarpetEnabled"),
+        CopperL1SpriteId = Shader.PropertyToID("_CopperL1Sprite"), CopperL1LargeId = Shader.PropertyToID("_CopperL1Large"),
+        CopperL1SmallId = Shader.PropertyToID("_CopperL1Small"), CopperEarthTilesEnabledId = Shader.PropertyToID("_CopperEarthTilesEnabled"),
+        CopperL2SmallId = Shader.PropertyToID("_CopperL2Small"), CopperL2MediumId = Shader.PropertyToID("_CopperL2Medium"),
+        CopperL2LargeId = Shader.PropertyToID("_CopperL2Large"), CopperL2SpritesEnabledId = Shader.PropertyToID("_CopperL2SpritesEnabled"),
+        CopperRockCombinedId = Shader.PropertyToID("_CopperRockCombined"), CopperRockTilesEnabledId = Shader.PropertyToID("_CopperRockTilesEnabled");
 
     public void PrepareVeins(Camera camera)
     {
         copperSurface.Hide();
         if (!isActiveAndEnabled || !map || !map.OreOverlay || !camera || !overlayMaterial) return;
+        // While playing, only game cameras get a vein field; editor Scene views would otherwise rebuild a second one.
+        if (Application.isPlaying && camera.cameraType != CameraType.Game) return;
         if (!target) ApplyTo(map.OreOverlay.GetComponent<TilemapRenderer>());
         if (!target) return;
         properties ??= new MaterialPropertyBlock();
         target.GetPropertyBlock(properties);
         bool visible = (camera.cullingMask & (1 << map.OreOverlay.gameObject.layer)) != 0;
-        if (visible && !map.IsGenerationStreaming && properties.GetVector("_UniformStone").x > 0)
+        if (visible && !map.IsGenerationStreaming && properties.GetVector(UniformStoneId).x > 0)
         {
             if (!fissureArt) fissureArt = Resources.Load<Texture2D>("OreVeins/RockFissure");
-            if (fissureArt) properties.SetTexture("_VeinRelief", fissureArt);
+            if (fissureArt) properties.SetTexture(VeinReliefId, fissureArt);
             if (!copperCarpet) copperCarpet = Resources.Load<Texture2D>("OreVeins/CopperCarpet/Copper");
-            if (copperCarpet) properties.SetTexture("_CopperCarpet", copperCarpet);
+            if (copperCarpet) properties.SetTexture(CopperCarpetId, copperCarpet);
             if (!copperEarthWall) copperEarthWall = Resources.Load<Texture2D>("OreVeins/CopperEarthWall/EarthWall");
-            if (copperEarthWall) properties.SetTexture("_CopperEarthWall", copperEarthWall);
-            properties.SetFloat("_CopperCarpetEnabled", copperCarpet ? 1 : 0);
-            if (!copperEarthCombined) copperEarthCombined = Resources.Load<Texture2D>("OreVeins/CopperEarthTiles/Combined");
-            if (copperEarthCombined) properties.SetTexture("_CopperEarthCombined", copperEarthCombined);
-            properties.SetFloat("_CopperEarthTilesEnabled", copperEarthCombined ? 1 : 0);
+            if (copperEarthWall) properties.SetTexture(CopperEarthWallId, copperEarthWall);
+            properties.SetFloat(CopperCarpetEnabledId, copperCarpet ? 1 : 0);
+            if (!copperL1Sprite) copperL1Sprite = Resources.Load<Texture2D>("OreVeins/CopperL1Sprite/CopperEmbedded");
+            if (copperL1Sprite) properties.SetTexture(CopperL1SpriteId, copperL1Sprite);
+            if (!copperL1Large) copperL1Large = Resources.Load<Texture2D>("OreVeins/CopperL1Sprite/CopperLarge");
+            if (copperL1Sprite) properties.SetTexture(CopperL1LargeId, copperL1Large ? copperL1Large : copperL1Sprite);
+            if (!copperL1Small) copperL1Small = Resources.Load<Texture2D>("OreVeins/CopperL1Sprite/CopperSmall");
+            if (copperL1Sprite) properties.SetTexture(CopperL1SmallId, copperL1Small ? copperL1Small : copperL1Sprite);
+            properties.SetFloat(CopperEarthTilesEnabledId, copperL1Sprite ? 1 : 0);
+            if (!copperL2Small) copperL2Small = Resources.Load<Texture2D>("OreVeins/CopperL2Sprite/CopperSmall");
+            if (!copperL2Medium) copperL2Medium = Resources.Load<Texture2D>("OreVeins/CopperL2Sprite/CopperMedium");
+            if (!copperL2Large) copperL2Large = Resources.Load<Texture2D>("OreVeins/CopperL2Sprite/CopperLarge");
+            if (copperL2Small) properties.SetTexture(CopperL2SmallId, copperL2Small);
+            if (copperL2Medium) properties.SetTexture(CopperL2MediumId, copperL2Medium);
+            if (copperL2Large) properties.SetTexture(CopperL2LargeId, copperL2Large);
+            properties.SetFloat(CopperL2SpritesEnabledId, copperL2Small && copperL2Medium && copperL2Large ? 1 : 0);
             if (!copperRockCombined) copperRockCombined = Resources.Load<Texture2DArray>("OreVeins/CopperRockTiles/Combined");
-            if (copperRockCombined) properties.SetTexture("_CopperRockCombined", copperRockCombined);
-            properties.SetFloat("_CopperRockTilesEnabled", copperRockCombined && copperRockCombined.depth == 4 ? 1 : 0);
+            if (copperRockCombined) properties.SetTexture(CopperRockCombinedId, copperRockCombined);
+            properties.SetFloat(CopperRockTilesEnabledId, copperRockCombined && copperRockCombined.depth == 4 ? 1 : 0);
             if (!veinFields.TryGetValue(camera, out var field))
                 veinFields.Add(camera, field = new OreVeinField());
             if (field.Prepare(map, camera))
             {field.Bind(properties, map);copperSurface.Prepare(map,target,field,properties);}
-            else properties.SetFloat("_VeinEnabled", 0);
+            else properties.SetFloat(VeinEnabledId, 0);
         }
-        else properties.SetFloat("_VeinEnabled", 0);
+        else properties.SetFloat(VeinEnabledId, 0);
         target.SetPropertyBlock(properties);
     }
 
@@ -147,7 +171,7 @@ public sealed class OreOverlayAppearance : MonoBehaviour
         copperSurface.Dispose();
         if (subscribedMap) subscribedMap.Generated -= InvalidateVeins;
         subscribedMap = null;
-        Tilemap.tilemapTileChanged -= VeinTilesChanged;
+        Tilemap.tilemapPositionsChanged -= VeinTilesChanged;
         RenderPipelineManager.beginCameraRendering -= BeforeCamera;
         foreach (var field in veinFields.Values) field.Dispose();
         veinFields.Clear();

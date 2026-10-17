@@ -13,7 +13,7 @@ using Object=UnityEngine.Object;
 
 public static class CopperCombinedVisualChecks
 {
-    const string Output="Assets/Design/OreVeins/CopperL1Branches/Implemented";
+    const string Output="Design/OreVeins/CopperL1Branches/Implemented";
     static readonly List<string> passed=new();
     static void Check(bool condition,string message)
     {if(!condition)throw new Exception(message);passed.Add("PASS "+message);}

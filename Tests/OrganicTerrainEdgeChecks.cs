@@ -68,21 +68,21 @@ public static class OrganicTerrainEdgeChecks
             var camera=new GameObject("Camera",typeof(Camera)).GetComponent<Camera>();camera.transform.position=new Vector3(4.95f,5.5f,-10);
             camera.orthographic=true;camera.orthographicSize=5.5f;camera.clearFlags=CameraClearFlags.SolidColor;
             camera.backgroundColor=new Color(.075f,.035f,.02f);camera.cullingMask=1<<31;camera.allowHDR=false;camera.targetTexture=target;
-            rubble.Apply(props,camera);
+            rubble.Apply(props,true,camera);
             var crumbMesh=mapObject.GetComponentInChildren<MeshFilter>().sharedMesh;
             int beforeCount=crumbMesh.vertexCount;
             if(beforeCount<100)throw new Exception("No projecting rubble generated");
             camera.Render();RenderTexture.active=target;pixels.ReadPixels(new Rect(0,0,900,900),0,0);pixels.Apply();
-            Directory.CreateDirectory("Assets/Design");File.WriteAllBytes("Assets/Design/OrganicTerrainEdges-detail.png",pixels.EncodeToPNG());
+            Directory.CreateDirectory("Design");File.WriteAllBytes("Design/OrganicTerrainEdges-detail.png",pixels.EncodeToPNG());
             int alpha=0;foreach(var c in pixels.GetPixels32())if(c.a>8)alpha++;
             if(alpha<250000)throw new Exception("Terrain render unexpectedly sparse: "+alpha);
             var shader=material.shader;if(ShaderUtil.ShaderHasError(shader))throw new Exception("Terrain shader failed");
-            AssetDatabase.ImportAsset("Assets/Design/OrganicTerrainEdges-detail.png");
+            AssetDatabase.ImportAsset("Design/OrganicTerrainEdges-detail.png");
             light.intensity=0;camera.backgroundColor=Color.black;camera.Render();RenderTexture.active=target;
             pixels.ReadPixels(new Rect(0,0,900,900),0,0);pixels.Apply();
             foreach(var color in pixels.GetPixels32())if(color.r>1||color.g>1||color.b>1)throw new Exception("Rubble emits light in darkness");
             if(mapObject.GetComponentsInChildren<Collider2D>().Length>0)throw new Exception("Decorative rubble added collision");
-            return new {passed=true,solidCells=solids,rubbleVertices=beforeCount,darkPixels=0,collidersUnchanged=true,preview="Assets/Design/OrganicTerrainEdges-detail.png"};
+            return new {passed=true,solidCells=solids,rubbleVertices=beforeCount,darkPixels=0,collidersUnchanged=true,preview="Design/OrganicTerrainEdges-detail.png"};
         }
         finally
         {

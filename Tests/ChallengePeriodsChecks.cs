@@ -16,7 +16,7 @@ public static class ChallengePeriodsChecks {
 }
 public sealed class ChallengePeriodsProbe:MonoBehaviour {
  const string Report="Temp/ChallengePeriodsChecks.txt";
- const string Output="Assets/Design/Tiefenhall/ChallengePeriods/UpgradeStyle";
+ const string Output="Design/Tiefenhall/ChallengePeriods/UpgradeStyle";
  string previous;DateTime? previousClock;MetaProgressionPanel owner;int checks;bool clean;
  void Check(bool ok,string label){if(!ok)throw new Exception(label);File.AppendAllText(Report,"PASS "+(++checks)+" "+label+"\n");}
  int Count(ChallengePeriod period,string metric)=>MetaProgression.GetChallenges(period).FirstOrDefault(c=>c.metric==metric)?.current ?? 0;

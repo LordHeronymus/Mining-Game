@@ -20,7 +20,7 @@ public static class CopperV3VisualChecks
     public static string Main(int testLayer=1)
     {
         if(Application.isPlaying)throw new Exception("Edit mode required");
-        Output="Assets/Design/OreVeins/CopperL1OriginalDirt/V3/Implemented/L"+testLayer;passed.Clear();Directory.CreateDirectory(Output);
+        Output="Design/OreVeins/CopperL1OriginalDirt/V3/Implemented/L"+testLayer;passed.Clear();Directory.CreateDirectory(Output);
         var previous=SceneManager.GetActiveScene();
         var sourceScene=SceneManager.GetSceneByPath("Assets/Scenes/SampleScene.unity");
         bool opened=!sourceScene.IsValid() || !sourceScene.isLoaded;
@@ -101,8 +101,8 @@ public static class CopperV3VisualChecks
             var copper=map.registry.GetById(BlockType.CopperOre);
             var sheets=new Texture2D[6];
             var names=new[]{"Small-1","Small-2","Medium-1","Medium-2","Large-1","Large-2"};
-            string sourceFolder=testLayer==1?"Assets/Design/OreVeins/CopperL1OriginalDirt/Sources":
-                "Assets/Design/OreVeins/CopperAllLayers/Sources/"+new[]{"Clay","Gray","Warm","Deep"}[testLayer-2];
+            string sourceFolder=testLayer==1?"Design/OreVeins/CopperL1OriginalDirt/Sources":
+                "Design/OreVeins/CopperAllLayers/Sources/"+new[]{"Clay","Gray","Warm","Deep"}[testLayer-2];
             for(int m=0;m<6;m++){
                 sheets[m]=new Texture2D(2,2,TextureFormat.RGBA32,true);disposables.Add(sheets[m]);
                 sheets[m].LoadImage(File.ReadAllBytes(sourceFolder+"/"+names[m]+".png"));sheets[m].Apply(true,false);

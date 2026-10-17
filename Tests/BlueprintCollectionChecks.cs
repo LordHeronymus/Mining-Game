@@ -43,7 +43,7 @@ public sealed class BlueprintCollectionProbe:MonoBehaviour
         }
         Check(panel.GetComponentsInChildren<Button>().Length==1,"Collection has only Back; no crafting or unlock side effects");
         yield return new WaitForEndOfFrame();
-        var texture=ScreenCapture.CaptureScreenshotAsTexture();File.WriteAllBytes("Assets/Design/Tiefenhall/ProgressionTimelinePrototypes/Implemented/Blueprints-Level15.png",texture.EncodeToPNG());Object.Destroy(texture);
+        var texture=ScreenCapture.CaptureScreenshotAsTexture();File.WriteAllBytes("Design/Tiefenhall/ProgressionTimelinePrototypes/Implemented/Blueprints-Level15.png",texture.EncodeToPNG());Object.Destroy(texture);
         Button("Blueprints Back").onClick.Invoke();yield return null;
         Check(owner.ShowingOverview && MetaProgression.TotalXp==xp,"Return preserves XP and returns to timeline");
         owner.OpenUpgrades();yield return null;

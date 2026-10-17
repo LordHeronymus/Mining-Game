@@ -13,8 +13,7 @@ public sealed class LoadingScreen : MonoBehaviour
     Texture2DArray terrainMasks;
     TextMeshProUGUI percentage, step, title;
     float displayed, readyAt = -1f, animationTime;
-    int previousFrameRate;
-    bool frameRateChanged;
+    int shownPercent = -1, shownStage = -1;
     UnityEngine.ThreadPriority previousLoadingPriority;
     bool loadingPriorityChanged;
     static CanvasGroup curtain;
@@ -131,13 +130,10 @@ public sealed class LoadingScreen : MonoBehaviour
         EnsureBuilt();
         LoadingAudio.Begin();
         instance.gameObject.SetActive(true); instance.group.alpha = 1f;
-        if (!instance.frameRateChanged) instance.previousFrameRate = Application.targetFrameRate;
-        instance.frameRateChanged = true;
-        // Present faster than the minimum 60 Hz so scheduler jitter has some
-        // room inside the 16.67 ms frame limit. Work still uses the 60 Hz budget.
-        Application.targetFrameRate = 90;
+        // The loading screen runs at the game's normal frame rate; LoadingWorkBudget keeps each frame's
+        // share of loading work small enough for the 120 Hz frame target.
         LoadingWorkBudget.Begin();
-        instance.displayed = 0f; instance.readyAt = -1f;
+        instance.displayed = 0f; instance.readyAt = -1f; instance.shownPercent = -1; instance.shownStage = -1;
         instance.animationTime = 0f;
         instance.presented = true; instance.revealing = false; instance.finishing = false;
         instance.fill.fillAmount = 0f; instance.percentage.text = "0 %";
@@ -145,6 +141,13 @@ public sealed class LoadingScreen : MonoBehaviour
         instance.title.text = LoadingProgress.Restoring ? "Spielstand laden" : "Mine vorbereiten";
         instance.step.text = LoadingProgress.CurrentLabel;
         GameplayInputBlocker.SetBlocked(instance, true); Time.timeScale = 0f;
+        // Scene activation and background asset preloads integrate in small slices while the screen animates.
+        if (!instance.loadingPriorityChanged)
+        {
+            instance.previousLoadingPriority = Application.backgroundLoadingPriority;
+            instance.loadingPriorityChanged = true;
+        }
+        Application.backgroundLoadingPriority = UnityEngine.ThreadPriority.Low;
     }
 
     public static void LoadScene(int index) { Show(); instance.presented = false; instance.StartCoroutine(instance.Load(index.ToString(), true)); }
@@ -154,9 +157,6 @@ public sealed class LoadingScreen : MonoBehaviour
         if (!curtain || !curtain.gameObject.activeSelf || curtain.alpha < 1f) yield return FadeToBlack();
         yield return new WaitForEndOfFrame();
         yield return null;
-        previousLoadingPriority = Application.backgroundLoadingPriority;
-        loadingPriorityChanged = true;
-        Application.backgroundLoadingPriority = UnityEngine.ThreadPriority.Low;
         TransitionPhase = "BlackSceneLoad";
         var operation = byIndex ? SceneManager.LoadSceneAsync(int.Parse(scene)) : SceneManager.LoadSceneAsync(scene);
         while (!operation.isDone)
@@ -164,7 +164,6 @@ public sealed class LoadingScreen : MonoBehaviour
             if (LoadingProgress.Stage == 0) LoadingProgress.Report(Mathf.Clamp01(operation.progress / .9f));
             yield return null;
         }
-        RestoreLoadingPriority();
         yield return new WaitForEndOfFrame();
         yield return null;
         // Start methods, native UI setup and asset integration can extend beyond
@@ -180,6 +179,7 @@ public sealed class LoadingScreen : MonoBehaviour
     {
         if (!LoadingProgress.Active) return;
         LoadingWorkBudget.ObserveFrame(Time.unscaledDeltaTime);
+        LoadingProgress.Advance();
         if (presented)
         {
             float next = Mathf.Lerp(displayed, LoadingProgress.Target, 1f - Mathf.Exp(-5f * Mathf.Min(Time.unscaledDeltaTime, 1f / 30f)));
@@ -187,8 +187,10 @@ public sealed class LoadingScreen : MonoBehaviour
         }
         if (LoadingProgress.Ready && 1f - displayed < .0015f) displayed = 1f;
         fill.fillAmount = displayed;
-        percentage.text = (displayed >= 1f ? 100 : Mathf.Min(99, Mathf.FloorToInt(displayed * 100f))) + " %";
-        step.text = LoadingProgress.CurrentLabel;
+        // Text meshes rebuild on every assignment; update them only when the shown value changes.
+        int percent = displayed >= 1f ? 100 : Mathf.Min(99, Mathf.FloorToInt(displayed * 100f));
+        if (percent != shownPercent) { shownPercent = percent; percentage.text = percent + " %"; }
+        if (LoadingProgress.Stage != shownStage) { shownStage = LoadingProgress.Stage; step.text = LoadingProgress.CurrentLabel; }
         // Keep a separate animation clock. A slow native scene activation must not
         // skip an entire swing (and its contact effects) on the following frame.
         if (presented || revealing) animationTime += Mathf.Min(Time.unscaledDeltaTime, 1f / 30f);
@@ -214,23 +216,16 @@ public sealed class LoadingScreen : MonoBehaviour
         while (Time.realtimeSinceStartupAsDouble < revealAt) yield return null;
         TransitionPhase = "GameplayFadeIn";
         yield return FadeFromBlack();
-        RestoreFrameRate();
         TransitionPhase = "Idle";
         GameplayInputBlocker.SetBlocked(this, false); Time.timeScale = 1f; LoadingProgress.Dismiss(); gameObject.SetActive(false);
     }
 
-    void OnDisable() { RestoreFrameRate(); RestoreLoadingPriority(); }
+    void OnDisable() => RestoreLoadingPriority();
     void RestoreLoadingPriority()
     {
         if (!loadingPriorityChanged) return;
         Application.backgroundLoadingPriority = previousLoadingPriority;
         loadingPriorityChanged = false;
-    }
-    void RestoreFrameRate()
-    {
-        if (!frameRateChanged) return;
-        Application.targetFrameRate = previousFrameRate;
-        frameRateChanged = false;
     }
 
     void Build()

@@ -13,7 +13,7 @@ using Object = UnityEngine.Object;
 
 public static class CopperEarthWallRegressionChecks
 {
-    const string Output = "Assets/Design/OreVeins/CopperEarthWall/Implemented";
+    const string Output = "Design/OreVeins/CopperEarthWall/Implemented";
     static readonly List<string> passed = new();
     static void Check(bool condition, string message)
     { if (!condition) throw new Exception(message); passed.Add(message); }
