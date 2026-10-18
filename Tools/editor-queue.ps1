@@ -33,8 +33,8 @@ $ErrorActionPreference = 'Stop'
 $utf8 = New-Object System.Text.UTF8Encoding $false
 $inv = [Globalization.CultureInfo]::InvariantCulture
 
-# Ab diesem Alter gilt das Aktivitaetssignal des Editors als nicht mehr aktuell (Editor schreibt alle 30 s).
-$FreshMinutes = 2
+# Ab diesem Alter gilt das Aktivitaetssignal als nicht mehr aktuell (Editor schreibt alle 30 s, im Hintergrund gedrosselt bis ~90 s).
+$FreshMinutes = 5
 # Haengt der Editor laenger als so lange (Prozess laeuft, aber kein Signal), wird er nicht mehr als belegt gewertet.
 $BlockedMaxMinutes = 30
 
