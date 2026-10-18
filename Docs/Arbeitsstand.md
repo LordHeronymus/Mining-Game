@@ -13,6 +13,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
 | Claude Code | Performance abschliessen: Ladebildschirm ohne Ruckler, keine Lag-Spikes, ≥ 100 FPS – pausiert, Zwischenstand im Changelog | claude/performance | Mining Game | Map (MapGenerator, Tilemap-Abonnenten, Rubble, Collider, Erzadern, Bäume, Gras), Loading, GPS-Codec/Schema, GameSaveSystem, AudioManager, Tests/Performance* | nein | 17.10.2026 19:45 |
+| Claude Code (Cloud) | Challenges-Rework: täglich/wöchentlich/monatlich/Langzeit, Katalog, neue Zählstellen, UI, GPS-Abschnitt (Konzept Docs/Challenges-Konzept.md) | claude/challenges-rework | Cloud | Progression (MetaChallengePeriods, MetaProgression*, neuer Challenge-Katalog), ChallengePanel/ChallengeArt, GpsProfile/GpsSchema.Catalog (nur neuer Abschnitt), Zählstellen in Gameplay-Skripten, Tests/*Challenge*, Docs/Challenges*.md | nein | 18.10.2026 21:20 |
 
 ## Zuletzt abgeschlossen
 
