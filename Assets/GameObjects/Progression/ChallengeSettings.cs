@@ -37,6 +37,8 @@ using System;
     [UnityEngine.Range(1, 1200), UnityEngine.InspectorName("Volle Taschen: Mindesttiefe (Blöcke)")] public int fullBagMinDepth = 10;
     [UnityEngine.Range(10f, 300f), UnityEngine.InspectorName("Volle Taschen: Ladung (% Tragkraft)")] public float fullBagPercent = 90f;
     [UnityEngine.Range(0f, 300f), UnityEngine.InspectorName("Volle Taschen: Zuwachs (% Tragkraft)")] public float fullBagGainPercent = 50f;
+    [UnityEngine.Range(10, 2000), UnityEngine.InspectorName("Volle Taschen: Bezugs-Tragkraft max. (kg)")] public int fullBagCapKg = 150;
+    [UnityEngine.Range(0, 200), UnityEngine.InspectorName("Rückkehr: neue Blöcke pro Tour")] public int tripMinNewBlocks = 10;
 
     public ChallengePeriodSettings Period(ChallengePeriod period) => period switch {
         ChallengePeriod.Daily => daily, ChallengePeriod.Weekly => weekly, ChallengePeriod.Monthly => monthly, _ => null };
@@ -66,7 +68,8 @@ using System;
             maxGrowthPercent = Finite(maxGrowthPercent, fallback.maxGrowthPercent, 0f, 500f),
             returnMinDepth = Clamp(returnMinDepth, 1, 1200), fullBagMinDepth = Clamp(fullBagMinDepth, 1, 1200),
             fullBagPercent = Finite(fullBagPercent, fallback.fullBagPercent, 10f, 300f),
-            fullBagGainPercent = Finite(fullBagGainPercent, fallback.fullBagGainPercent, 0f, 300f)
+            fullBagGainPercent = Finite(fullBagGainPercent, fallback.fullBagGainPercent, 0f, 300f),
+            fullBagCapKg = Clamp(fullBagCapKg, 10, 2000), tripMinNewBlocks = Clamp(tripMinNewBlocks, 0, 200)
         };
     }
     static ChallengePeriodSettings Clean(ChallengePeriodSettings value, ChallengePeriodSettings fallback) => value == null ? fallback : new ChallengePeriodSettings {

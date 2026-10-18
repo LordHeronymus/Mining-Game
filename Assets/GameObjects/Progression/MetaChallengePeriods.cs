@@ -312,7 +312,7 @@ public static partial class MetaProgression
         run.resourceSources.Add(key);
         RecordPeriodProgress(metric, 1); MarkChanged(false);
     }
-    public static void RecordCraftedAmount(Item item, int amount, bool exotic = false)
+    public static void RecordCraftedAmount(Item item, int amount, bool exotic = false, int crafts = 0)
     {
         if (!HasRun() || run.ended || amount <= 0) return;
         RecordPeriodProgress("crafted", amount);

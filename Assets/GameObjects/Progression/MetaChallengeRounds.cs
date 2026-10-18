@@ -13,7 +13,11 @@ public static partial class MetaProgression
     public static bool HasMinedOre(Item item, Vector3Int cell) => false;
     public static void RecordPlacedCount(string metric, int count) { }
     public static void SyncPlacedCount(string metric, int count) { }
-    public static void RecordReturn(int peakDepth, int peakLayer, bool fullBag) { }
+    public static void RecordReturn(int peakDepth, int peakLayer, bool fullBag, int newBlocks) { }
+    public static void RecordDepthReached(int depth) { }
+    public static void RecordLayerVisited(int layer) { }
+    public static void RecordAltarReached() { }
+    public static int CreditedBlocks { get; private set; }
     public static MetaChallengeProgress GetMonthlyProject() => null;
     public static MetaChallengeBonus ChallengeBonus(ChallengePeriod period) => new MetaChallengeBonus();
     public static long ChallengePeriodEnd(ChallengePeriod period) => 0;

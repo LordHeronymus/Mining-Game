@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 [Serializable] public sealed class MetaChallengeTask
 {
-    public string id, name, metric;
+    public string id, name, metric, unit;
     public int mode;
     public int subject = -1;
     public bool atLeast;
@@ -37,6 +37,7 @@ public sealed class ChallengeDrawContext
 {
     public int reachedLayer = 1, level = 1;
     public int[] craftLimits;
+    public float pickaxeHardness;
 }
 
 public static class ChallengeEngine
