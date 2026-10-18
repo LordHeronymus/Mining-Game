@@ -5,11 +5,14 @@ on:
   workflow_dispatch:
     inputs:
       suite:
-        description: "Suite from Tests/CI/suites (smoke, play)"
+        description: "Suite from Tests/CI/suites (smoke, play, performance)"
         default: smoke
       checks:
         description: "Optional instead of suite: comma separated check names, e.g. CaveGenerationChecks,play:GpsRuntimeChecks"
         default: ""
+      editorui:
+        description: "Unity editor UI on the virtual display: auto (for play checks), 1, 0"
+        default: auto
       nographics:
         description: "Run Unity without graphics device (faster, but no rendering)"
         type: boolean
@@ -29,11 +32,16 @@ concurrency:
 jobs:
   checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # Hard limit (AGENTS.md, Docs/Cloud-Tests.md): Unity gets until 16 min after the job start (CI_DEADLINE),
+    # leaving time for the report; the job itself stops at 20 min.
+    timeout-minutes: 20
     env:
       SUITE: ${{ inputs.suite || 'smoke' }}
       CHECKS: ${{ inputs.checks || '' }}
     steps:
+      - name: Start clock
+        run: echo "CI_DEADLINE=$(( $(date +%s) + 16 * 60 ))" >> "$GITHUB_ENV"
+
       - name: Check licence secrets
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -95,18 +103,26 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           CI_NOGRAPHICS: ${{ inputs.nographics && '1' || '0' }}
+          CI_EDITOR_UI: ${{ inputs.editorui || 'auto' }}
         run: |
           version=$(sed -n 's/^m_EditorVersion: //p' ProjectSettings/ProjectVersion.txt | tr -d '\r')
           image="unityci/editor:ubuntu-${version}-base-3"
           echo "Image: $image"
           docker run --rm --workdir /project -v "$GITHUB_WORKSPACE:/project" \
-            -e UNITY_LICENSE -e UNITY_SERIAL -e UNITY_EMAIL -e UNITY_PASSWORD -e CI_NOGRAPHICS \
+            -e UNITY_LICENSE -e UNITY_SERIAL -e UNITY_EMAIL -e UNITY_PASSWORD -e CI_NOGRAPHICS -e CI_EDITOR_UI -e CI_DEADLINE \
             "$image" bash Tests/CI/run-in-container.sh
 
       - name: Report
         if: always()
         run: |
           sudo chown -R "$(id -u):$(id -g)" . || true
+          if grep -q '"mode": "player"' Artifacts/plan.json 2>/dev/null && [ ! -f Artifacts/ci-results.json ]; then
+            python3 Tests/CI/player_report.py $(cat Artifacts/player-meta.txt 2>/dev/null || echo "0 ?") || true
+          fi
+          if [ -f Artifacts/abort-reason.txt ]; then
+            { echo "### ⛔ Abgebrochen"; echo; cat Artifacts/abort-reason.txt; echo; } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error title=Lauf abgebrochen::$(cat Artifacts/abort-reason.txt)"
+          fi
           if [ -f Artifacts/ci-results.md ]; then cat Artifacts/ci-results.md >> "$GITHUB_STEP_SUMMARY"; fi
           if [ -f Artifacts/editor.log ]; then
             errors=$(grep -E "error CS[0-9]+" Artifacts/editor.log | sort -u | head -50)
@@ -128,7 +144,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: unity-checks-${{ github.run_number }}
-          path: Artifacts
+          path: |
+            Artifacts
+            !Artifacts/player
           retention-days: 14
 
       - name: Save Library cache

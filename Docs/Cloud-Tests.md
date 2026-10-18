@@ -39,6 +39,35 @@ Ergebnisse: Zusammenfassung im Workflow-Lauf, Artefakt `unity-checks-<Nr>` mit `
 - `nographics`: Unity ohne Grafikgerät (schneller, aber Kameras rendern nicht; nur für reine Logik-Checks).
 - Lokal vorbereiten/prüfen: `python3 Tests/CI/prepare.py --suite smoke` (danach `Assets/Editor/CIChecks/` und `Artifacts/` wieder löschen, solange der Editor offen ist, sonst importiert er die Kopien).
 
+## Arbeitsteilung Cloud / lokal
+
+Cloud-Sessions (Claude Code im Browser/App) und der Workflow „Unity Checks“ brauchen keinen lokalen Editor. Faustregel:
+
+| In der Cloud | Lokal im Editor |
+| --- | --- |
+| Code-Änderungen, Refactorings, Fehlerbehebungen | Grafik, Optik, Shader, Licht, Animation beurteilen |
+| Logik-Checks (Suite `smoke`, einzelne Checks) | Szenen-/Prefab-Arbeit, die man sehen muss |
+| CPU-Messungen vorher/nachher (Suite `performance`) | Echte FPS-Abnahme (GPU), Build-Messung |
+| Analyse von Messdaten und Logs | Spielgefühl, Steuerung |
+
+- Die Cloud-Rechner haben keine GPU (Software-Rendering). FPS-Werte dort sind nur untereinander vergleichbar, nicht mit dem lokalen PC. Aussagekräftig sind Framezeiten von Spiellogik, Ladestufen, Spitzen und GC-Allokationen im Vergleich vorher/nachher auf dem gleichen Runner-Typ. Schwankungen von einigen Prozent sind normal.
+- Eine Cloud-Aufgabe läuft auf ihrem eigenen Branch und trägt sich in `Docs/Arbeitsstand.md` mit Ordner „Cloud“ ein. Sie belegt keinen lokalen Editor.
+- Abschluss einer Cloud-Aufgabe mit Optik- oder FPS-Bezug: kurze lokale Abnahme durch den Benutzer (Branch holen, Play starten bzw. Build-Benchmark).
+
+## Play-Mode in der Cloud
+
+Im `-batchmode` rendert der Editor kein Game-Fenster, daher kehren Coroutinen mit `WaitForEndOfFrame` (Blenden, Ladebildschirm) nie zurück und Play-Checks hängen (Lauf #7). Der Editor mit Oberfläche (ohne `-batchmode`, Xvfb + Mesa, `-automated`) beendet sich ohne Unity-Hub-Anmeldung direkt nach der Lizenzprüfung („Access token is unavailable“, Läufe #8–#12); diese Variante ist nur noch manuell mit `editorui = 1` aktivierbar. Play-Checks (`play:`) laufen deshalb in der Cloud derzeit nicht.
+
+## Zeitlimit und Nur-lokal-Checks
+
+- Ein Lauf hat höchstens **20 Minuten** (`timeout-minutes: 20`). Unity bzw. der Benchmark-Player bekommt nur die Zeit bis 16 Minuten nach Jobstart (`CI_DEADLINE`), danach folgen Bericht und Upload. Bei Überschreitung schreibt `run-in-container.sh` `Artifacts/abort-reason.txt` („Abgebrochen: Zeitlimit von 20 Minuten erreicht (…). Nicht erneut starten …“). Der Grund erscheint als Fehler im Job-Log, oben in der Lauf-Zusammenfassung, im Live-Status (Issue #2) und als Banner im Dashboard.
+- Checks zu Bewegung, Animation, Partikeln oder Bildraten tragen im Skript den Kommentar `// CI: local-only`. `prepare.py` lehnt sie in der Cloud nach wenigen Sekunden mit demselben Abbruchgrund ab, bevor Unity startet.
+- Agenten starten einen abgebrochenen Lauf nicht erneut (Regel in `AGENTS.md`).
+
+## Suite `performance` (Benchmark-Player)
+
+Statt im Editor misst die Cloud mit einem eigenständigen Linux-Player: `Assets/Editor/CI/CiBenchmarkBuild.cs` baut ihn (Mono, Define `MINING_BENCHMARK`, eigener Produktname „Tiefenhall Benchmark“ wie `Tests/BuildPerformanceBenchmark.cs`), danach startet `run-in-container.sh` ihn auf Xvfb mit Mesa-Software-OpenGL (`-performanceBenchmark -benchmarkNoRender`). `PerformanceBenchmarkDriver` spielt Laden, Stillstand, Abbau normal/schnell und Erkunden durch und schreibt `PerformanceBenchmark.txt`/`.csv` (Artefakt, Zusammenfassung im Dashboard). Der erste Build kompiliert alle Shader und dauert entsprechend; danach hilft der Library-Cache. Werte sind nur untereinander vergleichbar (kein GPU, Mono statt IL2CPP). Mit Zeichnen dauerte ein vollständiger Lauf 41 Minuten (Lauf #16: Software-Rendering, ~1,3 s pro Bild im Spiel); `-nographics` stürzt den Player ab (Lauf #15). Deshalb startet der Player mit `-benchmarkNoRender`: Grafikgerät vorhanden, aber alle Kameras zeichnen nichts (Culling-Maske 0), die Framezeiten messen nur die Rechenarbeit des Spiels. Ladegrenze `-benchmarkLoadLimit 480`. Mit `CI_PLAYER_RENDER=1` wird wieder gezeichnet (sprengt das Zeitlimit). Lauf #17: ganzer Lauf 12 min, Laden 92 s, Spielphasen 13–16 ms pro Bild (235–937 Bilder je Phase). Davon ~6 min Einrichtung (Speicher freigeben, Checkout, Cache).
+
 ## Grenzen
 
 - Checks, die Dateien aus dem lokalen `Temp/` erwarten (z. B. `LegacyMetaSerializationChecks`), oder Archiv-/Install-Skripte gehören nicht in Suiten.
