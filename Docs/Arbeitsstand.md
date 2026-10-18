@@ -8,14 +8,14 @@ Arbeitsordner (git worktrees, beide von `main`): `Git Repos/Mining Game` und `Gi
 
 | Ordner | Belegt von | Zweck | Seit |
 | --- | --- | --- | --- |
-| Mining Game | – | frei | 17.10.2026 22:40 |
+| Mining Game | – | frei | 18.10.2026 14:45 |
 | Mining Game 2 | – | frei (Library noch nicht importiert) | 17.10.2026 23:00 |
 
 ## Aktiv
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
-| Claude Code | Performance abschliessen: Ladebildschirm ohne Ruckler, keine Lag-Spikes, ≥ 100 FPS – pausiert, Zwischenstand im Changelog | claude/performance | Mining Game | Map (MapGenerator, Tilemap-Abonnenten, Rubble, Collider, Erzadern, Bäume, Gras), Loading, GPS-Codec/Schema, GameSaveSystem, AudioManager, Tests/Performance* | nein | 17.10.2026 19:45 |
+| Claude Code (Cloud) | Performance – übergeben an Cloud, siehe Docs/Performance-Uebergabe.md | claude/performance | Cloud | Map (MapGenerator, Tilemap-Abonnenten, Rubble, Collider, Erzadern, Bäume, Gras), Loading, GPS-Codec/Schema, GameSaveSystem, AudioManager, Tests/Performance* | nein | 17.10.2026 19:45 |
 
 ## Zuletzt abgeschlossen
 
