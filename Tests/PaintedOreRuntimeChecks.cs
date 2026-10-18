@@ -8,7 +8,7 @@ using UnityEngine.Rendering.Universal;
 using UnityEngine.Tilemaps;
 using Object=UnityEngine.Object;
 
-// Painted ore tiles (copper, iron, silver, gold, coal, platinum; Small/Medium/Large): generation, all host rocks, overhang clipping at mined cells, mining and save/load.
+// Painted ore tiles (copper, iron, silver, gold, coal, platinum, titanium; Small/Medium/Large): generation, all host rocks, overhang clipping at mined cells, mining and save/load.
 public static class PaintedOreRuntimeChecks
 {
     public static string Main()
@@ -75,8 +75,8 @@ public sealed class PaintedOreRuntimeProbe:MonoBehaviour
         Check(GameSaveSystem.ActiveSlot>0 && GameSaveSystem.InitialSaveError==null,"Fresh isolated run saved");
         CameraCheck("Fresh start");
         var map=Object.FindFirstObjectByType<MapGenerator>();
-        var copper=map.registry.GetById(BlockType.CopperOre);var iron=map.registry.GetById(BlockType.IronOre);var silver=map.registry.GetById(BlockType.SilverOre);var gold=map.registry.GetById(BlockType.GoldOre);var coal=map.registry.GetById(BlockType.Coal);var platinum=map.registry.GetById(BlockType.PlatinumOre);
-        foreach(var block in new[]{copper,iron,silver,gold,coal,platinum})
+        var copper=map.registry.GetById(BlockType.CopperOre);var iron=map.registry.GetById(BlockType.IronOre);var silver=map.registry.GetById(BlockType.SilverOre);var gold=map.registry.GetById(BlockType.GoldOre);var coal=map.registry.GetById(BlockType.Coal);var platinum=map.registry.GetById(BlockType.PlatinumOre);var titanium=map.registry.GetById(BlockType.TitaniumOre);
+        foreach(var block in new[]{copper,iron,silver,gold,coal,platinum,titanium})
         {
             Check(block.smallOre.Length==2 && block.mediumOre.Length==2 && block.richOre.Length==3,block.displayName+" keeps 2 Small, 2 Medium and 3 Large variants");
             foreach(var (tiles,richness,suffix) in new[]{(block.smallOre,OreRichness.Small,"_small"),(block.mediumOre,OreRichness.Medium,"_medium"),(block.richOre,OreRichness.Rich,"_large")})
@@ -135,6 +135,9 @@ public sealed class PaintedOreRuntimeProbe:MonoBehaviour
             // Platinum row: Medium, Large, Small.
             var pm=new Vector3Int(bx,-15,0);var pl=new Vector3Int(bx+1,-15,0);var ps=new Vector3Int(bx+2,-15,0);
             Place(pm,platinum.mediumOre[h%2]);Place(pl,platinum.richOre[(h+1)%3]);Place(ps,platinum.smallOre[(h+1)%2]);rich.Add(pm);rich.Add(pl);rich.Add(ps);
+            // Titanium row: Small, Medium, Large.
+            var ts=new Vector3Int(bx,-17,0);var tm=new Vector3Int(bx+1,-17,0);var tl=new Vector3Int(bx+2,-17,0);
+            Place(ts,titanium.smallOre[h%2]);Place(tm,titanium.mediumOre[(h+1)%2]);Place(tl,titanium.richOre[(h+2)%3]);rich.Add(ts);rich.Add(tm);rich.Add(tl);
         }
         foreach(var cell in rich)Check(Painted(map.OreOverlay,cell),"Placed painted tile keeps its marker at "+cell);
         yield return null;map.GetComponent<UniformStoneAppearance>().RefreshAppearance();

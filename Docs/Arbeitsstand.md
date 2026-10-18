@@ -16,6 +16,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
+- 18.10.2026, Claude Code: Titan (T5a) als gemalte Einzelblöcke, Branch `claude/iron-tiles`, siehe Docs/Gemalte-Erze.md.
 - 18.10.2026, Claude Code: Platin (P2) als gemalte Einzelblöcke, Branch `claude/iron-tiles`, siehe Docs/Gemalte-Erze.md.
 - 18.10.2026, Claude Code: Kohle (K2, ohne Steinchen) als gemalte Einzelblöcke, Branch `claude/iron-tiles`, siehe Docs/Gemalte-Erze.md.
 - 18.10.2026, Claude Code: Silber (S1) und Gold (G2b) als gemalte Einzelblöcke, Branch `claude/iron-tiles`, siehe Docs/Gemalte-Erze.md.
@@ -25,5 +26,3 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 - 18.10.2026, Claude Code (Cloud): Cloud-Tests laufen (Personal-Lizenz über Unity-Konto), Live-Dashboard `Tools/CloudDashboard` und Live-Status-Issue #2; 2 fehlgeschlagene Checks als Todoist-Aufgabe erfasst.
 - 18.10.2026, Claude Code (Cloud): Cloud-Tests eingerichtet (GitHub-Workflow „Unity Checks“, CiCheckRunner, Tests/CI), siehe Docs/Cloud-Tests.md; Lizenz-Secrets muss der Benutzer noch anlegen.
 - 17.10.2026, Claude Code: Branch-Setup erneuert: `main` auf dem aktuellen Stand, Aufgaben auf eigenen Branches, zweiter Arbeitsordner `Mining Game 2` (Branch `claude/erz-optik`) für parallele Chats.
-- 17.10.2026, Claude Code: Fehlerbehebungen aus Code-Analyse (Baupläne, Verkauf, GPS-Speicherung, Spielstand-Kompatibilität, Höhlenmaske u. a.) und Repo-Aufräumen (Design/, SceneBackups/, Archiv, Pakete), siehe Changelog.
-- 17.10.2026, Claude Cowork: AGENTS.md in CLAUDE.md, AGENTS.md (Spiegel) und Docs/Changelog.md aufgeteilt; Arbeitsstand-Datei eingeführt.

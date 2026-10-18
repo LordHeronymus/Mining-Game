@@ -243,9 +243,11 @@ public static class PaintedOreArt
         public float k = .95f, tilt = .4f, elong = .35f, rough = .12f; public int seedsPerRadius = 16;
         public float mainGloss = 45, seamBright = 1.28f, porosity, poreScale = 9, banding, bandWidth = 7;
         public bool pebbles = true; // loose brown host pebbles around the chunks
-        public int shape; // 0 faceted nuggets, 1 smooth polished nuggets, 2 cubic crystals
+        public int shape; // 0 faceted nuggets, 1 smooth polished nuggets, 2 cubic crystals, 3 crystal sprays
         public Color[] detail; public float detailThreshold = .7f, detailScale = 50; // optional third facet material (e.g. white)
         public float edgeWhite, edgeWidth = 1.7f, speckles, speckleScale = 9; // white facet edges, white flecks
+        public float bounceStrength = .08f, iridescence; // warm reflected light on shadow facets, anodised heat tint
+        public float crystalElong = 1.8f, crystalSpread = 60, crystalDensity = 1; // shape 3 (crystal sprays)
     }
     static Color C(float r, float g, float b) => new Color(r, g, b);
 
@@ -458,6 +460,59 @@ public static class PaintedOreArt
         "Design/OreVeins/PlatinumLarge/Sources/P2-Platin-violett-facettiert.png",
     });
 
+    // ---------- titanium: crystal sprays in the spirit of the old prism-cluster sprites ----------
+
+    const string TitaniumOut = "Design/OreVeins/TitaniumLarge";
+    static Palette Ti(string name, float elong, float spread, float density, float bounce, float iridescence)
+    {
+        var p = new Palette { name = name, shape = 3, crystalElong = elong, crystalSpread = spread, crystalDensity = density, bounceStrength = bounce, iridescence = iridescence };
+        return p;
+    }
+    static readonly Palette[] TitaniumPalettes =
+    {
+        Set(Ti("T1-Titan-Stahlblau", 1.9f, 55, 1f, .45f, 0), // like the old sprite: steel blue-grey prisms with warm golden reflections
+            new[] { C(.07f, .09f, .12f), C(.22f, .28f, .34f), C(.45f, .53f, .6f), C(.68f, .75f, .8f), C(.92f, .95f, .97f) },
+            new[] { C(.05f, .06f, .08f), C(.15f, .19f, .24f), C(.32f, .38f, .45f), C(.52f, .58f, .65f), C(.82f, .86f, .9f) },
+            C(.95f, .97f, 1), C(1, .72f, .35f), .5f, .9f, 50, .8f, 70),
+        Set(Ti("T2-Titan-eloxiert", 1.5f, 50, 1.1f, .15f, .55f), // anodised heat tint: gold, magenta, blue, teal over stubby prisms
+            new[] { C(.07f, .08f, .1f), C(.22f, .25f, .3f), C(.45f, .5f, .56f), C(.68f, .72f, .78f), C(.93f, .95f, .97f) },
+            new[] { C(.07f, .08f, .1f), C(.22f, .25f, .3f), C(.45f, .5f, .56f), C(.68f, .72f, .78f), C(.93f, .95f, .97f) },
+            C(1, 1, 1), C(.6f, .5f, .8f), .5f, .9f, 50, 1.01f, 70),
+        Set(Ti("T3-Titan-Rutil", 2.5f, 70, 1.6f, .25f, 0), // dark graphite needles with golden-red rutile needles
+            new[] { C(.04f, .045f, .05f), C(.13f, .14f, .16f), C(.27f, .29f, .32f), C(.45f, .47f, .51f), C(.75f, .78f, .82f) },
+            new[] { C(.16f, .05f, .02f), C(.42f, .16f, .05f), C(.7f, .36f, .12f), C(.88f, .6f, .3f), C(1, .86f, .6f) },
+            C(.95f, .95f, 1), C(.9f, .5f, .25f), .5f, 1f, 60, .55f, 70),
+        Set(Ti("T4-Titan-Eisblau", 1.35f, 45, 1.3f, .2f, 0), // pale icy cyan-blue blocky crystals with white tips
+            new[] { C(.08f, .14f, .18f), C(.24f, .38f, .45f), C(.48f, .64f, .72f), C(.7f, .84f, .89f), C(.93f, .98f, 1) },
+            new[] { C(.3f, .34f, .38f), C(.58f, .64f, .69f), C(.8f, .85f, .89f), C(.93f, .96f, .98f), C(1, 1, 1) },
+            C(.9f, .97f, 1), C(.4f, .7f, .85f), .5f, .8f, 50, .75f, 70),
+    };
+    // Titanium preview (four looks): PreviewTitaniumLarge.
+    public static string PreviewTitaniumLarge() => PreviewLarge(TitaniumPalettes, new[] { 2001, 2012, 2023, 2034 }, TitaniumOut, new[]
+    {
+        "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Iron/Iron_Large_01.png",
+        "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Platinum/Platinum_Large_01.png",
+    });
+
+    // Titanium follow-up: T1 shape with the T4 icy blue colours, longer crystals.
+    static readonly Color[] T4Main = { C(.08f, .14f, .18f), C(.24f, .38f, .45f), C(.48f, .64f, .72f), C(.7f, .84f, .89f), C(.93f, .98f, 1) };
+    static readonly Color[] T4Tips = { C(.3f, .34f, .38f), C(.58f, .64f, .69f), C(.8f, .85f, .89f), C(.93f, .96f, .98f), C(1, 1, 1) };
+    static Palette TiIce(string name, float elong, float spread, float density, float accent)
+        => Set(Ti(name, elong, spread, density, .3f, 0), T4Main, T4Tips, C(.9f, .97f, 1), C(.4f, .7f, .85f), .5f, .8f, 50, accent, 70);
+    static readonly Palette[] TitaniumIcePalettes =
+    {
+        TiIce("T5a-Eis-lang", 2.5f, 55, 1f, .78f),            // T1 layout, noticeably longer prisms
+        TiIce("T5b-Eis-Nadeln", 3.2f, 45, 1.3f, .8f),         // very long, slender needles, more of them
+        TiIce("T5c-Eis-Faecher", 2.6f, 80, 1.15f, .75f),      // long crystals fanning out wide
+        TiIce("T5d-Eis-Saeulen", 2.8f, 28, .85f, .82f),       // long, mostly upright columns, fewer and bigger
+    };
+    // Titanium follow-up (T1 shape, T4 colour, longer): PreviewTitaniumIce.
+    public static string PreviewTitaniumIce() => PreviewLarge(TitaniumIcePalettes, new[] { 2001, 2001, 2001, 2001 }, TitaniumOut + "/T1T4", new[]
+    {
+        "Design/OreVeins/TitaniumLarge/Sources/T1-Titan-Stahlblau.png",
+        "Design/OreVeins/TitaniumLarge/Sources/T4-Titan-Eisblau.png",
+    });
+
     public static string PreviewGoldSilverLarge() => PreviewLarge(GoldSilverPalettes, new[] { 1001, 1012, 1023, 1034 }, GoldSilverOut, new[]
     {
         "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Copper/Copper_Large_01.png",
@@ -513,9 +568,15 @@ public static class PaintedOreArt
 
     // Platinum install (applied 18.10.2026): original scheme P2, Large seed 1712 is the approved preview.
     static readonly int[] PlatinumLargeSeeds = { 1712, 1815, 1826 }, PlatinumSmallSeeds = { 1911, 1922 }, PlatinumMediumSeeds = { 1933, 1944 };
-    public static string Main() => InstallPlatinum();
+    // Platinum install: InstallPlatinum.
     public static string InstallPlatinum() => InstallOre(BlockType.PlatinumOre, "Platinum", "Platin", Array.Find(PlatinumPalettes, p => p.name == "P2-Platin-violett-facettiert"),
         PlatinumLargeSeeds, PlatinumSmallSeeds, PlatinumMediumSeeds, PlatinumOut + "/Installed");
+
+    // Titanium install (applied 18.10.2026): scheme T5a, Large seed 2001 is the approved preview.
+    static readonly int[] TitaniumLargeSeeds = { 2001, 2115, 2126 }, TitaniumSmallSeeds = { 2211, 2222 }, TitaniumMediumSeeds = { 2233, 2244 };
+    public static string Main() => InstallTitanium();
+    public static string InstallTitanium() => InstallOre(BlockType.TitaniumOre, "Titanium", "Titanium", Array.Find(TitaniumIcePalettes, p => p.name == "T5a-Eis-lang"),
+        TitaniumLargeSeeds, TitaniumSmallSeeds, TitaniumMediumSeeds, TitaniumOut + "/Installed");
 
     // Folder = ore folder under Blocks/Ores and sprite prefix (e.g. "Iron"), tilePrefix = German tile name (e.g. "Eisen").
     static string InstallOre(BlockType id, string folder, string tilePrefix, Palette palette, int[] largeSeeds, int[] smallSeeds, int[] mediumSeeds, string designDir)
@@ -723,9 +784,31 @@ public static class PaintedOreArt
     static List<Piece> Build(System.Random rng, List<(Vector2 c, float r)> chunks, int pebbles)
     {
         var list = new List<Piece>(); int i = 0;
-        foreach (var (c, r) in chunks) { list.Add(CupriteNugget(rng, c, r, (i * 7) % 23, i)); i++; }
+        foreach (var (c, r) in chunks)
+        {
+            if (Active.shape == 3) CrystalSpray(list, rng, c, r, (i * 7) % 23);
+            else list.Add(CupriteNugget(rng, c, r, (i * 7) % 23, i));
+            i++;
+        }
         Pebbles(list, rng, pebbles);
         return list;
+    }
+
+    // shape 3: each chunk becomes a small spray of pointed prism crystals growing upwards out of the rock.
+    static void CrystalSpray(List<Piece> list, System.Random rng, Vector2 c, float r, float z)
+    {
+        int count = Mathf.Clamp(1 + (int)(r / 22 * Active.crystalDensity), 1, 7);
+        for (int k = 0; k < count; k++)
+        {
+            float deg = 90 + (k == 0 ? (float)(rng.NextDouble() - .5) * 24 : (float)(rng.NextDouble() * 2 - 1) * Active.crystalSpread);
+            float a = deg * Mathf.Deg2Rad, size = r * (k == 0 ? .6f : .28f + (float)rng.NextDouble() * .3f);
+            float elong = Active.crystalElong * (.85f + (float)rng.NextDouble() * .3f);
+            var dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a)); var side = new Vector2(-dir.y, dir.x);
+            var centre = c + dir * size * elong * .45f + side * (k == 0 ? 0 : (float)(rng.NextDouble() - .5) * r * .9f);
+            bool accent = rng.NextDouble() > Active.accentThreshold;
+            list.Add(Crystal(new Piece { kind = Kind.Crystal, mat = accent ? Mat.Cuprite : Mat.Copper, c = centre, r = size, rot = a, elong = elong,
+                z = z + 30 - k * 4 + (float)rng.NextDouble() * 8, seed = rng.Next() }, rng));
+        }
     }
 
     static List<Piece> LargeThree()
@@ -1060,6 +1143,14 @@ public static class PaintedOreArt
             c *= 1 - .7f * pit; c += new Color(.09f, .09f, .095f) * Mathf.Max(0, lit - pit) * (ndl > 0 ? 1 : .4f);
             spec *= 1 - pit;
         }
+        // Anodised titanium: a heat-tint gradient (gold, magenta, blue, teal) running over each crystal.
+        if ((mat == Mat.Copper || mat == Mat.Cuprite) && Active.iridescence > 0)
+        {
+            float u = Mathf.Repeat(h.hn * .9f + Fbm(w.x / 45, w.y / 45, 271) * .9f + (h.p.seed & 255) / 255f * .5f, 1);
+            var tint = Ramp(u, C(.95f, .72f, .3f), C(.85f, .35f, .55f), C(.4f, .35f, .85f), C(.3f, .65f, .9f), C(.4f, .85f, .75f));
+            float luma = c.r * .3f + c.g * .55f + c.b * .15f;
+            c = Color.Lerp(c, tint * (luma * 1.7f + .08f), Active.iridescence);
+        }
         // White speckles (painted flecks, not emissive).
         if ((mat == Mat.Copper || mat == Mat.Cuprite || mat == Mat.Detail) && Active.speckles > 0)
         {
@@ -1077,7 +1168,7 @@ public static class PaintedOreArt
         float s = Mathf.Pow(Mathf.Max(0, Vector3.Dot(n, Half)), gloss) * spec * (1 - .6f * occl);
         if (h.p.style == 2) s = Smooth(.35f, .45f, s) * .75f; // hard-edged cartoon highlight
         c += Active.specTint * s;
-        if (mat == Mat.Copper || mat == Mat.Cuprite) c += Active.bounce * .08f * Mathf.Pow(1 - n.z, 2) * (ndl < 0 ? 1 : .3f); // warm bounce on the shadow side
+        if (mat == Mat.Copper || mat == Mat.Cuprite) c += Active.bounce * Active.bounceStrength * Mathf.Pow(1 - n.z, 2) * (ndl < 0 ? 1 : .3f); // warm bounce on the shadow side
         // Facet seams: bright where the facet faces the light, dark otherwise.
         if (h.p.style == 1 ? h.edge < Active.edgeWidth : h.edge < 1.3f)
         {
