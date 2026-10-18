@@ -279,6 +279,22 @@ namespace MiningGame.CI
             }
             xml.AppendLine("</testsuite>");
             File.WriteAllText(Path.Combine(outputDirectory, "ci-results.xml"), xml.ToString());
+
+            // Read by Tests/CI/progress.py for the live status in the cloud dashboard.
+            var json = new ResultFile();
+            foreach (var r in results)
+                json.checks.Add(new ResultRow { name = r.name, mode = r.mode, status = r.status, seconds = r.seconds, output = Shorten(r.output.ToString().TrimEnd(), 4000), logErrors = r.logErrors.ToArray() });
+            File.WriteAllText(Path.Combine(outputDirectory, "ci-results.json"), JsonUtility.ToJson(json, true));
+        }
+
+        [Serializable] class ResultFile { public List<ResultRow> checks = new(); }
+
+        [Serializable]
+        class ResultRow
+        {
+            public string name, mode, status, output;
+            public double seconds;
+            public string[] logErrors;
         }
 
         static string Describe(object value)

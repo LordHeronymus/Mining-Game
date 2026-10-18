@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Cloud-Tests Mining Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="cloud-dashboard.css">
+  <style>
+    html, body { margin: 0; height: 100%; }
+    body { background: #f2f2ef; }
+    @media (prefers-color-scheme: dark) { body { background: #121513; } }
+  </style>
+</head>
+<body>
+  <div id="dashboard"></div>
+  <script src="cloud-dashboard.js"></script>
+  <script>CloudDashboard.mount(document.getElementById("dashboard"));</script>
+</body>
+</html>

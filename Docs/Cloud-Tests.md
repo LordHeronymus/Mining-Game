@@ -12,13 +12,21 @@ Die Prüfskripte aus `Tests/*Checks.cs` laufen auch ohne lokalen Editor: GitHub 
 
 Ergebnisse: Zusammenfassung im Workflow-Lauf, Artefakt `unity-checks-<Nr>` mit `ci-results.md`, `ci-results.xml` (JUnit), `editor.log` und den Temp-Berichten/Vorschauen der Checks.
 
+## Live-Dashboard
+
+`Tools/CloudDashboard/index.html` im Browser öffnen (Doppelklick genügt). Es zeigt die letzten Läufe, den Ablauf der Workflow-Schritte, die Unity-Phase (Lizenz, Import mit Fortschritt, Kompilieren, Checks), die Checks mit Status, die letzten Log-Zeilen und Notizen von Claude. Aktualisierung alle 5 s während eines Laufs, sonst alle 30 s. Läufe lassen sich dort auch starten, abbrechen und wiederholen.
+
+- Datenquelle: GitHub-API direkt aus dem Browser. Den Live-Status während „Run Unity“ schreibt `Tests/CI/progress.py` alle 15 s als Kommentar in das Issue mit Label `cloud-status` („Cloud-Tests Live-Status“). Kommentare dort ohne Status-Markierung sind Notizen von Claude (Lauf mit `#<Nummer>` referenziert).
+- Zugang: Fine-grained Token (github.com → Settings → Developer settings → Fine-grained tokens), nur dieses Repository, Rechte **Actions: Read and write** (Read reicht zum Zuschauen) und **Issues: Read**. Der Schlüssel bleibt im localStorage des Browsers.
+- Modul: `cloud-dashboard.js` + `cloud-dashboard.css` sind eigenständig (alles unter `.cd`). Einbinden mit `CloudDashboard.mount(element, { owner, repo, workflow, token })`; ohne `token` fragt das Dashboard selbst danach. `destroy()` auf dem Rückgabewert räumt auf.
+
 ## Einmalige Einrichtung (Benutzer)
 
 1. **Lizenzdatei holen:** Unity Hub öffnen, mit dem Unity-Konto angemeldet sein und eine aktive Personal-Lizenz haben (Hub → Einstellungen → Lizenzen). Die Datei liegt unter Windows in `C:\ProgramData\Unity\Unity_lic.ulf` (macOS: `/Library/Application Support/Unity/Unity_lic.ulf`). Mit einem Texteditor öffnen und den ganzen Inhalt kopieren.
 2. **Secrets anlegen:** GitHub → Repository → Settings → Secrets and variables → Actions → New repository secret:
    - `UNITY_LICENSE`: kompletter Inhalt der `.ulf`-Datei
    - `UNITY_EMAIL`: E-Mail des Unity-Kontos
-   - `UNITY_PASSWORD`: Passwort des Unity-Kontos
+   - `UNITY_PASSWORD`: Passwort des Unity-Kontos (Unity 6 verlangt für die Personal-Lizenz im Batchmode einen Konto-Login; bei Google-Anmeldung zuerst unter id.unity.com ein eigenes Unity-Passwort setzen, nie das Google-Passwort verwenden)
    - Nur bei Pro/Plus-Lizenz statt `UNITY_LICENSE`: `UNITY_SERIAL`
 3. **Kostenlimit:** GitHub → Settings (Konto) → Billing and licensing → Budgets and alerts: Budget für Actions auf 0 $ setzen, dann gibt es keine Kosten über das Gratis-Kontingent hinaus.
 4. **Actions erlauben:** Repository → Settings → Actions → General: „Allow all actions and reusable workflows“ (benötigt werden `actions/*`). Unter „Workflow permissions“ genügt „Read“.
