@@ -135,7 +135,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 o.lightingUV = half2(ComputeScreenPos(o.positionCS / o.positionCS.w).xy);
 
                 o.ultronium = step(v.color.a, .99h);
-                o.painted = PaintedOreMarker(v.color.a);
+                o.painted = PaintedOreKind(v.color.a);
                 o.color = v.color * _Color * unity_SpriteColor;
                 if (o.ultronium > .5h || o.painted > .5h) o.color.a = _Color.a * unity_SpriteColor.a;
                 return o;
@@ -162,6 +162,7 @@ Shader "Mining Game/Ore Overlay Lit"
 
             // Painted ore tiles (e.g. copper Large) are complete artwork: drawn at their authored size,
             // may reach slightly into neighbouring rock, and are lit like the stone without extra effects.
+            // Glowing painted ores (ultronium) add the same pulsing emission as the old ultronium sprites.
             half4 PaintedOreFragment(Varyings i)
             {
                 float2 uv = (i.uv - .5) * _OreScale + .5;
@@ -184,6 +185,20 @@ Shader "Mining Game/Ore Overlay Lit"
                 half litPeak = max(lit.r, max(lit.g, lit.b));
                 half compressed = litPeak <= 0.7h ? litPeak : 0.7h + 0.3h * (1 - exp(-(litPeak - 0.7h) / 0.3h));
                 lit.rgb *= compressed / max(litPeak, 0.0001h);
+                if (i.painted > 1.5h)
+                {
+                    // One pulse phase per tile: find the tile centre from the sprite UV (tiles are axis-aligned).
+                    float2 worldPerUv = float2(ddx(i.positionWS.x) / (abs(ddx(i.uv.x)) > 1e-6 ? ddx(i.uv.x) : 1e-6),
+                        ddy(i.positionWS.y) / (abs(ddy(i.uv.y)) > 1e-6 ? ddy(i.uv.y) : 1e-6));
+                    float2 centre = i.positionWS.xy - (i.uv - .5) * worldPerUv;
+                    float2 tileCell = _UniformStone.x > 0
+                        ? floor((centre - _UniformStone.zw) / max(_UniformStone.x, .0001)) : floor(centre);
+                    half pulse = UltroniumPulse(tileCell, _Time.y, _UltroniumPulsesPerMinute);
+                    half peak = max(main.r, max(main.g, main.b));
+                    half facets = pow(smoothstep(.15h, .85h, peak), 3.0h);
+                    lit.rgb += (RichColor(main.rgb) * (.22h + .6h * facets) + _UltroniumGlowColor.rgb * facets * .1h)
+                        * _UltroniumGlow * pulse * main.a;
+                }
                 return lit;
             }
 

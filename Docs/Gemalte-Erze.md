@@ -1,6 +1,6 @@
 # Gemalte Erze – Einzelblöcke statt Shader-Adern
 
-Stand 18.10.2026. Kupfer (Branch `claude/copper-tiles`, Aufräumen `claude/copper-cleanup`), Eisen, Silber, Gold, Kohle, Platin, Titan, Wolfram, Mythril, oranger Granat, Smaragd, Rubin und Diamant (Branch `claude/iron-tiles`) sind gemalte Erzblöcke. Offen ist nur noch Ultronium. Die übrigen Erze laufen noch über die Shader-Adern.
+Stand 18.10.2026. Kupfer (Branch `claude/copper-tiles`, Aufräumen `claude/copper-cleanup`), Eisen, Silber, Gold, Kohle, Platin, Titan, Wolfram, Mythril, oranger Granat, Smaragd, Rubin, Diamant und Ultronium (Branch `claude/iron-tiles`) sind gemalte Erzblöcke: alle vierzehn Erzarten. Die übrigen Erze laufen noch über die Shader-Adern.
 
 ## Prinzip
 
@@ -28,26 +28,27 @@ Stand 18.10.2026. Kupfer (Branch `claude/copper-tiles`, Aufräumen `claude/coppe
 | Smaragd | „E2 Smaragd hell“: kurze, helle grüne Kristallgruppen mit mintfarbenen Spitzen | `Blocks/Sprites/Ores/Painted/Emerald/Emerald_{Small,Medium,Large}_0N.png` | `Ores/Emerald/Emerald_08..14` |
 | Rubin | „R3 Rubin-Kristalle blutrot“: grosse, kräftige blutrote Prismen ohne dunkles Gestein, helle Kanten | `Blocks/Sprites/Ores/Painted/Ruby/Ruby_{Small,Medium,Large}_0N.png` | `Ores/Ruby/Ruby_08..14` |
 | Diamant | „D2 Diamant-Oktaeder“: gedrungene, kühl-weisse Kristalle mit blauen Glanzflächen | `Blocks/Sprites/Ores/Painted/Diamond/Diamond_{Small,Medium,Large}_0N.png` | `Ores/Diamond/Diamond_08..14` |
+| Ultronium | „U2d Krone Monolith“: grosse, aufrechte dunkelviolette Kristalle mit Magenta-Kanten, türkisem Kern und Funkeln; leuchtet und pulsiert (Marker 253/255) | `Blocks/Sprites/Ores/Painted/Ultronium/Ultronium_{Small,Medium,Large}_0N.png` | `Ores/Ultronium/Ultronium_08..14` |
 
 Nummerierung je Erz: `_08..10_large`, `_11..12_small`, `_13..14_medium`. Eingetragen im Block-Asset (`smallOre`/`mediumOre`/`richOre`, Anzahl unverändert 2/2/3) und im `SaveAssetCatalog`. Die alten Tiles `_01..07` bleiben erhalten; alte Spielstände laden sie weiterhin und zeigen sie als Shader-Ader.
 
 ## Technik
 
-- **Marker:** Gemalte Erz-Tiles haben Tile-Farbe Alpha 254/255 (`PaintedOre.hlsl`). Ultronium nutzt Alpha < 0,99, normale Erze genau 1 – die Fälle überschneiden sich nicht. Der Wert wird mit dem Spielstand gespeichert und wiederhergestellt.
+- **Marker:** Gemalte Erz-Tiles haben Tile-Farbe Alpha 254/255 (`PaintedOre.hlsl`), leuchtende gemalte Erze (Ultronium) 253/255: Sie bekommen im Shader zusätzlich das pulsierende Ultronium-Leuchten (`_UltroniumGlow`, `_UltroniumPulsesPerMinute`, ein Puls pro Kachel) und bleiben auch im Dunkeln sichtbar. Ultronium nutzt Alpha < 0,99, normale Erze genau 1 – die Fälle überschneiden sich nicht. Der Wert wird mit dem Spielstand gespeichert und wiederhergestellt.
 - **Shader** `OreOverlayLit.shader`: Tiles mit Marker gehen in `PaintedOreFragment` – Sprite in Originalgrösse (Erzgrösse `oreScale` wird zurückgerechnet), normal beleuchtet wie das Gestein, kein Reflexions-Boost, kein Schimmer. Überhang wird über die Belegungsmaske (`_TestOccupancy`) abgeschnitten, damit nichts in abgebaute Zellen hängt.
 - Die frühere Kupfer-Infrastruktur (`CopperVeinTopology`, `CopperOutlineField`, `CopperDepositPlans`, `CopperCoverField`, `CopperSurfaceRenderer`, `Copper*.hlsl`, Texturen unter `Resources/OreVeins/Copper*`, Kupfer-Surface-Pass) ist entfernt. Das Spielstand-Feld `copperVisuals` gibt es nicht mehr; `JsonUtility` überspringt es in älteren Spielständen.
-- **Paletten-Optionen:** neben Farben und Glanz auch `porosity`/`poreScale` (runde Poren), `banding`/`bandWidth` (Schichtbänder) und `pebbles` (braune Steinchen rund um die Brocken, bei Kohle aus); `shape` (0 facettiert, 1 glatt poliert, 2 Würfelkristalle, 3 Kristallgruppen aus Prismen mit `crystalElong`/`crystalSpread`/`crystalDensity`/`crystalScale`); `iridescence` (Anlauffarben); `detail`/`edgeWhite`/`speckles` (zusätzliche weisse Facetten, Kanten, Sprenkel).
+- **Paletten-Optionen:** neben Farben und Glanz auch `porosity`/`poreScale` (runde Poren), `banding`/`bandWidth` (Schichtbänder) und `pebbles` (braune Steinchen rund um die Brocken, bei Kohle aus); `shape` (0 facettiert, 1 glatt poliert, 2 Würfelkristalle, 3 Kristallgruppen aus Prismen mit `crystalElong`/`crystalSpread`/`crystalDensity`/`crystalScale`); `iridescence` (Anlauffarben); `detail`/`edgeWhite`/`speckles` (zusätzliche weisse Facetten, Kanten, Sprenkel); `edgeGlow`/`rimGlow`/`coreGlow` mit `edgeColor`/`coreColor` (farbig gemalte Leuchtkanten und heller Kern). Zu grosse Kristallgruppen werden automatisch nach unten verschoben, damit die Spitzen im Bild bleiben.
 - **Neues Erz umstellen:** In `Tests/PaintedOreArt.cs` eine `Palette` anlegen (Haupt- und Akzentfarben, Glanz, Form-Parameter), mit `PreviewLarge` eine Vorschau rendern, danach `InstallOre(BlockType, Ordner, Tile-Präfix, Palette, Seeds…)` aufrufen (Sprites, Tiles mit Marker, Block-Asset, `SaveAssetCatalog`).
 
 ## Erzeugung und Prüfung
 
-- Generator: `Tests/PaintedOreArt.cs` (Paletten `Copper`, `IronPalettes`, `GoldSilverPalettes`, `GoldG2Palettes`; `InstallLarge`/`InstallSmallMedium` für Kupfer, `InstallOre` mit `InstallIron`/`InstallSilver`/`InstallGold`/`InstallCoal`/`InstallPlatinum`/`InstallTitanium`/`InstallTungsten`/`InstallMythril`/`InstallGarnet`/`InstallEmerald`/`InstallRuby`/`InstallDiamond`, Vorschauen `PreviewLarge`, `PreviewSmallMedium`). Erneutes Ausführen einer `Install…`-Methode überschreibt die installierten Sprites. Ältere Kupfer-Fassung: `Tests/Archive/CopperOreArt.cs`.
-- Designrunden und Vergleichsbilder: `Design/OreVeins/CopperLargeV3/`, `Design/OreVeins/CopperSmallMedium/`, `Design/OreVeins/IronLarge/`, `Design/OreVeins/GoldSilverLarge/`, `Design/OreVeins/CoalLarge/`, `Design/OreVeins/PlatinumLarge/`, `Design/OreVeins/TitaniumLarge/`, `Design/OreVeins/TungstenMythrilLarge/`, `Design/OreVeins/GemsLarge/`, Laufzeitbilder `Design/OreVeins/PaintedOres/Runtime/`.
+- Generator: `Tests/PaintedOreArt.cs` (Paletten `Copper`, `IronPalettes`, `GoldSilverPalettes`, `GoldG2Palettes`; `InstallLarge`/`InstallSmallMedium` für Kupfer, `InstallOre` mit `InstallIron`/`InstallSilver`/`InstallGold`/`InstallCoal`/`InstallPlatinum`/`InstallTitanium`/`InstallTungsten`/`InstallMythril`/`InstallGarnet`/`InstallEmerald`/`InstallRuby`/`InstallDiamond`/`InstallUltronium`, Vorschauen `PreviewLarge`, `PreviewSmallMedium`). Erneutes Ausführen einer `Install…`-Methode überschreibt die installierten Sprites. Ältere Kupfer-Fassung: `Tests/Archive/CopperOreArt.cs`.
+- Designrunden und Vergleichsbilder: `Design/OreVeins/CopperLargeV3/`, `Design/OreVeins/CopperSmallMedium/`, `Design/OreVeins/IronLarge/`, `Design/OreVeins/GoldSilverLarge/`, `Design/OreVeins/CoalLarge/`, `Design/OreVeins/PlatinumLarge/`, `Design/OreVeins/TitaniumLarge/`, `Design/OreVeins/TungstenMythrilLarge/`, `Design/OreVeins/GemsLarge/`, `Design/OreVeins/UltroniumLarge/`, Laufzeitbilder `Design/OreVeins/PaintedOres/Runtime/`.
 - Prüfskript: `Tests/PaintedOreRuntimeChecks.cs` (frischer Play-Start ab Homescreen, isoliertes Testprofil): alle generierten Kupfer-, Eisen-, Silber-, Gold-, Kohle-, Platin-, Titan-, Wolfram- und Mythrilzellen gemalt (seltene Erze wie Mythril können in der Testwelt fehlen und werden dann über platzierte Testblöcke geprüft), alle Gesteinsarten, Überhang an abgebauten Zellen, Abbau, Speichern/Laden, Kamera.
 
 ## Offen
 
-- Ultronium umstellen (eigener Shader-Pfad mit Pulsieren, Marker-Alpha < 0,99).
+- Die alten Ultronium-Tiles (Alpha 0,98) laufen weiter über den alten Ultronium-Pfad und erscheinen nur noch in alten Spielständen.
 - Mythril und Smaragd sind in keiner Map-Ebene eingetragen und werden derzeit nicht generiert.
 - Granat und Kupfer sowie Diamant und Titan liegen farblich nahe beieinander; im Spiel vergleichen.
 - Kohle ist auf dem dunkelsten Gestein (Ebene 4) eher dezent; bei Bedarf hellere Schichtbänder oder eine Kontur.

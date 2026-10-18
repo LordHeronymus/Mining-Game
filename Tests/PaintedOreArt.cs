@@ -97,6 +97,7 @@ public static class PaintedOreArt
 
     // Target of InstallTiles; copper by default, switched by InstallIron.
     static string oreSpriteDir = SpriteDir, oreSpritePrefix = "Copper", oreTileDir = TileDir, oreTilePrefix = "Kupfer";
+    static float oreMarkerAlpha = 254f / 255f;
 
     static OreTile[] InstallTiles(string size, string suffix, int firstNumber, OreRichness richness, int[] seeds,
         Func<int, List<Piece>> build, string designDir, Block block, OreTile reference, List<string> report)
@@ -127,7 +128,7 @@ public static class PaintedOreArt
             var tile = UnityEditor.AssetDatabase.LoadAssetAtPath<OreTile>(tilePath);
             bool create = !tile; if (create) tile = ScriptableObject.CreateInstance<OreTile>();
             tile.sprite = sprite;
-            tile.color = new Color(1, 1, 1, 254f / 255f); // painted-ore marker for OreOverlayLit
+            tile.color = new Color(1, 1, 1, oreMarkerAlpha); // painted-ore marker for OreOverlayLit (253/255 = glowing)
             tile.flags = reference.flags; tile.colliderType = reference.colliderType; tile.transform = Matrix4x4.identity;
             tile.block = block; tile.richness = richness;
             if (create) UnityEditor.AssetDatabase.CreateAsset(tile, tilePath); else UnityEditor.EditorUtility.SetDirty(tile);
@@ -248,6 +249,7 @@ public static class PaintedOreArt
         public float edgeWhite, edgeWidth = 1.7f, speckles, speckleScale = 9; // white facet edges, white flecks
         public float bounceStrength = .08f, iridescence; // warm reflected light on shadow facets, anodised heat tint
         public float crystalElong = 1.8f, crystalSpread = 60, crystalDensity = 1, crystalScale = 1; // shape 3 (crystal sprays)
+        public Color edgeColor = Color.white, coreColor = Color.white; public float edgeGlow, rimGlow, coreGlow; // coloured glowing edges/rim, bright core
     }
     static Color C(float r, float g, float b) => new Color(r, g, b);
 
@@ -657,6 +659,58 @@ public static class PaintedOreArt
     public static string InstallMythril() => InstallOre(BlockType.MythrilOre, "Mythril", "Mythril", Array.Find(TungstenMythrilPalettes, p => p.name == "M2-Mythril-Tiefblau"),
         MythrilLargeSeeds, MythrilSmallSeeds, MythrilMediumSeeds, TungstenMythrilOut + "/Installed");
 
+    // ---------- ultronium: the ultimate ore, old colour theme (dark violet body, magenta glowing edges, cyan core) ----------
+
+    const string UltroniumOut = "Design/OreVeins/UltroniumLarge";
+    static readonly Color[] UltViolet = { C(.03f, .01f, .06f), C(.1f, .04f, .18f), C(.22f, .1f, .36f), C(.4f, .24f, .58f), C(.72f, .6f, .92f) };
+    static readonly Color[] UltCyan = { C(0, .06f, .1f), C(.02f, .25f, .35f), C(.1f, .6f, .72f), C(.4f, .9f, .95f), C(.85f, 1, 1) };
+    static Palette Ult(Palette p, float edgeGlow, float edgeWidth, float rimGlow, float coreGlow, float speckles = 0)
+    {
+        Set(p, UltViolet, UltCyan, C(.9f, .8f, 1), C(.9f, .3f, 1), .8f, 1f, 70, p.accentThreshold, 60);
+        p.edgeColor = C(.98f, .3f, 1); p.coreColor = C(.4f, .95f, 1); p.edgeGlow = edgeGlow; p.edgeWidth = edgeWidth;
+        p.rimGlow = rimGlow; p.coreGlow = coreGlow; p.speckles = speckles; p.pebbles = false; p.bounceStrength = .25f; return p;
+    }
+    static readonly Palette[] UltroniumPalettes =
+    {
+        Ult(WithShape(new Palette { name = "U1-Ultronium-Kristallherz", accentThreshold = .68f }, 0, 1.05f, .45f, .3f, .1f, 9), .95f, 2.6f, .5f, .7f),       // like the old sprite: faceted chunks
+        Ult(Scale(Ti("U2-Ultronium-Krone", 2.3f, 55, 1.2f, .25f, 0), 1.35f), .95f, 2.4f, .45f, .65f),                                                           // tall crystal crown
+        Ult(WithShape(new Palette { name = "U3-Ultronium-Gitter", accentThreshold = .6f }, 2, 1f, .4f, 0, .1f, 16), 1f, 3f, .5f, .7f),                       // geometric cubes, energy lattice
+        Ult(WithShape(new Palette { name = "U4-Ultronium-Energiekern", accentThreshold = .8f }, 1, .85f, .3f, .35f, .1f, 16), 1f, 2.6f, .9f, 1f, .35f),       // polished orbs with glowing cores and sparkles
+    };
+    // Ultronium preview (four looks): PreviewUltroniumLarge.
+    // U2 follow-up: crystal crowns with different proportions and glow balance.
+    static Palette U2(string name, float elong, float spread, float density, float scale, float accent, float edge, float rim, float core, float speckles = 0)
+    {
+        var p = Ult(Scale(Ti(name, elong, spread, density, .25f, 0), scale), edge, 2.4f, rim, core, speckles);
+        p.accentThreshold = accent; return p;
+    }
+    static readonly Palette[] UltroniumCrownPalettes =
+    {
+        U2("U2a-Krone-hoch", 3f, 45, 1.2f, 1.45f, .8f, .95f, .45f, .6f),                 // taller, slimmer crown, mostly violet with cyan hearts
+        U2("U2b-Krone-dunkel", 2.3f, 55, 1.2f, 1.35f, 1.01f, 1f, .6f, .5f),              // dark violet crystals, glow only in the core and along magenta edges
+        U2("U2c-Krone-Faecher", 2.5f, 80, 1.5f, 1.3f, .7f, .95f, .45f, .65f, .2f),       // wide fan of many crystals, cyan tips, sparkles
+        U2("U2d-Krone-Monolith", 2.7f, 30, .8f, 1.7f, .82f, 1f, .55f, .75f, .15f),       // few large upright monoliths with a bright core
+    };
+    // Ultronium crown follow-up: PreviewUltroniumCrown.
+    // Ultronium install (applied 19.10.2026): scheme U2d, Large seed 3712 is the approved preview; tiles carry the glowing marker.
+    static readonly int[] UltroniumLargeSeeds = { 3712, 3815, 3826 }, UltroniumSmallSeeds = { 3911, 3922 }, UltroniumMediumSeeds = { 3933, 3944 };
+    public static string Main() => InstallUltronium();
+    public static string InstallUltronium()
+    {
+        oreMarkerAlpha = 253f / 255f;
+        return InstallOre(BlockType.UltroniumOre, "Ultronium", "Ultronium", Array.Find(UltroniumCrownPalettes, p => p.name == "U2d-Krone-Monolith"),
+            UltroniumLargeSeeds, UltroniumSmallSeeds, UltroniumMediumSeeds, UltroniumOut + "/Installed");
+    }
+    public static string PreviewUltroniumCrown() => PreviewLarge(UltroniumCrownPalettes, new[] { 3712, 3712, 3712, 3712 }, UltroniumOut + "/U2", new[]
+    {
+        "Design/OreVeins/UltroniumLarge/Sources/U2-Ultronium-Krone.png",
+    });
+    public static string PreviewUltroniumLarge() => PreviewLarge(UltroniumPalettes, new[] { 3701, 3712, 3723, 3734 }, UltroniumOut, new[]
+    {
+        "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Mythril/Mythril_Large_01.png",
+        "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Platinum/Platinum_Large_01.png",
+    });
+
     // Ruby follow-up: no dark host rock, deep blood red that looks precious (bright scarlet glints, white sparkling edges).
     static readonly Color[] RubyBlood = { C(.1f, 0, .01f), C(.32f, .01f, .03f), C(.6f, .02f, .05f), C(.84f, .08f, .08f), C(1, .38f, .3f) };
     static readonly Palette[] RubyPalettes =
@@ -674,7 +728,7 @@ public static class PaintedOreArt
     // Ruby (R3) and diamond (D2) install (applied 19.10.2026); Large seeds 2867 and 2812 are the approved previews.
     static readonly int[] RubyLargeSeeds = { 2867, 3315, 3326 }, RubySmallSeeds = { 3411, 3422 }, RubyMediumSeeds = { 3433, 3444 };
     static readonly int[] DiamondLargeSeeds = { 2812, 3515, 3526 }, DiamondSmallSeeds = { 3611, 3622 }, DiamondMediumSeeds = { 3633, 3644 };
-    public static string Main() => InstallRuby() + "\n" + InstallDiamond();
+    // Ruby and diamond install: InstallRuby, InstallDiamond.
     public static string InstallRuby() => InstallOre(BlockType.RubyOre, "Ruby", "Ruby", Array.Find(RubyPalettes, p => p.name == "R3-Rubin-Kristalle-blutrot"),
         RubyLargeSeeds, RubySmallSeeds, RubyMediumSeeds, GemsOut + "/Installed");
     public static string InstallDiamond() => InstallOre(BlockType.DiamondOre, "Diamond", "Diamond", Array.Find(GemPalettes, p => p.name == "D2-Diamant-Oktaeder"),
@@ -714,7 +768,7 @@ public static class PaintedOreArt
             block.smallOre = InstallTiles("Small", "small", 11, OreRichness.Small, smallSeeds, SmallNest, designDir, block, reference, report);
             block.mediumOre = InstallTiles("Medium", "medium", 13, OreRichness.Medium, mediumSeeds, MediumNest, designDir, block, reference, report);
         }
-        finally { Active = Copper; oreSpriteDir = SpriteDir; oreSpritePrefix = "Copper"; oreTileDir = TileDir; oreTilePrefix = "Kupfer"; }
+        finally { Active = Copper; oreSpriteDir = SpriteDir; oreSpritePrefix = "Copper"; oreTileDir = TileDir; oreTilePrefix = "Kupfer"; oreMarkerAlpha = 254f / 255f; }
         return Finish(block, report);
     }
 
@@ -916,6 +970,7 @@ public static class PaintedOreArt
     static void CrystalSpray(List<Piece> list, System.Random rng, Vector2 c, float r, float z)
     {
         int count = Mathf.Clamp(1 + (int)(r / 22 * Active.crystalDensity), 1, 7);
+        var spray = new List<Piece>(); float top = float.MinValue;
         for (int k = 0; k < count; k++)
         {
             float deg = 90 + (k == 0 ? (float)(rng.NextDouble() - .5) * 24 : (float)(rng.NextDouble() * 2 - 1) * Active.crystalSpread);
@@ -924,9 +979,16 @@ public static class PaintedOreArt
             var dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a)); var side = new Vector2(-dir.y, dir.x);
             var centre = c + dir * size * elong * .45f + side * (k == 0 ? 0 : (float)(rng.NextDouble() - .5) * r * .9f);
             bool accent = rng.NextDouble() > Active.accentThreshold;
-            list.Add(Crystal(new Piece { kind = Kind.Crystal, mat = accent ? Mat.Cuprite : Mat.Copper, c = centre, r = size, rot = a, elong = elong,
-                z = z + 30 - k * 4 + (float)rng.NextDouble() * 8, seed = rng.Next() }, rng));
+            var p = Crystal(new Piece { kind = Kind.Crystal, mat = accent ? Mat.Cuprite : Mat.Copper, c = centre, r = size, rot = a, elong = elong,
+                z = z + 30 - k * 4 + (float)rng.NextDouble() * 8, seed = rng.Next() }, rng);
+            float cs = Mathf.Cos(a), sn = Mathf.Sin(a);
+            foreach (var v in p.poly) top = Mathf.Max(top, centre.y + v.x * sn + v.y * cs);
+            spray.Add(p);
         }
+        // Big sprays would poke out of the canvas and get their tips cut off: shift them down so every tip stays inside.
+        float overflow = top - (Canvas - 14);
+        if (overflow > 0) foreach (var p in spray) p.c.y -= overflow;
+        list.AddRange(spray);
     }
 
     static List<Piece> LargeThree()
@@ -1287,12 +1349,22 @@ public static class PaintedOreArt
         if (h.p.style == 2) s = Smooth(.35f, .45f, s) * .75f; // hard-edged cartoon highlight
         c += Active.specTint * s;
         if (mat == Mat.Copper || mat == Mat.Cuprite) c += Active.bounce * Active.bounceStrength * Mathf.Pow(1 - n.z, 2) * (ndl < 0 ? 1 : .3f); // warm bounce on the shadow side
-        // Facet seams: bright where the facet faces the light, dark otherwise.
-        if (h.p.style == 1 ? h.edge < Active.edgeWidth : h.edge < 1.3f)
+        // Glowing core: facets get brighter toward the middle of each chunk/crystal (painted, not emissive).
+        if ((mat == Mat.Copper || mat == Mat.Cuprite) && Active.coreGlow > 0)
         {
-            if (ndl > .2f) { c *= h.p.style == 1 ? Active.seamBright : 1.16f; c = Color.Lerp(c, Color.white * .97f, Active.edgeWhite); }
+            float core = Mathf.Pow(Smooth(.75f, .05f, h.d), 2f) * (.65f + .35f * Fbm(w.x / 18, w.y / 18, 333));
+            c = Color.Lerp(c, Active.coreColor * (.75f + .5f * Mathf.Clamp01(ndl + .4f)), core * Active.coreGlow);
+        }
+        // Facet seams: bright where the facet faces the light, dark otherwise. Glowing edges are coloured on every side.
+        bool glow = Active.edgeGlow > 0;
+        if (h.p.style == 1 || glow ? h.edge < Active.edgeWidth : h.edge < 1.3f)
+        {
+            if (glow) c = Color.Lerp(c, Active.edgeColor, Active.edgeGlow * Smooth(Active.edgeWidth, Active.edgeWidth * .3f, h.edge));
+            else if (ndl > .2f) { c *= h.p.style == 1 ? Active.seamBright : 1.16f; c = Color.Lerp(c, Color.white * .97f, Active.edgeWhite); }
             else c *= h.p.style == 1 ? .72f : .82f;
         }
+        // Glowing rim along the silhouette (smooth shapes have no facet edges).
+        if (glow && Active.rimGlow > 0) c = Color.Lerp(c, Active.edgeColor, Active.rimGlow * Smooth(-7, -1.2f, h.sd));
         // Dark silhouette line keeps the ore readable against busy stone.
         c *= Mathf.Lerp(.55f, 1, Smooth(-2.2f, -.4f, -h.sd) );
         c *= 1 + noiseAmt * (Fbm(w.x / 6, w.y / 6, 77) - .5f) * 2;
