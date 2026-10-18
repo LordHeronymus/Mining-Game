@@ -62,6 +62,7 @@ public static partial class MetaProgression
     static void Reset()
     {
         ClearSession(); testDirectory = null; Changed = null; ChallengeTestUtc = null;
+        ChallengeSettingsOverride = null; ChallengeTimeZoneOverride = null; CreditedBlocks = 0;
     }
     static void ClearSession()
     {
@@ -69,7 +70,7 @@ public static partial class MetaProgression
         if (profile != null && dirty && !writeBlocked) SaveCurrentProfile();
         profile = null; run = null; loadedPath = null; dirty = writeBlocked = recovered = milestonePending = false;
         loadedSelection = null; loadedSelectionMode = -1;
-        LastError = null; saveElapsed = 0d; ClearCaches();
+        LastError = null; saveElapsed = 0d; ClearCaches(); transientRounds.Clear(); awardedStages = null;
         mainLength = mainWriteTicks = -1; mainValid = false;
         changeGeneration = pendingGeneration = pendingRevision = 0; saveAfterPending = false;
     }
@@ -197,7 +198,7 @@ public static partial class MetaProgression
         if (run.objectiveIds.Count == 0) SelectObjectives(run);
         foreach (string milestone in run.milestones)
             if (MetaProgressionCatalog.Challenge(milestone)?.permanent == true && !profile.completedMilestones.Contains(milestone)) profile.completedMilestones.Add(milestone);
-        RebuildCaches(); RecalculateTotal(); MarkDirty(); Save(); Changed?.Invoke();
+        RebuildCaches(); CheckMilestoneStages(); RecalculateTotal(); MarkDirty(); Save(); Changed?.Invoke();
     }
     static MetaProgressionSettings CurrentSettings()
         => (GpsSettings.Preferences.metaProgression ?? new MetaProgressionSettings()).Sanitized();
@@ -240,7 +241,8 @@ public static partial class MetaProgression
         depth = Mathf.Clamp(depth, 0, 100000);
         if (depth <= run.maxDepth) return;
         int previous = run.maxDepth / run.settings.depthStep, next = depth / run.settings.depthStep;
-        RecordPeriodProgress("depth", depth - run.maxDepth);
+        // Only the increase of the run's maximum: loading a deep save completes nothing.
+        RecordChallenge("depth-gain", depth - run.maxDepth);
         run.maxDepth = depth;
         double reward = 0d;
         for (int step = previous; step < next; step++) reward += Math.Min(run.settings.depthMaxXp, run.settings.depthBaseXp + step * (double)run.settings.depthIncrementXp);
@@ -252,7 +254,7 @@ public static partial class MetaProgression
         string id = regionX + ":" + regionY;
         if (!regions.Add(id)) return;
         run.regions.Add(id);
-        RecordPeriodProgress("regions", 1);
+        RecordChallenge("regions", 1);
         double depthFactor = 1d + Math.Min(1d, Math.Max(0, depth) / 1000d) * .6d;
         AwardProgress(run.settings.explorationXp * depthFactor); CheckChallenges(); MarkChanged(false);
     }
@@ -276,34 +278,20 @@ public static partial class MetaProgression
         }
         int next = (int)Math.Min(10000000L, counter.count + (long)count);
         double reward = weight * (Math.Pow(next, .8d) - Math.Pow(counter.count, .8d)) * run.settings.resourceXpMultiplier;
-        RecordPeriodProgress("resources", next - counter.count);
-        if (item == Item.Copper) RecordPeriodProgress("copper", next - counter.count);
-        if (item == Item.Coal) RecordPeriodProgress("coal", next - counter.count);
-        if (item == Item.Iron) RecordPeriodProgress("iron", next - counter.count);
-        if (item == Item.Silver) RecordPeriodProgress("silver", next - counter.count);
-        if (item == Item.Gold) RecordPeriodProgress("gold", next - counter.count);
-        if (item == Item.Platinum) RecordPeriodProgress("platinum", next - counter.count);
-        if (item == Item.Titanium) RecordPeriodProgress("titanium", next - counter.count);
-        if (item == Item.Obsidian) RecordPeriodProgress("obsidian", next - counter.count);
-        if (item == Item.OrangeGarnet || item == Item.Ruby || item == Item.Emerald || item == Item.Diamond)
-        {
-            RecordPeriodProgress("gems", next - counter.count);
-            RecordPeriodProgress("gems-xxl", next - counter.count);
-            RecordXxlGem(item, next - counter.count);
+        long gained = next - counter.count;
+        if (gained > 0) {
+            RecordChallenge("resources", gained);
+            RecordChallenge("ore", gained, (int)item);
+            if (IsGem(item)) RecordChallenge("gems", gained);
+            int bit = ChallengeCatalog.OreBit((int)item);
+            if (bit >= 0) RecordChallengeDistinct("ore-variety", bit);
         }
-        if (item == Item.Ultronium) RecordPeriodProgress("ultronium-xxl", next - counter.count);
-        if (item == Item.OrangeGarnet) RecordPeriodProgress("garnet", next - counter.count);
-        if (item == Item.Ruby) RecordPeriodProgress("ruby", next - counter.count);
-        if (item == Item.Emerald) RecordPeriodProgress("emerald", next - counter.count);
-        if (item == Item.Diamond) RecordPeriodProgress("diamond", next - counter.count);
-        RecordSpecificXxlOre(item, next - counter.count);
         counter.count = next; AwardProgress(reward); CheckChallenges(); MarkChanged(false);
     }
     public static void RecordDiscovery(string id)
     {
         if (!HasRun() || run.ended || string.IsNullOrWhiteSpace(id) || id.Length > 160 || !discoveries.Add(id)) return;
-        run.discoveries.Add(id); RecordPeriodProgress("discoveries", 1);
-        if (id == "altar") RecordPeriodProgress("altars-found", 1);
+        run.discoveries.Add(id); RecordChallenge("discoveries", 1);
         AwardProgress(run.settings.discoveryXp); CheckChallenges(); MarkChanged(true);
     }
     public static void RecordCraft(Item item)
@@ -360,6 +348,7 @@ public static partial class MetaProgression
         // Save is performed after RecalculateTotal in MarkChanged, so one transaction includes
         // both the permanent flag and its XP. A crash cannot leave one without the other.
         if (milestone) milestonePending = true;
+        CheckMilestoneStages();
     }
     static int Metric(string metric, MetaRunState state)
     {
@@ -386,9 +375,9 @@ public static partial class MetaProgression
         // accumulate from deduplicated run ledgers that survive deletion of save slots.
         if (unit == "exotics") return profile.runs.SelectMany(r => r.exoticCrafts).Distinct().Count();
         Item? ore = unit switch { "coal" => Item.Coal, "copper" => Item.Copper, "iron" => Item.Iron,
-            "silver" => Item.Silver, "gold" => Item.Gold, _ => null };
-        long total = ore.HasValue
-            ? profile.runs.Sum(r => r.resources.Where(c => c.item == (int)ore.Value).Sum(c => (long)c.count))
+            "silver" => Item.Silver, "gold" => Item.Gold, "ultronium" => Item.Ultronium, _ => null };
+        long total = unit == "gems" ? profile.runs.Sum(r => r.resources.Where(c => IsGem((Item)c.item)).Sum(c => (long)c.count))
+            : ore.HasValue ? profile.runs.Sum(r => r.resources.Where(c => c.item == (int)ore.Value).Sum(c => (long)c.count))
             : profile.runs.Sum(r => (long)Metric(unit, r));
         return (int)Math.Min(int.MaxValue, total);
     }
@@ -443,6 +432,22 @@ public static partial class MetaProgression
             if (current == null) target.resources.Add(new MetaResourceCount { item = counter.item, count = counter.count });
             else current.count = Math.Max(current.count, counter.count);
         }
+        MergeTallies(target, saved);
+    }
+    // A tally's value follows the world save (0 if the save lacks it); its peak survives every reload.
+    static void MergeTallies(MetaRunState target, MetaRunState saved)
+    {
+        var merged = new List<MetaRunTally>(); var ids = new HashSet<string>();
+        var existing = target.tallies ?? new List<MetaRunTally>();
+        if (saved.tallies != null) foreach (var tally in saved.tallies) {
+            if (tally == null || !ids.Add(tally.id)) continue;
+            var known = existing.Find(value => value != null && value.id == tally.id);
+            merged.Add(new MetaRunTally { id = tally.id, value = tally.value,
+                peak = Math.Max(Math.Max(tally.peak, tally.value), known == null ? 0 : Math.Max(known.peak, known.value)) });
+        }
+        foreach (var tally in existing)
+            if (tally != null && ids.Add(tally.id)) merged.Add(new MetaRunTally { id = tally.id, peak = Math.Max(tally.peak, tally.value) });
+        target.tallies = RepairTallies(merged);
     }
     static void Union<T>(List<T> target, List<T> source)
     {
@@ -562,6 +567,9 @@ public static partial class MetaProgression
             upgrades = CopyRanks(source.upgrades), completedMilestones = new List<string>(source.completedMilestones),
             reachedMiningLayer = source.reachedMiningLayer, periodRewardXp = source.periodRewardXp, challengeClockUtc = source.challengeClockUtc,
             challengePeriods = source.challengePeriods.Select(state => Clone(state)).ToList(),
+            challengeRounds = source.challengeRounds.Where(round => round != null).Select(round => Clone(round)).ToList(),
+            milestoneAwards = source.milestoneAwards.Where(award => award != null).Select(award => new MetaMilestoneAward { id = award.id, xp = award.xp }).ToList(),
+            lifetimeCounters = source.lifetimeCounters.Where(counter => counter != null).Select(counter => new MetaLifetimeCounter { id = counter.id, value = counter.value }).ToList(),
             runs = new List<MetaRunState>(source.runs.Count) };
         foreach (var state in source.runs) {
             var copied = new MetaRunState { version = state.version, runId = state.runId, loadout = CopyLoadout(state.loadout),
@@ -571,7 +579,8 @@ public static partial class MetaProgression
                 ended = state.ended, won = state.won, resourceSources = new List<string>(state.resourceSources), regions = new List<string>(state.regions),
                 discoveries = new List<string>(state.discoveries), crafts = new List<int>(state.crafts), exoticCrafts = new List<int>(state.exoticCrafts),
                 objectiveIds = new List<string>(state.objectiveIds), completedObjectives = new List<string>(state.completedObjectives), milestones = new List<string>(state.milestones),
-                resources = new List<MetaResourceCount>(state.resources.Count) };
+                resources = new List<MetaResourceCount>(state.resources.Count),
+                tallies = (state.tallies ?? new List<MetaRunTally>()).Where(tally => tally != null).Select(tally => new MetaRunTally { id = tally.id, value = tally.value, peak = tally.peak }).ToList() };
             foreach (var resource in state.resources) copied.resources.Add(new MetaResourceCount { item = resource.item, count = resource.count });
             copy.runs.Add(copied);
         }
@@ -646,6 +655,8 @@ public static partial class MetaProgression
         if (value.objectiveIds.Any(id => MetaProgressionCatalog.Challenge(id)?.permanent != false) || value.completedObjectives.Any(id => !value.objectiveIds.Contains(id)) || value.milestones.Any(id => MetaProgressionCatalog.Challenge(id)?.permanent != true)) return false;
         if (value.challengeXp != value.completedObjectives.Sum(id => (long)MetaProgressionCatalog.Challenge(id).xp) || value.milestoneXp != value.milestones.Sum(id => (long)MetaProgressionCatalog.Challenge(id).xp)) return false;
         value.settings = value.settings.Sanitized();
+        // Challenge tallies are repaired, never a reason to reject a world save.
+        value.tallies = RepairTallies(value.tallies);
         var loadout = value.loadout;
         const float tolerance = .01f;
         return InRange(loadout.healthMultiplier, 1f, 1f + MaxUpgradeEffect("health") + tolerance) && InRange(loadout.energyMultiplier, 1f, 1f + MaxUpgradeEffect("energy") + tolerance) &&

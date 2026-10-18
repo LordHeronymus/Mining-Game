@@ -61,10 +61,10 @@ public static class MetaProgressionCatalog
 
     public static readonly MetaChallengeDefinition[] Challenges = {
         new("depth-100", "Unter der Oberfläche", "depth", 100, 250, true),
-        new("depth-250", "Tiefer Vorstoß", "depth", 250, 600, true),
+        new("depth-250", "Tiefer Vorstoss", "depth", 250, 600, true),
         new("depth-500", "Im Herzen des Berges", "depth", 500, 1200, true),
         new("depth-1000", "Abgrundforscher", "depth", 1000, 2400, true),
-        new("exotic-first", "Fremde Künste", "exotics", 1, 400, true),
+        new("exotic-first", "Erste fremde Kunst", "exotics", 1, 400, true),
         new("gem-variety", "Edelsteinjäger", "rare", 3, 800, true),
         new("first-victory", "Tiefenhalls Vermächtnis", "victory", 1, 3000, true),
         new("lifetime-ores", "Bergbaulegende", "total-resources", 5000, 4000, true),
@@ -80,12 +80,12 @@ public static class MetaProgressionCatalog
         new("run-ores", "Adern des Reichtums", "variety", 3, 180, false, 0),
         new("run-miner", "Reiche Ausbeute", "resources", 100, 220, false, 0),
         new("run-crafter", "Geschmiedetes Glück", "crafts", 3, 180, false, 0),
-        new("run-map", "Unbetretene Pfade", "regions", 12, 240, false, 1),
-        new("run-depth", "Ruf der Tiefe", "depth", 150, 280, false, 1),
+        new("run-map", "Pfadfinder", "regions", 12, 240, false, 1),
+        new("run-depth", "Erster Abstieg", "depth", 150, 280, false, 1),
         new("run-discovery", "Flüstern im Stein", "discoveries", 2, 240, false, 1),
         new("run-deep", "Mut zum Abgrund", "depth", 400, 500, false, 2),
         new("run-rare", "Seltene Schätze", "rare", 2, 400, false, 2),
-        new("run-exotic", "Fremde Künste", "exotics", 1, 400, false, 2)
+        new("run-exotic", "Exotische Werkbank", "exotics", 1, 400, false, 2)
     };
 
     static readonly long[] thresholds = BuildThresholds();
