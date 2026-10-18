@@ -56,7 +56,7 @@ Cloud-Sessions (Claude Code im Browser/App) und der Workflow „Unity Checks“ 
 
 ## Editor-UI für Play-Mode
 
-Im `-batchmode` rendert der Editor kein Game-Fenster, daher kehren Coroutinen mit `WaitForEndOfFrame` (Blenden, Ladebildschirm) nie zurück und Play-Checks hängen (Lauf #7: Laden 300 s bei Stufe 0). Enthält der Plan Play-Checks, startet `run-in-container.sh` Unity deshalb ohne `-batchmode` mit Editor-Oberfläche auf dem virtuellen Xvfb-Bildschirm (Workflow-Eingabe `editorui`: auto/1/0). Ein `timeout` (Standard 100 min, `CI_UNITY_TIMEOUT`) beendet Unity, falls ein Dialog blockiert.
+Im `-batchmode` rendert der Editor kein Game-Fenster, daher kehren Coroutinen mit `WaitForEndOfFrame` (Blenden, Ladebildschirm) nie zurück und Play-Checks hängen (Lauf #7: Laden 300 s bei Stufe 0). Enthält der Plan Play-Checks, startet `run-in-container.sh` Unity deshalb ohne `-batchmode` mit Editor-Oberfläche auf dem virtuellen Xvfb-Bildschirm (Workflow-Eingabe `editorui`: auto/1/0). Ein `timeout` (Standard 100 min, `CI_UNITY_TIMEOUT`) beendet Unity, falls etwas blockiert. Ein Wächter macht Bildschirmfotos (Artefakt `screens/`), protokolliert Fenstertitel (`windows.log`, Ende auch im Job-Log) und drückt Enter auf einem Dialog, wenn das Editor-Log 90 s still steht.
 
 ## Suite `performance`
 

@@ -59,18 +59,60 @@ ARGS=(-projectPath "$PWD" -executeMethod MiningGame.CI.CiCheckRunner.Run
       -ciPlan "$ARTIFACTS/plan.json" -ciOutput "$ARTIFACTS" -logFile "$ARTIFACTS/editor.log")
 # Guard against modal dialogs or hangs: the runner's own timeouts cannot fire if the editor blocks.
 LIMIT="${CI_UNITY_TIMEOUT:-100m}"
-if [ "${CI_NOGRAPHICS:-0}" != "1" ] && command -v xvfb-run >/dev/null; then
+
+# Screenshots and window titles of the virtual display, plus a cautious dialog handler: when the
+# editor log has not grown for a while, the frontmost window that is not the main editor window
+# gets Return (default button). Everything is logged to Artifacts/ for diagnosis.
+watch_display() {
+  local pid=$1 n=0 last_size=-1 idle=0
+  mkdir -p "$ARTIFACTS/screens"
+  while kill -0 "$pid" 2>/dev/null; do
+    sleep 15; n=$((n + 1))
+    if [ $n -le 8 ] || [ $((n % 8)) -eq 0 ]; then
+      command -v import >/dev/null && import -window root "$ARTIFACTS/screens/$(printf %04d $((n * 15)))s.png" 2>/dev/null
+    fi
+    command -v xdotool >/dev/null || continue
+    titles=$(for w in $(xdotool search --onlyvisible --name '.' 2>/dev/null); do echo "$w $(xdotool getwindowname "$w" 2>/dev/null)"; done)
+    echo "== $(date +%T)" >> "$ARTIFACTS/windows.log"; echo "$titles" >> "$ARTIFACTS/windows.log"
+    size=$(stat -c %s "$ARTIFACTS/editor.log" 2>/dev/null || echo 0)
+    if [ "$size" = "$last_size" ]; then idle=$((idle + 15)); else idle=0; last_size=$size; fi
+    if [ $idle -ge 90 ]; then
+      dialog=$(echo "$titles" | grep -v -E ' - Unity [0-9]|^$' | tail -n 1 | cut -d' ' -f1)
+      if [ -n "$dialog" ]; then
+        echo "$(date +%T) editor log idle ${idle}s, pressing Return on window $dialog" | tee -a "$ARTIFACTS/windows.log"
+        command -v import >/dev/null && import -window root "$ARTIFACTS/screens/dialog-$(date +%H%M%S).png" 2>/dev/null
+        xdotool windowactivate --sync "$dialog" key --clearmodifiers Return 2>/dev/null
+        idle=0
+      fi
+    fi
+  done
+}
+
+if [ "${CI_NOGRAPHICS:-0}" != "1" ] && command -v Xvfb >/dev/null; then
   if [ "$UI_MODE" = 1 ]; then
     echo "Starting Unity with editor UI on virtual display"
-    timeout "$LIMIT" xvfb-run -a -s "-screen 0 1920x1080x24" "$UNITY" "${ARGS[@]}"
+    (apt-get -qq update && apt-get -qq install -y --no-install-recommends xdotool imagemagick) > "$ARTIFACTS/apt.log" 2>&1 \
+      || echo "X tools not installed (see apt.log)"
+    Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+    XVFB_PID=$!
+    export DISPLAY=:99
+    sleep 2
+    timeout "$LIMIT" "$UNITY" "${ARGS[@]}" &
+    UNITY_PID=$!
+    watch_display $UNITY_PID &
+    wait $UNITY_PID
+    code=$?
+    kill $XVFB_PID 2>/dev/null
   else
     timeout "$LIMIT" xvfb-run -a -s "-screen 0 1920x1080x24" "$UNITY" -batchmode "${ARGS[@]}"
+    code=$?
   fi
 else
   timeout "$LIMIT" "$UNITY" -batchmode -nographics "${ARGS[@]}"
+  code=$?
 fi
-code=$?
 echo "Unity exit code: $code"
+if [ -f "$ARTIFACTS/windows.log" ]; then echo "--- Fenster auf dem virtuellen Bildschirm (letzte Einträge)"; tail -n 40 "$ARTIFACTS/windows.log"; fi
 
 # Free the seat again so it does not count as an extra machine.
 if [ "$STRATEGY" = serial ]; then
