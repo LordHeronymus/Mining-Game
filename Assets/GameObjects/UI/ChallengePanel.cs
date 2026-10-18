@@ -9,10 +9,16 @@ public sealed class ChallengePanel : MonoBehaviour
 {
     static readonly CultureInfo German = CultureInfo.GetCultureInfo("de-DE");
     static readonly Color Muted = new Color32(193, 178, 152, 255);
-    RectTransform layout, content;
+    // Tab order must not follow the enum: Monthly was appended after Lifetime.
+    static readonly ChallengePeriod[] Periods = { ChallengePeriod.Daily, ChallengePeriod.Weekly, ChallengePeriod.Monthly, ChallengePeriod.Lifetime };
+    static readonly string[] TabNames = { "Täglich", "Wöchentlich", "Monatlich", "Langzeit" };
+    static readonly string[] TierNames = { "Leicht", "Mittel", "Schwer", "XXL", "Projekt" };
+    static readonly Color[] TierColors = { new Color32(112, 196, 96, 255), new Color32(86, 156, 232, 255), new Color32(170, 108, 230, 255), ProgressionArt.Gold, ProgressionArt.Gold };
+    static readonly string[] MedalNames = { "", "Bronze", "Silber", "Gold", "Platin" };
+    static readonly Color[] MedalColors = { Muted, new Color32(205, 127, 50, 255), new Color32(196, 204, 212, 255), ProgressionArt.Gold, new Color32(229, 228, 226, 255) };
+    RectTransform layout, content, bonusBar;
     ScrollRect scroll;
-    TextMeshProUGUI total;
-    TextMeshProUGUI countdown;
+    TextMeshProUGUI countdown, bonus;
     readonly System.Collections.Generic.List<Button> tabs = new();
     ChallengePeriod period;
     int countdownSecond = -1;
@@ -21,7 +27,7 @@ public sealed class ChallengePanel : MonoBehaviour
     bool refresh, closing;
     float height;
 
-    internal static ChallengePanel Create(Transform owner, Action onBack)
+    public static ChallengePanel Create(Transform owner, Action onBack)
     {
         var root = HomeUi.Panel("Challenges", owner);
         var panel = root.gameObject.AddComponent<ChallengePanel>();
@@ -36,20 +42,20 @@ public sealed class ChallengePanel : MonoBehaviour
         HomeUi.Image("Board Backing", layout, Vector2.zero, new Vector2(1410, 830)).color = new Color32(23, 12, 7, 255);
         var board = HomeUi.Image("Board", layout, Vector2.zero, new Vector2(1500, 900), "Panel");
         board.pixelsPerUnitMultiplier = 1.5f; board.raycastTarget = true;
-        Text("Title", layout, "Herausforderungen", new Vector2(-180, 356), new Vector2(935, 70), 48, TextAlignmentOptions.Left);
-        total = Text("Completed Count", layout, "", new Vector2(510, 350), new Vector2(290, 40), 24, TextAlignmentOptions.Right);
-        total.color = ProgressionArt.Gold;
-        countdown = Text("Countdown", layout, "", new Vector2(185, 350), new Vector2(315, 40), 23, TextAlignmentOptions.Right);
+        Text("Title", layout, "Herausforderungen", new Vector2(-388, 356), new Vector2(520, 70), 48, TextAlignmentOptions.Left);
+        countdown = Text("Countdown", layout, "", new Vector2(497, 350), new Vector2(316, 40), 23, TextAlignmentOptions.Right);
         var hourglass=HomeUi.Image("Hourglass",countdown.transform,new Vector2(-150,0),new Vector2(16,27));
         hourglass.sprite=ChallengeArt.Sprite(8);hourglass.preserveAspect=true;
-        for(int i=0;i<3;i++) {
-            var selected=(ChallengePeriod)i;
-            var tab=HomeUi.Button("Challenge Tab "+selected,layout,new[]{"Täglich","Wöchentlich","Langzeit"}[i],
-                new Vector2(-540+i*248,295),new Vector2(237,46),()=>SetPeriod(selected));
+        for(int i=0;i<Periods.Length;i++) {
+            var selected=Periods[i];
+            var tab=HomeUi.Button("Challenge Tab "+selected,layout,TabNames[i],new Vector2(-540+i*248,295),new Vector2(237,46),()=>SetPeriod(selected));
             UpgradeTileArt.StyleTab(tab);
             tab.GetComponent<HomeButtonFeedback>().selectionManaged=true;
             tabs.Add(tab);
         }
+        bonusBar = HomeUi.Rect("Bonus Bar", layout, new Vector2(497, 295), new Vector2(316, 46));
+        bonus = Text("Bonus", bonusBar, "", new Vector2(0, 9), new Vector2(316, 28), 21, TextAlignmentOptions.Center);
+        bonus.color = ProgressionArt.Gold;
         HomeUi.Image("Header Rule", layout, new Vector2(0, 269), new Vector2(1310, 2)).color = ProgressionArt.Gold;
 
         var viewport = HomeUi.Rect("Challenges Viewport", layout, new Vector2(0, -36), new Vector2(1320, 588));
@@ -80,8 +86,9 @@ public sealed class ChallengePanel : MonoBehaviour
     void SetPeriod(ChallengePeriod value)
     {
         period=value;countdownSecond=-1;
-        for(int i=0;i<tabs.Count;i++) tabs[i].GetComponent<HomeButtonFeedback>().primary=i==(int)period;
-        Rebuild();scroll.StopMovement();scroll.verticalNormalizedPosition=1;
+        for(int i=0;i<tabs.Count;i++) tabs[i].GetComponent<HomeButtonFeedback>().primary=Periods[i]==period;
+        Rebuild();periodEnd=MetaProgression.ChallengePeriodEnd(period);
+        scroll.StopMovement();scroll.verticalNormalizedPosition=1;
         UpdateCountdown();
     }
 
@@ -93,32 +100,58 @@ public sealed class ChallengePanel : MonoBehaviour
         int seconds=(int)Math.Ceiling(remaining.TotalSeconds);
         if(countdownSecond==seconds)return;
         countdownSecond=seconds;
-        countdown.text=period==ChallengePeriod.Weekly
-            ? $"Neu in {remaining.Days} T {remaining.Hours:00}:{remaining.Minutes:00}:{remaining.Seconds:00}"
-            : $"Neu in {(int)remaining.TotalHours:00}:{remaining.Minutes:00}:{remaining.Seconds:00}";
+        countdown.text=period==ChallengePeriod.Daily
+            ? $"Neu in {(int)remaining.TotalHours:00}:{remaining.Minutes:00}:{remaining.Seconds:00}"
+            : $"Neu in {remaining.Days} T {remaining.Hours:00}:{remaining.Minutes:00}:{remaining.Seconds:00}";
         countdown.ForceMeshUpdate();
         ((RectTransform)countdown.transform.Find("Hourglass")).anchoredPosition=
             new Vector2(countdown.textBounds.min.x-17,0);
-        // A rollover increases the remaining time; rebuild also while the game is paused.
-        long end=MetaProgression.Profile.challengePeriods.Find(p=>p.period==(int)period)?.endUtc??0;
+        // A rollover draws a new round with a later end; rebuild also while the game is paused.
+        long end=MetaProgression.ChallengePeriodEnd(period);
         if(periodEnd!=end){periodEnd=end;refresh=true;}
     }
 
     void Rebuild()
     {
         float position = scroll.verticalNormalizedPosition;
-        foreach (Transform child in content) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
-        var challenges = MetaProgression.GetChallenges(period);
-        int completed = 0; height = 12;
-        foreach (var challenge in challenges) if (challenge.completed) completed++;
-        total.text = completed + " / " + challenges.Length + " abgeschlossen";
-        for(int index=0;index<challenges.Length;index++) {
-            var tile=At("Challenge "+challenges[index].id,new Vector2((index%3-1)*446,-12-index/3*292-138),new Vector2(420,276));
-            BuildTile(tile,challenges[index]);
+        for (int i = content.childCount - 1; i >= 0; i--) if (content.GetChild(i).gameObject.activeSelf) Discard(content.GetChild(i).gameObject);
+        var challenges = MetaProgression.GetChallenges(period) ?? Array.Empty<MetaChallengeProgress>();
+        var project = period == ChallengePeriod.Monthly ? MetaProgression.GetMonthlyProject() : null;
+        // The project spans the first row; the regular tiles follow in the next one.
+        int slot = 0;
+        if (project != null) { BuildProject(At("Challenge " + project.id, new Vector2(0, -150), new Vector2(1312, 276)), project); slot = 3; }
+        foreach (var challenge in challenges) {
+            if (challenge == null || project != null && challenge.kind == 1) continue;
+            BuildTile(At("Challenge " + challenge.id, new Vector2((slot % 3 - 1) * 446, -12 - slot / 3 * 292 - 138), new Vector2(420, 276)), challenge);
+            slot++;
         }
-        height=((challenges.Length+2)/3)*292+4;
+        height = ((slot + 2) / 3) * 292 + 4;
+        UpdateBonus();
         content.sizeDelta = new Vector2(0, Mathf.Max(scroll.viewport.rect.height, height));
         Canvas.ForceUpdateCanvases(); scroll.verticalNormalizedPosition = position;
+    }
+
+    void UpdateBonus()
+    {
+        for (int i = bonusBar.childCount - 1; i >= 0; i--) {
+            var child = bonusBar.GetChild(i);
+            if (child != bonus.transform && child.gameObject.activeSelf) Discard(child.gameObject);
+        }
+        var state = MetaProgression.ChallengeBonus(period) ?? new MetaChallengeBonus();
+        int done = Mathf.Max(0, state.done), required = Mathf.Max(0, state.required);
+        string xp = Xp(state.xp);
+        bonus.text = period == ChallengePeriod.Lifetime ? done + " / " + required + " Stufen erreicht"
+            : state.awarded && state.xp > 0 ? "Bonus erhalten · " + xp
+            : done + " / " + required + " erledigt" + (state.xp > 0 ? " → " + xp : "");
+        bool pips = period != ChallengePeriod.Lifetime && required > 0 && required <= 16;
+        bonus.rectTransform.anchoredPosition = new Vector2(0, pips ? 9 : 0);
+        if (!pips) return;
+        float step = Mathf.Min(44, 300f / required);
+        for (int i = 0; i < required; i++) {
+            var socket = HomeUi.Image("Bonus Pip " + i, bonusBar, new Vector2((i - (required - 1) * .5f) * step, -14), new Vector2(step - 3, 12));
+            socket.sprite = UpgradeTileArt.RankSprite(false);
+            if (i < done) HomeUi.Image("Fill", socket.transform, Vector2.zero, new Vector2(step - 3, 12)).sprite = UpgradeTileArt.RankSprite(true);
+        }
     }
 
     RectTransform At(string name, Vector2 position, Vector2 size)
@@ -129,74 +162,139 @@ public sealed class ChallengePanel : MonoBehaviour
 
     static void BuildTile(RectTransform tile, MetaChallengeProgress challenge)
     {
+        Frame(tile);
+        string label = null; Color tone = Muted; bool tint = false;
+        int stages = Mathf.Max(1, challenge.stages), reached = Mathf.Clamp(challenge.medal, 0, stages);
+        if (challenge.kind == 2) {
+            // Rim shows the medal already earned, the plaque the medal that the shown XP pays for.
+            int next = Mathf.Min(reached + 1, stages);
+            label = MedalNames[Mathf.Clamp(next, 1, 4)]; tone = MedalColors[Mathf.Clamp(next, 1, 4)]; tint = true;
+            if (reached > 0) Rim(tile, MedalColors[Mathf.Min(reached, 4)]);
+        } else if (challenge.kind == 3) label = "Run-Ziel";
+        else if (challenge.tier >= 0 && challenge.tier < TierNames.Length) {
+            label = TierNames[challenge.tier]; tone = TierColors[challenge.tier]; tint = true; Rim(tile, tone);
+        }
+        var icon = HomeUi.Image("Icon", tile, new Vector2(-20, 0), new Vector2(180, 140));
+        icon.sprite = Icon(challenge); icon.preserveAspect = true;
+        Plaque(tile, new Vector2(137, 58), challenge.xp, label, tone, tint);
+        if (challenge.kind == 2)
+            Text("Stage Count", tile, "Stufe " + reached + "/" + stages, new Vector2(137, 14), new Vector2(124, 28), 20, TextAlignmentOptions.Center)
+                .color = MedalColors[Mathf.Min(reached, 4)];
+        var name = Text("Name", tile, challenge.name, new Vector2(0, 106), new Vector2(366, 38), 28, TextAlignmentOptions.Center);
+        name.fontSizeMin=24;
+        Text("Progress", tile, Counter(challenge.current, challenge.target, Unit(challenge)), new Vector2(0, -80), new Vector2(370, 29), 21, TextAlignmentOptions.Center);
+        Track(tile, new Vector2(0, -109), 376, challenge.target > 0 ? (float)challenge.current / challenge.target : 0);
+        if (challenge.completed) Completed(tile, new Vector2(175, -104));
+    }
+
+    static void BuildProject(RectTransform tile, MetaChallengeProgress project)
+    {
+        Frame(tile); Rim(tile, TierColors[(int)ChallengeTier.Project]);
+        var icon = HomeUi.Image("Icon", tile, new Vector2(-540, 8), new Vector2(190, 146));
+        icon.sprite = Icon(project); icon.preserveAspect = true;
+        Text("Kicker", tile, "Monatsprojekt", new Vector2(-540, -98), new Vector2(200, 30), 22, TextAlignmentOptions.Center).color = ProgressionArt.Gold;
+        Text("Name", tile, project.name, new Vector2(105, 106), new Vector2(1000, 38), 28, TextAlignmentOptions.Center).fontSizeMin = 24;
+        string unit = Unit(project);
+        var targets = project.stageTargets != null && project.stageTargets.Length > 0 ? project.stageTargets : new[] { project.target };
+        var rewards = project.stageTargets != null && project.stageTargets.Length > 0 ? project.stageXp : new[] { project.xp };
+        int count = Mathf.Min(targets.Length, 5), previous = 0;
+        Text("Progress", tile, Counter(project.current, targets[count - 1], unit), new Vector2(105, -104), new Vector2(700, 29), 21, TextAlignmentOptions.Center);
+        // Stages share x -410..620 with 26-unit gaps (3 stages: 326 wide at -247, 105, 457).
+        float width = (1030f - 26 * (count - 1)) / count, inner = width - 26;
+        for (int i = 0; i < count; i++) {
+            int target = targets[i]; float x = -410 + width * .5f + i * (width + 26);
+            var stage = HomeUi.Rect("Stage " + (i + 1), tile, new Vector2(x, 0), new Vector2(width, 200));
+            Text("Stage Name", stage, "Etappe " + (i + 1), new Vector2(0, 66), new Vector2(inner, 30), 22, TextAlignmentOptions.Center);
+            Text("Target", stage, Number(target) + (unit.Length > 0 ? " " + unit : ""), new Vector2(0, 36), new Vector2(inner, 28), 20, TextAlignmentOptions.Center).color = Muted;
+            Plaque(stage, new Vector2(0, 2), rewards != null && i < rewards.Length ? rewards[i] : 0, null, TierColors[Mathf.Min(i, 2)], true);
+            Track(stage, new Vector2(0, -52), inner, target > previous ? (float)(project.current - previous) / (target - previous) : project.current >= target ? 1 : 0);
+            if (i < project.stagesDone || project.current >= target) Completed(stage, new Vector2(width * .5f - 28, -48));
+            if (i < count - 1) Text("Arrow", tile, "→", new Vector2(x + width * .5f + 13, -52), new Vector2(30, 32), 24, TextAlignmentOptions.Center).color = ProgressionArt.Gold;
+            previous = target;
+        }
+    }
+
+    static void Frame(RectTransform tile)
+    {
         var frame = HomeUi.Image("Frame", tile, Vector2.zero, tile.sizeDelta, "SelectionCardNormal");
         frame.pixelsPerUnitMultiplier = 5.5f;
         ChallengeArt.DarkWood(frame);
-        string metric = challenge.metric ?? MetaProgressionCatalog.Challenge(challenge.id)?.metric;
-        var icon = HomeUi.Image("Icon", tile, new Vector2(-12, 1), new Vector2(190, 146));
-        icon.sprite = Icon(metric); icon.preserveAspect = true;
-        var plaque=HomeUi.Image("XP Plaque",tile,new Vector2(137,61),new Vector2(112,34),"SelectionCardNormal");
-        plaque.pixelsPerUnitMultiplier=14;ChallengeArt.DarkWood(plaque);
-        Text("Reward", plaque.transform, "+" + challenge.xp.ToString("N0", German) + " XP", Vector2.zero, new Vector2(98,28), 21, TextAlignmentOptions.Center).color = ProgressionArt.Gold;
-        var name = Text("Name", tile, challenge.name, new Vector2(0, 106), new Vector2(366, 38), 28, TextAlignmentOptions.Center);
-        name.fontSizeMin=24;
-        Text("Progress", tile, Counter(challenge, metric), new Vector2(0, -80), new Vector2(370, 29), 21, TextAlignmentOptions.Center);
-        var track = HomeUi.Image("Progress Track", tile, new Vector2(0, -109), new Vector2(376, 39));
+    }
+
+    // Inset 16 puts the line on the inner wood lip of the card frame.
+    static void Rim(RectTransform tile, Color color)
+    {
+        var rim = HomeUi.Rect("Tier Rim", tile, Vector2.zero, tile.sizeDelta - new Vector2(32, 32)).gameObject.AddComponent<ChallengeTierRim>();
+        rim.color = color; rim.raycastTarget = false;
+    }
+
+    static void Plaque(Transform parent, Vector2 position, int xp, string label, Color tone, bool tint)
+    {
+        bool tier = !string.IsNullOrEmpty(label);
+        var plaque = HomeUi.Image("XP Plaque", parent, position, new Vector2(124, tier ? 56 : 34), "SelectionCardNormal");
+        plaque.pixelsPerUnitMultiplier = 14; ChallengeArt.DarkWood(plaque);
+        if (tint) plaque.color = Color.Lerp(Color.white, tone, .6f);
+        if (tier) {
+            var text = Text("Tier", plaque.transform, label, new Vector2(0, 13), new Vector2(108, 22), 16, TextAlignmentOptions.Center);
+            text.fontSizeMin = 12; text.color = tone;
+        }
+        Text("Reward", plaque.transform, Xp(xp), new Vector2(0, tier ? -9 : 0), new Vector2(110, 28), 21, TextAlignmentOptions.Center).color = ProgressionArt.Gold;
+    }
+
+    static void Track(Transform parent, Vector2 position, float width, float progress)
+    {
+        var track = HomeUi.Image("Progress Track", parent, position, new Vector2(width, 39));
         track.sprite=ChallengeArt.Sprite(6);track.type=Image.Type.Sliced;track.pixelsPerUnitMultiplier=2.5f;
-        var interior=HomeUi.Rect("Interior",track.transform,Vector2.zero,new Vector2(308,16));
-        var fillRect=HomeUi.Rect("Progress Fill",interior,Vector2.zero,Vector2.zero);
-        fillRect.anchorMin=Vector2.zero;
-        fillRect.anchorMax=new Vector2(challenge.target>0?Mathf.Clamp01((float)challenge.current/challenge.target):0,1);
-        fillRect.offsetMin=fillRect.offsetMax=Vector2.zero;
-        fillRect.gameObject.AddComponent<ChallengeGoldFill>().raycastTarget=false;
-        if (challenge.completed) {
-            var mark=HomeUi.Image("Completed",tile,new Vector2(175,-104),new Vector2(51,51));
-            mark.sprite=ChallengeArt.Sprite(7);mark.preserveAspect=true;
-        }
+        var interior=HomeUi.Rect("Interior",track.transform,Vector2.zero,new Vector2(width-68,16));
+        var fill=HomeUi.Rect("Progress Fill",interior,Vector2.zero,Vector2.zero);
+        fill.anchorMin=Vector2.zero;fill.anchorMax=new Vector2(Mathf.Clamp01(progress),1);
+        fill.offsetMin=fill.offsetMax=Vector2.zero;
+        fill.gameObject.AddComponent<ChallengeGoldFill>().raycastTarget=false;
     }
 
-    static Sprite Icon(string metric)
+    static void Completed(Transform parent, Vector2 position)
     {
-        if (metric.StartsWith("total-", StringComparison.Ordinal)) metric=metric.Substring(6);
-        if (metric == "artifacts-xxl" || metric == "specific-artifact-xxl" || metric == "artifacts" || metric == "specific-artifact") {
-            foreach (var sprite in Resources.LoadAll<Sprite>("ArtifactPointMedallions"))
-                if (sprite.name == "ArtifactPoint_Sun") return sprite;
-        }
-        int part=metric switch {"resources"=>0,"depth"=>1,"crafted"=>2,"copper"=>3,"sales"=>4,"torches"=>5,_=>-1};
-        if(part>=0)return ChallengeArt.Sprite(part);
-        Item item = metric switch {
-            "depth" => Item.IronLadder, "rare" or "gems" or "gems-xxl" or "diamond" => Item.Diamond, "garnet" => Item.OrangeGarnet, "ruby" => Item.Ruby, "emerald" => Item.Emerald, "victory" or "ultronium-xxl" => Item.Ultronium,
-            "visited-layers" or "revealed-cells" or "altars-found" or "artifact-variety" or "round-trip" => Item.Torche, "exotics" => Item.PercussionHammer, "regions" or "discoveries" => Item.Torche,
-            "pickaxe-upgrades" or "tools-crafted" or "crafts" => Item.IronPickaxe, "gear-crafted" or "carrying-upgrades" => Item.Backpack, "dynamite-crafted" => Item.Dynamite, "medkits-crafted" => Item.Medkit, "energy-upgrades" => Item.EnergyStorageVial, "resources" => Item.Gold, "coal"=>Item.Coal, "iron"=>Item.Iron,
-            "silver"=>Item.Silver,"gold"=>Item.Gold,"ladders"=>Item.IronLadder,
-            "platinum"=>Item.Platinum,"titanium"=>Item.Titanium,"obsidian"=>Item.Obsidian,
-            "trees"=>Item.Axe,"grass"=>Item.Scythe,"surface-blocks" or "l2-blocks" or "l3-blocks" or "l4-xxl" or "l5-xxl"=>Item.CopperPickaxe,"artifacts"=>Item.Torche, _ => Item.CopperPickaxe
-        };
-        var catalog = Resources.Load<ItemCatalog>("ItemCatalog");
-        if (catalog) foreach (var entry in catalog.items) if (entry && entry.item == item && entry.icon) return entry.icon;
-        return ProgressionArt.Sprite(0);
+        var mark=HomeUi.Image("Completed",parent,position,new Vector2(51,51));
+        mark.sprite=ChallengeArt.Sprite(7);mark.preserveAspect=true;
     }
 
-    static string Counter(MetaChallengeProgress challenge, string metric)
+    static Sprite Icon(MetaChallengeProgress challenge)
     {
-        if (metric.StartsWith("total-", StringComparison.Ordinal)) metric=metric.Substring(6);
-        string unit = metric switch {
-            "visited-layers"=>"Schichten besucht", "revealed-cells"=>"Kartenfelder", "altars-found"=>"Altäre entdeckt", "artifact-variety"=>"Artefakttypen", "round-trip"=>challenge.subject ?? "Expeditionen", "depth" => "Blöcke Tiefe", "regions" => "Gebiete", "variety" => "Erzarten", "resources" => "Erze", "gems" or "gems-xxl" => "Edelsteine", "ultronium-xxl" => "Ultronium", "garnet" => "Granat", "ruby" => "Rubine", "emerald" => "Smaragde", "diamond" => "Diamanten",
-            "crafted"=>"Gegenstände hergestellt","copper"=>"Kupfer","sales"=>"$ verkauft","torches"=>"Fackeln hergestellt",
-            "dynamite-crafted"=>"Dynamit hergestellt", "medkits-crafted"=>"Medkits hergestellt", "pickaxe-upgrades"=>"Spitzhacken-Upgrades", "tools-crafted"=>"Werkzeuge hergestellt", "gear-crafted"=>"Ausrüstungen hergestellt", "energy-upgrades"=>"Energie-Upgrades", "carrying-upgrades"=>"Traglast-Upgrades", "crafts" => "Herstellungen", "exotics" => "Exotics hergestellt", "rare" => "seltene Erzarten",
-            "discoveries" => "Entdeckungen", "victory" => "Siege",
-            "coal"=>"Kohle","iron"=>"Eisen","silver"=>"Silber","gold"=>"Gold","ladders"=>"Leitern hergestellt",
-            "platinum"=>"Platin","titanium"=>"Titan","obsidian"=>"Obsidian",
-            "trees"=>"Bäume gefällt","grass"=>"Grasbüschel geerntet","surface-blocks"=>"Oberflächenblöcke","l2-blocks"=>"Blöcke aus L2","l3-blocks"=>"Blöcke aus L3","l4-xxl"=>"Blöcke aus L4","l5-xxl"=>"Blöcke aus L5","artifacts" or "specific-artifact" or "artifacts-xxl" or "specific-artifact-xxl"=>"Artefakte abgebaut", _ => ""
-        };
-        if ((metric == "specific-artifact" || metric == "specific-artifact-xxl") && !string.IsNullOrEmpty(challenge.subject)) unit = challenge.subject;
-        return challenge.current.ToString("N0", German) + " / " + challenge.target.ToString("N0", German) + " " + unit;
+        var sprite = ChallengeArt.Icon(challenge.icon);
+        if (!sprite && !string.IsNullOrEmpty(challenge.metric)) sprite = ChallengeArt.Icon(ChallengeCatalog.Icon(null, challenge.metric, -1));
+        if (!sprite) sprite = ChallengeArt.Sprite(0);
+        return sprite ? sprite : ProgressionArt.Sprite(0);
     }
+
+    static string Unit(MetaChallengeProgress challenge)
+    {
+        if (!string.IsNullOrEmpty(challenge.unit)) return challenge.unit;
+        if (!string.IsNullOrEmpty(challenge.subject)) return challenge.subject;
+        string metric = challenge.metric ?? "";
+        string unit = metric.Length > 0 ? ChallengeCatalog.Unit(null, metric, -1) : null;
+        if (!string.IsNullOrEmpty(unit)) return unit;
+        if (metric.StartsWith("total-", StringComparison.Ordinal)) metric = metric.Substring(6);
+        return metric switch {
+            "blocks" => "Blöcke abgebaut", "resources" => "Erze", "depth" => "Blöcke Tiefe", "regions" => "Gebiete", "discoveries" => "Entdeckungen",
+            "crafted" => "Gegenstände hergestellt", "crafts" => "Herstellungen", "exotics" => "Exotics hergestellt", "sales" => "$ Verkaufserlös",
+            "artifacts" => "Artefakte geborgen", "variety" => "Erzarten", "rare" => "seltene Erzarten", "victory" => "Siege", _ => ""
+        };
+    }
+
+    static string Counter(int current, int target, string unit) => Number(current) + " / " + Number(target) + (unit.Length > 0 ? " " + unit : "");
+    static string Number(int value) => value.ToString("N0", German);
+    static string Xp(int xp) => "+" + Number(xp) + " XP";
 
     static TextMeshProUGUI Text(string name, Transform parent, string value, Vector2 position, Vector2 size, float font, TextAlignmentOptions alignment)
     {
         var text = ProgressionArt.Text(name, parent, value, position, size, font);
         text.richText = false; text.alignment = alignment; return text;
+    }
+    // Hidden at once because tests count active children; edit-mode previews cannot use Destroy.
+    static void Discard(GameObject target)
+    {
+        target.SetActive(false);
+        if (Application.isPlaying) Destroy(target); else DestroyImmediate(target);
     }
     void OnProgressChanged() => refresh = true;
     void OnRectTransformDimensionsChange() => HomeUi.Fit(layout, new Vector2(1600, 980));
@@ -216,7 +314,9 @@ public sealed class ChallengePanel : MonoBehaviour
     public void Close()
     {
         if (closing) return; closing = true;
-        gameObject.SetActive(false); Destroy(gameObject); onBack?.Invoke();
+        // OnDestroy is not sent in edit mode, so unsubscribe here as well.
+        MetaProgression.Changed -= OnProgressChanged;
+        Discard(gameObject); onBack?.Invoke();
     }
     void OnDestroy() => MetaProgression.Changed -= OnProgressChanged;
 }
