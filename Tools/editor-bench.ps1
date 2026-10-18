@@ -6,7 +6,7 @@
 
 .EXAMPLE
   Tools/editor-bench.sh status
-  Tools/editor-bench.sh checkout claude/mein-thema -Id q1a2b3     # nur als oberster Eintrag der Warteschlange
+  Tools/editor-bench.sh checkout claude/mein-thema -Id q1a2b3     # nur als oberster Eintrag; -Discard verwirft Reste
   Tools/editor-bench.sh release -Id q1a2b3                         # danach; -Discard verwirft Testspuren
 
   Exit-Codes: 0 ok, 1 Fehler, 4 nicht oben in der Warteschlange, 5 Testbank hat Aenderungen.
@@ -96,8 +96,14 @@ switch ($Command) {
             exit 4
         }
         $dirty = Get-Dirty
+        if ($dirty -and $Discard) {
+            $r = Git @('restore', '--staged', '--worktree', '--', '.')
+            if ($r.code -ne 0) { Write-Output "Verwerfen fehlgeschlagen: $($r.err)"; exit 1 }
+            Write-Output 'Testspuren verworfen.'
+            $dirty = Get-Dirty
+        }
         if ($dirty) {
-            Write-Output "Die Testbank hat noch Aenderungen (vom vorherigen Test?). Pruefen mit status, verwerfen mit release -Discard."
+            Write-Output "Die Testbank hat noch Aenderungen (Testspuren oder Unity-Importspuren wie Sprite-IDs in .meta). Pruefen mit status, verwerfen mit checkout -Discard."
             $dirty -split "`n" | ForEach-Object { Write-Output "  $_" }
             exit 5
         }

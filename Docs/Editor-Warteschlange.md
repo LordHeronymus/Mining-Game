@@ -40,13 +40,13 @@ Der Editor von `Mining Game` gehört dem Benutzer. Chats testen im Editor von `M
 git commit -am "WIP: Stand zum Testen"                                       # im eigenen Arbeitsordner
 Tools/editor-queue.sh join -Project "Mining Game 2" -Who "Claude Code: <Aufgabe>" -Purpose "<Zweck>"
 Tools/editor-queue.sh wait -Project "Mining Game 2" -Id <id> -TimeoutMinutes 9
-Tools/editor-bench.sh checkout <branch> -Id <id>                             # nur als oberster Eintrag
+Tools/editor-bench.sh checkout <branch> -Id <id> -Discard                    # nur als oberster Eintrag; -Discard verwirft Reste
 unity command --project-path "C:\IT\GameDev\Git Repos\Mining Game 2" run_script --file Tests/<Name>Checks.cs
 Tools/editor-bench.sh release                                                # -Discard verwirft Testspuren
 Tools/editor-queue.sh leave -Project "Mining Game 2" -Id <id>
 ```
 
-- `checkout` verweigert, wenn der Aufrufer nicht oben in der Warteschlange von `Mining Game 2` steht (Exit 4) oder die Testbank noch Änderungen hat (Exit 5). `status` zeigt Stand, Herkunft und Änderungen.
+- `checkout` verweigert, wenn der Aufrufer nicht oben in der Warteschlange von `Mining Game 2` steht (Exit 4) oder die Testbank noch Änderungen hat (Exit 5); `-Discard` verwirft solche Reste vorher. Unity schreibt beim Laden selbst Importspuren (Sprite-IDs in `.meta`, neu erzeugtes `OreVeins/CopperRockTiles/Combined.asset`, Zeilenenden), die gelten als Testspuren. `status` zeigt Stand, Herkunft und Änderungen.
 - `release` verweigert bei Änderungen (Exit 5): Gewollte Änderungen (z. B. Szenen) auf der Testbank committen, dann zeigt `release` den Befehl `git merge --ff-only <commit>` zum Übernehmen in den eigenen Branch; Testspuren mit `-Discard` verwerfen. Nicht versionierte Dateien (`Library`, `.mcp.json`) bleiben unberührt.
 - Die Unity-Werkzeuge (MCP) eines Chats zeigen auf den Editor aus der nicht versionierten `.mcp.json` seines Ordners (heute in `Mining Game` noch auf den Editor des Benutzers). Deshalb vor MCP-Nutzung `editor_status` prüfen (`projectPath` muss `Mining Game 2` sein), sonst `unity command --project-path "…Mining Game 2"` verwenden.
 - Zustand der Testbank: `Git Repos/EditorQueue/Mining Game 2.bench.json`.
