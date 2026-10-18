@@ -103,7 +103,11 @@ if [ "${CI_NOGRAPHICS:-0}" != "1" ] && command -v Xvfb >/dev/null; then
     echo "--- OpenGL auf dem virtuellen Bildschirm"
     (glxinfo -B 2>&1 || echo "glxinfo nicht verfügbar") | head -n 20
     # -automated: no human at the editor, dialogs are skipped or answered with their default.
-    timeout "$LIMIT" "$UNITY" -automated -force-glcore "${ARGS[@]}" &
+    # Without -batchmode the editor needs a signed-in account (access token); without it, it shows a
+    # sign-in dialog and quits right after "Pro License" (runs #8/#10/#11). Log in like the batch run #4 did.
+    LOGIN=()
+    if [ -n "${UNITY_EMAIL:-}" ] && [ -n "${UNITY_PASSWORD:-}" ]; then LOGIN=(-username "$UNITY_EMAIL" -password "$UNITY_PASSWORD"); fi
+    timeout "$LIMIT" "$UNITY" -automated -force-glcore "${LOGIN[@]}" "${ARGS[@]}" &
     UNITY_PID=$!
     watch_display $UNITY_PID &
     wait $UNITY_PID
