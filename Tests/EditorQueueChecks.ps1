@@ -118,6 +118,34 @@ $lock.Dispose()
 $p.WaitForExit(15000) | Out-Null
 Check 'join nach Freigabe erfolgreich' ($p.HasExited -and $p.ExitCode -eq 0 -and ((Ids) -join ',') -eq 'z')
 
+# 10) Benutzer reiht sich direkt hinter dem Inhaber ein, ohne ihn zu verdraengen.
+Reset
+Q @('join', '-Id', 'a', '-Who', 'Chat A') | Out-Null
+Q @('join', '-Id', 'b', '-Who', 'Chat B') | Out-Null
+$r = Q @('join', '-User', '-Purpose', 'selbst testen')
+Check 'Benutzer an Position 2' ((((Ids) -join ',') -eq 'a,benutzer,b') -and $r.out -match 'Position 2') "ids=$((Ids) -join ',')"
+Reset
+Q @('join', '-User') | Out-Null
+Check 'Benutzer in leerer Liste oben' (((Ids) -join ',') -eq 'benutzer')
+
+# 11) Claude-Code-Hook setzt das Lebenszeichen ueber die Sitzungs-ID (join merkt sie aus CLAUDE_CODE_SESSION_ID).
+Reset
+Q @('join', '-Id', 'a', '-Who', 'Chat A') | Out-Null
+$env:CLAUDE_CODE_SESSION_ID = 'sess-test-1'
+Q @('join', '-Id', 'c', '-Who', 'Chat C') | Out-Null
+Remove-Item Env:CLAUDE_CODE_SESSION_ID
+Start-Sleep -Seconds 4
+$bash = Join-Path $env:ProgramFiles 'Git\bin\bash.exe'
+$env:EDITOR_QUEUE_DIR = $dir; $env:EDITOR_QUEUE_HOOK_SECONDS = '0'
+'{"session_id":"sess-test-1","hook_event_name":"PostToolUse"}' | & $bash (Join-Path $root 'Tools/editor-queue-hook.sh')
+'{"session_id":"unbekannt"}' | & $bash (Join-Path $root 'Tools/editor-queue-hook.sh')
+Remove-Item Env:EDITOR_QUEUE_DIR, Env:EDITOR_QUEUE_HOOK_SECONDS
+Q @('heartbeat', '-Id', 'a') | Out-Null
+$r = Q @('status', '-StaleMinutes', '0.05')
+Check 'Hook haelt wartenden Chat am Leben' (((Ids) -join ',') -eq 'a,c') "ids=$((Ids) -join ',')"
+$r = Q @('heartbeat', '-Session', 'sess-test-1')
+Check 'heartbeat per -Session' ($r.code -eq 0 -and $r.out -match 'Position 2') $r.out
+
 Write-Output ''
 if ($failures -eq 0) { Write-Output 'Alle Editor-Warteschlangen-Checks bestanden.'; exit 0 }
 Write-Output "$failures Check(s) fehlgeschlagen."

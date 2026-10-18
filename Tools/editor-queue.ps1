@@ -54,7 +54,7 @@ if (-not $Project) { $Project = Split-Path $ownerRoot -Leaf }
 if (-not $QueueDir) { $QueueDir = $env:EDITOR_QUEUE_DIR }
 if (-not $QueueDir) { $QueueDir = Join-Path (Split-Path $ownerRoot -Parent) 'EditorQueue' }
 if ($StaleMinutes -le 0 -and $env:EDITOR_QUEUE_STALE_MINUTES) { $StaleMinutes = [double]::Parse($env:EDITOR_QUEUE_STALE_MINUTES, $inv) }
-if ($StaleMinutes -le 0) { $StaleMinutes = 5 }
+if ($StaleMinutes -le 0) { $StaleMinutes = 10 }
 if ($PollSeconds -lt 1) { $PollSeconds = 1 }
 
 if (-not (Test-Path -LiteralPath $QueueDir)) { New-Item -ItemType Directory -Path $QueueDir -Force | Out-Null }
@@ -242,6 +242,10 @@ function Find-Index($list) {
         $hits = @(for ($i = 0; $i -lt $list.Count; $i++) { if ($list[$i].who -eq $Who) { $i } })
         if ($hits.Count -eq 1) { return $hits[0] }
         if ($hits.Count -gt 1) { throw "Mehrere Eintraege mit -Who '$Who'. Bitte -Id angeben." }
+        return -1
+    }
+    if ($Session) {
+        for ($i = 0; $i -lt $list.Count; $i++) { if ($list[$i].session -eq $Session) { return $i } }
     }
     return -1
 }
@@ -286,6 +290,8 @@ switch ($Command) {
     'join' {
         if (-not $Who) { Write-Output 'join braucht -Who "<Chat/Agent: Aufgabe>" (oder -User).'; exit 1 }
         if (-not $Id) { $Id = 'q' + ([guid]::NewGuid().ToString('N').Substring(0, 6)) }
+        # Claude-Code-Sitzung merken: der Hook (Tools/editor-queue-hook.sh) setzt damit automatisch Lebenszeichen.
+        if (-not $Session -and -not $User -and $env:CLAUDE_CODE_SESSION_ID) { $Session = $env:CLAUDE_CODE_SESSION_ID }
         $pos = Invoke-Locked {
             param($list)
             $i = Find-Index $list
@@ -303,10 +309,11 @@ switch ($Command) {
                     kind = $(if ($User) { 'user' } else { 'agent' })
                     joined = $now; heartbeat = $now; topSince = $null
                 }
-                [void]$list.Add($e)
+                # Der Benutzer reiht sich direkt hinter dem aktuellen Inhaber ein, ohne ihn zu verdraengen.
+                if ($User -and $list.Count -ge 1) { $list.Insert(1, $e); $i = 1 }
+                else { [void]$list.Add($e); $i = $list.Count - 1 }
                 if ($list.Count -eq 1) { $e.topSince = $now; Write-Log "OBEN $(Describe $e) darf den Editor nutzen" }
-                Write-Log "JOIN $(Describe $e) - $Purpose"
-                $i = $list.Count - 1
+                Write-Log "JOIN $(Describe $e) - $Purpose (Position $($i + 1))"
             }
             $i + 1
         }
@@ -316,7 +323,7 @@ switch ($Command) {
         exit 0
     }
     'wait' {
-        if (-not $Id -and -not $Who) { Write-Output 'wait braucht -Id.'; exit 1 }
+        if (-not $Id -and -not $Who -and -not $Session) { Write-Output 'wait braucht -Id (oder -Session).'; exit 1 }
         $start = Get-Date
         $lastPos = -1
         while ($true) {
@@ -340,7 +347,7 @@ switch ($Command) {
         }
     }
     'heartbeat' {
-        if (-not $Id -and -not $Who) { Write-Output 'heartbeat braucht -Id.'; exit 1 }
+        if (-not $Id -and -not $Who -and -not $Session) { Write-Output 'heartbeat braucht -Id (oder -Session).'; exit 1 }
         $pos = Invoke-Locked {
             param($list)
             $i = Find-Index $list
@@ -352,7 +359,7 @@ switch ($Command) {
         exit 0
     }
     'leave' {
-        if (-not $Id -and -not $Who) { Write-Output 'leave braucht -Id.'; exit 1 }
+        if (-not $Id -and -not $Who -and -not $Session) { Write-Output 'leave braucht -Id (oder -Session).'; exit 1 }
         $next = Invoke-Locked {
             param($list)
             $i = Find-Index $list
