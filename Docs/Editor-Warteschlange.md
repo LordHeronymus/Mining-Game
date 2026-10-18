@@ -77,7 +77,7 @@ Im Admin-Tool PrivOrg zeigt das Modul **Editor-Warteschlange** (Dev/Owner) alle 
 powershell -NoProfile -ExecutionPolicy Bypass -File Tools/editor-queue-server.ps1
 ```
 
-- **Autostart:** einmal im Ordner `Mining Game` mit `-Install` (Verknüpfung im Windows-Autostart, startet unsichtbar), entfernen mit `-Uninstall`.
+- **Autostart:** `-Install` kopiert `editor-queue.ps1` und den Dienst nach `Git Repos/EditorQueue/bin` (unabhängig von Arbeitsordnern und Testbank) und legt eine Verknüpfung in den Windows-Autostart (startet unsichtbar, mit `-ProjectRoot` auf `Mining Game`). Nach Änderungen an den Skripten `-Install` erneut ausführen; entfernen mit `-Uninstall`.
 - **Gehostetes PrivOrg:** dessen Adresse freigeben, z. B. `-Install -AllowOrigin https://<projekt>.vercel.app` (mehrere mit Komma). `localhost`-Seiten sind immer erlaubt, alle anderen Herkünfte bekommen 403.
 - **Schnittstelle:** `GET /api/queue` (alle Arbeitsordner, je `status -Json`), `POST /api/join|heartbeat|leave` mit `{ "project": "<Ordner>", "purpose": "…" }`, immer als Benutzer (`-User`). Arbeitsordner sind der Projektordner, Geschwister `<Projekt> <n>` mit `ProjectSettings` und alle mit Warteschlange/Aktivitätssignal.
 - Doku auf PrivOrg-Seite: `docs/editor-queue.md` im PrivOrg-Repository.

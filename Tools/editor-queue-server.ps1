@@ -19,6 +19,8 @@ param(
     [int]$Port = 47615,
     [string[]]$AllowOrigin = @(),
     [string]$QueueDir,
+    # Projektordner, dessen Editoren gemeint sind (Standard: der Ordner, aus dem dieses Skript stammt).
+    [string]$ProjectRoot,
     [switch]$Install,
     [switch]$Uninstall
 )
@@ -27,35 +29,44 @@ $ErrorActionPreference = 'Stop'
 $queueScript = Join-Path $PSScriptRoot 'editor-queue.ps1'
 $shortcut = Join-Path ([Environment]::GetFolderPath('Startup')) 'Mining Game Editor-Warteschlange.lnk'
 
-if ($Uninstall) {
-    if (Test-Path -LiteralPath $shortcut) { Remove-Item -LiteralPath $shortcut; Write-Output "Autostart entfernt: $shortcut" }
-    else { Write-Output 'Kein Autostart eingerichtet.' }
-    exit 0
-}
-if ($Install) {
-    $shell = New-Object -ComObject WScript.Shell
-    $lnk = $shell.CreateShortcut($shortcut)
-    $lnk.TargetPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-    $allowed = @($AllowOrigin | ForEach-Object { $_ -split ',' } | Where-Object { $_ })
-    $originArgs = if ($allowed.Count) { " -AllowOrigin `"$($allowed -join ',')`"" } else { '' }
-    $lnk.Arguments = "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$PSCommandPath`" -Port $Port$originArgs"
-    $lnk.WorkingDirectory = $PSScriptRoot
-    $lnk.Description = 'Lokaler Dienst der Unity-Editor-Warteschlange fuer PrivOrg'
-    $lnk.Save()
-    Write-Output "Autostart eingerichtet: $shortcut"
-    Write-Output "Startet beim naechsten Anmelden; jetzt sofort starten mit: powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$PSCommandPath`""
-    exit 0
-}
+# --- Projekte -------------------------------------------------------------------
 
-# --- Projekte und erlaubte Herkunft ---------------------------------------------
-
-$repoRoot = [IO.Path]::GetFullPath((Split-Path $PSScriptRoot -Parent)).TrimEnd('\', '/')
+if (-not $ProjectRoot) { $ProjectRoot = Split-Path $PSScriptRoot -Parent }
+$repoRoot = [IO.Path]::GetFullPath($ProjectRoot).TrimEnd('\', '/')
 $ownerMatch = [regex]::Match($repoRoot, '^(.*?)[\\/]\.claude[\\/]worktrees[\\/]')
 $ownerRoot = if ($ownerMatch.Success) { $ownerMatch.Groups[1].Value } else { $repoRoot }
 $ownerName = Split-Path $ownerRoot -Leaf
 $reposDir = Split-Path $ownerRoot -Parent
 if (-not $QueueDir) { $QueueDir = $env:EDITOR_QUEUE_DIR }
 if (-not $QueueDir) { $QueueDir = Join-Path $reposDir 'EditorQueue' }
+
+if ($Uninstall) {
+    if (Test-Path -LiteralPath $shortcut) { Remove-Item -LiteralPath $shortcut; Write-Output "Autostart entfernt: $shortcut" }
+    else { Write-Output 'Kein Autostart eingerichtet.' }
+    exit 0
+}
+if ($Install) {
+    # Kopie in einen festen Ordner ausserhalb von Git: Arbeitsordner und Testbank wechseln ihren Stand.
+    $bin = Join-Path $QueueDir 'bin'
+    New-Item -ItemType Directory -Path $bin -Force | Out-Null
+    foreach ($name in 'editor-queue.ps1', 'editor-queue-server.ps1') { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination (Join-Path $bin $name) -Force }
+    $target = Join-Path $bin 'editor-queue-server.ps1'
+    $shell = New-Object -ComObject WScript.Shell
+    $lnk = $shell.CreateShortcut($shortcut)
+    $lnk.TargetPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+    $allowed = @($AllowOrigin | ForEach-Object { $_ -split ',' } | Where-Object { $_ })
+    $originArgs = if ($allowed.Count) { " -AllowOrigin `"$($allowed -join ',')`"" } else { '' }
+    $lnk.Arguments = "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$target`" -Port $Port -ProjectRoot `"$ownerRoot`" -QueueDir `"$QueueDir`"$originArgs"
+    $lnk.WorkingDirectory = $bin
+    $lnk.Description = 'Lokaler Dienst der Unity-Editor-Warteschlange fuer PrivOrg'
+    $lnk.Save()
+    Write-Output "Autostart eingerichtet: $shortcut"
+    Write-Output "Skripte kopiert nach $bin (nach Aenderungen -Install erneut ausfuehren)."
+    Write-Output "Startet beim naechsten Anmelden; jetzt sofort starten mit: Start-Process '$shortcut'"
+    exit 0
+}
+
+# --- Erlaubte Herkunft ----------------------------------------------------------
 
 $origins = @($AllowOrigin | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim().TrimEnd('/') } | Where-Object { $_ }) + @(($env:EDITOR_QUEUE_ORIGINS -split ',') | ForEach-Object { $_.Trim().TrimEnd('/') } | Where-Object { $_ })
 
