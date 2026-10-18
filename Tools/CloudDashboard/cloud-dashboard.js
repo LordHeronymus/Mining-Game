@@ -392,7 +392,7 @@
       }).join("");
       const showImport = status.imported > 0 && status.assets > 0 && ["import", "compile", "unity"].includes(status.phase);
       const pct = showImport ? Math.min(100, Math.round(status.imported / status.assets * 100)) : 0;
-      const importBar = showImport ? `<div class="cd-progress"><span class="num">${status.imported.toLocaleString("de-CH")}</span> <span class="muted">von etwa ${status.assets.toLocaleString("de-CH")} Assets importiert</span><div class="cd-bar"><span style="width:${pct}%"></span></div></div>` : "";
+      const importBar = showImport ? `<div class="cd-progress"><span class="num">${status.imported.toLocaleString("de-CH")}</span> <span class="muted">${status.imported <= status.assets ? `von etwa ${status.assets.toLocaleString("de-CH")} ` : ""}Assets importiert</span>${status.imported <= status.assets ? `<div class="cd-bar"><span style="width:${pct}%"></span></div>` : ""}</div>` : "";
       const problem = status.problem ? `<div class="cd-banner" style="margin-top:12px">${esc(status.problem)}</div>` : "";
       const errors = status.compile_errors && status.compile_errors.length ? `<pre class="cd-errors">${esc(status.compile_errors.join("\n"))}</pre>` : "";
       const fresh = run.status !== "completed" && status.updated ? `<span class="muted" style="font-size:13px"> · Status ${esc(ago(status.updated))}</span>` : "";
