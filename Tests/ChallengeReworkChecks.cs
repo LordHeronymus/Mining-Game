@@ -55,12 +55,12 @@ public static class ChallengeReworkChecks
 
     // Legacy period tables (MetaChallengePeriods.cs before the rework), used to build and verify migration fixtures.
     static readonly string[] DailyNames = { "Schätze des Berges", "Ruf der Tiefe", "Meister am Amboss", "Kupferglut", "Goldene Geschäfte", "Funken im Dunkel",
-        "Schwarze Adern", "Eisenherz", "Silbermond", "Goldfieber", "Unbetretene Pfade", "Geheimnisse im Stein", "Fremde Künste", "Himmelsleiter", "Große Ausbeute", "Feuer der Schmiede",
+        "Schwarze Adern", "Eisenherz", "Silbermond", "Goldfieber", "Unbetretene Pfade", "Geheimnisse im Stein", "Fremde Künste", "Himmelsleiter", "Grosse Ausbeute", "Feuer der Schmiede",
         "Platinglanz", "Titankraft", "Obsidianfluch", "Goldener Handschlag", "Ruf der Wälder", "Grüne Ernte", "Unter der Grasnarbe", "Relikte der Vorzeit", "Spuren der Vorzeit", "Steinernes Erwachen", "In der Bergesmitte",
         "XXL · Herz des Berges", "XXL · Ruf des Abgrunds", "XXL · Erzrausch", "Funkelnde Beute", "Glut des Granats", "Rubinfeuer", "Smaragdtraum", "Diamantenglanz",
         "XXL · Edelsteinrausch", "XXL · Kristalljagd", "XXL · Reliktenjäger", "XXL · Reliktvermächtnis", "XXL · Ultroniumrausch", "Die nächste Klinge", "Werkzeugschmiede", "Für den Aufbruch", "Funken des Lebens", "Schultern aus Stahl", "Donner der Schmiede", "Heilende Vorräte", "Grenzgänger", "Verborgene Weiten", "Ruf des Altars", "Spuren der Alten", "Licht und Tiefe" };
     static readonly string[] WeeklyNames = { "Schätze des Berges", "Ruf der Tiefe", "Meister am Amboss", "Kupferglut", "Goldene Geschäfte", "Funken im Dunkel",
-        "König der Kohle", "Eiserne Dynastie", "Silberne Träume", "Goldene Ära", "Jenseits der Karten", "Geheimnisse des Berges", "Fremde Künste", "Wege zum Himmel", "Große Ausbeute", "Feuer der Schmiede" };
+        "König der Kohle", "Eiserne Dynastie", "Silberne Träume", "Goldene Ära", "Jenseits der Karten", "Geheimnisse des Berges", "Fremde Künste", "Wege zum Himmel", "Grosse Ausbeute", "Feuer der Schmiede" };
     static readonly int[] DailyTargets = { 50, 100, 5, 25, 1000, 3, 25, 25, 25, 25, 6, 1, 1, 5, 250, 15, 25, 25, 30, 2500, 10, 25, 150, 5, 3, 200, 250, 2000, 2000, 500, 30, 25, 25, 25, 25, 300, 150, 75, 25, 100, 1, 2, 1, 1, 1, 5, 3, 2, 250, 1, 2, 1 };
     static readonly int[] DailyLargeTargets = { 250, 300, 15, 100, 5000, 15, 100, 100, 100, 100, 18, 3, 3, 25, 1250, 45, 100, 100, 100, 7500, 40, 100, 500, 25, 10, 600, 750, 2000, 2000, 500, 100, 100, 100, 100, 100, 300, 150, 75, 25, 100, 2, 5, 3, 2, 2, 20, 10, 4, 1000, 2, 5, 1 };
     static readonly int[] LegacyDailyRewards = { 150, 200, 150, 100, 200, 100, 100, 150, 180, 200, 180, 200, 300, 120, 350, 250, 220, 240, 250, 350, 500, 500, 500, 500, 500, 500, 500, 3000, 3000, 3000, 500, 500, 500, 500, 500, 3000, 3000, 3000, 3000, 3000, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500 };
@@ -122,8 +122,9 @@ public static class ChallengeReworkChecks
             : "FAIL " + failed + " of " + (passed + failed) + " challenge rework checks";
         File.WriteAllText(Report, summary + "\n" + string.Join("\n", lines) + "\n");
         if (failed == 0) return summary;
-        string first = lines.FirstOrDefault(line => line.StartsWith("FAIL ")) ?? "";
-        return summary + "; first: " + (first.Length > 5 ? first.Substring(5) : first);
+        // The CI live status only keeps the returned text (about 2500 characters), so list every failure briefly.
+        string list = string.Join(" | ", lines.Where(line => line.StartsWith("FAIL ")).Select(line => line.Length > 125 ? line.Substring(5, 120) + "…" : line.Substring(5)));
+        return summary + ": " + (list.Length > 2300 ? list.Substring(0, 2300) + " …" : list);
     }
 
     // ---------- helpers ----------
