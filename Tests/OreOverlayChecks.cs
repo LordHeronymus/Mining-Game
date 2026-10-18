@@ -69,7 +69,11 @@ public static class OreOverlayChecks
             {
                 var s = ore.sprite;
                 Check(ore.block == oreBlock && ore.richness == r && ore.colliderType == Tile.ColliderType.None, "Overlay metadata incorrect");
-                Check((s.bounds.size - new Vector3(.5f,.5f,.2f)).sqrMagnitude < .0001f, "Sprite block size mismatch");
+                // Painted ore tiles (colour alpha 253/254 of 255, Docs/Gemalte-Erze.md) keep 418 px per 0.5-unit cell
+                // but use a 544 px canvas so chunks may overhang into neighbouring rock.
+                bool painted = ore.color.a > .99f && ore.color.a < .999f;
+                Check(painted ? Mathf.Abs(s.pixelsPerUnit - 836) < .01f && Mathf.Abs(s.bounds.size.x - 544f / 836f) < .001f
+                    : (s.bounds.size - new Vector3(.5f,.5f,.2f)).sqrMagnitude < .0001f, "Sprite block size mismatch");
                 Check(Vector2.Distance(s.pivot, s.rect.size * .5f) < .01f, "Sprite pivot mismatch");
                 Check(s.texture.mipmapCount > 1 && s.texture.filterMode == FilterMode.Trilinear &&
                     s.texture.format == TextureFormat.RGBA32, "Incorrect texture quality or alpha format");

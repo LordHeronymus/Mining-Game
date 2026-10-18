@@ -60,5 +60,5 @@ using UnityEngine;
     public SavedMiningCell[] mining;
     public SavedForest forest;
     public SavedGrassland grass;
-    public CopperDepositState[] copperVisuals;
+    // "copperVisuals" (copper vein plans) was dropped with the painted copper tiles; JsonUtility skips it in older saves.
 }

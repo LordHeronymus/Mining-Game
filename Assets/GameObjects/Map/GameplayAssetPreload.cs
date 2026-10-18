@@ -11,11 +11,7 @@ public static class GameplayAssetPreload
     static readonly (string path, Type type)[] Assets =
     {
         // OreOverlayAppearance (vein art)
-        ("OreVeins/RockFissure", typeof(Texture2D)), ("OreVeins/CopperCarpet/Copper", typeof(Texture2D)),
-        ("OreVeins/CopperEarthWall/EarthWall", typeof(Texture2D)), ("OreVeins/CopperL1Sprite/CopperEmbedded", typeof(Texture2D)),
-        ("OreVeins/CopperL1Sprite/CopperLarge", typeof(Texture2D)), ("OreVeins/CopperL1Sprite/CopperSmall", typeof(Texture2D)),
-        ("OreVeins/CopperL2Sprite/CopperSmall", typeof(Texture2D)), ("OreVeins/CopperL2Sprite/CopperMedium", typeof(Texture2D)),
-        ("OreVeins/CopperL2Sprite/CopperLarge", typeof(Texture2D)), ("OreVeins/CopperRockTiles/Combined", typeof(Texture2DArray)),
+        ("OreVeins/RockFissure", typeof(Texture2D)),
         // UltroniumAltarChamber
         ("UltroniumAltar/Chamber", typeof(Shader)), ("UltroniumAltar/DepositButtonGlow", typeof(Shader)),
         ("UltroniumAltar/ChamberWall", typeof(Texture2D)), ("UltroniumAltar/SanctuaryStone", typeof(Texture2D)),

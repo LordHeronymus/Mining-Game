@@ -7,32 +7,6 @@ Shader "Mining Game/Ore Overlay Lit"
         [HideInInspector] _VeinEnabled("Connected Veins", Float) = 0
         [HideInInspector] _VeinCells("Vein Neighbours", 2D) = "black" {}
         [HideInInspector] _VeinRelief("Fissure Relief", 2D) = "black" {}
-        [HideInInspector] _CopperCarpet("Continuous Copper", 2D) = "black" {}
-        [HideInInspector] _CopperOutlineField("Copper Combined Contour", 2D) = "black" {}
-        [HideInInspector] _CopperEarthWall("Copper Earth Wall", 2D) = "black" {}
-        [HideInInspector] _CopperEarthTiles("Copper Earth Tiles", 2D) = "black" {}
-        [HideInInspector] _CopperEarthTileLayout("Copper Tile Cores", 2D) = "black" {}
-        [HideInInspector] _CopperEarthCombined("Combined Earth Copper Tiles", 2D) = "black" {}
-        [HideInInspector] _CopperL1Sprite("L1 Copper Sprite", 2D) = "black" {}
-        [HideInInspector] _CopperL1Large("L1 Large Copper Sprite", 2D) = "black" {}
-        [HideInInspector] _CopperL1Small("L1 Small Copper Sprite", 2D) = "black" {}
-        [HideInInspector] _CopperL2Small("L2 Small Copper Sprite", 2D) = "black" {}
-        [HideInInspector] _CopperL2Medium("L2 Medium Copper Sprite", 2D) = "black" {}
-        [HideInInspector] _CopperL2Large("L2 Large Copper Sprite", 2D) = "black" {}
-        [HideInInspector] _CopperL2SpritesEnabled("L2 Copper Sprites Enabled", Float) = 0
-        [HideInInspector] _CopperRockCombined("Combined Rock Copper Tiles", 2DArray) = "" {}
-        [HideInInspector] _UseTerrainMasks("Use terrain masks", Float) = 0
-        [HideInInspector] _FrayedInset("Frayed edge inset", Float) = 0
-        [HideInInspector] _TerrainEdgeTuning("Terrain edge tuning", Vector) = (1,1,1,0)
-        [HideInInspector] _TerrainEdgeMasks("Terrain edge masks", 2DArray) = "" {}
-        [HideInInspector] _CopperEarthTilesEnabled("Copper Earth Tiles Enabled", Float) = 0
-        [HideInInspector] _CopperRockTilesEnabled("Copper Rock Tiles Enabled", Float) = 0
-
-        [HideInInspector] _CopperCoverEnabled("Copper Earth Cover", Float) = 1
-        [HideInInspector] _CopperRecessDepth("Copper Earth Step", Float) = 2
-        [HideInInspector] _CopperWallHeight("Copper Wall Height", Float) = 0.34
-        [HideInInspector] _CopperSurfacePass("Copper Surface Pass", Float) = 0
-        [HideInInspector] _CopperCarpetEnabled("Copper Carpet", Float) = 0
         _ReflectionStrength("Reflection Strength", Range(0, 6)) = 2.5
         _ShimmerStrength("Shimmer Strength", Range(0, 3)) = 0.12
         _EmbeddingStrength("Rock Embedding", Range(0, 1)) = 1
@@ -68,6 +42,7 @@ Shader "Mining Game/Ore Overlay Lit"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
             #include "UltroniumPulse.hlsl"
+            #include "PaintedOre.hlsl"
 
             #pragma vertex CombinedShapeLightVertex
             #pragma target 3.5
@@ -96,6 +71,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 half2   lightingUV  : TEXCOORD1;
                 float3  positionWS  : TEXCOORD2;
                 half    ultronium   : TEXCOORD3;
+                half    painted     : TEXCOORD4;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -123,17 +99,6 @@ Shader "Mining Game/Ore Overlay Lit"
                 float4 _UniformStone;
                 float4 _TestBounds;
                 float _VeinEnabled;
-                float _CopperCarpetEnabled;
-                float _CopperEarthTilesEnabled;
-                float _CopperL2SpritesEnabled;
-                float _CopperRockTilesEnabled;
-                float _UseTerrainMasks;
-                float _FrayedInset;
-                float4 _TerrainEdgeTuning;
-                float _CopperCoverEnabled;
-                float _CopperRecessDepth;
-                float _CopperWallHeight;
-                float _CopperSurfacePass;
                 float _VeinSeed;
                 float4 _VeinBounds;
                 float4 _VeinGrid;
@@ -163,16 +128,16 @@ Shader "Mining Game/Ore Overlay Lit"
                 UNITY_SKINNED_VERTEX_COMPUTE(v);
 
                 SetUpSpriteInstanceProperties();
-                if(_CopperSurfacePass<.5) v.positionOS = UnityFlipSprite(v.positionOS, unity_SpriteProps.xy);
+                v.positionOS = UnityFlipSprite(v.positionOS, unity_SpriteProps.xy);
                 o.positionCS = TransformObjectToHClip(v.positionOS);
                 o.positionWS = TransformObjectToWorld(v.positionOS);
                 o.uv = (v.uv - 0.5) / max(_OreScale, 0.01) + 0.5;
                 o.lightingUV = half2(ComputeScreenPos(o.positionCS / o.positionCS.w).xy);
 
                 o.ultronium = step(v.color.a, .99h);
+                o.painted = PaintedOreKind(v.color.a);
                 o.color = v.color * _Color * unity_SpriteColor;
-                if(_CopperSurfacePass>.5)o.color=1;
-                if (o.ultronium > .5h) o.color.a = _Color.a * unity_SpriteColor.a;
+                if (o.ultronium > .5h || o.painted > .5h) o.color.a = _Color.a * unity_SpriteColor.a;
                 return o;
             }
 
@@ -195,28 +160,51 @@ Shader "Mining Game/Ore Overlay Lit"
                 return half4(RichColor(sample.rgb) * sample.a, sample.a);
             }
 
+            // Painted ore tiles (e.g. copper Large) are complete artwork: drawn at their authored size,
+            // may reach slightly into neighbouring rock, and are lit like the stone without extra effects.
+            // Glowing painted ores (ultronium) add the same pulsing emission as the old ultronium sprites.
+            half4 PaintedOreFragment(Varyings i)
+            {
+                float2 uv = (i.uv - .5) * _OreScale + .5;
+                clip(min(min(uv.x, uv.y), min(1 - uv.x, 1 - uv.y)));
+                if (_UniformStone.x > 0)
+                {
+                    float2 cell = floor((i.positionWS.xy - _UniformStone.zw) / max(_UniformStone.x, .0001));
+                    half4 host = SAMPLE_TEXTURE2D_LOD(_TestOccupancy, sampler_TestOccupancy,
+                        (cell + .5 - _TestBounds.xy) / _TestBounds.zw, 0);
+                    clip(host.r - .5); // never hang over mined-out space
+                }
+                half4 main = i.color * SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv);
+                half4 mask = SAMPLE_TEXTURE2D(_MaskTex, sampler_MaskTex, uv);
+                SurfaceData2D surfaceData;
+                InputData2D inputData;
+                InitializeSurfaceData(main.rgb, main.a, mask, surfaceData);
+                InitializeInputData(uv, i.lightingUV, inputData);
+                SETUP_DEBUG_TEXTURE_DATA_2D_NO_TS(inputData, i.positionWS, i.positionCS, _MainTex);
+                half4 lit = CombinedShapeLightShared(surfaceData, inputData);
+                half litPeak = max(lit.r, max(lit.g, lit.b));
+                half compressed = litPeak <= 0.7h ? litPeak : 0.7h + 0.3h * (1 - exp(-(litPeak - 0.7h) / 0.3h));
+                lit.rgb *= compressed / max(litPeak, 0.0001h);
+                if (i.painted > 1.5h)
+                {
+                    // One pulse phase per tile: find the tile centre from the sprite UV (tiles are axis-aligned).
+                    float2 worldPerUv = float2(ddx(i.positionWS.x) / (abs(ddx(i.uv.x)) > 1e-6 ? ddx(i.uv.x) : 1e-6),
+                        ddy(i.positionWS.y) / (abs(ddy(i.uv.y)) > 1e-6 ? ddy(i.uv.y) : 1e-6));
+                    float2 centre = i.positionWS.xy - (i.uv - .5) * worldPerUv;
+                    float2 tileCell = _UniformStone.x > 0
+                        ? floor((centre - _UniformStone.zw) / max(_UniformStone.x, .0001)) : floor(centre);
+                    half pulse = UltroniumPulse(tileCell, _Time.y, _UltroniumPulsesPerMinute);
+                    half peak = max(main.r, max(main.g, main.b));
+                    half facets = pow(smoothstep(.15h, .85h, peak), 3.0h);
+                    lit.rgb += (RichColor(main.rgb) * (.22h + .6h * facets) + _UltroniumGlowColor.rgb * facets * .1h)
+                        * _UltroniumGlow * pulse * main.a;
+                }
+                return lit;
+            }
+
             half4 CombinedShapeLightFragment(Varyings i) : SV_Target
             {
-                if(_CopperSurfacePass>.5)
-                {
-                    clip(max(max(_CopperCarpetEnabled,_CopperEarthTilesEnabled),_CopperRockTilesEnabled)-.5);
-                    float2 p=(i.positionWS.xy-_VeinGrid.zw)/_VeinGrid.xy;
-                    float type=VeinCell(floor(p)).x;
-                    bool copper=abs(type-3)<.1;
-                    if(CopperEarthTileHost(i.positionWS.xy))
-                    {
-                        clip(copper?1:-1);
-                        return CopperEarthTileFragment(i,p);
-                    }
-                    // The upper earth face may extend over the occupied host
-                    // immediately above copper. Never paint over another ore.
-                    float heightReserve=min(.75,clamp(_CopperWallHeight,.08,.71)+.04);
-                    bool upperHost=_CopperRecessDepth>1.5 && _CopperCoverEnabled>.5 && type<.5
-                        && abs(VeinCell(floor(p-float2(0,heightReserve))).x-3)<.1;
-                    clip(copper || upperHost?1:-1);
-                    clip(CopperCarpetHost(i.positionWS.xy)?1:-1);
-                    return CopperCarpetFragment(i,p);
-                }
+                if (i.painted > .5h) return PaintedOreFragment(i);
                 if (_VeinEnabled > .5)
                 {
                     float2 veinPosition = (i.positionWS.xy-_VeinGrid.zw)/_VeinGrid.xy;
@@ -325,6 +313,8 @@ Shader "Mining Game/Ore Overlay Lit"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
 
+            #include "PaintedOre.hlsl"
+
             #pragma vertex NormalsRenderingVertex
             #pragma fragment NormalsRenderingFragment
 
@@ -373,17 +363,6 @@ Shader "Mining Game/Ore Overlay Lit"
                 float4 _UniformStone;
                 float4 _TestBounds;
                 float _VeinEnabled;
-                float _CopperCarpetEnabled;
-                float _CopperEarthTilesEnabled;
-                float _CopperL2SpritesEnabled;
-                float _CopperRockTilesEnabled;
-                float _UseTerrainMasks;
-                float _FrayedInset;
-                float4 _TerrainEdgeTuning;
-                float _CopperCoverEnabled;
-                float _CopperRecessDepth;
-                float _CopperWallHeight;
-                float _CopperSurfacePass;
                 float _VeinSeed;
                 float4 _VeinBounds;
                 float4 _VeinGrid;
@@ -399,7 +378,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 SetUpSpriteInstanceProperties();
                 attributes.positionOS = UnityFlipSprite(attributes.positionOS, unity_SpriteProps.xy);
                 o.positionCS = TransformObjectToHClip(attributes.positionOS);
-                o.uv = (attributes.uv - 0.5) / max(_OreScale, 0.01) + 0.5;
+                o.uv = PaintedOreMarker(attributes.color.a) > .5h ? attributes.uv : (attributes.uv - 0.5) / max(_OreScale, 0.01) + 0.5;
                 half ultronium = step(attributes.color.a, .99h);
                 o.ultronium = ultronium;
                 o.color = attributes.color * _Color * unity_SpriteColor;
@@ -414,7 +393,6 @@ Shader "Mining Game/Ore Overlay Lit"
 
             half4 NormalsRenderingFragment(Varyings i) : SV_Target
             {
-                clip(.5-_CopperSurfacePass);
                 clip(min(min(i.uv.x, i.uv.y), min(1 - i.uv.x, 1 - i.uv.y)));
                 half4 texel = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
                 texel.a = lerp(texel.a, smoothstep(.04h, .7h, texel.a), i.ultronium);
@@ -434,6 +412,7 @@ Shader "Mining Game/Ore Overlay Lit"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
             #include "UltroniumPulse.hlsl"
+            #include "PaintedOre.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
             #if defined(DEBUG_DISPLAY)
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Debug/Debugging2D.hlsl"
@@ -483,17 +462,6 @@ Shader "Mining Game/Ore Overlay Lit"
                 float4 _UniformStone;
                 float4 _TestBounds;
                 float _VeinEnabled;
-                float _CopperCarpetEnabled;
-                float _CopperEarthTilesEnabled;
-                float _CopperL2SpritesEnabled;
-                float _CopperRockTilesEnabled;
-                float _UseTerrainMasks;
-                float _FrayedInset;
-                float4 _TerrainEdgeTuning;
-                float _CopperCoverEnabled;
-                float _CopperRecessDepth;
-                float _CopperWallHeight;
-                float _CopperSurfacePass;
                 float _VeinSeed;
                 float4 _VeinBounds;
                 float4 _VeinGrid;
@@ -510,7 +478,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 attributes.positionOS = UnityFlipSprite( attributes.positionOS, unity_SpriteProps.xy);
                 o.positionCS = TransformObjectToHClip(attributes.positionOS);
                 o.positionWS = TransformObjectToWorld(attributes.positionOS);
-                o.uv = (attributes.uv - 0.5) / max(_OreScale, 0.01) + 0.5;
+                o.uv = PaintedOreMarker(attributes.color.a) > .5h ? attributes.uv : (attributes.uv - 0.5) / max(_OreScale, 0.01) + 0.5;
                 o.ultronium = step(attributes.color.a, .99h);
                 o.color = attributes.color * _Color * unity_SpriteColor;
                 if (o.ultronium > .5h) o.color.a = _Color.a * unity_SpriteColor.a;
@@ -519,7 +487,6 @@ Shader "Mining Game/Ore Overlay Lit"
 
             float4 UnlitFragment(Varyings i) : SV_Target
             {
-                clip(.5-_CopperSurfacePass);
                 clip(min(min(i.uv.x, i.uv.y), min(1 - i.uv.x, 1 - i.uv.y)));
                 float4 mainTex = i.color * SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
                 mainTex.a = lerp(mainTex.a, smoothstep(.04h, .7h, mainTex.a), i.ultronium);

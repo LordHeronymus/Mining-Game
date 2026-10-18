@@ -26,15 +26,15 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 88ffa3629a47a7642b4591219185e876, type: 2}
   - {fileID: 11400000, guid: c45beb857736e7a418670d84ffe0e98f, type: 2}
   smallOre:
-  - {fileID: 11400000, guid: ef87cfc572a13674aaaffcc3c5e3ee7a, type: 2}
-  - {fileID: 11400000, guid: 008aaae4c5da83440b628e077e5f0b77, type: 2}
+  - {fileID: 11400000, guid: 3326cdcbfa549cf4aa615bdd0aea912a, type: 2}
+  - {fileID: 11400000, guid: 2b4f883f302f38748967d2a730d4588a, type: 2}
   mediumOre:
-  - {fileID: 11400000, guid: 894218f8e1abe694e84722478c2dd23e, type: 2}
-  - {fileID: 11400000, guid: ccc17029dfd1938418c4733a0b1c482f, type: 2}
+  - {fileID: 11400000, guid: 104faa3986b371f42b0a0bd4e86b88a2, type: 2}
+  - {fileID: 11400000, guid: 96e824a9468721840b28b113db9babda, type: 2}
   richOre:
-  - {fileID: 11400000, guid: 5bc120b49a179524089ba58eb9276079, type: 2}
-  - {fileID: 11400000, guid: 240ba51862510a54499caee2e12bc9e2, type: 2}
-  - {fileID: 11400000, guid: 71598ae8cea9a694da1e95cb7b0077b4, type: 2}
+  - {fileID: 11400000, guid: 3e6d544426f7188418a00d5411fade54, type: 2}
+  - {fileID: 11400000, guid: b34eedeff2849ff4da80f691b6e9ad09, type: 2}
+  - {fileID: 11400000, guid: 80f13661cd155414ca3ee7c07147b750, type: 2}
   spawnWithNoise: 1
   oreFrequencyPercent: 3.54
   veinSizeIndex: 8
