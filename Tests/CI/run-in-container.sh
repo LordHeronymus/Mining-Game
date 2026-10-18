@@ -91,14 +91,19 @@ watch_display() {
 if [ "${CI_NOGRAPHICS:-0}" != "1" ] && command -v Xvfb >/dev/null; then
   if [ "$UI_MODE" = 1 ]; then
     echo "Starting Unity with editor UI on virtual display"
-    (apt-get -qq update && apt-get -qq install -y --no-install-recommends xdotool imagemagick) > "$ARTIFACTS/apt.log" 2>&1 \
+    # Mesa provides software OpenGL (GLX) on Xvfb; without it the editor UI cannot create a graphics
+    # device and quits right after licensing (runs #8/#10).
+    (apt-get -qq update && apt-get -qq install -y --no-install-recommends \
+        xdotool imagemagick mesa-utils libgl1-mesa-dri libglx-mesa0 libegl-mesa0) > "$ARTIFACTS/apt.log" 2>&1 \
       || echo "X tools not installed (see apt.log)"
-    Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+    Xvfb :99 -screen 0 1920x1080x24 +extension GLX +render -noreset > "$ARTIFACTS/xvfb.log" 2>&1 &
     XVFB_PID=$!
-    export DISPLAY=:99
+    export DISPLAY=:99 LIBGL_ALWAYS_SOFTWARE=1
     sleep 2
+    echo "--- OpenGL auf dem virtuellen Bildschirm"
+    (glxinfo -B 2>&1 || echo "glxinfo nicht verfügbar") | head -n 20
     # -automated: no human at the editor, dialogs are skipped or answered with their default.
-    timeout "$LIMIT" "$UNITY" -automated "${ARGS[@]}" &
+    timeout "$LIMIT" "$UNITY" -automated -force-glcore "${ARGS[@]}" &
     UNITY_PID=$!
     watch_display $UNITY_PID &
     wait $UNITY_PID
