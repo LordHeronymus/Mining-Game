@@ -9,6 +9,7 @@ Arbeitsordner (git worktrees, beide von `main`): `Git Repos/Mining Game` und `Gi
 | Ordner | Belegt von | Zweck | Seit |
 | --- | --- | --- | --- |
 | Mining Game | – | frei | 17.10.2026 22:40 |
+| Cloud (GitHub Actions) | – | parallel nutzbar, kein lokaler Editor | 18.10.2026 |
 | Mining Game 2 | – | frei (Library noch nicht importiert) | 17.10.2026 23:00 |
 
 ## Aktiv

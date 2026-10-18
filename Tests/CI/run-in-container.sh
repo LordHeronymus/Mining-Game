@@ -67,5 +67,5 @@ elif [ "$STRATEGY" = personal ]; then
 fi
 
 # Check reports and previews the scripts write to Temp/.
-find Temp -maxdepth 1 -type f \( -name '*.txt' -o -name '*.json' -o -name '*.png' \) -exec cp {} "$ARTIFACTS/temp/" \; 2>/dev/null || true
+find Temp -maxdepth 1 -type f \( -name '*.txt' -o -name '*.json' -o -name '*.csv' -o -name '*.png' \) -exec cp {} "$ARTIFACTS/temp/" \; 2>/dev/null || true
 exit $code

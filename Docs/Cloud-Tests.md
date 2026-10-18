@@ -39,6 +39,25 @@ Ergebnisse: Zusammenfassung im Workflow-Lauf, Artefakt `unity-checks-<Nr>` mit `
 - `nographics`: Unity ohne Grafikgerät (schneller, aber Kameras rendern nicht; nur für reine Logik-Checks).
 - Lokal vorbereiten/prüfen: `python3 Tests/CI/prepare.py --suite smoke` (danach `Assets/Editor/CIChecks/` und `Artifacts/` wieder löschen, solange der Editor offen ist, sonst importiert er die Kopien).
 
+## Arbeitsteilung Cloud / lokal
+
+Cloud-Sessions (Claude Code im Browser/App) und der Workflow „Unity Checks“ brauchen keinen lokalen Editor. Faustregel:
+
+| In der Cloud | Lokal im Editor |
+| --- | --- |
+| Code-Änderungen, Refactorings, Fehlerbehebungen | Grafik, Optik, Shader, Licht, Animation beurteilen |
+| Logik-Checks (Suite `smoke`, einzelne Checks) | Szenen-/Prefab-Arbeit, die man sehen muss |
+| CPU-Messungen vorher/nachher (Suite `performance`) | Echte FPS-Abnahme (GPU), Build-Messung |
+| Analyse von Messdaten und Logs | Spielgefühl, Steuerung |
+
+- Die Cloud-Rechner haben keine GPU (Software-Rendering). FPS-Werte dort sind nur untereinander vergleichbar, nicht mit dem lokalen PC. Aussagekräftig sind Framezeiten von Spiellogik, Ladestufen, Spitzen und GC-Allokationen im Vergleich vorher/nachher auf dem gleichen Runner-Typ. Schwankungen von einigen Prozent sind normal.
+- Eine Cloud-Aufgabe läuft auf ihrem eigenen Branch und trägt sich in `Docs/Arbeitsstand.md` mit Ordner „Cloud“ ein. Sie belegt keinen lokalen Editor.
+- Abschluss einer Cloud-Aufgabe mit Optik- oder FPS-Bezug: kurze lokale Abnahme durch den Benutzer (Branch holen, Play starten bzw. Build-Benchmark).
+
+## Suite `performance`
+
+Führt `Tests/PerformanceBenchmarkChecks.cs` aus (frischer Play-Start ab MainMenu: Laden, Stillstand, Abbau normal/schnell, Erkunden). Der Runner wartet, bis `Temp/PerformanceBenchmark.txt` mit `PASS`/`FAIL` beginnt (`resultDonePattern`). Bericht und `PerformanceBenchmark.csv` (jedes Frame) liegen im Artefakt unter `temp/`, die Zusammenfassung zusätzlich im Dashboard bei den Ergebnissen. Für Vergleiche denselben Branch vor und nach einer Änderung messen.
+
 ## Grenzen
 
 - Checks, die Dateien aus dem lokalen `Temp/` erwarten (z. B. `LegacyMetaSerializationChecks`), oder Archiv-/Install-Skripte gehören nicht in Suiten.

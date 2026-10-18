@@ -1,0 +1,12 @@
+{
+  "checks": [
+    {
+      "name": "PerformanceBenchmarkChecks",
+      "mode": "play",
+      "resultFile": "Temp/PerformanceBenchmark.txt",
+      "waitForResultFile": true,
+      "resultDonePattern": "^(PASS|FAIL)",
+      "timeoutSeconds": 1200
+    }
+  ]
+}
