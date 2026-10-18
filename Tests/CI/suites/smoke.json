@@ -1,0 +1,11 @@
+{
+  "checks": [
+    { "name": "CaveGenerationChecks" },
+    { "name": "OreDistributionChecks" },
+    { "name": "TorchLightFieldChecks" },
+    { "name": "LightingChecks" },
+    { "name": "SurfaceHarvestIdentityChecks" },
+    { "name": "MetaProgressionCoreChecks" },
+    { "name": "ChallengeMigrationChecks" }
+  ]
+}

@@ -1,0 +1,139 @@
+name: Unity Checks
+
+# Runs Tests/*Checks.cs in a Unity editor on GitHub (see Docs/Cloud-Tests.md).
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "Suite from Tests/CI/suites (smoke, play)"
+        default: smoke
+      checks:
+        description: "Optional instead of suite: comma separated check names, e.g. CaveGenerationChecks,play:GpsRuntimeChecks"
+        default: ""
+      nographics:
+        description: "Run Unity without graphics device (faster, but no rendering)"
+        type: boolean
+        default: false
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+concurrency:
+  group: unity-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      SUITE: ${{ inputs.suite || 'smoke' }}
+      CHECKS: ${{ inputs.checks || '' }}
+    steps:
+      - name: Check licence secrets
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          if [ -z "$UNITY_LICENSE" ] && [ -z "$UNITY_SERIAL" ] && { [ -z "$UNITY_EMAIL" ] || [ -z "$UNITY_PASSWORD" ]; }; then
+            echo "::error::Unity licence secrets are missing (UNITY_EMAIL + UNITY_PASSWORD). See Docs/Cloud-Tests.md."
+            exit 1
+          fi
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          sudo docker image prune --all --force
+          df -h /
+
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Start live status
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python3 Tests/CI/progress.py start
+          nohup python3 Tests/CI/progress.py watch > "$RUNNER_TEMP/progress.log" 2>&1 &
+
+      - name: List LFS objects
+        run: git lfs ls-files --long --include="Assets/**" | cut -d' ' -f1 | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v4
+        with:
+          path: .git/lfs
+          key: lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Pull LFS files (Assets only)
+        run: git lfs pull --include="Assets/**"
+
+      - name: Restore Library cache
+        id: library
+        uses: actions/cache/restore@v4
+        with:
+          path: Library
+          key: Library-${{ hashFiles('ProjectSettings/ProjectVersion.txt', 'Packages/manifest.json', 'Packages/packages-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            Library-${{ hashFiles('ProjectSettings/ProjectVersion.txt', 'Packages/manifest.json', 'Packages/packages-lock.json') }}-
+
+      - name: Prepare checks
+        run: python3 Tests/CI/prepare.py --suite "$SUITE" --checks "$CHECKS"
+
+      - name: Run Unity
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          CI_NOGRAPHICS: ${{ inputs.nographics && '1' || '0' }}
+        run: |
+          version=$(sed -n 's/^m_EditorVersion: //p' ProjectSettings/ProjectVersion.txt | tr -d '\r')
+          image="unityci/editor:ubuntu-${version}-base-3"
+          echo "Image: $image"
+          docker run --rm --workdir /project -v "$GITHUB_WORKSPACE:/project" \
+            -e UNITY_LICENSE -e UNITY_SERIAL -e UNITY_EMAIL -e UNITY_PASSWORD -e CI_NOGRAPHICS \
+            "$image" bash Tests/CI/run-in-container.sh
+
+      - name: Report
+        if: always()
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" . || true
+          if [ -f Artifacts/ci-results.md ]; then cat Artifacts/ci-results.md >> "$GITHUB_STEP_SUMMARY"; fi
+          if [ -f Artifacts/editor.log ]; then
+            errors=$(grep -E "error CS[0-9]+" Artifacts/editor.log | sort -u | head -50)
+            if [ -n "$errors" ]; then
+              { echo "### Compilerfehler"; echo '```'; echo "$errors"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            fi
+            tail -n 200 Artifacts/editor.log
+          fi
+
+      - name: Final live status
+        if: always()
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 Tests/CI/progress.py final --conclusion "${{ job.status }}"
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-checks-${{ github.run_number }}
+          path: Artifacts
+          retention-days: 14
+
+      - name: Save Library cache
+        if: always() && steps.library.outputs.cache-hit != 'true' && hashFiles('Library/ArtifactDB') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: Library
+          key: ${{ steps.library.outputs.cache-primary-key }}

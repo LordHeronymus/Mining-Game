@@ -10,6 +10,7 @@ Die vollständige Änderungshistorie steht in `Docs/Changelog.md`. Dort nur bei 
 - Auf Deutsch antworten (Schweizer Schreibweise, kein ß).
 - Kompakt antworten, auf das Wesentliche konzentrieren. Details nur, wenn nötig oder ausdrücklich erfragt.
 - Stellt der Benutzer eine Frage, zuerst nur die Frage beantworten. Auch wenn sie eine mögliche Änderung betrifft: nichts programmieren oder verändern, bis eine ausdrückliche Freigabe in einer folgenden Nachricht kommt. Eine ausdrückliche Arbeitsanweisung ohne Frage direkt ausführen.
+- Nach jeder abgeschlossenen Aufgabe ein kurzes Resümee in einfacher Sprache ohne technische Details: was geändert wurde, wie es im Prinzip funktioniert und was der nächste Schritt ist.
 
 ## Arbeitsregeln
 
@@ -32,6 +33,7 @@ Die vollständige Änderungshistorie steht in `Docs/Changelog.md`. Dort nur bei 
 - Tests nutzen temporäre Szenen bzw. isolierte Profile und verändern die Spielszene nicht.
 - Vorschauen und Berichte gehen ins lokale `Temp/`-Verzeichnis.
 - Abschlusszustand nach Tests: SampleScene im Edit Mode, keine offenen Play-/Szenenwechsel, Save-/Meta-TestDirectory `null`.
+- Ohne lokalen Editor (Cloud-Sessions): Checks über den GitHub-Workflow „Unity Checks“ ausführen, siehe `Docs/Cloud-Tests.md`.
 
 ## Zusammenarbeit mehrerer Agenten
 
