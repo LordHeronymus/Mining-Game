@@ -1,14 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using UnityEngine;
 
 // Daily, weekly and monthly rounds drawn from ChallengeCatalog, gameplay counters and lifetime milestone stages.
 // All challenge XP goes into periodRewardXp, so older builds still validate the total. Every payout also leaves a
-// marker in the current run's ledger, which older builds keep: "cr:" restores paid round tasks when a round is drawn
-// again, "cm:" restores milestone awards on load (RebuildAwards). Neither pays a second time.
+// marker in the current run's ledger, which older builds keep: "cx:"/"ct:"/"cs:" describe the paid round so it is
+// rebuilt exactly after an older build dropped it, "cr:" restores its paid tasks, "cm:" restores milestone awards on
+// load (RebuildAwards) and "tp:" keeps each run tally's peak (MergeTallies). Neither pays a second time.
 public static partial class MetaProgression
 {
+    // Older builds reject a run (and the whole profile) for a ledger string that is blank, longer or duplicated.
+    const int MaxLedgerKey = 160;
     static readonly ChallengePeriod[] RoundPeriods = { ChallengePeriod.Daily, ChallengePeriod.Weekly, ChallengePeriod.Monthly };
     static readonly string[] LegacyMinedKeys = { "l2-block:", "l3-block:", "xxl-layer:4:", "xxl-layer:5:", "surface-block:" };
     // Rounds shown while the profile cannot be written; never persisted.
@@ -57,11 +61,10 @@ public static partial class MetaProgression
         if (start >= end) end = start + TimeSpan.TicksPerDay;
         if (writeBlocked) {
             if (!transientRounds.TryGetValue(((int)period, start), out var cached))
-                transientRounds[((int)period, start)] = cached = DrawRound(period, start, end, day, old);
+                transientRounds[((int)period, start)] = cached = NewRound(period, start, end, day, now.Ticks, old);
             return cached;
         }
-        var drawn = DrawRound(period, start, end, day, old);
-        ApplyPaidMarkers(drawn, old);
+        var drawn = NewRound(period, start, end, day, now.Ticks, old);
         profile.challengeRounds.RemoveAll(round => round == null || round.period == (int)period);
         profile.challengeRounds.Add(drawn);
         profile.challengeClockUtc = Math.Max(profile.challengeClockUtc, now.Ticks);
@@ -69,6 +72,17 @@ public static partial class MetaProgression
         // In a run the autosave stores it; a save here would snapshot a half-applied Record* call.
         if (run == null) RequestSave();
         return drawn;
+    }
+    // A round an older build dropped is rebuilt from its descriptor markers: a redraw would differ, because the draw
+    // depends on the previous round and on the draw context. Otherwise it is drawn. Then paid markers are applied.
+    static MetaChallengeRound NewRound(ChallengePeriod period, long start, long end, int day, long now, MetaChallengeRound old)
+    {
+        RoundLedger ledger = null; MetaChallengeRound round = null;
+        try { ledger = ScanRound((int)period, start); round = RestoreRound(period, start, now, ledger); }
+        catch (Exception error) { Debug.LogException(error); }
+        round ??= DrawRound(period, start, end, day, old);
+        if (ledger != null) ApplyPaidMarkers(round, old, ledger.paid);
+        return round;
     }
     static MetaChallengeRound DrawRound(ChallengePeriod period, long start, long end, int day, MetaChallengeRound old)
     {
@@ -106,13 +120,20 @@ public static partial class MetaProgression
         return reached;
     }
 
-    static string MarkerPrefix(MetaChallengeRound round) => "cr:" + round.period + ":" + round.startUtc + ":";
-    static string TaskKey(MetaChallengeTask task, int index) => task.id + "/" + task.subject + "/" + index;
+    // Invariant digits: a negative subject must read the same under every culture (some write U+2212 as minus).
+    static string MarkerPrefix(MetaChallengeRound round) => "cr:" + Inv(round.period) + ":" + Inv(round.startUtc) + ":";
+    static string TaskKey(MetaChallengeTask task, int index) => task.id + "/" + Inv(task.subject) + "/" + Inv(index);
     static bool IsProject(MetaChallengeTask task) => task.tier == (int)ChallengeTier.Project;
     static void AddMarker(string key) { if (sources.Add(key)) run.resourceSources.Add(key); }
+    static string Inv(long value) => value.ToString(CultureInfo.InvariantCulture);
+    static bool TryInv(string text, out long value) => long.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out value);
+    // ":<period>:<start>:" after the two letters of a descriptor marker.
+    static string DescriptorAt(int period, long start) => ":" + Inv(period) + ":" + Inv(start) + ":";
     // Idempotent: every paid task, stage and bonus of the round has its marker in the current run afterwards.
     static void WritePaidMarkers(MetaChallengeRound round)
     {
+        // Converted legacy rounds are never drawn again, so their markers could only mark tasks of a later draw as paid.
+        if (round.format != 2) return;
         string prefix = MarkerPrefix(round);
         for (int i = 0; i < round.tasks.Count; i++) {
             var task = round.tasks[i];
@@ -122,21 +143,113 @@ public static partial class MetaProgression
             else if (task.done) AddMarker(key + ":t");
         }
         if (round.bonusPaid) AddMarker(prefix + "b");
+        WriteDescriptors(round);
+    }
+    // Once per round and run: "cx:p:start:end:day:bonus:count", per task "ct:p:start:i:id/subject/tier/target/xp" and per
+    // project "cs:p:start:i:targets/stageXp". All or nothing: a round that cannot be described exactly is drawn again.
+    static void WriteDescriptors(MetaChallengeRound round)
+    {
+        if (round.tasks.Count == 0) return;
+        string at = DescriptorAt(round.period, round.startUtc);
+        string header = "cx" + at + Inv(round.endUtc) + ":" + Inv(round.dayIndex) + ":" + Inv(round.bonusXp) + ":" + Inv(round.tasks.Count);
+        if (sources.Contains(header)) return;
+        var keys = new List<string>(round.tasks.Count + 2) { header };
+        for (int i = 0; i < round.tasks.Count; i++) {
+            var task = round.tasks[i];
+            if (task == null || ChallengeCatalog.Template(task.id) == null || task.id.IndexOf('/') >= 0) return;
+            keys.Add("ct" + at + Inv(i) + ":" + task.id + "/" + Inv(task.subject) + "/" + Inv(task.tier) + "/" + Inv(task.target) + "/" + Inv(task.xp));
+            if (!IsProject(task)) continue;
+            if (task.stageTargets == null || task.stageXp == null) return;
+            keys.Add("cs" + at + Inv(i) + ":" + string.Join(",", task.stageTargets.Select(value => Inv(value))) + "/" + string.Join(",", task.stageXp.Select(value => Inv(value))));
+        }
+        foreach (string key in keys) if (key.Length > MaxLedgerKey) return;
+        foreach (string key in keys) AddMarker(key);
+    }
+
+    // The markers of one round in all runs' ledgers, collected in one pass when the round is created.
+    sealed class RoundLedger
+    {
+        public HashSet<string> paid;
+        public string header;
+        public Dictionary<int, string> tasks, stages;
+        public bool conflict;
+    }
+    static RoundLedger ScanRound(int period, long start)
+    {
+        var result = new RoundLedger();
+        string paidPrefix = "cr:" + period + ":" + start + ":", at = DescriptorAt(period, start);
+        foreach (var state in profile.runs) {
+            if (state?.resourceSources == null) continue;
+            foreach (string key in state.resourceSources) {
+                if (key == null || key.Length < 4 || key[0] != 'c' || key[2] != ':') continue;
+                char kind = key[1];
+                if (kind == 'r') {
+                    if (key.Length > paidPrefix.Length && key.StartsWith(paidPrefix, StringComparison.Ordinal)) (result.paid ??= new HashSet<string>()).Add(key.Substring(paidPrefix.Length));
+                    continue;
+                }
+                if ((kind != 'x' && kind != 't' && kind != 's') || key.Length <= 2 + at.Length || string.CompareOrdinal(key, 2, at, 0, at.Length) != 0) continue;
+                string rest = key.Substring(2 + at.Length);
+                if (kind == 'x') { result.conflict |= result.header != null && result.header != rest; result.header = rest; continue; }
+                // "i:..." per task index; two different descriptions of one index (two different rounds) are not rebuilt.
+                int split = rest.IndexOf(':');
+                if (split <= 0 || !int.TryParse(rest.Substring(0, split), NumberStyles.None, CultureInfo.InvariantCulture, out int index)) { result.conflict = true; continue; }
+                var map = kind == 't' ? result.tasks ??= new Dictionary<int, string>() : result.stages ??= new Dictionary<int, string>();
+                string value = rest.Substring(split + 1);
+                if (map.TryGetValue(index, out string known) && known != value) result.conflict = true;
+                map[index] = value;
+            }
+        }
+        return result;
+    }
+    // Rebuilds the round from its descriptors, with fresh progress (ApplyPaidMarkers restores what was paid). Null when
+    // they are missing, incomplete, contradictory or name an unknown template: the round is then drawn as before.
+    static MetaChallengeRound RestoreRound(ChallengePeriod period, long start, long now, RoundLedger ledger)
+    {
+        if (ledger.header == null || ledger.tasks == null || ledger.conflict) return null;
+        try {
+            string[] head = ledger.header.Split(':');
+            if (head.Length != 4 || !TryInv(head[0], out long end) || !TryInv(head[1], out long day) || !TryInv(head[2], out long bonus) || !TryInv(head[3], out long count)) return null;
+            if (end <= now || day < 0 || day > 30 || bonus < 0 || bonus > int.MaxValue || count < 1 || count > 16 || ledger.tasks.Count != count) return null;
+            int diligenceTasks = ChallengeCatalog.DiligenceTasks(CurrentChallengeSettings), projects = 0;
+            var round = new MetaChallengeRound { period = (int)period, startUtc = start, endUtc = end, dayIndex = (int)day, bonusXp = (int)bonus };
+            for (int i = 0; i < count; i++) {
+                if (!ledger.tasks.TryGetValue(i, out string text)) return null;
+                string[] part = text.Split('/');
+                var template = part.Length == 5 ? ChallengeCatalog.Template(part[0]) : null;
+                if (template == null || !TryInv(part[1], out long subject) || !TryInv(part[2], out long tier) || !TryInv(part[3], out long target) || !TryInv(part[4], out long xp)) return null;
+                bool project = tier == (int)ChallengeTier.Project;
+                if (project != template.project || subject < -1 || subject > 10000 || tier < 0 || tier > 4 || target < 1 || target > int.MaxValue || xp < 0 || xp > int.MaxValue) return null;
+                // Name, unit and metric exactly as ChallengeEngine.Draw sets them.
+                var task = new MetaChallengeTask { id = template.id, name = ChallengeCatalog.Name(template.id, (int)subject),
+                    unit = project ? template.unit : ChallengeCatalog.TemplateUnit(template, (int)subject, diligenceTasks), metric = template.metric,
+                    mode = (int)template.mode, subject = (int)subject, atLeast = template.atLeast, tier = (int)tier, target = (int)target, xp = (int)xp };
+                if (project) {
+                    projects++;
+                    string[] lists = ledger.stages != null && ledger.stages.TryGetValue(i, out string stages) ? stages.Split('/') : null;
+                    if (lists == null || lists.Length != 2 || !TryInts(lists[0], out var stageTargets) || !TryInts(lists[1], out var stageXp)) return null;
+                    task.stageTargets = stageTargets; task.stageXp = stageXp;
+                }
+                round.tasks.Add(task);
+            }
+            return (ledger.stages?.Count ?? 0) == projects && ChallengeEngine.Sanitize(round) ? round : null;
+        } catch (Exception error) { Debug.LogException(error); return null; }
+    }
+    static bool TryInts(string csv, out int[] values)
+    {
+        string[] parts = csv.Split(',');
+        values = parts.Length >= 1 && parts.Length <= 5 ? new int[parts.Length] : null;
+        if (values == null) return false;
+        for (int i = 0; i < parts.Length; i++) {
+            if (!TryInv(parts[i], out long value) || value < int.MinValue || value > int.MaxValue) return false;
+            values[i] = (int)value;
+        }
+        return true;
     }
     // A round drawn again after an older build dropped it keeps what was already paid, without paying it again.
     // Only XP covered by periodRewardXp is restored, so the integrity check on load always holds.
-    static void ApplyPaidMarkers(MetaChallengeRound round, MetaChallengeRound replaced)
+    static void ApplyPaidMarkers(MetaChallengeRound round, MetaChallengeRound replaced, HashSet<string> paid)
     {
-        if (round.tasks.Count == 0) return;
-        string prefix = MarkerPrefix(round);
-        HashSet<string> paid = null;
-        foreach (var state in profile.runs) {
-            if (state?.resourceSources == null) continue;
-            foreach (string key in state.resourceSources)
-                if (key != null && key.Length > prefix.Length && key[0] == 'c' && key[1] == 'r' && key.StartsWith(prefix, StringComparison.Ordinal))
-                    (paid ??= new HashSet<string>()).Add(key.Substring(prefix.Length));
-        }
-        if (paid == null) return;
+        if (round.tasks.Count == 0 || paid == null) return;
         long budget = profile.periodRewardXp;
         foreach (var other in profile.challengeRounds) if (other != null && other != replaced) budget -= ChallengeEngine.PaidXp(other);
         foreach (var award in profile.milestoneAwards) if (award != null) budget -= award.xp;
@@ -262,7 +375,7 @@ public static partial class MetaProgression
         if (tally == null || amount <= 0) return 0;
         tally.value = Math.Min(MaxTallyValue, tally.value + amount);
         long credit = Math.Max(0, tally.value - tally.peak);
-        tally.peak = Math.Max(tally.peak, tally.value);
+        RaisePeak(tally, tally.value);
         return credit;
     }
     static long SetTally(string id, long value)
@@ -272,8 +385,34 @@ public static partial class MetaProgression
         value = Math.Min(MaxTallyValue, Math.Max(0, value));
         long credit = Math.Max(0, value - tally.peak);
         if (tally.value != value || credit > 0) MarkDirty();
-        tally.value = value; tally.peak = Math.Max(tally.peak, value);
+        tally.value = value; RaisePeak(tally, value);
         return credit;
+    }
+    // Older builds drop run tallies but keep the ledger, so each peak is mirrored in exactly one "tp:<id>:<peak>" marker
+    // (MergeTallies restores it). The old marker was added recently, so it is searched from the end.
+    static void RaisePeak(MetaRunTally tally, long peak)
+    {
+        if (peak <= tally.peak) return;
+        string old = TallyMarker(tally.id, tally.peak);
+        if (sources.Remove(old)) {
+            int index = run.resourceSources.LastIndexOf(old);
+            if (index >= 0) run.resourceSources.RemoveAt(index);
+        }
+        tally.peak = peak;
+        string key = TallyMarker(tally.id, peak);
+        if (key.Length <= MaxLedgerKey) AddMarker(key);
+    }
+    static string TallyMarker(string id, long peak) => "tp:" + id + ":" + Inv(peak);
+    // Tally ids may contain ':' ("placed:torches-placed"), so the peak follows the last one.
+    static bool TryTallyMarker(string key, out string id, out long peak)
+    {
+        id = null; peak = 0;
+        if (key == null || key.Length < 6 || key[0] != 't' || key[1] != 'p' || key[2] != ':') return false;
+        int split = key.LastIndexOf(':');
+        if (split <= 3 || split == key.Length - 1 || !long.TryParse(key.Substring(split + 1), NumberStyles.None, CultureInfo.InvariantCulture, out peak)) return false;
+        id = key.Substring(3, split - 3);
+        peak = Math.Min(MaxTallyValue, peak);
+        return true;
     }
 
     public static void RecordMinedBlock(Vector3Int cell, int layer, bool blasted)

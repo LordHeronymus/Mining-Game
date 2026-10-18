@@ -448,6 +448,32 @@ public static partial class MetaProgression
         foreach (var tally in existing)
             if (tally != null && ids.Add(tally.id)) merged.Add(new MetaRunTally { id = tally.id, peak = Math.Max(tally.peak, tally.value) });
         target.tallies = RepairTallies(merged);
+        RestoreTallyPeaks(target);
+    }
+    // Older builds drop the tallies but keep and union the ledger (MergeLedger already did): the highest "tp:" marker per
+    // id restores the peak, even for a tally neither side still has. Afterwards each tally's peak has exactly one marker.
+    static void RestoreTallyPeaks(MetaRunState target)
+    {
+        var ledger = target.resourceSources;
+        var tallies = target.tallies;
+        Dictionary<string, long> marked = null;
+        foreach (string key in ledger) {
+            if (!TryTallyMarker(key, out string id, out long peak)) continue;
+            marked ??= new Dictionary<string, long>();
+            if (!marked.TryGetValue(id, out long known) || peak > known) marked[id] = peak;
+        }
+        if (marked != null) {
+            foreach (var tally in tallies) if (marked.TryGetValue(tally.id, out long peak) && peak > tally.peak) tally.peak = peak;
+            foreach (var pair in marked)
+                if (tallies.Count < MaxRunTallies && ValidChallengeId(pair.Key) && !tallies.Exists(tally => tally.id == pair.Key))
+                    tallies.Add(new MetaRunTally { id = pair.Key, peak = pair.Value });
+        }
+        var expected = new Dictionary<string, string>();
+        foreach (var tally in tallies) if (tally.peak > 0) expected[tally.id] = TallyMarker(tally.id, tally.peak);
+        var present = new HashSet<string>();
+        // Stale markers of a known tally go (the ledger stays unique); markers of other ids are left alone.
+        if (marked != null) ledger.RemoveAll(key => TryTallyMarker(key, out string id, out _) && expected.TryGetValue(id, out string wanted) && !(key == wanted && present.Add(key)));
+        foreach (string key in expected.Values) if (!present.Contains(key) && key.Length <= MaxLedgerKey) ledger.Add(key);
     }
     static void Union<T>(List<T> target, List<T> source)
     {

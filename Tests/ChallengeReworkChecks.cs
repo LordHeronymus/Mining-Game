@@ -721,6 +721,29 @@ public static class ChallengeReworkChecks
         MetaProgression.RecordSale(100);
         Check(Pr("probe-run-sales") == 7600, "replay: switching back continues the first run's value");
         Check(Counter("sales") == ls0 + 7900, "replay: sales lifetime counter equals the credited proceeds");
+
+        // Older builds rewrite the profile without run tallies but keep the ledger: the "tp:" peak markers still guard the replay.
+        static List<string> PeakMarkers(string id) => RunSources().Where(x => x.StartsWith("tp:" + id + ":") && x.LastIndexOf(':') == 3 + id.Length).ToList();
+        static long Peak(string id) => MetaProgression.CurrentRun.tallies?.Find(x => x != null && x.id == id)?.peak ?? -1;
+        var world = MetaProgression.CaptureRunState();
+        long sw = Pr("probe-sales"), cw = Pr("probe-crafted"), lsw = Counter("sales"), tw = Pr("probe-torches-placed");
+        MetaProgression.RecordSale(4000); MetaProgression.RecordCraftedAmount(Item.BridgePart, 6); MetaProgression.RecordPlacedCount("torches-placed", 15);
+        Check(Pr("probe-sales") == sw + 4000 && Pr("probe-crafted") == cw + 6 && Pr("probe-torches-placed") == tw + 2, "replay: sale, craft and placement after the world save are credited");
+        var guarded = new[] { "sales", "crafted", "placed:torches-placed" };
+        var peaks = guarded.ToDictionary(id => id, Peak);
+        var wrong = guarded.Where(id => !(PeakMarkers(id).Count == 1 && PeakMarkers(id)[0] == "tp:" + id + ":" + peaks[id])).ToList();
+        Check(wrong.Count == 0 && peaks["sales"] > 0 && peaks["placed:torches-placed"] == 15, "replay: each tally keeps exactly one tp marker holding its peak (" + string.Join(", ", wrong) + ")");
+        var mainWorld = Clone(world); mainWorld.tallies.Clear();
+        foreach (var snapshotWorld in new[] { world, mainWorld }) {
+            string which = snapshotWorld == world ? "this build's" : "an older build's";
+            MetaProgression.CurrentRun.tallies.Clear(); // the older build rewrote the profile without them
+            MetaProgression.BeginRun(runId, snapshotWorld);
+            MetaProgression.RecordSale(4000); MetaProgression.RecordCraftedAmount(Item.BridgePart, 6); MetaProgression.RecordPlacedCount("torches-placed", 15);
+            Check(Pr("probe-sales") == sw + 4000 && Pr("probe-crafted") == cw + 6 && Pr("probe-torches-placed") == tw + 2 && Counter("sales") == lsw + 4000,
+                "replay: after an older build dropped the tallies, replaying from " + which + " world save credits nothing (tp markers)");
+            wrong = guarded.Where(id => Peak(id) != peaks[id] || !(PeakMarkers(id).Count == 1 && PeakMarkers(id)[0] == "tp:" + id + ":" + peaks[id])).ToList();
+            Check(wrong.Count == 0, "replay: " + which + " world save: peaks restored from the markers, one tp marker each (" + string.Join(", ", wrong) + ")");
+        }
         Consistent(start, "replay");
         string probesJson = JsonUtility.ToJson(new State { rounds = new List<MetaChallengeRound> { Stored(3) } });
         Check(MetaProgression.Save(), "replay: save");
@@ -952,52 +975,86 @@ public static class ChallengeReworkChecks
     // ---------- 8. downgrade -> upgrade cycle ----------
     static string Signature(MetaChallengeRound round) => round == null ? "none" : round.startUtc + ":" + string.Join("|", round.tasks.Select(t =>
         t.id + "/" + t.subject + "/" + t.target + "/" + t.xp + "/" + t.tier + "/" + string.Join(",", t.stageTargets ?? new int[0])));
-    static void DowngradeCycle()
+    // What an older build does to the shared profile: it rewrites it without the challenge fields, but keeps the run ledgers.
+    static string SimulateOlderBuild(string label)
     {
-        var s = S1(); s.growthPercentPer10Levels = 0f; // the redraw must not depend on the level gained in between
-        Fresh("cycle", T0, s);
-        MetaProgression.BeginRun("seed-cycle", new MetaRunState { runId = "seed-cycle", progressXp = MetaProgressionCatalog.XpForLevel(8) });
-        MetaProgression.EndRun();
-        // Drawn in the menu (no run, level >= 5), exactly like the redraw after the downgrade.
-        var signatures = new[] { 0, 1, 3 }.ToDictionary(p => p, p => Signature(R(p)));
-        MetaProgression.BeginRun("test-run-cycle");
-        int k = Cheapest(Stored(0));
-        Reach(0, k, Stored(0).tasks[k].target);
-        int pi = Stored(3).tasks.FindIndex(t => t.tier == (int)ChallengeTier.Project);
-        if (pi >= 0) Reach(3, pi, Stored(3).tasks[pi].stageTargets[0]);
-        MetaProgression.RecordSale(50000);
-        var done = new[] { 0, 1, 3 }.ToDictionary(p => p, p => Stored(p).tasks.Select(t => t.done).ToArray());
-        int stages = pi >= 0 ? Stored(3).tasks[pi].stagesPaid : 0;
-        Check(Stored(0).tasks[k].done && stages >= 1 && P.milestoneAwards.Any(a => a.id == "ms-sales-1"), "cycle: setup paid a daily task, a project stage and ms-sales-1");
-        long period = P.periodRewardXp, total = MetaProgression.TotalXp;
-        MetaProgression.EndRun();
-        Check(!MetaProgression.IsSaving, "cycle: no save pending before the older build writes");
-
+        Check(!MetaProgression.IsSaving, label + ": no save pending before the older build writes");
         var envelope = JsonUtility.FromJson<Envelope>(File.ReadAllText(MetaProgression.ProfilePath));
         var old = JsonUtility.FromJson<MetaProfile>(envelope.payload);
         old.challengeRounds.Clear(); old.milestoneAwards.Clear(); old.lifetimeCounters.Clear();
         foreach (var run in old.runs) run.tallies.Clear();
         old.revision++;
         string payload = JsonUtility.ToJson(old).Replace("\"challengeRounds\":[],", "").Replace("\"milestoneAwards\":[],", "").Replace("\"lifetimeCounters\":[],", "").Replace(",\"tallies\":[]", "");
-        Check(!payload.Contains("challengeRounds") && !payload.Contains("milestoneAwards") && !payload.Contains("lifetimeCounters") && !payload.Contains("tallies") && payload.Contains("cm:ms-sales-1"),
-            "cycle: simulated older payload lacks the new fields but keeps the run ledger markers");
+        Check(!payload.Contains("challengeRounds") && !payload.Contains("milestoneAwards") && !payload.Contains("lifetimeCounters") && !payload.Contains("tallies"),
+            label + ": simulated older payload lacks the new fields but keeps the run ledgers");
         WriteEnvelope(MetaProgression.ProfilePath, payload);
         foreach (string extra in new[] { ".bak", ".tmp" }) if (File.Exists(MetaProgression.ProfilePath + extra)) File.Delete(MetaProgression.ProfilePath + extra);
         MetaProgression.Reload();
+        return payload;
+    }
+    static string Descriptor(MetaChallengeRound round, string kind) => kind + ":" + round.period + ":" + round.startUtc + ":";
+    static void DowngradeCycle()
+    {
+        // Default growth, and the June rounds are drawn in a run right after the May rounds (previous round, craft limits),
+        // while the rounds after the downgrade are created in the menu: a redraw would differ, so they must be rebuilt.
+        var s = S1();
+        DateTime may = Utc(2026, 5, 31, 10), june = Utc(2026, 6, 1, 10); // Sunday, then Monday 1 June: day, week and month roll over together
+        Fresh("cycle", may, s);
+        MetaProgression.BeginRun("seed-cycle", new MetaRunState { runId = "seed-cycle", progressXp = MetaProgressionCatalog.XpForLevel(8) });
+        MetaProgression.EndRun();
+        var previous = new[] { 0, 1, 3 }.ToDictionary(p => p, p => R(p));
+        MetaProgression.ChallengeTestUtc = june;
+        MetaProgression.BeginRun("test-run-cycle");
+        var drawn = new[] { 0, 1, 3 }.ToDictionary(p => p, p => R(p));
+        Check(drawn.All(pair => pair.Value != null && previous[pair.Key] != null && previous[pair.Key].endUtc == pair.Value.startUtc && pair.Value.format == 2),
+            "cycle: the June rounds directly follow the May rounds (drawn with their previous round)");
+        var signatures = drawn.ToDictionary(pair => pair.Key, pair => Signature(pair.Value));
+        int k = Cheapest(Stored(0));
+        Reach(0, k, Stored(0).tasks[k].target);
+        foreach (int p in new[] { 1, 3 }) { int c = Cheapest(Stored(p)); if (c >= 0) Reach(p, c, Stored(p).tasks[c].target); }
+        int pi = Stored(3).tasks.FindIndex(t => t.tier == (int)ChallengeTier.Project);
+        if (pi >= 0) Reach(3, pi, Stored(3).tasks[pi].stageTargets[0]);
+        MetaProgression.RecordSale(50000);
+        var done = new[] { 0, 1, 3 }.ToDictionary(p => p, p => Stored(p).tasks.Select(t => t.done).ToArray());
+        int stages = pi >= 0 ? Stored(3).tasks[pi].stagesPaid : 0;
+        Check(Stored(0).tasks[k].done && stages >= 1 && P.milestoneAwards.Any(a => a.id == "ms-sales-1") && done[1].Any(x => x) && done[3].Any(x => x),
+            "cycle: setup paid daily, weekly and monthly tasks, a project stage and ms-sales-1");
+        var described = new[] { 0, 1, 3 }.Where(p => !RunSources().Any(x => x.StartsWith(Descriptor(Stored(p), "cx"))) ||
+            RunSources().Count(x => x.StartsWith(Descriptor(Stored(p), "ct"))) != Stored(p).tasks.Count).Select(p => (ChallengePeriod)p).ToList();
+        Check(described.Count == 0, "cycle: every paid round is described by cx/ct markers in the ledger (" + string.Join(", ", described) + ")");
+        // Without the descriptors, the round would be drawn again from the menu context and without its previous round.
+        var redraws = new List<string>();
+        foreach (int p in new[] { 0, 1, 3 }) {
+            var round = Stored(p);
+            var context = new ChallengeDrawContext { reachedLayer = Math.Max(1, P.reachedMiningLayer), level = MetaProgression.Level };
+            if (Signature(ChallengeEngine.Draw((ChallengePeriod)p, round.startUtc, round.endUtc, round.dayIndex, context, MetaProgression.CurrentChallengeSettings, null)) != signatures[p])
+                redraws.Add(((ChallengePeriod)p).ToString());
+        }
+        lines.Add("NOTE cycle: a plain redraw would change " + (redraws.Count == 0 ? "no round" : string.Join(", ", redraws)));
+        long period = P.periodRewardXp, total = MetaProgression.TotalXp;
+        MetaProgression.EndRun();
+
+        string payload = SimulateOlderBuild("cycle");
+        Check(payload.Contains("cm:ms-sales-1") && payload.Contains("\"cx:3:") && payload.Contains("\"tp:sales:"), "cycle: the older payload keeps the cm, cx and tp markers");
         Check(MetaProgression.LastError == null && P.periodRewardXp == period && MetaProgression.TotalXp == total, "cycle: the downgraded profile loads with unchanged XP");
         var award = P.milestoneAwards.Find(a => a.id == "ms-sales-1");
         Check(award != null && award.xp == 1000 && P.milestoneAwards.Count(a => a.id == "ms-sales-1") == 1, "cycle: milestone awards are rebuilt from cm markers without new XP");
-        foreach (int p in new[] { 0, 1, 3 }) Check(Signature(R(p)) == signatures[p], "cycle: " + (ChallengePeriod)p + " redraw reproduces the same tasks");
+        foreach (int p in new[] { 0, 1, 3 }) {
+            var round = R(p);
+            Check(Signature(round) == signatures[p] && round.format == 2 && round.endUtc == drawn[p].endUtc && round.dayIndex == drawn[p].dayIndex && round.bonusXp == drawn[p].bonusXp &&
+                round.tasks.Select(t => t.name + "|" + t.unit + "|" + t.metric + "|" + t.mode + "|" + t.atLeast).SequenceEqual(drawn[p].tasks.Select(t => t.name + "|" + t.unit + "|" + t.metric + "|" + t.mode + "|" + t.atLeast)),
+                "cycle: " + (ChallengePeriod)p + " round is rebuilt with identical tasks (" + Signature(round) + ")");
+        }
         var restored = new List<string>();
         foreach (int p in new[] { 0, 1, 3 }) {
             var round = Stored(p);
             for (int i = 0; i < round.tasks.Count && i < done[p].Length; i++) {
                 var t = round.tasks[i];
-                if (t.tier == (int)ChallengeTier.Project || !done[p][i]) continue;
-                if (!(t.done && t.paid == t.xp && t.progress == t.target)) restored.Add(TaskName(round, i));
+                if (t.tier == (int)ChallengeTier.Project) continue;
+                if (done[p][i] ? !(t.done && t.paid == t.xp && t.progress == t.target) : t.done || t.paid != 0) restored.Add(TaskName(round, i));
             }
         }
-        Check(restored.Count == 0, "cycle: tasks paid before the downgrade come back done and paid (" + string.Join(", ", restored) + ")");
+        Check(restored.Count == 0, "cycle: exactly the tasks paid before the downgrade come back done and paid (" + string.Join(", ", restored) + ")");
         if (pi >= 0) {
             var project = Stored(3).tasks[pi];
             Check(project.stagesPaid == stages && project.paid == project.stageXp.Take(stages).Sum() && stages > 0 && project.progress == project.stageTargets[stages - 1],
@@ -1013,6 +1070,40 @@ public static class ChallengeReworkChecks
         Check(Stored(0).tasks[k].paid == dayPaid, "cycle: the restored daily task is not paid again");
         Consistent(ledger, "cycle: after the downgrade");
         DowngradeInvariants("cycle");
+        static string PaidState(MetaChallengeRound round) => string.Join("|", round.tasks.Select(t => t.done + "/" + t.paid + "/" + t.stagesPaid)) + "/" + round.bonusPaid;
+        var before = new[] { 0, 1, 3 }.ToDictionary(p => p, p => Signature(Stored(p)) + "#" + PaidState(Stored(p)));
+        period = P.periodRewardXp;
+        MetaProgression.EndRun();
+        SimulateOlderBuild("cycle second");
+        var changed = new[] { 0, 1, 3 }.Where(p => Signature(R(p)) + "#" + PaidState(Stored(p)) != before[p]).Select(p => (ChallengePeriod)p).ToList();
+        Check(changed.Count == 0 && P.periodRewardXp == period, "cycle: a second downgrade rebuilds the same rounds with the same paid state (" + string.Join(", ", changed) + ")");
+
+        // A converted legacy round (format 1) is never drawn again: paying it writes no round markers, so a later draw of
+        // the same day after a downgrade cannot inherit its paid keys.
+        var fx = Legacy(95, 52, Selections[0], false, 2, false, 0, 0, 0);
+        fx.profile.challengePeriods.Remove(fx.weekly);
+        long dayStart = fx.daily.startUtc;
+        Fresh("cycle-legacy", new DateTime(dayStart, DateTimeKind.Utc).AddHours(10), s);
+        MetaProgression.Reload();
+        WriteEnvelope(MetaProgression.ProfilePath, JsonUtility.ToJson(fx.profile));
+        foreach (string extra in new[] { ".bak", ".tmp" }) if (File.Exists(MetaProgression.ProfilePath + extra)) File.Delete(MetaProgression.ProfilePath + extra);
+        MetaProgression.Reload();
+        var converted = R(0);
+        Check(converted != null && converted.format == 1 && converted.startUtc == dayStart, "cycle legacy: the running legacy day is a format-1 round");
+        MetaProgression.BeginRun("test-run-cycle-legacy");
+        int li = converted?.tasks.FindIndex(t => t.id == "ore" && t.subject == 0 && !t.done) ?? -1;
+        long legacyPeriod = P.periodRewardXp;
+        if (li >= 0) Reach(0, li, converted.tasks[li].target);
+        Check(li >= 0 && Stored(0) == converted && converted.tasks[li].done && P.periodRewardXp > legacyPeriod, "cycle legacy: a task of the format-1 round is paid on this build");
+        var day = new MetaChallengeRound { period = 0, startUtc = dayStart };
+        var legacyMarkers = RunSources().Where(x => new[] { "cr", "cx", "ct", "cs" }.Any(kind => x.StartsWith(Descriptor(day, kind)))).ToList();
+        Check(legacyMarkers.Count == 0, "cycle legacy: paying a format-1 round writes no round markers (" + string.Join(", ", legacyMarkers.Take(3)) + ")");
+        legacyPeriod = P.periodRewardXp;
+        MetaProgression.EndRun();
+        SimulateOlderBuild("cycle legacy");
+        var redrawn = R(0);
+        Check(redrawn != null && redrawn.format == 2 && redrawn.startUtc == dayStart && Completed(redrawn) == 0 && Paid(redrawn) == 0 && P.periodRewardXp == legacyPeriod,
+            "cycle legacy: the format-2 draw of the same day starts unpaid and pays nothing (" + Completed(redrawn) + " done)");
     }
 
     // ---------- 9. migration of legacy period states ----------
