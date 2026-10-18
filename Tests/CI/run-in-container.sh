@@ -81,6 +81,8 @@ return_licence() {
 # the virtual display. A player has no editor dialogs and renders every frame, unlike the batchmode editor.
 # Software rendering is slow (run #13: ~1.5 s per frame at 1280x720 Ultra, loading hit the driver's 300 s limit),
 # so the player runs at a tiny resolution and the lowest quality level: the benchmark targets CPU work.
+# Run #14 still spent ~100 ms per frame on software rendering (loading reached stage 4 of 7 in 300 s), so by default
+# the player runs with -nographics (no rendering at all, pure CPU frame times); CI_PLAYER_NOGRAPHICS=0 renders.
 if grep -q '"mode": "player"' "$ARTIFACTS/plan.json"; then
   echo "Building benchmark player (Linux, Mono)"
   timeout "${CI_BUILD_TIMEOUT:-75m}" "$UNITY" -batchmode -nographics -projectPath "$PWD" \
@@ -95,7 +97,8 @@ if grep -q '"mode": "player"' "$ARTIFACTS/plan.json"; then
     started=$(date +%s)
     timeout "${CI_PLAYER_TIMEOUT:-30m}" "$PLAYER" -performanceBenchmark "$PWD/$ARTIFACTS/PerformanceBenchmark.txt" \
       -logFile "$PWD/$ARTIFACTS/player.log" -screen-fullscreen 0 \
-      -screen-width "${CI_PLAYER_WIDTH:-320}" -screen-height "${CI_PLAYER_HEIGHT:-180}" -screen-quality "Very Low" -force-glcore
+      -screen-width "${CI_PLAYER_WIDTH:-320}" -screen-height "${CI_PLAYER_HEIGHT:-180}" -screen-quality "Very Low" \
+      $([ "${CI_PLAYER_NOGRAPHICS:-1}" = 1 ] && echo -nographics || echo -force-glcore)
     pcode=$?
     echo "Player exit code: $pcode"
     echo "$(( $(date +%s) - started )) $pcode" > "$ARTIFACTS/player-meta.txt"
