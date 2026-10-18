@@ -111,3 +111,9 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Cloud checks (Tests/CI): copied check scripts, reports and LFS cache key
+/Assets/Editor/CIChecks/
+/Assets/Editor/CIChecks.meta
+/Artifacts/
+/.lfs-assets-id
