@@ -17,6 +17,11 @@ else:
     text = f"Kein Bericht (Player-Exit {exit_code}).\n" + "\n".join(tail)
     status = "FAIL"
 
+abort = ART / "abort-reason.txt"
+if abort.exists():
+    text = abort.read_text(encoding="utf-8").strip() + "\n\n" + text
+    status = "FAIL"
+
 row = {"name": "PlayerBenchmark", "mode": "player", "status": status, "seconds": seconds, "output": text[:4000], "logErrors": []}
 (ART / "ci-results.json").write_text(json.dumps({"checks": [row]}, ensure_ascii=False, indent=2), encoding="utf-8")
 icon = "✅" if status == "PASS" else "❌"

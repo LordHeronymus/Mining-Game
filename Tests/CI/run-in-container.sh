@@ -14,6 +14,17 @@ ARTIFACTS="Artifacts"
 mkdir -p "$ARTIFACTS/temp" "$HOME/.cache/unity3d"
 STRATEGY=""
 
+# Hard time limit: the workflow passes CI_DEADLINE (epoch seconds, job start + 16 min; the job itself stops at 20 min).
+# Every Unity/player call gets only the time that is left. When it runs out, abort() writes Artifacts/abort-reason.txt,
+# which the report, the live status and the dashboard show, so agents see why and do not simply start the run again.
+DEADLINE="${CI_DEADLINE:-$(( $(date +%s) + 100 * 60 ))}"
+left() { local s=$(( DEADLINE - $(date +%s) )); [ $s -lt 30 ] && s=30; echo "${s}s"; }
+abort() {
+  local text="Abgebrochen: Zeitlimit von 20 Minuten erreicht ($1). Dieser Lauf ist für die Cloud zu aufwendig. Nicht erneut starten: Check verkleinern, mit // CI: local-only markieren oder lokal im Editor ausführen."
+  echo "$text" > "$ARTIFACTS/abort-reason.txt"
+  echo "::error title=Zeitlimit 20 min::$text"
+}
+
 if [ -n "${UNITY_SERIAL:-}" ]; then
   STRATEGY=serial
   echo "Activating serial licence"
@@ -81,28 +92,30 @@ return_licence() {
 # the virtual display. A player has no editor dialogs and renders every frame, unlike the batchmode editor.
 # Software rendering is slow (run #13: ~1.5 s per frame at 1280x720 Ultra, loading hit the driver's 300 s limit),
 # so the player runs at a tiny resolution and the lowest quality level: the benchmark targets CPU work.
-# Run #14 still spent ~100 ms per frame on software rendering (loading reached stage 4 of 7 in the driver's 300 s).
-# -nographics crashes the player right after start (run #15, segfault), so it renders and gets a longer loading limit
-# (-benchmarkLoadLimit) plus a small virtual screen, which caps the window size. CI_PLAYER_NOGRAPHICS=1 tries without.
+# Run #14 still spent ~100 ms per frame on software rendering, -nographics crashes the player (run #15), and with
+# rendering the full run took 41 min (run #16, ~1.3 s per frame in the game). So the player keeps its graphics device but
+# its cameras draw nothing (-benchmarkNoRender): frame times measure CPU work only. CI_PLAYER_RENDER=1 draws again.
 if grep -q '"mode": "player"' "$ARTIFACTS/plan.json"; then
   echo "Building benchmark player (Linux, Mono)"
-  timeout "${CI_BUILD_TIMEOUT:-75m}" "$UNITY" -batchmode -nographics -projectPath "$PWD" \
+  timeout "$(left)" "$UNITY" -batchmode -nographics -projectPath "$PWD" \
     -executeMethod MiningGame.CI.CiBenchmarkBuild.Build -ciBuildPath "$ARTIFACTS/player" -logFile "$ARTIFACTS/editor.log"
   code=$?
   echo "Build exit code: $code"
+  [ $code -eq 124 ] && abort "beim Bauen des Benchmark-Players"
   return_licence
   if [ $code -eq 0 ]; then
     XVFB_SCREEN="${CI_PLAYER_SCREEN:-640x360x24}" start_display
     PLAYER="$ARTIFACTS/player/TiefenhallBenchmark.x86_64"
     chmod +x "$PLAYER"
     started=$(date +%s)
-    timeout "${CI_PLAYER_TIMEOUT:-45m}" "$PLAYER" -performanceBenchmark "$PWD/$ARTIFACTS/PerformanceBenchmark.txt" \
-      -benchmarkLoadLimit "${CI_PLAYER_LOAD_LIMIT:-2100}" \
+    timeout "$(left)" "$PLAYER" -performanceBenchmark "$PWD/$ARTIFACTS/PerformanceBenchmark.txt" \
+      -benchmarkLoadLimit "${CI_PLAYER_LOAD_LIMIT:-480}" $([ "${CI_PLAYER_RENDER:-0}" = 1 ] || echo -benchmarkNoRender) \
       -logFile "$PWD/$ARTIFACTS/player.log" -screen-fullscreen 0 \
       -screen-width "${CI_PLAYER_WIDTH:-320}" -screen-height "${CI_PLAYER_HEIGHT:-180}" -screen-quality "Very Low" \
-      $([ "${CI_PLAYER_NOGRAPHICS:-0}" = 1 ] && echo -nographics || echo -force-glcore)
+      -force-glcore
     pcode=$?
     echo "Player exit code: $pcode"
+    [ $pcode -eq 124 ] && abort "während des Benchmarks im Player"
     echo "$(( $(date +%s) - started )) $pcode" > "$ARTIFACTS/player-meta.txt"
     kill $XVFB_PID 2>/dev/null
     echo "--- Player-Log (Ende)"; tail -n 40 "$ARTIFACTS/player.log" 2>/dev/null
@@ -115,7 +128,7 @@ fi
 ARGS=(-projectPath "$PWD" -executeMethod MiningGame.CI.CiCheckRunner.Run
       -ciPlan "$ARTIFACTS/plan.json" -ciOutput "$ARTIFACTS" -logFile "$ARTIFACTS/editor.log")
 # Guard against modal dialogs or hangs: the runner's own timeouts cannot fire if the editor blocks.
-LIMIT="${CI_UNITY_TIMEOUT:-100m}"
+LIMIT="$(left)"
 
 # Screenshots and window titles of the virtual display, plus a cautious dialog handler: when the
 # editor log has not grown for a while, the frontmost window that is not the main editor window
@@ -169,6 +182,7 @@ else
   code=$?
 fi
 echo "Unity exit code: $code"
+[ $code -eq 124 ] && abort "während der Checks im Editor"
 if [ -f "$ARTIFACTS/windows.log" ]; then echo "--- Fenster auf dem virtuellen Bildschirm (letzte Einträge)"; tail -n 40 "$ARTIFACTS/windows.log"; fi
 
 # Free the seat again so it does not count as an extra machine.

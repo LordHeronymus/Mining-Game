@@ -17,6 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 TESTS = ROOT / "Tests"
 TARGET = ROOT / "Assets" / "Editor" / "CIChecks"
+LOCAL_ONLY = "CI: local-only"  # checks about motion, animation, particles or frame rates (AGENTS.md)
 PLAY_MARKERS = ("Requires fresh Play", "Requires free MainMenu", "MainMenuController.IsVisible", "Requires the running main menu")
 
 
@@ -35,6 +36,15 @@ def parse_list(text):
     return entries
 
 
+def reject(text):
+    # Shown by the workflow report, the live status and the dashboard (like the time limit).
+    art = ROOT / "Artifacts"
+    art.mkdir(exist_ok=True)
+    (art / "abort-reason.txt").write_text(f"Abgebrochen: {text}\n", encoding="utf-8")
+    print(f"::error title=Nur lokal::{text}")
+    sys.exit(1)
+
+
 def complete(entry):
     name = entry["name"]
     if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
@@ -45,6 +55,9 @@ def complete(entry):
     if not source_path.exists():
         sys.exit(f"Check not found: Tests/{name}.cs")
     source = source_path.read_text(encoding="utf-8-sig")
+    if LOCAL_ONLY in source:
+        reject(f"{name} ist mit „// {LOCAL_ONLY}“ markiert (Bewegung, Animation, Partikel oder Bildraten) und läuft nur lokal im Editor. "
+               "Nicht in der Cloud erneut starten.")
     entry.setdefault("mode", "play" if any(marker in source for marker in PLAY_MARKERS) else "edit")
     entry.setdefault("resultFile", f"Temp/{name}.txt")
     # Checks driven by EditorApplication.update only report through their result file.

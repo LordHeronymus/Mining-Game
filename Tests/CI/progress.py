@@ -169,7 +169,8 @@ def build(final=None, conclusion=None):
 
     source = lines if lines else read(ART / "activation.log").splitlines()
     tail = [l[:300] for l in source[-400:] if l.strip()][-60:]
-    problem = next((text for marker, text in PROBLEMS if marker in log + read(ART / "activation.log")), None)
+    problem = read(ART / "abort-reason.txt").strip() or next(
+        (text for marker, text in PROBLEMS if marker in log + read(ART / "activation.log")), None)
     errors = sorted({l.strip()[:300] for l in lines if re.search(r"error CS\d+", l)})[:30]
     return {
         "version": 1,
