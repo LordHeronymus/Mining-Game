@@ -33,6 +33,7 @@ namespace MiningGame.CI
             public string afterStop;
             public string resultFile;
             public bool waitForResultFile;
+            public string resultDonePattern;
             public float timeoutSeconds = 300;
         }
 
@@ -144,7 +145,7 @@ namespace MiningGame.CI
 
                 case Phase.WaitFile:
                     // Asynchronous checks run on EditorApplication.update and write their result file when done.
-                    if (current.waitForResultFile && !File.Exists(current.resultFile)) return;
+                    if (current.waitForResultFile && !ResultFileDone()) return;
                     if (!string.IsNullOrEmpty(current.afterStop) && !afterStopDone) { Set(Phase.StopForAfter); return; }
                     if (ResultFileOk()) Pass();
                     return;
@@ -202,6 +203,15 @@ namespace MiningGame.CI
                 return;
             }
             Set(next);
+        }
+
+        // Some checks write a placeholder first ("läuft …"); resultDonePattern marks the final report.
+        static bool ResultFileDone()
+        {
+            if (!File.Exists(current.resultFile)) return false;
+            if (string.IsNullOrEmpty(current.resultDonePattern)) return true;
+            try { return System.Text.RegularExpressions.Regex.IsMatch(File.ReadAllText(current.resultFile), current.resultDonePattern, System.Text.RegularExpressions.RegexOptions.Multiline); }
+            catch (IOException) { return false; }
         }
 
         // Checks often write Temp/<Name>.txt; any line starting with FAIL fails the check.

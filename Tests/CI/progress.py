@@ -113,6 +113,13 @@ def build(final=None, conclusion=None):
     by_name = {c["name"]: c for c in checks}
 
     log = read(ART / "editor.log")
+    player_log = read(ART / "player.log")
+    if player_log:
+        # Benchmark player running (suite performance): the build is done, show the player's log.
+        for c in checks:
+            if c["mode"] == "player" and c["status"] == "pending":
+                c["status"] = "running"
+        log = player_log
     lines = log.splitlines()
     imported = 0
     compiling = False
@@ -150,6 +157,8 @@ def build(final=None, conclusion=None):
         phase = "done"
     elif started:
         phase = "checks"
+    elif log and any(c["mode"] == "player" for c in checks):
+        phase = "compile"  # building the benchmark player (shaders), shown as "Kompilieren"
     elif log:
         tail = "\n".join(lines[-30:])
         phase = "compile" if compiling and ("csc" in tail or "Compil" in tail) else "import" if imported else "unity"
@@ -160,7 +169,8 @@ def build(final=None, conclusion=None):
 
     source = lines if lines else read(ART / "activation.log").splitlines()
     tail = [l[:300] for l in source[-400:] if l.strip()][-60:]
-    problem = next((text for marker, text in PROBLEMS if marker in log + read(ART / "activation.log")), None)
+    problem = read(ART / "abort-reason.txt").strip() or next(
+        (text for marker, text in PROBLEMS if marker in log + read(ART / "activation.log")), None)
     errors = sorted({l.strip()[:300] for l in lines if re.search(r"error CS\d+", l)})[:30]
     return {
         "version": 1,
@@ -169,7 +179,7 @@ def build(final=None, conclusion=None):
         "ref": REF,
         "suite": CHECKS or SUITE,
         "phase": phase,
-        "phase_text": PHASES[phase],
+        "phase_text": "Spiel wird gebaut (Shader)" if phase == "compile" and any(c["mode"] == "player" for c in checks) else PHASES[phase],
         "updated": now(),
         "imported": imported,
         "assets": total_assets(),
