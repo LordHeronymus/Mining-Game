@@ -409,7 +409,6 @@ public static class GameSaveSystem
             exotics = ExoticWorldContent.Ensure(map).CaptureState(),
             placedLights = PlacedTorch.Capture(map),
             generationSettings = GpsSettings.CaptureGeneration(map),
-            copperVisuals = map.GetComponent<OreOverlayAppearance>().CopperPlans.Capture(),
             savedUtc = DateTime.UtcNow.Ticks, playedSeconds = PlayedSeconds, playerPosition = player.transform.position,
             playerVelocity = player.GetComponent<Rigidbody2D>().linearVelocity, facingLeft = player.transform.localScale.x < 0,
             inventory = InventoryManager.Instance.CaptureRunState(), stats = StatsManager.Instance.CaptureRunState(),
@@ -542,7 +541,6 @@ public static class GameSaveSystem
         var appearance = map.GetComponent<UniformStoneAppearance>();
         if (appearance && appearance.isActiveAndEnabled) yield return appearance.PrepareForLoading(data);
         yield return map.FinishSavedMapRestoreSteps(data.terrainTiles);
-        map.GetComponent<OreOverlayAppearance>().RestoreCopperPlans(run.state.copperVisuals);
         var surface = map.GetComponent<DirtSurfaceAppearance>();
         if (surface && surface.isActiveAndEnabled) yield return surface.PrepareForLoading();
         InventoryManager.Instance.RestoreRunState(run.state.inventory);
