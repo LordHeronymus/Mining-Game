@@ -6,11 +6,7 @@ Arbeitsordner (git worktrees, beide von `main`): `Git Repos/Mining Game` und `Gi
 
 ## Unity Editor
 
-| Ordner | Belegt von | Zweck | Seit |
-| --- | --- | --- | --- |
-| Mining Game | – | frei | 17.10.2026 22:40 |
-| Cloud (GitHub Actions) | – | parallel nutzbar, kein lokaler Editor | 18.10.2026 |
-| Mining Game 2 | – | frei (Library noch nicht importiert) | 17.10.2026 23:00 |
+Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von Git (`Git Repos/EditorQueue/<Ordner>.json`, für alle Branches gleich). Anzeigen mit `Tools/editor-queue.sh status`, Regeln in `Docs/Editor-Warteschlange.md`. Cloud-Läufe (GitHub Actions) belegen keinen lokalen Editor und sind parallel nutzbar.
 
 ## Aktiv
 
@@ -20,6 +16,7 @@ Arbeitsordner (git worktrees, beide von `main`): `Git Repos/Mining Game` und `Gi
 
 ## Zuletzt abgeschlossen
 
+- 18.10.2026, Claude Code: Editor-Warteschlange ausserhalb von Git (`Tools/editor-queue.*`, Aktivitätssignal `Assets/Editor/EditorQueueActivity.cs`, Doku `Docs/Editor-Warteschlange.md`) ersetzt die Tabelle „Unity Editor“.
 - 18.10.2026, Claude Code (Cloud): Cloud-Läufe mit 20-min-Limit und Abbruchgrund, `// CI: local-only`, Performance-Suite ohne Zeichnen (Lauf #17: 12 min, aussagekräftige CPU-Werte).
 - 18.10.2026, Claude Code (Cloud): Suite `performance` läuft in der Cloud vollständig durch (Benchmark-Player, Lauf #16); Werte wegen Software-Rendering nur eingeschränkt aussagekräftig, siehe Docs/Cloud-Tests.md.
 - 18.10.2026, Claude Code (Cloud): Cloud-Tests laufen (Personal-Lizenz über Unity-Konto), Live-Dashboard `Tools/CloudDashboard` und Live-Status-Issue #2; 2 fehlgeschlagene Checks als Todoist-Aufgabe erfasst.
