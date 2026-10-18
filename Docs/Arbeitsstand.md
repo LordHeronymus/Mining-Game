@@ -8,7 +8,7 @@ Arbeitsordner (git worktrees, beide von `main`): `Git Repos/Mining Game` und `Gi
 
 | Ordner | Belegt von | Zweck | Seit |
 | --- | --- | --- | --- |
-| Mining Game | – | frei | 18.10.2026 21:10 |
+| Mining Game | – | frei | 18.10.2026 22:10 |
 | Mining Game 2 | – | frei (Library noch nicht importiert) | 17.10.2026 23:00 |
 
 ## Aktiv
@@ -19,6 +19,7 @@ Arbeitsordner (git worktrees, beide von `main`): `Git Repos/Mining Game` und `Gi
 
 ## Zuletzt abgeschlossen
 
+- 18.10.2026, Claude Code: Kohle (K2, ohne Steinchen) als gemalte Einzelblöcke, Branch `claude/iron-tiles`, siehe Docs/Gemalte-Erze.md.
 - 18.10.2026, Claude Code: Silber (S1) und Gold (G2b) als gemalte Einzelblöcke, Branch `claude/iron-tiles`, siehe Docs/Gemalte-Erze.md.
 - 18.10.2026, Claude Code: Eisenerz (Schema E1 Stahl) als gemalte Einzelblöcke und Kupfer-Aufräumen (claude/copper-cleanup) geprüft und zusammengeführt, Branch `claude/iron-tiles`, siehe Docs/Gemalte-Erze.md.
 - 18.10.2026, Claude Code: Kupfererz (Small/Medium/Large) als gemalte Einzelblöcke statt Shader-Adern auf Branch `claude/copper-tiles`, siehe Docs/Gemalte-Erze.md.

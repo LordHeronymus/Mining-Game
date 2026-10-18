@@ -241,6 +241,8 @@ public static class PaintedOreArt
         public Color specTint = new Color(1, .9f, .76f), bounce = new Color(1, .55f, .3f);
         public float mainSpec = .5f, accentSpec = 1.1f, accentGloss = 70, accentThreshold = .66f, accentScale = 70;
         public float k = .95f, tilt = .4f, elong = .35f, rough = .12f; public int seedsPerRadius = 16;
+        public float mainGloss = 45, seamBright = 1.28f, porosity, poreScale = 9, banding, bandWidth = 7;
+        public bool pebbles = true; // loose brown host pebbles around the chunks
     }
     static Color C(float r, float g, float b) => new Color(r, g, b);
 
@@ -367,6 +369,39 @@ public static class PaintedOreArt
     // Gold G2 follow-up preview: PreviewGoldG2.
     public static string PreviewGoldG2() => PreviewLarge(GoldG2Palettes, new[] { 1012, 1012 }, GoldSilverOut + "/G2", new string[0]);
 
+    // ---------- coal: matte, porous, blockier chunks (four schemes) ----------
+
+    const string CoalOut = "Design/OreVeins/CoalLarge";
+    static Palette Coal(string name) => new Palette { name = name, k = 1f, tilt = .55f, elong = .5f, rough = .18f, seedsPerRadius = 10,
+        mainGloss = 14, seamBright = 1.12f, specTint = new Color(.85f, .88f, .95f), bounce = new Color(.25f, .25f, .3f),
+        pebbles = false }; // brown pebbles look wrong next to black coal on the dark host rocks
+    static Palette Tune(Palette p, float porosity, float poreScale, float banding, float bandWidth, float k, float rough, int seeds, float seam)
+    { p.porosity = porosity; p.poreScale = poreScale; p.banding = banding; p.bandWidth = bandWidth; p.k = k; p.rough = rough; p.seedsPerRadius = seeds; p.seamBright = seam; return p; }
+    static readonly Palette[] CoalPalettes =
+    {
+        Tune(Set(Coal("K1-Kohle-matt"), // dull charcoal-black, fine pores, dusty grey facets
+            new[] { C(.03f, .03f, .03f), C(.08f, .08f, .085f), C(.15f, .15f, .16f), C(.25f, .25f, .27f), C(.4f, .4f, .43f) },
+            new[] { C(.05f, .05f, .05f), C(.12f, .12f, .12f), C(.21f, .21f, .21f), C(.32f, .32f, .32f), C(.47f, .47f, .46f) },
+            C(.85f, .88f, .95f), C(.25f, .25f, .3f), .08f, .05f, 10, .6f, 50), .55f, 7, 0, 7, 1f, .18f, 10, 1.12f),
+        Tune(Set(Coal("K2-Steinkohle-geschichtet"), // stratified chunks: matte layers alternate with faint glassy bands
+            new[] { C(.025f, .025f, .03f), C(.07f, .07f, .08f), C(.14f, .14f, .16f), C(.24f, .24f, .27f), C(.42f, .43f, .47f) },
+            new[] { C(.02f, .02f, .025f), C(.06f, .06f, .07f), C(.13f, .13f, .15f), C(.25f, .26f, .29f), C(.5f, .52f, .56f) },
+            C(.85f, .88f, .95f), C(.25f, .25f, .3f), .12f, .1f, 16, .64f, 60), .35f, 8, .45f, 6, 1f, .16f, 11, 1.1f),
+        Tune(Set(Coal("K3-Anthrazit"), // near-black anthracite, few pores, subtle cool sheen on the facets
+            new[] { C(.02f, .02f, .025f), C(.06f, .06f, .075f), C(.13f, .135f, .16f), C(.24f, .25f, .3f), C(.46f, .48f, .55f) },
+            new[] { C(.02f, .02f, .03f), C(.06f, .065f, .085f), C(.13f, .14f, .19f), C(.25f, .28f, .36f), C(.5f, .55f, .66f) },
+            C(.8f, .86f, 1), C(.2f, .22f, .32f), .3f, .35f, 28, .62f, 60), .15f, 10, 0, 7, 1.05f, .14f, 10, 1.18f),
+        Tune(Set(Coal("K4-Braunkohle-poroes"), // brownish-black, coarse spongy pores, crumbly rounded chunks
+            new[] { C(.035f, .028f, .022f), C(.1f, .075f, .055f), C(.2f, .15f, .11f), C(.33f, .26f, .19f), C(.5f, .42f, .33f) },
+            new[] { C(.05f, .035f, .025f), C(.13f, .09f, .06f), C(.23f, .16f, .1f), C(.35f, .26f, .17f), C(.5f, .4f, .29f) },
+            C(.9f, .85f, .8f), C(.3f, .22f, .15f), .04f, .04f, 8, .66f, 70), .85f, 9, 0, 7, .88f, .24f, 13, 1.12f),
+    };
+    // Coal preview (four schemes): PreviewCoalLarge.
+    public static string PreviewCoalLarge() => PreviewLarge(CoalPalettes, new[] { 1401, 1412, 1423, 1434 }, CoalOut, new[]
+    {
+        "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Iron/Iron_Large_01.png",
+    });
+
     public static string PreviewGoldSilverLarge() => PreviewLarge(GoldSilverPalettes, new[] { 1001, 1012, 1023, 1034 }, GoldSilverOut, new[]
     {
         "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Copper/Copper_Large_01.png",
@@ -410,9 +445,15 @@ public static class PaintedOreArt
 
     // Gold install (applied 18.10.2026): scheme G2b, Large seed 1012 is the approved preview.
     static readonly int[] GoldLargeSeeds = { 1012, 1213, 1224 }, GoldSmallSeeds = { 1311, 1322 }, GoldMediumSeeds = { 1333, 1344 };
-    public static string Main() => InstallGold();
+    // Gold install: InstallGold.
     public static string InstallGold() => InstallOre(BlockType.GoldOre, "Gold", "Gold", Array.Find(GoldG2Palettes, p => p.name == "G2b-Gold-hell"),
         GoldLargeSeeds, GoldSmallSeeds, GoldMediumSeeds, GoldSilverOut + "/Installed");
+
+    // Coal install (applied 18.10.2026): scheme K2 without pebbles, Large seed 1412 is the approved preview.
+    static readonly int[] CoalLargeSeeds = { 1412, 1515, 1526 }, CoalSmallSeeds = { 1611, 1622 }, CoalMediumSeeds = { 1633, 1644 };
+    public static string Main() => InstallCoal();
+    public static string InstallCoal() => InstallOre(BlockType.Coal, "Coal", "Kohle", Array.Find(CoalPalettes, p => p.name == "K2-Steinkohle-geschichtet"),
+        CoalLargeSeeds, CoalSmallSeeds, CoalMediumSeeds, CoalOut + "/Installed");
 
     // Folder = ore folder under Blocks/Ores and sprite prefix (e.g. "Iron"), tilePrefix = German tile name (e.g. "Eisen").
     static string InstallOre(BlockType id, string folder, string tilePrefix, Palette palette, int[] largeSeeds, int[] smallSeeds, int[] mediumSeeds, string designDir)
@@ -658,6 +699,7 @@ public static class PaintedOreArt
 
     static void Pebbles(List<Piece> list, System.Random rng, int count)
     {
+        if (!Active.pebbles) return;
         int placed = 0;
         for (int attempt = 0; attempt < 4000 && placed < count; attempt++)
         {
@@ -918,7 +960,7 @@ public static class PaintedOreArt
                     if (h.hn < .45f && Fbm(w.x / 7, w.y / 7, 17) > .64f) c = Color.Lerp(c, new Color(.2f, .55f, .47f) * (.6f + t * .6f), .85f);
                 }
                 spec = h.p.style == 1 ? Active.mainSpec : h.p.kind == Kind.Blob ? .8f : h.p.kind == Kind.Crystal ? 1f : .3f;
-                gloss = h.p.style == 1 ? 45 : h.p.kind == Kind.Blob ? 60 : h.p.kind == Kind.Crystal ? 45 : 22; break;
+                gloss = h.p.style == 1 ? Active.mainGloss : h.p.kind == Kind.Blob ? 60 : h.p.kind == Kind.Crystal ? 45 : 22; break;
             case Mat.Cuprite:
                 c = Ramp(t, Active.accent[0], Active.accent[1], Active.accent[2], Active.accent[3], Active.accent[4]);
                 spec = Active.accentSpec; gloss = Active.accentGloss; break;
@@ -933,12 +975,29 @@ public static class PaintedOreArt
                 c = Ramp(t * .9f, new Color(.15f, .1f, .07f), new Color(.3f, .21f, .15f), new Color(.46f, .34f, .25f), new Color(.6f, .48f, .36f), new Color(.74f, .62f, .5f));
                 spec = .04f; noiseAmt = .1f; break;
         }
+        // Coal-like surfaces: pores (pits with a lit lower rim) and strata bands across each chunk; both dull the shine.
+        if ((mat == Mat.Copper || mat == Mat.Cuprite) && Active.porosity > 0)
+        {
+            float ps = Active.poreScale;
+            float pit = Pores(w, ps, Active.porosity);
+            float lit = Pores(w + new Vector2(ps * .12f, -ps * .12f), ps, Active.porosity);
+            c *= 1 - .7f * pit; c += new Color(.09f, .09f, .095f) * Mathf.Max(0, lit - pit) * (ndl > 0 ? 1 : .4f);
+            spec *= 1 - pit;
+        }
+        if ((mat == Mat.Copper || mat == Mat.Cuprite) && Active.banding > 0)
+        {
+            var q = Local(h.p, w);
+            float band = Mathf.Sin(q.y / Active.bandWidth + Fbm(w.x / 40, w.y / 40, 211) * 4);
+            float shiny = Smooth(.55f, .85f, band);
+            c *= 1 - Active.banding * Smooth(-.2f, -.7f, band);
+            spec *= Mathf.Lerp(.3f, 1.6f, shiny);
+        }
         float s = Mathf.Pow(Mathf.Max(0, Vector3.Dot(n, Half)), gloss) * spec * (1 - .6f * occl);
         if (h.p.style == 2) s = Smooth(.35f, .45f, s) * .75f; // hard-edged cartoon highlight
         c += Active.specTint * s;
         if (mat == Mat.Copper || mat == Mat.Cuprite) c += Active.bounce * .08f * Mathf.Pow(1 - n.z, 2) * (ndl < 0 ? 1 : .3f); // warm bounce on the shadow side
         // Facet seams: bright where the facet faces the light, dark otherwise.
-        if (h.p.style == 1 ? h.edge < 1.7f : h.edge < 1.3f) c *= ndl > .2f ? (h.p.style == 1 ? 1.28f : 1.16f) : (h.p.style == 1 ? .72f : .82f);
+        if (h.p.style == 1 ? h.edge < 1.7f : h.edge < 1.3f) c *= ndl > .2f ? (h.p.style == 1 ? Active.seamBright : 1.16f) : (h.p.style == 1 ? .72f : .82f);
         // Dark silhouette line keeps the ore readable against busy stone.
         c *= Mathf.Lerp(.55f, 1, Smooth(-2.2f, -.4f, -h.sd) );
         c *= 1 + noiseAmt * (Fbm(w.x / 6, w.y / 6, 77) - .5f) * 2;
@@ -1014,6 +1073,21 @@ public static class PaintedOreArt
         }
         return inside ? -d : d;
     }
+    // Round pores: at most one per grid cell (density = share of cells with a pore), soft edge. Returns 0..1.
+    static float Pores(Vector2 w, float size, float density)
+    {
+        int cx = Mathf.FloorToInt(w.x / size), cy = Mathf.FloorToInt(w.y / size); float pit = 0;
+        for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++)
+        {
+            int x = cx + i, y = cy + j;
+            if (Hash(x, y, 501) > density) continue;
+            var centre = new Vector2((x + Hash(x, y, 502)) * size, (y + Hash(x, y, 503)) * size);
+            float radius = size * (.12f + .22f * Hash(x, y, 504));
+            pit = Mathf.Max(pit, Smooth(radius, radius * .7f, (w - centre).magnitude));
+        }
+        return pit;
+    }
+
     static float Hash(int x, int y, int s)
     {
         unchecked
