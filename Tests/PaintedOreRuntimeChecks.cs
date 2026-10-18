@@ -8,8 +8,8 @@ using UnityEngine.Rendering.Universal;
 using UnityEngine.Tilemaps;
 using Object=UnityEngine.Object;
 
-// Painted copper tiles (Small/Medium/Large): generation, all host rocks, overhang clipping at mined cells, mining and save/load.
-public static class CopperPaintedRuntimeChecks
+// Painted ore tiles (copper, iron, silver, gold; Small/Medium/Large): generation, all host rocks, overhang clipping at mined cells, mining and save/load.
+public static class PaintedOreRuntimeChecks
 {
     public static string Main()
     {
@@ -18,14 +18,14 @@ public static class CopperPaintedRuntimeChecks
         if(GameSaveSystem.TestDirectory!=null || MetaProgression.TestDirectory!=null)
             throw new Exception("Another test owns the save scope");
         var root=new GameObject("Copper Large painted runtime checks");Object.DontDestroyOnLoad(root);
-        root.AddComponent<CopperPaintedRuntimeProbe>();return "Started; report Temp/CopperPaintedRuntimeChecks.txt";
+        root.AddComponent<PaintedOreRuntimeProbe>();return "Started; report Temp/PaintedOreRuntimeChecks.txt";
     }
 }
 
-public sealed class CopperPaintedRuntimeProbe:MonoBehaviour
+public sealed class PaintedOreRuntimeProbe:MonoBehaviour
 {
-    const string Report="Temp/CopperPaintedRuntimeChecks.txt";
-    const string Output="Design/OreVeins/CopperLargeV3/Runtime";
+    const string Report="Temp/PaintedOreRuntimeChecks.txt";
+    const string Output="Design/OreVeins/PaintedOres/Runtime";
     const float Marker=254f/255f;
     string previousSave,previousMeta,directory;bool restored,previousBackground;
     void Check(bool value,string message){if(!value)throw new Exception(message);File.AppendAllText(Report,"PASS "+message+"\n");}
@@ -33,7 +33,7 @@ public sealed class CopperPaintedRuntimeProbe:MonoBehaviour
     {
         previousSave=GameSaveSystem.TestDirectory;previousMeta=MetaProgression.TestDirectory;
         previousBackground=Application.runInBackground;Application.runInBackground=true;
-        directory=Path.GetFullPath("Temp/CopperLargePaintedRun-"+DateTime.UtcNow.Ticks);
+        directory=Path.GetFullPath("Temp/PaintedOreRun-"+DateTime.UtcNow.Ticks);
         Directory.CreateDirectory(directory);GameSaveSystem.TestDirectory=directory;
         MetaProgression.TestDirectory=Path.Combine(directory,"Profile");
         File.WriteAllText(Report,"Isolated save directory: "+directory+"\n");
@@ -71,27 +71,30 @@ public sealed class CopperPaintedRuntimeProbe:MonoBehaviour
     static bool Painted(Tilemap tiles,Vector3Int cell)=>Mathf.Abs(tiles.GetColor(cell).a-Marker)<.001f;
     IEnumerator Run()
     {
-        RunNavigation.NewGame("Kupfer-Large-Test");yield return Ready();
+        RunNavigation.NewGame("Erz-Test");yield return Ready();
         Check(GameSaveSystem.ActiveSlot>0 && GameSaveSystem.InitialSaveError==null,"Fresh isolated run saved");
         CameraCheck("Fresh start");
         var map=Object.FindFirstObjectByType<MapGenerator>();
-        var copper=map.registry.GetById(BlockType.CopperOre);
-        Check(copper.smallOre.Length==2 && copper.mediumOre.Length==2 && copper.richOre.Length==3,"Copper keeps 2 Small, 2 Medium and 3 Large variants");
-        foreach(var (tiles,richness,suffix) in new[]{(copper.smallOre,OreRichness.Small,"_small"),(copper.mediumOre,OreRichness.Medium,"_medium"),(copper.richOre,OreRichness.Rich,"_large")})
-            foreach(var tile in tiles)
-                Check(tile.name.EndsWith(suffix) && Mathf.Abs(tile.color.a-Marker)<.001f && tile.richness==richness,
-                    tile.name+" is a painted "+richness+" tile");
-        // The freshly generated world must already use painted tiles for every copper cell.
-        var bounds=map.OreOverlay.cellBounds;var generated=new int[3];var painted=new int[3];
-        foreach(var cell in bounds.allPositionsWithin)
+        var copper=map.registry.GetById(BlockType.CopperOre);var iron=map.registry.GetById(BlockType.IronOre);var silver=map.registry.GetById(BlockType.SilverOre);var gold=map.registry.GetById(BlockType.GoldOre);
+        foreach(var block in new[]{copper,iron,silver,gold})
         {
-            var ore=map.OreOverlay.GetTile<OreTile>(cell);
-            if(!ore || ore.block!=copper)continue;
-            int r=(int)ore.richness;generated[r]++;
-            if(Array.IndexOf(copper.GetOreVariants(ore.richness),ore)>=0 && Painted(map.OreOverlay,cell))painted[r]++;
+            Check(block.smallOre.Length==2 && block.mediumOre.Length==2 && block.richOre.Length==3,block.displayName+" keeps 2 Small, 2 Medium and 3 Large variants");
+            foreach(var (tiles,richness,suffix) in new[]{(block.smallOre,OreRichness.Small,"_small"),(block.mediumOre,OreRichness.Medium,"_medium"),(block.richOre,OreRichness.Rich,"_large")})
+                foreach(var tile in tiles)
+                    Check(tile.name.EndsWith(suffix) && Mathf.Abs(tile.color.a-Marker)<.001f && tile.richness==richness,
+                        tile.name+" is a painted "+richness+" tile");
+            // The freshly generated world must already use painted tiles for every cell of this ore.
+            var bounds=map.OreOverlay.cellBounds;var generated=new int[3];var painted=new int[3];
+            foreach(var cell in bounds.allPositionsWithin)
+            {
+                var ore=map.OreOverlay.GetTile<OreTile>(cell);
+                if(!ore || ore.block!=block)continue;
+                int r=(int)ore.richness;generated[r]++;
+                if(Array.IndexOf(block.GetOreVariants(ore.richness),ore)>=0 && Painted(map.OreOverlay,cell))painted[r]++;
+            }
+            for(int r=0;r<3;r++)
+                Check(generated[r]>0 && painted[r]==generated[r],"Generated world: "+painted[r]+"/"+generated[r]+" "+(OreRichness)r+" "+block.displayName+" cells painted");
         }
-        for(int r=0;r<3;r++)
-            Check(generated[r]>0 && painted[r]==generated[r],"Generated world: "+painted[r]+"/"+generated[r]+" "+(OreRichness)r+" copper cells painted");
 
         var player=Object.FindFirstObjectByType<PlayerMovement>();
         int playerX=map.Terrain.WorldToCell(player.transform.position).x;
@@ -117,6 +120,15 @@ public sealed class CopperPaintedRuntimeProbe:MonoBehaviour
             var c=new Vector3Int(bx+1,-11,0);Place(c,copper.richOre[h%3]);rich.Add(c);
             var s=new Vector3Int(bx,-11,0);var m=new Vector3Int(bx+2,-11,0);
             Place(s,copper.smallOre[h%2]);Place(m,copper.mediumOre[(h+1)%2]);rich.Add(s);rich.Add(m);
+            // Iron row: Small, Large, Medium.
+            var fs=new Vector3Int(bx,-16,0);var fl=new Vector3Int(bx+1,-16,0);var fm=new Vector3Int(bx+2,-16,0);
+            Place(fs,iron.smallOre[h%2]);Place(fl,iron.richOre[h%3]);Place(fm,iron.mediumOre[(h+1)%2]);rich.Add(fs);rich.Add(fl);rich.Add(fm);
+            // Silver row: Medium, Small, Large.
+            var ss=new Vector3Int(bx,-9,0);var sl=new Vector3Int(bx+1,-9,0);var sm=new Vector3Int(bx+2,-9,0);
+            Place(ss,silver.mediumOre[h%2]);Place(sl,silver.smallOre[(h+1)%2]);Place(sm,silver.richOre[h%3]);rich.Add(ss);rich.Add(sl);rich.Add(sm);
+            // Gold row: Large, Medium, Small.
+            var gl=new Vector3Int(bx,-13,0);var gm=new Vector3Int(bx+1,-12,0);var gs=new Vector3Int(bx+2,-13,0);
+            Place(gl,gold.richOre[(h+2)%3]);Place(gm,gold.mediumOre[h%2]);Place(gs,gold.smallOre[(h+1)%2]);rich.Add(gl);rich.Add(gm);rich.Add(gs);
         }
         foreach(var cell in rich)Check(Painted(map.OreOverlay,cell),"Placed painted tile keeps its marker at "+cell);
         yield return null;map.GetComponent<UniformStoneAppearance>().RefreshAppearance();

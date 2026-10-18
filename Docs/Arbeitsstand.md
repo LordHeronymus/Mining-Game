@@ -8,7 +8,7 @@ Arbeitsordner (git worktrees, beide von `main`): `Git Repos/Mining Game` und `Gi
 
 | Ordner | Belegt von | Zweck | Seit |
 | --- | --- | --- | --- |
-| Mining Game | – | frei | 18.10.2026 18:30 |
+| Mining Game | – | frei | 18.10.2026 21:10 |
 | Mining Game 2 | – | frei (Library noch nicht importiert) | 17.10.2026 23:00 |
 
 ## Aktiv
@@ -16,12 +16,12 @@ Arbeitsordner (git worktrees, beide von `main`): `Git Repos/Mining Game` und `Gi
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
 | Claude Code | Performance abschliessen: Ladebildschirm ohne Ruckler, keine Lag-Spikes, ≥ 100 FPS – pausiert, Zwischenstand im Changelog | claude/performance | Mining Game | Map (MapGenerator, Tilemap-Abonnenten, Rubble, Collider, Erzadern, Bäume, Gras), Loading, GPS-Codec/Schema, GameSaveSystem, AudioManager, Tests/Performance* | nein | 17.10.2026 19:45 |
-| Claude Code | Kupfer-Adern-System aufräumen (ungenutzter Code/Texturen, alte Copper-Checks archiviert) – Code fertig, Editor-Prüfung offen | claude/copper-cleanup | .claude/worktrees/nostalgic-solomon-584ae4 | OreOverlayAppearance, OreVeinField, OreOverlayLit.shader, OreVeinSurface.hlsl, Copper*.cs/hlsl (gelöscht), Resources/OreVeins/Copper*, GameplayAssetPreload, TileMiner, RunSaveState/GameSaveSystem (copperVisuals), Tests/Copper* | wartet auf Mining Game | 18.10.2026 19:10 |
 
 ## Zuletzt abgeschlossen
 
-- 18.10.2026, Claude Code: Kupfererz (Small/Medium/Large) als gemalte Einzelblöcke statt Shader-Adern auf Branch `claude/copper-tiles`, siehe Docs/Kupfer-Erz.md.
-
+- 18.10.2026, Claude Code: Silber (S1) und Gold (G2b) als gemalte Einzelblöcke, Branch `claude/iron-tiles`, siehe Docs/Gemalte-Erze.md.
+- 18.10.2026, Claude Code: Eisenerz (Schema E1 Stahl) als gemalte Einzelblöcke und Kupfer-Aufräumen (claude/copper-cleanup) geprüft und zusammengeführt, Branch `claude/iron-tiles`, siehe Docs/Gemalte-Erze.md.
+- 18.10.2026, Claude Code: Kupfererz (Small/Medium/Large) als gemalte Einzelblöcke statt Shader-Adern auf Branch `claude/copper-tiles`, siehe Docs/Gemalte-Erze.md.
 - 18.10.2026, Claude Code (Cloud): Cloud-Tests laufen (Personal-Lizenz über Unity-Konto), Live-Dashboard `Tools/CloudDashboard` und Live-Status-Issue #2; 2 fehlgeschlagene Checks als Todoist-Aufgabe erfasst.
 - 18.10.2026, Claude Code (Cloud): Cloud-Tests eingerichtet (GitHub-Workflow „Unity Checks“, CiCheckRunner, Tests/CI), siehe Docs/Cloud-Tests.md; Lizenz-Secrets muss der Benutzer noch anlegen.
 - 17.10.2026, Claude Code: Branch-Setup erneuert: `main` auf dem aktuellen Stand, Aufgaben auf eigenen Branches, zweiter Arbeitsordner `Mining Game 2` (Branch `claude/erz-optik`) für parallele Chats.
