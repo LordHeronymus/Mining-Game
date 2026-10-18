@@ -11,7 +11,7 @@ using UnityEngine;
 
 // Only compiled into benchmark players: Tests/BuildPerformanceBenchmark.cs builds them with the MINING_BENCHMARK
 // define and a separate product name, so saves, profile and settings stay apart from the real game.
-// Start the player with -performanceBenchmark <report.txt> [-benchmarkVsync 0|1]. It plays the phases of
+// Start the player with -performanceBenchmark <report.txt> [-benchmarkVsync 0|1] [-benchmarkProfile <file> (development builds)]. It plays the phases of
 // Tests/PerformanceBenchmarkChecks.cs (loading a new run, idle, normal and fast mining, exploring), records the
 // duration of every frame, writes the report (+ .csv) and quits.
 [DefaultExecutionOrder(-10000)]
@@ -34,6 +34,9 @@ public sealed class PerformanceBenchmarkDriver : MonoBehaviour
     Rigidbody2D body;
     MethodInfo applyHit;
     Vector3 exploreFrom, exploreTo;
+#if DEVELOPMENT_BUILD
+    string profileFile;
+#endif
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Boot()
@@ -55,6 +58,21 @@ public sealed class PerformanceBenchmarkDriver : MonoBehaviour
         applyHit = typeof(TileMiner).GetMethod("ApplyMiningHit", BindingFlags.NonPublic | BindingFlags.Instance);
         // Let the main menu settle like a player who just started the game.
         yield return new WaitForSecondsRealtime(3f);
+#if DEVELOPMENT_BUILD
+        // Development benchmark players can record the whole run: -benchmarkProfile <file> writes <file>-<part>.raw.
+        var args = Environment.GetCommandLineArgs();
+        int profile = Array.IndexOf(args, "-benchmarkProfile");
+        if (profile >= 0 && profile + 1 < args.Length)
+        {
+            UnityEngine.Profiling.Profiler.maxUsedMemory = 1 << 30;
+            profileFile = args[profile + 1];
+            UnityEngine.Profiling.Profiler.logFile = profileFile + "-0";
+            UnityEngine.Profiling.Profiler.enableBinaryLog = true;
+            UnityEngine.Profiling.Profiler.enabled = true;
+        }
+#endif
+        // Every run saves a new slot; Finish deletes it again. Fail instead of waiting when no slot is free.
+        if (GameSaveSystem.NextFreeSlot() < 1) { Finish("FAIL: Kein freier Spielstand-Slot (" + GameSaveSystem.DirectoryPath + ")"); yield break; }
         collections = GC.CollectionCount(0);
         Enter(Phase.Loading);
         RunNavigation.NewGame("Benchmark");
@@ -67,6 +85,10 @@ public sealed class PerformanceBenchmarkDriver : MonoBehaviour
         if (phase == Phase.Menu || phase == Phase.Done) return;
         int count = GC.CollectionCount(0);
         samples.Add(new Sample { phase = phase, stage = LoadingProgress.Stage, ms = Time.unscaledDeltaTime * 1000f, collections = count - collections });
+#if DEVELOPMENT_BUILD
+        // The Profiler window keeps at most 2000 frames: split the recording into parts of 1500 frames.
+        if (profileFile != null && samples.Count % 1500 == 0) UnityEngine.Profiling.Profiler.logFile = profileFile + "-" + samples.Count / 1500;
+#endif
         collections = count;
         try { Drive(); }
         catch (Exception error) { Finish("FAIL: " + error); }
@@ -187,7 +209,21 @@ public sealed class PerformanceBenchmarkDriver : MonoBehaviour
                 csv.Append(string.Format(culture, "{0},{1},{2},{3:F3},{4}\n", i, PhaseNames[(int)samples[i].phase], samples[i].stage, samples[i].ms, samples[i].collections));
             File.WriteAllText(Path.ChangeExtension(report, ".csv"), csv.ToString());
         }
-        finally { Application.Quit(); }
+        finally
+        {
+#if DEVELOPMENT_BUILD
+            UnityEngine.Profiling.Profiler.enabled = false;
+            UnityEngine.Profiling.Profiler.enableBinaryLog = false;
+            UnityEngine.Profiling.Profiler.logFile = "";
+#endif
+            int slot = GameSaveSystem.ActiveSlot;
+            if (slot >= 1)
+            {
+                GameSaveSystem.LeaveRun();
+                if (!GameSaveSystem.DeleteSlot(slot, out var error)) Debug.LogWarning("Benchmark-Spielstand bleibt: " + error);
+            }
+            Application.Quit();
+        }
     }
 }
 #endif

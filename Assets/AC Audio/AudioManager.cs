@@ -458,7 +458,8 @@ public class AudioManager : MonoBehaviour
 
     // Decompress-on-load clips decode synchronously on their first play: the first hit in a new layer stalled
     // a gameplay frame by up to 15 ms. Decode the short effect clips ahead in small slices while the game loads;
-    // a long clip would stall a whole loading frame instead.
+    // long clips (over 3 s) are imported with "Load In Background" and only queue their decode here. Not every
+    // clip loads in background: the queued requests delay the scene activation behind them.
     System.Collections.IEnumerator WarmGameplayClips()
     {
         var clips = new List<AudioClip> { DeepLayerOreHitClip, DeepLayerStoneHitClip, blockedMiningHitClip };
@@ -471,7 +472,8 @@ public class AudioManager : MonoBehaviour
         var clock = System.Diagnostics.Stopwatch.StartNew();
         foreach (var clip in clips)
         {
-            if (!clip || clip.loadState != AudioDataLoadState.Unloaded || clip.length > 3f) continue;
+            if (!clip || clip.loadState != AudioDataLoadState.Unloaded) continue;
+            if (clip.length > 3f) { if (clip.loadInBackground) clip.LoadAudioData(); continue; }
             clip.LoadAudioData();
             if (clock.Elapsed.TotalMilliseconds < 2) continue;
             yield return null;
