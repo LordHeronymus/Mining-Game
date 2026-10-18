@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public enum ChallengePeriod { Daily, Weekly, Lifetime }
+
 
 [Serializable] public sealed class MetaChallengePeriodState
 {
