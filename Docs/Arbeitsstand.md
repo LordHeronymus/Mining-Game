@@ -16,6 +16,7 @@ Arbeitsordner (git worktrees, beide von `main`): `Git Repos/Mining Game` und `Gi
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
 | Claude Code | Performance abschliessen: Ladebildschirm ohne Ruckler, keine Lag-Spikes, ≥ 100 FPS – pausiert, Zwischenstand im Changelog | claude/performance | Mining Game | Map (MapGenerator, Tilemap-Abonnenten, Rubble, Collider, Erzadern, Bäume, Gras), Loading, GPS-Codec/Schema, GameSaveSystem, AudioManager, Tests/Performance* | nein | 17.10.2026 19:45 |
+| Claude Code | Kupfer-Adern-System aufräumen (ungenutzter Code/Texturen, alte Copper-Checks archiviert) – Code fertig, Editor-Prüfung offen | claude/copper-cleanup | .claude/worktrees/nostalgic-solomon-584ae4 | OreOverlayAppearance, OreVeinField, OreOverlayLit.shader, OreVeinSurface.hlsl, Copper*.cs/hlsl (gelöscht), Resources/OreVeins/Copper*, GameplayAssetPreload, TileMiner, RunSaveState/GameSaveSystem (copperVisuals), Tests/Copper* | wartet auf Mining Game | 18.10.2026 19:10 |
 
 ## Zuletzt abgeschlossen
 
