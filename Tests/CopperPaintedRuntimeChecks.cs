@@ -1,0 +1,193 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using UnityEngine;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.Tilemaps;
+using Object=UnityEngine.Object;
+
+// Painted copper tiles (Small/Medium/Large): generation, all host rocks, overhang clipping at mined cells, mining and save/load.
+public static class CopperPaintedRuntimeChecks
+{
+    public static string Main()
+    {
+        if(!Application.isPlaying || !MainMenuController.IsVisible || RunNavigation.IsTransitioning)
+            throw new Exception("Requires a fresh Play start at the homescreen");
+        if(GameSaveSystem.TestDirectory!=null || MetaProgression.TestDirectory!=null)
+            throw new Exception("Another test owns the save scope");
+        var root=new GameObject("Copper Large painted runtime checks");Object.DontDestroyOnLoad(root);
+        root.AddComponent<CopperPaintedRuntimeProbe>();return "Started; report Temp/CopperPaintedRuntimeChecks.txt";
+    }
+}
+
+public sealed class CopperPaintedRuntimeProbe:MonoBehaviour
+{
+    const string Report="Temp/CopperPaintedRuntimeChecks.txt";
+    const string Output="Design/OreVeins/CopperLargeV3/Runtime";
+    const float Marker=254f/255f;
+    string previousSave,previousMeta,directory;bool restored,previousBackground;
+    void Check(bool value,string message){if(!value)throw new Exception(message);File.AppendAllText(Report,"PASS "+message+"\n");}
+    IEnumerator Start()
+    {
+        previousSave=GameSaveSystem.TestDirectory;previousMeta=MetaProgression.TestDirectory;
+        previousBackground=Application.runInBackground;Application.runInBackground=true;
+        directory=Path.GetFullPath("Temp/CopperLargePaintedRun-"+DateTime.UtcNow.Ticks);
+        Directory.CreateDirectory(directory);GameSaveSystem.TestDirectory=directory;
+        MetaProgression.TestDirectory=Path.Combine(directory,"Profile");
+        File.WriteAllText(Report,"Isolated save directory: "+directory+"\n");
+        var stack=new Stack<IEnumerator>();stack.Push(Run());
+        while(stack.Count>0)
+        {
+            bool more=false;object current=null;Exception error=null;
+            try{more=stack.Peek().MoveNext();if(more)current=stack.Peek().Current;}catch(Exception e){error=e;}
+            if(error!=null)
+            {
+                File.AppendAllText(Report,"FAIL "+error);RunNavigation.MainMenu();
+                while(RunNavigation.IsTransitioning)yield return null;
+                Cleanup();yield break;
+            }
+            if(!more){stack.Pop();continue;}
+            if(current is IEnumerator nested)stack.Push(nested);else yield return current;
+        }
+        File.AppendAllText(Report,"ALL PASSED\n");Cleanup();
+    }
+    IEnumerator Ready()
+    {
+        float deadline=Time.realtimeSinceStartup+150;
+        while(RunNavigation.IsTransitioning || LoadingProgress.Active)
+        {if(Time.realtimeSinceStartup>deadline)throw new Exception("Loading timeout");yield return null;}
+        yield return null;
+    }
+    void CameraCheck(string phase)
+    {
+        var player=Object.FindFirstObjectByType<PlayerMovement>();var view=Camera.main;
+        Check(view && player && view.GetComponent<CameraFollow>().enabled &&
+            view.GetComponent<CameraFollow>().target==player.transform &&
+            view.GetComponent<CameraWorldBorderClamp>().enabled && GameplayTestSettings.CameraFollowEnabled,
+            phase+": player follow and world clamp active");
+    }
+    static bool Painted(Tilemap tiles,Vector3Int cell)=>Mathf.Abs(tiles.GetColor(cell).a-Marker)<.001f;
+    IEnumerator Run()
+    {
+        RunNavigation.NewGame("Kupfer-Large-Test");yield return Ready();
+        Check(GameSaveSystem.ActiveSlot>0 && GameSaveSystem.InitialSaveError==null,"Fresh isolated run saved");
+        CameraCheck("Fresh start");
+        var map=Object.FindFirstObjectByType<MapGenerator>();
+        var copper=map.registry.GetById(BlockType.CopperOre);
+        Check(copper.smallOre.Length==2 && copper.mediumOre.Length==2 && copper.richOre.Length==3,"Copper keeps 2 Small, 2 Medium and 3 Large variants");
+        foreach(var (tiles,richness,suffix) in new[]{(copper.smallOre,OreRichness.Small,"_small"),(copper.mediumOre,OreRichness.Medium,"_medium"),(copper.richOre,OreRichness.Rich,"_large")})
+            foreach(var tile in tiles)
+                Check(tile.name.EndsWith(suffix) && Mathf.Abs(tile.color.a-Marker)<.001f && tile.richness==richness,
+                    tile.name+" is a painted "+richness+" tile");
+        // The freshly generated world must already use painted tiles for every copper cell.
+        var bounds=map.OreOverlay.cellBounds;var generated=new int[3];var painted=new int[3];
+        foreach(var cell in bounds.allPositionsWithin)
+        {
+            var ore=map.OreOverlay.GetTile<OreTile>(cell);
+            if(!ore || ore.block!=copper)continue;
+            int r=(int)ore.richness;generated[r]++;
+            if(Array.IndexOf(copper.GetOreVariants(ore.richness),ore)>=0 && Painted(map.OreOverlay,cell))painted[r]++;
+        }
+        for(int r=0;r<3;r++)
+            Check(generated[r]>0 && painted[r]==generated[r],"Generated world: "+painted[r]+"/"+generated[r]+" "+(OreRichness)r+" copper cells painted");
+
+        var player=Object.FindFirstObjectByType<PlayerMovement>();
+        int playerX=map.Terrain.WorldToCell(player.transform.position).x;
+        var hostTiles=new TileBase[]{map.surfaceDirtTile,map.layerOneTile,map.uniformTestTile,map.layerThreeTile,map.layerFourTile};
+        for(int x=playerX-8;x<playerX+8;x++)for(int y=-20;y<-8;y++)
+        {
+            var cell=new Vector3Int(x,y,0);map.Terrain.SetTile(cell,hostTiles[Mathf.Min(4,(x-playerX+8)/3)]);
+            map.OreOverlay.SetTile(cell,null);map.ArtifactOverlay?.SetTile(cell,null);
+        }
+        var rich=new List<Vector3Int>();var airNeighbours=new List<Vector3Int>();var placed=new Dictionary<Vector3Int,OreTile>();
+        void Place(Vector3Int cell,OreTile ore)
+        {
+            map.OreOverlay.SetTile(cell,ore);map.OreOverlay.SetTileFlags(cell,TileFlags.None);placed[cell]=ore;
+            map.OreOverlay.SetTransformMatrix(cell,ore.transform);
+        }
+        for(int h=0;h<5;h++)
+        {
+            int bx=playerX-8+h*3;
+            var single=new Vector3Int(bx+1,-18,0);Place(single,copper.richOre[h%3]);rich.Add(single);
+            airNeighbours.Add(new Vector3Int(bx+2,-18,0));
+            var a=new Vector3Int(bx,-14,0);var b=new Vector3Int(bx+1,-14,0);
+            Place(a,copper.richOre[(h+1)%3]);Place(b,copper.richOre[(h+2)%3]);rich.Add(a);rich.Add(b);
+            var c=new Vector3Int(bx+1,-11,0);Place(c,copper.richOre[h%3]);rich.Add(c);
+            var s=new Vector3Int(bx,-11,0);var m=new Vector3Int(bx+2,-11,0);
+            Place(s,copper.smallOre[h%2]);Place(m,copper.mediumOre[(h+1)%2]);rich.Add(s);rich.Add(m);
+        }
+        foreach(var cell in rich)Check(Painted(map.OreOverlay,cell),"Placed painted tile keeps its marker at "+cell);
+        yield return null;map.GetComponent<UniformStoneAppearance>().RefreshAppearance();
+        Capture(map,new Vector3Int(playerX,-14,0),"Painted-all-hosts");
+
+        var miner=Object.FindFirstObjectByType<TileMiner>();
+        var hit=typeof(TileMiner).GetMethod("ApplyMiningHit",BindingFlags.NonPublic|BindingFlags.Instance);
+        void Mine(Vector3Int cell){int hits=0;while(map.Terrain.HasTile(cell) && hits++<100)hit.Invoke(miner,new object[]{cell,.5f});}
+        // Hard host rock needs a better pickaxe; open the neighbouring cells directly to test overhang clipping.
+        foreach(var cell in airNeighbours){map.Terrain.SetTile(cell,null);map.OreOverlay.SetTile(cell,null);Check(!map.Terrain.HasTile(cell),"Neighbour of a Large tile opened at "+cell);}
+        Check(map.GetOreAt(rich[0])!=null && map.GetOreAt(rich[0]).richness==OreRichness.Rich,"Large tile survives mining its neighbour");
+        var minedRich=rich[1];Mine(minedRich);
+        Check(!map.Terrain.HasTile(minedRich) && !map.OreOverlay.HasTile(minedRich),"Mining a Large tile removes terrain and ore");
+        Check(map.GetOreAt(rich[2])!=null && Painted(map.OreOverlay,rich[2]),"Paired Large neighbour keeps identity and marker");
+        yield return null;map.GetComponent<UniformStoneAppearance>().RefreshAppearance();
+        Capture(map,new Vector3Int(playerX,-14,0),"Painted-mined");
+        CameraCheck("After mining");
+
+        int slot=GameSaveSystem.ActiveSlot;bool saved=false;string saveError=null;
+        yield return GameSaveSystem.Save(slot,this,(ok,error)=>{saved=ok;saveError=error;});
+        Check(saved,"Modified world saved: "+saveError);
+        RunNavigation.MainMenu();yield return Ready();
+        Check(RunNavigation.LoadGame(slot,out string loadError),"Isolated save loads: "+loadError);yield return Ready();
+        map=Object.FindFirstObjectByType<MapGenerator>();
+        foreach(var cell in rich)
+        {
+            if(cell==minedRich){Check(!map.OreOverlay.HasTile(cell),"Mined Large cell stays empty after loading");continue;}
+            var ore=map.GetOreAt(cell);
+            Check(ore==placed[cell] && Painted(map.OreOverlay,cell),ore.name+" and marker restored at "+cell);
+        }
+        yield return null;map.GetComponent<UniformStoneAppearance>().RefreshAppearance();
+        Capture(map,new Vector3Int(playerX,-14,0),"Painted-restored");
+        CameraCheck("After restore");
+        RunNavigation.MainMenu();yield return Ready();Check(MainMenuController.IsVisible,"Returned to homescreen");
+    }
+    void Capture(MapGenerator map,Vector3Int centre,string name)
+    {
+        Directory.CreateDirectory(Output);
+        var view=new GameObject("Copper Large verification camera",typeof(Camera)).GetComponent<Camera>();
+        view.CopyFrom(Camera.main);view.enabled=false;view.orthographic=true;view.orthographicSize=6.6f;
+        view.transform.position=map.Terrain.GetCellCenterWorld(centre)+Vector3.back*10;
+        var lights=Object.FindObjectsByType<Light2D>(FindObjectsSortMode.None);
+        var states=new bool[lights.Length];for(int n=0;n<lights.Length;n++){states[n]=lights[n].enabled;lights[n].enabled=false;}
+        var lamp=new GameObject("Copper verification lamp",typeof(Light2D)).GetComponent<Light2D>();
+        lamp.lightType=Light2D.LightType.Global;lamp.intensity=1;
+        var darkness=map.transform.Find("Daylight Overlay")?.GetComponent<MeshRenderer>();
+        bool darknessEnabled=darkness && darkness.enabled;
+        var target=new RenderTexture(1280,960,24,RenderTextureFormat.ARGB32);
+        var pixels=new Texture2D(1280,960,TextureFormat.RGBA32,false);var previous=RenderTexture.active;
+        try
+        {
+            if(darkness)darkness.enabled=false;
+            view.targetTexture=target;map.GetComponent<OreOverlayAppearance>().PrepareVeins(view);view.Render();
+            RenderTexture.active=target;pixels.ReadPixels(new Rect(0,0,1280,960),0,0);pixels.Apply();
+            File.WriteAllBytes(Output+"/"+name+".png",pixels.EncodeToPNG());
+            int visible=0;foreach(var c in pixels.GetPixels32())if(c.r>30 || c.g>30 || c.b>30)visible++;
+            Check(visible>pixels.width*pixels.height*.7,"Captured actual gameplay scene "+name);
+        }
+        finally
+        {
+            view.targetTexture=null;RenderTexture.active=previous;if(darkness)darkness.enabled=darknessEnabled;
+            lamp.enabled=false;for(int n=0;n<lights.Length;n++)if(lights[n])lights[n].enabled=states[n];
+            Object.Destroy(view.gameObject);Object.Destroy(lamp.gameObject);Object.Destroy(target);Object.Destroy(pixels);
+        }
+    }
+    void Cleanup()
+    {
+        if(restored)return;restored=true;
+        if(GameSaveSystem.TestDirectory==directory)GameSaveSystem.TestDirectory=previousSave;
+        if(directory!=null && MetaProgression.TestDirectory==Path.Combine(directory,"Profile"))MetaProgression.TestDirectory=previousMeta;
+        Application.runInBackground=previousBackground;Object.Destroy(gameObject);
+    }
+    void OnDestroy(){if(!restored)Cleanup();}
+}

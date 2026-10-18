@@ -97,7 +97,8 @@ public sealed class OreOverlayAppearance : MonoBehaviour
             if (!veinFields.TryGetValue(camera, out var field))
                 veinFields.Add(camera, field = new OreVeinField());
             if (field.Prepare(map, camera))
-            {field.Bind(properties, map);copperSurface.Prepare(map,target,field,properties);}
+            // All copper sizes are painted ore tiles now (Docs/Kupfer-Large.md); the continuous copper surface stays hidden.
+            field.Bind(properties, map);
             else properties.SetFloat(VeinEnabledId, 0);
         }
         else properties.SetFloat(VeinEnabledId, 0);

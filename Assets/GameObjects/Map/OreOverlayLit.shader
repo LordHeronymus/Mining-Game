@@ -68,6 +68,7 @@ Shader "Mining Game/Ore Overlay Lit"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
             #include "UltroniumPulse.hlsl"
+            #include "PaintedOre.hlsl"
 
             #pragma vertex CombinedShapeLightVertex
             #pragma target 3.5
@@ -96,6 +97,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 half2   lightingUV  : TEXCOORD1;
                 float3  positionWS  : TEXCOORD2;
                 half    ultronium   : TEXCOORD3;
+                half    painted     : TEXCOORD4;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -170,9 +172,10 @@ Shader "Mining Game/Ore Overlay Lit"
                 o.lightingUV = half2(ComputeScreenPos(o.positionCS / o.positionCS.w).xy);
 
                 o.ultronium = step(v.color.a, .99h);
+                o.painted = PaintedOreMarker(v.color.a);
                 o.color = v.color * _Color * unity_SpriteColor;
                 if(_CopperSurfacePass>.5)o.color=1;
-                if (o.ultronium > .5h) o.color.a = _Color.a * unity_SpriteColor.a;
+                if (o.ultronium > .5h || o.painted > .5h) o.color.a = _Color.a * unity_SpriteColor.a;
                 return o;
             }
 
@@ -193,6 +196,33 @@ Shader "Mining Game/Ore Overlay Lit"
                 sample.a = lerp(sample.a, smoothstep(.04h, .7h, sample.a), ultronium);
                 sample.a *= step(0, min(min(uv.x, uv.y), min(1-uv.x, 1-uv.y)));
                 return half4(RichColor(sample.rgb) * sample.a, sample.a);
+            }
+
+            // Painted ore tiles (e.g. copper Large) are complete artwork: drawn at their authored size,
+            // may reach slightly into neighbouring rock, and are lit like the stone without extra effects.
+            half4 PaintedOreFragment(Varyings i)
+            {
+                float2 uv = (i.uv - .5) * _OreScale + .5;
+                clip(min(min(uv.x, uv.y), min(1 - uv.x, 1 - uv.y)));
+                if (_UniformStone.x > 0)
+                {
+                    float2 cell = floor((i.positionWS.xy - _UniformStone.zw) / max(_UniformStone.x, .0001));
+                    half4 host = SAMPLE_TEXTURE2D_LOD(_TestOccupancy, sampler_TestOccupancy,
+                        (cell + .5 - _TestBounds.xy) / _TestBounds.zw, 0);
+                    clip(host.r - .5); // never hang over mined-out space
+                }
+                half4 main = i.color * SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv);
+                half4 mask = SAMPLE_TEXTURE2D(_MaskTex, sampler_MaskTex, uv);
+                SurfaceData2D surfaceData;
+                InputData2D inputData;
+                InitializeSurfaceData(main.rgb, main.a, mask, surfaceData);
+                InitializeInputData(uv, i.lightingUV, inputData);
+                SETUP_DEBUG_TEXTURE_DATA_2D_NO_TS(inputData, i.positionWS, i.positionCS, _MainTex);
+                half4 lit = CombinedShapeLightShared(surfaceData, inputData);
+                half litPeak = max(lit.r, max(lit.g, lit.b));
+                half compressed = litPeak <= 0.7h ? litPeak : 0.7h + 0.3h * (1 - exp(-(litPeak - 0.7h) / 0.3h));
+                lit.rgb *= compressed / max(litPeak, 0.0001h);
+                return lit;
             }
 
             half4 CombinedShapeLightFragment(Varyings i) : SV_Target
@@ -217,6 +247,7 @@ Shader "Mining Game/Ore Overlay Lit"
                     clip(CopperCarpetHost(i.positionWS.xy)?1:-1);
                     return CopperCarpetFragment(i,p);
                 }
+                if (i.painted > .5h) return PaintedOreFragment(i);
                 if (_VeinEnabled > .5)
                 {
                     float2 veinPosition = (i.positionWS.xy-_VeinGrid.zw)/_VeinGrid.xy;
@@ -325,6 +356,8 @@ Shader "Mining Game/Ore Overlay Lit"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
 
+            #include "PaintedOre.hlsl"
+
             #pragma vertex NormalsRenderingVertex
             #pragma fragment NormalsRenderingFragment
 
@@ -399,7 +432,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 SetUpSpriteInstanceProperties();
                 attributes.positionOS = UnityFlipSprite(attributes.positionOS, unity_SpriteProps.xy);
                 o.positionCS = TransformObjectToHClip(attributes.positionOS);
-                o.uv = (attributes.uv - 0.5) / max(_OreScale, 0.01) + 0.5;
+                o.uv = PaintedOreMarker(attributes.color.a) > .5h ? attributes.uv : (attributes.uv - 0.5) / max(_OreScale, 0.01) + 0.5;
                 half ultronium = step(attributes.color.a, .99h);
                 o.ultronium = ultronium;
                 o.color = attributes.color * _Color * unity_SpriteColor;
@@ -434,6 +467,7 @@ Shader "Mining Game/Ore Overlay Lit"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
             #include "UltroniumPulse.hlsl"
+            #include "PaintedOre.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
             #if defined(DEBUG_DISPLAY)
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Debug/Debugging2D.hlsl"
@@ -510,7 +544,7 @@ Shader "Mining Game/Ore Overlay Lit"
                 attributes.positionOS = UnityFlipSprite( attributes.positionOS, unity_SpriteProps.xy);
                 o.positionCS = TransformObjectToHClip(attributes.positionOS);
                 o.positionWS = TransformObjectToWorld(attributes.positionOS);
-                o.uv = (attributes.uv - 0.5) / max(_OreScale, 0.01) + 0.5;
+                o.uv = PaintedOreMarker(attributes.color.a) > .5h ? attributes.uv : (attributes.uv - 0.5) / max(_OreScale, 0.01) + 0.5;
                 o.ultronium = step(attributes.color.a, .99h);
                 o.color = attributes.color * _Color * unity_SpriteColor;
                 if (o.ultronium > .5h) o.color.a = _Color.a * unity_SpriteColor.a;

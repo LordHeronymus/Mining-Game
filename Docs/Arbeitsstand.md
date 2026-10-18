@@ -8,7 +8,7 @@ Arbeitsordner (git worktrees, beide von `main`): `Git Repos/Mining Game` und `Gi
 
 | Ordner | Belegt von | Zweck | Seit |
 | --- | --- | --- | --- |
-| Mining Game | – | frei | 17.10.2026 22:40 |
+| Mining Game | – | frei | 18.10.2026 18:30 |
 | Mining Game 2 | – | frei (Library noch nicht importiert) | 17.10.2026 23:00 |
 
 ## Aktiv
@@ -18,6 +18,8 @@ Arbeitsordner (git worktrees, beide von `main`): `Git Repos/Mining Game` und `Gi
 | Claude Code | Performance abschliessen: Ladebildschirm ohne Ruckler, keine Lag-Spikes, ≥ 100 FPS – pausiert, Zwischenstand im Changelog | claude/performance | Mining Game | Map (MapGenerator, Tilemap-Abonnenten, Rubble, Collider, Erzadern, Bäume, Gras), Loading, GPS-Codec/Schema, GameSaveSystem, AudioManager, Tests/Performance* | nein | 17.10.2026 19:45 |
 
 ## Zuletzt abgeschlossen
+
+- 18.10.2026, Claude Code: Kupfererz (Small/Medium/Large) als gemalte Einzelblöcke statt Shader-Adern auf Branch `claude/copper-tiles`, siehe Docs/Kupfer-Erz.md.
 
 - 18.10.2026, Claude Code (Cloud): Cloud-Tests laufen (Personal-Lizenz über Unity-Konto), Live-Dashboard `Tools/CloudDashboard` und Live-Status-Issue #2; 2 fehlgeschlagene Checks als Todoist-Aufgabe erfasst.
 - 18.10.2026, Claude Code (Cloud): Cloud-Tests eingerichtet (GitHub-Workflow „Unity Checks“, CiCheckRunner, Tests/CI), siehe Docs/Cloud-Tests.md; Lizenz-Secrets muss der Benutzer noch anlegen.
