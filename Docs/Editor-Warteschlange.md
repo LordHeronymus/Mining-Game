@@ -55,7 +55,7 @@ Der Benutzereintrag hat die feste Id `benutzer`. Solange er wartet, wird er nie 
 Bei jedem Aufruf (praktisch: durch wartende `wait`-Befehle) wird geprüft:
 
 - **Inhaber (oben):** verdrängt, wenn sein letztes Lebenszeichen und sein Nachrücken älter als 10 Minuten sind (`-StaleMinutes`) **und** der Editor objektiv ungenutzt ist. Wer frisch nach oben rückt, hat also immer volle 10 Minuten.
-- **Editor gilt als genutzt** (nie verdrängen), wenn das Aktivitätssignal frisch ist (≤ 2 min alt) und Play-Mode läuft, kompiliert wird oder die letzte Aktivität jünger als 10 Minuten ist; oder wenn der Editor-Prozess läuft, aber seit höchstens 30 Minuten kein Signal mehr schreibt (blockiert/beschäftigt).
+- **Editor gilt als genutzt** (nie verdrängen), wenn das Aktivitätssignal frisch ist (≤ 5 min alt; im Hintergrund schreibt Unity gedrosselt nur etwa alle 30–90 s) und Play-Mode läuft, kompiliert wird oder die letzte Aktivität jünger als 10 Minuten ist; oder wenn der Editor-Prozess läuft, aber seit höchstens 30 Minuten kein Signal mehr schreibt (blockiert/beschäftigt).
 - **Editor gilt als ungenutzt**, wenn er geschlossen ist, länger ruhig war oder kein Aktivitätssignal hat (z. B. Branch ohne `EditorQueueActivity.cs`); dann entscheidet allein das Lebenszeichen.
 - **Wartende Chats** ohne Lebenszeichen seit 10 Minuten fallen weg (ihr `wait` setzt es laufend).
 
