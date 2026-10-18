@@ -87,7 +87,8 @@ public sealed class ChallengePanel : MonoBehaviour
     {
         period=value;countdownSecond=-1;
         for(int i=0;i<tabs.Count;i++) tabs[i].GetComponent<HomeButtonFeedback>().primary=Periods[i]==period;
-        Rebuild();periodEnd=MetaProgression.ChallengePeriodEnd(period);
+        // Read the end first: a rollover during Rebuild then shows up as a changed end and rebuilds once more.
+        periodEnd=MetaProgression.ChallengePeriodEnd(period);Rebuild();
         scroll.StopMovement();scroll.verticalNormalizedPosition=1;
         UpdateCountdown();
     }

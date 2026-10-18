@@ -10,7 +10,8 @@ using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 // Pipeline run_script: invoke MetaProgressionUiChecks.Main in the main menu.
-// This UI-only suite never changes XP, ranks, recipes, gameplay saves or profile paths.
+// This UI-only suite never changes XP, ranks, recipes or gameplay saves. After reading the home label it switches to an
+// isolated meta profile, because opening the challenge tabs draws and saves rounds.
 public static class MetaProgressionUiChecks
 {
     public static object Main()
@@ -29,7 +30,8 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
     MetaProgressionPanel panel;
     long originalXp;
     int[] originalRanks;
-    bool finished;
+    bool finished, isolatedSet;
+    string previousMeta, isolated;
 
     void Check(bool value, string description)
     {
@@ -39,8 +41,6 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
     Button Button(string name) => panel.GetComponentsInChildren<Button>(true).First(b => b.name == name);
     IEnumerator Start()
     {
-        originalXp = MetaProgression.TotalXp;
-        originalRanks = MetaProgressionCatalog.Upgrades.Select(u => MetaProgression.GetRank(u.id)).ToArray();
         var routines = new Stack<IEnumerator>(); routines.Push(Run());
         while (routines.Count > 0)
         {
@@ -61,6 +61,11 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
         // Main menu layout is attached to ScreenCanvas, not the scene controller.
         if (!entrance) entrance = GameObject.Find("ScreenCanvas").GetComponentsInChildren<Button>(true).First(b => b.name == "Progression");
         Check(entrance.GetComponentInChildren<TMP_Text>().text.Contains("Level " + MetaProgression.Level), "Home entry exposes current level");
+        previousMeta = MetaProgression.TestDirectory;
+        isolated = Path.GetFullPath("Temp/MetaProgressionUi-" + DateTime.UtcNow.Ticks + "/Profile");
+        MetaProgression.TestDirectory = isolated; isolatedSet = true;
+        originalXp = MetaProgression.TotalXp;
+        originalRanks = MetaProgressionCatalog.Upgrades.Select(u => MetaProgression.GetRank(u.id)).ToArray();
         entrance.onClick.Invoke(); yield return null;
         panel = Object.FindFirstObjectByType<MetaProgressionPanel>();
         Check(panel && MetaProgressionPanel.IsOpen && !panel.IsReadOnly, "Home opens editable progression");
@@ -201,7 +206,9 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
         if (finished) return;
         finished = true;
         if (panel) panel.Close();
+        RestoreProfile();
         Destroy(gameObject);
     }
-    void OnDestroy() { if (!finished && panel) panel.Close(); }
+    void RestoreProfile() { if (isolatedSet && MetaProgression.TestDirectory == isolated) MetaProgression.TestDirectory = previousMeta; isolatedSet = false; }
+    void OnDestroy() { if (!finished && panel) panel.Close(); if (!finished) RestoreProfile(); }
 }
