@@ -21,12 +21,17 @@ namespace MiningGame.CI
             string product = PlayerSettings.productName;
             var standalone = NamedBuildTarget.Standalone;
             var backend = PlayerSettings.GetScriptingBackend(standalone);
+            bool defaultApis = PlayerSettings.GetUseDefaultGraphicsAPIs(BuildTarget.StandaloneLinux64);
+            var apis = PlayerSettings.GetGraphicsAPIs(BuildTarget.StandaloneLinux64);
             int code = 1;
             try
             {
                 Directory.CreateDirectory(folder);
                 PlayerSettings.productName = product + " Benchmark";
                 PlayerSettings.SetScriptingBackend(standalone, ScriptingImplementation.Mono2x);
+                // The player runs on Mesa OpenGL only; skipping Vulkan halves the shader compilation.
+                PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.StandaloneLinux64, false);
+                PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneLinux64, new[] { UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore });
                 var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
                 {
                     scenes = EditorBuildSettings.scenes.Where(scene => scene.enabled).Select(scene => scene.path).ToArray(),
@@ -45,6 +50,8 @@ namespace MiningGame.CI
             {
                 PlayerSettings.productName = product;
                 PlayerSettings.SetScriptingBackend(standalone, backend);
+                PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneLinux64, apis);
+                PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.StandaloneLinux64, defaultApis);
             }
             EditorApplication.Exit(code);
         }

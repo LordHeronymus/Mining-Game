@@ -157,6 +157,8 @@ def build(final=None, conclusion=None):
         phase = "done"
     elif started:
         phase = "checks"
+    elif log and any(c["mode"] == "player" for c in checks):
+        phase = "compile"  # building the benchmark player (shaders), shown as "Kompilieren"
     elif log:
         tail = "\n".join(lines[-30:])
         phase = "compile" if compiling and ("csc" in tail or "Compil" in tail) else "import" if imported else "unity"
@@ -176,7 +178,7 @@ def build(final=None, conclusion=None):
         "ref": REF,
         "suite": CHECKS or SUITE,
         "phase": phase,
-        "phase_text": PHASES[phase],
+        "phase_text": "Spiel wird gebaut (Shader)" if phase == "compile" and any(c["mode"] == "player" for c in checks) else PHASES[phase],
         "updated": now(),
         "imported": imported,
         "assets": total_assets(),
