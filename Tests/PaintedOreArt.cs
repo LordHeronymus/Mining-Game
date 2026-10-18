@@ -15,7 +15,7 @@ public static class PaintedOreArt
     static readonly Vector3 Half = (new Vector3(-.5f, .6f, .62f).normalized + Vector3.forward).normalized;
 
     enum Kind { Blob, Facet, Crystal }
-    enum Mat { Copper, Weathered, Malachite, Stone, Cuprite, Pebble }
+    enum Mat { Copper, Weathered, Malachite, Stone, Cuprite, Pebble, Detail }
 
     sealed class Piece
     {
@@ -243,6 +243,9 @@ public static class PaintedOreArt
         public float k = .95f, tilt = .4f, elong = .35f, rough = .12f; public int seedsPerRadius = 16;
         public float mainGloss = 45, seamBright = 1.28f, porosity, poreScale = 9, banding, bandWidth = 7;
         public bool pebbles = true; // loose brown host pebbles around the chunks
+        public int shape; // 0 faceted nuggets, 1 smooth polished nuggets, 2 cubic crystals
+        public Color[] detail; public float detailThreshold = .7f, detailScale = 50; // optional third facet material (e.g. white)
+        public float edgeWhite, edgeWidth = 1.7f, speckles, speckleScale = 9; // white facet edges, white flecks
     }
     static Color C(float r, float g, float b) => new Color(r, g, b);
 
@@ -402,6 +405,59 @@ public static class PaintedOreArt
         "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Iron/Iron_Large_01.png",
     });
 
+    // ---------- platinum: four strongly different looks (shape and colour) ----------
+
+    const string PlatinumOut = "Design/OreVeins/PlatinumLarge";
+    static Palette WithShape(Palette p, int shape, float k, float tilt, float elong, float rough, int seeds)
+    { p.shape = shape; p.k = k; p.tilt = tilt; p.elong = elong; p.rough = rough; p.seedsPerRadius = seeds; return p; }
+    static readonly Palette[] PlatinumPalettes =
+    {
+        WithShape(Set(new Palette { name = "P1-Platin-Nuggets-glatt" }, // smooth, mirror-polished nuggets, faint lavender
+            new[] { C(.05f, .05f, .07f), C(.19f, .18f, .23f), C(.42f, .41f, .49f), C(.7f, .69f, .77f), C(.95f, .95f, 1) },
+            new[] { C(.08f, .06f, .12f), C(.24f, .19f, .34f), C(.46f, .4f, .62f), C(.68f, .63f, .84f), C(.93f, .91f, 1) },
+            C(.95f, .95f, 1), C(.55f, .5f, .7f), .9f, .9f, 60, .62f, 70), 1, .7f, .3f, .4f, .1f, 16),
+        WithShape(Set(new Palette { name = "P2-Platin-violett-facettiert" }, // faceted grey-white with violet facets
+            new[] { C(.09f, .085f, .1f), C(.29f, .28f, .32f), C(.54f, .53f, .58f), C(.75f, .74f, .79f), C(.94f, .94f, .97f) },
+            new[] { C(.1f, .06f, .16f), C(.28f, .2f, .42f), C(.5f, .42f, .7f), C(.7f, .64f, .88f), C(.92f, .9f, 1) },
+            C(.95f, .95f, 1), C(.55f, .45f, .75f), .6f, .8f, 55, .6f, 60), 0, .95f, .42f, .3f, .12f, 13),
+        WithShape(Set(new Palette { name = "P3-Platin-Wuerfel" }, // cubic crystals, bright cool-white with a few graphite cubes
+            new[] { C(.1f, .1f, .12f), C(.32f, .32f, .36f), C(.58f, .58f, .63f), C(.8f, .8f, .85f), C(.97f, .97f, 1) },
+            new[] { C(.04f, .04f, .05f), C(.12f, .12f, .14f), C(.24f, .24f, .27f), C(.4f, .4f, .44f), C(.68f, .68f, .72f) },
+            C(.95f, .97f, 1), C(.5f, .52f, .65f), .7f, .5f, 50, .62f, 70), 2, 1f, .4f, 0, .1f, 16),
+        WithShape(Set(new Palette { name = "P4-Platin-in-Chromit" }, // champagne-white platinum in dark green-black chromite
+            new[] { C(.12f, .11f, .1f), C(.36f, .34f, .31f), C(.62f, .6f, .56f), C(.82f, .8f, .76f), C(.98f, .97f, .94f) },
+            new[] { C(.03f, .05f, .04f), C(.08f, .12f, .1f), C(.15f, .22f, .18f), C(.25f, .33f, .28f), C(.45f, .55f, .48f) },
+            C(1, .98f, .94f), C(.6f, .55f, .45f), .65f, .15f, 14, .52f, 50), 0, 1f, .5f, .35f, .16f, 12),
+    };
+    // Platinum preview (four looks): PreviewPlatinumLarge.
+    public static string PreviewPlatinumLarge() => PreviewLarge(PlatinumPalettes, new[] { 1701, 1712, 1723, 1734 }, PlatinumOut, new[]
+    {
+        "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Silver/Silver_Large_01.png",
+        "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Iron/Iron_Large_01.png",
+    });
+
+    // P2 follow-up: same base colours (grey-white body, violet facets), more white details.
+    static readonly Color[] P2Main = { C(.09f, .085f, .1f), C(.29f, .28f, .32f), C(.54f, .53f, .58f), C(.75f, .74f, .79f), C(.94f, .94f, .97f) };
+    static readonly Color[] P2Violet = { C(.1f, .06f, .16f), C(.28f, .2f, .42f), C(.5f, .42f, .7f), C(.7f, .64f, .88f), C(.92f, .9f, 1) };
+    static readonly Color[] WhiteFacets = { C(.36f, .36f, .4f), C(.64f, .64f, .69f), C(.85f, .85f, .89f), C(.95f, .95f, .97f), C(1, 1, 1) };
+    static Palette P2(string name, Color[] detail, float detailThreshold, float edgeWhite, float edgeWidth, float speckles)
+    {
+        var p = WithShape(Set(new Palette { name = name }, P2Main, P2Violet, C(.95f, .95f, 1), C(.55f, .45f, .75f), .6f, .8f, 55, .6f, 60), 0, .95f, .42f, .3f, .12f, 13);
+        p.detail = detail; p.detailThreshold = detailThreshold; p.edgeWhite = edgeWhite; p.edgeWidth = edgeWidth; p.speckles = speckles; return p;
+    }
+    static readonly Palette[] PlatinumP2Palettes =
+    {
+        P2("P2a-weisse-Facetten", WhiteFacets, .5f, 0, 1.7f, 0),       // some facets bright white
+        P2("P2b-weisse-Kanten", null, .7f, 1f, 3.4f, 0),              // white edge lines along every facet
+        P2("P2c-weisse-Sprenkel", null, .7f, 0, 1.7f, .85f),           // white flecks scattered over the chunks
+        P2("P2d-weiss-kombiniert", WhiteFacets, .58f, .8f, 2.8f, .45f), // white facets, light edges and a few flecks
+    };
+    // Platinum P2 white-detail follow-up (not chosen): PreviewPlatinumP2.
+    public static string PreviewPlatinumP2() => PreviewLarge(PlatinumP2Palettes, new[] { 1712, 1712, 1712, 1712 }, PlatinumOut + "/P2", new[]
+    {
+        "Design/OreVeins/PlatinumLarge/Sources/P2-Platin-violett-facettiert.png",
+    });
+
     public static string PreviewGoldSilverLarge() => PreviewLarge(GoldSilverPalettes, new[] { 1001, 1012, 1023, 1034 }, GoldSilverOut, new[]
     {
         "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Copper/Copper_Large_01.png",
@@ -451,9 +507,15 @@ public static class PaintedOreArt
 
     // Coal install (applied 18.10.2026): scheme K2 without pebbles, Large seed 1412 is the approved preview.
     static readonly int[] CoalLargeSeeds = { 1412, 1515, 1526 }, CoalSmallSeeds = { 1611, 1622 }, CoalMediumSeeds = { 1633, 1644 };
-    public static string Main() => InstallCoal();
+    // Coal install: InstallCoal.
     public static string InstallCoal() => InstallOre(BlockType.Coal, "Coal", "Kohle", Array.Find(CoalPalettes, p => p.name == "K2-Steinkohle-geschichtet"),
         CoalLargeSeeds, CoalSmallSeeds, CoalMediumSeeds, CoalOut + "/Installed");
+
+    // Platinum install (applied 18.10.2026): original scheme P2, Large seed 1712 is the approved preview.
+    static readonly int[] PlatinumLargeSeeds = { 1712, 1815, 1826 }, PlatinumSmallSeeds = { 1911, 1922 }, PlatinumMediumSeeds = { 1933, 1944 };
+    public static string Main() => InstallPlatinum();
+    public static string InstallPlatinum() => InstallOre(BlockType.PlatinumOre, "Platinum", "Platin", Array.Find(PlatinumPalettes, p => p.name == "P2-Platin-violett-facettiert"),
+        PlatinumLargeSeeds, PlatinumSmallSeeds, PlatinumMediumSeeds, PlatinumOut + "/Installed");
 
     // Folder = ore folder under Blocks/Ores and sprite prefix (e.g. "Iron"), tilePrefix = German tile name (e.g. "Eisen").
     static string InstallOre(BlockType id, string folder, string tilePrefix, Palette palette, int[] largeSeeds, int[] smallSeeds, int[] mediumSeeds, string designDir)
@@ -625,12 +687,20 @@ public static class PaintedOreArt
 
     static Piece CupriteNugget(System.Random rng, Vector2 c, float r, float z, int index)
     {
+        bool accentChunk = r < 26 && index % 3 == 1;
+        if (Active.shape == 1) // smooth polished nuggets
+            return Outline(new Piece { kind = Kind.Blob, mat = accentChunk ? Mat.Cuprite : Mat.Copper, c = c, r = r, z = z, k = .85f,
+                rot = (float)rng.NextDouble() * 6.28f, elong = 1 + (float)rng.NextDouble() * Active.elong, seed = rng.Next() }, rng, Active.rough);
+        if (Active.shape == 2) // cubic crystals
+            return Crystal(new Piece { kind = Kind.Crystal, mat = accentChunk || index % 4 == 2 ? Mat.Cuprite : Mat.Copper, c = c, r = r * .85f, z = z,
+                rot = (float)rng.NextDouble() * 6.28f, elong = 1, seed = rng.Next() }, rng, true);
         var p = GemNugget(rng, c, r, z, Active.seedsPerRadius);
         p.seedMat = new Mat[p.seeds.Length];
         for (int s = 0; s < p.seeds.Length; s++)
         {
             var wpos = p.c + p.seeds[s] * p.r;
-            p.seedMat[s] = Fbm(wpos.x / Active.accentScale, wpos.y / Active.accentScale, 23) > Active.accentThreshold || (r < 26 && index % 3 == 1) ? Mat.Cuprite : Mat.Copper;
+            p.seedMat[s] = Active.detail != null && Fbm(wpos.x / Active.detailScale, wpos.y / Active.detailScale, 37) > Active.detailThreshold ? Mat.Detail
+                : Fbm(wpos.x / Active.accentScale, wpos.y / Active.accentScale, 23) > Active.accentThreshold || (r < 26 && index % 3 == 1) ? Mat.Cuprite : Mat.Copper;
         }
         return p;
     }
@@ -742,21 +812,24 @@ public static class PaintedOreArt
         return p;
     }
 
-    static Piece Crystal(Piece p, System.Random rng)
+    // cube = square frustum (cubic crystal seen at an angle) instead of a pointed prism.
+    static Piece Crystal(Piece p, System.Random rng, bool cube = false)
     {
-        int n = 5 + rng.Next(3);
+        int n = cube ? 4 : 5 + rng.Next(3);
         p.poly = new Vector2[n]; p.inner = new Vector2[n];
-        p.apex = new Vector2(p.r * p.elong * .38f, (float)(rng.NextDouble() - .5) * p.r * .2f);
-        float top = .3f + (float)rng.NextDouble() * .2f;
+        p.apex = cube ? new Vector2((float)(rng.NextDouble() - .5) * p.r * .35f, (float)(rng.NextDouble() - .5) * p.r * .35f)
+            : new Vector2(p.r * p.elong * .38f, (float)(rng.NextDouble() - .5) * p.r * .2f);
+        float top = cube ? .55f + (float)rng.NextDouble() * .12f : .3f + (float)rng.NextDouble() * .2f;
         for (int i = 0; i < n; i++)
         {
-            float a = (i + (float)(rng.NextDouble() - .5) * .5f) / n * 6.2832f;
-            float rr = p.r * (.8f + (float)rng.NextDouble() * .3f);
+            float a = cube ? (i + .5f + (float)(rng.NextDouble() - .5) * .06f) / n * 6.2832f : (i + (float)(rng.NextDouble() - .5) * .5f) / n * 6.2832f;
+            float rr = cube ? p.r : p.r * (.8f + (float)rng.NextDouble() * .3f);
             p.poly[i] = new Vector2(Mathf.Cos(a) * rr * p.elong, Mathf.Sin(a) * rr);
             p.inner[i] = p.apex + (p.poly[i] - p.apex) * top;
         }
-        p.k = p.r * (.9f + (float)rng.NextDouble() * .3f); // apex height in px
-        p.topN = new Vector3(.25f + (float)(rng.NextDouble() - .5) * .3f, (float)(rng.NextDouble() - .5) * .3f, 1).normalized;
+        p.k = p.r * (cube ? .55f + (float)rng.NextDouble() * .15f : .9f + (float)rng.NextDouble() * .3f); // apex height in px
+        p.topN = cube ? new Vector3((float)(rng.NextDouble() - .5) * .2f, (float)(rng.NextDouble() - .5) * .2f, 1).normalized
+            : new Vector3(.25f + (float)(rng.NextDouble() - .5) * .3f, (float)(rng.NextDouble() - .5) * .3f, 1).normalized;
         return p;
     }
 
@@ -953,7 +1026,7 @@ public static class PaintedOreArt
         {
             case Mat.Copper:
                 c = Ramp(t, Active.main[0], Active.main[1], Active.main[2], Active.main[3], Active.main[4]);
-                if (h.p.kind == Kind.Blob && h.p.style == 0)
+                if (h.p.kind == Kind.Blob && h.p.style == 0 && Active == Copper) // copper tarnish and patina specks
                 {
                     float tarnish = Smooth(.52f, .72f, Fbm(w.x / 22, w.y / 22, 91));
                     c = Color.Lerp(c, c * new Color(.62f, .46f, .42f), tarnish * .4f);
@@ -964,6 +1037,9 @@ public static class PaintedOreArt
             case Mat.Cuprite:
                 c = Ramp(t, Active.accent[0], Active.accent[1], Active.accent[2], Active.accent[3], Active.accent[4]);
                 spec = Active.accentSpec; gloss = Active.accentGloss; break;
+            case Mat.Detail:
+                c = Ramp(t, Active.detail[0], Active.detail[1], Active.detail[2], Active.detail[3], Active.detail[4]);
+                spec = .6f; gloss = 40; break;
             case Mat.Malachite:
                 c = Ramp(t, new Color(.04f, .17f, .16f), new Color(.1f, .36f, .31f), new Color(.2f, .56f, .47f), new Color(.42f, .76f, .63f), new Color(.72f, .93f, .82f));
                 float band = Mathf.Sin((w.x * .7f + w.y) / 5.5f + Fbm(w.x / 30, w.y / 30, 5) * 9);
@@ -984,6 +1060,12 @@ public static class PaintedOreArt
             c *= 1 - .7f * pit; c += new Color(.09f, .09f, .095f) * Mathf.Max(0, lit - pit) * (ndl > 0 ? 1 : .4f);
             spec *= 1 - pit;
         }
+        // White speckles (painted flecks, not emissive).
+        if ((mat == Mat.Copper || mat == Mat.Cuprite || mat == Mat.Detail) && Active.speckles > 0)
+        {
+            float fleck = Pores(w, Active.speckleScale, Active.speckles, 70);
+            c = Color.Lerp(c, new Color(.93f, .93f, .96f) * (.8f + .2f * Mathf.Clamp01(ndl + .5f)), fleck * .92f);
+        }
         if ((mat == Mat.Copper || mat == Mat.Cuprite) && Active.banding > 0)
         {
             var q = Local(h.p, w);
@@ -997,7 +1079,11 @@ public static class PaintedOreArt
         c += Active.specTint * s;
         if (mat == Mat.Copper || mat == Mat.Cuprite) c += Active.bounce * .08f * Mathf.Pow(1 - n.z, 2) * (ndl < 0 ? 1 : .3f); // warm bounce on the shadow side
         // Facet seams: bright where the facet faces the light, dark otherwise.
-        if (h.p.style == 1 ? h.edge < 1.7f : h.edge < 1.3f) c *= ndl > .2f ? (h.p.style == 1 ? Active.seamBright : 1.16f) : (h.p.style == 1 ? .72f : .82f);
+        if (h.p.style == 1 ? h.edge < Active.edgeWidth : h.edge < 1.3f)
+        {
+            if (ndl > .2f) { c *= h.p.style == 1 ? Active.seamBright : 1.16f; c = Color.Lerp(c, Color.white * .97f, Active.edgeWhite); }
+            else c *= h.p.style == 1 ? .72f : .82f;
+        }
         // Dark silhouette line keeps the ore readable against busy stone.
         c *= Mathf.Lerp(.55f, 1, Smooth(-2.2f, -.4f, -h.sd) );
         c *= 1 + noiseAmt * (Fbm(w.x / 6, w.y / 6, 77) - .5f) * 2;
@@ -1074,15 +1160,15 @@ public static class PaintedOreArt
         return inside ? -d : d;
     }
     // Round pores: at most one per grid cell (density = share of cells with a pore), soft edge. Returns 0..1.
-    static float Pores(Vector2 w, float size, float density)
+    static float Pores(Vector2 w, float size, float density, int salt = 0)
     {
         int cx = Mathf.FloorToInt(w.x / size), cy = Mathf.FloorToInt(w.y / size); float pit = 0;
         for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++)
         {
             int x = cx + i, y = cy + j;
-            if (Hash(x, y, 501) > density) continue;
-            var centre = new Vector2((x + Hash(x, y, 502)) * size, (y + Hash(x, y, 503)) * size);
-            float radius = size * (.12f + .22f * Hash(x, y, 504));
+            if (Hash(x, y, 501 + salt) > density) continue;
+            var centre = new Vector2((x + Hash(x, y, 502 + salt)) * size, (y + Hash(x, y, 503 + salt)) * size);
+            float radius = size * (.12f + .22f * Hash(x, y, 504 + salt));
             pit = Mathf.Max(pit, Smooth(radius, radius * .7f, (w - centre).magnitude));
         }
         return pit;

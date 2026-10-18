@@ -16,6 +16,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
+- 18.10.2026, Claude Code: Platin (P2) als gemalte Einzelblöcke, Branch `claude/iron-tiles`, siehe Docs/Gemalte-Erze.md.
 - 18.10.2026, Claude Code: Kohle (K2, ohne Steinchen) als gemalte Einzelblöcke, Branch `claude/iron-tiles`, siehe Docs/Gemalte-Erze.md.
 - 18.10.2026, Claude Code: Silber (S1) und Gold (G2b) als gemalte Einzelblöcke, Branch `claude/iron-tiles`, siehe Docs/Gemalte-Erze.md.
 - 18.10.2026, Claude Code: Eisenerz (Schema E1 Stahl) als gemalte Einzelblöcke und Kupfer-Aufräumen (claude/copper-cleanup) geprüft und zusammengeführt, Branch `claude/iron-tiles`, siehe Docs/Gemalte-Erze.md.
