@@ -241,6 +241,9 @@ Eine Tour beginnt an der Oberfläche, also bei Zellenreihe 0 oder darüber. Beim
 - `cr:<Zeitraum>:<StartUtc>:<Vorlage>/<Gegenstand>/<Index>` mit der Endung `:t` für eine Aufgabe oder `:s<n>` für eine Projektetappe. `cr:<Zeitraum>:<StartUtc>:b` steht für den Bonus.
   - Wird eine Runde neu gezogen, nachdem ein älterer Build sie gelöscht hat, gelten die markierten Aufgaben als erledigt und ausbezahlt. Neue XP gibt es dafür nicht.
 - `cm:<Stufen-ID>` stellt fehlende Langzeitstufen beim Laden wieder her, ohne erneute XP.
+- `cx:`/`ct:`/`cs:` beschreiben eine gezogene Runde (Kopf mit Ende, Wochentag, Bonus und Anzahl; je Aufgabe Vorlage, Gegenstand, Stufe, Ziel, XP; je Projekt die Etappen). Sie werden einmal pro Runde geschrieben, sobald darin etwas ausbezahlt wird. Fehlt die Runde später, wird sie daraus **genau so wiederhergestellt**, wie sie gezogen wurde, und erst danach greifen die `cr:`-Marken. Umgewandelte alte Runden (Format 1) schreiben keine Marken.
+- `tp:<Tally>:<Höchstwert>` hält je Tally (Verkauf, Herstellen, platzierte Fackeln/Leitern) den Höchstwert fest. Beim Laden einer Welt wird der Wiederholungsschutz daraus wiederhergestellt.
+- Alle Marken sind kurz (unter 160 Zeichen), eindeutig und verwenden kulturunabhängige Ziffern, damit ältere Builds den Ledger weiter akzeptieren.
 - Beide Wiederherstellungen decken höchstens die XP, die in `periodRewardXp` vorhanden ist. Damit kann die Prüfung beim Laden nie fehlschlagen.
 
 **Restrisiken beim Wechsel zwischen `main` und diesem Branch** (gemeinsames Profil):
@@ -249,8 +252,9 @@ Eine Tour beginnt an der Oberfläche, also bei Zellenreihe 0 oder darüber. Beim
 - **Neue Felder gehen verloren:** `main` löscht beim nächsten Speichern Runden, Auszeichnungen, Zähler und Tallies. Zurück auf dem Branch gilt:
   - Auszeichnungen kommen über `cm:` zurück.
   - Die Zähler-Linien beginnen wieder bei 0. Erreichte Stufen bleiben, es wird nichts doppelt bezahlt.
-  - Der Wiederholungsschutz für Verkauf und Herstellen beginnt neu.
-- **Neu gezogene Runden:** Bezahlte Aufgaben werden nur wiedererkannt, wenn dieselben Aufgaben gezogen werden. Haben sich Schicht, Level oder Herstellbarkeit dazwischen geändert, kann eine Aufgabe erneut bezahlt werden. Nicht bezahlter Fortschritt, Masken und Fleiss-Tage gehen verloren.
+  - Der Wiederholungsschutz für Verkauf und Herstellen kommt über `tp:` zurück.
+  - Runden, in denen schon etwas bezahlt wurde, kommen über `cx:`/`ct:`/`cs:` identisch zurück; bezahlte Aufgaben, Etappen und Bonus bleiben bezahlt.
+- **Runden ohne Auszahlung:** Eine Runde, in der noch nichts bezahlt wurde, hat keine Beschreibung und wird neu gezogen (bei anderer Schicht, anderem Level oder anderer Herstellbarkeit auch anders). Da nichts bezahlt war, entsteht keine doppelte Auszahlung; nicht bezahlter Fortschritt, Masken und Fleiss-Tage gehen aber verloren.
 - **Alter Stand von `main`:** Hat `main` für denselben Tag einen alten Stand angelegt, wird dieser wieder umgewandelt und ersetzt die neue Runde dieses Tages. Die bereits bezahlte XP bleibt.
 - **Älteres Backup:** Fällt das Profil auf ein älteres Backup zurück, werden Marken ohne XP-Deckung nicht wiederhergestellt. Die Aufgabe kann dann erneut verdient werden.
 
@@ -325,17 +329,33 @@ Prüfskripte unter `Tests/`:
 
 | Skript | Inhalt |
 | --- | --- |
+| `ChallengeCoreChecks.cs` | Edit Mode, auch ohne Unity lauffähig (nur reiner Kern): Katalog, Meilenstein-Linien, Textlängen, Mengenregeln, Auswahl über 3000 Tage, 600 Wochen und 200 Monate, Auswahlvarianten, Zählmechanik, Sanitize mit Zufallsdaten, Perioden-Grenzen mit Sommerzeit |
 | `ChallengeReworkChecks.cs` | Edit Mode, isolierte Profile: Runden, Zählen, Speicherung, Wiederholungsschutz, Uhr und Zeitzonen, Langzeit, Abwärtskompatibilität, Migration, Robustheit |
 | `ChallengeSettingsChecks.cs` | Edit Mode: GPS-Abschnitt „Herausforderungen“ mit temporärem Profil |
 | `ChallengePanelPreviewChecks.cs` | Edit Mode, auch in der Cloud: baut die Tafel aus einem isolierten Profil, rendert jeden Tab nach `Temp/ChallengePanel-<Tab>.png` und vergleicht sie mit den Daten |
 | `ChallengePeriodsChecks.cs`, `ChallengeGameplayChecks.cs` | Play Mode ab MainMenu: neue Runden im Spiel |
 | `ChallengeMigrationChecks.cs`, `MetaProgressionUiChecks.cs` | Bestehende Checks, an das neue Layout angepasst |
 
+Suite für die Cloud: `Tests/CI/suites/challenges.json` (die fünf Edit-Mode-Checks oben plus `MetaProgressionCoreChecks`). Start: Actions → Unity Checks → Run workflow, Suite `challenges`.
+
 Die alten Prüfskripte `DailyChallengeSelectionChecks.cs`, `AdditionalChallengesChecks.cs` und `PrepareDailyChallengeIsolation.ps1` liegen jetzt in `Tests/Archive/`.
 
 ### Testergebnisse
 
-_Wird nach den Testläufen ergänzt._
+Cloud-Workflow „Unity Checks“ (Unity 6000.1.12f1, Batchmode mit Xvfb), Branch `claude/challenges-rework`:
+
+| Lauf | Stand | Suite / Checks | Ergebnis |
+| --- | --- | --- | --- |
+| #22 | `9c9c131` (Gerüst) | ChallengeMigrationChecks | bestanden (Aufwärmlauf, Unity-Cache) |
+| #23 | `c908d86` (erste Gesamtversion) | Migration, Settings, Rework, PanelPreview, MetaProgressionCore | 4/5 bestanden; Rework 548/580 (32-mal derselbe Testfehler: alter Name „Große“ statt „Grosse Ausbeute“) |
+| #24 | `177a18f` | ChallengeReworkChecks | bestanden (580) |
+| #25 | `eb57f1d` (nach Prüfrunde) | Suite `challenges` | **6/6 bestanden**: Core 581'496 · Rework 599 · Settings 71 · Migration 5 · PanelPreview 2'154 (inkl. Bilder je Tab) · MetaProgressionCore 87 |
+
+`MetaProgressionCoreChecks` war in allen früheren Cloud-Läufen rot („worker owns detached snapshot“); mit dem neuen System speichert eine Rundenziehung mitten in einem Aufzeichnungsaufruf nicht mehr sofort, seither ist der Check grün.
+
+Lokal ohne Unity: Kompilierung aller Spiel-, Editor- und 186 Prüfskripte gegen Unity-Referenzen ohne neue Fehler (nur 119 schon vorher bestehende Fehler in veralteten fremden Prüfskripten); `ChallengeCoreChecks` unter .NET 8; Laufzeit-Simulation der echten `MetaProgression*`-Dateien gegen Unity-Attrappen (599 Prüfungen, 4'500 Zufallsrunden für die Wiederherstellung, 57'660 Prüfungen für den Verkaufs-/Herstellungsschutz).
+
+Die Play-Mode-Checks (`ChallengePeriodsChecks`, `ChallengeGameplayChecks`, `MetaProgressionUiChecks`, `ProgressionTimelineChecks`) laufen in der Cloud derzeit nicht (siehe `Docs/Cloud-Tests.md`) und sind nur kompiliert; sie sollten lokal im Editor laufen.
 
 ## 8. Überarbeitung der bisherigen Challenges
 
