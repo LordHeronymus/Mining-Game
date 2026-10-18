@@ -51,10 +51,58 @@ fi
 # Play-Mode checks need the full editor UI on the virtual display: in -batchmode the Game view
 # never renders, so coroutines waiting for WaitForEndOfFrame (fades, loading screen) never resume.
 # CI_EDITOR_UI: auto (play checks in the plan), 1 (always), 0 (never).
-UI_MODE="${CI_EDITOR_UI:-auto}"
-if [ "$UI_MODE" = auto ]; then
-  if grep -q '"mode": "play"' "$ARTIFACTS/plan.json"; then UI_MODE=1; else UI_MODE=0; fi
+# Off by default: without Unity Hub sign-in the editor UI quits right after licensing
+# ("Access token is unavailable", runs #8-#12). Performance measurements use the benchmark player instead.
+UI_MODE="${CI_EDITOR_UI:-0}"
+[ "$UI_MODE" = auto ] && UI_MODE=0
+start_display() {
+  # Mesa provides software OpenGL (GLX) on Xvfb for the editor UI or the benchmark player.
+  (apt-get -qq update && apt-get -qq install -y --no-install-recommends \
+      xdotool imagemagick mesa-utils libgl1-mesa-dri libglx-mesa0 libegl-mesa0) > "$ARTIFACTS/apt.log" 2>&1 \
+    || echo "X tools not installed (see apt.log)"
+  Xvfb :99 -screen 0 1920x1080x24 +extension GLX +render -noreset > "$ARTIFACTS/xvfb.log" 2>&1 &
+  XVFB_PID=$!
+  export DISPLAY=:99 LIBGL_ALWAYS_SOFTWARE=1
+  sleep 2
+  echo "--- OpenGL auf dem virtuellen Bildschirm"
+  (glxinfo -B 2>&1 || echo "glxinfo nicht verfügbar") | head -n 12
+}
+
+return_licence() {
+  if [ "$STRATEGY" = serial ]; then
+    "$UNITY" -batchmode -nographics -quit -returnlicense -logFile "$ARTIFACTS/return.log" \
+      -username "${UNITY_EMAIL:-}" -password "${UNITY_PASSWORD:-}" || true
+  elif [ "$STRATEGY" = personal ]; then
+    "$CLIENT" --return-ulf > "$ARTIFACTS/return.log" 2>&1 || true
+  fi
+}
+
+# Suite "performance": build a Linux benchmark player (MINING_BENCHMARK, PerformanceBenchmarkDriver) and run it on
+# the virtual display. A player has no editor dialogs and renders every frame, unlike the batchmode editor.
+if grep -q '"mode": "player"' "$ARTIFACTS/plan.json"; then
+  echo "Building benchmark player (Linux, Mono)"
+  timeout "${CI_BUILD_TIMEOUT:-75m}" "$UNITY" -batchmode -nographics -projectPath "$PWD" \
+    -executeMethod MiningGame.CI.CiBenchmarkBuild.Build -ciBuildPath "$ARTIFACTS/player" -logFile "$ARTIFACTS/editor.log"
+  code=$?
+  echo "Build exit code: $code"
+  return_licence
+  if [ $code -eq 0 ]; then
+    start_display
+    PLAYER="$ARTIFACTS/player/TiefenhallBenchmark.x86_64"
+    chmod +x "$PLAYER"
+    started=$(date +%s)
+    timeout "${CI_PLAYER_TIMEOUT:-30m}" "$PLAYER" -performanceBenchmark "$PWD/$ARTIFACTS/PerformanceBenchmark.txt" \
+      -logFile "$PWD/$ARTIFACTS/player.log" -screen-fullscreen 0 -screen-width 1280 -screen-height 720 -force-glcore
+    pcode=$?
+    echo "Player exit code: $pcode"
+    echo "$(( $(date +%s) - started )) $pcode" > "$ARTIFACTS/player-meta.txt"
+    kill $XVFB_PID 2>/dev/null
+    [ -f "$ARTIFACTS/PerformanceBenchmark.txt" ] && cat "$ARTIFACTS/PerformanceBenchmark.txt"
+    code=$pcode
+  fi
+  exit $code
 fi
+
 ARGS=(-projectPath "$PWD" -executeMethod MiningGame.CI.CiCheckRunner.Run
       -ciPlan "$ARTIFACTS/plan.json" -ciOutput "$ARTIFACTS" -logFile "$ARTIFACTS/editor.log")
 # Guard against modal dialogs or hangs: the runner's own timeouts cannot fire if the editor blocks.
@@ -91,17 +139,7 @@ watch_display() {
 if [ "${CI_NOGRAPHICS:-0}" != "1" ] && command -v Xvfb >/dev/null; then
   if [ "$UI_MODE" = 1 ]; then
     echo "Starting Unity with editor UI on virtual display"
-    # Mesa provides software OpenGL (GLX) on Xvfb; without it the editor UI cannot create a graphics
-    # device and quits right after licensing (runs #8/#10).
-    (apt-get -qq update && apt-get -qq install -y --no-install-recommends \
-        xdotool imagemagick mesa-utils libgl1-mesa-dri libglx-mesa0 libegl-mesa0) > "$ARTIFACTS/apt.log" 2>&1 \
-      || echo "X tools not installed (see apt.log)"
-    Xvfb :99 -screen 0 1920x1080x24 +extension GLX +render -noreset > "$ARTIFACTS/xvfb.log" 2>&1 &
-    XVFB_PID=$!
-    export DISPLAY=:99 LIBGL_ALWAYS_SOFTWARE=1
-    sleep 2
-    echo "--- OpenGL auf dem virtuellen Bildschirm"
-    (glxinfo -B 2>&1 || echo "glxinfo nicht verfügbar") | head -n 20
+    start_display
     # -automated: no human at the editor, dialogs are skipped or answered with their default.
     # Without -batchmode the editor needs a signed-in account (access token); without it, it shows a
     # sign-in dialog and quits right after "Pro License" (runs #8/#10/#11). Log in like the batch run #4 did.
@@ -125,12 +163,7 @@ echo "Unity exit code: $code"
 if [ -f "$ARTIFACTS/windows.log" ]; then echo "--- Fenster auf dem virtuellen Bildschirm (letzte Einträge)"; tail -n 40 "$ARTIFACTS/windows.log"; fi
 
 # Free the seat again so it does not count as an extra machine.
-if [ "$STRATEGY" = serial ]; then
-  "$UNITY" -batchmode -nographics -quit -returnlicense -logFile "$ARTIFACTS/return.log" \
-    -username "${UNITY_EMAIL:-}" -password "${UNITY_PASSWORD:-}" || true
-elif [ "$STRATEGY" = personal ]; then
-  "$CLIENT" --return-ulf > "$ARTIFACTS/return.log" 2>&1 || true
-fi
+return_licence
 
 # Check reports and previews the scripts write to Temp/.
 find Temp -maxdepth 1 -type f \( -name '*.txt' -o -name '*.json' -o -name '*.csv' -o -name '*.png' \) -exec cp {} "$ARTIFACTS/temp/" \; 2>/dev/null || true

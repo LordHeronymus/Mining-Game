@@ -39,6 +39,8 @@ def complete(entry):
     name = entry["name"]
     if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
         sys.exit(f"Invalid check name: {name}")
+    if entry.get("mode") == "player":
+        return entry, None  # benchmark player build, no check script
     source_path = TESTS / f"{name}.cs"
     if not source_path.exists():
         sys.exit(f"Check not found: Tests/{name}.cs")
@@ -47,7 +49,7 @@ def complete(entry):
     entry.setdefault("resultFile", f"Temp/{name}.txt")
     # Checks driven by EditorApplication.update only report through their result file.
     entry.setdefault("waitForResultFile", "EditorApplication.update+=" in source.replace(" ", ""))
-    if entry["mode"] not in ("edit", "play"):
+    if entry["mode"] not in ("edit", "play", "player"):
         sys.exit(f"Invalid mode for {name}: {entry['mode']}")
     return entry, source_path
 
@@ -69,7 +71,8 @@ def main():
     plan = []
     for entry in entries:
         entry, source_path = complete(dict(entry))
-        shutil.copy2(source_path, TARGET / source_path.name)
+        if source_path:
+            shutil.copy2(source_path, TARGET / source_path.name)
         plan.append(entry)
 
     plan_path = Path(args.plan)

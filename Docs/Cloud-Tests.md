@@ -54,13 +54,13 @@ Cloud-Sessions (Claude Code im Browser/App) und der Workflow „Unity Checks“ 
 - Eine Cloud-Aufgabe läuft auf ihrem eigenen Branch und trägt sich in `Docs/Arbeitsstand.md` mit Ordner „Cloud“ ein. Sie belegt keinen lokalen Editor.
 - Abschluss einer Cloud-Aufgabe mit Optik- oder FPS-Bezug: kurze lokale Abnahme durch den Benutzer (Branch holen, Play starten bzw. Build-Benchmark).
 
-## Editor-UI für Play-Mode
+## Play-Mode in der Cloud
 
-Im `-batchmode` rendert der Editor kein Game-Fenster, daher kehren Coroutinen mit `WaitForEndOfFrame` (Blenden, Ladebildschirm) nie zurück und Play-Checks hängen (Lauf #7: Laden 300 s bei Stufe 0). Enthält der Plan Play-Checks, startet `run-in-container.sh` Unity deshalb ohne `-batchmode`, aber mit `-automated` (kein Mensch am Editor, Dialoge werden übersprungen bzw. mit der Standardantwort beantwortet) mit Editor-Oberfläche auf dem virtuellen Xvfb-Bildschirm (Workflow-Eingabe `editorui`: auto/1/0). Für das Grafikgerät installiert das Skript Mesa (Software-OpenGL über GLX) und startet Unity mit `-force-glcore`; `glxinfo -B` steht im Job-Log. Ein `timeout` (Standard 100 min, `CI_UNITY_TIMEOUT`) beendet Unity, falls etwas blockiert. Ein Wächter macht Bildschirmfotos (Artefakt `screens/`), protokolliert Fenstertitel (`windows.log`, Ende auch im Job-Log) und drückt Enter auf einem Dialog, wenn das Editor-Log 90 s still steht.
+Im `-batchmode` rendert der Editor kein Game-Fenster, daher kehren Coroutinen mit `WaitForEndOfFrame` (Blenden, Ladebildschirm) nie zurück und Play-Checks hängen (Lauf #7). Der Editor mit Oberfläche (ohne `-batchmode`, Xvfb + Mesa, `-automated`) beendet sich ohne Unity-Hub-Anmeldung direkt nach der Lizenzprüfung („Access token is unavailable“, Läufe #8–#12); diese Variante ist nur noch manuell mit `editorui = 1` aktivierbar. Play-Checks (`play:`) laufen deshalb in der Cloud derzeit nicht.
 
-## Suite `performance`
+## Suite `performance` (Benchmark-Player)
 
-Führt `Tests/PerformanceBenchmarkChecks.cs` aus (frischer Play-Start ab MainMenu: Laden, Stillstand, Abbau normal/schnell, Erkunden). Der Runner wartet, bis `Temp/PerformanceBenchmark.txt` mit `PASS`/`FAIL` beginnt (`resultDonePattern`). Bericht und `PerformanceBenchmark.csv` (jedes Frame) liegen im Artefakt unter `temp/`, die Zusammenfassung zusätzlich im Dashboard bei den Ergebnissen. Für Vergleiche denselben Branch vor und nach einer Änderung messen.
+Statt im Editor misst die Cloud mit einem eigenständigen Linux-Player: `Assets/Editor/CI/CiBenchmarkBuild.cs` baut ihn (Mono, Define `MINING_BENCHMARK`, eigener Produktname „Tiefenhall Benchmark“ wie `Tests/BuildPerformanceBenchmark.cs`), danach startet `run-in-container.sh` ihn auf Xvfb mit Mesa-Software-OpenGL (`-performanceBenchmark`). `PerformanceBenchmarkDriver` spielt Laden, Stillstand, Abbau normal/schnell und Erkunden durch und schreibt `PerformanceBenchmark.txt`/`.csv` (Artefakt, Zusammenfassung im Dashboard). Der erste Build kompiliert alle Shader und dauert entsprechend; danach hilft der Library-Cache. Werte sind nur untereinander vergleichbar (kein GPU, Mono statt IL2CPP).
 
 ## Grenzen
 

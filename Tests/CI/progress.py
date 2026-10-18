@@ -113,6 +113,13 @@ def build(final=None, conclusion=None):
     by_name = {c["name"]: c for c in checks}
 
     log = read(ART / "editor.log")
+    player_log = read(ART / "player.log")
+    if player_log:
+        # Benchmark player running (suite performance): the build is done, show the player's log.
+        for c in checks:
+            if c["mode"] == "player" and c["status"] == "pending":
+                c["status"] = "running"
+        log = player_log
     lines = log.splitlines()
     imported = 0
     compiling = False
