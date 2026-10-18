@@ -64,6 +64,7 @@ public sealed class PerformanceBenchmarkDriver : MonoBehaviour
 
     void Update()
     {
+        if (NoRender) HideCameras();
         if (phase == Phase.Menu || phase == Phase.Done) return;
         int count = GC.CollectionCount(0);
         samples.Add(new Sample { phase = phase, stage = LoadingProgress.Stage, ms = Time.unscaledDeltaTime * 1000f, collections = count - collections });
@@ -78,7 +79,7 @@ public sealed class PerformanceBenchmarkDriver : MonoBehaviour
         switch (phase)
         {
             case Phase.Loading:
-                if (now - phaseStarted > 300) throw new Exception("Laden dauerte länger als 300 s");
+                if (now - phaseStarted > LoadLimit) throw new Exception($"Laden dauerte länger als {LoadLimit:F0} s");
                 if (RunNavigation.IsTransitioning || LoadingProgress.Active || !GameSaveSystem.CanSave) { nextAction = now + .5; return; }
                 if (now < nextAction) return;
                 Prepare();
@@ -144,6 +145,27 @@ public sealed class PerformanceBenchmarkDriver : MonoBehaviour
     {
         if (body) { body.position = position; body.linearVelocity = Vector2.zero; }
         player.position = position;
+    }
+
+    // -benchmarkLoadLimit <s>: the cloud player renders in software (Mesa) and loads much slower than a real PC.
+    static readonly double LoadLimit = ReadLoadLimit();
+    static double ReadLoadLimit()
+    {
+        var args = Environment.GetCommandLineArgs();
+        int index = Array.IndexOf(args, "-benchmarkLoadLimit");
+        return index >= 0 && index + 1 < args.Length && double.TryParse(args[index + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out double limit) ? limit : 300;
+    }
+
+    // -benchmarkNoRender: cameras draw nothing (culling mask 0), so frame times measure the game's CPU work only.
+    // The cloud player has no GPU; Mesa software rendering took ~1.3 s per frame in the game (run #16).
+    // Cameras stay enabled because game code relies on Camera.main.
+    static readonly bool NoRender = Array.IndexOf(Environment.GetCommandLineArgs(), "-benchmarkNoRender") >= 0;
+    static readonly Camera[] cameras = new Camera[16];
+    static void HideCameras()
+    {
+        int count = Camera.GetAllCameras(cameras);
+        for (int i = 0; i < count; i++)
+            if (cameras[i].cullingMask != 0) { cameras[i].cullingMask = 0; cameras[i].clearFlags = CameraClearFlags.SolidColor; }
     }
 
     static double Percentile(List<float> sorted, double p) => sorted.Count == 0 ? 0 : sorted[Math.Min(sorted.Count - 1, (int)Math.Ceiling(sorted.Count * p) - 1)];

@@ -34,6 +34,8 @@ Die vollständige Änderungshistorie steht in `Docs/Changelog.md`. Dort nur bei 
 - Vorschauen und Berichte gehen ins lokale `Temp/`-Verzeichnis.
 - Abschlusszustand nach Tests: SampleScene im Edit Mode, keine offenen Play-/Szenenwechsel, Save-/Meta-TestDirectory `null`.
 - Ohne lokalen Editor (Cloud-Sessions): Checks über den GitHub-Workflow „Unity Checks“ ausführen, siehe `Docs/Cloud-Tests.md`.
+- **Cloud nur für Passendes:** In der Cloud nur Code-Änderungen, Logik-/Daten-Checks, CPU-Messungen (Suite `performance`, ohne Zeichnen) und Screenshot-Vergleiche von Standbildern (z. B. Gebäude, Erz-Overlays). Bewegung, Animation, Partikel, Bildraten und Spielgefühl nur lokal im Editor prüfen bzw. den Benutzer zur Abnahme bitten. Solche Checks im Skript mit `// CI: local-only` markieren; die Cloud lehnt sie dann sofort ab.
+- **Zeitlimit Cloud:** Ein Lauf hat höchstens 20 Minuten. Bricht er mit „Abgebrochen: …“ ab (Zeitlimit oder `local-only`), denselben Lauf nicht erneut starten, sondern den Grund dem Benutzer melden und den Check verkleinern oder lokal ausführen.
 
 ## Zusammenarbeit mehrerer Agenten
 
