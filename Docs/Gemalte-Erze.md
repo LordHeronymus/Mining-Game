@@ -1,6 +1,6 @@
 # Gemalte Erze – Einzelblöcke statt Shader-Adern
 
-Stand 18.10.2026. Kupfer (Branch `claude/copper-tiles`, Aufräumen `claude/copper-cleanup`), Eisen, Silber, Gold, Kohle, Platin, Titan, Wolfram und Mythril (Branch `claude/iron-tiles`) sind gemalte Erzblöcke. Die übrigen Erze laufen noch über die Shader-Adern.
+Stand 18.10.2026. Kupfer (Branch `claude/copper-tiles`, Aufräumen `claude/copper-cleanup`), Eisen, Silber, Gold, Kohle, Platin, Titan, Wolfram, Mythril, oranger Granat, Smaragd, Rubin und Diamant (Branch `claude/iron-tiles`) sind gemalte Erzblöcke. Offen ist nur noch Ultronium. Die übrigen Erze laufen noch über die Shader-Adern.
 
 ## Prinzip
 
@@ -24,6 +24,10 @@ Stand 18.10.2026. Kupfer (Branch `claude/copper-tiles`, Aufräumen `claude/coppe
 | Titan | „T5a Eis lang“: Gruppen langer, spitzer Prismen (wie das alte Titan) in Eisblau mit weissen Spitzen | `Blocks/Sprites/Ores/Painted/Titanium/Titanium_{Small,Medium,Large}_0N.png` | `Ores/Titanium/Titanium_08..14` |
 | Wolfram | „W1 Wolfram-Säulen“: grosse, gedrungene dunkle Säulenkristalle mit warmen Reflexen (wie das alte Wolfram) | `Blocks/Sprites/Ores/Painted/Wolfram/Wolfram_{Small,Medium,Large}_0N.png` | `Ores/Wolfram/Wolfram_08..14` |
 | Mythril | „M2 Mythril tiefblau“: königsblaue Kristallgruppen mit türkisen Kristallen | `Blocks/Sprites/Ores/Painted/Mythril/Mythril_{Small,Medium,Large}_0N.png` | `Ores/Mythril/Mythril_08..14` |
+| Oranger Granat | „G2 Granat blutorange“: tief rot-orange Facettenkörner mit goldenen Facetten | `Blocks/Sprites/Ores/Painted/OrangeGranat/OrangeGranat_{Small,Medium,Large}_0N.png` | `Ores/OrangeGranat/OrangeGranat_08..14` |
+| Smaragd | „E2 Smaragd hell“: kurze, helle grüne Kristallgruppen mit mintfarbenen Spitzen | `Blocks/Sprites/Ores/Painted/Emerald/Emerald_{Small,Medium,Large}_0N.png` | `Ores/Emerald/Emerald_08..14` |
+| Rubin | „R3 Rubin-Kristalle blutrot“: grosse, kräftige blutrote Prismen ohne dunkles Gestein, helle Kanten | `Blocks/Sprites/Ores/Painted/Ruby/Ruby_{Small,Medium,Large}_0N.png` | `Ores/Ruby/Ruby_08..14` |
+| Diamant | „D2 Diamant-Oktaeder“: gedrungene, kühl-weisse Kristalle mit blauen Glanzflächen | `Blocks/Sprites/Ores/Painted/Diamond/Diamond_{Small,Medium,Large}_0N.png` | `Ores/Diamond/Diamond_08..14` |
 
 Nummerierung je Erz: `_08..10_large`, `_11..12_small`, `_13..14_medium`. Eingetragen im Block-Asset (`smallOre`/`mediumOre`/`richOre`, Anzahl unverändert 2/2/3) und im `SaveAssetCatalog`. Die alten Tiles `_01..07` bleiben erhalten; alte Spielstände laden sie weiterhin und zeigen sie als Shader-Ader.
 
@@ -37,13 +41,15 @@ Nummerierung je Erz: `_08..10_large`, `_11..12_small`, `_13..14_medium`. Eingetr
 
 ## Erzeugung und Prüfung
 
-- Generator: `Tests/PaintedOreArt.cs` (Paletten `Copper`, `IronPalettes`, `GoldSilverPalettes`, `GoldG2Palettes`; `InstallLarge`/`InstallSmallMedium` für Kupfer, `InstallOre` mit `InstallIron`/`InstallSilver`/`InstallGold`/`InstallCoal`/`InstallPlatinum`/`InstallTitanium`/`InstallTungsten`/`InstallMythril`, Vorschauen `PreviewLarge`, `PreviewSmallMedium`). Erneutes Ausführen einer `Install…`-Methode überschreibt die installierten Sprites. Ältere Kupfer-Fassung: `Tests/Archive/CopperOreArt.cs`.
-- Designrunden und Vergleichsbilder: `Design/OreVeins/CopperLargeV3/`, `Design/OreVeins/CopperSmallMedium/`, `Design/OreVeins/IronLarge/`, `Design/OreVeins/GoldSilverLarge/`, `Design/OreVeins/CoalLarge/`, `Design/OreVeins/PlatinumLarge/`, `Design/OreVeins/TitaniumLarge/`, `Design/OreVeins/TungstenMythrilLarge/`, Laufzeitbilder `Design/OreVeins/PaintedOres/Runtime/`.
+- Generator: `Tests/PaintedOreArt.cs` (Paletten `Copper`, `IronPalettes`, `GoldSilverPalettes`, `GoldG2Palettes`; `InstallLarge`/`InstallSmallMedium` für Kupfer, `InstallOre` mit `InstallIron`/`InstallSilver`/`InstallGold`/`InstallCoal`/`InstallPlatinum`/`InstallTitanium`/`InstallTungsten`/`InstallMythril`/`InstallGarnet`/`InstallEmerald`/`InstallRuby`/`InstallDiamond`, Vorschauen `PreviewLarge`, `PreviewSmallMedium`). Erneutes Ausführen einer `Install…`-Methode überschreibt die installierten Sprites. Ältere Kupfer-Fassung: `Tests/Archive/CopperOreArt.cs`.
+- Designrunden und Vergleichsbilder: `Design/OreVeins/CopperLargeV3/`, `Design/OreVeins/CopperSmallMedium/`, `Design/OreVeins/IronLarge/`, `Design/OreVeins/GoldSilverLarge/`, `Design/OreVeins/CoalLarge/`, `Design/OreVeins/PlatinumLarge/`, `Design/OreVeins/TitaniumLarge/`, `Design/OreVeins/TungstenMythrilLarge/`, `Design/OreVeins/GemsLarge/`, Laufzeitbilder `Design/OreVeins/PaintedOres/Runtime/`.
 - Prüfskript: `Tests/PaintedOreRuntimeChecks.cs` (frischer Play-Start ab Homescreen, isoliertes Testprofil): alle generierten Kupfer-, Eisen-, Silber-, Gold-, Kohle-, Platin-, Titan-, Wolfram- und Mythrilzellen gemalt (seltene Erze wie Mythril können in der Testwelt fehlen und werden dann über platzierte Testblöcke geprüft), alle Gesteinsarten, Überhang an abgebauten Zellen, Abbau, Speichern/Laden, Kamera.
 
 ## Offen
 
-- Übrige Erze (Edelsteine, Ultronium) umstellen.
+- Ultronium umstellen (eigener Shader-Pfad mit Pulsieren, Marker-Alpha < 0,99).
+- Mythril und Smaragd sind in keiner Map-Ebene eingetragen und werden derzeit nicht generiert.
+- Granat und Kupfer sowie Diamant und Titan liegen farblich nahe beieinander; im Spiel vergleichen.
 - Kohle ist auf dem dunkelsten Gestein (Ebene 4) eher dezent; bei Bedarf hellere Schichtbänder oder eine Kontur.
 - Mehr Varianz (Spiegeln/weitere Varianten), damit sich lange Reihen nicht wiederholen.
 - Eisen hebt sich auf hellgrauem Gestein (Ebene „graues Gestein“) weniger stark ab als Kupfer; bei Bedarf dunklere Kontur oder Akzentfarbe.

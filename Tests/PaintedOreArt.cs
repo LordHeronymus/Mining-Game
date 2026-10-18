@@ -543,6 +543,46 @@ public static class PaintedOreArt
         "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Iron/Iron_Large_01.png",
     });
 
+    // ---------- gems: diamond, orange garnet, emerald, ruby (two schemes each, after the old gem sprites) ----------
+
+    const string GemsOut = "Design/OreVeins/GemsLarge";
+    static Palette Gem(Palette p, float edgeWhite, float edgeWidth) { p.edgeWhite = edgeWhite; p.edgeWidth = edgeWidth; return p; }
+    static readonly Color[] RockDark = { C(.04f, .04f, .045f), C(.12f, .12f, .13f), C(.24f, .24f, .26f), C(.38f, .38f, .4f), C(.6f, .6f, .62f) };
+    static readonly Palette[] GemPalettes =
+    {
+        Gem(Set(WithShape(new Palette { name = "D1-Diamant-Brocken" }, 0, 1f, .5f, .3f, .1f, 9), // like the old sprite: pale icy chunks with many facets
+            new[] { C(.2f, .26f, .34f), C(.48f, .56f, .66f), C(.74f, .8f, .88f), C(.9f, .94f, .98f), C(1, 1, 1) },
+            new[] { C(.16f, .3f, .42f), C(.38f, .6f, .76f), C(.64f, .84f, .95f), C(.85f, .96f, 1), C(1, 1, 1) },
+            C(1, 1, 1), C(.5f, .7f, .9f), .9f, 1f, 70, .66f, 50), .6f, 2.4f),
+        Gem(Set(Scale(Ti("D2-Diamant-Oktaeder", 1.25f, 55, 1.3f, .3f, 0), 1.35f), // stubby octahedral crystals, cool white with blue glints
+            new[] { C(.22f, .26f, .32f), C(.5f, .56f, .64f), C(.76f, .81f, .87f), C(.92f, .95f, .98f), C(1, 1, 1) },
+            new[] { C(.12f, .24f, .4f), C(.3f, .5f, .78f), C(.56f, .76f, .95f), C(.8f, .92f, 1), C(1, 1, 1) },
+            C(1, 1, 1), C(.5f, .7f, .95f), .9f, 1f, 70, .8f, 60), .7f, 2.6f),
+        Gem(Set(WithShape(new Palette { name = "G1-Granat-orange" }, 0, .9f, .45f, .25f, .1f, 13), // like the old sprite: rounded faceted orange garnets
+            new[] { C(.28f, .05f, .01f), C(.62f, .16f, .02f), C(.9f, .36f, .06f), C(1, .6f, .22f), C(1, .86f, .6f) },
+            new[] { C(.32f, .1f, .01f), C(.7f, .28f, .03f), C(.95f, .5f, .1f), C(1, .72f, .32f), C(1, .93f, .7f) },
+            C(1, .92f, .8f), C(1, .5f, .15f), .8f, .9f, 60, .62f, 60), .35f, 2f),
+        Gem(Set(WithShape(new Palette { name = "G2-Granat-blutorange" }, 0, 1f, .5f, .3f, .12f, 11), // deeper red-orange with golden facets
+            new[] { C(.22f, .03f, .02f), C(.52f, .09f, .04f), C(.8f, .22f, .07f), C(.96f, .42f, .16f), C(1, .74f, .5f) },
+            new[] { C(.3f, .14f, .02f), C(.66f, .38f, .05f), C(.92f, .64f, .15f), C(1, .82f, .38f), C(1, .96f, .76f) },
+            C(1, .9f, .76f), C(1, .45f, .15f), .8f, .9f, 60, .66f, 55), .3f, 2f),
+        Gem(Set(Ti("E1-Smaragd-Prismen", 2.2f, 50, 1.15f, .3f, 0), // like the old sprite: long green prisms, some dark host-rock crystals at the base
+            new[] { C(.02f, .14f, .07f), C(.04f, .36f, .17f), C(.12f, .62f, .32f), C(.4f, .86f, .55f), C(.82f, 1, .86f) },
+            RockDark, C(.9f, 1, .92f), C(.3f, .85f, .5f), .7f, .2f, 20, .8f, 60), .45f, 2.4f),
+        Gem(Set(Ti("E2-Smaragd-hell", 1.7f, 65, 1.4f, .3f, 0), // shorter, brighter emerald crystals with pale mint tips
+            new[] { C(.02f, .16f, .1f), C(.05f, .42f, .24f), C(.16f, .7f, .42f), C(.46f, .9f, .64f), C(.86f, 1, .9f) },
+            new[] { C(.1f, .3f, .22f), C(.3f, .6f, .48f), C(.56f, .86f, .72f), C(.8f, .97f, .88f), C(1, 1, 1) },
+            C(.9f, 1, .92f), C(.3f, .85f, .5f), .7f, .9f, 60, .78f, 60), .4f, 2.2f),
+        Gem(Set(Ti("R1-Rubin-Prismen", 2.1f, 60, 1.2f, .3f, 0), // like the old sprite: red prisms with dark host-rock crystals
+            new[] { C(.16f, .01f, .03f), C(.44f, .03f, .07f), C(.76f, .1f, .14f), C(.95f, .34f, .36f), C(1, .78f, .78f) },
+            RockDark, C(1, .9f, .9f), C(1, .25f, .3f), .7f, .2f, 20, .74f, 60), .45f, 2.4f),
+        Gem(Set(WithShape(new Palette { name = "R2-Rubin-in-Gestein" }, 0, 1f, .5f, .35f, .14f, 11), // faceted ruby chunks set in dark rock facets
+            new[] { C(.16f, .01f, .03f), C(.44f, .03f, .07f), C(.76f, .1f, .14f), C(.95f, .34f, .36f), C(1, .78f, .78f) },
+            RockDark, C(1, .9f, .9f), C(1, .25f, .3f), .8f, .15f, 14, .6f, 45), .35f, 2.2f),
+    };
+    // Gem preview (two schemes each): PreviewGemsLarge.
+    public static string PreviewGemsLarge() => PreviewLarge(GemPalettes, new[] { 2801, 2812, 2823, 2834, 2845, 2856, 2867, 2878 }, GemsOut, new string[0]);
+
     public static string PreviewGoldSilverLarge() => PreviewLarge(GoldSilverPalettes, new[] { 1001, 1012, 1023, 1034 }, GoldSilverOut, new[]
     {
         "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Copper/Copper_Large_01.png",
@@ -611,20 +651,59 @@ public static class PaintedOreArt
     // Tungsten (W1) and mythril (M2) install (applied 18.10.2026); Large seeds 2301 and 2334 are the approved previews.
     static readonly int[] TungstenLargeSeeds = { 2301, 2415, 2426 }, TungstenSmallSeeds = { 2511, 2522 }, TungstenMediumSeeds = { 2533, 2544 };
     static readonly int[] MythrilLargeSeeds = { 2334, 2615, 2626 }, MythrilSmallSeeds = { 2711, 2722 }, MythrilMediumSeeds = { 2733, 2744 };
-    public static string Main() => InstallTungsten() + "\n" + InstallMythril();
+    // Tungsten and mythril install: InstallTungsten, InstallMythril.
     public static string InstallTungsten() => InstallOre(BlockType.TungstenOre, "Wolfram", "Wolfram", Array.Find(TungstenMythrilPalettes, p => p.name == "W1-Wolfram-Saeulen"),
         TungstenLargeSeeds, TungstenSmallSeeds, TungstenMediumSeeds, TungstenMythrilOut + "/Installed");
     public static string InstallMythril() => InstallOre(BlockType.MythrilOre, "Mythril", "Mythril", Array.Find(TungstenMythrilPalettes, p => p.name == "M2-Mythril-Tiefblau"),
         MythrilLargeSeeds, MythrilSmallSeeds, MythrilMediumSeeds, TungstenMythrilOut + "/Installed");
+
+    // Ruby follow-up: no dark host rock, deep blood red that looks precious (bright scarlet glints, white sparkling edges).
+    static readonly Color[] RubyBlood = { C(.1f, 0, .01f), C(.32f, .01f, .03f), C(.6f, .02f, .05f), C(.84f, .08f, .08f), C(1, .38f, .3f) };
+    static readonly Palette[] RubyPalettes =
+    {
+        Gem(Set(Scale(Ti("R3-Rubin-Kristalle-blutrot", 2.1f, 55, 1.15f, .35f, 0), 1.4f), // long, thick prisms like the old ruby, without the rock
+            RubyBlood,
+            new[] { C(.18f, 0, .02f), C(.46f, .02f, .05f), C(.76f, .05f, .08f), C(.96f, .2f, .16f), C(1, .5f, .4f) },
+            C(1, .9f, .86f), C(1, .2f, .15f), .8f, 1.1f, 70, .72f, 60), .4f, 2.4f),
+        Gem(Set(WithShape(new Palette { name = "R4-Rubin-Edelsteinbrocken", bounceStrength = .3f }, 0, 1.05f, .45f, .25f, .1f, 9), // rough gem chunks with many facets, wine-red facets, sparkling edges
+            RubyBlood,
+            new[] { C(.06f, 0, .01f), C(.2f, .005f, .02f), C(.38f, .01f, .04f), C(.58f, .04f, .06f), C(.9f, .3f, .26f) },
+            C(1, .9f, .86f), C(1, .2f, .15f), .9f, 1f, 70, .6f, 45), .45f, 2.4f),
+    };
+    // Ruby follow-up preview (blood red, no rock): PreviewRuby.
+    // Ruby (R3) and diamond (D2) install (applied 19.10.2026); Large seeds 2867 and 2812 are the approved previews.
+    static readonly int[] RubyLargeSeeds = { 2867, 3315, 3326 }, RubySmallSeeds = { 3411, 3422 }, RubyMediumSeeds = { 3433, 3444 };
+    static readonly int[] DiamondLargeSeeds = { 2812, 3515, 3526 }, DiamondSmallSeeds = { 3611, 3622 }, DiamondMediumSeeds = { 3633, 3644 };
+    public static string Main() => InstallRuby() + "\n" + InstallDiamond();
+    public static string InstallRuby() => InstallOre(BlockType.RubyOre, "Ruby", "Ruby", Array.Find(RubyPalettes, p => p.name == "R3-Rubin-Kristalle-blutrot"),
+        RubyLargeSeeds, RubySmallSeeds, RubyMediumSeeds, GemsOut + "/Installed");
+    public static string InstallDiamond() => InstallOre(BlockType.DiamondOre, "Diamond", "Diamond", Array.Find(GemPalettes, p => p.name == "D2-Diamant-Oktaeder"),
+        DiamondLargeSeeds, DiamondSmallSeeds, DiamondMediumSeeds, GemsOut + "/Installed");
+    public static string PreviewRuby() => PreviewLarge(RubyPalettes, new[] { 2867, 2878 }, GemsOut + "/Ruby", new[]
+    {
+        "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/OrangeGranat/OrangeGranat_Large_01.png",
+        "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Copper/Copper_Large_01.png",
+    });
+
+    // Garnet (G2) and emerald (E2) install (applied 19.10.2026); Large seeds 2834 and 2856 are the approved previews.
+    static readonly int[] GarnetLargeSeeds = { 2834, 2915, 2926 }, GarnetSmallSeeds = { 3011, 3022 }, GarnetMediumSeeds = { 3033, 3044 };
+    static readonly int[] EmeraldLargeSeeds = { 2856, 3115, 3126 }, EmeraldSmallSeeds = { 3211, 3222 }, EmeraldMediumSeeds = { 3233, 3244 };
+    // Garnet and emerald install: InstallGarnet, InstallEmerald.
+    public static string InstallGarnet() => InstallOre(BlockType.OrangeGarnetOre, "OrangeGranat", "OrangeGranat", Array.Find(GemPalettes, p => p.name == "G2-Granat-blutorange"),
+        GarnetLargeSeeds, GarnetSmallSeeds, GarnetMediumSeeds, GemsOut + "/Installed");
+    public static string InstallEmerald() => InstallOre(BlockType.EmeraldOre, "Emerald", "Emerald", Array.Find(GemPalettes, p => p.name == "E2-Smaragd-hell"),
+        EmeraldLargeSeeds, EmeraldSmallSeeds, EmeraldMediumSeeds, GemsOut + "/Installed");
 
     // Folder = ore folder under Blocks/Ores and sprite prefix (e.g. "Iron"), tilePrefix = German tile name (e.g. "Eisen").
     static string InstallOre(BlockType id, string folder, string tilePrefix, Palette palette, int[] largeSeeds, int[] smallSeeds, int[] mediumSeeds, string designDir)
     {
         if (Application.isPlaying) throw new Exception("Edit mode required");
         if (palette == null) throw new Exception("Palette missing for " + folder);
-        var reference = UnityEditor.AssetDatabase.LoadAssetAtPath<OreTile>("Assets/GameObjects/Map/Blocks/Ores/" + folder + "/" + tilePrefix + "_05_rich.asset");
+        // Most ores number their old tiles small→rich (_05_rich), diamond and garnet rich→small (_01_rich).
+        var reference = UnityEditor.AssetDatabase.LoadAssetAtPath<OreTile>("Assets/GameObjects/Map/Blocks/Ores/" + folder + "/" + tilePrefix + "_05_rich.asset")
+            ?? UnityEditor.AssetDatabase.LoadAssetAtPath<OreTile>("Assets/GameObjects/Map/Blocks/Ores/" + folder + "/" + tilePrefix + "_01_rich.asset");
         var block = reference ? reference.block : null;
-        if (!block || block.id != id) throw new Exception(id + " block not found via " + tilePrefix + "_05_rich");
+        if (!block || block.id != id) throw new Exception(id + " block not found via " + tilePrefix + "_05_rich/_01_rich");
         var report = new List<string>();
         try
         {
