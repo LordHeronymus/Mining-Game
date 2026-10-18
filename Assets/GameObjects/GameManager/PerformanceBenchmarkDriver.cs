@@ -78,7 +78,7 @@ public sealed class PerformanceBenchmarkDriver : MonoBehaviour
         switch (phase)
         {
             case Phase.Loading:
-                if (now - phaseStarted > 300) throw new Exception("Laden dauerte länger als 300 s");
+                if (now - phaseStarted > LoadLimit) throw new Exception($"Laden dauerte länger als {LoadLimit:F0} s");
                 if (RunNavigation.IsTransitioning || LoadingProgress.Active || !GameSaveSystem.CanSave) { nextAction = now + .5; return; }
                 if (now < nextAction) return;
                 Prepare();
@@ -144,6 +144,15 @@ public sealed class PerformanceBenchmarkDriver : MonoBehaviour
     {
         if (body) { body.position = position; body.linearVelocity = Vector2.zero; }
         player.position = position;
+    }
+
+    // -benchmarkLoadLimit <s>: the cloud player renders in software (Mesa) and loads much slower than a real PC.
+    static readonly double LoadLimit = ReadLoadLimit();
+    static double ReadLoadLimit()
+    {
+        var args = Environment.GetCommandLineArgs();
+        int index = Array.IndexOf(args, "-benchmarkLoadLimit");
+        return index >= 0 && index + 1 < args.Length && double.TryParse(args[index + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out double limit) ? limit : 300;
     }
 
     static double Percentile(List<float> sorted, double p) => sorted.Count == 0 ? 0 : sorted[Math.Min(sorted.Count - 1, (int)Math.Ceiling(sorted.Count * p) - 1)];

@@ -1,5 +1,5 @@
 {
   "checks": [
-    { "name": "PlayerBenchmark", "mode": "player", "timeoutSeconds": 1800 }
+    { "name": "PlayerBenchmark", "mode": "player", "timeoutSeconds": 2700 }
   ]
 }

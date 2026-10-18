@@ -60,7 +60,7 @@ Im `-batchmode` rendert der Editor kein Game-Fenster, daher kehren Coroutinen mi
 
 ## Suite `performance` (Benchmark-Player)
 
-Statt im Editor misst die Cloud mit einem eigenständigen Linux-Player: `Assets/Editor/CI/CiBenchmarkBuild.cs` baut ihn (Mono, Define `MINING_BENCHMARK`, eigener Produktname „Tiefenhall Benchmark“ wie `Tests/BuildPerformanceBenchmark.cs`), danach startet `run-in-container.sh` ihn auf Xvfb mit Mesa-Software-OpenGL (`-performanceBenchmark`). `PerformanceBenchmarkDriver` spielt Laden, Stillstand, Abbau normal/schnell und Erkunden durch und schreibt `PerformanceBenchmark.txt`/`.csv` (Artefakt, Zusammenfassung im Dashboard). Der erste Build kompiliert alle Shader und dauert entsprechend; danach hilft der Library-Cache. Werte sind nur untereinander vergleichbar (kein GPU, Mono statt IL2CPP).
+Statt im Editor misst die Cloud mit einem eigenständigen Linux-Player: `Assets/Editor/CI/CiBenchmarkBuild.cs` baut ihn (Mono, Define `MINING_BENCHMARK`, eigener Produktname „Tiefenhall Benchmark“ wie `Tests/BuildPerformanceBenchmark.cs`), danach startet `run-in-container.sh` ihn auf Xvfb mit Mesa-Software-OpenGL (`-performanceBenchmark`). `PerformanceBenchmarkDriver` spielt Laden, Stillstand, Abbau normal/schnell und Erkunden durch und schreibt `PerformanceBenchmark.txt`/`.csv` (Artefakt, Zusammenfassung im Dashboard). Der erste Build kompiliert alle Shader und dauert entsprechend; danach hilft der Library-Cache. Werte sind nur untereinander vergleichbar (kein GPU, Mono statt IL2CPP). Software-Rendering kostet rund 100 ms pro Bild (Lauf #14), daher läuft der Player in einem kleinen virtuellen Bildschirm (640×360) mit Ladegrenze `-benchmarkLoadLimit 2100` statt 300 s. `-nographics` stürzt den Player sofort ab (Lauf #15).
 
 ## Grenzen
 

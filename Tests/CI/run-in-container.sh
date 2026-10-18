@@ -60,7 +60,7 @@ start_display() {
   (apt-get -qq update && apt-get -qq install -y --no-install-recommends \
       xdotool imagemagick mesa-utils libgl1-mesa-dri libglx-mesa0 libegl-mesa0) > "$ARTIFACTS/apt.log" 2>&1 \
     || echo "X tools not installed (see apt.log)"
-  Xvfb :99 -screen 0 1920x1080x24 +extension GLX +render -noreset > "$ARTIFACTS/xvfb.log" 2>&1 &
+  Xvfb :99 -screen 0 "${XVFB_SCREEN:-1920x1080x24}" +extension GLX +render -noreset > "$ARTIFACTS/xvfb.log" 2>&1 &
   XVFB_PID=$!
   export DISPLAY=:99 LIBGL_ALWAYS_SOFTWARE=1
   sleep 2
@@ -81,8 +81,9 @@ return_licence() {
 # the virtual display. A player has no editor dialogs and renders every frame, unlike the batchmode editor.
 # Software rendering is slow (run #13: ~1.5 s per frame at 1280x720 Ultra, loading hit the driver's 300 s limit),
 # so the player runs at a tiny resolution and the lowest quality level: the benchmark targets CPU work.
-# Run #14 still spent ~100 ms per frame on software rendering (loading reached stage 4 of 7 in 300 s), so by default
-# the player runs with -nographics (no rendering at all, pure CPU frame times); CI_PLAYER_NOGRAPHICS=0 renders.
+# Run #14 still spent ~100 ms per frame on software rendering (loading reached stage 4 of 7 in the driver's 300 s).
+# -nographics crashes the player right after start (run #15, segfault), so it renders and gets a longer loading limit
+# (-benchmarkLoadLimit) plus a small virtual screen, which caps the window size. CI_PLAYER_NOGRAPHICS=1 tries without.
 if grep -q '"mode": "player"' "$ARTIFACTS/plan.json"; then
   echo "Building benchmark player (Linux, Mono)"
   timeout "${CI_BUILD_TIMEOUT:-75m}" "$UNITY" -batchmode -nographics -projectPath "$PWD" \
@@ -91,18 +92,20 @@ if grep -q '"mode": "player"' "$ARTIFACTS/plan.json"; then
   echo "Build exit code: $code"
   return_licence
   if [ $code -eq 0 ]; then
-    start_display
+    XVFB_SCREEN="${CI_PLAYER_SCREEN:-640x360x24}" start_display
     PLAYER="$ARTIFACTS/player/TiefenhallBenchmark.x86_64"
     chmod +x "$PLAYER"
     started=$(date +%s)
-    timeout "${CI_PLAYER_TIMEOUT:-30m}" "$PLAYER" -performanceBenchmark "$PWD/$ARTIFACTS/PerformanceBenchmark.txt" \
+    timeout "${CI_PLAYER_TIMEOUT:-45m}" "$PLAYER" -performanceBenchmark "$PWD/$ARTIFACTS/PerformanceBenchmark.txt" \
+      -benchmarkLoadLimit "${CI_PLAYER_LOAD_LIMIT:-2100}" \
       -logFile "$PWD/$ARTIFACTS/player.log" -screen-fullscreen 0 \
       -screen-width "${CI_PLAYER_WIDTH:-320}" -screen-height "${CI_PLAYER_HEIGHT:-180}" -screen-quality "Very Low" \
-      $([ "${CI_PLAYER_NOGRAPHICS:-1}" = 1 ] && echo -nographics || echo -force-glcore)
+      $([ "${CI_PLAYER_NOGRAPHICS:-0}" = 1 ] && echo -nographics || echo -force-glcore)
     pcode=$?
     echo "Player exit code: $pcode"
     echo "$(( $(date +%s) - started )) $pcode" > "$ARTIFACTS/player-meta.txt"
     kill $XVFB_PID 2>/dev/null
+    echo "--- Player-Log (Ende)"; tail -n 40 "$ARTIFACTS/player.log" 2>/dev/null
     [ -f "$ARTIFACTS/PerformanceBenchmark.txt" ] && cat "$ARTIFACTS/PerformanceBenchmark.txt"
     code=$pcode
   fi
