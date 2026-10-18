@@ -22,6 +22,7 @@ param(
     [string]$Session,
     [string]$Purpose,
     [switch]$User,
+    [switch]$Json,
     [string]$Project,
     [string]$QueueDir,
     [double]$TimeoutMinutes = 0,
@@ -386,6 +387,25 @@ switch ($Command) {
             Write-Queue $list
         }
         finally { $lock.Dispose() }
+        if ($Json) {
+            # Maschinenlesbar fuer den lokalen Dienst (Tools/editor-queue-server.ps1) und PrivOrg.
+            $ed = Get-EditorState
+            $pos = 0
+            $rows = @(foreach ($e in $list) {
+                    $pos++
+                    [ordered]@{
+                        position = $pos; id = $e.id; who = $e.who; session = $e.session; purpose = $e.purpose
+                        kind = $e.kind; joined = $e.joined; heartbeat = $e.heartbeat; topSince = $e.topSince
+                    }
+                })
+            $obj = [ordered]@{
+                project = $Project; now = (Iso (Now)); staleMinutes = $StaleMinutes
+                editor = [ordered]@{ busy = [bool]$ed.busy; text = $ed.text }
+                entries = $rows
+            }
+            ConvertTo-Json -InputObject $obj -Depth 5 -Compress
+            exit 0
+        }
         Show-Queue $list
         exit 0
     }

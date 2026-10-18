@@ -146,6 +146,45 @@ Check 'Hook haelt wartenden Chat am Leben' (((Ids) -join ',') -eq 'a,c') "ids=$(
 $r = Q @('heartbeat', '-Session', 'sess-test-1')
 Check 'heartbeat per -Session' ($r.code -eq 0 -and $r.out -match 'Position 2') $r.out
 
+# 12) status -Json liefert maschinenlesbare Daten fuer den lokalen Dienst / PrivOrg.
+Reset
+Q @('join', '-Id', 'a', '-Who', 'Chat A', '-Purpose', 'Play-Tests') | Out-Null
+Q @('join', '-User', '-Purpose', 'selbst testen') | Out-Null
+$r = Q @('status', '-Json')
+$j = $r.out | ConvertFrom-Json
+Check 'status -Json' (($j.project -eq $project) -and ($j.entries.Count -eq 2) -and ($j.entries[1].kind -eq 'user') -and ($j.entries[0].position -eq 1) -and ($null -ne $j.editor.busy)) $r.out
+
+# 13) Lokaler Dienst: Liste lesen, Benutzer an-/abmelden, fremde Herkunft abweisen.
+Reset
+New-Item -ItemType Directory (Join-Path $dir 'svc') -Force | Out-Null
+$svcDir = Join-Path $dir 'svc'
+$port = Get-Random -Minimum 48000 -Maximum 48900
+$srv = Start-Process powershell.exe -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$(Join-Path $root 'Tools\editor-queue-server.ps1')`"", '-Port', $port, '-QueueDir', "`"$svcDir`"", '-AllowOrigin', 'https://privorg.example') -PassThru -NoNewWindow -RedirectStandardOutput (Join-Path $dir 'svc.out') -RedirectStandardError (Join-Path $dir 'svc.err')
+$base = "http://localhost:$port"
+try {
+    $ready = $false
+    for ($i = 0; $i -lt 40 -and -not $ready; $i++) { try { Invoke-RestMethod "$base/api/queue" -TimeoutSec 2 | Out-Null; $ready = $true } catch { Start-Sleep -Milliseconds 250 } }
+    Check 'Dienst startet' $ready
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script join -Id a -Who 'Chat A' -Project 'Mining Game' -QueueDir $svcDir | Out-Null
+    $q = Invoke-RestMethod "$base/api/queue"
+    $mg = @($q.projects | Where-Object { $_.project -eq 'Mining Game' })[0]
+    Check 'Dienst liefert Arbeitsordner und Eintraege' (($q.service -eq 'editor-queue') -and ($mg.entries.Count -eq 1)) ($q | ConvertTo-Json -Depth 6 -Compress)
+    $body = [Text.Encoding]::UTF8.GetBytes('{"project":"Mining Game","purpose":"Prüfung über PrivOrg"}')
+    $res = Invoke-RestMethod "$base/api/join" -Method Post -ContentType 'application/json; charset=utf-8' -Body $body -Headers @{ Origin = 'http://localhost:3000' }
+    $mg = @($res.queue.projects | Where-Object { $_.project -eq 'Mining Game' })[0]
+    Check 'Dienst: Benutzer an Position 2, Umlaute erhalten' ($res.ok -and $mg.entries[1].id -eq 'benutzer' -and $mg.entries[1].purpose -eq 'Prüfung über PrivOrg') ($res | ConvertTo-Json -Depth 6 -Compress)
+    $code = 0
+    try { Invoke-WebRequest "$base/api/leave" -Method Post -ContentType 'application/json' -Body '{"project":"Mining Game"}' -Headers @{ Origin = 'https://evil.example' } -UseBasicParsing | Out-Null }
+    catch { $code = [int]$_.Exception.Response.StatusCode }
+    Check 'Dienst weist fremde Herkunft ab (403)' ($code -eq 403)
+    $pre = Invoke-WebRequest "$base/api/join" -Method Options -Headers @{ Origin = 'https://privorg.example'; 'Access-Control-Request-Method' = 'POST'; 'Access-Control-Request-Private-Network' = 'true' } -UseBasicParsing
+    Check 'Dienst: Preflight fuer freigegebene Herkunft' (($pre.Headers['Access-Control-Allow-Origin'] -eq 'https://privorg.example') -and ($pre.Headers['Access-Control-Allow-Private-Network'] -eq 'true'))
+    $res = Invoke-RestMethod "$base/api/leave" -Method Post -ContentType 'application/json' -Body '{"project":"Mining Game"}'
+    $mg = @($res.queue.projects | Where-Object { $_.project -eq 'Mining Game' })[0]
+    Check 'Dienst: Benutzer ausgetragen' ($res.ok -and $mg.entries.Count -eq 1)
+}
+finally { if (-not $srv.HasExited) { Stop-Process -Id $srv.Id -Force } }
+
 Write-Output ''
 if ($failures -eq 0) { Write-Output 'Alle Editor-Warteschlangen-Checks bestanden.'; exit 0 }
 Write-Output "$failures Check(s) fehlgeschlagen."

@@ -50,6 +50,19 @@ Tools/editor-queue.sh leave -User
 
 Der Benutzereintrag hat die feste Id `benutzer`. Solange er wartet, wird er nie entfernt. Ist er oben, hält ihn jede Editor-Aktivität am Leben (Play-Mode, Auswahl, Änderungen, Speichern); erst nach 10 Minuten ohne Lebenszeichen **und** ohne Editor-Aktivität rückt der Nächste nach.
 
+## PrivOrg-Modul und lokaler Dienst
+
+Im Admin-Tool PrivOrg zeigt das Modul **Editor-Warteschlange** (Dev/Owner) alle Arbeitsordner mit Inhaber, Zweck, Wartenden und Editorzustand; dort kann sich der Benutzer auch eintragen, ein Lebenszeichen senden und austragen. Die Daten liefert der lokale Dienst `Tools/editor-queue-server.ps1` unter `http://localhost:47615`; die Warteschlange verlässt den PC nicht.
+
+```bash
+powershell -NoProfile -ExecutionPolicy Bypass -File Tools/editor-queue-server.ps1
+```
+
+- **Autostart:** einmal im Ordner `Mining Game` mit `-Install` (Verknüpfung im Windows-Autostart, startet unsichtbar), entfernen mit `-Uninstall`.
+- **Gehostetes PrivOrg:** dessen Adresse freigeben, z. B. `-Install -AllowOrigin https://<projekt>.vercel.app` (mehrere mit Komma). `localhost`-Seiten sind immer erlaubt, alle anderen Herkünfte bekommen 403.
+- **Schnittstelle:** `GET /api/queue` (alle Arbeitsordner, je `status -Json`), `POST /api/join|heartbeat|leave` mit `{ "project": "<Ordner>", "purpose": "…" }`, immer als Benutzer (`-User`). Arbeitsordner sind der Projektordner, Geschwister `<Projekt> <n>` mit `ProjectSettings` und alle mit Warteschlange/Aktivitätssignal.
+- Doku auf PrivOrg-Seite: `docs/editor-queue.md` im PrivOrg-Repository.
+
 ## Verdrängung verwaister Belegungen
 
 Bei jedem Aufruf (praktisch: durch wartende `wait`-Befehle) wird geprüft:
@@ -71,4 +84,4 @@ Jede Verdrängung steht mit Grund in `<Ordner>.log`.
 powershell -NoProfile -ExecutionPolicy Bypass -File Tests/EditorQueueChecks.ps1
 ```
 
-Läuft ohne Editor in `Temp/EditorQueueTest` (nie im echten Queue-Ordner): gleichzeitige Anmeldungen, `wait`/Nachrücken, Verdrängung bei veraltetem Lebenszeichen, Schutz durch Play-Mode und frische Aktivität, Benutzer an Position 2, Hook-Lebenszeichen per Sitzung, Sperre.
+Läuft ohne Editor in `Temp/EditorQueueTest` (nie im echten Queue-Ordner): gleichzeitige Anmeldungen, `wait`/Nachrücken, Verdrängung bei veraltetem Lebenszeichen, Schutz durch Play-Mode und frische Aktivität, Benutzer an Position 2, Hook-Lebenszeichen per Sitzung, Sperre, `status -Json` und der lokale Dienst (Lesen, An-/Abmelden, Herkunftsprüfung, Preflight).
