@@ -209,7 +209,7 @@ public sealed class SettingsPanel : MonoBehaviour
         AddSlider(displayPage.transform, "UI-Größe", firstRowY + rowSpacing, () => PlayerSettings.UiScale,
             value => PlayerSettings.UiScale = value, .8f, 1.2f, false);
         AddSlider(displayPage.transform, "HUD-Größe", firstRowY + 2 * rowSpacing, () => PlayerSettings.HudScale,
-            value => PlayerSettings.HudScale = value, .5f, 1f, false);
+            value => PlayerSettings.HudScale = value, PlayerSettings.MinHudScale, 1f, false);
     }
 
     void BuildKeys()
