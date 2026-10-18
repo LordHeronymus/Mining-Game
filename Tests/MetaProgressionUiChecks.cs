@@ -113,17 +113,25 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
             Check(corners.All(c=>challengeRoot.rect.Contains(challengeRoot.InverseTransformPoint(c))), "Challenge board fits "+size);
         }
         HomeUi.Stretch(challengeRoot); yield return null;
-        foreach (var challenge in MetaProgression.GetChallenges())
+        // Each tab lists its own views; the monthly project is an extra tile in front of the monthly tasks.
+        foreach (var period in new[] { ChallengePeriod.Daily, ChallengePeriod.Weekly, ChallengePeriod.Monthly, ChallengePeriod.Lifetime })
         {
-            var row = challengeScroll.content.Find("Challenge " + challenge.id);
-            Check(row && row.Find("Progress").GetComponent<TMP_Text>().text.Any(char.IsLetter), challenge.id + " counter names the objective unit");
-            Check(row.Find("Icon").GetComponent<Image>().sprite && !row.GetComponentsInChildren<TMP_Text>().Any(t => t.isTextOverflowing), challenge.id + " icon and tile text fit");
+            challengesPanel.GetComponentsInChildren<Button>(true).First(b => b.name == "Challenge Tab " + period).onClick.Invoke(); yield return null;
+            var ids = MetaProgression.GetChallenges(period).Select(c => c.id).ToList();
+            if (period == ChallengePeriod.Monthly && MetaProgression.GetMonthlyProject() is MetaChallengeProgress project) ids.Insert(0, project.id);
+            Check(ids.Count > 0 && challengeScroll.content.Cast<Transform>().Count(t => t.gameObject.activeSelf) == ids.Count, period + " shows one tile per challenge");
+            foreach (var id in ids)
+            {
+                var row = challengeScroll.content.Cast<Transform>().FirstOrDefault(t => t.gameObject.activeSelf && t.name == "Challenge " + id);
+                Check(row && row.Find("Progress").GetComponent<TMP_Text>().text.Any(char.IsLetter), id + " counter names the objective unit");
+                Check(row.Find("Icon").GetComponent<Image>().sprite && !row.GetComponentsInChildren<TMP_Text>().Any(t => t.isTextOverflowing), id + " icon and tile text fit");
+            }
+            yield return Capture("Challenges-" + period);
         }
         Check(Time.timeScale == 0 && GameplayInputBlocker.IsBlocked, "Challenge panel preserves parent pause and blocker");
-        yield return Capture("Challenges");
         challengeScroll.verticalNormalizedPosition=0; yield return null;
-        var lastChallenge=(RectTransform)challengeScroll.content.Find("Challenge "+MetaProgression.GetChallenges().Last().id);
-        Check(challengeScroll.viewport.rect.Contains(challengeScroll.viewport.InverseTransformPoint(lastChallenge.TransformPoint(lastChallenge.rect.center))), "Last challenge tile reachable by scrolling");
+        var lastChallenge=(RectTransform)challengeScroll.content.Find("Challenge "+MetaProgression.GetChallenges(ChallengePeriod.Lifetime).Last().id);
+        Check(challengeScroll.viewport.rect.Contains(challengeScroll.viewport.InverseTransformPoint(lastChallenge.TransformPoint(lastChallenge.rect.center))), "Last lifetime tile reachable by scrolling");
         Button("Challenges Back").onClick.Invoke(); yield return null;
         Check(panel.ShowingOverview && !Object.FindFirstObjectByType<ChallengePanel>(), "Challenge Back returns directly to the timeline");
         Button("Open Baupläne").onClick.Invoke(); yield return null;
