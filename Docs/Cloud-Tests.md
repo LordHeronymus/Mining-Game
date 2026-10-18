@@ -22,12 +22,12 @@ Ergebnisse: Zusammenfassung im Workflow-Lauf, Artefakt `unity-checks-<Nr>` mit `
 
 ## Einmalige Einrichtung (Benutzer)
 
-1. **Lizenzdatei holen:** Unity Hub öffnen, mit dem Unity-Konto angemeldet sein und eine aktive Personal-Lizenz haben (Hub → Einstellungen → Lizenzen). Die Datei liegt unter Windows in `C:\ProgramData\Unity\Unity_lic.ulf` (macOS: `/Library/Application Support/Unity/Unity_lic.ulf`). Mit einem Texteditor öffnen und den ganzen Inhalt kopieren.
+1. **Unity-Konto:** Für Unity Personal braucht es nur E-Mail und Passwort des Unity-Kontos. Der Workflow aktiviert die Personal-Lizenz damit über Unitys Licensing Client (`--activate-all --include-personal`, wie GameCI) und gibt den Platz nach dem Lauf wieder frei (`--return-ulf`). Eine `.ulf`-Datei funktioniert für Personal nicht mehr: Unity stellt sie nur noch für Enterprise/Industry aus. Wer sich bei Unity mit Google anmeldet, setzt unter id.unity.com zuerst ein eigenes Unity-Passwort (nie das Google-Passwort verwenden).
 2. **Secrets anlegen:** GitHub → Repository → Settings → Secrets and variables → Actions → New repository secret:
-   - `UNITY_LICENSE`: kompletter Inhalt der `.ulf`-Datei
    - `UNITY_EMAIL`: E-Mail des Unity-Kontos
-   - `UNITY_PASSWORD`: Passwort des Unity-Kontos (Unity 6 verlangt für die Personal-Lizenz im Batchmode einen Konto-Login; bei Google-Anmeldung zuerst unter id.unity.com ein eigenes Unity-Passwort setzen, nie das Google-Passwort verwenden)
-   - Nur bei Pro/Plus-Lizenz statt `UNITY_LICENSE`: `UNITY_SERIAL`
+   - `UNITY_PASSWORD`: Passwort des Unity-Kontos
+   - Nur bei Pro/Plus-Lizenz zusätzlich: `UNITY_SERIAL`
+   - `UNITY_LICENSE` (Inhalt einer `.ulf`) wird nur noch verwendet, wenn kein Passwort gesetzt ist.
 3. **Kostenlimit:** GitHub → Settings (Konto) → Billing and licensing → Budgets and alerts: Budget für Actions auf 0 $ setzen, dann gibt es keine Kosten über das Gratis-Kontingent hinaus.
 4. **Actions erlauben:** Repository → Settings → Actions → General: „Allow all actions and reusable workflows“ (benötigt werden `actions/*`). Unter „Workflow permissions“ genügt „Read“.
 5. **Ersten Lauf starten:** Actions → Unity Checks → Run workflow, Branch wählen, Suite `smoke`. Der erste Lauf importiert die komplette Library (lange); danach kommt sie aus dem Cache.

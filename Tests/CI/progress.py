@@ -48,6 +48,8 @@ PHASES = {
 
 # Known failure causes, shown in the dashboard instead of a bare "failure".
 PROBLEMS = [
+    ("No seat available", "Unity hat dem Konto keinen Personal-Platz zugewiesen (id.unity.com prüfen)."),
+    ("Personal licence activation failed", "Aktivierung der Personal-Lizenz über das Unity-Konto fehlgeschlagen (UNITY_EMAIL/UNITY_PASSWORD prüfen)."),
     ("No valid Unity Editor license found", "Unity-Lizenz ungültig oder nicht aktiviert (Secrets UNITY_LICENSE/UNITY_EMAIL/UNITY_PASSWORD prüfen)."),
     ("Scripts have compiler errors", "Compilerfehler im Projekt oder in einem Check."),
     ("No space left on device", "Speicherplatz auf dem Runner voll."),
@@ -158,7 +160,7 @@ def build(final=None, conclusion=None):
 
     source = lines if lines else read(ART / "activation.log").splitlines()
     tail = [l[:300] for l in source[-400:] if l.strip()][-60:]
-    problem = next((text for marker, text in PROBLEMS if marker in log), None)
+    problem = next((text for marker, text in PROBLEMS if marker in log + read(ART / "activation.log")), None)
     errors = sorted({l.strip()[:300] for l in lines if re.search(r"error CS\d+", l)})[:30]
     return {
         "version": 1,
