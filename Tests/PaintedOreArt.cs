@@ -247,7 +247,7 @@ public static class PaintedOreArt
         public Color[] detail; public float detailThreshold = .7f, detailScale = 50; // optional third facet material (e.g. white)
         public float edgeWhite, edgeWidth = 1.7f, speckles, speckleScale = 9; // white facet edges, white flecks
         public float bounceStrength = .08f, iridescence; // warm reflected light on shadow facets, anodised heat tint
-        public float crystalElong = 1.8f, crystalSpread = 60, crystalDensity = 1; // shape 3 (crystal sprays)
+        public float crystalElong = 1.8f, crystalSpread = 60, crystalDensity = 1, crystalScale = 1; // shape 3 (crystal sprays)
     }
     static Color C(float r, float g, float b) => new Color(r, g, b);
 
@@ -513,6 +513,36 @@ public static class PaintedOreArt
         "Design/OreVeins/TitaniumLarge/Sources/T4-Titan-Eisblau.png",
     });
 
+    // ---------- tungsten and mythril: two schemes each, after the old prism-cluster sprites ----------
+
+    const string TungstenMythrilOut = "Design/OreVeins/TungstenMythrilLarge";
+    static Palette Scale(Palette p, float s) { p.crystalScale = s; return p; }
+    static readonly Palette[] TungstenMythrilPalettes =
+    {
+        Set(Scale(Ti("W1-Wolfram-Saeulen", 1.5f, 40, 1.7f, .5f, 0), 1.45f), // like the old sprite: dark gunmetal stubby columns with warm golden reflections
+            new[] { C(.04f, .045f, .05f), C(.14f, .15f, .17f), C(.3f, .32f, .35f), C(.52f, .54f, .58f), C(.82f, .84f, .87f) },
+            new[] { C(.04f, .045f, .05f), C(.14f, .15f, .17f), C(.3f, .32f, .35f), C(.52f, .54f, .58f), C(.82f, .84f, .87f) },
+            C(.95f, .95f, 1), C(1, .7f, .3f), .5f, .8f, 50, 1.01f, 70),
+        WithShape(Set(new Palette { name = "W2-Wolframit-Brocken", bounceStrength = .4f }, // blocky gunmetal chunks with bronze-brown wolframite facets
+            new[] { C(.04f, .045f, .05f), C(.14f, .15f, .17f), C(.3f, .32f, .35f), C(.52f, .54f, .58f), C(.82f, .84f, .87f) },
+            new[] { C(.08f, .05f, .02f), C(.24f, .15f, .06f), C(.45f, .3f, .13f), C(.66f, .5f, .27f), C(.9f, .78f, .55f) },
+            C(.95f, .95f, 1), C(1, .7f, .3f), .55f, .6f, 40, .6f, 60), 0, 1f, .55f, .35f, .15f, 10),
+        Set(Ti("M1-Mythril-Kristall", 2.4f, 50, 1.1f, .3f, 0), // like the old sprite: bright blue crystals with pale blue-white facets
+            new[] { C(.03f, .1f, .25f), C(.07f, .3f, .62f), C(.2f, .56f, .9f), C(.5f, .8f, 1), C(.88f, .97f, 1) },
+            new[] { C(.12f, .22f, .38f), C(.3f, .5f, .74f), C(.56f, .78f, .95f), C(.8f, .93f, 1), C(1, 1, 1) },
+            C(.9f, .97f, 1), C(.3f, .7f, 1), .6f, .9f, 60, .7f, 70),
+        Set(Ti("M2-Mythril-Tiefblau", 2f, 65, 1.4f, .3f, 0), // deeper royal blue with cyan crystals, more and broader
+            new[] { C(.02f, .04f, .18f), C(.06f, .14f, .46f), C(.14f, .32f, .78f), C(.36f, .58f, .98f), C(.8f, .9f, 1) },
+            new[] { C(.02f, .14f, .2f), C(.05f, .38f, .5f), C(.15f, .66f, .8f), C(.45f, .88f, .96f), C(.85f, 1, 1) },
+            C(.9f, .97f, 1), C(.3f, .6f, 1), .6f, .9f, 60, .62f, 70),
+    };
+    // Tungsten/mythril preview (two schemes each): PreviewTungstenMythrilLarge.
+    public static string PreviewTungstenMythrilLarge() => PreviewLarge(TungstenMythrilPalettes, new[] { 2301, 2312, 2323, 2334 }, TungstenMythrilOut, new[]
+    {
+        "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Titanium/Titanium_Large_01.png",
+        "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Iron/Iron_Large_01.png",
+    });
+
     public static string PreviewGoldSilverLarge() => PreviewLarge(GoldSilverPalettes, new[] { 1001, 1012, 1023, 1034 }, GoldSilverOut, new[]
     {
         "Assets/GameObjects/Map/Blocks/Sprites/Ores/Painted/Copper/Copper_Large_01.png",
@@ -574,9 +604,18 @@ public static class PaintedOreArt
 
     // Titanium install (applied 18.10.2026): scheme T5a, Large seed 2001 is the approved preview.
     static readonly int[] TitaniumLargeSeeds = { 2001, 2115, 2126 }, TitaniumSmallSeeds = { 2211, 2222 }, TitaniumMediumSeeds = { 2233, 2244 };
-    public static string Main() => InstallTitanium();
+    // Titanium install: InstallTitanium.
     public static string InstallTitanium() => InstallOre(BlockType.TitaniumOre, "Titanium", "Titanium", Array.Find(TitaniumIcePalettes, p => p.name == "T5a-Eis-lang"),
         TitaniumLargeSeeds, TitaniumSmallSeeds, TitaniumMediumSeeds, TitaniumOut + "/Installed");
+
+    // Tungsten (W1) and mythril (M2) install (applied 18.10.2026); Large seeds 2301 and 2334 are the approved previews.
+    static readonly int[] TungstenLargeSeeds = { 2301, 2415, 2426 }, TungstenSmallSeeds = { 2511, 2522 }, TungstenMediumSeeds = { 2533, 2544 };
+    static readonly int[] MythrilLargeSeeds = { 2334, 2615, 2626 }, MythrilSmallSeeds = { 2711, 2722 }, MythrilMediumSeeds = { 2733, 2744 };
+    public static string Main() => InstallTungsten() + "\n" + InstallMythril();
+    public static string InstallTungsten() => InstallOre(BlockType.TungstenOre, "Wolfram", "Wolfram", Array.Find(TungstenMythrilPalettes, p => p.name == "W1-Wolfram-Saeulen"),
+        TungstenLargeSeeds, TungstenSmallSeeds, TungstenMediumSeeds, TungstenMythrilOut + "/Installed");
+    public static string InstallMythril() => InstallOre(BlockType.MythrilOre, "Mythril", "Mythril", Array.Find(TungstenMythrilPalettes, p => p.name == "M2-Mythril-Tiefblau"),
+        MythrilLargeSeeds, MythrilSmallSeeds, MythrilMediumSeeds, TungstenMythrilOut + "/Installed");
 
     // Folder = ore folder under Blocks/Ores and sprite prefix (e.g. "Iron"), tilePrefix = German tile name (e.g. "Eisen").
     static string InstallOre(BlockType id, string folder, string tilePrefix, Palette palette, int[] largeSeeds, int[] smallSeeds, int[] mediumSeeds, string designDir)
@@ -801,7 +840,7 @@ public static class PaintedOreArt
         for (int k = 0; k < count; k++)
         {
             float deg = 90 + (k == 0 ? (float)(rng.NextDouble() - .5) * 24 : (float)(rng.NextDouble() * 2 - 1) * Active.crystalSpread);
-            float a = deg * Mathf.Deg2Rad, size = r * (k == 0 ? .6f : .28f + (float)rng.NextDouble() * .3f);
+            float a = deg * Mathf.Deg2Rad, size = r * Active.crystalScale * (k == 0 ? .6f : .28f + (float)rng.NextDouble() * .3f);
             float elong = Active.crystalElong * (.85f + (float)rng.NextDouble() * .3f);
             var dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a)); var side = new Vector2(-dir.y, dir.x);
             var centre = c + dir * size * elong * .45f + side * (k == 0 ? 0 : (float)(rng.NextDouble() - .5) * r * .9f);
