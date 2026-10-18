@@ -32,6 +32,7 @@ Die vollständige Änderungshistorie steht in `Docs/Changelog.md`. Dort nur bei 
 - Tests nutzen temporäre Szenen bzw. isolierte Profile und verändern die Spielszene nicht.
 - Vorschauen und Berichte gehen ins lokale `Temp/`-Verzeichnis.
 - Abschlusszustand nach Tests: SampleScene im Edit Mode, keine offenen Play-/Szenenwechsel, Save-/Meta-TestDirectory `null`.
+- Ohne lokalen Editor (Cloud-Sessions): Checks über den GitHub-Workflow „Unity Checks“ ausführen, siehe `Docs/Cloud-Tests.md`.
 
 ## Zusammenarbeit mehrerer Agenten
 

@@ -1,0 +1,5 @@
+{
+  "checks": [
+    { "name": "GpsRuntimeChecks", "mode": "play", "afterStop": "AfterStop", "timeoutSeconds": 300 }
+  ]
+}
