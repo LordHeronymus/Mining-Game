@@ -10,6 +10,9 @@ on:
       checks:
         description: "Optional instead of suite: comma separated check names, e.g. CaveGenerationChecks,play:GpsRuntimeChecks"
         default: ""
+      editorui:
+        description: "Unity editor UI on the virtual display: auto (for play checks), 1, 0"
+        default: auto
       nographics:
         description: "Run Unity without graphics device (faster, but no rendering)"
         type: boolean
@@ -95,12 +98,13 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           CI_NOGRAPHICS: ${{ inputs.nographics && '1' || '0' }}
+          CI_EDITOR_UI: ${{ inputs.editorui || 'auto' }}
         run: |
           version=$(sed -n 's/^m_EditorVersion: //p' ProjectSettings/ProjectVersion.txt | tr -d '\r')
           image="unityci/editor:ubuntu-${version}-base-3"
           echo "Image: $image"
           docker run --rm --workdir /project -v "$GITHUB_WORKSPACE:/project" \
-            -e UNITY_LICENSE -e UNITY_SERIAL -e UNITY_EMAIL -e UNITY_PASSWORD -e CI_NOGRAPHICS \
+            -e UNITY_LICENSE -e UNITY_SERIAL -e UNITY_EMAIL -e UNITY_PASSWORD -e CI_NOGRAPHICS -e CI_EDITOR_UI \
             "$image" bash Tests/CI/run-in-container.sh
 
       - name: Report

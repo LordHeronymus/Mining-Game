@@ -54,6 +54,10 @@ Cloud-Sessions (Claude Code im Browser/App) und der Workflow „Unity Checks“ 
 - Eine Cloud-Aufgabe läuft auf ihrem eigenen Branch und trägt sich in `Docs/Arbeitsstand.md` mit Ordner „Cloud“ ein. Sie belegt keinen lokalen Editor.
 - Abschluss einer Cloud-Aufgabe mit Optik- oder FPS-Bezug: kurze lokale Abnahme durch den Benutzer (Branch holen, Play starten bzw. Build-Benchmark).
 
+## Editor-UI für Play-Mode
+
+Im `-batchmode` rendert der Editor kein Game-Fenster, daher kehren Coroutinen mit `WaitForEndOfFrame` (Blenden, Ladebildschirm) nie zurück und Play-Checks hängen (Lauf #7: Laden 300 s bei Stufe 0). Enthält der Plan Play-Checks, startet `run-in-container.sh` Unity deshalb ohne `-batchmode` mit Editor-Oberfläche auf dem virtuellen Xvfb-Bildschirm (Workflow-Eingabe `editorui`: auto/1/0). Ein `timeout` (Standard 100 min, `CI_UNITY_TIMEOUT`) beendet Unity, falls ein Dialog blockiert.
+
 ## Suite `performance`
 
 Führt `Tests/PerformanceBenchmarkChecks.cs` aus (frischer Play-Start ab MainMenu: Laden, Stillstand, Abbau normal/schnell, Erkunden). Der Runner wartet, bis `Temp/PerformanceBenchmark.txt` mit `PASS`/`FAIL` beginnt (`resultDonePattern`). Bericht und `PerformanceBenchmark.csv` (jedes Frame) liegen im Artefakt unter `temp/`, die Zusammenfassung zusätzlich im Dashboard bei den Ergebnissen. Für Vergleiche denselben Branch vor und nach einer Änderung messen.

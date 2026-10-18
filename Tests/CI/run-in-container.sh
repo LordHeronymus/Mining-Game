@@ -48,12 +48,26 @@ else
   exit 3
 fi
 
-ARGS=(-batchmode -projectPath "$PWD" -executeMethod MiningGame.CI.CiCheckRunner.Run
+# Play-Mode checks need the full editor UI on the virtual display: in -batchmode the Game view
+# never renders, so coroutines waiting for WaitForEndOfFrame (fades, loading screen) never resume.
+# CI_EDITOR_UI: auto (play checks in the plan), 1 (always), 0 (never).
+UI_MODE="${CI_EDITOR_UI:-auto}"
+if [ "$UI_MODE" = auto ]; then
+  if grep -q '"mode": "play"' "$ARTIFACTS/plan.json"; then UI_MODE=1; else UI_MODE=0; fi
+fi
+ARGS=(-projectPath "$PWD" -executeMethod MiningGame.CI.CiCheckRunner.Run
       -ciPlan "$ARTIFACTS/plan.json" -ciOutput "$ARTIFACTS" -logFile "$ARTIFACTS/editor.log")
+# Guard against modal dialogs or hangs: the runner's own timeouts cannot fire if the editor blocks.
+LIMIT="${CI_UNITY_TIMEOUT:-100m}"
 if [ "${CI_NOGRAPHICS:-0}" != "1" ] && command -v xvfb-run >/dev/null; then
-  xvfb-run -a -s "-screen 0 1920x1080x24" "$UNITY" "${ARGS[@]}"
+  if [ "$UI_MODE" = 1 ]; then
+    echo "Starting Unity with editor UI on virtual display"
+    timeout "$LIMIT" xvfb-run -a -s "-screen 0 1920x1080x24" "$UNITY" "${ARGS[@]}"
+  else
+    timeout "$LIMIT" xvfb-run -a -s "-screen 0 1920x1080x24" "$UNITY" -batchmode "${ARGS[@]}"
+  fi
 else
-  "$UNITY" -nographics "${ARGS[@]}"
+  timeout "$LIMIT" "$UNITY" -batchmode -nographics "${ARGS[@]}"
 fi
 code=$?
 echo "Unity exit code: $code"
