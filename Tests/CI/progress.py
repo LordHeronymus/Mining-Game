@@ -46,6 +46,13 @@ PHASES = {
     "done": "Fertig",
 }
 
+# Known failure causes, shown in the dashboard instead of a bare "failure".
+PROBLEMS = [
+    ("No valid Unity Editor license found", "Unity-Lizenz ungültig oder nicht aktiviert (Secrets UNITY_LICENSE/UNITY_EMAIL/UNITY_PASSWORD prüfen)."),
+    ("Scripts have compiler errors", "Compilerfehler im Projekt oder in einem Check."),
+    ("No space left on device", "Speicherplatz auf dem Runner voll."),
+]
+
 CHECK_START = re.compile(r"^\[CI\] \((\d+)/(\d+)\) (\S+) \[(\w+)\]")
 CHECK_END = re.compile(r"^\[CI\] (PASS|FAIL) (\S+) \(([\d.]+)s\)")
 
@@ -151,6 +158,7 @@ def build(final=None, conclusion=None):
 
     source = lines if lines else read(ART / "activation.log").splitlines()
     tail = [l[:300] for l in source[-400:] if l.strip()][-60:]
+    problem = next((text for marker, text in PROBLEMS if marker in log), None)
     errors = sorted({l.strip()[:300] for l in lines if re.search(r"error CS\d+", l)})[:30]
     return {
         "version": 1,
@@ -165,6 +173,7 @@ def build(final=None, conclusion=None):
         "assets": total_assets(),
         "checks": checks,
         "compile_errors": errors,
+        "problem": problem,
         "log_tail": tail,
         "conclusion": conclusion,
         "results": results,
