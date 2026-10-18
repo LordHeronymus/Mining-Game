@@ -92,7 +92,10 @@ function Get-QueueJson {
     $parts = foreach ($p in (Get-Projects)) {
         $r = Invoke-Queue 'status' @{ Json = $true; Project = $p }
         $line = ($r.out -split "`n" | Where-Object { $_.StartsWith('{') } | Select-Object -Last 1)
-        if ($line) { $line } else { (ConvertTo-Json -Compress -InputObject ([ordered]@{ project = $p; error = $r.out })) }
+        # Rolle: der Projektordner gehoert dem Benutzer, "<Projekt> 2" ist die Testbank der Chats (Tools/editor-bench.ps1).
+        $role = if ($p -eq $ownerName) { 'user' } elseif ($p -eq "$ownerName 2") { 'bench' } else { 'other' }
+        if ($line) { $line.Substring(0, $line.Length - 1) + ',"role":"' + $role + '"}' }
+        else { (ConvertTo-Json -Compress -InputObject ([ordered]@{ project = $p; role = $role; error = $r.out })) }
     }
     return '{"service":"editor-queue","version":1,"queueDir":' + (ConvertTo-Json -InputObject $QueueDir) + ',"projects":[' + ($parts -join ',') + ']}'
 }

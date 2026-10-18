@@ -32,6 +32,25 @@ PowerShell: `powershell -NoProfile -ExecutionPolicy Bypass -File Tools/editor-qu
 - `wait` prüft alle 15 s (`-PollSeconds`), setzt dabei das eigene Lebenszeichen und räumt verwaiste Einträge ab. Exit-Codes: `0` oben, `2` Zeitlimit erreicht (Eintrag bleibt, erneut `wait`), `3` Eintrag nicht mehr vorhanden (neu `join`). Im Bash-Tool wegen des 10-Minuten-Limits `-TimeoutMinutes 9` verwenden oder im Hintergrund laufen lassen.
 - `status` zeigt Warteschlange und Editorzustand.
 
+## Testbank „Mining Game 2“ (Editor der Chats)
+
+Der Editor von `Mining Game` gehört dem Benutzer. Chats testen im Editor von `Mining Game 2`, der **Testbank**: Dort ist kein fester Branch ausgecheckt, jeder Chat holt seinen eigenen Stand losgelöst (`git switch --detach`) hinein, testet und gibt sie wieder frei. Der Branch darf dabei im eigenen Arbeitsordner ausgecheckt bleiben.
+
+```bash
+git commit -am "WIP: Stand zum Testen"                                       # im eigenen Arbeitsordner
+Tools/editor-queue.sh join -Project "Mining Game 2" -Who "Claude Code: <Aufgabe>" -Purpose "<Zweck>"
+Tools/editor-queue.sh wait -Project "Mining Game 2" -Id <id> -TimeoutMinutes 9
+Tools/editor-bench.sh checkout <branch> -Id <id>                             # nur als oberster Eintrag
+unity command --project-path "C:\IT\GameDev\Git Repos\Mining Game 2" run_script --file Tests/<Name>Checks.cs
+Tools/editor-bench.sh release                                                # -Discard verwirft Testspuren
+Tools/editor-queue.sh leave -Project "Mining Game 2" -Id <id>
+```
+
+- `checkout` verweigert, wenn der Aufrufer nicht oben in der Warteschlange von `Mining Game 2` steht (Exit 4) oder die Testbank noch Änderungen hat (Exit 5). `status` zeigt Stand, Herkunft und Änderungen.
+- `release` verweigert bei Änderungen (Exit 5): Gewollte Änderungen (z. B. Szenen) auf der Testbank committen, dann zeigt `release` den Befehl `git merge --ff-only <commit>` zum Übernehmen in den eigenen Branch; Testspuren mit `-Discard` verwerfen. Nicht versionierte Dateien (`Library`, `.mcp.json`) bleiben unberührt.
+- Die Unity-Werkzeuge (MCP) eines Chats zeigen auf den Editor aus der nicht versionierten `.mcp.json` seines Ordners (heute in `Mining Game` noch auf den Editor des Benutzers). Deshalb vor MCP-Nutzung `editor_status` prüfen (`projectPath` muss `Mining Game 2` sein), sonst `unity command --project-path "…Mining Game 2"` verwenden.
+- Zustand der Testbank: `Git Repos/EditorQueue/Mining Game 2.bench.json`.
+
 ## Automatisches Lebenszeichen (Claude Code)
 
 `join` merkt sich die Claude-Code-Sitzung (`CLAUDE_CODE_SESSION_ID`). Der Hook in `.claude/settings.json` ruft nach jedem Werkzeugaufruf und jeder Benutzernachricht `Tools/editor-queue-hook.sh` auf: Steht die Sitzung in einer Warteschlange, setzt er höchstens einmal pro Minute ein Lebenszeichen (`heartbeat -Session`), sonst endet er sofort (etwa 0,3 s). Ein Chat, der 15 Minuten testet, bleibt so von selbst am Leben; stürzt er ab oder vergisst er `leave`, hören die Lebenszeichen auf und nach 10 ruhigen Minuten rückt der Nächste nach. Codex und Cowork haben diesen Hook nicht und rufen `heartbeat` selbst auf.
