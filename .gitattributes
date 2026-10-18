@@ -7,3 +7,5 @@ AudioMastering/Candidates/Assets/AC[[:space:]]Audio/Ambience/CaveAmbience.wav fi
 AudioMastering/Candidates/Assets/AC[[:space:]]Audio/Ambience/UndergroundClay.wav filter=lfs diff=lfs merge=lfs -text
 AudioMastering/Candidates/Assets/Resources/Audio/LoadingYogaAmbience.wav filter=lfs diff=lfs merge=lfs -text
 AudioMastering/Originals/Assets/AC[[:space:]]Audio/Ambience/UndergroundClay.wav filter=lfs diff=lfs merge=lfs -text
+# Shell-Skripte immer mit LF auschecken, sonst bricht Bash an Windows-Zeilenenden ab (core.autocrlf=true)
+*.sh text eol=lf
