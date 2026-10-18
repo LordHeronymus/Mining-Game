@@ -97,7 +97,8 @@ if [ "${CI_NOGRAPHICS:-0}" != "1" ] && command -v Xvfb >/dev/null; then
     XVFB_PID=$!
     export DISPLAY=:99
     sleep 2
-    timeout "$LIMIT" "$UNITY" "${ARGS[@]}" &
+    # -automated: no human at the editor, dialogs are skipped or answered with their default.
+    timeout "$LIMIT" "$UNITY" -automated "${ARGS[@]}" &
     UNITY_PID=$!
     watch_display $UNITY_PID &
     wait $UNITY_PID
