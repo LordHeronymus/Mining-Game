@@ -16,7 +16,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
-- 19.10.2026, Claude Code (Cloud): Challenges-Rework (täglich/wöchentlich/monatlich/Langzeit, Katalog, neue Zählstellen, UI, GPS) auf Branch `claude/challenges-rework`, `main` hineingeholt, Cloud-Suite `challenges` grün (Läufe #27, #28), Draft-PR offen; Merge nach `main` wartet auf Freigabe des Benutzers.
+- 19.10.2026, Claude Code (Cloud): Challenges-Rework (täglich/wöchentlich/monatlich/Langzeit, Katalog, neue Zählstellen, UI, GPS) auf Branch `claude/challenges-rework`, `main` hineingeholt, Cloud-Suiten `challenges` (Läufe #27, #28) und `smoke` (Lauf #30) grün, Draft-PR offen; Merge nach `main` wartet auf Freigabe des Benutzers.
 - 19.10.2026, Claude Code: Alle 14 Erze als gemalte Einzelblöcke statt Shader-Adern (Kupfer, Eisen, Silber, Gold, Kohle, Platin, Titan, Wolfram, Mythril, Granat, Smaragd, Rubin, Diamant, Ultronium mit Pulsieren), Kupfer-Adern-System entfernt; Branch `claude/iron-tiles` mit `main` zusammengeführt und geprüft, bereit für `main` (Freigabe Benutzer), siehe Docs/Gemalte-Erze.md.
 - 18.10.2026, Claude Code: HUD-Größe in den Einstellungen bis 30 % einstellbar (vorher 50 %), Branch `claude/hud-scale`.
 - 18.10.2026, Claude Code: Editor-Warteschlange ausserhalb von Git (`Tools/editor-queue.*`, Aktivitätssignal `Assets/Editor/EditorQueueActivity.cs`, Doku `Docs/Editor-Warteschlange.md`) ersetzt die Tabelle „Unity Editor“.
