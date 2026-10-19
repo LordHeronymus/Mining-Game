@@ -56,6 +56,7 @@ public static class ChallengeSettingsChecks
             temporary = ScriptableObject.CreateInstance<GpsProfile>();
             temporary.assets = asset ? asset.assets.ToList() : new List<GpsAssetReference>();
             temporary.documentJson = assetJson;
+            Group("gps layers", () => GpsLayers(original, asset));
             GpsSettings.UseProfile(temporary, Copy(original));
             Group("catalog", Catalog);
             Group("defaults", Defaults);
@@ -79,6 +80,33 @@ public static class ChallengeSettingsChecks
             : "FAIL " + failed + " of " + (passed + failed) + " GPS challenge settings checks";
         File.WriteAllText(Report, summary + "\n" + string.Join("\n", lines) + "\n");
         return failed == 0 ? summary : summary + "; first: " + lines.First(line => line.StartsWith("FAIL ")).Substring(5);
+    }
+
+    // The catalog hard-codes layer depths and the first layer of every ore (it is pure C#). Fail when GPS drifts from it.
+    static void GpsLayers(GpsDocument document, GpsProfile profile)
+    {
+        var map = document.records.Find(record => record.type == typeof(MapGenerator).AssemblyQualifiedName);
+        var layers = map?.fields.Find(field => field.name == "layers")?.children;
+        var starts = layers?.Select(layer => (int)(layer.children.Find(field => field.name == "startDepth")?.number ?? -1)).ToArray() ?? new int[0];
+        Check(starts.SequenceEqual(new[] { 0, 30, 150, 450, 900 }), "gps layers: layer start depths are 0/30/150/450/900 as the catalog depth tables assume (" + string.Join("/", starts) + ")");
+        var ores = map?.fields.Find(field => field.name == "oreSettings")?.children;
+        var blocks = profile ? profile.assets.Select(entry => entry.asset).OfType<Block>().ToArray() : new Block[0];
+        int FirstLayer(Item item)
+        {
+            var block = blocks.FirstOrDefault(candidate => candidate.itemDrop && candidate.itemDrop.item == item);
+            var entry = block ? ores?.Find(ore => (int)(ore.children.Find(field => field.name == "ore")?.number ?? -1) == (int)block.id) : null;
+            var indices = entry?.children.Find(field => field.name == "layerIndices")?.children;
+            return indices == null || indices.Count == 0 ? -1 : (int)indices.Min(index => index.number) + 1;
+        }
+        var subjects = new (string template, Item item)[] { ("ore", Item.Coal), ("ore", Item.Copper), ("ore", Item.Iron), ("ore", Item.Silver), ("ore", Item.Gold),
+            ("ore", Item.Titanium), ("ore", Item.Platinum), ("ore", Item.Tungsten), ("gem", Item.OrangeGarnet), ("gem", Item.Ruby), ("gem", Item.Diamond), ("ultronium", Item.Ultronium) };
+        foreach (var (template, item) in subjects) {
+            int gps = FirstLayer(item), catalog = ChallengeCatalog.MinLayer(template, template == "ultronium" ? -1 : (int)item);
+            // Garnet is offered one layer later on purpose: it is very rare in its first layer.
+            Check(gps > 0 && catalog >= gps && catalog <= gps + 1, "gps layers: " + item + " offered from layer " + catalog + ", spawns in GPS from layer " + gps);
+        }
+        foreach (var item in new[] { Item.Obsidian, Item.Mythril, Item.Emerald })
+            if (FirstLayer(item) > 0) lines.Add("INFO gps layers: " + item + " now spawns in GPS (layer " + FirstLayer(item) + "); the catalog does not offer it yet");
     }
 
     static void Catalog()

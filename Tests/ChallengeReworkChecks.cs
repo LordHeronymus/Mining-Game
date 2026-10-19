@@ -735,15 +735,24 @@ public static class ChallengeReworkChecks
         Check(wrong.Count == 0 && peaks["sales"] > 0 && peaks["placed:torches-placed"] == 15, "replay: each tally keeps exactly one tp marker holding its peak (" + string.Join(", ", wrong) + ")");
         var mainWorld = Clone(world); mainWorld.tallies.Clear();
         foreach (var snapshotWorld in new[] { world, mainWorld }) {
-            string which = snapshotWorld == world ? "this build's" : "an older build's";
+            bool fromOlder = snapshotWorld == mainWorld;
+            string which = fromOlder ? "an older build's" : "this build's";
+            long s1 = Pr("probe-sales"), c1 = Pr("probe-crafted"), t1 = Pr("probe-torches-placed"), l1 = Counter("sales");
             MetaProgression.CurrentRun.tallies.Clear(); // the older build rewrote the profile without them
             MetaProgression.BeginRun(runId, snapshotWorld);
             MetaProgression.RecordSale(4000); MetaProgression.RecordCraftedAmount(Item.BridgePart, 6); MetaProgression.RecordPlacedCount("torches-placed", 15);
-            Check(Pr("probe-sales") == sw + 4000 && Pr("probe-crafted") == cw + 6 && Pr("probe-torches-placed") == tw + 2 && Counter("sales") == lsw + 4000,
-                "replay: after an older build dropped the tallies, replaying from " + which + " world save credits nothing (tp markers)");
+            // An older build's world save carries no tallies: it counts as being at the peak, so new sales and crafts count
+            // at once instead of stalling until the old total; placements stay guarded by the world's torch count.
+            long sale = fromOlder ? 4000 : 0, craft = fromOlder ? 6 : 0;
+            Check(Pr("probe-sales") == s1 + sale && Pr("probe-crafted") == c1 + craft && Pr("probe-torches-placed") == t1 && Counter("sales") == l1 + sale,
+                fromOlder ? "replay: after an older build's world save new sales and crafts count at once, placements stay guarded"
+                      : "replay: after an older build dropped the tallies, replaying from this build's world save credits nothing (tp markers)");
+            peaks["sales"] += sale; peaks["crafted"] += craft;
             wrong = guarded.Where(id => Peak(id) != peaks[id] || !(PeakMarkers(id).Count == 1 && PeakMarkers(id)[0] == "tp:" + id + ":" + peaks[id])).ToList();
             Check(wrong.Count == 0, "replay: " + which + " world save: peaks restored from the markers, one tp marker each (" + string.Join(", ", wrong) + ")");
         }
+        Check(MetaProgression.CurrentRun.tallies.Exists(x => x != null && x.id == "tallies") && !RunSources().Any(x => x.StartsWith("tp:tallies:")),
+            "replay: the run keeps the marker tally that identifies saves of this build, without a tp marker");
         Consistent(start, "replay");
         string probesJson = JsonUtility.ToJson(new State { rounds = new List<MetaChallengeRound> { Stored(3) } });
         Check(MetaProgression.Save(), "replay: save");

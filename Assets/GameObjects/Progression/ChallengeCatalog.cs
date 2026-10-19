@@ -120,6 +120,13 @@ public static class ChallengeCatalog
     public static string ArtifactName(int type) => type >= 1 && type <= ArtifactNames.Length ? ArtifactNames[type - 1] : "";
     public static int AvailableOres(int reachedLayer) => OresPerLayer[Layer(reachedLayer) - 1];
     public static int AvailableArtifacts(int reachedLayer) => ArtifactsPerLayer[Layer(reachedLayer) - 1];
+    // First layer a template (and subject) is offered at; -1 for unknown templates. Checked against the GPS ore layers in CI.
+    public static int MinLayer(string templateId, int subject = -1)
+    {
+        var template = Template(templateId);
+        if (template == null) return -1;
+        return Math.Max(template.minLayer, Subject(template, subject)?.minLayer ?? 1);
+    }
 
     // ---- Draw support (used by ChallengeEngine.Draw)
 

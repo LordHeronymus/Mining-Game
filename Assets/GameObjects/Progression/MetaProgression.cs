@@ -195,6 +195,7 @@ public static partial class MetaProgression
             existing.ended = saved.ended;
         }
         run = existing;
+        MarkTallyAware(run);
         if (run.objectiveIds.Count == 0) SelectObjectives(run);
         foreach (string milestone in run.milestones)
             if (MetaProgressionCatalog.Challenge(milestone)?.permanent == true && !profile.completedMilestones.Contains(milestone)) profile.completedMilestones.Add(milestone);
@@ -445,10 +446,23 @@ public static partial class MetaProgression
             merged.Add(new MetaRunTally { id = tally.id, value = tally.value,
                 peak = Math.Max(Math.Max(tally.peak, tally.value), known == null ? 0 : Math.Max(known.peak, known.value)) });
         }
+        // A world saved by an older build has no tallies at all (not even the marker tally). Treat it as being at the
+        // peak, otherwise its new sales and crafts would earn nothing until the old total is reached again. Replays
+        // through such a save are therefore not guarded; saves of this build keep their own values.
+        bool aware = saved.tallies != null && saved.tallies.Exists(tally => tally != null && tally.id == TallyAware);
         foreach (var tally in existing)
             if (tally != null && ids.Add(tally.id)) merged.Add(new MetaRunTally { id = tally.id, peak = Math.Max(tally.peak, tally.value) });
         target.tallies = RepairTallies(merged);
         RestoreTallyPeaks(target);
+        if (!aware) foreach (var tally in target.tallies) if (!saved.tallies?.Exists(value => value != null && value.id == tally.id) ?? true) tally.value = Math.Max(tally.value, tally.peak);
+        MarkTallyAware(target);
+    }
+    // Tells MergeTallies that a world snapshot was written by a build that keeps tallies (older builds drop the list).
+    const string TallyAware = "tallies";
+    static void MarkTallyAware(MetaRunState state)
+    {
+        state.tallies ??= new List<MetaRunTally>();
+        if (!state.tallies.Exists(tally => tally != null && tally.id == TallyAware)) state.tallies.Insert(0, new MetaRunTally { id = TallyAware, value = 1, peak = 1 });
     }
     // Older builds drop the tallies but keep and union the ledger (MergeLedger already did): the highest "tp:" marker per
     // id restores the peak, even for a tally neither side still has. Afterwards each tally's peak has exactly one marker.
@@ -469,7 +483,7 @@ public static partial class MetaProgression
                     tallies.Add(new MetaRunTally { id = pair.Key, peak = pair.Value });
         }
         var expected = new Dictionary<string, string>();
-        foreach (var tally in tallies) if (tally.peak > 0) expected[tally.id] = TallyMarker(tally.id, tally.peak);
+        foreach (var tally in tallies) if (tally.peak > 0 && tally.id != TallyAware) expected[tally.id] = TallyMarker(tally.id, tally.peak);
         var present = new HashSet<string>();
         // Stale markers of a known tally go (the ledger stays unique); markers of other ids are left alone.
         if (marked != null) ledger.RemoveAll(key => TryTallyMarker(key, out string id, out _) && expected.TryGetValue(id, out string wanted) && !(key == wanted && present.Add(key)));

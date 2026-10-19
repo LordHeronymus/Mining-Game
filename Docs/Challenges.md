@@ -109,7 +109,7 @@ Monatlich gibt es kein XXL. Der Wurf ist pro Zeitraum fest und unabhängig von d
   - „Werkzeuge“ und „Ausrüstung“: herstellbare Anzahl mindestens gleich dem Ziel.
   - „Upgrades“: herstellbare Stufen der Spitzhacke, der Energie oder der Tragkraft mindestens gleich dem Ziel.
   - Eisenspitzhacke, Obsidianspitzhacke und Reise-Monolith zählen nie mit, siehe Abschnitt 10.
-  - Wird eine Runde ohne laufenden Run gezogen (Hauptmenü), entfallen Werkzeuge, Ausrüstung und Upgrades für diesen Zeitraum.
+  - Wird eine Runde ohne laufenden Run gezogen (Hauptmenü), gilt ein frischer Run: nur Rezepte ohne Bauplan (Axt, Sense, Dynamit). Werkzeug-Aufgaben bis 2 sind dann möglich, Ausrüstung, Upgrades und Medkits (alle mit Bauplan, der in jedem Run neu gekauft wird) entfallen für diesen Zeitraum.
   - Dynamit braucht das freie Dynamit-Rezept, Medkits den Medkit-Bauplan.
 
 **Mengenwachstum:** Die Vorlagen Blöcke, „Schätze des Berges“, Erzvarianten, „Meister am Amboss“, „Erzmagnat“ und „Meisterschmiede“ (in den Tabellen mit ↑ markiert) wachsen um den Faktor 1 + min(Max, pro Schicht × (Schicht − 1) + pro 10 Level × ⌊(Level − 1) / 10⌋) / 100. Standard: 10 % pro Schicht, 2 % pro 10 Level, höchstens 60 %. Gerundet wird „schön“:
@@ -252,7 +252,7 @@ Eine Tour beginnt an der Oberfläche, also bei Zellenreihe 0 oder darüber. Beim
 - **Neue Felder gehen verloren:** `main` löscht beim nächsten Speichern Runden, Auszeichnungen, Zähler und Tallies. Zurück auf dem Branch gilt:
   - Auszeichnungen kommen über `cm:` zurück.
   - Die Zähler-Linien beginnen wieder bei 0. Erreichte Stufen bleiben, es wird nichts doppelt bezahlt.
-  - Der Wiederholungsschutz für Verkauf und Herstellen kommt über `tp:` zurück.
+  - Der Wiederholungsschutz für Verkauf und Herstellen kommt über `tp:` zurück. Ein Weltstand, den ein älterer Build gespeichert hat (ohne Tallies), gilt dabei als auf dem Höchststand: neue Verkäufe zählen sofort, nur ein bewusstes Wiederverkaufen über einen solchen älteren Weltstand ist nicht geschützt. Eigene Weltstände erkennt der Branch an der Merk-Tally `tallies`.
   - Runden, in denen schon etwas bezahlt wurde, kommen über `cx:`/`ct:`/`cs:` identisch zurück; bezahlte Aufgaben, Etappen und Bonus bleiben bezahlt.
 - **Runden ohne Auszahlung:** Eine Runde, in der noch nichts bezahlt wurde, hat keine Beschreibung und wird neu gezogen (bei anderer Schicht, anderem Level oder anderer Herstellbarkeit auch anders). Da nichts bezahlt war, entsteht keine doppelte Auszahlung; nicht bezahlter Fortschritt, Masken und Fleiss-Tage gehen aber verloren.
 - **Alter Stand von `main`:** Hat `main` für denselben Tag einen alten Stand angelegt, wird dieser wieder umgewandelt und ersetzt die neue Runde dieses Tages. Die bereits bezahlte XP bleibt.
@@ -334,9 +334,10 @@ Prüfskripte unter `Tests/`:
 | `ChallengeSettingsChecks.cs` | Edit Mode: GPS-Abschnitt „Herausforderungen“ mit temporärem Profil |
 | `ChallengePanelPreviewChecks.cs` | Edit Mode, auch in der Cloud: baut die Tafel aus einem isolierten Profil, rendert jeden Tab nach `Temp/ChallengePanel-<Tab>.png` und vergleicht sie mit den Daten |
 | `ChallengePeriodsChecks.cs`, `ChallengeGameplayChecks.cs` | Play Mode ab MainMenu: neue Runden im Spiel |
-| `ChallengeMigrationChecks.cs`, `MetaProgressionUiChecks.cs` | Bestehende Checks, an das neue Layout angepasst |
+| `ChallengeMigrationChecks.cs` | Bestehender Check (Smoke-Suite), unverändert grün |
+| `MetaProgressionUiChecks.cs`, `ProgressionTimelineChecks.cs` | Play Mode: an das neue Layout angepasst; der UI-Check nutzt jetzt ein isoliertes Profil |
 
-Suite für die Cloud: `Tests/CI/suites/challenges.json` (die fünf Edit-Mode-Checks oben plus `MetaProgressionCoreChecks`). Start: Actions → Unity Checks → Run workflow, Suite `challenges`.
+Suite für die Cloud: `Tests/CI/suites/challenges.json` (die fünf Edit-Mode-Checks oben plus `MetaProgressionCoreChecks`). `ChallengeSettingsChecks` vergleicht zusätzlich die im Katalog fest hinterlegten Schichttiefen (0/30/150/450/900) und ersten Erzschichten mit der GPS-Erzverteilung; ändert sich die Verteilung im GPS, wird der Check rot, statt dass Katalog und Karte still auseinanderlaufen. Start: Actions → Unity Checks → Run workflow, Suite `challenges`.
 
 Die alten Prüfskripte `DailyChallengeSelectionChecks.cs`, `AdditionalChallengesChecks.cs` und `PrepareDailyChallengeIsolation.ps1` liegen jetzt in `Tests/Archive/`.
 
@@ -396,7 +397,7 @@ Mengen „neu“: Katalogwerte bei Schicht 1 und Level 1. Für Varianten mit Geg
 | 19 | Goldener Handschlag · sales · 2'500/7'500 · 500/1'500 | → `sales` | – | – | Zusammengelegt: Doppelung von #4. Der Gedanke lebt als „Grosser Handschlag“ (grösster Einzelverkauf, neu) weiter |
 | 20 | Ruf der Wälder · trees · 10/40 · 500/1'500 | `trees` Ruf der Wälder (Abbau) | T 3/6/12/30 · W 15/35/70/150 · M 60/150/300 | immer | Mengen angepasst: höchstens 32 Bäume, sie wachsen in 100–240 s nach |
 | 21 | Grüne Ernte · grass · 25/100 · 500/1'500 | `grass` Grüne Ernte (Abbau) | T 15/40/80/200 · W 100/250/500/1'200 · M 400/1'000/2'000 | immer, Sense nötig | Mengen angepasst |
-| 22 | Unter der Grasnarbe · surface-blocks · 150/500 · 500/1'500 | `layer-blocks` · Schicht 1 (Abbau) | T 80/200/400/1'500 · W 500/1'200/2'500/8'000 · M 2'000/5'000/10'000 | nur bis erreichte S2 | Neue Zählweise: jeder Block der Schicht über den Zellschlüssel, auch Erz- und Artefaktfelder. Für Fortgeschrittene ist Schicht 1 meist schon ausgegraben |
+| 22 | Unter der Grasnarbe · surface-blocks · 150/500 · 500/1'500 | `layer-blocks` · Schicht 1 (Abbau) | T 80/200/400/– · W 500/1'200/2'500/– · M 2'000/5'000/10'000 (XXL nur mit GPS „XXL ab Schicht“ ≤ 2) | nur bis erreichte S2 | Neue Zählweise: jeder Block der Schicht über den Zellschlüssel, auch Erz- und Artefaktfelder. Für Fortgeschrittene ist Schicht 1 meist schon ausgegraben |
 | 23 | Relikte der Vorzeit · artifacts · 5/25 · 500/1'500 | `artifacts` Relikte der Vorzeit (Artefakte) | T 2/4/8/25 · W 10/20/40/80 · M 40/80/150 | immer | Mengen ans Vorkommen angepasst (rund 490 pro Welt, erreichbar ist nur, was entlang der Gänge liegt). Mit #37 zusammengelegt |
 | 24 | Spuren der Vorzeit · specific-artifact · 3/10 · 500/1'500 | `artifact` · Typ (Artefakte), Faktor nach Vorkommen | z. B. Alter Kompass T 1/–/2/5 · W 2/3/6/13 · M 5/10/20 (alle Typen siehe unten) | erste Schicht des Typs | Freischaltung korrigiert: bisher zufällig alle 10 Typen ohne Rücksicht auf die Schicht. Mengen nach Vorkommen. Mit #38 zusammengelegt |
 | 25 | Steinernes Erwachen · l2-blocks · 200/600 · 500/1'500 | `layer-blocks` · Schicht 2 (Abbau) | ab S2: T 80/200/400/1'500 · W 500/1'200/2'500/8'000 · M 2'000/5'000/10'000 | ab S2 | Freischaltung korrigiert, bisher ab S1. Mengen angepasst |
@@ -580,7 +581,7 @@ Abgedeckt sind damit alle Ideen aus Konzept §3: Sprengmeister, Lichtbringer, Kl
 - **Debug-Teleport** (GPS-Testaktion) sperrt die Belohnungen nicht. Ein Teleport ab der Oberfläche zählt Tiefe, Schichten und Altar. Diese Lücke bestand schon vorher.
 - **Erzadern:** Erz, das bei gesperrten Belohnungen abgebaut wurde, hat keinen Ledger-Schlüssel. Eine Ader kann dadurch zerfallen und mehrfach zählen. Dynamit, das im Debugmodus gelegt wurde und danach explodiert, wird angerechnet.
 - **Kurzes Fenster nach dem Laden:** Eine Leiter, die in den ersten rund 0,25 s nach dem Laden gesetzt wird, kann höchstens 1 zu viel anrechnen.
-- **Runde im Hauptmenü gezogen:** Ohne Run gibt es an diesem Tag bzw. in dieser Woche keine Werkzeug-, Ausrüstungs- und Upgrade-Aufgaben. Medkits sind dann ohne Bauplan-Prüfung möglich.
+- **Runde im Hauptmenü gezogen:** Sie wird für einen frischen Run gezogen (nur Axt/Sense/Dynamit herstellbar), also ohne Ausrüstungs-, Upgrade- und Medkit-Aufgaben für diesen Tag bzw. diese Woche.
 - **Schichten und Vorkommen sind fest im Katalog hinterlegt:** Erz- und Artefaktschichten, verfügbare Arten und die Schichtgrenzen 30/150/450/900 entsprechen dem GPS-Stand vom Oktober 2026. Wird die Erzverteilung oder die Schichttiefe in GPS geändert, muss `ChallengeCatalog.cs` mitgezogen werden. Das alte System las die ersten Erzschichten aus GPS.
 - **Fleiss:** Die Einheit „Tage mit N Tagesaufgaben“ wird beim Ziehen der Woche gespeichert. Die Anrechnung liest „Fleiss: Tagesaufgaben pro Tag“ aber laufend. Ändert man den Wert mitten in der Woche, passt der Text nicht mehr zur Regel.
 - **Monatliche XXL-Werte** in GPS haben keine Wirkung, weil die Monatsmengen nur drei Stufen kennen.

@@ -95,16 +95,19 @@ public static partial class MetaProgression
     }
     static ChallengeDrawContext DrawContext()
     {
-        var context = new ChallengeDrawContext { level = Level, craftLimits = run != null ? CraftChallengeLimits() : null };
+        // Outside a run (main menu) the round is drawn for a fresh run: only free recipes (axe, scythe, dynamite) are
+        // craftable there; blueprints for pickaxes, gear and medkits are bought again in every run.
+        var context = new ChallengeDrawContext { level = Level, craftLimits = run != null ? CraftChallengeLimits() : (int[])FreshRunCraftLimits.Clone() };
         if (Isolated) { context.reachedLayer = Math.Max(1, profile.reachedMiningLayer); return context; }
         // A fresh world must not get tasks for the deepest layer ever reached: use what this run or a stored world reached.
-        int layer = Math.Max(run != null ? LayerAtDepth(run.maxDepth) : 1, ImportReachedMiningLayers());
+        int layer = Math.Max(run != null ? HomeLandscape.LayerAtDepth(run.maxDepth) : 1, ImportReachedMiningLayers());
         context.reachedLayer = Math.Max(1, Math.Min(layer, profile.reachedMiningLayer));
         try { var inventory = InventoryManager.Instance; context.pickaxeHardness = inventory ? inventory.EquippedPickaxeMaximumHardness : 0f; }
         catch (Exception) { context.pickaxeHardness = 0f; }
         return context;
     }
-    static int LayerAtDepth(int depth) => depth >= 900 ? 5 : depth >= 450 ? 4 : depth >= 150 ? 3 : depth >= 30 ? 2 : 1;
+    // Same layout as CraftChallengeLimits: pickaxe upgrades, tools, gear, energy upgrades, carrying upgrades, dynamite, medkits.
+    static readonly int[] FreshRunCraftLimits = { 0, 2, 0, 0, 0, 20, 0 };
     // Highest home layer of the stored worlds; also raises the profile's reached layer (older profiles lack it).
     static int ImportReachedMiningLayers()
     {
