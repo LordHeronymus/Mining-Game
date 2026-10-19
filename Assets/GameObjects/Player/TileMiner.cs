@@ -531,8 +531,7 @@ public class TileMiner : MonoBehaviour
         if (!highlightRenderer || !tilemap) return;
         var terrainRenderer = tilemap.GetComponent<TilemapRenderer>();
         if (!terrainRenderer) return;
-        // Terrain, ore and the copper surface occupy the next two orders.
-        // Reserve the cursor above them even before the surface is constructed.
+        // Terrain and ore occupy the next two orders; the cursor stays above them.
         int layer = terrainRenderer.sortingLayerID;
         int order = terrainRenderer.sortingOrder + 2;
         void Above(Renderer renderer, int extra = 0)
@@ -547,7 +546,6 @@ public class TileMiner : MonoBehaviour
         {
             Above(map.OreOverlay ? map.OreOverlay.GetComponent<TilemapRenderer>() : null, 1);
             Above(map.ArtifactOverlay ? map.ArtifactOverlay.GetComponent<TilemapRenderer>() : null);
-            Above(map.GetComponent<OreOverlayAppearance>()?.CopperSurface);
         }
         highlightRenderer.sortingLayerID = layer;
         highlightRenderer.sortingOrder = order + 1;

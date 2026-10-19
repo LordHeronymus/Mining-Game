@@ -31,15 +31,26 @@ public static class UltroniumChecks
             ["Ultronium_06_rich.png"] = "76507C3AFE61838C191AB02EB37D2EF52A3CDD564BC1675A8953240D34DFD9BC",
             ["Ultronium_07_rich.png"] = "B7FE11C5DB7BF6F8DEC823FD1C3945E787E6D7D3ABF952B8A035EDD4AA3879D2"
         };
+        // Current tiles are painted and glowing (marker 253/255, Docs/Gemalte-Erze.md): 418 px per 0.5-unit cell on a 544 px canvas.
         foreach (var tile in block.smallOre.Concat(block.mediumOre).Concat(block.richOre))
         {
             Check(tile && tile.sprite && tile.block == block, "Broken Ultronium tile reference.");
-            Check(Mathf.Abs(tile.color.a - .98f) < .001f,
+            Check(Mathf.Abs(tile.color.a - 253f / 255f) < .001f,
                 "Ultronium tile is missing its glow marker.");
             Check(tile.colliderType == UnityEngine.Tilemaps.Tile.ColliderType.None,
                 "Ultronium overlays must not have colliders.");
+            Check(Mathf.Abs(tile.sprite.pixelsPerUnit - 836) < .01f &&
+                Mathf.Abs(tile.sprite.bounds.size.x - 544f / 836f) < .001f, "Incorrect Ultronium sprite size.");
+            Check(AssetDatabase.GetAssetPath(tile.sprite).Contains("/Ores/Painted/Ultronium/"), "Ultronium tile does not use painted art.");
+        }
+        // The old faceted tiles stay untouched for old saves (alpha .98 glow marker, original pixels).
+        foreach (var tile in AssetDatabase.FindAssets("t:OreTile", new[] { "Assets/GameObjects/Map/Blocks/Ores/Ultronium" })
+            .Select(g => AssetDatabase.LoadAssetAtPath<OreTile>(AssetDatabase.GUIDToAssetPath(g)))
+            .Where(t => t && System.Text.RegularExpressions.Regex.IsMatch(t.name, "_0[1-7]_")))
+        {
+            Check(Mathf.Abs(tile.color.a - .98f) < .001f, "Old Ultronium tile lost its glow marker: " + tile.name);
             Check(Mathf.Abs(tile.sprite.bounds.size.x - .5f) < .001f &&
-                Mathf.Abs(tile.sprite.bounds.size.y - .5f) < .001f, "Incorrect Ultronium sprite size.");
+                Mathf.Abs(tile.sprite.bounds.size.y - .5f) < .001f, "Incorrect old Ultronium sprite size.");
             string path = AssetDatabase.GetAssetPath(tile.sprite);
             var importer = AssetImporter.GetAtPath(path) as TextureImporter;
             Check(importer && importer.mipmapEnabled && importer.filterMode == FilterMode.Trilinear &&

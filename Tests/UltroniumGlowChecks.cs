@@ -86,7 +86,8 @@ public static class UltroniumGlowChecks
                 {
                     var color = colors[y * 512 + x];
                     float energy = color.r + color.g + color.b;
-                    if (x < 256) goldEnergy += energy; else ultroniumEnergy += energy;
+                    // Painted ultronium overhangs its cell by .075 units (30 px here): only count gold left of that.
+                    if (x < 220) goldEnergy += energy; else if (x >= 256) ultroniumEnergy += energy;
                 }
             Check(goldEnergy < 1f, "Ordinary ore became self-lit.");
             Check(ultroniumEnergy > 100f, "Ultronium has no visible emission in darkness.");
