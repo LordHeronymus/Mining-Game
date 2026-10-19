@@ -352,7 +352,8 @@ Cloud-Workflow „Unity Checks“ (Unity 6000.1.12f1, Batchmode mit Xvfb), Branc
 | #24 | `177a18f` | ChallengeReworkChecks | bestanden (580) |
 | #25 | `eb57f1d` (nach Prüfrunde) | Suite `challenges` | **6/6 bestanden**: Core 581'496 · Rework 599 · Settings 71 · Migration 5 · PanelPreview 2'154 (inkl. Bilder je Tab) · MetaProgressionCore 87 |
 | #26 | `eb57f1d` | Suite `smoke` (bestehende Projekt-Checks) | 6/7 bestanden; einzig `CaveGenerationChecks` rot („Cave generation entered a protected area“) – identisch zu Lauf #18 und #21 auf anderen Branches, nicht durch diese Arbeit verursacht |
-| #27 | `276f34a` (Endstand) | Suite `challenges` | **6/6 bestanden**: Core 581'496 · Rework 600 · Settings 84 · Migration 5 · PanelPreview 2'154 · MetaProgressionCore 87 (zusammen 584'426 Prüfungen) |
+| #27 | `276f34a` | Suite `challenges` | **6/6 bestanden**: Core 581'496 · Rework 600 · Settings 84 · Migration 5 · PanelPreview 2'154 · MetaProgressionCore 87 (zusammen 584'426 Prüfungen) |
+| #28 | `3002269` (Endstand, `main` mit gemalten Erzen hineingeholt) | Suite `challenges` | **6/6 bestanden**, gleiche Zahlen wie #27 |
 
 `MetaProgressionCoreChecks` war in allen früheren Cloud-Läufen rot („worker owns detached snapshot“); mit dem neuen System speichert eine Rundenziehung mitten in einem Aufzeichnungsaufruf nicht mehr sofort, seither ist der Check grün.
 
