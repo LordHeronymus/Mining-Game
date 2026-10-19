@@ -16,7 +16,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
-- 19.10.2026, Claude Code (Cloud): Challenges-Rework (täglich/wöchentlich/monatlich/Langzeit, Katalog, neue Zählstellen, UI, GPS) auf Branch `claude/challenges-rework`, Cloud-Suite `challenges` grün (Lauf #25); Merge nach `main` wartet auf Freigabe des Benutzers.
+- 19.10.2026, Claude Code (Cloud): Challenges-Rework (täglich/wöchentlich/monatlich/Langzeit, Katalog, neue Zählstellen, UI, GPS) auf Branch `claude/challenges-rework`, Cloud-Suite `challenges` grün (Lauf #27); Merge nach `main` wartet auf Freigabe des Benutzers.
 - 18.10.2026, Claude Code: HUD-Größe in den Einstellungen bis 30 % einstellbar (vorher 50 %), Branch `claude/hud-scale`.
 - 18.10.2026, Claude Code: Editor-Warteschlange ausserhalb von Git (`Tools/editor-queue.*`, Aktivitätssignal `Assets/Editor/EditorQueueActivity.cs`, Doku `Docs/Editor-Warteschlange.md`) ersetzt die Tabelle „Unity Editor“.
 - 18.10.2026, Claude Code (Cloud): Cloud-Läufe mit 20-min-Limit und Abbruchgrund, `// CI: local-only`, Performance-Suite ohne Zeichnen (Lauf #17: 12 min, aussagekräftige CPU-Werte).
