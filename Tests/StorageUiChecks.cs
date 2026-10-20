@@ -94,8 +94,9 @@ public sealed class StorageUiProbe : MonoBehaviour
         var entryGroup = storage.EntryGroup;
         Check(entryGroup && entryGroup.alpha > .99f && entryGroup.interactable, "Entry sign fades in near the hut");
         Check(entry.GetComponentInParent<Canvas>().renderMode == RenderMode.WorldSpace, "Entry sign is a world-space button");
-        Check(entryGroup.GetComponentInChildren<TextMeshProUGUI>().text == "Lager öffnen" && entryGroup.GetComponentInChildren<TextMeshProUGUI>().fontSize >= 28, "Entry label is readable");
-        Check(entry.GetComponent<GoldButtonFeedback>(), "Entry sign uses the gold wood button style");
+        var workshopSign = Object.FindFirstObjectByType<WorkbenchBuilding>().GetComponentInChildren<Button>(true).GetComponent<Image>().sprite;
+        Check(entry.GetComponent<Image>().sprite == workshopSign && workshopSign, "Entry sign uses the same Enter sign as the workshop");
+        Check(entry.onClick.GetPersistentEventCount() == 0, "Entry sign no longer calls the workshop");
 
         entry.onClick.Invoke();
         var panel = StoragePanel.Instance;
