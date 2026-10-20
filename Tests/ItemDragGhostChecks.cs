@@ -154,9 +154,12 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
             Compare("Inventory", item, icon, ghost, position, new Vector2(200, -12));
             if (pictured.Contains(item))
             {
+                pin = () => inventoryUi.MoveDraggedIcon(position + new Vector2(200, -12));
                 yield return Pop(ghost); PopChecks("Inventory", item, ghost);
+                inventoryUi.MoveDraggedIcon(position + new Vector2(200, -12));
                 Compare("Inventory", item, icon, ghost, position, new Vector2(200, -12));
                 yield return Shot("Inventory", item, icon.rectTransform, ghost.rectTransform);
+                pin = null;
             }
             inventoryUi.CancelItemDrag();
             inventoryCount++;
@@ -183,9 +186,12 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
                 Compare("Hotbar", hotbarItems[i], icon, ghost, position, new Vector2(0, 230));
                 if (pictured.Contains(hotbarItems[i]))
                 {
+                    pin = () => hud.GetType().GetMethod("MoveDraggedIcon", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(hud, new object[] { moved });
                     yield return Pop(ghost); PopChecks("Hotbar", hotbarItems[i], ghost);
+                    hud.GetType().GetMethod("MoveDraggedIcon", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(hud, new object[] { moved });
                     Compare("Hotbar", hotbarItems[i], icon, ghost, position, new Vector2(0, 230));
                     yield return Shot("Hotbar", hotbarItems[i], icon.rectTransform, ghost.rectTransform);
+                    pin = null;
                 }
                 hud.CancelHotbarDrag();
             }
@@ -224,6 +230,12 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
     // Drag start pops: the item grows quickly past the carry size, then settles at CarryScale.
     // Nested coroutines bypass the error wrapper in Start, so Pop only measures and PopChecks throws.
     float popPeak;
+    // Inventory and hotbar move their ghost to the real mouse every frame (Update/LateUpdate); the test pins its own
+    // pointer right before the canvases render, after all of those.
+    Action pin;
+    void OnEnable() => Canvas.willRenderCanvases += Pin;
+    void OnDisable() => Canvas.willRenderCanvases -= Pin;
+    void Pin() => pin?.Invoke();
     IEnumerator Pop(Image ghost)
     {
         var state = ghost.GetComponent<ItemDragGhost>();
@@ -245,6 +257,8 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
         yield return new WaitForEndOfFrame();
         var full = ScreenCapture.CaptureScreenshotAsTexture();
         var points = Corners(slot).Concat(Corners(ghost)).ToList();
+        var gi = ghost.GetComponent<Image>(); var gc = gi.canvas;
+        Log($"{ui} {item.item} shot: slot {string.Join(" ", Corners(slot))} ghost {string.Join(" ", Corners(ghost))} parent {ghost.parent.name} sib {ghost.GetSiblingIndex()}/{ghost.parent.childCount} canvas {gc.name}/{gc.renderMode}/{gc.sortingOrder} root {gc.rootCanvas.name} active {gi.isActiveAndEnabled} alpha {gi.color.a} cull {gi.canvasRenderer.cull} scale {ghost.lossyScale} frame {Time.frameCount}");
         float scaleX = full.width / (float)UnityEngine.Screen.width, scaleY = full.height / (float)UnityEngine.Screen.height;
         int xMin = Mathf.Clamp(Mathf.FloorToInt(points.Min(p => p.x) * scaleX) - 30, 0, full.width - 1);
         int yMin = Mathf.Clamp(Mathf.FloorToInt(points.Min(p => p.y) * scaleY) - 30, 0, full.height - 1);
