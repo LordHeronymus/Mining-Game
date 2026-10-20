@@ -153,7 +153,7 @@ try {
             $path = $req.Url.AbsolutePath.TrimEnd('/')
             if ($req.HttpMethod -eq 'OPTIONS') { Send $ctx 204 ''; continue }
             if ($req.HttpMethod -eq 'GET' -and ($path -eq '/api/queue' -or $path -eq '')) { Send $ctx 200 (Get-QueueJson); continue }
-            if ($req.HttpMethod -eq 'POST' -and $path -match '^/api/(join|heartbeat|leave)$') {
+            if ($req.HttpMethod -eq 'POST' -and $path -match '^/api/(join|heartbeat|leave|move|request-release)$') {
                 $action = $Matches[1]
                 if ($req.ContentType -notlike 'application/json*') { SendError $ctx 415 'Content-Type application/json erwartet'; continue }
                 $reader = New-Object IO.StreamReader($req.InputStream, [Text.Encoding]::UTF8)
@@ -161,13 +161,30 @@ try {
                 $body = if ($raw.Trim()) { $raw | ConvertFrom-Json } else { $null }
                 $project = [string]$body.project
                 if (-not ((Get-Projects) -contains $project)) { SendError $ctx 400 "Unbekannter Arbeitsordner: $project"; continue }
-                $named = @{ User = $true; Project = $project }
-                $purpose = [string]$body.purpose
-                if ($action -eq 'join' -and $purpose) {
-                    if ($purpose.Length -gt 200) { $purpose = $purpose.Substring(0, 200) }
-                    $named.Purpose = $purpose
+                # join/heartbeat/leave immer als Benutzer; move und request-release ordnen fremde Eintraege.
+                if ($action -eq 'move') {
+                    $entryId = [string]$body.id
+                    $position = 0
+                    if ($entryId -notmatch '^[A-Za-z0-9_-]{1,64}$' -or -not [int]::TryParse([string]$body.position, [ref]$position) -or $position -lt 1 -or $position -gt 1000) {
+                        SendError $ctx 400 'move braucht id und position (ab 2)'; continue
+                    }
+                    $named = @{ Project = $project; Id = $entryId; Position = $position }
+                }
+                elseif ($action -eq 'request-release') {
+                    $named = @{ Project = $project; Cancel = ($body.cancel -eq $true) }
+                }
+                else {
+                    $named = @{ User = $true; Project = $project }
+                    $purpose = [string]$body.purpose
+                    if ($action -eq 'join' -and $purpose) {
+                        if ($purpose.Length -gt 200) { $purpose = $purpose.Substring(0, 200) }
+                        $named.Purpose = $purpose
+                    }
                 }
                 $r = Invoke-Queue $action $named
+                # move/request-release: Exit 1 = nicht erlaubt (Inhaber verschieben, Benutzer bitten), 3 = Eintrag weg.
+                if ($action -in 'move', 'request-release' -and $r.code -eq 1) { SendError $ctx 409 $r.out; continue }
+                if ($action -eq 'move' -and $r.code -eq 3) { SendError $ctx 404 $r.out; continue }
                 if ($r.code -ne 0 -and $r.code -ne 3) { SendError $ctx 500 $r.out; continue }
                 Send $ctx 200 ('{"ok":' + $(if ($r.code -eq 0) { 'true' } else { 'false' }) + ',"message":' + (ConvertTo-Json -InputObject $r.out) + ',"queue":' + (Get-QueueJson) + '}')
                 continue
