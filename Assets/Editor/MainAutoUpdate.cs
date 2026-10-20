@@ -9,8 +9,9 @@ using Debug = UnityEngine.Debug;
 
 // Haelt den Ordner des Benutzers ("Mining Game") automatisch auf dem neuesten origin/main
 // (Docs/Main-Auto-Update.md). Jede Minute im Leerlauf: git fetch, dann nur ein Fast-Forward,
-// wenn main ausgecheckt ist, keine getrackten Dateien geaendert sind, keine offene Szene
-// ungespeichert ist und weder Play-Mode noch Kompilierung laufen. Danach laedt Unity die Assets neu.
+// wenn main ausgecheckt ist, keine offene Szene ungespeichert ist und weder Play-Mode noch
+// Kompilierung laufen. Lokal geaenderte Dateien bleiben erhalten; muesste Git eine davon
+// ueberschreiben, bricht es ab. Danach laedt Unity die Assets neu.
 // Testbank ("Mining Game 2") und Worktrees bleiben unberuehrt.
 [InitializeOnLoad]
 public static class MainAutoUpdate
@@ -86,9 +87,11 @@ public static class MainAutoUpdate
         if (behind == "0") return manual ? "bereits aktuell" : null;
         Git(root, "rev-list --count origin/main..HEAD", out string ahead);
         if (ahead != "0") return "lokales main hat eigene Commits (" + ahead + "), kein Fast-Forward";
-        Git(root, "status --porcelain --untracked-files=no", out string changes);
-        if (changes.Length > 0) return "geänderte Dateien im Ordner, nichts übernommen:\n" + changes;
-        return Git(root, "merge --ff-only -q origin/main", out string merge) == 0 ? "updated" : "Fast-Forward fehlgeschlagen: " + merge;
+        // Lokale Änderungen blockieren nicht: Git bricht den Fast-Forward selbst ab, bevor es eine geänderte Datei überschreiben müsste.
+        if (Git(root, "merge --ff-only -q origin/main", out string merge) == 0) return "updated";
+        return merge.Contains("would be overwritten") || merge.Contains("untracked working tree files")
+            ? "neue Commits ändern Dateien, die hier lokal geändert sind, nichts übernommen:\n" + merge
+            : "Fast-Forward fehlgeschlagen: " + merge;
     }
 
     static void Skip(string reason)
@@ -102,6 +105,7 @@ public static class MainAutoUpdate
     {
         var psi = new ProcessStartInfo("git", "-C \"" + root + "\" " + args)
         { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
+        psi.Environment["LC_ALL"] = "C"; // englische Git-Meldungen, damit Pull() sie erkennt
         using var process = Process.Start(psi);
         var error = process.StandardError.ReadToEndAsync();
         output = process.StandardOutput.ReadToEnd().Trim();
