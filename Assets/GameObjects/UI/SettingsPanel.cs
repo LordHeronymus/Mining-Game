@@ -183,7 +183,7 @@ public sealed class SettingsPanel : MonoBehaviour
     {
         const float rowSpacing = 100, rowHeight = 68;
         float navigationCenterY = (114 + 700) * .5f;
-        float firstRowY = navigationCenterY + audioPage.GetComponent<RectTransform>().anchoredPosition.y - 1.5f * rowSpacing - rowHeight * .5f;
+        float firstRowY = navigationCenterY + audioPage.GetComponent<RectTransform>().anchoredPosition.y - 2f * rowSpacing - rowHeight * .5f;
         AddSlider(audioPage.transform, "Gesamtlautstärke", firstRowY, () => PlayerSettings.Master,
             GpsSettings.PreviewMasterVolume, 0f, 1f, true, SaveMasterVolume);
         AddSlider(audioPage.transform, "Musik", firstRowY + rowSpacing, () => PlayerSettings.Music,
@@ -192,6 +192,8 @@ public sealed class SettingsPanel : MonoBehaviour
             value => PlayerSettings.Ambience = value, 0f, 1f, true);
         AddSlider(audioPage.transform, "Effekte", firstRowY + 3 * rowSpacing, () => PlayerSettings.Sfx,
             value => PlayerSettings.Sfx = value, 0f, 1f, true);
+        AddSlider(audioPage.transform, "Stimme", firstRowY + 4 * rowSpacing, () => PlayerSettings.Voice,
+            value => PlayerSettings.Voice = value, 0f, 1f, true);
     }
 
     void BuildDisplay()
@@ -319,6 +321,7 @@ public sealed class SettingsPanel : MonoBehaviour
             "Gesamtlautstärke" => PlayerSettings.Master,
             "Musik" => PlayerSettings.Music,
             "Ambiente" => PlayerSettings.Ambience,
+            "Stimme" => PlayerSettings.Voice,
             _ => PlayerSettings.Sfx
         };
         foreach (var slider in displayPage.GetComponentsInChildren<Slider>(true))

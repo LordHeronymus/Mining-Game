@@ -5,6 +5,11 @@ public class EnergyMonolyth : MonoBehaviour
 {
     void Awake() => GpsSettings.ApplyComponent(this);
 
+    public static event System.Action<float, float, float> Recharged; // (before, after, max)
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => Recharged = null;
+
     [SerializeField] CanvasGroup panel;
     [SerializeField] EnergyManager energyManager;
     [SerializeField] StatsManager stats;
@@ -52,6 +57,7 @@ public class EnergyMonolyth : MonoBehaviour
         }
         else AudioManager.Instance.Play(SoundType.Recharge);
 
+        float before = energyManager.energy;
         float cost = energyManager.delta * rechargeCost;
 
         if (stats.HasInfiniteMoney || cost <= stats.Money)
@@ -66,5 +72,6 @@ public class EnergyMonolyth : MonoBehaviour
             stats.AddMoney(-availableMoney);
             energyManager.energy = Mathf.Min(stats.MaxEnergy, energyManager.energy + affordableEnergy);
         }
+        if (energyManager.energy > before + 0.001f) Recharged?.Invoke(before, energyManager.energy, stats.MaxEnergy);
     }
 }

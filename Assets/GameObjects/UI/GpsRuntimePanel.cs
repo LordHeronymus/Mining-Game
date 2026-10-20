@@ -395,12 +395,26 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
             foreach (var artifact in GpsSchema.Choices(typeof(ArtifactTile)))
             { var tile = (ArtifactTile)artifact.asset; ActionRow(tile.displayName, () => { Close(); ArtifactDiscoveryView.ShowArtifact(tile); }); }
         }
+        if (Header("test-voice", "Sprachausgabe", 0))
+        {
+            foreach (var (e, label) in VoiceTests) { var voice = e; ActionRow(label, () => VoiceLinePlayer.PlayTest(voice)); }
+            ActionRow("Stimme stoppen", VoiceLinePlayer.StopSpeaking);
+        }
 #if UNITY_EDITOR
         if (Header("test-editor", "Editor", 0))
             ActionRow(PerformanceMonitorControl.IsEnabled ? "Performanceaufzeichnung stoppen" : "Performance aufzeichnen",
                 () => { PerformanceMonitorControl.SetEnabled(!PerformanceMonitorControl.IsEnabled); BuildPage(); });
 #endif
     }
+    static readonly (VoiceLineEvent e, string label)[] VoiceTests =
+    {
+        (VoiceLineEvent.EnergyLow, "Energie niedrig"), (VoiceLineEvent.EnergyCritical, "Energie kritisch"), (VoiceLineEvent.EnergyRefilled, "Energie aufgefüllt"),
+        (VoiceLineEvent.CarryStage1, "Traglast Stufe 1"), (VoiceLineEvent.CarryStage2, "Traglast Stufe 2"), (VoiceLineEvent.FallSmall, "Kleiner Sturz"),
+        (VoiceLineEvent.FallBig, "Grosser Sturz"), (VoiceLineEvent.OreSold, "Erz verkauft"), (VoiceLineEvent.BlueprintBought, "Bauplan gekauft"),
+        (VoiceLineEvent.CraftedAxe, "Axt hergestellt"), (VoiceLineEvent.CraftedScythe, "Sense hergestellt"), (VoiceLineEvent.CraftedMedkit, "Medkit hergestellt"),
+        (VoiceLineEvent.CraftedTorches, "Fackeln hergestellt"), (VoiceLineEvent.CraftedPickaxe, "Spitzhacke hergestellt"), (VoiceLineEvent.UpgradeEnergy, "Energie-Upgrade"),
+        (VoiceLineEvent.UpgradeCarry, "Traglast-Upgrade"), (VoiceLineEvent.NewWorld, "Neue Welt"), (VoiceLineEvent.SaveLoaded, "Spielstand geladen"),
+    };
     void ActionRow(string label, Action action) { Button(content, label, new Vector2(24, -rowY), new Vector2(720, 32), action); rowY += 40; }
     void GenerateMap()
     {

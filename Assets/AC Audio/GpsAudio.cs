@@ -10,7 +10,7 @@ public static class GpsAudio
     sealed class Sample { public AudioClip clip; public float volumeRandom, pitchRandom; }
     static ConditionalWeakTable<AudioSource, Sample> samples = new();
     static AudioClipTuningSettingsAsset settings;
-    public static readonly string[] Categories = { "Homescreen", "Ladebildschirm", "Abbau", "Geröll", "Bauen und Pflanzen", "Spieler und Gesundheit", "Shop und UI", "Tiere", "Umgebung", "Untergrund-Details", "Altar", "Weitere Clips", "Archiv" };
+    public static readonly string[] Categories = { "Homescreen", "Ladebildschirm", "Abbau", "Geröll", "Bauen und Pflanzen", "Spieler und Gesundheit", "Shop und UI", "Tiere", "Umgebung", "Untergrund-Details", "Altar", "Weitere Clips", "Stimme", "Archiv" };
     public static readonly string[] Fields = { "volume", "volumeSpread", "pitch", "pitchSpread" };
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void Reset() { settings=null; samples=new(); }
