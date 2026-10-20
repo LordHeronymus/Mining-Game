@@ -23,7 +23,7 @@ public class ShopBuilding : MonoBehaviour
         int layer = legacyCanvas ? legacyCanvas.gameObject.layer : gameObject.layer;
         if (legacyCanvas) legacyCanvas.gameObject.SetActive(false);
         shopPanel = FindFirstObjectByType<ShopPanel>(FindObjectsInactive.Include);
-        var sprite = GetComponentInChildren<SpriteRenderer>(true);
+        var sprite = EntrySign.MainSprite(transform);
         if (sprite) entrySign = EntrySign.Create(transform, sprite, "Shop öffnen",
             () => { if (visitors.Count > 0 && !GameplayInputBlocker.IsBlocked && legacyButton) legacyButton.onClick.Invoke(); }, layer);
     }

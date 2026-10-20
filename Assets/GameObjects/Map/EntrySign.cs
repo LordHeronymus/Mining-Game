@@ -7,7 +7,7 @@ using UnityEngine.UI;
 // The width follows the caption so the text never runs into the brass end caps.
 public sealed class EntrySign : MonoBehaviour
 {
-    const float FadeDuration = .12f, Height = 92, FontSize = 40, CapMargin = 58, WorldScale = .01f;
+    const float FadeDuration = .12f, Height = 92, FontSize = 40, CapMargin = 86, WorldScale = .01f;
     static readonly Color Cream = new Color32(255, 245, 229, 255);
 
     public bool Visible { get; set; }
@@ -17,6 +17,17 @@ public sealed class EntrySign : MonoBehaviour
     RectTransform rect;
     Material fontMaterial;
     float baseY;
+
+    // The building artwork is the largest sprite; smaller ones are signboards, lanterns or crystals.
+    public static SpriteRenderer MainSprite(Transform building)
+    {
+        SpriteRenderer best = null;
+        foreach (var renderer in building.GetComponentsInChildren<SpriteRenderer>(true))
+            if (!best || Area(renderer) > Area(best)) best = renderer;
+        return best;
+    }
+
+    static float Area(SpriteRenderer renderer) => renderer.bounds.size.x * renderer.bounds.size.y;
 
     public static EntrySign Create(Transform building, SpriteRenderer sprite, string caption, UnityAction onClick, int layer)
     {

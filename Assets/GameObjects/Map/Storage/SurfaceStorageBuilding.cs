@@ -71,7 +71,7 @@ public sealed class SurfaceStorageBuilding : MonoBehaviour
     void BuildEntryButton()
     {
         if (entrySign) return;
-        var sprite = GetComponentInChildren<SpriteRenderer>();
+        var sprite = EntrySign.MainSprite(transform);
         if (!sprite) return;
         var shop = FindFirstObjectByType<ShopBuilding>();
         var shopCanvas = shop ? shop.GetComponentInChildren<Canvas>(true) : null;

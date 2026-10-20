@@ -18,7 +18,7 @@ public sealed class WorkbenchBuilding : MonoBehaviour
         var legacyCanvas = entryButton ? entryButton.GetComponentInParent<Canvas>(true) : null;
         int layer = legacyCanvas ? legacyCanvas.gameObject.layer : gameObject.layer;
         if (legacyCanvas) legacyCanvas.gameObject.SetActive(false);
-        var sprite = GetComponentInChildren<SpriteRenderer>(true);
+        var sprite = EntrySign.MainSprite(transform);
         if (sprite) entrySign = EntrySign.Create(transform, sprite, "Werkbank öffnen", Open, layer);
     }
 

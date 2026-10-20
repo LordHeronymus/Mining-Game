@@ -497,10 +497,10 @@ public sealed class StoragePanel : MonoBehaviour
 
         Hint(Button("Deposit Ores", layout, "Erze einlagern", 204, 745, 282, 56, DepositOres), "Legt alle Erze aus dem Rucksack ins Lager");
         Hint(Button("Deposit All", layout, "Alles einlagern", 506, 745, 282, 56, DepositAll), "Legt alles ins Lager – Gegenstände in der Schnellleiste bleiben im Rucksack");
-        var value = Panel("Value", layout, 860, 745, 300, 56, rowSprite);
-        valueText = Label(value.transform, "", 20, 0, 260, 56, 26, TextAlignmentOptions.Midline);
+        var value = Panel("Value", layout, 860, 745, 282, 56, rowSprite);
+        valueText = Label(value.transform, "", 20, 0, 242, 56, 26, TextAlignmentOptions.Midline);
         valueText.richText = true;
-        Hint(Button("Withdraw All", layout, "Alles entnehmen", 1180, 745, 264, 56, WithdrawAll), "Nimmt so viel aus dem Lager, wie der Rucksack tragen kann");
+        Hint(Button("Withdraw All", layout, "Alles entnehmen", 1162, 745, 282, 56, WithdrawAll), "Nimmt so viel aus dem Lager, wie der Rucksack tragen kann");
         hintText = Label(layout, ControlsHint, 176, 810, 1296, 32, 21, TextAlignmentOptions.Midline);
         hintText.color = Muted;
         FitLayout();

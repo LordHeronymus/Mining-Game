@@ -116,6 +116,10 @@ public sealed class StorageUiProbe : MonoBehaviour
         var storageFrame = (RectTransform)layout.Find("Storage Frame");
         Check(backpackFrame.anchoredPosition.x < storageFrame.anchoredPosition.x, "Backpack on the left, storage on the right");
         Check(layout.Find("Background").GetComponent<Image>().sprite.texture.name == "BuyBackground-v2", "Shop background artwork");
+        yield return null;
+        var bottom = new[] { "Deposit Ores", "Deposit All", "Withdraw All" }.Select(n => layout.Find(n).GetComponentInChildren<TextMeshProUGUI>()).ToArray();
+        Check(bottom.All(x => Mathf.Abs(x.fontSize - bottom[0].fontSize) < .01f) && ((RectTransform)layout.Find("Value")).rect.height == ((RectTransform)layout.Find("Withdraw All")).rect.height,
+            "Bottom buttons share size and font size");
         var slotIcon = panel.BackpackSlots[0];
         Check(Vector2.Distance(slotIcon.iconCenter, new Vector2(slotIcon.rect.rect.width / 2, -slotIcon.rect.rect.height / 2)) < .5f &&
             Mathf.Abs(slotIcon.iconRect.rect.width / slotIcon.iconRect.rect.height - 134f / 106f) < .01f, "Storage icons are centred like inventory icons");
