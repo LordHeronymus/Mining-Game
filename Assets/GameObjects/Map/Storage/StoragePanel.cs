@@ -64,6 +64,8 @@ public sealed class StoragePanel : MonoBehaviour
     string hoverHint;
     float weightWarning;
     bool dirty;
+    readonly List<TextMeshProUGUI> actionLabels = new();
+    int actionLabelFrames;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatic() => Instance = null;
@@ -132,6 +134,7 @@ public sealed class StoragePanel : MonoBehaviour
     {
         if (!IsOpen) return;
         if (dirty) Refresh();
+        MatchActionLabels();
         if (weightText) weightText.color = weightWarning > 0
             ? Color.Lerp(WeightColor(), Color.red, Mathf.PingPong(weightWarning * 6, 1))
             : WeightColor();
@@ -501,9 +504,21 @@ public sealed class StoragePanel : MonoBehaviour
         valueText = Label(value.transform, "", 20, 0, 242, 56, 26, TextAlignmentOptions.Midline);
         valueText.richText = true;
         Hint(Button("Withdraw All", layout, "Alles entnehmen", 1162, 745, 282, 56, WithdrawAll), "Nimmt so viel aus dem Lager, wie der Rucksack tragen kann");
+        foreach (var name in new[] { "Deposit Ores", "Deposit All", "Withdraw All" })
+            actionLabels.Add(layout.Find(name).GetComponentInChildren<TextMeshProUGUI>());
         hintText = Label(layout, ControlsHint, 176, 810, 1296, 32, 21, TextAlignmentOptions.Midline);
         hintText.color = Muted;
         FitLayout();
+    }
+
+    // GoldButtonFeedback auto-sizes each caption to its own length; once that has run, all action buttons
+    // take the smallest size so the bottom row reads as one set.
+    void MatchActionLabels()
+    {
+        if (actionLabelFrames > 2 || ++actionLabelFrames <= 2) return;
+        foreach (var label in actionLabels) label.ForceMeshUpdate();
+        float size = actionLabels.Min(label => label.fontSize);
+        foreach (var label in actionLabels) { label.enableAutoSizing = false; label.fontSize = size; }
     }
 
     RectTransform Fill(RectTransform bar, string name, Color color)
