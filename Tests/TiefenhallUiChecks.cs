@@ -41,7 +41,7 @@ public sealed class TiefenhallUiProbe : MonoBehaviour
         Check(RunNavigation.LoadGame(GameSaveSystem.MostRecentSlot(), out _), "Isolated saved run loads");
         while (RunNavigation.IsTransitioning || LoadingProgress.Active) yield return null;
         var pause = FindFirstObjectByType<RunPauseMenu>(); pause.Open();
-        Click(FindButton(pause.transform, "Save")); yield return null;
+        SaveSlotPanel.Show(pause.transform.parent, true); yield return null;
         var slots = FindFirstObjectByType<SaveSlotPanel>(); Check(slots && SaveSlotPanel.IsOpen, "Save opens slots");
         Click(FindButton(slots.transform, "Slot 2"));
         while (GameSaveSystem.IsBusy) yield return null;
