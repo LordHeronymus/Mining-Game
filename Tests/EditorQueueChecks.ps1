@@ -128,23 +128,50 @@ Reset
 Q @('join', '-User') | Out-Null
 Check 'Benutzer in leerer Liste oben' (((Ids) -join ',') -eq 'benutzer')
 
-# 11) Claude-Code-Hook setzt das Lebenszeichen ueber die Sitzungs-ID (join merkt sie aus CLAUDE_CODE_SESSION_ID).
+# 11) Claude-Code-Hook: nur Unity-Aufrufe zaehlen; ein laufender Aufruf schuetzt, Code-Arbeit nicht.
 Reset
-Q @('join', '-Id', 'a', '-Who', 'Chat A') | Out-Null
 $env:CLAUDE_CODE_SESSION_ID = 'sess-test-1'
 Q @('join', '-Id', 'c', '-Who', 'Chat C') | Out-Null
 Remove-Item Env:CLAUDE_CODE_SESSION_ID
-Start-Sleep -Seconds 4
+Q @('join', '-Id', 'w', '-Who', 'Chat W') | Out-Null
 $bash = Join-Path $env:ProgramFiles 'Git\bin\bash.exe'
-$env:EDITOR_QUEUE_DIR = $dir; $env:EDITOR_QUEUE_HOOK_SECONDS = '0'
-'{"session_id":"sess-test-1","hook_event_name":"PostToolUse"}' | & $bash (Join-Path $root 'Tools/editor-queue-hook.sh')
-'{"session_id":"unbekannt"}' | & $bash (Join-Path $root 'Tools/editor-queue-hook.sh')
-Remove-Item Env:EDITOR_QUEUE_DIR, Env:EDITOR_QUEUE_HOOK_SECONDS
+$hook = Join-Path $root 'Tools/editor-queue-hook.sh'
+function Hook([string]$json) { $env:EDITOR_QUEUE_DIR = $dir; $json | & $bash $hook; Remove-Item Env:EDITOR_QUEUE_DIR }
+function Busy { (Get-Content $queueFile -Raw | ConvertFrom-Json).entries | Where-Object { $_.id -eq 'c' } | ForEach-Object { $_.busySince } }
+Hook '{"session_id":"sess-test-1","hook_event_name":"PreToolUse","tool_name":"Edit","tool_input":{"file_path":"x.cs"}}'
+Hook '{"session_id":"sess-test-1","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"git status"}}'
+Check 'Hook ignoriert Nicht-Unity-Aufrufe' (-not (Busy))
+Hook '{"session_id":"sess-test-1","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"unity command --project-path X run_script --file Tests/A.cs"}}'
+Check 'Hook: Unity-Befehl markiert laufenden Aufruf' ([bool](Busy))
+Start-Sleep -Seconds 4
+Q @('heartbeat', '-Id', 'w') | Out-Null
+Q @('status', '-StaleMinutes', '0.05') | Out-Null
+Check 'laufender Unity-Aufruf schuetzt Inhaber' (((Ids) -join ',') -eq 'c,w') "ids=$((Ids) -join ',')"
+Hook '{"session_id":"sess-test-1","hook_event_name":"PostToolUse","tool_name":"Bash","tool_input":{"command":"unity command --project-path X run_script --file Tests/A.cs"}}'
+Check 'Hook: Ende des Aufrufs hebt Schutz auf' (-not (Busy))
+Hook '{"session_id":"sess-test-1","hook_event_name":"PreToolUse","tool_name":"mcp__unity__editor_play","tool_input":{}}'
+Check 'Hook: Unity-MCP-Werkzeug zaehlt' ([bool](Busy))
+Hook '{"session_id":"sess-test-1","hook_event_name":"PostToolUse","tool_name":"mcp__unity__editor_play","tool_input":{}}'
+Start-Sleep -Seconds 4
+Q @('heartbeat', '-Id', 'w') | Out-Null
+Hook '{"session_id":"sess-test-1","hook_event_name":"PostToolUse","tool_name":"Edit","tool_input":{}}'
+Q @('status', '-StaleMinutes', '0.05') | Out-Null
+Check 'Code aendern gibt den Editor frei (Inhaber verdraengt)' (((Ids) -join ',') -eq 'w') "ids=$((Ids) -join ',')"
+$r = Q @('heartbeat', '-Session', 'unbekannt')
+Check 'heartbeat per unbekannter Sitzung -> 3' ($r.code -eq 3)
+
+# 11b) Der Benutzer als Inhaber hat die laengere Frist (Standard 10 min), Chats die kurze.
+Reset
+Q @('join', '-User') | Out-Null
+Q @('join', '-Id', 'a', '-Who', 'Chat A') | Out-Null
+Start-Sleep -Seconds 4
 Q @('heartbeat', '-Id', 'a') | Out-Null
-$r = Q @('status', '-StaleMinutes', '0.05')
-Check 'Hook haelt wartenden Chat am Leben' (((Ids) -join ',') -eq 'a,c') "ids=$((Ids) -join ',')"
-$r = Q @('heartbeat', '-Session', 'sess-test-1')
-Check 'heartbeat per -Session' ($r.code -eq 0 -and $r.out -match 'Position 2') $r.out
+Q @('status', '-StaleMinutes', '0.05') | Out-Null
+Check 'Benutzer als Inhaber bekommt laengere Frist' (((Ids) -join ',') -eq 'benutzer,a') "ids=$((Ids) -join ',')"
+Q @('status', '-StaleMinutes', '0.05', '-UserStaleMinutes', '0.05') | Out-Null
+Check 'Benutzer-Frist einstellbar' (((Ids) -join ',') -eq 'a') "ids=$((Ids) -join ',')"
+$j = (Q @('status', '-Json')).out | ConvertFrom-Json
+Check 'Standardfristen 2 / 10 min' (($j.staleMinutes -eq 2) -and ($j.userStaleMinutes -eq 10)) "$($j.staleMinutes)/$($j.userStaleMinutes)"
 
 # 12) status -Json liefert maschinenlesbare Daten fuer den lokalen Dienst / PrivOrg.
 Reset

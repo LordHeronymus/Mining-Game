@@ -21,7 +21,7 @@ Claude-Worktrees unter `Mining Game/.claude/worktrees/…` zählen zum Editor vo
 Tools/editor-queue.sh join -Who "Claude Code: Eisen-Kacheln" -Session "<Sitzungs-ID>" -Purpose "Play-Tests"
 Tools/editor-queue.sh wait -Id <id> -TimeoutMinutes 9     # blockiert, bis man oben ist
 #   ... Editor nutzen ...
-Tools/editor-queue.sh heartbeat -Id <id>                  # nur ohne Claude-Code-Hook (Codex, Cowork): mind. alle 8 min
+Tools/editor-queue.sh heartbeat -Id <id>                  # nur ohne Claude-Code-Hook (Codex, Cowork): während des Tests jede Minute
 Tools/editor-queue.sh leave -Id <id>                      # sofort danach
 ```
 
@@ -51,9 +51,9 @@ Tools/editor-queue.sh leave -Project "Mining Game 2" -Id <id>
 - Die Unity-Werkzeuge (MCP) eines Chats zeigen auf den Editor aus der nicht versionierten `.mcp.json` seines Ordners (heute in `Mining Game` noch auf den Editor des Benutzers). Deshalb vor MCP-Nutzung `editor_status` prüfen (`projectPath` muss `Mining Game 2` sein), sonst `unity command --project-path "…Mining Game 2"` verwenden.
 - Zustand der Testbank: `Git Repos/EditorQueue/Mining Game 2.bench.json`.
 
-## Automatisches Lebenszeichen (Claude Code)
+## Lebenszeichen: nur echte Editor-Nutzung zählt
 
-`join` merkt sich die Claude-Code-Sitzung (`CLAUDE_CODE_SESSION_ID`). Der Hook in `.claude/settings.json` ruft nach jedem Werkzeugaufruf und jeder Benutzernachricht `Tools/editor-queue-hook.sh` auf: Steht die Sitzung in einer Warteschlange, setzt er höchstens einmal pro Minute ein Lebenszeichen (`heartbeat -Session`), sonst endet er sofort (etwa 0,3 s). Ein Chat, der 15 Minuten testet, bleibt so von selbst am Leben; stürzt er ab oder vergisst er `leave`, hören die Lebenszeichen auf und nach 10 ruhigen Minuten rückt der Nächste nach. Codex und Cowork haben diesen Hook nicht und rufen `heartbeat` selbst auf.
+Der Editor ist **nur fürs Testen** reserviert, nicht fürs Programmieren. Lebenszeichen entstehen deshalb nur durch tatsächliche Editor-Nutzung. `join` merkt sich die Claude-Code-Sitzung (`CLAUDE_CODE_SESSION_ID`). Der Hook in `.claude/settings.json` (PreToolUse/PostToolUse) ruft `Tools/editor-queue-hook.sh` nur bei Unity-Aufrufen auf (Unity-MCP-Werkzeuge, `unity command …`, `Tools/editor-bench`): vorher `heartbeat -Busy` (ein Aufruf läuft, der Inhaber wird bis 15 min nicht verdrängt, auch bei langen `run_script`), danach `heartbeat -Idle`. Lesen, Code schreiben oder Suchen setzen kein Lebenszeichen. Wer zwischen zwei Tests Code ändert, meldet sich mit `leave` ab und für den nächsten Test neu an; wer es vergisst, wird nach 2 Minuten ohne Editor-Nutzung verdrängt. Codex und Cowork haben diesen Hook nicht und rufen während eines Tests mindestens jede Minute `heartbeat` auf (lange Aufrufe mit `-Busy`/`-Idle` einrahmen).
 
 ## Benutzer
 
@@ -67,7 +67,7 @@ Tools/editor-queue.sh join -User -Purpose "selbst testen"
 Tools/editor-queue.sh leave -User
 ```
 
-Der Benutzereintrag hat die feste Id `benutzer`. Solange er wartet, wird er nie entfernt. Ist er oben, hält ihn jede Editor-Aktivität am Leben (Play-Mode, Auswahl, Änderungen, Speichern); erst nach 10 Minuten ohne Lebenszeichen **und** ohne Editor-Aktivität rückt der Nächste nach.
+Der Benutzereintrag hat die feste Id `benutzer`. Solange er wartet, wird er nie entfernt. Ist er oben, hält ihn jede Editor-Aktivität am Leben (Play-Mode, Auswahl, Änderungen, Speichern); erst nach 10 Minuten (`-UserStaleMinutes`, länger als bei Chats) ohne Lebenszeichen **und** ohne Editor-Aktivität rückt der Nächste nach.
 
 ## PrivOrg-Modul und lokaler Dienst
 
@@ -84,12 +84,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File Tools/editor-queue-server.ps
 
 ## Verdrängung verwaister Belegungen
 
-Bei jedem Aufruf (praktisch: durch wartende `wait`-Befehle) wird geprüft:
+Bei jedem Aufruf (praktisch: durch wartende `wait`-Befehle und alle 5 s durch den lokalen Dienst, solange PrivOrg das Modul zeigt) wird geprüft:
 
-- **Inhaber (oben):** verdrängt, wenn sein letztes Lebenszeichen und sein Nachrücken älter als 10 Minuten sind (`-StaleMinutes`) **und** der Editor objektiv ungenutzt ist. Wer frisch nach oben rückt, hat also immer volle 10 Minuten.
-- **Editor gilt als genutzt** (nie verdrängen), wenn das Aktivitätssignal frisch ist (≤ 5 min alt; im Hintergrund schreibt Unity gedrosselt nur etwa alle 30–90 s) und Play-Mode läuft, kompiliert wird oder die letzte Aktivität jünger als 10 Minuten ist; oder wenn der Editor-Prozess läuft, aber seit höchstens 30 Minuten kein Signal mehr schreibt (blockiert/beschäftigt).
+- **Inhaber (oben):** verdrängt, wenn sein letztes Lebenszeichen und sein Nachrücken älter als 2 Minuten sind (`-StaleMinutes`, Benutzer 10 Minuten) **und** der Editor objektiv ungenutzt ist **und** kein Unity-Aufruf läuft (`heartbeat -Busy`, höchstens 15 min). Wer frisch nach oben rückt, hat also immer volle 2 Minuten zum Loslegen.
+- **Editor gilt als genutzt** (nie verdrängen), wenn das Aktivitätssignal frisch ist (≤ 5 min alt; im Hintergrund schreibt Unity gedrosselt nur etwa alle 30–90 s) und Play-Mode läuft, kompiliert wird oder die letzte Aktivität jünger als die Frist (2 bzw. 10 Minuten) ist; oder wenn der Editor-Prozess läuft, aber seit höchstens 30 Minuten kein Signal mehr schreibt (blockiert/beschäftigt).
 - **Editor gilt als ungenutzt**, wenn er geschlossen ist, länger ruhig war oder kein Aktivitätssignal hat (z. B. Branch ohne `EditorQueueActivity.cs`); dann entscheidet allein das Lebenszeichen.
-- **Wartende Chats** ohne Lebenszeichen seit 10 Minuten fallen weg (ihr `wait` setzt es laufend).
+- **Wartende Chats** ohne Lebenszeichen seit 2 Minuten fallen weg (ihr `wait` setzt es laufend).
 
 Jede Verdrängung steht mit Grund in `<Ordner>.log`.
 
