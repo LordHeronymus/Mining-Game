@@ -9,10 +9,13 @@ public sealed class ItemDragGhost : MonoBehaviour
 {
     public const float PopScale = 1.28f, CarryScale = 1.12f, PopSeconds = .08f, SettleSeconds = .16f;
     const float ShadowDistance = 5f;
+    // A slow frame (e.g. loading or a screenshot) advances the pop by at most this much, so it is never skipped.
+    const float MaxStep = 1f / 30f;
     static readonly Color ShadowColor = new Color(0f, 0f, 0f, .45f);
 
     Vector3 baseScale, grabOffset, pointer;
-    float startedAt;
+    float elapsed;
+    int beganFrame;
 
     // Current size factor of the pop (1 at the start, CarryScale once settled).
     public float Factor { get; private set; } = 1f;
@@ -47,7 +50,8 @@ public sealed class ItemDragGhost : MonoBehaviour
         state.baseScale = rect.localScale;
         state.grabOffset = offset;
         state.pointer = from.position - offset;
-        state.startedAt = Time.unscaledTime;
+        state.elapsed = 0f;
+        state.beganFrame = Time.frameCount;
         state.Apply();
         return offset;
     }
@@ -73,12 +77,16 @@ public sealed class ItemDragGhost : MonoBehaviour
         return Mathf.Lerp(PopScale, CarryScale, Mathf.SmoothStep(0f, 1f, settle));
     }
 
-    void LateUpdate() => Apply();
+    void LateUpdate()
+    {
+        if (Time.frameCount != beganFrame) elapsed += Mathf.Min(Time.unscaledDeltaTime, MaxStep);
+        Apply();
+    }
 
     // Scales around the grab point, so the item stays under the cursor where it was picked up.
     void Apply()
     {
-        Factor = Lift(Time.unscaledTime - startedAt);
+        Factor = Lift(elapsed);
         var rect = (RectTransform)transform;
         rect.localScale = new Vector3(baseScale.x * Factor, baseScale.y * Factor, 1f);
         rect.position = pointer + grabOffset * Factor;

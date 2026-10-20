@@ -299,7 +299,7 @@ public sealed class StoragePanel : MonoBehaviour
         }
         dragGhost.sprite = slot.item.icon;
         dragGrabOffset = ItemDragGhost.Begin(dragGhost, slot.icon, data.position, EventCamera);
-        dragGhost.color = new Color(1, 1, 1, .85f);
+        dragGhost.color = Color.white;
         dragGhost.transform.SetAsLastSibling();
         dragGhost.gameObject.SetActive(true);
         Drag(data);

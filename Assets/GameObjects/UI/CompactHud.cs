@@ -336,7 +336,7 @@ public sealed class CompactHud : MonoBehaviour
         dragIcon.sprite = slots[index - 1].icon;
         dragIcon.transform.SetParent(hotbar.parent, false);
         dragGrabOffset = ItemDragGhost.Begin(dragIcon, icons[index - 1], screenPosition, HotbarEventCamera());
-        dragIcon.color = new Color(1f, 1f, 1f, .9f);
+        dragIcon.color = Color.white;
         dragIcon.gameObject.SetActive(true);
         dragIcon.transform.SetAsLastSibling();
         MoveDraggedIcon(screenPosition);

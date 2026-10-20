@@ -123,7 +123,7 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
             Compare("Storage", slot.item, slot.icon, storageGhost, grab, new Vector2(190, 10));
             if (pictured.Contains(slot.item))
             {
-                yield return Pop("Storage", slot.item, storageGhost);
+                yield return Pop(storageGhost); PopChecks("Storage", slot.item, storageGhost);
                 Compare("Storage", slot.item, slot.icon, storageGhost, grab, new Vector2(190, 10));
                 yield return Shot("Storage", slot.item, slot.icon.rectTransform, storageGhost.rectTransform);
             }
@@ -154,7 +154,7 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
             Compare("Inventory", item, icon, ghost, position, new Vector2(200, -12));
             if (pictured.Contains(item))
             {
-                yield return Pop("Inventory", item, ghost);
+                yield return Pop(ghost); PopChecks("Inventory", item, ghost);
                 Compare("Inventory", item, icon, ghost, position, new Vector2(200, -12));
                 yield return Shot("Inventory", item, icon.rectTransform, ghost.rectTransform);
             }
@@ -183,7 +183,7 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
                 Compare("Hotbar", hotbarItems[i], icon, ghost, position, new Vector2(0, 230));
                 if (pictured.Contains(hotbarItems[i]))
                 {
-                    yield return Pop("Hotbar", hotbarItems[i], ghost);
+                    yield return Pop(ghost); PopChecks("Hotbar", hotbarItems[i], ghost);
                     Compare("Hotbar", hotbarItems[i], icon, ghost, position, new Vector2(0, 230));
                     yield return Shot("Hotbar", hotbarItems[i], icon.rectTransform, ghost.rectTransform);
                 }
@@ -222,14 +222,22 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
     }
 
     // Drag start pops: the item grows quickly past the carry size, then settles at CarryScale.
-    IEnumerator Pop(string ui, ItemSO item, Image ghost)
+    // Nested coroutines bypass the error wrapper in Start, so Pop only measures and PopChecks throws.
+    float popPeak;
+    IEnumerator Pop(Image ghost)
     {
         var state = ghost.GetComponent<ItemDragGhost>();
-        float end = Time.realtimeSinceStartup + .45f, peak = 0f;
-        while (Time.realtimeSinceStartup < end) { yield return null; peak = Mathf.Max(peak, state.Factor); }
-        Check(peak > ItemDragGhost.CarryScale + .05f, $"{ui}: {item.displayName} pops on drag start (peak {peak:0.000})");
-        Check(Mathf.Abs(state.Factor - ItemDragGhost.CarryScale) < .001f, $"{ui}: {item.displayName} settles at the carry size ({state.Factor:0.000})");
-        Log($"{ui} {item.displayName}: peak {peak:0.000}, carried at {state.Factor:0.000}");
+        float end = Time.realtimeSinceStartup + .6f;
+        popPeak = 0f;
+        while (Time.realtimeSinceStartup < end) { yield return null; popPeak = Mathf.Max(popPeak, state.Factor); }
+    }
+
+    void PopChecks(string ui, ItemSO item, Image ghost)
+    {
+        float factor = ghost.GetComponent<ItemDragGhost>().Factor;
+        Check(popPeak > ItemDragGhost.CarryScale + .05f, $"{ui}: {item.displayName} pops on drag start (peak {popPeak:0.000})");
+        Check(Mathf.Abs(factor - ItemDragGhost.CarryScale) < .001f, $"{ui}: {item.displayName} settles at the carry size ({factor:0.000})");
+        Log($"{ui} {item.displayName}: peak {popPeak:0.000}, carried at {factor:0.000}");
     }
 
     IEnumerator Shot(string ui, ItemSO item, RectTransform slot, RectTransform ghost)
