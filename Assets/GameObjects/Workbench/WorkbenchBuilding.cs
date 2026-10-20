@@ -4,15 +4,22 @@ using UnityEngine;
 [RequireComponent(typeof(BoxCollider2D))]
 public sealed class WorkbenchBuilding : MonoBehaviour
 {
+    // Legacy "Enter" sign from the prefab; replaced at runtime by the shared gold EntrySign.
     [SerializeField] CanvasGroup entryButton;
-    [SerializeField, Min(0)] float fadeDuration = .1f;
     readonly HashSet<Collider2D> visitors = new();
     WorkbenchPanel panel;
+    EntrySign entrySign;
+
+    public EntrySign EntrySign => entrySign;
 
     void Awake()
     {
         panel = FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include);
-        HideButton();
+        var legacyCanvas = entryButton ? entryButton.GetComponentInParent<Canvas>(true) : null;
+        int layer = legacyCanvas ? legacyCanvas.gameObject.layer : gameObject.layer;
+        if (legacyCanvas) legacyCanvas.gameObject.SetActive(false);
+        var sprite = GetComponentInChildren<SpriteRenderer>(true);
+        if (sprite) entrySign = EntrySign.Create(transform, sprite, "Werkbank öffnen", Open, layer);
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -25,11 +32,7 @@ public sealed class WorkbenchBuilding : MonoBehaviour
     void LateUpdate()
     {
         visitors.RemoveWhere(c => !c || !c.enabled || !c.gameObject.activeInHierarchy);
-        if (!entryButton) return;
-        bool visible = visitors.Count > 0 && panel && !GameplayInputBlocker.IsBlocked;
-        entryButton.alpha = Mathf.MoveTowards(entryButton.alpha, visible ? 1 : 0,
-            fadeDuration > 0 ? Time.unscaledDeltaTime / fadeDuration : 1);
-        entryButton.interactable = entryButton.blocksRaycasts = visible;
+        if (entrySign) entrySign.Visible = visitors.Count > 0 && panel && !GameplayInputBlocker.IsBlocked;
     }
 
     public void Open()
@@ -37,21 +40,9 @@ public sealed class WorkbenchBuilding : MonoBehaviour
         if (visitors.Count == 0 || !panel || GameplayInputBlocker.IsBlocked) return;
         panel.ShowPanel(true);
         if (!panel.IsOpen) return;
-        HideButton();
         AudioManager.Instance?.Play(SoundType.UI_Click);
         AudioManager.Instance?.Play(SoundType.DoorOpen);
     }
 
-    void OnDisable()
-    {
-        visitors.Clear();
-        HideButton();
-    }
-
-    void HideButton()
-    {
-        if (!entryButton) return;
-        entryButton.alpha = 0;
-        entryButton.interactable = entryButton.blocksRaycasts = false;
-    }
+    void OnDisable() => visitors.Clear();
 }

@@ -94,7 +94,16 @@ public sealed class StorageUiProbe : MonoBehaviour
         var entryGroup = storage.EntryGroup;
         Check(entryGroup && entryGroup.alpha > .99f && entryGroup.interactable, "Entry sign fades in near the hut");
         Check(entry.GetComponentInParent<Canvas>().renderMode == RenderMode.WorldSpace, "Entry sign is a world-space button");
-        Check(entryGroup.GetComponentInChildren<TextMeshProUGUI>().text == "Lager öffnen" && entryGroup.GetComponentInChildren<TextMeshProUGUI>().fontSize >= 28, "Entry label is readable");
+        Check(storage.EntrySign.Label.text == "Lager öffnen", "Entry label");
+        var workshopSign = Object.FindFirstObjectByType<WorkbenchBuilding>().EntrySign;
+        var shopSign = Object.FindFirstObjectByType<ShopBuilding>().EntrySign;
+        Check(workshopSign && shopSign && workshopSign.Label.text == "Werkbank öffnen" && shopSign.Label.text == "Shop öffnen", "Workshop and shop use the same gold entry sign");
+        foreach (var sign in new[] { storage.EntrySign, workshopSign, shopSign })
+        {
+            Check(sign.Button.GetComponent<GoldButtonFeedback>() && Mathf.Approximately(sign.Label.fontSize, storage.EntrySign.Label.fontSize), sign.Label.text + ": same style and font size");
+            Check(sign.Label.GetPreferredValues(sign.Label.text).x <= sign.Label.rectTransform.rect.width + .5f, sign.Label.text + ": text fits between the end caps");
+        }
+        Check(!Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None).Any(c => c.name == "EnterButtonCanvas" && c.gameObject.activeInHierarchy), "Old Enter signs are hidden");
         Check(entry.GetComponent<GoldButtonFeedback>(), "Entry sign uses the gold wood button style");
 
         entry.onClick.Invoke();
