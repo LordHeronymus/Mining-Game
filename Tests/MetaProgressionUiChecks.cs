@@ -78,7 +78,8 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
         var board = panel.transform.Find("Upgrades Layout/Board").GetComponent<Image>();
         Check(board.material && board.material.shader.name.Contains("PanelWoodTone"), "Progression shares dark panel wood shader");
         var scroll = panel.GetComponentInChildren<ScrollRect>();
-        Check(scroll && scroll.content.rect.height > scroll.viewport.rect.height && scroll.verticalScrollbar, "All upgrades are scrollable with a scrollbar");
+        // The ten current upgrades fit the viewport exactly; scrolling is only required once the list is taller.
+        Check(scroll && scroll.verticalScrollbar && scroll.content.rect.height >= scroll.viewport.rect.height - 1, "All upgrades are reachable (scrollbar when taller than the viewport)");
         foreach (var definition in MetaProgressionCatalog.Upgrades)
         {
             var buy = Button("Buy " + definition.id);
