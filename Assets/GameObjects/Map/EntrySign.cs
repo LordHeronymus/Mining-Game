@@ -84,7 +84,7 @@ public sealed class EntrySign : MonoBehaviour
         rect.sizeDelta = new Vector2(Mathf.Ceil(textWidth) + 2 * CapMargin, Height);
         // World-space placement and size: buildings may be scaled (the shop is), the sign must not be.
         parentScale = Mathf.Max(.0001f, Mathf.Abs(building.lossyScale.x));
-        baseY = sprite.bounds.max.y + .45f;
+        baseY = sprite.bounds.max.y + .58f;
         rect.position = new Vector3(sprite.bounds.center.x, baseY, building.position.z);
         rect.localScale = Vector3.one * (WorldScale / parentScale);
         // Apply after sizing: GoldButtonFeedback picks the wide button artwork from the final aspect ratio.
