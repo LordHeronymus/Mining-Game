@@ -17,7 +17,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
-- 20.10.2026, Claude Code: Gezogenes Item (Drag & Drop) sieht in Lager, Inventar und Hotbar genau aus wie im Slot (Lager zeigte Leiter/Fackel/Dynamit gespiegelt), gemeinsames `ItemDragGhost`; Branch `claude/drag-ghost`, bereit für `main` (Freigabe Benutzer).
+- 20.10.2026, Claude Code: Gezogenes Item (Drag & Drop) sieht in Lager, Inventar und Hotbar genau aus wie im Slot (Lager zeigte Leiter/Fackel/Dynamit gespiegelt), gemeinsames `ItemDragGhost`; Branch `claude/drag-ghost`, mit Freigabe des Benutzers in `main` zusammengeführt.
 - 20.10.2026, Claude Code: Alte Spielstände bekommen beim Laden die gemalten Erze (gleiche Erzart, Grösse und Stelle, seedstabil), Branch `claude/painted-ore-migration-3f7f47`, in `main`.
 - 20.10.2026, Claude Code: Pausemenü „Speichern“ speichert direkt in den aktiven Spielstand (keine Slot-Auswahl mehr, Rückfall nur ohne aktiven Slot); Branch `claude/save-active`, mit Freigabe des Benutzers in `main`.
 - 20.10.2026, Claude Code: Lag beim Baumfällen behoben (Sammelsound wurde beim ersten Holz synchron geladen), Messskript `Tests/TreeChopSpikes.cs`, Branch `claude/tree-lag`, mit Freigabe des Benutzers in `main`.
