@@ -190,7 +190,13 @@ public class InventoryManager : MonoBehaviour
         return AddInternal(item, amount, enforceWeightLimit: false);
     }
 
-    bool AddInternal(ItemSO item, int amount, bool enforceWeightLimit)
+    // Moving items out of the storage hut is a transfer, not a find, so it skips the item-gained feed.
+    public bool AddTransferred(ItemSO item, int amount = 1)
+    {
+        return AddInternal(item, amount, enforceWeightLimit: true, announce: false);
+    }
+
+    bool AddInternal(ItemSO item, int amount, bool enforceWeightLimit, bool announce = true)
     {
         if (item && item.category == ItemCategory.Powerup)
             return amount == 1 && UnlockPowerup(item);
@@ -201,7 +207,7 @@ public class InventoryManager : MonoBehaviour
         _counts[item] = _counts.TryGetValue(item, out var cur) ? cur + amount : amount;
         OnItemChanged?.Invoke(item, _counts[item]);
         OnInventoryChanged?.Invoke();
-        OnItemGained?.Invoke(item, amount);
+        if (announce) OnItemGained?.Invoke(item, amount);
         return true;
     }
 
