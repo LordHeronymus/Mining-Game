@@ -111,6 +111,7 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
         var storageGhost = Field<Image>(panel, "dragGhost");
         foreach (var slot in panel.BackpackSlots.Where(x => x.item).ToList())
         {
+            if (pictured.Contains(slot.item)) { Field<ScrollRect>(panel, "backpackScroll").verticalNormalizedPosition = 0; Canvas.ForceUpdateCanvases(); }
             var data = new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left };
             data.position = Screen(slot.icon.rectTransform, ScreenCenter(slot.icon.rectTransform)) + new Vector2(9, -6);
             panel.BeginDrag(slot, data);
@@ -161,8 +162,7 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
             yield return null; Canvas.ForceUpdateCanvases();
             for (int i = 0; i < hotbarItems.Count; i++)
             {
-                var icon = hud.transform.Find("Hotbar/Slot " + (i + 2) + "/Item")?.GetComponent<Image>();
-                if (!icon) icon = hud.GetComponentsInChildren<Image>(true).First(x => x.name == "Item" && x.transform.parent.name == "Slot " + (i + 2));
+                var icon = Field<Image[]>(hud, "icons")[i];
                 var position = Screen(icon.rectTransform, ScreenCenter(icon.rectTransform)) + new Vector2(6, 8);
                 Check(hud.BeginHotbarDrag(i + 1, position), "Hotbar drag starts for " + hotbarItems[i].displayName);
                 var ghost = Field<Image>(hud, "dragIcon");
