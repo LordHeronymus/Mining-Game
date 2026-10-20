@@ -30,7 +30,7 @@ Stand 18.10.2026. Kupfer (Branch `claude/copper-tiles`, Aufräumen `claude/coppe
 | Diamant | „D2 Diamant-Oktaeder“: gedrungene, kühl-weisse Kristalle mit blauen Glanzflächen | `Blocks/Sprites/Ores/Painted/Diamond/Diamond_{Small,Medium,Large}_0N.png` | `Ores/Diamond/Diamond_08..14` |
 | Ultronium | „U2d Krone Monolith“: grosse, aufrechte dunkelviolette Kristalle mit Magenta-Kanten, türkisem Kern und Funkeln; leuchtet und pulsiert (Marker 253/255) | `Blocks/Sprites/Ores/Painted/Ultronium/Ultronium_{Small,Medium,Large}_0N.png` | `Ores/Ultronium/Ultronium_08..14` |
 
-Nummerierung je Erz: `_08..10_large`, `_11..12_small`, `_13..14_medium`. Eingetragen im Block-Asset (`smallOre`/`mediumOre`/`richOre`, Anzahl unverändert 2/2/3) und im `SaveAssetCatalog`. Die alten Tiles `_01..07` bleiben erhalten; alte Spielstände laden sie weiterhin und zeigen sie als Shader-Ader.
+Nummerierung je Erz: `_08..10_large`, `_11..12_small`, `_13..14_medium`. Eingetragen im Block-Asset (`smallOre`/`mediumOre`/`richOre`, Anzahl unverändert 2/2/3) und im `SaveAssetCatalog`. Die alten Tiles `_01..07` bleiben im Katalog erhalten, damit alte Spielstände lesbar bleiben; beim Laden ersetzt `PaintedOreMigration` sie durch die gemalten Tiles derselben Erzart und Grösse (siehe „Alte Spielstände“).
 
 ## Technik
 
@@ -46,13 +46,21 @@ Nummerierung je Erz: `_08..10_large`, `_11..12_small`, `_13..14_medium`. Eingetr
 - Designrunden und Vergleichsbilder: `Design/OreVeins/CopperLargeV3/`, `Design/OreVeins/CopperSmallMedium/`, `Design/OreVeins/IronLarge/`, `Design/OreVeins/GoldSilverLarge/`, `Design/OreVeins/CoalLarge/`, `Design/OreVeins/PlatinumLarge/`, `Design/OreVeins/TitaniumLarge/`, `Design/OreVeins/TungstenMythrilLarge/`, `Design/OreVeins/GemsLarge/`, `Design/OreVeins/UltroniumLarge/`, Laufzeitbilder `Design/OreVeins/PaintedOres/Runtime/`.
 - Prüfskript: `Tests/PaintedOreRuntimeChecks.cs` (frischer Play-Start ab Homescreen, isoliertes Testprofil): alle generierten Kupfer-, Eisen-, Silber-, Gold-, Kohle-, Platin-, Titan-, Wolfram- und Mythrilzellen gemalt (seltene Erze wie Mythril können in der Testwelt fehlen und werden dann über platzierte Testblöcke geprüft), alle Gesteinsarten, Überhang an abgebauten Zellen, Abbau, Speichern/Laden, Kamera.
 
+## Alte Spielstände
+
+Spielstände speichern die konkreten Erz-Tiles. Welten, die vor dem Umstieg einer Erzart angelegt wurden, enthalten deshalb noch die alten Tiles `_01..07` (bzw. ältere Ultronium-Tiles mit Alpha 0,98). `PaintedOreMigration` (`Assets/GameObjects/Save/`) läuft beim Laden direkt nach dem Einlesen der Erz-Ebene in `GameSaveSystem.PrepareLoad`:
+
+- Jedes `OreTile`, das in keiner der aktuellen Gruppen seines Blocks (`smallOre`/`mediumOre`/`richOre`) steht, wird durch eine aktuelle Variante derselben Erzart (`OreTile.block`) und Grösse (`OreTile.richness`) ersetzt. Bereits gemalte Tiles bleiben unverändert.
+- Die Variante wählt derselbe Hash wie die Generierung (`OreVeins.Hash(seed, x, y, 0x5678)`, Generierungs-Koordinaten): seed- und positionsstabil, ohne Unitys Zufallszustand; die Welt sieht aus wie eine frisch erzeugte mit diesem Seed.
+- Zellflags, Farbe (Marker 254/255 bzw. 253/255) und Transform kommen vom neuen Tile, wie bei der Generierung.
+- Beim nächsten Speichern stehen die gemalten Tiles im Spielstand; bis dahin ergibt jedes Laden dieselben Varianten. Kosten: eine Schleife über die Erz-Ebene, wenige Millisekunden.
+- Prüfskript: `Tests/PaintedOreMigrationChecks.cs` (frischer Play-Start ab Homescreen, isoliertes Testprofil).
+
 ## Offen
 
-- Die alten Ultronium-Tiles (Alpha 0,98) laufen weiter über den alten Ultronium-Pfad und erscheinen nur noch in alten Spielständen.
 - Mythril und Smaragd sind in keiner Map-Ebene eingetragen und werden derzeit nicht generiert.
 - Granat und Kupfer sowie Diamant und Titan liegen farblich nahe beieinander; im Spiel vergleichen.
 - Kohle ist auf dem dunkelsten Gestein (Ebene 4) eher dezent; bei Bedarf hellere Schichtbänder oder eine Kontur.
 - Mehr Varianz (Spiegeln/weitere Varianten), damit sich lange Reihen nicht wiederholen.
 - Eisen hebt sich auf hellgrauem Gestein (Ebene „graues Gestein“) weniger stark ab als Kupfer; bei Bedarf dunklere Kontur oder Akzentfarbe.
 - Kleine Steinchen und Kontaktschatten in den Sprites sind neutral braun; auf dunklen Ebenen könnten sie im Shader an das Gestein angepasst werden.
-- Alte Spielstände mit `_01..07`-Tiles könnten beim Laden auf die gemalten Tiles umgestellt werden.
