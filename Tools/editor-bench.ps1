@@ -8,13 +8,15 @@
   Tools/editor-bench.sh status
   Tools/editor-bench.sh checkout claude/mein-thema -Id q1a2b3     # nur als oberster Eintrag; -Discard verwirft Reste
   Tools/editor-bench.sh release -Id q1a2b3                         # danach; -Discard verwirft Testspuren
+  Tools/editor-bench.sh audio-on -Id q1a2b3                        # Ton nur fuer Audio-Tests (sonst stumm)
+  Tools/editor-bench.sh audio-off                                  # wieder stumm (checkout/release tun das auch)
 
   Exit-Codes: 0 ok, 1 Fehler, 4 nicht oben in der Warteschlange, 5 Testbank hat Aenderungen.
 #>
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('status', 'checkout', 'release', 'help')]
+    [ValidateSet('status', 'checkout', 'release', 'audio-on', 'audio-off', 'help')]
     [string]$Command = 'help',
     [Parameter(Position = 1)]
     [string]$Ref,
@@ -40,6 +42,8 @@ $benchName = Split-Path $Bench -Leaf
 if (-not $QueueDir) { $QueueDir = $env:EDITOR_QUEUE_DIR }
 if (-not $QueueDir) { $QueueDir = Join-Path (Split-Path $ownerRoot -Parent) 'EditorQueue' }
 $stateFile = Join-Path $QueueDir "$benchName.bench.json"
+# Solange diese Datei fehlt, haelt Assets/Editor/TestBenchAudioMute.cs den Editor der Testbank stumm.
+$audioFile = Join-Path $QueueDir "$benchName.audio-on"
 if (-not $Session -and $env:CLAUDE_CODE_SESSION_ID) { $Session = $env:CLAUDE_CODE_SESSION_ID }
 
 if (-not (Test-Path -LiteralPath (Join-Path $Bench '.git'))) { Write-Output "Testbank $Bench ist kein Git-Arbeitsordner."; exit 1 }
@@ -71,11 +75,14 @@ function Test-Holder {
     return (($Id -and $top.id -eq $Id) -or ($Session -and $top.session -eq $Session))
 }
 
+function Set-Muted { if (Test-Path -LiteralPath $audioFile) { Remove-Item -LiteralPath $audioFile -Force } }
+
 function Show-Status {
     $head = Git @('rev-parse', '--short', 'HEAD')
     $branch = (Git @('symbolic-ref', '-q', '--short', 'HEAD')).out
     $state = Get-State
     Write-Output "Testbank: $Bench"
+    Write-Output ("Ton:      {0}" -f $(if (Test-Path -LiteralPath $audioFile) { 'an (Audio-Test)' } else { 'stumm' }))
     Write-Output ("Stand:    {0}{1}" -f $head.out, $(if ($branch) { " (Branch $branch)" } else { ' (losgeloest)' }))
     if ($state) {
         Write-Output "Geholt:   $($state.ref) von $($state.by) am $(([DateTime]::Parse($state.since)).ToLocalTime().ToString('dd.MM. HH:mm'))"
@@ -89,6 +96,17 @@ function Show-Status {
 
 switch ($Command) {
     'status' { Show-Status; exit 0 }
+    'audio-on' {
+        if (-not $Force -and -not (Test-Holder)) {
+            Write-Output "Nicht oben in der Warteschlange '$benchName'. Ton nur fuer den aktuellen Inhaber (oder -Force)."
+            exit 4
+        }
+        if (-not (Test-Path -LiteralPath $QueueDir)) { New-Item -ItemType Directory -Path $QueueDir -Force | Out-Null }
+        [IO.File]::WriteAllText($audioFile, [DateTime]::UtcNow.ToString('o'), $utf8)
+        Write-Output 'Ton der Testbank an (Audio-Test). Danach: audio-off, release schaltet ihn ebenfalls stumm.'
+        exit 0
+    }
+    'audio-off' { Set-Muted; Write-Output 'Testbank stumm.'; exit 0 }
     'checkout' {
         if (-not $Ref) { Write-Output 'checkout braucht einen Branch oder Commit.'; exit 1 }
         if (-not $Force -and -not (Test-Holder)) {
@@ -115,7 +133,8 @@ switch ($Command) {
         $state = [ordered]@{ ref = $Ref; sha = $sha.out; by = $(if ($Id) { $Id } else { $Session }); session = $Session; since = [DateTime]::UtcNow.ToString('o') }
         if (-not (Test-Path -LiteralPath $QueueDir)) { New-Item -ItemType Directory -Path $QueueDir -Force | Out-Null }
         [IO.File]::WriteAllText($stateFile, (ConvertTo-Json -InputObject $state), $utf8)
-        Write-Output "Testbank steht auf $Ref ($($sha.out.Substring(0, 9)))."
+        Set-Muted
+        Write-Output "Testbank steht auf $Ref ($($sha.out.Substring(0, 9))), Ton stumm (fuer Audio-Tests: audio-on)."
         Write-Output "Unity: Assets neu laden lassen, dann testen mit"
         Write-Output "  unity command --project-path `"$Bench`" run_script --file Tests/<Name>Checks.cs"
         exit 0
@@ -138,6 +157,7 @@ switch ($Command) {
             }
             Remove-Item -LiteralPath $stateFile -Force
         }
+        Set-Muted
         Write-Output "Testbank freigegeben. Jetzt aus der Warteschlange: editor-queue leave -Project `"$benchName`" -Id <id>"
         exit 0
     }
