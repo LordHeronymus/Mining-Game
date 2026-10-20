@@ -289,7 +289,7 @@ public sealed class StoragePanel : MonoBehaviour
         dragged = slot;
         if (!dragGhost)
         {
-            dragGhost = Rect("Drag Ghost", layout, 0, 0, 104, 96).gameObject.AddComponent<Image>();
+            dragGhost = Rect("Drag Ghost", layout, 0, 0, ItemIconLayout.CellIconSize(new Vector2(Cell, Cell)).x, ItemIconLayout.CellIconSize(new Vector2(Cell, Cell)).y).gameObject.AddComponent<Image>();
             dragGhost.raycastTarget = false; dragGhost.preserveAspect = true;
             dragGhost.rectTransform.anchorMin = dragGhost.rectTransform.anchorMax = dragGhost.rectTransform.pivot = new Vector2(.5f, .5f);
         }
@@ -527,7 +527,8 @@ public sealed class StoragePanel : MonoBehaviour
         button.targetGraphic = frame;
         button.navigation = new Navigation { mode = Navigation.Mode.None };
         GoldButtonFeedback.Apply(button, rowSprite, selectedRowSprite);
-        var icon = Panel("Icon", frame.transform, 14, 8, 100, 92, null);
+        var iconSize = ItemIconLayout.CellIconSize(new Vector2(Cell, Cell));
+        var icon = Panel("Icon", frame.transform, (Cell - iconSize.x) / 2, (Cell - iconSize.y) / 2, iconSize.x, iconSize.y, null);
         icon.preserveAspect = true;
         ShopVisualTheme.CenterImage(icon);
         var badge = Panel("Count", frame.transform, 60, 90, 62, 32, rowSprite);

@@ -116,6 +116,12 @@ public sealed class StorageUiProbe : MonoBehaviour
         var storageFrame = (RectTransform)layout.Find("Storage Frame");
         Check(backpackFrame.anchoredPosition.x < storageFrame.anchoredPosition.x, "Backpack on the left, storage on the right");
         Check(layout.Find("Background").GetComponent<Image>().sprite.texture.name == "BuyBackground-v2", "Shop background artwork");
+        var slotIcon = panel.BackpackSlots[0];
+        Check(Vector2.Distance(slotIcon.iconCenter, new Vector2(slotIcon.rect.rect.width / 2, -slotIcon.rect.rect.height / 2)) < .5f &&
+            Mathf.Abs(slotIcon.iconRect.rect.width / slotIcon.iconRect.rect.height - 134f / 106f) < .01f, "Storage icons are centred like inventory icons");
+        var hud = Object.FindFirstObjectByType<CompactHud>();
+        var hotbarIcon = hud.GetComponentsInChildren<Image>(true).First(x => x.name == "Item");
+        Check(Mathf.Abs(hotbarIcon.rectTransform.sizeDelta.x / hotbarIcon.rectTransform.sizeDelta.y - 134f / 106f) < .01f, "Hotbar icons use the inventory icon box");
 
         inventory.Add(iron, 10); inventory.Add(coal, 7); inventory.Add(gold, 3);
         yield return null;
