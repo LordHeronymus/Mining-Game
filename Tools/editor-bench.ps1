@@ -135,6 +135,22 @@ function Invoke-UnityEval([string]$code, [int]$timeoutSeconds = 30) {
     finally { Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue }
 }
 
+# Lange Wartezeiten (Import, Kompilieren): alle 30 s ein Lebenszeichen, damit niemand den Inhaber waehrenddessen verdraengt.
+# $false = nicht mehr oben in der Warteschlange: dann den Editor nicht weiter anfassen.
+$queueScript = Join-Path $PSScriptRoot 'editor-queue.ps1'
+$script:lastBeat = Get-Date
+function Step-Wait {
+    Start-Sleep -Seconds 3
+    if ($Force) { return $true }
+    if (((Get-Date) - $script:lastBeat).TotalSeconds -ge 30 -and (Test-Path -LiteralPath $queueScript)) {
+        $hb = @('heartbeat', '-Project', $benchName, '-QueueDir', $QueueDir)
+        if ($Id) { $hb += @('-Id', $Id) } elseif ($Session) { $hb += @('-Session', $Session) }
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $queueScript @hb | Out-Null
+        $script:lastBeat = Get-Date
+    }
+    return (Test-Holder)
+}
+
 # Fuehrt C# im Testbank-Editor aus und versucht es erneut, solange der Editor beschaeftigt ist (Import, Kompilieren).
 # Blockiert ein Dialog, beantwortet der Waechter bekannte sofort. Rueckgabe .state: ok | not-running | blocked | failed
 function Invoke-BenchEditor([string]$code, [string]$what, [int]$waitSeconds = 60) {
@@ -155,7 +171,7 @@ function Invoke-BenchEditor([string]$code, [string]$what, [int]$waitSeconds = 60
         }
         if ((Get-Date) -gt $deadline) { return @{ state = 'failed'; out = $(if ($r.ok) { 'Play-Mode endet nicht' } else { $r.out }) } }
         if (-not $said) { Write-Host "  $msg, warte ..."; $said = $true }
-        Start-Sleep -Seconds 3
+        if (-not (Step-Wait)) { return @{ state = 'lost'; out = '' } }
     }
 }
 
@@ -166,6 +182,7 @@ function Close-BenchScene {
     switch ($r.state) {
         'ok' { Write-Host 'Szene im Testbank-Editor ohne Speichern geschlossen.' }
         'not-running' { Write-Host 'Testbank-Editor laeuft nicht (Szene nicht geschlossen).' }
+        'lost' { Write-Host 'Nicht mehr oben in der Warteschlange: abgebrochen, Testbank unveraendert.' }
         'blocked' {
             Write-Host 'Der Testbank-Editor ist durch einen unbekannten Dialog blockiert:'
             Write-Host $r.out
@@ -188,10 +205,10 @@ function Open-BenchScene([string]$closed) {
         else { Write-Host "Warnung: $scenePath nicht geoeffnet ($($r.state): $($r.out)). Im Editor selbst oeffnen." }
         return
     }
-    $deadline = (Get-Date).AddSeconds(300)
+    $deadline = (Get-Date).AddSeconds(180)
     $queued = Get-Date
     while ((Get-Date) -lt $deadline) {
-        Start-Sleep -Seconds 3
+        if (-not (Step-Wait)) { Write-Host 'Nicht mehr oben in der Warteschlange: Editor wird nicht weiter angefasst.'; return }
         $s = Invoke-UnityEval $sceneStateCode
         if ($s.ok -and $s.out -match "scene=$([regex]::Escape($scenePath));") {
             Write-Host "Unity: Assets neu eingelesen, $scenePath geoeffnet$(if ($s.out -match 'compiling=True') { ' (Skripte kompilieren noch)' })."
@@ -208,7 +225,7 @@ function Open-BenchScene([string]$closed) {
             [void](Invoke-UnityEval $queueOpenCode); $queued = Get-Date
         }
     }
-    Write-Host "Warnung: $scenePath nach 5 min noch nicht offen. Im Editor selbst oeffnen."
+    Write-Host "Warnung: $scenePath nach 3 min noch nicht offen. Im Editor selbst oeffnen."
 }
 
 function Show-Status {
@@ -258,6 +275,8 @@ switch ($Command) {
         # Szene vor jeder Dateiaenderung schliessen (auch vor dem Verwerfen), sonst meldet Unity "modified externally".
         $closed = Close-BenchScene
         if ($closed -eq 'blocked') { exit 6 }
+        # Waehrend des Schliessens (Import, Play-Mode) koennte ein anderer nachgerueckt sein.
+        if ($closed -eq 'lost' -or (-not $Force -and -not (Test-Holder))) { Write-Output 'Nicht mehr oben in der Warteschlange: abgebrochen.'; exit 4 }
         if ($dirty) {
             $r = Git @('restore', '--staged', '--worktree', '--', '.')
             if ($r.code -ne 0) { Write-Output "Verwerfen fehlgeschlagen: $($r.err)"; Open-BenchScene $closed; exit 1 }
@@ -294,7 +313,8 @@ switch ($Command) {
         }
         if ($dirty) {
             # Szene vor dem Verwerfen schliessen, danach frisch oeffnen (kein "modified externally").
-            $closed = Close-BenchScene
+            # Nur der Inhaber fasst den Editor an (sonst stoert man den Test des Naechsten); Verwerfen wie bisher.
+            $closed = if ($Force -or (Test-Holder)) { Close-BenchScene } else { Write-Output 'Nicht (mehr) oben in der Warteschlange: Editor wird nicht angefasst.'; 'skipped' }
             if ($closed -eq 'blocked') { exit 6 }
             $r = Git @('restore', '--staged', '--worktree', '--', '.')
             if ($r.code -ne 0) { Write-Output "Verwerfen fehlgeschlagen: $($r.err)"; Open-BenchScene $closed; exit 1 }
