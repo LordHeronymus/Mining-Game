@@ -102,7 +102,8 @@ public sealed class StorageUiProbe : MonoBehaviour
         {
             Check(sign.Button.GetComponent<GoldButtonFeedback>() && Mathf.Approximately(sign.Label.fontSize, storage.EntrySign.Label.fontSize), sign.Label.text + ": same style and font size");
             Check(sign.Label.GetPreferredValues(sign.Label.text).x <= sign.Label.rectTransform.rect.width + .5f, sign.Label.text + ": text fits between the end caps");
-            Check(Mathf.Abs(sign.transform.lossyScale.x - storage.EntrySign.transform.lossyScale.x) < .0001f, sign.Label.text + ": same world size on scaled buildings");
+            System.Func<EntrySign, float> baseScale = s => s.transform.lossyScale.x / (.92f + .08f * s.Group.alpha);
+            Check(Mathf.Abs(baseScale(sign) - baseScale(storage.EntrySign)) < .0001f, sign.Label.text + ": same world size on scaled buildings");
             var main = EntrySign.MainSprite(sign.transform.parent);
             Check(((RectTransform)sign.transform).TransformPoint(((RectTransform)sign.transform).rect.min).y > main.bounds.max.y, sign.Label.text + ": floats above the roof");
         }
