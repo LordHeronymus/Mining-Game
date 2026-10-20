@@ -19,11 +19,11 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 - 20.10.2026, Claude Code: Neue Regel „Befehlsaufrufe“ in `AGENTS.md` (Skripte/Git einzeln aufrufen, Suchen/Lesen mit eingebauten Werkzeugen, damit Freigaben greifen), Branch `claude/agents-befehlsaufrufe`, mit Freigabe des Benutzers in `main`.
 - 20.10.2026, Claude Code: Lager-Oberfläche im Shop-/Werkbank-Stil (Rucksack links, Lager rechts, Entnahme bis 3× Traglast), schwebender Knopf „Lager öffnen“, Kupfer-Icon-Import repariert; Branch `claude/lager-ui`, mit Freigabe des Benutzers in `main` zusammengeführt, siehe Docs/Lager.md.
-- 20.10.2026, Claude Code: Debug-Einstellungen (F1/Editor-Fenster) werden sofort dauerhaft gespeichert und überleben Play-, Domain- und Editor-Neustart; Branch `claude/debug-persist`, bereit für `main` (Freigabe Benutzer).
+- 20.10.2026, Claude Code: Ordner `Mining Game` holt jede Minute automatisch den neuesten `main` (`Assets/Editor/MainAutoUpdate.cs`, Docs/Main-Auto-Update.md), Branch `claude/main-autoupdate`, in `main`.
+- 20.10.2026, Claude Code: Debug-Einstellungen (F1/Editor-Fenster) werden sofort dauerhaft gespeichert und überleben Play-, Domain- und Editor-Neustart; Branch `claude/debug-persist`, in `main`.
 - 20.10.2026, Claude Code: Start-Items liegen bei neuem Spiel lückenlos in Hotbar-Slots 1, 2, 3 … (keine alte Belegung mehr), Branch `claude/hotbar-start`, in `main`.
 - 20.10.2026, Claude Code: Testbank-Editor läuft immer stumm (`Assets/Editor/TestBenchAudioMute.cs`), Ton nur für Audio-Tests per `editor-bench audio-on`.
 - 19.10.2026, Claude Code: Alle 14 Erze als gemalte Einzelblöcke statt Shader-Adern (Kupfer, Eisen, Silber, Gold, Kohle, Platin, Titan, Wolfram, Mythril, Granat, Smaragd, Rubin, Diamant, Ultronium mit Pulsieren), Kupfer-Adern-System entfernt; Branch `claude/iron-tiles` mit `main` zusammengeführt und geprüft, bereit für `main` (Freigabe Benutzer), siehe Docs/Gemalte-Erze.md.
 - 18.10.2026, Claude Code: HUD-Größe in den Einstellungen bis 30 % einstellbar (vorher 50 %), Branch `claude/hud-scale`.
 - 18.10.2026, Claude Code: Editor-Warteschlange ausserhalb von Git (`Tools/editor-queue.*`, Aktivitätssignal `Assets/Editor/EditorQueueActivity.cs`, Doku `Docs/Editor-Warteschlange.md`) ersetzt die Tabelle „Unity Editor“.
 - 18.10.2026, Claude Code (Cloud): Cloud-Läufe mit 20-min-Limit und Abbruchgrund, `// CI: local-only`, Performance-Suite ohne Zeichnen (Lauf #17: 12 min, aussagekräftige CPU-Werte).
-- 18.10.2026, Claude Code (Cloud): Suite `performance` läuft in der Cloud vollständig durch (Benchmark-Player, Lauf #16); Werte wegen Software-Rendering nur eingeschränkt aussagekräftig, siehe Docs/Cloud-Tests.md.
