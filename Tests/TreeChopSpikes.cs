@@ -37,6 +37,8 @@ public static class TreeChopSpikes
     static readonly List<(string label, float ms, long gc)> frames = new();
     static readonly List<(string label, float ms, string tree)> spikes = new();
     static readonly ProfilerMarker hitMarker = new("TreeChop.Hit");
+    static readonly List<string> lateClips = new();
+    static readonly List<AudioClip> unloaded = new();
 
     public static object Main()
     {
@@ -55,7 +57,7 @@ public static class TreeChopSpikes
         GameSaveSystem.TestDirectory = Path.Combine(directory, "saves");
         MetaProgression.TestDirectory = Path.Combine(directory, "meta");
         Application.runInBackground = true;
-        frames.Clear(); spikes.Clear(); queue.Clear(); failure = null; felled = 0; tree = null;
+        frames.Clear(); spikes.Clear(); queue.Clear(); lateClips.Clear(); audioLog.Clear(); lastAmbience = null; ambience = null; failure = null; felled = 0; tree = null;
         pendingLabel = currentLabel = "Laden";
         playerLoop.Dispose(); gcAlloc.Dispose();
         playerLoop = ProfilerRecorder.StartNew(new ProfilerCategory("PlayerLoop"), "PlayerLoop", 1,
@@ -93,7 +95,14 @@ public static class TreeChopSpikes
             if (step == Step.Done) return;
             // Recorder values describe the previous frame, which carried the previous label.
             if (step != Step.Loading && playerLoop.Valid && playerLoop.Count > 0)
-                frames.Add((currentLabel, playerLoop.LastValue / 1e6f, gcAlloc.Valid && gcAlloc.Count > 0 ? gcAlloc.LastValue : 0));
+            {
+                float ms = playerLoop.LastValue / 1e6f;
+                frames.Add((currentLabel, ms, gcAlloc.Valid && gcAlloc.Count > 0 ? gcAlloc.LastValue : 0));
+                if (ms >= 50) audioLog.Add($"F{Time.frameCount - 1} {ms:F0} ms ({currentLabel}), Ambience {AmbienceState()}");
+            }
+            string state = AmbienceState();
+            if (state != lastAmbience) audioLog.Add($"F{Time.frameCount} t={Time.realtimeSinceStartup:F1} s {step}: {state}");
+            lastAmbience = state;
             currentLabel = pendingLabel;
             pendingLabel = step == Step.Falling ? "Fallen" : step == Step.Chop ? "zwischen Schlägen" : step == Step.Approach ? "Annähern" : "Stillstand";
             Drive();
@@ -122,16 +131,22 @@ public static class TreeChopSpikes
                 return;
             case Step.Approach:
                 if (now - stepStarted < .6) return;
+                // Audio clips without loaded data, listed before the hits (the lookup costs about a millisecond).
+                unloaded.Clear();
+                unloaded.AddRange(Resources.FindObjectsOfTypeAll<AudioClip>().Where(c => c.loadState == AudioDataLoadState.Unloaded));
                 Enter(Step.Chop); nextHit = now;
                 return;
             case Step.Chop:
                 if (!tree) { NextTree(); return; }
                 if (now < nextHit) return;
                 nextHit = now + .3;
-                bool last = tree.Health <= (Object.FindFirstObjectByType<SurfaceTrees>()?.HitDamage ?? 1f);
-                var wood = WoodItem();
+                bool last = tree.Health <= (forest ? forest.HitDamage : 1f);
+                var wood = woodItem;
                 if (last && wood && !InventoryManager.Instance.CanAdd(wood, 60)) InventoryManager.Instance.ResetAll();
                 using (hitMarker.Auto()) tree.Hit((Vector2)player.position);
+                foreach (var clip in unloaded.ToArray())
+                    if (clip.loadState != AudioDataLoadState.Unloaded && unloaded.Remove(clip))
+                        lateClips.Add($"{clip.name} ({clip.length:F1} s, {clip.loadType}, Hintergrund {clip.loadInBackground}) beim {(tree.IsFalling ? "Fällschlag" : "Schlag")} von Baum {felled + 1}");
                 currentLabel = tree.IsFalling ? "Fällschlag" : "Schlag";
                 if (tree.IsFalling) Enter(Step.Falling);
                 return;
@@ -145,14 +160,31 @@ public static class TreeChopSpikes
         }
     }
 
-    static ItemSO WoodItem() => typeof(SurfaceTrees).GetField("wood", BindingFlags.NonPublic | BindingFlags.Instance)
-        .GetValue(Object.FindFirstObjectByType<SurfaceTrees>()) as ItemSO;
+    static SurfaceTrees forest;
+    static ItemSO woodItem;
+    static readonly List<string> audioLog = new();
+    static string lastAmbience;
+    static SurfaceAmbience ambience;
+
+    // Load state of the surface ambience clip and which of its two sources play (long clip, decoded on demand).
+    static string AmbienceState()
+    {
+        if (!ambience) ambience = Object.FindFirstObjectByType<SurfaceAmbience>();
+        if (!ambience) return "keine";
+        const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+        var clip = typeof(SurfaceAmbience).GetField("clip", flags).GetValue(ambience) as AudioClip;
+        var sources = (AudioSource[])typeof(SurfaceAmbience).GetField("sources", flags).GetValue(ambience);
+        return $"{(clip ? clip.name + " " + clip.loadState : "-")}, running {typeof(SurfaceAmbience).GetField("running", flags).GetValue(ambience)}, " +
+            string.Join("/", sources.Select(s => s && s.isPlaying ? "spielt" : "still"));
+    }
 
     static void Prepare()
     {
         var movement = Object.FindFirstObjectByType<PlayerMovement>();
         if (!movement) throw new Exception("Spieler fehlt");
         player = movement.transform; body = movement.GetComponent<Rigidbody2D>();
+        forest = Object.FindFirstObjectByType<SurfaceTrees>();
+        woodItem = forest ? typeof(SurfaceTrees).GetField("wood", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(forest) as ItemSO : null;
         var growth = typeof(ChoppableTree).GetField("sizeBonusRatio", BindingFlags.NonPublic | BindingFlags.Instance);
         var maximum = typeof(ChoppableTree).GetField("maximumSizeBonusRatio", BindingFlags.NonPublic | BindingFlags.Instance);
         int index = 0;
@@ -199,7 +231,15 @@ public static class TreeChopSpikes
             view.GetItemChildren(view.GetRootItemID(), children);
             float loop = children.Where(c => view.GetItemName(c) == "PlayerLoop")
                 .Sum(c => view.GetItemColumnDataAsFloat(c, HierarchyFrameDataView.columnTotalTime));
-            if (loop < threshold || spikes.Count >= 60) continue;
+            float hit = 0f;
+            using (var raw = ProfilerDriver.GetRawFrameDataView(frame, 0))
+                if (raw != null && raw.valid)
+                {
+                    int id = raw.GetMarkerId("TreeChop.Hit");
+                    for (int i = 0; i < raw.sampleCount; i++) if (raw.GetSampleMarkerId(i) == id) hit += raw.GetSampleTimeMs(i);
+                }
+            // Felling hits that cost at least a millisecond are kept as well, to see what they consist of.
+            if ((loop < threshold && hit < 1f) || spikes.Count >= 60) continue;
             var text = new StringBuilder();
             Tree(view, view.GetRootItemID(), 4, text, culture);
             string label = text.ToString().Contains("TreeChop.Hit") ? "mit Schlag" : "ohne Schlag";
@@ -252,6 +292,12 @@ public static class TreeChopSpikes
                 group.Key, sorted.Count, sorted.Average(), sorted[Math.Min(sorted.Count - 1, (int)(sorted.Count * .95))], sorted[^1],
                 sorted.Count(x => x >= 10), group.Average(f => (double)f.gc), group.Max(f => f.gc)));
         }
+        text.AppendLine();
+        text.AppendLine("Oberflächen-Ambience und Frames ab 50 ms:");
+        foreach (var entry in audioLog) text.AppendLine("  " + entry);
+        text.AppendLine();
+        text.AppendLine($"Erst beim Schlag geladene Audio-Clips: {lateClips.Count}");
+        foreach (var clip in lateClips) text.AppendLine("  " + clip);
         text.AppendLine();
         text.AppendLine($"Profiler-Frames mit PlayerLoop ab {threshold} ms: {spikes.Count} (Profiler-Overhead enthalten)");
         foreach (var spike in spikes) text.AppendLine(spike.tree);
