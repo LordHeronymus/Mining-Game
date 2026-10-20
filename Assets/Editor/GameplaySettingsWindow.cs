@@ -24,12 +24,12 @@ public class GameplaySettingsWindow : EditorWindow
     [MenuItem("Mining Game/Debug Settings")]
     public static void Open()
     { var window = GetWindow<GameplaySettingsWindow>("Debug Settings"); window.minSize = new Vector2(760,640); window.Show(); }
-    void OnEnable() { titleContent = new GUIContent("Debug Settings"); view = new GpsEditorView(this); GpsSettings.Changed += Repaint; EditorApplication.playModeStateChanged += PlayModeChanged; }
-    void PlayModeChanged(PlayModeStateChange state) { GpsSettings.Changed -= Repaint; GpsSettings.Changed += Repaint; Repaint(); }
+    void OnEnable() { titleContent = new GUIContent("Debug Settings"); view = new GpsEditorView(this); GpsSettings.Changed += Repaint; GpsSettings.Saved += Repaint; EditorApplication.playModeStateChanged += PlayModeChanged; }
+    void PlayModeChanged(PlayModeStateChange state) { GpsSettings.Changed -= Repaint; GpsSettings.Changed += Repaint; GpsSettings.Saved -= Repaint; GpsSettings.Saved += Repaint; Repaint(); }
     void OnDisable()
     {
         HomeAudioEditorPreview.Stop();
-        GpsSettings.Changed -= Repaint;
+        GpsSettings.Changed -= Repaint; GpsSettings.Saved -= Repaint;
         EditorApplication.playModeStateChanged -= PlayModeChanged;
         foreach (var curve in curves.Values) if (curve) DestroyImmediate(curve);
         curves.Clear();

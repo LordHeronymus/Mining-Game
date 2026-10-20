@@ -50,6 +50,7 @@ Tools/editor-queue.sh leave -Project "Mining Game 2" -Id <id>
 - `release` verweigert bei Änderungen (Exit 5): Gewollte Änderungen (z. B. Szenen) auf der Testbank committen, dann zeigt `release` den Befehl `git merge --ff-only <commit>` zum Übernehmen in den eigenen Branch; Testspuren mit `-Discard` verwerfen. Nicht versionierte Dateien (`Library`, `.mcp.json`) bleiben unberührt.
 - Die Unity-Werkzeuge (MCP) eines Chats zeigen auf den Editor aus der nicht versionierten `.mcp.json` seines Ordners (heute in `Mining Game` noch auf den Editor des Benutzers). Deshalb vor MCP-Nutzung `editor_status` prüfen (`projectPath` muss `Mining Game 2` sein), sonst `unity command --project-path "…Mining Game 2"` verwenden.
 - Zustand der Testbank: `Git Repos/EditorQueue/Mining Game 2.bench.json`.
+- **Ton:** Der Editor der Testbank läuft immer stumm (`Assets/Editor/TestBenchAudioMute.cs` setzt „Mute Audio“, nur im Ordner `<Projekt> 2`; der Editor des Benutzers bleibt unberührt). Nur für Audio-Tests als oberster Eintrag `Tools/editor-bench.sh audio-on -Id <id>` (oder Unity-Menü **Tools → Testbank → Ton an**), danach `audio-off`; `checkout` und `release` schalten ebenfalls wieder stumm. Schalter: `Git Repos/EditorQueue/Mining Game 2.audio-on`.
 
 ## Lebenszeichen: nur echte Editor-Nutzung zählt
 
