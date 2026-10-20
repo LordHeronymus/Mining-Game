@@ -20,8 +20,7 @@ Die Lagerhütte neben dem Shop funktioniert wie eine Kiste in Minecraft: Items a
 
 - `Assets/GameObjects/Map/EntrySign.cs`: gemeinsames Eingangsschild für Lager, Shop und Werkbank (Breite nach Text, Weltkoordinaten, Ein-/Ausblenden). Die alten „Enter“-Schilder in Szene/Prefab werden zur Laufzeit deaktiviert.
 - Item-Bilder: `ItemIconLayout.CellIconSize` gibt allen Item-Zellen (Inventar, Schnellleiste, Lager) dasselbe Bildfeld.
-
-- `Assets/GameObjects/Map/Storage/SurfaceStorageBuilding.cs`: Lagerinhalt, Ein-/Auslagern, Besucher-Trigger, Weltraum-Knopf (`EnterButtonCanvas`, gleiche Ebene wie der Shop-Knopf).
+- `Assets/GameObjects/Map/Storage/SurfaceStorageBuilding.cs`: Lagerinhalt, Ein-/Auslagern, Besucher-Trigger, Eingangsschild über `EntrySign`.
 - `Assets/GameObjects/Map/Storage/StoragePanel.cs`: Fenster, zur Laufzeit unter dem Canvas der Werkbank erzeugt (`StoragePanel.Ensure()`), gleiche Grafiken wie Shop/Werkbank (`Shop/BuyBackground-v2`, `Shop/BuyFrames-v2`, `GoldButtonFeedback`, TitleFont).
 - Entnahmen laufen über `InventoryManager.AddTransferred`: gleiche Gewichtsprüfung wie `Add`, aber ohne „+N Item“-Einblendung (ist ein Umlagern, kein Fund).
 - Prüfskript: `Tests/StorageUiChecks.cs` (frischer Play-Start ab MainMenu, isoliertes Spielstand-/Meta-Profil, Ergebnis in `Temp/StorageUiChecks.txt`).
