@@ -10,7 +10,7 @@ public static class PlayerSettings
     const string FullscreenKey = "settings.display.fullscreen";
     const string UiScaleKey = "settings.display.uiScale";
     const string HudScaleKey = "settings.display.hudScale";
-    public const float DefaultHudScale = .8f;
+    public const float DefaultHudScale = .8f, MinHudScale = .3f;
     static readonly Dictionary<CanvasScaler, Vector2> References = new();
 
     public static float Master
@@ -29,10 +29,10 @@ public static class PlayerSettings
     public static float UiScale { get => PlayerPrefs.GetFloat(UiScaleKey, 1f); set { PlayerPrefs.SetFloat(UiScaleKey, Mathf.Clamp(value, .8f, 1.2f)); ApplyUiScale(); PlayerPrefs.Save(); } }
     public static float HudScale
     {
-        get => Mathf.Clamp(PlayerPrefs.GetFloat(HudScaleKey, DefaultHudScale), .5f, 1f);
+        get => Mathf.Clamp(PlayerPrefs.GetFloat(HudScaleKey, DefaultHudScale), MinHudScale, 1f);
         set
         {
-            PlayerPrefs.SetFloat(HudScaleKey, Mathf.Clamp(value, .5f, 1f));
+            PlayerPrefs.SetFloat(HudScaleKey, Mathf.Clamp(value, MinHudScale, 1f));
             ApplyHudScale();
             PlayerPrefs.Save();
         }

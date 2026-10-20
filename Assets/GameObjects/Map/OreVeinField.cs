@@ -10,24 +10,20 @@ public sealed class OreVeinField : IDisposable
     public Texture2D Texture { get; private set; }
     public BoundsInt Bounds { get; private set; }
 
-    const byte Copper = (byte)((int)BlockType.CopperOre + 1);
     // Cells kept around the visible area. The buffer only re-centres (a full rebuild) when the view comes
     // closer than Margin cells to its edge. A larger border would rebuild less often, but every rebuild scales
     // with the buffer area, and short rebuilds keep frame times even.
     const int Border = 16, Margin = 5;
-    static readonly Unity.Profiling.ProfilerMarker RebuildMarker = new("Mining.OreVeins.Rebuild"),
-        TopologyMarker = new("Mining.OreVeins.Topology"), OutlineMarker = new("Mining.OreVeins.Outline");
+    static readonly Unity.Profiling.ProfilerMarker RebuildMarker = new("Mining.OreVeins.Rebuild");
 
     bool dirty = true, pixelsChanged;
-    readonly CopperOutlineField copperOutline = new CopperOutlineField();
     TileBase[] oreBuffer = Array.Empty<TileBase>(), terrainBuffer = Array.Empty<TileBase>();
     Tilemap source;
     Tilemap substrate;
 
     public void Invalidate() => dirty = true;
 
-    // Planned deposits never change while mining, so a change can only affect its own cell. Ordinary cells are
-    // patched in place; copper cells also drive the deposit links and the outline field and rebuild the field.
+    // A change can only affect its own cell, so changed cells are patched in place.
     public void Changed(Tilemap map, NativeArray<Vector3Int> positions)
     {
         if (dirty || !Texture || (map != source && map != substrate)) return;
@@ -40,8 +36,6 @@ public sealed class OreVeinField : IDisposable
             int index = (cell.y - bounds.yMin) * bounds.size.x + cell.x - bounds.xMin;
             var before = pixels[index];
             var after = Pixel(source.GetTile<OreTile>(cell), substrate.HasTile(cell));
-            if (before.r == Copper || after.r == Copper) { dirty = true; return; }
-            after.b = before.b;
             if (before.r == after.r && before.g == after.g && before.a == after.a) continue;
             pixels[index] = after;
             pixelsChanged = true;
@@ -91,7 +85,7 @@ public sealed class OreVeinField : IDisposable
             }
             dirty = true;
         }
-        if (dirty) Rebuild(map);
+        if (dirty) Rebuild();
         else if (pixelsChanged)
         {
             Texture.Apply(false, false);
@@ -100,7 +94,7 @@ public sealed class OreVeinField : IDisposable
         return true;
     }
 
-    void Rebuild(MapGenerator map)
+    void Rebuild()
     {
         using var measure = RebuildMarker.Auto();
         int count = Bounds.size.x * Bounds.size.y;
@@ -111,9 +105,6 @@ public sealed class OreVeinField : IDisposable
         for (int i = 0; i < count; i++) pixels[i] = Pixel(oreBuffer[i] as OreTile, terrainBuffer[i]);
         // Drop the tile references again so the buffers do not keep anything alive.
         Array.Clear(oreBuffer, 0, count); Array.Clear(terrainBuffer, 0, count);
-        using (TopologyMarker.Auto()) CopperVeinTopology.Fill(map, Bounds, pixels);
-        using (OutlineMarker.Auto()) copperOutline.Build(pixels, Bounds.size.x, Bounds.size.y);
-
         Texture.Apply(false, false);
         dirty = pixelsChanged = false;
     }
@@ -125,17 +116,15 @@ public sealed class OreVeinField : IDisposable
         var dy = map.Terrain.CellToWorld(Vector3Int.up) - origin;
         properties.SetFloat(VeinEnabled, 1);
         properties.SetTexture(VeinCells, Texture);
-        properties.SetTexture(CopperOutline, copperOutline.Texture ? copperOutline.Texture : Texture2D.blackTexture);
-
         properties.SetVector(VeinBounds, new Vector4(Bounds.xMin, Bounds.yMin, Bounds.size.x, Bounds.size.y));
         properties.SetVector(VeinGrid, new Vector4(dx.x, dy.y, origin.x, origin.y));
         properties.SetFloat(VeinSeed, (uint)map.ActiveSeed % 8191);
     }
     static readonly int VeinEnabled = Shader.PropertyToID("_VeinEnabled"), VeinCells = Shader.PropertyToID("_VeinCells"),
-        CopperOutline = Shader.PropertyToID("_CopperOutlineField"), VeinBounds = Shader.PropertyToID("_VeinBounds"),
+        VeinBounds = Shader.PropertyToID("_VeinBounds"),
         VeinGrid = Shader.PropertyToID("_VeinGrid"), VeinSeed = Shader.PropertyToID("_VeinSeed");
 
-    public void Dispose() { ReleaseTexture(); copperOutline.Dispose(); source = substrate = null; dirty = true; pixelsChanged = false; }
+    public void Dispose() { ReleaseTexture(); source = substrate = null; dirty = true; pixelsChanged = false; }
 
     void ReleaseTexture()
     {

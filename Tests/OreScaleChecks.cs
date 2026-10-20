@@ -42,7 +42,10 @@ public static class OreScaleChecks
             map.Terrain.SetTile(Vector3Int.zero,registry.GetById(BlockType.Stone).variants[0]);
             go.GetComponent<TilemapRenderer>().enabled=false;
             var overlay=map.OreOverlay;
-            var ore=registry.GetById(BlockType.GoldOre).richOre[0];
+            // Scaling, reflection and shimmer belong to the legacy overlay path (old tiles in old saves);
+            // painted tiles keep their authored size and overhang (Docs/Gemalte-Erze.md, PaintedOreRuntimeChecks).
+            var ore=AssetDatabase.LoadAssetAtPath<OreTile>("Assets/GameObjects/Map/Blocks/Ores/Gold/Gold_05_rich.asset");
+            Check(ore && ore.block==registry.GetById(BlockType.GoldOre) && ore.color.a>.999f,"Legacy gold tile missing");
             overlay.SetTile(Vector3Int.zero,ore);
             overlay.SetTileFlags(Vector3Int.zero,TileFlags.None);
             var rotation=Matrix4x4.Rotate(Quaternion.Euler(0,0,90));
