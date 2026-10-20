@@ -20,5 +20,6 @@ Die Lagerhütte neben dem Shop funktioniert wie eine Kiste in Minecraft: Items a
 
 - `Assets/GameObjects/Map/Storage/SurfaceStorageBuilding.cs`: Lagerinhalt, Ein-/Auslagern, Besucher-Trigger, Weltraum-Knopf (`EnterButtonCanvas`, gleiche Ebene wie der Shop-Knopf).
 - `Assets/GameObjects/Map/Storage/StoragePanel.cs`: Fenster, zur Laufzeit unter dem Canvas der Werkbank erzeugt (`StoragePanel.Ensure()`), gleiche Grafiken wie Shop/Werkbank (`Shop/BuyBackground-v2`, `Shop/BuyFrames-v2`, `GoldButtonFeedback`, TitleFont).
-- Prüfskript: `Tests/StorageUiChecks.cs` (frischer Play-Start, Ergebnis in `Temp/StorageUiChecks-result.txt`).
-- Entwurf: `Design/Lager/Entwurf/Lager-Entwurf.html`.
+- Entnahmen laufen über `InventoryManager.AddTransferred`: gleiche Gewichtsprüfung wie `Add`, aber ohne „+N Item“-Einblendung (ist ein Umlagern, kein Fund).
+- Prüfskript: `Tests/StorageUiChecks.cs` (frischer Play-Start ab MainMenu, isoliertes Spielstand-/Meta-Profil, Ergebnis in `Temp/StorageUiChecks.txt`).
+- Entwurf: `Design/Lager/Entwurf/Lager-Entwurf.html`, umgesetzt: `Design/Lager/Lager-implemented.png`, `Design/Lager/Lager-Knopf-implemented.png`.
