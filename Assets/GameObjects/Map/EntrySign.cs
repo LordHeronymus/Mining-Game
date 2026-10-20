@@ -16,7 +16,7 @@ public sealed class EntrySign : MonoBehaviour
     public TextMeshProUGUI Label { get; private set; }
     RectTransform rect;
     Material fontMaterial;
-    float baseY;
+    float baseY, parentScale = 1;
 
     // The building artwork is the largest sprite; smaller ones are signboards, lanterns or crystals.
     public static SpriteRenderer MainSprite(Transform building)
@@ -82,9 +82,11 @@ public sealed class EntrySign : MonoBehaviour
 
         float textWidth = Label.GetPreferredValues(caption, 10000, Height).x;
         rect.sizeDelta = new Vector2(Mathf.Ceil(textWidth) + 2 * CapMargin, Height);
-        baseY = sprite.bounds.max.y - building.position.y + .45f;
-        rect.localPosition = new Vector3(sprite.bounds.center.x - building.position.x, baseY, 0);
-        rect.localScale = Vector3.one * WorldScale;
+        // World-space placement and size: buildings may be scaled (the shop is), the sign must not be.
+        parentScale = Mathf.Max(.0001f, Mathf.Abs(building.lossyScale.x));
+        baseY = sprite.bounds.max.y + .45f;
+        rect.position = new Vector3(sprite.bounds.center.x, baseY, building.position.z);
+        rect.localScale = Vector3.one * (WorldScale / parentScale);
         // Apply after sizing: GoldButtonFeedback picks the wide button artwork from the final aspect ratio.
         GoldButtonFeedback.Apply(Button, null, null);
 
@@ -101,8 +103,9 @@ public sealed class EntrySign : MonoBehaviour
         Group.interactable = Visible || Group.alpha > 0;
         // Pops in slightly and floats gently so the sign reads as an inviting interaction.
         float bob = Mathf.Sin(Time.unscaledTime * 2.2f) * .04f * Group.alpha;
-        rect.localScale = Vector3.one * (WorldScale * (.92f + .08f * Group.alpha));
-        rect.localPosition = new Vector3(rect.localPosition.x, baseY + bob, 0);
+        rect.localScale = Vector3.one * (WorldScale / parentScale * (.92f + .08f * Group.alpha));
+        var position = rect.position;
+        rect.position = new Vector3(position.x, baseY + bob, position.z);
     }
 
     void OnDisable()
