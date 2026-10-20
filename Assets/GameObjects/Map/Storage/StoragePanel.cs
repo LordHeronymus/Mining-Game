@@ -495,12 +495,12 @@ public sealed class StoragePanel : MonoBehaviour
         storageContent = ScrollArea("Storage", layout, 876, 330, out storageScroll);
         AddScrollbar(storageScroll, 1436, 330);
 
-        Hint(Button("Deposit Ores", layout, "Erze einlagern", 204, 748, 282, 50, DepositOres), "Legt alle Erze aus dem Rucksack ins Lager");
-        Hint(Button("Deposit All", layout, "Alles einlagern", 506, 748, 282, 50, DepositAll), "Legt alles ins Lager – Gegenstände in der Schnellleiste bleiben im Rucksack");
-        var value = Panel("Value", layout, 860, 748, 300, 50, rowSprite);
-        valueText = Label(value.transform, "", 20, 0, 260, 50, 26, TextAlignmentOptions.Midline);
+        Hint(Button("Deposit Ores", layout, "Erze einlagern", 204, 745, 282, 56, DepositOres), "Legt alle Erze aus dem Rucksack ins Lager");
+        Hint(Button("Deposit All", layout, "Alles einlagern", 506, 745, 282, 56, DepositAll), "Legt alles ins Lager – Gegenstände in der Schnellleiste bleiben im Rucksack");
+        var value = Panel("Value", layout, 860, 745, 300, 56, rowSprite);
+        valueText = Label(value.transform, "", 20, 0, 260, 56, 26, TextAlignmentOptions.Midline);
         valueText.richText = true;
-        Hint(Button("Withdraw All", layout, "Alles entnehmen", 1180, 748, 264, 50, WithdrawAll), "Nimmt so viel aus dem Lager, wie der Rucksack tragen kann");
+        Hint(Button("Withdraw All", layout, "Alles entnehmen", 1180, 745, 264, 56, WithdrawAll), "Nimmt so viel aus dem Lager, wie der Rucksack tragen kann");
         hintText = Label(layout, ControlsHint, 176, 810, 1296, 32, 21, TextAlignmentOptions.Midline);
         hintText.color = Muted;
         FitLayout();
@@ -627,11 +627,13 @@ public sealed class StoragePanel : MonoBehaviour
         text.text = caption; text.color = Cream; text.fontStyle = FontStyles.Normal;
         text.fontSize = size; text.enableAutoSizing = true; text.fontSizeMin = size * .65f; text.fontSizeMax = size;
         text.alignment = alignment switch {
-            TextAlignmentOptions.Left => TextAlignmentOptions.MidlineLeft,
-            TextAlignmentOptions.Center => TextAlignmentOptions.Midline,
-            TextAlignmentOptions.Right => TextAlignmentOptions.MidlineRight,
+            TextAlignmentOptions.MidlineLeft => TextAlignmentOptions.Left,
+            TextAlignmentOptions.Midline => TextAlignmentOptions.Center,
+            TextAlignmentOptions.MidlineRight => TextAlignmentOptions.Right,
             _ => alignment
         };
+        // Middle (line-box) alignment, not Midline: Midline centres the visible glyphs, so a descender such as
+        // the g in "einlagern" pushes the whole caption up compared with captions without descenders.
         text.textWrappingMode = TextWrappingModes.NoWrap;
         text.overflowMode = TextOverflowModes.Ellipsis;
         text.raycastTarget = false;
