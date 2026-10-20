@@ -154,7 +154,7 @@ public class InventoryUI : MonoBehaviour
         if (!source) source = cells.FirstOrDefault(c => c.item == item)?.icon;
         draggedIcon.sprite = item.icon;
         draggedGrabOffset = ItemDragGhost.Begin(draggedIcon, source, screenPosition, DragEventCamera);
-        draggedIcon.color = new Color(1f, 1f, 1f, .9f);
+        draggedIcon.color = Color.white;
         draggedIcon.gameObject.SetActive(true);
         draggedIcon.transform.SetAsLastSibling();
         MoveDraggedIcon(screenPosition);

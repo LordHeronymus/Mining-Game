@@ -39,6 +39,8 @@ public static partial class GpsSchema
             new GpsFieldSpec("orthographicSize", "Halbe sichtbare Höhe")),
         new GpsSectionSpec("Spieler", "Startressourcen", typeof(GpsPreferences), "",
             new GpsFieldSpec("startingResources", "Startressourcen", applyTime: GpsApplyTime.NewRun)),
+        new GpsSectionSpec("Spieler", "Autosave", typeof(GpsPreferences), "",
+            new GpsFieldSpec("autosaveIntervalMinutes", "Intervall (min, 0 = aus)", min: 0f, max: 60f)),
         new GpsSectionSpec("Bewegung", "Laufen und Springen", typeof(PlayerBaseStats), "",
             new GpsFieldSpec("moveSpeed", "Laufgeschwindigkeit", min: 0.01f),
             new GpsFieldSpec("jumpHeightBlocks", "Sprunghöhe (Blöcke)", min: 0, max: 100)),

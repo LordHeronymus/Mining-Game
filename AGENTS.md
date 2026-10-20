@@ -28,6 +28,7 @@ Die vollständige Änderungshistorie steht in `Docs/Changelog.md`. Dort nur bei 
 ## Tests im Unity Editor
 
 - **Welcher Editor:** Der Editor von `Mining Game` gehört dem Benutzer für eigene Tests; Chats nutzen ihn nur, wenn der Benutzer es ausdrücklich sagt. Chats testen im Editor von `Mining Game 2` (Testbank, siehe „Zusammenarbeit mehrerer Agenten“ Punkt 3). Unity-Werkzeuge (MCP) nur verwenden, wenn `editor_status` als `projectPath` `Mining Game 2` meldet (festgelegt in der nicht versionierten `.mcp.json` des Ordners, in dem der Chat läuft); sonst den Editor mit `unity command --project-path "<Git Repos>/Mining Game 2" …` ausdrücklich ansprechen.
+- **Testbank-Editor antwortet nicht** (MCP- oder `unity command`-Zeitüberschreitung): zuerst `Tools/editor-dialog.sh list` prüfen. Ein modaler Dialog blockiert den Editor; bekannte Dialoge (z. B. „modified externally“ → Reload, „Scene(s) Have Been Modified“ → Don't Save) mit `Tools/editor-dialog.sh press "<Knopf>"` schliessen, unbekannte nicht raten, sondern dem Benutzer melden (Titel, Text, Knöpfe). Nur für die Testbank, nie für den Editor des Benutzers. Details in `Docs/Editor-Warteschlange.md`.
 - Prüfskripte liegen unter `Tests/` und laufen im verbundenen Editor:
   `unity command --project-path "<Git Repos>/Mining Game 2" run_script --file Tests/<Name>Checks.cs`
   Viele Prüfskripte verlangen einen frischen Play-Start ab MainMenu (Rückgabe „Requires … Play …“). Solche Skripte nie im Edit Mode starten, sonst schreiben sie Testobjekte in die geöffnete Szene.
