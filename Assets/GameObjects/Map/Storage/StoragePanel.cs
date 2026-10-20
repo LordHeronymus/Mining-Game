@@ -59,6 +59,7 @@ public sealed class StoragePanel : MonoBehaviour
     TMP_InputField searchField;
     Image dragGhost;
     Slot dragged;
+    Vector3 dragGrabOffset;
     InventoryManager inventory;
     SurfaceStorageBuilding subscribedStorage;
     string hoverHint;
@@ -294,6 +295,7 @@ public sealed class StoragePanel : MonoBehaviour
             dragGhost.rectTransform.anchorMin = dragGhost.rectTransform.anchorMax = dragGhost.rectTransform.pivot = new Vector2(.5f, .5f);
         }
         dragGhost.sprite = slot.item.icon;
+        dragGrabOffset = ItemDragGhost.Begin(dragGhost, slot.icon, data.position, EventCamera);
         dragGhost.color = new Color(1, 1, 1, .85f);
         dragGhost.transform.SetAsLastSibling();
         dragGhost.gameObject.SetActive(true);
@@ -302,9 +304,7 @@ public sealed class StoragePanel : MonoBehaviour
 
     public void Drag(PointerEventData data)
     {
-        if (!dragGhost || dragged == null) return;
-        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(layout, data.position, EventCamera, out var local))
-            dragGhost.rectTransform.anchoredPosition = local;
+        if (dragGhost && dragged != null) ItemDragGhost.Move(dragGhost, dragGrabOffset, data.position, EventCamera);
     }
 
     public void Drop(PointerEventData data)
