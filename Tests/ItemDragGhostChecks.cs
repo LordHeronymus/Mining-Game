@@ -114,13 +114,19 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
             if (pictured.Contains(slot.item)) { Field<ScrollRect>(panel, "backpackScroll").verticalNormalizedPosition = 0; Canvas.ForceUpdateCanvases(); }
             var data = new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left };
             data.position = Screen(slot.icon.rectTransform, ScreenCenter(slot.icon.rectTransform)) + new Vector2(9, -6);
+            var grab = data.position;
             panel.BeginDrag(slot, data);
             storageGhost = Field<Image>(panel, "dragGhost");
-            Compare("Storage", slot.item, slot.icon, storageGhost, Vector2.zero);
+            Compare("Storage", slot.item, slot.icon, storageGhost, grab, Vector2.zero);
             data.position += new Vector2(190, 10);
             panel.Drag(data);
-            Compare("Storage", slot.item, slot.icon, storageGhost, new Vector2(190, 10));
-            if (pictured.Contains(slot.item)) yield return Shot("Storage", slot.item, slot.icon.rectTransform, storageGhost.rectTransform);
+            Compare("Storage", slot.item, slot.icon, storageGhost, grab, new Vector2(190, 10));
+            if (pictured.Contains(slot.item))
+            {
+                yield return Pop("Storage", slot.item, storageGhost);
+                Compare("Storage", slot.item, slot.icon, storageGhost, grab, new Vector2(190, 10));
+                yield return Shot("Storage", slot.item, slot.icon.rectTransform, storageGhost.rectTransform);
+            }
             data.position = Screen(slot.icon.rectTransform, ScreenCenter(slot.icon.rectTransform));
             panel.Drop(data);
             Check(!storageGhost.gameObject.activeSelf, "Storage ghost hides after drop");
@@ -143,10 +149,15 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
             var position = Screen(icon.rectTransform, ScreenCenter(icon.rectTransform)) + new Vector2(-7, 5);
             inventoryUi.BeginItemDrag(item, position, icon);
             var ghost = Field<Image>(inventoryUi, "draggedIcon");
-            Compare("Inventory", item, icon, ghost, Vector2.zero);
+            Compare("Inventory", item, icon, ghost, position, Vector2.zero);
             inventoryUi.MoveDraggedIcon(position + new Vector2(200, -12));
-            Compare("Inventory", item, icon, ghost, new Vector2(200, -12));
-            if (pictured.Contains(item)) yield return Shot("Inventory", item, icon.rectTransform, ghost.rectTransform);
+            Compare("Inventory", item, icon, ghost, position, new Vector2(200, -12));
+            if (pictured.Contains(item))
+            {
+                yield return Pop("Inventory", item, ghost);
+                Compare("Inventory", item, icon, ghost, position, new Vector2(200, -12));
+                yield return Shot("Inventory", item, icon.rectTransform, ghost.rectTransform);
+            }
             inventoryUi.CancelItemDrag();
             inventoryCount++;
         }
@@ -166,11 +177,16 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
                 var position = Screen(icon.rectTransform, ScreenCenter(icon.rectTransform)) + new Vector2(6, 8);
                 Check(hud.BeginHotbarDrag(i + 1, position), "Hotbar drag starts for " + hotbarItems[i].displayName);
                 var ghost = Field<Image>(hud, "dragIcon");
-                Compare("Hotbar", hotbarItems[i], icon, ghost, Vector2.zero);
+                Compare("Hotbar", hotbarItems[i], icon, ghost, position, Vector2.zero);
                 var moved = position + new Vector2(0, 230);
                 hud.GetType().GetMethod("MoveDraggedIcon", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(hud, new object[] { moved });
-                Compare("Hotbar", hotbarItems[i], icon, ghost, new Vector2(0, 230));
-                if (pictured.Contains(hotbarItems[i])) yield return Shot("Hotbar", hotbarItems[i], icon.rectTransform, ghost.rectTransform);
+                Compare("Hotbar", hotbarItems[i], icon, ghost, position, new Vector2(0, 230));
+                if (pictured.Contains(hotbarItems[i]))
+                {
+                    yield return Pop("Hotbar", hotbarItems[i], ghost);
+                    Compare("Hotbar", hotbarItems[i], icon, ghost, position, new Vector2(0, 230));
+                    yield return Shot("Hotbar", hotbarItems[i], icon.rectTransform, ghost.rectTransform);
+                }
                 hud.CancelHotbarDrag();
             }
             Log("PASS Hotbar: " + hotbarItems.Count + " items");
@@ -184,18 +200,36 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
         Log("COMPLETE " + checks + " checks");
     }
 
-    // The ghost must cover the slot icon shifted by the pointer movement, with the same mirroring.
-    void Compare(string ui, ItemSO item, Image source, Image ghost, Vector2 pointerDelta)
+    // The ghost must cover the slot icon shifted by the pointer movement, with the same mirroring. While it pops it is
+    // enlarged by the current factor around the grab point, so the grabbed spot stays under the cursor.
+    void Compare(string ui, ItemSO item, Image source, Image ghost, Vector2 grab, Vector2 pointerDelta)
     {
         Check(ghost && ghost.gameObject.activeInHierarchy, ui + ": ghost visible for " + item.displayName);
         Check(ghost.sprite == source.sprite && ghost.preserveAspect == source.preserveAspect, ui + ": same sprite for " + item.displayName);
+        var state = ghost.GetComponent<ItemDragGhost>();
+        Check(state && ghost.GetComponent<Shadow>(), ui + ": ghost has pop state and shadow for " + item.displayName);
+        float factor = state.Factor;
         var a = Corners(source.rectTransform); var b = Corners(ghost.rectTransform);
         for (int i = 0; i < 4; i++)
-            Check(Vector2.Distance(a[i] + pointerDelta, b[i]) < 1.5f,
-                $"{ui}: corner {i} of {item.displayName} differs (slot {a[i] + pointerDelta}, ghost {b[i]})");
+        {
+            var expected = grab + pointerDelta + (a[i] - grab) * factor;
+            Check(Vector2.Distance(expected, b[i]) < 1.5f,
+                $"{ui}: corner {i} of {item.displayName} differs (expected {expected}, ghost {b[i]}, factor {factor:0.000})");
+        }
         Check(Mathf.Sign(source.rectTransform.lossyScale.x) == Mathf.Sign(ghost.rectTransform.lossyScale.x) &&
               Mathf.Sign(source.rectTransform.lossyScale.y) == Mathf.Sign(ghost.rectTransform.lossyScale.y),
             ui + ": same mirroring for " + item.displayName);
+    }
+
+    // Drag start pops: the item grows quickly past the carry size, then settles at CarryScale.
+    IEnumerator Pop(string ui, ItemSO item, Image ghost)
+    {
+        var state = ghost.GetComponent<ItemDragGhost>();
+        float end = Time.realtimeSinceStartup + .45f, peak = 0f;
+        while (Time.realtimeSinceStartup < end) { yield return null; peak = Mathf.Max(peak, state.Factor); }
+        Check(peak > ItemDragGhost.CarryScale + .05f, $"{ui}: {item.displayName} pops on drag start (peak {peak:0.000})");
+        Check(Mathf.Abs(state.Factor - ItemDragGhost.CarryScale) < .001f, $"{ui}: {item.displayName} settles at the carry size ({state.Factor:0.000})");
+        Log($"{ui} {item.displayName}: peak {peak:0.000}, carried at {state.Factor:0.000}");
     }
 
     IEnumerator Shot(string ui, ItemSO item, RectTransform slot, RectTransform ghost)
