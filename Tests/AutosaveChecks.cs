@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 // Autosave: timed save into the active slot, no save during pause, "Hauptmenü" saves, no manual save button,
 // immediate save for play-mode stop, and no automatic save into a different save directory.
-// Ends inside the run with TestDirectory still set (see output) so the caller can stop play mode and verify the exit save.
+// Ends inside the run with both test directories still set (see output) so the caller can stop play mode and verify the exit save.
 public static class AutosaveChecks
 {
     static readonly Stack<IEnumerator> routines = new Stack<IEnumerator>();
@@ -28,6 +28,8 @@ public static class AutosaveChecks
         output = Path.GetFullPath(Path.Combine(Application.dataPath, "../Temp/AutosaveChecks.txt"));
         testDirectory = Path.GetFullPath(Path.Combine(Application.dataPath, "../Temp/Autosave-" + DateTime.UtcNow.Ticks));
         GameSaveSystem.TestDirectory = testDirectory;
+        // A fixed meta directory keeps the run alive while the checks switch the save directory.
+        MetaProgression.TestDirectory = Path.Combine(testDirectory, "MetaProfile");
         oldInterval = GpsSettings.Preferences.autosaveIntervalMinutes;
         background = Application.runInBackground; Application.runInBackground = true;
         began = EditorApplication.timeSinceStartup; frame = -1; passed.Clear(); routines.Clear();
@@ -147,7 +149,7 @@ public static class AutosaveChecks
         GpsSettings.Preferences.autosaveIntervalMinutes = oldInterval;
         Application.runInBackground = background;
         // On success TestDirectory stays set until the caller has stopped play mode and checked the exit save.
-        if (failed) GameSaveSystem.TestDirectory = null;
+        if (failed) { GameSaveSystem.TestDirectory = null; MetaProgression.TestDirectory = null; }
         File.WriteAllText(output, result + "\nIsolated directory: " + testDirectory);
     }
 }
