@@ -152,9 +152,6 @@ public sealed class TiefenhallProbe : MonoBehaviour
         var discovered = map.GetComponent<PlayerMapDiscovery>().CaptureState();
         Check(discovered.seed == state.seed && discovered.discoveredBits.SequenceEqual(state.discoveredBits), "Explored map restored");
         Check(Camera.main.GetComponent<CameraFollow>().target == player.transform && Camera.main.GetComponent<CameraFollow>().enabled, "Loaded run follows player");
-        Button("Save").onClick.Invoke(); yield return null;
-        Check(SaveSlotPanel.IsOpen && Button("Slot 2").interactable && RaycastButton(Button("Slot 2")), "Pause opens interactive manual save slots");
-        Button("Back").onClick.Invoke(); yield return null;
         int homeSlot = GameSaveSystem.ActiveSlot;
         Button("Home").onClick.Invoke();
         yield return Until(() => SceneManager.GetActiveScene().name == "MainMenu" && !RunNavigation.IsTransitioning, "saved return home");

@@ -21,12 +21,15 @@ param(
     [string]$QueueDir,
     # Projektordner, dessen Editoren gemeint sind (Standard: der Ordner, aus dem dieses Skript stammt).
     [string]$ProjectRoot,
+    # Dialog-Waechter fuer den Editor der Testbank ("<Projekt> 2"): Pruefintervall in Sekunden, 0 = aus (Tools/editor-dialog.ps1).
+    [int]$DialogWatchSeconds = 3,
     [switch]$Install,
     [switch]$Uninstall
 )
 
 $ErrorActionPreference = 'Stop'
 $queueScript = Join-Path $PSScriptRoot 'editor-queue.ps1'
+$dialogScript = Join-Path $PSScriptRoot 'editor-dialog.ps1'
 $shortcut = Join-Path ([Environment]::GetFolderPath('Startup')) 'Mining Game Editor-Warteschlange.lnk'
 
 # --- Projekte -------------------------------------------------------------------
@@ -49,7 +52,7 @@ if ($Install) {
     # Kopie in einen festen Ordner ausserhalb von Git: Arbeitsordner und Testbank wechseln ihren Stand.
     $bin = Join-Path $QueueDir 'bin'
     New-Item -ItemType Directory -Path $bin -Force | Out-Null
-    foreach ($name in 'editor-queue.ps1', 'editor-queue-server.ps1') { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination (Join-Path $bin $name) -Force }
+    foreach ($name in 'editor-queue.ps1', 'editor-queue-server.ps1', 'editor-dialog.ps1') { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination (Join-Path $bin $name) -Force }
     $target = Join-Path $bin 'editor-queue-server.ps1'
     $shell = New-Object -ComObject WScript.Shell
     $lnk = $shell.CreateShortcut($shortcut)
@@ -143,9 +146,22 @@ try { $listener.Start() }
 catch { Write-Output "Port $Port ist belegt oder nicht freigegeben (laeuft der Dienst schon?): $($_.Exception.Message)"; exit 1 }
 Write-Output "Editor-Warteschlange: Dienst laeuft auf http://localhost:$Port (Queue-Ordner $QueueDir)"
 
+# Dialog-Waechter: beantwortet bekannte modale Dialoge der Testbank, meldet unbekannte (Protokoll, status, wait).
+# Nur fuer eine Testbank, die in diesen Queue-Ordner meldet (Aktivitaetssignal vorhanden), nie fuer den Editor des Benutzers.
+$benchName = "$ownerName 2"
+function Watch-Dialogs {
+    if ($DialogWatchSeconds -le 0 -or -not (Test-Path -LiteralPath $dialogScript)) { return }
+    if (-not (Test-Path -LiteralPath (Join-Path $QueueDir "$benchName.activity.json"))) { return }
+    try { & $dialogScript watch -Once -Quiet -Project $benchName -ProjectRoot $ownerRoot -QueueDir $QueueDir | Out-Null } catch { }
+}
+if ($DialogWatchSeconds -gt 0) { Write-Output "Dialog-Waechter fuer '$benchName' alle $DialogWatchSeconds s." }
+
 try {
     while ($listener.IsListening) {
-        $ctx = $listener.GetContext()
+        # Auf Anfragen warten und dazwischen den Dialog-Waechter laufen lassen.
+        $pending = $listener.BeginGetContext($null, $null)
+        while (-not $pending.AsyncWaitHandle.WaitOne([Math]::Max(1, $DialogWatchSeconds) * 1000)) { Watch-Dialogs }
+        $ctx = $listener.EndGetContext($pending)
         try {
             $req = $ctx.Request
             $origin = $req.Headers['Origin']
