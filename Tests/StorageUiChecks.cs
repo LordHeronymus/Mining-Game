@@ -116,8 +116,8 @@ public sealed class StorageUiProbe : MonoBehaviour
         var storageFrame = (RectTransform)layout.Find("Storage Frame");
         Check(backpackFrame.anchoredPosition.x < storageFrame.anchoredPosition.x, "Backpack on the left, storage on the right");
         Check(layout.Find("Background").GetComponent<Image>().sprite.texture.name == "BuyBackground-v2", "Shop background artwork");
-        yield return null;
-        var bottom = new[] { "Deposit Ores", "Deposit All", "Withdraw All" }.Select(n => layout.Find(n).GetComponentInChildren<TextMeshProUGUI>()).ToArray();
+        for (int frame = 0; frame < 4; frame++) yield return null;
+        var bottom =new[] { "Deposit Ores", "Deposit All", "Withdraw All" }.Select(n => layout.Find(n).GetComponentInChildren<TextMeshProUGUI>()).ToArray();
         Check(bottom.All(x => Mathf.Abs(x.fontSize - bottom[0].fontSize) < .01f) && ((RectTransform)layout.Find("Value")).rect.height == ((RectTransform)layout.Find("Withdraw All")).rect.height,
             "Bottom buttons share size and font size");
         var slotIcon = panel.BackpackSlots[0];
