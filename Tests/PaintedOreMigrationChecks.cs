@@ -112,6 +112,7 @@ public sealed class PaintedOreMigrationProbe:MonoBehaviour
         Check(blocks.All(b=>old.Keys.Any(k=>k.block==b)),"Every generated ore has old catalog tiles: "+string.Join(", ",blocks.Select(b=>b.displayName)));
 
         // Rebuild an old world: most cells get an old tile of the same ore and size; some keep a different painted variant.
+        // Generated cells carry their tile's colour; SetTile keeps the previous cell colour of unlocked tiles, so set it.
         var expected=new Dictionary<Vector3Int,OreTile>();int replaced=0,kept=0,n=0;
         var perOre=new Dictionary<string,int>();
         foreach(var pair in generated.OrderBy(x=>x.Key.y).ThenBy(x=>x.Key.x))
@@ -120,11 +121,11 @@ public sealed class PaintedOreMigrationProbe:MonoBehaviour
             if(n++%9==0 && variants.Length>1)
             {
                 var other=variants[(Array.IndexOf(variants,ore)+1)%variants.Length];
-                ores.SetTile(cell,other);expected[cell]=other;kept++;continue;
+                ores.SetTile(cell,other);ores.SetColor(cell,other.color);expected[cell]=other;kept++;continue;
             }
             if(!old.TryGetValue((ore.block,ore.richness),out var group)){expected[cell]=ore;continue;}
             var legacy=group[(Math.Abs(cell.x*31+cell.y*17))%group.Length];
-            ores.SetTile(cell,legacy);expected[cell]=ore;replaced++;
+            ores.SetTile(cell,legacy);ores.SetColor(cell,legacy.color);expected[cell]=ore;replaced++;
             perOre[ore.block.displayName]=perOre.TryGetValue(ore.block.displayName,out int c)?c+1:1;
             if(Mathf.Abs(ores.GetColor(cell).a-legacy.color.a)>.0005f)throw new Exception("Old tile colour not applied at "+cell);
         }
