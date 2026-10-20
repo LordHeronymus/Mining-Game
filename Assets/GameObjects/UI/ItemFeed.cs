@@ -72,6 +72,10 @@ public sealed class ItemFeed : MonoBehaviour
         if (sunIcon) artifactPointsIcon = sunIcon;
         Instance = this;
         collectBling = Resources.Load<AudioClip>("Audio/Ding4");
+        // The clip is not preloaded: its first play read and decoded it in the frame of the first pickup (often the
+        // wood of the first felled tree), 5 ms with a warm file cache and over 40 ms with a cold one. It is imported
+        // with "Load In Background", so this only queues the decode.
+        if (collectBling && collectBling.loadState == AudioDataLoadState.Unloaded) collectBling.LoadAudioData();
         collectionSoundReady = false;
         pending.Clear();
         nextPickupTime = 0f;

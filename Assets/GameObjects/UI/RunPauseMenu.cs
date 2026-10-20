@@ -34,7 +34,7 @@ public sealed class RunPauseMenu : MonoBehaviour
         HomeUi.Image("Board", layout, Vector2.zero, new Vector2(650, 940), "Panel");
         HomeUi.Label("Title", layout, "Tiefenhall", new Vector2(0, 383), new Vector2(560, 85), 62);
         HomeUi.Button("Resume", layout, "Fortsetzen", new Vector2(0, 265), new Vector2(500, 76), Close, true);
-        saveButton = HomeUi.Button("Save", layout, "Speichern", new Vector2(0, 174), new Vector2(500, 76), () => SaveSlotPanel.Show(transform.parent, true));
+        saveButton = HomeUi.Button("Save", layout, "Speichern", new Vector2(0, 174), new Vector2(500, 76), SaveCurrent);
         HomeUi.Button("Load", layout, "Laden", new Vector2(0, 83), new Vector2(500, 76), () => SaveSlotPanel.Show(transform.parent, false));
         HomeUi.Button("Progression", layout, "Fortschritt", new Vector2(0, -8), new Vector2(500, 76), () => MetaProgressionPanel.Show(transform.parent, true));
         challengesButton = HomeUi.Button("Challenges", layout, "Herausforderungen", new Vector2(0, -99), new Vector2(500, 76), OpenChallenges);
@@ -59,7 +59,7 @@ public sealed class RunPauseMenu : MonoBehaviour
         if (IsOpen) return;
         IsOpen = true; previousScale = Time.timeScale; Time.timeScale = 0;
         GameplayInputBlocker.SetBlocked(this, true); transform.SetAsLastSibling(); Visible(true);
-        saveButton.interactable = GameSaveSystem.CanSave;
+        saveButton.interactable = GameSaveSystem.CanSave; status.text = "";
     }
     public void Close()
     {
@@ -77,6 +77,14 @@ public sealed class RunPauseMenu : MonoBehaviour
             layout.gameObject.SetActive(true);
             UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(challengesButton.gameObject);
         });
+    }
+    // Saves into the slot of the running game; the slot picker only appears when no slot is known.
+    void SaveCurrent()
+    {
+        if (GameSaveSystem.IsBusy) return;
+        if (GameSaveSystem.ActiveSlot < 1) { SaveSlotPanel.Show(transform.parent, true); return; }
+        status.text = "Speichern …";
+        StartCoroutine(GameSaveSystem.Save(GameSaveSystem.ActiveSlot, this, (ok, message) => status.text = message));
     }
     void SaveAndHome()
     {
