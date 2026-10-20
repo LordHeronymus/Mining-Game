@@ -377,20 +377,24 @@ public sealed class CompactHud : MonoBehaviour
     }
     const string SlotLayoutVersion = "CompactHud.SlotLayoutVersion";
     const string SlotLayoutPrefix = "CompactHud.Slot.";
+    // A new run starts with an empty hotbar: the starting items fill slots 1, 2, 3 … in their configured
+    // order, so slots remembered from earlier runs (e.g. dynamite) no longer leave empty gaps.
     public void AddStartingResourcesToSlots()
     {
-        bool changed = false;
-        foreach (var resource in StartingResourcesSettings.Load().items)
+        Array.Clear(slots, 0, slots.Length);
+        int next = 0;
+        void Place(int itemId)
         {
-            if (resource.amount <= 0) continue;
-            var item = StartingResourcesSettings.Resolve(resource.itemId);
-            if (!IsHotbarItem(item) || Array.Exists(slots, slot => slot && slot.item == item.item)) continue;
-            int freeSlot = Array.FindIndex(slots, slot => !slot);
-            if (freeSlot < 0) break;
-            slots[freeSlot] = item;
-            changed = true;
+            var item = StartingResourcesSettings.Resolve(itemId);
+            if (next >= slots.Length || !IsHotbarItem(item) || Array.Exists(slots, slot => slot && slot.item == item.item)) return;
+            slots[next++] = item;
         }
-        if (changed) SaveSlotLayout();
+        foreach (var resource in StartingResourcesSettings.Load().items)
+            if (resource.amount > 0) Place(resource.itemId);
+        var loadout = MetaProgression.CurrentLoadout;
+        if (loadout.startingTorches > 0) Place((int)Item.Torche);
+        if (loadout.startingLadders > 0) Place((int)Item.Ladder);
+        SaveSlotLayout();
     }
     void LoadSlotLayout()
     {

@@ -16,8 +16,13 @@ public static class GpsProfileEditor
     {
         EditorApplication.delayCall += () => { if (!EditorApplication.isPlayingOrWillChangePlaymode) Install(); };
         Undo.undoRedoPerformed += () => { if (Resources.Load<GpsProfile>(GpsSettings.ResourceName)) GpsSettings.Reload(); };
+        // Debug-menu edits are stored a moment after the last change; flush them before anything can revert or reload them.
+        EditorApplication.update += GpsSettings.CommitPending;
+        AssemblyReloadEvents.beforeAssemblyReload += GpsSettings.CommitPendingNow;
+        EditorApplication.quitting += GpsSettings.CommitPendingNow;
         EditorApplication.playModeStateChanged += state =>
         {
+            if (state == PlayModeStateChange.ExitingEditMode || state == PlayModeStateChange.ExitingPlayMode) GpsSettings.CommitPendingNow();
             if (state == PlayModeStateChange.ExitingEditMode)
             {
                 if (!Resources.Load<GpsProfile>(GpsSettings.ResourceName) || GpsSettings.Document.records.Count==0) Install();

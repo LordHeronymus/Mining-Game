@@ -12,6 +12,7 @@ public sealed class GpsRuntimeHost : MonoBehaviour
 {
     void Update()
     {
+        GpsSettings.CommitPending();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (GameBindings.Down(GameAction.DebugPanel) && (!GameplayInputBlocker.IsBlocked || GpsRuntimePanel.IsOpen))
         { if (GpsRuntimePanel.IsOpen) GpsRuntimePanel.Close(); else GpsRuntimePanel.Open(); }
@@ -64,12 +65,13 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
     public static void Close()
     {
         GpsAudioPreview.Stop();
+        GpsSettings.CommitPendingNow();
         if (!instance) return;
         if (EventSystem.current?.currentSelectedGameObject)
         { EventSystem.current.SetSelectedGameObject(null); }
         GameplayInputBlocker.SetBlocked(instance, false); instance.gameObject.SetActive(false);
     }
-    void OnDestroy() { GameplayInputBlocker.SetBlocked(this, false); GpsSettings.Changed -= ConfigurationChanged; }
+    void OnDestroy() { GameplayInputBlocker.SetBlocked(this, false); GpsSettings.Changed -= ConfigurationChanged; GpsSettings.Saved -= Refresh; }
     void Build()
     {
         font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF") ?? TMP_Settings.defaultFontAsset;
@@ -103,6 +105,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         scroll.verticalScrollbar = bar; scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
         status = Label(card, "", new Vector2(28, -938), new Vector2(1670, 30), 19);
         GpsSettings.Changed += ConfigurationChanged;
+        GpsSettings.Saved += Refresh;
     }
     public void SelectTab(string name)
     {
@@ -164,7 +167,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
                     var root = GpsSettings.GetValue(record.key, entry.field.name)?.Copy(); if (root == null) continue;
                     string label = !string.IsNullOrEmpty(record.assetKey) && group.Count() == 1 && fields.Length > 1 ? record.name : entry.field.label;
                     DrawValue(record.key, root, root, entry.field, label, sectionKey + "/" + record.key + "/" + root.name, 1, null,
-                        () => { committing=true; try { if (!GpsSettings.SetValue(record.key, root, out string error)) status.text = error; } finally { committing=false; } });
+                        () => { committing=true; try { if (!GpsSettings.SetValueAndCommit(record.key, root, out string error)) status.text = error; } finally { committing=false; } });
                 }
                 if (section == "Item-Icons" && GpsSettings.Profile.Resolve(record.assetKey) is ItemSO ore) BuildShopIconPreview(ore);
             }
