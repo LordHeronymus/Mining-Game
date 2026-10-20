@@ -11,7 +11,11 @@
   Tools/editor-bench.sh audio-on -Id q1a2b3                        # Ton nur fuer Audio-Tests (sonst stumm)
   Tools/editor-bench.sh audio-off                                  # wieder stumm (checkout/release tun das auch)
 
-  Exit-Codes: 0 ok, 1 Fehler, 4 nicht oben in der Warteschlange, 5 Testbank hat Aenderungen.
+  checkout/release schliessen vorher die offene Szene im Editor der Testbank ohne Speichern und oeffnen danach
+  Assets/Scenes/SampleScene.unity neu (kein Dialog "modified externally"). -NoEditor laesst den Editor in Ruhe.
+
+  Exit-Codes: 0 ok, 1 Fehler, 4 nicht oben in der Warteschlange, 5 Testbank hat Aenderungen,
+              6 Editor durch einen unbekannten Dialog blockiert (Tools/editor-dialog.sh list / press).
 #>
 [CmdletBinding()]
 param(
@@ -25,6 +29,7 @@ param(
     [string]$Bench,
     [string]$QueueDir,
     [switch]$Discard,
+    [switch]$NoEditor,
     [switch]$Force
 )
 
@@ -77,6 +82,137 @@ function Test-Holder {
 
 function Set-Muted { if (Test-Path -LiteralPath $audioFile) { Remove-Item -LiteralPath $audioFile -Force } }
 
+# --- Editor der Testbank: Szene vor Git-Aenderungen schliessen, danach wieder oeffnen ---------------------------
+# Sonst fragt Unity nach dem Wechsel modal "The open scene(s) have been modified externally" und blockiert den Editor.
+
+$dialogScript = Join-Path $PSScriptRoot 'editor-dialog.ps1'
+$scenePath = 'Assets/Scenes/SampleScene.unity'
+$closeSceneCode = @'
+if (UnityEditor.EditorApplication.isPlaying) { UnityEditor.EditorApplication.isPlaying = false; return "playing"; }
+UnityEditor.SceneManagement.StageUtility.GoToMainStage();
+UnityEditor.SceneManagement.EditorSceneManager.NewScene(UnityEditor.SceneManagement.NewSceneSetup.EmptyScene, UnityEditor.SceneManagement.NewSceneMode.Single);
+return "closed";
+'@
+# Nach dem Wechsel: Import anstossen, dann Szene oeffnen, sobald der Editor nicht mehr importiert. Unity bricht einzelne Befehle
+# nach 5 s Hauptthread-Zeit ab (der Import laeuft trotzdem weiter); delayCall laeuft im Hintergrund-Editor nicht verlaesslich.
+$refreshCode = @'
+UnityEditor.AssetDatabase.Refresh();
+return "refreshed";
+'@
+$openSceneCode = @"
+if (UnityEditor.EditorApplication.isCompiling || UnityEditor.EditorApplication.isUpdating) return "busy";
+UnityEditor.SceneManagement.EditorSceneManager.OpenScene("$scenePath", UnityEditor.SceneManagement.OpenSceneMode.Single);
+return "opened";
+"@
+
+# Ein Durchgang des Dialog-Waechters ohne Schonfrist. Exit: 0 kein Dialog (mehr), 3 Editor laeuft nicht, 6 unbekannter Dialog offen.
+function Invoke-DialogCheck {
+    if (-not (Test-Path -LiteralPath $dialogScript)) { return @{ code = 0; out = '' } }
+    $out = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $dialogScript watch -Once -GraceSeconds 0 -Project $benchName -ProjectRoot $Bench -QueueDir $QueueDir
+    return @{ code = $LASTEXITCODE; out = ($out -join "`n") }
+}
+
+# C# im Editor der Testbank ausfuehren (unity command eval_file), mit Zeitlimit.
+function Invoke-UnityEval([string]$code, [int]$timeoutSeconds = 30) {
+    $unity = Get-Command unity -ErrorAction SilentlyContinue
+    if (-not $unity) { return @{ ok = $false; out = 'Unity-CLI (unity) nicht gefunden' } }
+    $file = Join-Path ([IO.Path]::GetTempPath()) ("editor-bench-{0}.cs" -f [guid]::NewGuid().ToString('N'))
+    [IO.File]::WriteAllText($file, $code, $utf8)
+    try {
+        $psi = New-Object Diagnostics.ProcessStartInfo $unity.Source
+        $psi.Arguments = (@('command', '--project-path', $Bench, '--timeout', "$timeoutSeconds", '--no-banner', '--non-interactive', 'eval_file', '--file', $file) |
+                ForEach-Object { if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ } }) -join ' '
+        $psi.UseShellExecute = $false; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true; $psi.CreateNoWindow = $true
+        $psi.StandardOutputEncoding = $utf8
+        $p = [Diagnostics.Process]::Start($psi)
+        $errTask = $p.StandardError.ReadToEndAsync()
+        $outTask = $p.StandardOutput.ReadToEndAsync()
+        if (-not $p.WaitForExit(($timeoutSeconds + 30) * 1000)) { try { $p.Kill() } catch { }; return @{ ok = $false; out = 'Zeitlimit' } }
+        $text = ($outTask.Result + "`n" + $errTask.Result).Trim()
+        return @{ ok = ($p.ExitCode -eq 0 -and $text -match '"success":\s*true'); out = $text }
+    }
+    finally { Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue }
+}
+
+# Lange Wartezeiten (Import, Kompilieren): alle 30 s ein Lebenszeichen, damit niemand den Inhaber waehrenddessen verdraengt.
+# $false = nicht mehr oben in der Warteschlange: dann den Editor nicht weiter anfassen.
+$queueScript = Join-Path $PSScriptRoot 'editor-queue.ps1'
+$script:lastBeat = Get-Date
+function Step-Wait {
+    Start-Sleep -Seconds 3
+    if ($Force) { return $true }
+    if (((Get-Date) - $script:lastBeat).TotalSeconds -ge 30 -and (Test-Path -LiteralPath $queueScript)) {
+        $hb = @('heartbeat', '-Project', $benchName, '-QueueDir', $QueueDir)
+        if ($Id) { $hb += @('-Id', $Id) } elseif ($Session) { $hb += @('-Session', $Session) }
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $queueScript @hb | Out-Null
+        $script:lastBeat = Get-Date
+    }
+    return (Test-Holder)
+}
+
+# Fuehrt C# im Testbank-Editor aus und versucht es erneut, solange der Editor beschaeftigt ist (Import, Kompilieren).
+# Blockiert ein Dialog, beantwortet der Waechter bekannte sofort. Rueckgabe .state: ok | not-running | blocked | failed
+function Invoke-BenchEditor([string]$code, [string]$what, [int]$waitSeconds = 60) {
+    $check = Invoke-DialogCheck
+    if ($check.code -eq 3) { return @{ state = 'not-running'; out = '' } }
+    if ($check.code -eq 6) { return @{ state = 'blocked'; out = $check.out } }
+    $deadline = (Get-Date).AddSeconds($waitSeconds)
+    $said = $false
+    while ($true) {
+        $r = Invoke-UnityEval $code
+        if ($r.ok -and $r.out -notmatch '"result":"playing"') { return @{ state = 'ok'; out = $r.out } }
+        if ($r.ok) { $msg = 'Play-Mode wird beendet' }
+        else {
+            $msg = "Editor beschaeftigt ($what)"
+            $check = Invoke-DialogCheck
+            if ($check.code -eq 3) { return @{ state = 'not-running'; out = '' } }
+            if ($check.code -eq 6) { return @{ state = 'blocked'; out = $check.out } }
+        }
+        if ((Get-Date) -gt $deadline) { return @{ state = 'failed'; out = $(if ($r.ok) { 'Play-Mode endet nicht' } else { $r.out }) } }
+        if (-not $said) { Write-Host "  $msg, warte ..."; $said = $true }
+        if (-not (Step-Wait)) { return @{ state = 'lost'; out = '' } }
+    }
+}
+
+# Vor einer Git-Aenderung: Szene ohne Speichern schliessen. Rueckgabe: ok | skipped | not-running | blocked (abbrechen) | failed
+function Close-BenchScene {
+    if ($NoEditor) { return 'skipped' }
+    $r = Invoke-BenchEditor $closeSceneCode 'Szene schliessen'
+    switch ($r.state) {
+        'ok' { Write-Host 'Szene im Testbank-Editor ohne Speichern geschlossen.' }
+        'not-running' { Write-Host 'Testbank-Editor laeuft nicht (Szene nicht geschlossen).' }
+        'lost' { Write-Host 'Nicht mehr oben in der Warteschlange: abgebrochen, Testbank unveraendert.' }
+        'blocked' {
+            Write-Host 'Der Testbank-Editor ist durch einen unbekannten Dialog blockiert:'
+            Write-Host $r.out
+            Write-Host 'Bewusst schliessen mit Tools/editor-dialog.sh press "<Knopf>" oder dem Benutzer melden; danach erneut.'
+        }
+        'failed' {
+            Write-Host "Warnung: Szene konnte nicht geschlossen werden (Editor antwortet nicht: $($r.out))."
+            Write-Host '  Erscheint danach "modified externally", beantwortet ihn der Dialog-Waechter (sonst: Tools/editor-dialog.sh press Reload).'
+        }
+    }
+    return $r.state
+}
+
+# Nach einer Git-Aenderung: Assets neu einlesen und SampleScene wieder oeffnen (wartet bis zu 3 min auf den Import).
+function Open-BenchScene([string]$closed) {
+    if ($closed -ne 'ok') { return }
+    $r = Invoke-UnityEval $refreshCode
+    $deadline = (Get-Date).AddSeconds(180)
+    while ((Get-Date) -lt $deadline) {
+        if ($r.ok -and $r.out -match '"result":"opened"') { Write-Host "Unity: Assets neu eingelesen, $scenePath geoeffnet (Skripte kompilieren ggf. noch)."; return }
+        if (-not $r.ok) {
+            $check = Invoke-DialogCheck
+            if ($check.code -eq 6) { Write-Host "Testbank-Editor durch Dialog blockiert:`n$($check.out)"; return }
+            if ($check.code -eq 3) { Write-Host 'Testbank-Editor laeuft nicht mehr.'; return }
+        }
+        if (-not (Step-Wait)) { Write-Host 'Nicht mehr oben in der Warteschlange: Editor wird nicht weiter angefasst.'; return }
+        $r = Invoke-UnityEval $openSceneCode
+    }
+    Write-Host "Warnung: $scenePath nach 3 min noch nicht offen. Im Editor selbst oeffnen."
+}
+
 function Show-Status {
     $head = Git @('rev-parse', '--short', 'HEAD')
     $branch = (Git @('symbolic-ref', '-q', '--short', 'HEAD')).out
@@ -114,28 +250,41 @@ switch ($Command) {
             exit 4
         }
         $dirty = Get-Dirty
-        if ($dirty -and $Discard) {
-            $r = Git @('restore', '--staged', '--worktree', '--', '.')
-            if ($r.code -ne 0) { Write-Output "Verwerfen fehlgeschlagen: $($r.err)"; exit 1 }
-            Write-Output 'Testspuren verworfen.'
-            $dirty = Get-Dirty
-        }
-        if ($dirty) {
+        if ($dirty -and -not $Discard) {
             Write-Output "Die Testbank hat noch Aenderungen (Testspuren oder Unity-Importspuren wie Sprite-IDs in .meta). Pruefen mit status, verwerfen mit checkout -Discard."
             $dirty -split "`n" | ForEach-Object { Write-Output "  $_" }
             exit 5
         }
         $sha = Git @('rev-parse', '--verify', "$Ref^{commit}")
         if ($sha.code -ne 0) { Write-Output "Unbekannter Branch/Commit: $Ref"; exit 1 }
+        # Szene vor jeder Dateiaenderung schliessen (auch vor dem Verwerfen), sonst meldet Unity "modified externally".
+        $closed = Close-BenchScene
+        if ($closed -eq 'blocked') { exit 6 }
+        # Waehrend des Schliessens (Import, Play-Mode) koennte ein anderer nachgerueckt sein.
+        if ($closed -eq 'lost' -or (-not $Force -and -not (Test-Holder))) { Write-Output 'Nicht mehr oben in der Warteschlange: abgebrochen.'; exit 4 }
+        if ($dirty) {
+            $r = Git @('restore', '--staged', '--worktree', '--', '.')
+            if ($r.code -ne 0) { Write-Output "Verwerfen fehlgeschlagen: $($r.err)"; Open-BenchScene $closed; exit 1 }
+            Write-Output 'Testspuren verworfen.'
+            $dirty = Get-Dirty
+        }
+        if ($dirty) {
+            Write-Output "Die Testbank hat noch Aenderungen, die sich nicht verwerfen liessen:"
+            $dirty -split "`n" | ForEach-Object { Write-Output "  $_" }
+            Open-BenchScene $closed
+            exit 5
+        }
         # Losgeloest auschecken: der Branch darf gleichzeitig im eigenen Arbeitsordner ausgecheckt bleiben.
         $r = Git @('switch', '--detach', $sha.out)
-        if ($r.code -ne 0) { Write-Output "git switch fehlgeschlagen: $($r.err)"; exit 1 }
+        if ($r.code -ne 0) { Write-Output "git switch fehlgeschlagen: $($r.err)"; Open-BenchScene $closed; exit 1 }
         $state = [ordered]@{ ref = $Ref; sha = $sha.out; by = $(if ($Id) { $Id } else { $Session }); session = $Session; since = [DateTime]::UtcNow.ToString('o') }
         if (-not (Test-Path -LiteralPath $QueueDir)) { New-Item -ItemType Directory -Path $QueueDir -Force | Out-Null }
         [IO.File]::WriteAllText($stateFile, (ConvertTo-Json -InputObject $state), $utf8)
         Set-Muted
         Write-Output "Testbank steht auf $Ref ($($sha.out.Substring(0, 9))), Ton stumm (fuer Audio-Tests: audio-on)."
-        Write-Output "Unity: Assets neu laden lassen, dann testen mit"
+        Open-BenchScene $closed
+        if ($closed -ne 'ok') { Write-Output "Unity: Assets neu laden lassen (Fenster anklicken oder AssetDatabase.Refresh)." }
+        Write-Output "Testen mit:"
         Write-Output "  unity command --project-path `"$Bench`" run_script --file Tests/<Name>Checks.cs"
         exit 0
     }
@@ -147,7 +296,16 @@ switch ($Command) {
             $dirty -split "`n" | ForEach-Object { Write-Output "  $_" }
             exit 5
         }
-        if ($dirty) { $r = Git @('restore', '--staged', '--worktree', '--', '.'); if ($r.code -ne 0) { Write-Output "Verwerfen fehlgeschlagen: $($r.err)"; exit 1 } ; Write-Output 'Testspuren verworfen.' }
+        if ($dirty) {
+            # Szene vor dem Verwerfen schliessen, danach frisch oeffnen (kein "modified externally").
+            # Nur der Inhaber fasst den Editor an (sonst stoert man den Test des Naechsten); Verwerfen wie bisher.
+            $closed = if ($Force -or (Test-Holder)) { Close-BenchScene } else { Write-Output 'Nicht (mehr) oben in der Warteschlange: Editor wird nicht angefasst.'; 'skipped' }
+            if ($closed -eq 'blocked') { exit 6 }
+            $r = Git @('restore', '--staged', '--worktree', '--', '.')
+            if ($r.code -ne 0) { Write-Output "Verwerfen fehlgeschlagen: $($r.err)"; Open-BenchScene $closed; exit 1 }
+            Write-Output 'Testspuren verworfen.'
+            Open-BenchScene $closed
+        }
         if ($state) {
             $ahead = (Git @('log', '--oneline', "$($state.sha)..HEAD")).out
             if ($ahead) {

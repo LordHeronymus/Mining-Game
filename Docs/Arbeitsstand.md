@@ -17,6 +17,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
+- 20.10.2026, Claude Code: Testbank-Dialoge: `Tools/editor-dialog.sh list/press` erkennt und schliesst modale Unity-Dialoge der Testbank, Wächter im Queue-Dienst und in `wait` beantwortet bekannte (z. B. „modified externally“ → Reload), meldet unbekannte; `editor-bench` schliesst die Szene vor dem Wechsel; Branch `claude/bench-dialogs-62a367`, bereit für `main` (Freigabe Benutzer), Dienst danach mit `-Install` neu einrichten.
 - 20.10.2026, Claude Code: Autosave alle 3 min Spielzeit (GPS Spieler → Autosave), Pausemenü ohne „Speichern“, „Hauptmenü“ und Play-Stopp speichern automatisch; Branch `claude/autosave`, mit Freigabe des Benutzers in `main`.
 - 20.10.2026, Claude Code: Editor-Warteschlange: Benutzer sortiert Wartende per Drag & Drop um (PrivOrg, `move`), Knopf „Bitte abschliessen“ (5 min, bei laufendem Test einmalig 2 min mehr, Hook meldet es dem Chat), Frist ohne Editor-Nutzung 4 min; Branch `claude/editor-queue-reorder`.
 - 20.10.2026, Claude Code: Gezogenes Item (Drag & Drop) sieht in Lager, Inventar und Hotbar genau aus wie im Slot (Lager zeigte Leiter/Fackel/Dynamit gespiegelt), gemeinsames `ItemDragGhost`; Branch `claude/drag-ghost`, mit Freigabe des Benutzers in `main` zusammengeführt.
@@ -26,4 +27,3 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 - 20.10.2026, Claude Code: Testbank `Mining Game 2` für Chats (`Tools/editor-bench.sh`), der Editor von `Mining Game` bleibt dem Benutzer; Editor-Frist 2 min (Benutzer 10 min), Lebenszeichen nur durch Unity-Aufrufe; PrivOrg-Modul „Editor-Warteschlange“ mit lokalem Dienst im Autostart.
 - 20.10.2026, Claude Code: Neue Regel „Befehlsaufrufe“ in `AGENTS.md` (Skripte/Git einzeln aufrufen, kein `git -C`, Suchen/Lesen mit eingebauten Werkzeugen, damit Freigaben greifen), Branch `claude/agents-befehlsaufrufe`, mit Freigabe des Benutzers in `main`.
 - 20.10.2026, Claude Code: Lager-Oberfläche im Shop-/Werkbank-Stil (Rucksack links, Lager rechts, Entnahme bis 3× Traglast), schwebender Knopf „Lager öffnen“, Kupfer-Icon-Import repariert; Branch `claude/lager-ui`, mit Freigabe des Benutzers in `main` zusammengeführt, siehe Docs/Lager.md.
-- 20.10.2026, Claude Code: Ordner `Mining Game` holt jede Minute automatisch den neuesten `main` (`Assets/Editor/MainAutoUpdate.cs`, Docs/Main-Auto-Update.md), Branch `claude/main-autoupdate`, in `main`.
