@@ -23,6 +23,18 @@
           }
         ]
       }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash|PowerShell|mcp__.*unity.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/Tools/editor-queue-hook.sh\" || true",
+            "timeout": 20
+          }
+        ]
+      }
     ]
   }
 }

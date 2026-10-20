@@ -1,27 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(BoxCollider2D))]
 public sealed class SurfaceStorageBuilding : MonoBehaviour
 {
-    const float EntryFadeDuration = .12f;
     readonly Dictionary<ItemSO, int> stored = new();
     readonly HashSet<Collider2D> visitors = new();
-    CanvasGroup entryGroup;
-    Button entryButton;
-    RectTransform entryCanvas;
-    Material entryFontMaterial;
-    int entryLayer = -1;
-    float entryBaseY;
+    EntrySign entrySign;
 
     public bool IsOpen => StoragePanel.Instance && StoragePanel.Instance.IsOpen && StoragePanel.Instance.Storage == this;
     public bool HasVisitor => visitors.Count > 0;
-    public Button EntryButton => entryButton;
-    public CanvasGroup EntryGroup => entryGroup;
+    public EntrySign EntrySign => entrySign;
+    public Button EntryButton => entrySign ? entrySign.Button : null;
+    public CanvasGroup EntryGroup => entrySign ? entrySign.Group : null;
     public IReadOnlyDictionary<ItemSO, int> StoredItems => stored;
     public event Action StorageChanged;
 
@@ -71,79 +65,17 @@ public sealed class SurfaceStorageBuilding : MonoBehaviour
 
     void LateUpdate()
     {
-        if (!entryGroup) return;
-        bool visible = visitors.Count > 0 && !GameplayInputBlocker.IsBlocked;
-        entryGroup.alpha = Mathf.MoveTowards(entryGroup.alpha, visible ? 1 : 0, Time.unscaledDeltaTime / EntryFadeDuration);
-        // Stay interactable while fading out so GoldButtonFeedback does not grey the sign; only clicks stop.
-        entryGroup.blocksRaycasts = visible;
-        entryGroup.interactable = visible || entryGroup.alpha > 0;
-        // Pops in slightly and floats gently so the sign reads as an inviting interaction.
-        float bob = Mathf.Sin(Time.unscaledTime * 2.2f) * .04f * entryGroup.alpha;
-        entryCanvas.localScale = Vector3.one * (.0092f + .0008f * entryGroup.alpha);
-        entryCanvas.localPosition = new Vector3(entryCanvas.localPosition.x, entryBaseY + bob, 0);
+        if (entrySign) entrySign.Visible = visitors.Count > 0 && !GameplayInputBlocker.IsBlocked;
     }
 
     void BuildEntryButton()
     {
-        if (entryGroup) return;
-        var sprite = GetComponentInChildren<SpriteRenderer>();
+        if (entrySign) return;
+        var sprite = EntrySign.MainSprite(transform);
         if (!sprite) return;
-        if (entryLayer < 0)
-        {
-            var shop = FindFirstObjectByType<ShopBuilding>();
-            var shopCanvas = shop ? shop.GetComponentInChildren<Canvas>(true) : null;
-            entryLayer = shopCanvas ? shopCanvas.gameObject.layer : gameObject.layer;
-        }
-        var canvasObject = new GameObject("EnterButtonCanvas", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster), typeof(CanvasGroup));
-        canvasObject.layer = entryLayer;
-        entryCanvas = (RectTransform)canvasObject.transform;
-        entryCanvas.SetParent(transform, false);
-        entryCanvas.sizeDelta = new Vector2(330, 92);
-        entryBaseY = sprite.bounds.max.y - transform.position.y + .45f;
-        entryCanvas.localPosition = new Vector3(sprite.bounds.center.x - transform.position.x, entryBaseY, 0);
-        entryCanvas.localScale = Vector3.one * .01f;
-        var canvas = canvasObject.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.WorldSpace;
-        canvas.worldCamera = Camera.main;
-        canvas.sortingLayerID = sprite.sortingLayerID;
-        canvas.sortingOrder = sprite.sortingOrder + 2;
-
-        var buttonObject = new GameObject("Button", typeof(RectTransform), typeof(Image), typeof(Button));
-        buttonObject.layer = canvasObject.layer;
-        var rect = (RectTransform)buttonObject.transform;
-        rect.SetParent(entryCanvas, false);
-        rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
-        rect.offsetMin = rect.offsetMax = Vector2.zero;
-        var button = entryButton = buttonObject.GetComponent<Button>();
-        button.targetGraphic = buttonObject.GetComponent<Image>();
-        button.navigation = new Navigation { mode = Navigation.Mode.None };
-        GoldButtonFeedback.Apply(button, null, null);
-        button.onClick.AddListener(Open);
-
-        // The label sits beside the button so GoldButtonFeedback does not shrink it to the narrow centre of the plaque.
-        var label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
-        label.gameObject.layer = canvasObject.layer;
-        label.rectTransform.SetParent(entryCanvas, false);
-        label.rectTransform.anchorMin = Vector2.zero; label.rectTransform.anchorMax = Vector2.one;
-        label.rectTransform.offsetMin = new Vector2(44, 8); label.rectTransform.offsetMax = new Vector2(-44, -8);
-        var font = Resources.Load<TMP_FontAsset>("ArtifactDiscovery/TitleFont");
-        if (font)
-        {
-            label.font = font;
-            entryFontMaterial = new Material(font.material);
-            entryFontMaterial.SetFloat("_OutlineWidth", .065f);
-            entryFontMaterial.SetColor("_OutlineColor", new Color(.10f, .055f, .025f, 1));
-            label.fontSharedMaterial = entryFontMaterial;
-        }
-        label.text = "Lager öffnen";
-        label.enableAutoSizing = true; label.fontSizeMin = 28; label.fontSizeMax = 44; label.color = new Color32(255, 245, 229, 255);
-        label.alignment = TextAlignmentOptions.Midline;
-        label.textWrappingMode = TextWrappingModes.NoWrap;
-        label.raycastTarget = false;
-
-        entryGroup = canvasObject.GetComponent<CanvasGroup>();
-        entryGroup.alpha = 0;
-        entryGroup.interactable = entryGroup.blocksRaycasts = false;
+        var shop = FindFirstObjectByType<ShopBuilding>();
+        var shopCanvas = shop ? shop.GetComponentInChildren<Canvas>(true) : null;
+        entrySign = EntrySign.Create(transform, sprite, "Lager öffnen", Open, shopCanvas ? shopCanvas.gameObject.layer : gameObject.layer);
     }
 
     public void Open()
@@ -162,13 +94,8 @@ public sealed class SurfaceStorageBuilding : MonoBehaviour
     {
         Close();
         visitors.Clear();
-        if (entryGroup) { entryGroup.alpha = 0; entryGroup.interactable = entryGroup.blocksRaycasts = false; }
     }
 
-    void OnDestroy()
-    {
-        if (entryFontMaterial) Destroy(entryFontMaterial);
-    }
 
     public int GetStoredCount(ItemSO item) => item && stored.TryGetValue(item, out int count) ? count : 0;
 
