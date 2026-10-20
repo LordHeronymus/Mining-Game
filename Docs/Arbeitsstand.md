@@ -14,6 +14,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 | --- | --- | --- | --- | --- | --- | --- |
 | Claude Code | Performance abschliessen: Ladebildschirm ohne Ruckler, keine Lag-Spikes, ≥ 100 FPS – pausiert, Zwischenstand im Changelog | claude/performance | Mining Game | Map (MapGenerator, Tilemap-Abonnenten, Rubble, Collider, Erzadern, Bäume, Gras), Loading, GPS-Codec/Schema, GameSaveSystem, AudioManager, Tests/Performance* | nein | 17.10.2026 19:45 |
 | Claude Code (Cloud) | Challenges-Rework: Aufgaben-Baukasten, Stufen, wöchentliche Rotation, Monats-Challenges, Boni, gestufte Meilensteine (Konzept Docs/Challenges-Konzept.md) | claude/challenges-rework | Cloud | Progression (MetaProgression*, MetaChallengePeriods, Catalog), ChallengePanel/ChallengeArt, neue Zählstellen (Dynamit, Fackeln, Leitern, Rückkehr), GPS, Tests/*Challenge* | nein (Cloud-Workflow) | 18.10.2026 |
+| Claude Code | Testbank: modale Unity-Dialoge erkennen/schliessen (`editor-dialog`), Wächter im Queue-Dienst, `editor-bench` ohne „modified externally“ | claude/bench-dialogs-62a367 | .claude/worktrees/fervent-roentgen-52fc7e | Tools/editor-dialog.*, Tools/editor-bench.ps1, Tools/editor-queue.ps1 (Editorzustand, wait), Tools/editor-queue-server.ps1, Docs/Editor-Warteschlange.md, AGENTS.md | ja (Testbank) | 20.10.2026 20:25 |
 
 ## Zuletzt abgeschlossen
 
