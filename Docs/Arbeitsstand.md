@@ -17,7 +17,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
-- 20.10.2026, Claude Code: Neue Regel „Befehlsaufrufe“ in `AGENTS.md` (Skripte/Git einzeln aufrufen, damit Freigaben greifen), Branch `claude/agents-befehlsaufrufe`, bereit für `main` (Freigabe Benutzer).
+- 20.10.2026, Claude Code: Neue Regel „Befehlsaufrufe“ in `AGENTS.md` (Skripte/Git einzeln aufrufen, Suchen/Lesen mit eingebauten Werkzeugen, damit Freigaben greifen), Branch `claude/agents-befehlsaufrufe`, mit Freigabe des Benutzers in `main`.
 - 20.10.2026, Claude Code: Lager-Oberfläche im Shop-/Werkbank-Stil (Rucksack links, Lager rechts, Entnahme bis 3× Traglast), schwebender Knopf „Lager öffnen“, Kupfer-Icon-Import repariert; Branch `claude/lager-ui`, mit Freigabe des Benutzers in `main` zusammengeführt, siehe Docs/Lager.md.
 - 20.10.2026, Claude Code: Debug-Einstellungen (F1/Editor-Fenster) werden sofort dauerhaft gespeichert und überleben Play-, Domain- und Editor-Neustart; Branch `claude/debug-persist`, bereit für `main` (Freigabe Benutzer).
 - 20.10.2026, Claude Code: Start-Items liegen bei neuem Spiel lückenlos in Hotbar-Slots 1, 2, 3 … (keine alte Belegung mehr), Branch `claude/hotbar-start`, in `main`.
