@@ -61,6 +61,7 @@ public sealed class CompactHud : MonoBehaviour
     Image dragIcon;
     Image pickaxeIcon;
     int draggedSlot = -1;
+    Vector3 dragGrabOffset;
     bool wasBuilding;
     int lastMoney = int.MinValue, lastPoints = int.MinValue, lastDepth = int.MinValue,
         lastHealth = int.MinValue, lastMaxHealth = int.MinValue, lastEnergy = int.MinValue, lastMax = int.MinValue;
@@ -334,6 +335,7 @@ public sealed class CompactHud : MonoBehaviour
         }
         dragIcon.sprite = slots[index - 1].icon;
         dragIcon.transform.SetParent(hotbar.parent, false);
+        dragGrabOffset = ItemDragGhost.Begin(dragIcon, icons[index - 1], screenPosition, HotbarEventCamera());
         dragIcon.color = new Color(1f, 1f, 1f, .9f);
         dragIcon.gameObject.SetActive(true);
         dragIcon.transform.SetAsLastSibling();
@@ -371,9 +373,7 @@ public sealed class CompactHud : MonoBehaviour
     }
     void MoveDraggedIcon(Vector2 screenPosition)
     {
-        if (!dragIcon || !RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)dragIcon.transform.parent,
-            screenPosition, HotbarEventCamera(), out var local)) return;
-        ItemIconLayout.Apply(slots[draggedSlot - 1], dragIcon.rectTransform, local);
+        if (dragIcon) ItemDragGhost.Move(dragIcon, dragGrabOffset, screenPosition, HotbarEventCamera());
     }
     const string SlotLayoutVersion = "CompactHud.SlotLayoutVersion";
     const string SlotLayoutPrefix = "CompactHud.Slot.";
