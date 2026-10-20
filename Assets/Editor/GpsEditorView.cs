@@ -47,7 +47,7 @@ public sealed partial class GpsEditorView
                         EditorGUI.BeginChangeCheck();
                         DrawValue(record.key, root, root, pair.field, label, record.key + "/" + root.name, null);
                         if (EditorGUI.EndChangeCheck())
-                        { if (!GpsSettings.SetValue(record.key, root, out string error)) window.SetStatus(error); }
+                        { if (!GpsSettings.SetValueAndCommit(record.key, root, out string error)) window.SetStatus(error); }
                     }
                     if (title == "Item-Icons" && GpsSettings.Profile.Resolve(record.assetKey) is ItemSO ore) DrawShopIconPreview(ore);
                 }
