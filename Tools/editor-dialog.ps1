@@ -174,6 +174,14 @@ function Find-Editor {
         if (-not $p -or $p.ProcessName -ieq 'Unity') { return $null }
         return $ProcessId
     }
+    # Im Dienst (alle paar Sekunden im selben Prozess) die Prozess-Suche merken: WMI ist vergleichsweise teuer.
+    if (-not $global:EditorDialogPidCache) { $global:EditorDialogPidCache = @{} }
+    $cached = $global:EditorDialogPidCache[$projectPath]
+    if ($cached) {
+        $p = Get-Process -Id $cached.pid -ErrorAction SilentlyContinue
+        if ($p -and $p.ProcessName -ieq 'Unity' -and $p.StartTime -eq $cached.start) { return $cached.pid }
+        $global:EditorDialogPidCache.Remove($projectPath)
+    }
     $hint = 0
     if (Test-Path -LiteralPath $activityFile) {
         try { $hint = [int](([IO.File]::ReadAllText($activityFile, $utf8) | ConvertFrom-Json).processId) } catch { }
@@ -188,8 +196,10 @@ function Find-Editor {
             if ($path -ieq $projectPath) { [int]$p.ProcessId }
         })
     if ($found.Count -eq 0) { return $null }
-    if ($found -contains $hint) { return $hint }
-    return $found[0]
+    $editor = if ($found -contains $hint) { $hint } else { $found[0] }
+    $p = Get-Process -Id $editor -ErrorAction SilentlyContinue
+    if ($p) { $global:EditorDialogPidCache[$projectPath] = @{ pid = $editor; start = $p.StartTime } }
+    return $editor
 }
 
 function Get-PrevState {
@@ -204,6 +214,8 @@ function Get-Windows([int]$editorPid, $prev) {
     $result = New-Object System.Collections.ArrayList
     foreach ($h in [EditorDialogNative]::TopWindows([uint32]$editorPid)) {
         $cls = [EditorDialogNative]::ClassOf($h)
+        # Unitys eigene Fenster (Hauptfenster, Game, schwebende Fenster, Popups) sind keine nativen Dialoge.
+        if (-not $All -and $cls -like 'Unity*') { continue }
         $title = [EditorDialogNative]::Caption($h)
         $buttons = New-Object System.Collections.ArrayList
         $options = New-Object System.Collections.ArrayList
@@ -230,9 +242,8 @@ function Get-Windows([int]$editorPid, $prev) {
                 if ($t -and $t.Trim()) { [void]$texts.Add($t.Trim()) }
             }
         }
-        $isUnity = $cls -like 'Unity*'
         $kind = if ($buttons.Count -gt 0 -and -not $progress) { 'dialog' } elseif ($progress -or ($cls -eq '#32770')) { 'progress' } else { 'window' }
-        if (-not $All -and ($kind -eq 'window' -or ($isUnity -and $kind -ne 'dialog'))) { continue }
+        if (-not $All -and $kind -eq 'window') { continue }
         $text = ($texts -join "`n")
         if ($text.Length -gt 2000) { $text = $text.Substring(0, 2000) + ' ...' }
         $rule = $null
