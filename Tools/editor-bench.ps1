@@ -93,11 +93,18 @@ UnityEditor.SceneManagement.StageUtility.GoToMainStage();
 UnityEditor.SceneManagement.EditorSceneManager.NewScene(UnityEditor.SceneManagement.NewSceneSetup.EmptyScene, UnityEditor.SceneManagement.NewSceneMode.Single);
 return "closed";
 '@
-$openSceneCode = @"
-UnityEditor.AssetDatabase.Refresh();
-UnityEditor.SceneManagement.EditorSceneManager.OpenScene("$scenePath", UnityEditor.SceneManagement.OpenSceneMode.Single);
-return "opened";
+# Nach dem Wechsel: Import und Szene asynchron (Unity bricht Befehle nach 5 s Hauptthread-Zeit ab, ein Import dauert laenger).
+$queueOpenCode = @"
+UnityEditor.EditorApplication.delayCall += () => {
+    UnityEditor.AssetDatabase.Refresh();
+    if (UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().path != "$scenePath")
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("$scenePath", UnityEditor.SceneManagement.OpenSceneMode.Single);
+};
+return "queued";
 "@
+$sceneStateCode = @'
+return "scene=" + UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().path + ";compiling=" + UnityEditor.EditorApplication.isCompiling;
+'@
 
 # Ein Durchgang des Dialog-Waechters ohne Schonfrist. Exit: 0 kein Dialog (mehr), 3 Editor laeuft nicht, 6 unbekannter Dialog offen.
 function Invoke-DialogCheck {
@@ -107,7 +114,7 @@ function Invoke-DialogCheck {
 }
 
 # C# im Editor der Testbank ausfuehren (unity command eval_file), mit Zeitlimit.
-function Invoke-UnityEval([string]$code, [int]$timeoutSeconds = 60) {
+function Invoke-UnityEval([string]$code, [int]$timeoutSeconds = 30) {
     $unity = Get-Command unity -ErrorAction SilentlyContinue
     if (-not $unity) { return @{ ok = $false; out = 'Unity-CLI (unity) nicht gefunden' } }
     $file = Join-Path ([IO.Path]::GetTempPath()) ("editor-bench-{0}.cs" -f [guid]::NewGuid().ToString('N'))
@@ -123,31 +130,36 @@ function Invoke-UnityEval([string]$code, [int]$timeoutSeconds = 60) {
         $outTask = $p.StandardOutput.ReadToEndAsync()
         if (-not $p.WaitForExit(($timeoutSeconds + 30) * 1000)) { try { $p.Kill() } catch { }; return @{ ok = $false; out = 'Zeitlimit' } }
         $text = ($outTask.Result + "`n" + $errTask.Result).Trim()
-        return @{ ok = ($p.ExitCode -eq 0); out = $text }
+        return @{ ok = ($p.ExitCode -eq 0 -and $text -match '"success":\s*true'); out = $text }
     }
     finally { Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue }
 }
 
-# Fuehrt C# im Testbank-Editor aus; blockiert ein Dialog, beantwortet der Waechter bekannte und es folgt ein zweiter Versuch.
-# Rueckgabe: ok | not-running | blocked (unbekannter Dialog, Text in .out) | failed
-function Invoke-BenchEditor([string]$code, [string]$what, [int]$timeoutSeconds = 60) {
+# Fuehrt C# im Testbank-Editor aus und versucht es erneut, solange der Editor beschaeftigt ist (Import, Kompilieren).
+# Blockiert ein Dialog, beantwortet der Waechter bekannte sofort. Rueckgabe .state: ok | not-running | blocked | failed
+function Invoke-BenchEditor([string]$code, [string]$what, [int]$waitSeconds = 60) {
     $check = Invoke-DialogCheck
     if ($check.code -eq 3) { return @{ state = 'not-running'; out = '' } }
     if ($check.code -eq 6) { return @{ state = 'blocked'; out = $check.out } }
-    for ($attempt = 1; $attempt -le 6; $attempt++) {
-        $r = Invoke-UnityEval $code $timeoutSeconds
-        if ($r.ok -and $r.out -match 'playing') { Write-Host "  Play-Mode wird beendet ..."; Start-Sleep -Seconds 3; continue }
-        if ($r.ok) { return @{ state = 'ok'; out = $r.out } }
-        $check = Invoke-DialogCheck
-        if ($check.code -eq 3) { return @{ state = 'not-running'; out = '' } }
-        if ($check.code -eq 6) { return @{ state = 'blocked'; out = $check.out } }
-        if ($attempt -ge 2) { return @{ state = 'failed'; out = $r.out } }
-        Write-Host "  Editor antwortet nicht ($what), zweiter Versuch ..."
+    $deadline = (Get-Date).AddSeconds($waitSeconds)
+    $said = $false
+    while ($true) {
+        $r = Invoke-UnityEval $code
+        if ($r.ok -and $r.out -notmatch '"result":"playing"') { return @{ state = 'ok'; out = $r.out } }
+        if ($r.ok) { $msg = 'Play-Mode wird beendet' }
+        else {
+            $msg = "Editor beschaeftigt ($what)"
+            $check = Invoke-DialogCheck
+            if ($check.code -eq 3) { return @{ state = 'not-running'; out = '' } }
+            if ($check.code -eq 6) { return @{ state = 'blocked'; out = $check.out } }
+        }
+        if ((Get-Date) -gt $deadline) { return @{ state = 'failed'; out = $(if ($r.ok) { 'Play-Mode endet nicht' } else { $r.out }) } }
+        if (-not $said) { Write-Host "  $msg, warte ..."; $said = $true }
+        Start-Sleep -Seconds 3
     }
-    return @{ state = 'failed'; out = 'Play-Mode endet nicht' }
 }
 
-# Vor einer Git-Aenderung: Szene ohne Speichern schliessen. $false = abbrechen (unbekannter Dialog blockiert den Editor).
+# Vor einer Git-Aenderung: Szene ohne Speichern schliessen. Rueckgabe: ok | skipped | not-running | blocked (abbrechen) | failed
 function Close-BenchScene {
     if ($NoEditor) { return 'skipped' }
     $r = Invoke-BenchEditor $closeSceneCode 'Szene schliessen'
@@ -167,14 +179,36 @@ function Close-BenchScene {
     return $r.state
 }
 
-# Nach einer Git-Aenderung: Assets neu einlesen und SampleScene wieder oeffnen.
+# Nach einer Git-Aenderung: Assets neu einlesen und SampleScene wieder oeffnen, dann warten, bis sie offen ist.
 function Open-BenchScene([string]$closed) {
     if ($closed -ne 'ok') { return }
-    # Import nach dem Wechsel kann dauern.
-    $r = Invoke-BenchEditor $openSceneCode 'Szene oeffnen' 240
-    if ($r.state -eq 'ok') { Write-Host "Unity: Assets neu eingelesen, $scenePath geoeffnet (Skripte kompilieren ggf. noch)." }
-    elseif ($r.state -eq 'blocked') { Write-Host "Testbank-Editor durch Dialog blockiert:`n$($r.out)" }
-    else { Write-Host "Warnung: $scenePath nicht geoeffnet ($($r.state): $($r.out)). Im Editor selbst oeffnen oder spaeter erneut." }
+    $r = Invoke-BenchEditor $queueOpenCode 'Szene oeffnen'
+    if ($r.state -ne 'ok') {
+        if ($r.state -eq 'blocked') { Write-Host "Testbank-Editor durch Dialog blockiert:`n$($r.out)" }
+        else { Write-Host "Warnung: $scenePath nicht geoeffnet ($($r.state): $($r.out)). Im Editor selbst oeffnen." }
+        return
+    }
+    $deadline = (Get-Date).AddSeconds(300)
+    $queued = Get-Date
+    while ((Get-Date) -lt $deadline) {
+        Start-Sleep -Seconds 3
+        $s = Invoke-UnityEval $sceneStateCode
+        if ($s.ok -and $s.out -match "scene=$([regex]::Escape($scenePath));") {
+            Write-Host "Unity: Assets neu eingelesen, $scenePath geoeffnet$(if ($s.out -match 'compiling=True') { ' (Skripte kompilieren noch)' })."
+            return
+        }
+        if (-not $s.ok) {
+            $check = Invoke-DialogCheck
+            if ($check.code -eq 6) { Write-Host "Testbank-Editor durch Dialog blockiert:`n$($check.out)"; return }
+            if ($check.code -eq 3) { Write-Host 'Testbank-Editor laeuft nicht mehr.'; return }
+            continue
+        }
+        # Editor antwortet, Szene aber noch nicht offen: Auftrag ging bei einem Domain-Reload verloren -> erneut.
+        if ($s.out -match 'compiling=False' -and ((Get-Date) - $queued).TotalSeconds -gt 20) {
+            [void](Invoke-UnityEval $queueOpenCode); $queued = Get-Date
+        }
+    }
+    Write-Host "Warnung: $scenePath nach 5 min noch nicht offen. Im Editor selbst oeffnen."
 }
 
 function Show-Status {
