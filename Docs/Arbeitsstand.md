@@ -17,6 +17,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
+- 20.10.2026, Claude Code: Pausemenü „Speichern“ speichert direkt in den aktiven Spielstand (keine Slot-Auswahl mehr, Rückfall nur ohne aktiven Slot); Branch `claude/save-active`, mit Freigabe des Benutzers in `main`.
 - 20.10.2026, Claude Code: Lag beim Baumfällen behoben (Sammelsound wurde beim ersten Holz synchron geladen), Messskript `Tests/TreeChopSpikes.cs`, Branch `claude/tree-lag`, mit Freigabe des Benutzers in `main`.
 - 20.10.2026, Claude Code: Testbank `Mining Game 2` für Chats (`Tools/editor-bench.sh`), der Editor von `Mining Game` bleibt dem Benutzer; Editor-Frist 2 min (Benutzer 10 min), Lebenszeichen nur durch Unity-Aufrufe; PrivOrg-Modul „Editor-Warteschlange“ mit lokalem Dienst im Autostart.
 - 20.10.2026, Claude Code: Neue Regel „Befehlsaufrufe“ in `AGENTS.md` (Skripte/Git einzeln aufrufen, kein `git -C`, Suchen/Lesen mit eingebauten Werkzeugen, damit Freigaben greifen), Branch `claude/agents-befehlsaufrufe`, mit Freigabe des Benutzers in `main`.
@@ -26,4 +27,3 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 - 20.10.2026, Claude Code: Start-Items liegen bei neuem Spiel lückenlos in Hotbar-Slots 1, 2, 3 … (keine alte Belegung mehr), Branch `claude/hotbar-start`, in `main`.
 - 20.10.2026, Claude Code: Testbank-Editor läuft immer stumm (`Assets/Editor/TestBenchAudioMute.cs`), Ton nur für Audio-Tests per `editor-bench audio-on`.
 - 19.10.2026, Claude Code: Alle 14 Erze als gemalte Einzelblöcke statt Shader-Adern (Kupfer, Eisen, Silber, Gold, Kohle, Platin, Titan, Wolfram, Mythril, Granat, Smaragd, Rubin, Diamant, Ultronium mit Pulsieren), Kupfer-Adern-System entfernt; Branch `claude/iron-tiles` mit `main` zusammengeführt und geprüft, bereit für `main` (Freigabe Benutzer), siehe Docs/Gemalte-Erze.md.
-- 18.10.2026, Claude Code: HUD-Größe in den Einstellungen bis 30 % einstellbar (vorher 50 %), Branch `claude/hud-scale`.
