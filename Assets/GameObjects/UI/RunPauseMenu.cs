@@ -11,7 +11,6 @@ public sealed class RunPauseMenu : MonoBehaviour
     RectTransform layout;
     TMPro.TextMeshProUGUI status;
     float previousScale;
-    Button saveButton;
     Button challengesButton;
     ChallengePanel challengesPanel;
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -31,17 +30,17 @@ public sealed class RunPauseMenu : MonoBehaviour
         var scrim = HomeUi.Image("Scrim", transform, Vector2.zero, Vector2.zero); HomeUi.Stretch(scrim.rectTransform);
         scrim.color = new Color(0, 0, 0, .62f); scrim.raycastTarget = true;
         layout = HomeUi.Rect("Pause Layout", transform, Vector2.zero, new Vector2(700, 1000));
-        HomeUi.Image("Board", layout, Vector2.zero, new Vector2(650, 940), "Panel");
+        // The run saves itself (RunAutosave and on leaving), so the menu has no manual save button.
+        HomeUi.Image("Board", layout, new Vector2(0, 45), new Vector2(650, 850), "Panel");
         HomeUi.Label("Title", layout, "Tiefenhall", new Vector2(0, 383), new Vector2(560, 85), 62);
         HomeUi.Button("Resume", layout, "Fortsetzen", new Vector2(0, 265), new Vector2(500, 76), Close, true);
-        saveButton = HomeUi.Button("Save", layout, "Speichern", new Vector2(0, 174), new Vector2(500, 76), SaveCurrent);
-        HomeUi.Button("Load", layout, "Laden", new Vector2(0, 83), new Vector2(500, 76), () => SaveSlotPanel.Show(transform.parent, false));
-        HomeUi.Button("Progression", layout, "Fortschritt", new Vector2(0, -8), new Vector2(500, 76), () => MetaProgressionPanel.Show(transform.parent, true));
-        challengesButton = HomeUi.Button("Challenges", layout, "Herausforderungen", new Vector2(0, -99), new Vector2(500, 76), OpenChallenges);
-        HomeUi.Button("Settings", layout, "Einstellungen", new Vector2(0, -190), new Vector2(500, 76), () =>
+        HomeUi.Button("Load", layout, "Laden", new Vector2(0, 174), new Vector2(500, 76), () => SaveSlotPanel.Show(transform.parent, false));
+        HomeUi.Button("Progression", layout, "Fortschritt", new Vector2(0, 83), new Vector2(500, 76), () => MetaProgressionPanel.Show(transform.parent, true));
+        challengesButton = HomeUi.Button("Challenges", layout, "Herausforderungen", new Vector2(0, -8), new Vector2(500, 76), OpenChallenges);
+        HomeUi.Button("Settings", layout, "Einstellungen", new Vector2(0, -99), new Vector2(500, 76), () =>
             FindFirstObjectByType<SettingsPanel>(FindObjectsInactive.Include)?.Open());
-        HomeUi.Button("Home", layout, "Speichern & Hauptmenü", new Vector2(0, -281), new Vector2(500, 76), SaveAndHome);
-        status = HomeUi.Label("Status", layout, "", new Vector2(0, -395), new Vector2(580, 60), 24);
+        HomeUi.Button("Home", layout, "Hauptmenü", new Vector2(0, -190), new Vector2(500, 76), SaveAndHome);
+        status = HomeUi.Label("Status", layout, "", new Vector2(0, -300), new Vector2(580, 60), 24);
         Visible(false); HomeUi.Fit(layout, new Vector2(780, 1070));
     }
     void Update()
@@ -59,7 +58,7 @@ public sealed class RunPauseMenu : MonoBehaviour
         if (IsOpen) return;
         IsOpen = true; previousScale = Time.timeScale; Time.timeScale = 0;
         GameplayInputBlocker.SetBlocked(this, true); transform.SetAsLastSibling(); Visible(true);
-        saveButton.interactable = GameSaveSystem.CanSave; status.text = "";
+        status.text = "";
     }
     public void Close()
     {
@@ -78,19 +77,14 @@ public sealed class RunPauseMenu : MonoBehaviour
             UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(challengesButton.gameObject);
         });
     }
-    // Saves into the slot of the running game; the slot picker only appears when no slot is known.
-    void SaveCurrent()
-    {
-        if (GameSaveSystem.IsBusy) return;
-        if (GameSaveSystem.ActiveSlot < 1) { SaveSlotPanel.Show(transform.parent, true); return; }
-        status.text = "Speichern …";
-        StartCoroutine(GameSaveSystem.Save(GameSaveSystem.ActiveSlot, this, (ok, message) => status.text = message));
-    }
+    // Saves the running game into its own slot, then returns home. A run that cannot be captured
+    // (e.g. no energy left) keeps its last save; only a run without any slot still offers the slot picker.
     void SaveAndHome()
     {
-        if (GameSaveSystem.IsBusy) return;
-        status.text = "Speichern …";
+        if (GameSaveSystem.IsBusy || RunNavigation.IsTransitioning) return;
         if (GameSaveSystem.ActiveSlot < 1) { SaveSlotPanel.Show(transform.parent, true); return; }
+        if (!GameSaveSystem.CanSave) { RunNavigation.MainMenu(); return; }
+        status.text = "Speichern …";
         StartCoroutine(GameSaveSystem.Save(GameSaveSystem.ActiveSlot, this,
             (ok, message) => { status.text = message; if (ok) RunNavigation.MainMenu(); }));
     }

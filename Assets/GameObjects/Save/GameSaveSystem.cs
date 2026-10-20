@@ -26,6 +26,8 @@ public static class GameSaveSystem
     public static float PlayedSeconds { get; set; }
     public static event Action SlotsChanged;
     static LoadedRun pending;
+    // Directory the active run belongs to; automatic saves never follow a later TestDirectory switch into another profile.
+    static string activeDirectory;
     public static bool HasPendingLoad => pending != null;
 #if UNITY_EDITOR
     public static string TestDirectory;
@@ -63,7 +65,7 @@ public static class GameSaveSystem
     static void Reset()
     {
         IsBusy = false; pending = null; PlayedSeconds = 0; SlotsChanged = null;
-        ActiveSlot = -1; ActiveRunName = null; HasPendingNewRun = false; InitialSaveError = null;
+        ActiveSlot = -1; activeDirectory = null; ActiveRunName = null; HasPendingNewRun = false; InitialSaveError = null;
 #if UNITY_EDITOR
         TestDirectory = null;
 #endif
@@ -111,12 +113,12 @@ public static class GameSaveSystem
         int slot = NextFreeSlot();
         if (slot < 1 || IsBusy) return false;
         CancelPendingLoad(); PlayedSeconds = 0;
-        ActiveSlot = slot; HasPendingNewRun = true; InitialSaveError = null;
+        ActiveSlot = slot; activeDirectory = DirectoryPath; HasPendingNewRun = true; InitialSaveError = null;
         ActiveRunName = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
         MetaProgression.BeginRun(Guid.NewGuid().ToString("N"));
         return true;
     }
-    public static void LeaveRun() { MetaProgression.EndRun(); ActiveSlot = -1; ActiveRunName = null; HasPendingNewRun = false; }
+    public static void LeaveRun() { MetaProgression.EndRun(); ActiveSlot = -1; activeDirectory = null; ActiveRunName = null; HasPendingNewRun = false; }
 
     public static IEnumerator SaveNewRunForLoading(MonoBehaviour owner)
     {
@@ -273,7 +275,7 @@ public static class GameSaveSystem
                 for (int i = 0; i < layers.Length; i++) layers[i] = ReadLayer(reader, catalog, state);
                 if (expanded.Position != expanded.Length) throw new InvalidDataException();
                 pending = new LoadedRun { state = state, layers = layers };
-                ActiveSlot = slot; HasPendingNewRun = false; InitialSaveError = null;
+                ActiveSlot = slot; activeDirectory = DirectoryPath; HasPendingNewRun = false; InitialSaveError = null;
                 ActiveRunName = summary.name;
                 error = null; return true;
             }
@@ -324,6 +326,19 @@ public static class GameSaveSystem
 
     public static IEnumerator Save(int slot, MonoBehaviour owner, Action<bool, string> complete)
         => SaveRun(slot, owner, complete, false, false);
+
+    // True while the running game has a slot of its own in the current save directory and can be captured.
+    public static bool CanAutoSave => ActiveSlot >= 1 && !HasPendingNewRun && activeDirectory == DirectoryPath && CanSave;
+
+    // Saves the active run without returning to the frame loop, for play-mode stop and application quit.
+    public static bool SaveActiveRunNow(MonoBehaviour owner)
+    {
+        if (!CanAutoSave) return false;
+        bool saved = false;
+        var routine = SaveRun(ActiveSlot, owner, (ok, _) => saved = ok, false, false);
+        while (routine.MoveNext()) { }
+        return saved;
+    }
 
     static IEnumerator SaveRun(int slot, MonoBehaviour owner, Action<bool, string> complete, bool createOnly, bool allowLoading)
     {
@@ -394,7 +409,7 @@ public static class GameSaveSystem
         IsBusy = false; Time.timeScale = previousScale;
         // An open pause/slot panel owns its own input gate; do not release it here.
         if (!(owner is RunPauseMenu) && !(owner is SaveSlotPanel)) GameplayInputBlocker.SetBlocked(owner, false);
-        if (error == null) { ActiveSlot = slot; SlotsChanged?.Invoke(); }
+        if (error == null) { ActiveSlot = slot; activeDirectory = DirectoryPath; SlotsChanged?.Invoke(); }
         else Debug.LogError("Tiefenhall: Speichern fehlgeschlagen: " + error);
         complete?.Invoke(error == null, error == null ? "Gespeichert" : "Spielstand konnte nicht gespeichert werden.");
     }
