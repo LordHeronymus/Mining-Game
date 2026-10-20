@@ -63,6 +63,9 @@ $queueFile = Join-Path $QueueDir "$Project.json"
 $lockFile = Join-Path $QueueDir "$Project.lock"
 $logFile = Join-Path $QueueDir "$Project.log"
 $activityFile = Join-Path $QueueDir "$Project.activity.json"
+# Offene modale Dialoge des Editors (schreibt Tools/editor-dialog.ps1: Waechter im Dienst, wait, list/press).
+$dialogFile = Join-Path $QueueDir "$Project.dialogs.json"
+$dialogScript = Join-Path $PSScriptRoot 'editor-dialog.ps1'
 
 # --- Hilfsfunktionen ----------------------------------------------------------
 
@@ -107,13 +110,37 @@ function Get-Prop($obj, [string]$name) {
 
 function Write-Log([string]$text) {
     $line = '{0}  {1}' -f (Get-Date).ToString('yyyy-MM-dd HH:mm:ss', $inv), $text
-    [IO.File]::AppendAllText($logFile, $line + "`r`n", $utf8)
+    # Der Dialog-Waechter (Tools/editor-dialog.ps1) schreibt ohne Sperre ins selbe Protokoll: bei Kollision kurz erneut.
+    for ($i = 0; ; $i++) {
+        try { [IO.File]::AppendAllText($logFile, $line + "`r`n", $utf8); return }
+        catch { if ($i -ge 20) { throw }; Start-Sleep -Milliseconds 50 }
+    }
 }
 
 function Describe($e) {
     $s = "[$($e.id)] $($e.who)"
     if ($e.session) { $s += " (Sitzung $($e.session))" }
     return $s
+}
+
+# Offene Dialoge laut Tools/editor-dialog.ps1 (hoechstens 2 min alt) als Text, sonst $null.
+function Get-DialogText {
+    if (-not (Test-Path -LiteralPath $dialogFile)) { return $null }
+    try { $st = [IO.File]::ReadAllText($dialogFile, $utf8) | ConvertFrom-Json } catch { return $null }
+    if ((AgeMinutes (Get-Prop $st 'updated')) -gt 2) { return $null }
+    $open = @(@(Get-Prop $st 'dialogs') | Where-Object { $_ -and $_.kind -eq 'dialog' })
+    if ($open.Count -eq 0) { return $null }
+    $d = $open[0]
+    $buttons = (@($d.buttons) | ForEach-Object { "[$_]" }) -join ' '
+    $hint = if ($d.press) { "Waechter klickt '$($d.press)'" } else { 'nicht automatisch: Tools/editor-dialog.sh list, dann press "<Knopf>" oder Benutzer melden' }
+    return "Dialog offen (geoeffnet $(FormatAge (AgeMinutes $d.since))): '$($d.title)' $buttons - $hint"
+}
+
+# Ein Durchgang des Dialog-Waechters fuer die Testbank (wartende Chats helfen mit, falls der Dienst nicht laeuft).
+function Invoke-DialogWatch {
+    if (-not (Test-Path -LiteralPath $dialogScript)) { return }
+    if ($Project -ne (((Split-Path $ownerRoot -Leaf) -replace ' \d+$', '') + ' 2')) { return }   # nur die Testbank, nie der Editor des Benutzers
+    try { & $dialogScript watch -Once -Quiet -Project $Project -ProjectRoot $ownerRoot -QueueDir $QueueDir | Out-Null } catch { }
 }
 
 # Exklusive Sperre ueber den Freigabemodus: wird beim Prozessende vom System freigegeben, nie verwaist.
@@ -178,6 +205,9 @@ function Get-EditorState {
             catch { Start-Sleep -Milliseconds 100 }
         }
     }
+    # Ein offener Dialog blockiert den Editor: nie als ruhig werten, sonst wird der Inhaber wegen des Dialogs verdraengt.
+    $dialog = Get-DialogText
+    if ($dialog) { return @{ busy = $true; text = $dialog } }
     if ($null -ne $act) {
         $updAge = AgeMinutes (Get-Prop $act 'updated')
         $lastAge = AgeMinutes (Get-Prop $act 'lastActivity')
@@ -327,7 +357,14 @@ switch ($Command) {
         if (-not $Id -and -not $Who -and -not $Session) { Write-Output 'wait braucht -Id (oder -Session).'; exit 1 }
         $start = Get-Date
         $lastPos = -1
+        $lastDialog = $null
         while ($true) {
+            # Blockiert ein Dialog die Testbank, bekannte beantworten und unbekannte hier zeigen.
+            Invoke-DialogWatch
+            $dialog = Get-DialogText
+            $dialogKey = if ($dialog) { $dialog -replace '^Dialog offen \(geoeffnet [^)]*\)', '' } else { $null }
+            if ($dialog -and $dialogKey -ne $lastDialog) { Write-Output ("{0}  Editor blockiert: {1}" -f (Get-Date).ToString('HH:mm:ss', $inv), $dialog) }
+            $lastDialog = $dialogKey
             $pos = Invoke-Locked {
                 param($list)
                 $i = Find-Index $list
