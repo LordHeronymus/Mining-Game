@@ -98,6 +98,10 @@ public sealed class ChallengePanel : MonoBehaviour
         countdown.gameObject.SetActive(period!=ChallengePeriod.Lifetime);
         if(period==ChallengePeriod.Lifetime)return;
         var remaining=MetaProgression.ChallengeRemaining(period);
+        // A rollover draws a new round with a later end; rebuild also while the game is paused.
+        // Checked before the same-second shortcut: a jump of exactly one period leaves the remaining time unchanged.
+        long end=MetaProgression.ChallengePeriodEnd(period);
+        if(periodEnd!=end){periodEnd=end;refresh=true;}
         int seconds=(int)Math.Ceiling(remaining.TotalSeconds);
         if(countdownSecond==seconds)return;
         countdownSecond=seconds;
@@ -107,9 +111,6 @@ public sealed class ChallengePanel : MonoBehaviour
         countdown.ForceMeshUpdate();
         ((RectTransform)countdown.transform.Find("Hourglass")).anchoredPosition=
             new Vector2(countdown.textBounds.min.x-17,0);
-        // A rollover draws a new round with a later end; rebuild also while the game is paused.
-        long end=MetaProgression.ChallengePeriodEnd(period);
-        if(periodEnd!=end){periodEnd=end;refresh=true;}
     }
 
     void Rebuild()

@@ -34,7 +34,8 @@ public sealed class ChallengePeriodsProbe:MonoBehaviour {
  static int Slots(ChallengePeriod period){var s=Settings.Period(period);return s.countEasy+s.countMedium+s.countHard;}
  static string Xp(int xp)=>"+"+xp.ToString("N0",German)+" XP";
  static DateTime Utc(int year,int month,int day,int hour)=>new DateTime(year,month,day,hour,0,0,DateTimeKind.Utc);
- static MetaChallengeRound Round(ChallengePeriod period)=>MetaProgression.Profile.challengeRounds.Find(r=>r!=null&&r.period==(int)period);
+ // Rounds are drawn lazily on first query; draw through the public API before reading the profile.
+ static MetaChallengeRound Round(ChallengePeriod period)=>MetaProgression.GetChallenges(period)!=null?MetaProgression.Profile.challengeRounds.Find(r=>r!=null&&r.period==(int)period):null;
  static bool IsProject(MetaChallengeTask task)=>task.tier==(int)ChallengeTier.Project||task.stageTargets!=null&&task.stageTargets.Length>0;
  static string Snapshot(ChallengePeriod period) {
   var project=period==ChallengePeriod.Monthly?MetaProgression.GetMonthlyProject():null;
