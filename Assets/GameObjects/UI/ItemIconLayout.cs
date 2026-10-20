@@ -11,6 +11,14 @@ public static class ItemIconLayout
     public static string Category(ItemSO item) => item.category switch {
         ItemCategory.Ore => "Erze", ItemCategory.Tool => "Werkzeuge", ItemCategory.Consumable => "Verbrauchsgegenstände",
         ItemCategory.Powerup => "Powerups", _ => "Materialien und Sonstiges" };
+    // Item cells (inventory, hotbar, storage) share the inventory geometry: a 134x106 icon box centred in a
+    // 164x156 cell, scaled uniformly. Same box shape everywhere, so each item sits identically in every cell.
+    public static Vector2 CellIconSize(Vector2 cell)
+    {
+        float scale = Mathf.Min(cell.x / 164f, cell.y / 156f);
+        return new Vector2(134f * scale, 106f * scale);
+    }
+
     public static void Apply(ItemSO item, RectTransform rect, Vector2 center)
     {
         if (!rect) return;

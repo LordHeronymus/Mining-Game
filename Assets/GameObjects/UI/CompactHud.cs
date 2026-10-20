@@ -329,7 +329,7 @@ public sealed class CompactHud : MonoBehaviour
         draggedSlot = index;
         if (!dragIcon)
         {
-            dragIcon = Image("Dragged Item", transform, 0, 0, 58, 58, null, Color.white);
+            dragIcon = Image("Dragged Item", transform, 0, 0, 58, 58 * 106f / 134f, null, Color.white);
             dragIcon.rectTransform.anchorMin = dragIcon.rectTransform.anchorMax = dragIcon.rectTransform.pivot = new Vector2(.5f, .5f);
             dragIcon.preserveAspect = true;
         }
@@ -479,6 +479,7 @@ public sealed class CompactHud : MonoBehaviour
     void ApplyHotbarIconLayout(ItemSO item, RectTransform icon)
     {
         icon.anchorMin = icon.anchorMax = icon.pivot = new Vector2(.5f, .5f);
+        icon.sizeDelta = ItemIconLayout.CellIconSize(new Vector2(SocketSize, SocketSize));
         ItemIconLayout.Apply(item, icon, new Vector2(0, HotbarIconVerticalOffset));
     }
     void OnRectTransformDimensionsChange() => Fit();
