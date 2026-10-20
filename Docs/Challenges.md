@@ -377,7 +377,7 @@ Lokal im Editor der Testbank `Mining Game 2` (Unity 6000.1.12f1, 20.10.2026, Sta
 | MetaProgressionCoreChecks | Edit | **PASS 87** |
 | ChallengePeriodsChecks | Play | **PASS 75** (nach zwei Korrekturen, siehe unten; vorher FAIL nach 47 bzw. 58) |
 | ChallengeGameplayChecks | Play | **PASS 20** (inkl. „Kamera folgt dem Spieler“ nach Reload) |
-| MetaProgressionUiChecks | Play | FAIL nach 22: „Upgrade money uses stationary shared button styling“ |
+| MetaProgressionUiChecks | Play | Stand `65704ba`: alle Challenge-Prüfungen grün (4 Tabs, alle Kacheln, Texte, Scrollen, Rückweg); FAIL nach 160 in der Bauplan-Sammlung: „All essential recipes are listed from the build catalog“ (vorher FAIL nach 22 an den Upgrade-Karten, behoben) |
 | ProgressionTimelineChecks | Play | FAIL nach 3: „Upcoming blueprints visible“ (Stufen 15/35 nicht auf der Zeitleiste) |
 
 Behoben (Commits `d7876f2`, `9dadf45`):
@@ -385,8 +385,10 @@ Behoben (Commits `d7876f2`, `9dadf45`):
 - `ChallengePanel.UpdateCountdown` prüfte den Periodenwechsel erst nach der Abkürzung „gleiche Restsekunde“. Ein Uhrensprung um genau eine Periode (gleiche Restzeit in der neuen Runde) liess die offene Tafel deshalb veraltet stehen. Die Prüfung steht jetzt vor der Abkürzung.
 - `ChallengePeriodsChecks`: Der Bildteil las nach dem Profilwechsel die Runden direkt aus dem Profil, bevor sie gezogen waren (Runden entstehen erst bei der ersten Abfrage); dadurch wurde nichts angetrieben. Der Test zieht die Runde jetzt zuerst über `GetChallenges`.
 - `MetaProgressionUiChecks`: verlangte einen Scrollbereich, obwohl die 10 Upgrades genau in den sichtbaren Bereich passen (630 = 630); jetzt nur Scrollen, wenn die Liste länger ist.
+- `MetaProgressionUiChecks`: verlangte für jede anklickbare Fläche den Speichern-Knopf-Stil; die ganzen Upgrade-Karten sind aber bewusst Auswahlkarten (`SelectionCardNormal`/`SelectionCardHover`). Karten werden jetzt auf ihren Kartenrahmen geprüft, die Kaufen-Knöpfe weiter auf den Speichern-Stil (Commit `65704ba`).
+- `ProgressionTimelineChecks` (noch nicht angepasst): erwartet bei Level 12 die Baupläne 15 und 35 gleichzeitig auf der Zeitleiste. Seit den Vorschau-Bauplänen (10, 20, 25, 30 …) zeigt der Ausschnitt 10, 12, 13, 14, 15 und als nächsten Bauplan 20 (Seilrolle); die Erwartung ist veraltet.
 
-Offen, nicht durch diesen Branch verursacht (Upgrade-Tafel und Zeitleiste sind auf dem Branch unverändert): Die zwei roten Prüfungen oben erwarten ein älteres Aussehen der Upgrade-Knöpfe bzw. ältere Bauplan-Stufen. Beide brechen ab, bevor ihre Challenge-Teile laufen; die Tafel selbst decken `ChallengePeriodsChecks` und `ChallengePanelPreviewChecks` ab.
+Offen, nicht durch diesen Branch verursacht (Upgrade-Tafel, Bauplan-Sammlung und Zeitleiste sind auf dem Branch unverändert): `MetaProgressionUiChecks` bricht in der Bauplan-Sammlung ab, `ProgressionTimelineChecks` an der veralteten Zeitleisten-Erwartung (siehe oben).
 
 Auffälligkeiten in den Vorschaubildern (nur Optik, keine Fehler der Prüfungen): Der aktive Tab ist kaum vom inaktiven zu unterscheiden; der Scrollbalken rechts zeigt nur die untere Hälfte als dünne Linie; das Sanduhr-Symbol im Tages-Countdown wirkt verpixelt; einige Symbole doppeln sich (Fackel bei „Unbetretene Pfade“ und „Funken im Dunkel“, Spitzhacke bei „Werkzeugschmiede“ und „Aufrüsten“); „Goldener Lauf“ kommt täglich und wöchentlich mit demselben Namen vor; „0 / 1 Exotics“ ist ein englischer Einheitenname.
 
