@@ -4,7 +4,7 @@ Die Lagerhütte neben dem Shop funktioniert wie eine Kiste in Minecraft: Items a
 
 ## Bedienung
 
-- **Knopf „Lager öffnen“** schwebt über der Hütte, sobald der Spieler davorsteht (Holzschild im Stil der Shop-/Werkbank-Knöpfe, goldener Rand beim Darüberfahren). Wer weggeht, schliesst das Lager automatisch, ebenso Esc.
+- **Knopf „Lager öffnen“** schwebt über der Hütte, sobald der Spieler davorsteht: goldenes Holzschild (`EntrySign`), das auch Shop und Werkbank verwenden. Wer weggeht, schliesst das Lager automatisch, ebenso Esc.
 - **Fenster:** links der Rucksack, rechts das Lager, je ein Raster mit 4 Spalten (scrollbar). Oben Suche und Filter (Alle, Erze, Werkzeuge, Verbrauch, Material) für beide Seiten.
 - **Verschieben:** Klick = 1 Stück, Shift+Klick = ganzer Stapel, Rechtsklick = Hälfte, Ziehen auf die andere Seite = ganzer Stapel.
 - **Schnellknöpfe:** „Erze einlagern“, „Alles einlagern“ (Items in der Schnellleiste bleiben im Rucksack), „Alles entnehmen“ (berücksichtigt den gewählten Filter, so viel wie tragbar).
@@ -17,6 +17,9 @@ Die Lagerhütte neben dem Shop funktioniert wie eine Kiste in Minecraft: Items a
 - Der Gewichtsbalken zeigt den normalen Bereich gold, den langsameren Bereich korallenrot und markiert die Traglast mit einem Strich. Im Testmodus „Kein Gewicht“ entfällt das Limit.
 
 ## Technik
+
+- `Assets/GameObjects/Map/EntrySign.cs`: gemeinsames Eingangsschild für Lager, Shop und Werkbank (Breite nach Text, Weltkoordinaten, Ein-/Ausblenden). Die alten „Enter“-Schilder in Szene/Prefab werden zur Laufzeit deaktiviert.
+- Item-Bilder: `ItemIconLayout.CellIconSize` gibt allen Item-Zellen (Inventar, Schnellleiste, Lager) dasselbe Bildfeld.
 
 - `Assets/GameObjects/Map/Storage/SurfaceStorageBuilding.cs`: Lagerinhalt, Ein-/Auslagern, Besucher-Trigger, Weltraum-Knopf (`EnterButtonCanvas`, gleiche Ebene wie der Shop-Knopf).
 - `Assets/GameObjects/Map/Storage/StoragePanel.cs`: Fenster, zur Laufzeit unter dem Canvas der Werkbank erzeugt (`StoragePanel.Ensure()`), gleiche Grafiken wie Shop/Werkbank (`Shop/BuyBackground-v2`, `Shop/BuyFrames-v2`, `GoldButtonFeedback`, TitleFont).
