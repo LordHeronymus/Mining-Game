@@ -55,7 +55,7 @@ public sealed class StoragePanel : MonoBehaviour
     RectTransform layout, backpackContent, storageContent, backpackFrame, storageFrame;
     RectTransform normalFill, overloadFill, capacityMarker;
     ScrollRect backpackScroll, storageScroll;
-    TextMeshProUGUI weightText, weightHint, storageSummary, valueText, hintText, backpackEmpty, storageEmpty;
+    TextMeshProUGUI weightText, weightHint, storageSummary, valueText, hintText;
     TMP_InputField searchField;
     Image dragGhost;
     Slot dragged;
@@ -228,7 +228,7 @@ public sealed class StoragePanel : MonoBehaviour
     {
         if (!Storage || !item || amount <= 0) return 0;
         int moved = withdraw ? Storage.WithdrawUpTo(item, amount) : Storage.TryDeposit(item, amount) ? amount : 0;
-        if (moved > 0) HomeClickAudio.Play();
+        if (moved > 0) HomeClickAudio.PlayUi();
         if (withdraw && moved < amount) WarnWeight();
         Refresh();
         return moved;
@@ -303,7 +303,7 @@ public sealed class StoragePanel : MonoBehaviour
     public void Drag(PointerEventData data)
     {
         if (!dragGhost || dragged == null) return;
-        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(layout, data.position, data.pressEventCamera, out var local))
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(layout, data.position, EventCamera, out var local))
             dragGhost.rectTransform.anchoredPosition = local;
     }
 
@@ -313,8 +313,18 @@ public sealed class StoragePanel : MonoBehaviour
         EndDrag();
         if (slot == null || !slot.item) return;
         var target = slot.fromStorage ? backpackFrame : storageFrame;
-        if (RectTransformUtility.RectangleContainsScreenPoint(target, data.position, data.pressEventCamera))
+        if (RectTransformUtility.RectangleContainsScreenPoint(target, data.position, EventCamera))
             Move(slot.item, slot.amount, slot.fromStorage);
+    }
+
+    Camera EventCamera
+    {
+        get
+        {
+            var canvas = GetComponentInParent<Canvas>();
+            canvas = canvas ? canvas.rootCanvas : null;
+            return canvas && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+        }
     }
 
     void EndDrag()
@@ -356,13 +366,8 @@ public sealed class StoragePanel : MonoBehaviour
         var stored = Storage ? Sorted(Storage.StoredItems).ToArray() : Array.Empty<KeyValuePair<ItemSO, int>>();
         Populate(backpackSlots, backpackContent, pack, false);
         Populate(storageSlots, storageContent, stored, true);
-        backpackEmpty.gameObject.SetActive(pack.Length == 0);
-        storageEmpty.gameObject.SetActive(stored.Length == 0);
-        backpackEmpty.text = string.IsNullOrWhiteSpace(SearchQuery) && Category == 0 ? "Der Rucksack ist leer" : "Keine passenden Items";
-        storageEmpty.text = string.IsNullOrWhiteSpace(SearchQuery) && Category == 0 ? "Noch nichts eingelagert" : "Keine passenden Items";
-
         int kinds = Storage ? Storage.StoredItems.Count(e => e.Key && e.Value > 0) : 0;
-        storageSummary.text = kinds == 1 ? "1 Sorte" : $"{kinds} Sorten";
+        storageSummary.text = kinds == 0 ? "leer" : kinds == 1 ? "1 Sorte" : $"{kinds} Sorten";
         long worth = Storage ? Storage.StoredItems.Where(e => e.Key).Sum(e => (long)e.Key.worth * e.Value) : 0;
         valueText.text = $"Wert <color=#{ColorUtility.ToHtmlStringRGB(Gold)}>{ShopMoneyFormatter.Format(worth)}</color>";
         RefreshWeight(inventory);
@@ -401,7 +406,7 @@ public sealed class StoragePanel : MonoBehaviour
         {
             var slot = slots[i];
             slot.rect.gameObject.SetActive(i < shown);
-            if (i >= shown) continue;
+            if (i >= shown) { slot.item = null; slot.amount = 0; continue; }
             slot.rect.anchoredPosition = new Vector2(i % Columns * ColumnPitch, -(i / Columns) * RowPitch);
             var item = i < items.Length ? items[i].Key : null;
             slot.amount = i < items.Length ? items[i].Value : 0;
@@ -419,7 +424,7 @@ public sealed class StoragePanel : MonoBehaviour
         content.sizeDelta = new Vector2(GridWidth, Mathf.Max(GridHeight, (shown / Columns - 1) * RowPitch + Cell));
     }
 
-    static string Kg(double value) => value.ToString("0.#", German);
+    static string Kg(double value) => value.ToString("0.##", German);
 
     // ---- View ----
 
@@ -463,7 +468,7 @@ public sealed class StoragePanel : MonoBehaviour
             tab.GetComponentInChildren<TextMeshProUGUI>().fontSizeMax = 25;
             tabs.Add(tab.GetComponent<Image>());
         }
-        Button("Close", layout, "Schliessen", 1290, 137, 170, 49, Hide).GetComponentInChildren<TextMeshProUGUI>().fontSizeMax = 25;
+        Button("Close", layout, "Schliessen", 1310, 137, 150, 49, Hide).GetComponentInChildren<TextMeshProUGUI>().fontSizeMax = 25;
 
         backpackFrame = Panel("Backpack Frame", layout, 176, 206, 640, 600, rowSprite).rectTransform;
         storageFrame = Panel("Storage Frame", layout, 832, 206, 640, 600, rowSprite).rectTransform;
@@ -489,9 +494,6 @@ public sealed class StoragePanel : MonoBehaviour
         AddScrollbar(backpackScroll, 780, 330);
         storageContent = ScrollArea("Storage", layout, 876, 330, out storageScroll);
         AddScrollbar(storageScroll, 1436, 330);
-        backpackEmpty = Label(layout, "", 220, 500, GridWidth, 60, 28, TextAlignmentOptions.Midline);
-        storageEmpty = Label(layout, "", 876, 500, GridWidth, 60, 28, TextAlignmentOptions.Midline);
-        backpackEmpty.color = storageEmpty.color = Muted;
 
         Hint(Button("Deposit Ores", layout, "Erze einlagern", 204, 748, 282, 50, DepositOres), "Legt alle Erze aus dem Rucksack ins Lager");
         Hint(Button("Deposit All", layout, "Alles einlagern", 506, 748, 282, 50, DepositAll), "Legt alles ins Lager – Gegenstände in der Schnellleiste bleiben im Rucksack");
@@ -660,9 +662,10 @@ public sealed class StorageSlotInput : MonoBehaviour, IPointerClickHandler, IPoi
 
     public void OnPointerClick(PointerEventData data)
     {
-        if (data.button == PointerEventData.InputButton.Middle) return;
+        // A drag released on its own slot still reports a click; the drop already decided what moves.
+        if (data.dragging || data.button == PointerEventData.InputButton.Middle) return;
         panel.Click(slot, data.button, Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
-        panel.Hover(slot, true);
+        panel.Hover(slot, slot.rect.gameObject.activeInHierarchy);
     }
     public void OnPointerEnter(PointerEventData data) => panel.Hover(slot, true);
     public void OnPointerExit(PointerEventData data) => panel.Hover(slot, false);

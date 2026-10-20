@@ -8,142 +8,170 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
-// Requires a fresh Play start from MainMenu (run after the game finished loading).
+// Requires a fresh Play start from MainMenu. Runs in an isolated save/meta profile; result in Temp/StorageUiChecks.txt.
 public static class StorageUiChecks
 {
     public static object Main()
     {
-        if (!Application.isPlaying || LoadingProgress.Active) throw new Exception("Requires Play Mode after the game finishes loading.");
-        new GameObject("Storage UI checks").AddComponent<StorageUiProbe>();
-        return "Running storage entry button, chest layout, click/drag moves and triple-capacity withdraw checks; result in Temp/StorageUiChecks-result.txt.";
+        if (!Application.isPlaying || !MainMenuController.IsVisible || GameplayInputBlocker.IsBlocked)
+            return "Requires fresh Play from MainMenu.";
+        var go = new GameObject("Storage UI Probe");
+        Object.DontDestroyOnLoad(go);
+        go.AddComponent<StorageUiProbe>();
+        return "Running storage entry sign, chest layout, moves and triple-capacity withdraw checks; result in Temp/StorageUiChecks.txt.";
     }
 }
 
 public sealed class StorageUiProbe : MonoBehaviour
 {
-    static void Check(bool value, string message) { if (!value) throw new Exception(message); }
+    const string Report = "Temp/StorageUiChecks.txt";
+    string save, meta, gps;
+    bool clean;
+    int checks;
+
+    void Check(bool ok, string label)
+    {
+        if (!ok) throw new Exception(label);
+        File.AppendAllText(Report, "PASS " + (++checks) + " " + label + "\n");
+    }
 
     IEnumerator Start()
     {
+        save = GameSaveSystem.TestDirectory; meta = MetaProgression.TestDirectory; gps = JsonUtility.ToJson(GpsSettings.Tests);
+        GameSaveSystem.TestDirectory = Path.GetFullPath("Temp/StorageUi-" + DateTime.UtcNow.Ticks);
+        MetaProgression.TestDirectory = Path.Combine(GameSaveSystem.TestDirectory, "Profile");
+        GpsSettings.Document.tests.testModeDisabled = true;
+        File.WriteAllText(Report, "");
+        var routine = Run();
+        while (true)
+        {
+            bool more = false; object next = null; Exception error = null;
+            try { more = routine.MoveNext(); if (more) next = routine.Current; } catch (Exception e) { error = e; }
+            if (error != null) { File.AppendAllText(Report, "FAILED " + error + "\n"); break; }
+            if (!more) break;
+            yield return next;
+        }
+        if (StoragePanel.Instance && StoragePanel.Instance.IsOpen) StoragePanel.Instance.Hide();
+        if (!MainMenuController.IsVisible && !RunNavigation.IsTransitioning) RunNavigation.MainMenu();
+        float end = Time.realtimeSinceStartup + 120;
+        while ((LoadingProgress.Active || RunNavigation.IsTransitioning) && Time.realtimeSinceStartup < end) yield return null;
+        Cleanup();
+    }
+
+    IEnumerator Ready()
+    {
+        float end = Time.realtimeSinceStartup + 120;
+        while (LoadingProgress.Active || RunNavigation.IsTransitioning)
+        {
+            if (Time.realtimeSinceStartup > end) throw new Exception("Loading timeout");
+            yield return null;
+        }
+        yield return null; yield return null;
+    }
+
+    IEnumerator Run()
+    {
+        RunNavigation.NewGame("Lager-Test"); yield return Ready();
         var storage = Object.FindFirstObjectByType<SurfaceStorageBuilding>();
         var player = Object.FindFirstObjectByType<PlayerMovement>();
         var inventory = InventoryManager.Instance;
         var catalog = Resources.Load<ItemCatalog>("ItemCatalog");
-        string result = "FAILED: incomplete";
-        if (!storage || !player || !inventory || !catalog)
-        {
-            File.WriteAllText("Temp/StorageUiChecks-result.txt", "FAILED: storage, player, inventory or catalog missing");
-            Destroy(gameObject); yield break;
-        }
-        var snapshot = inventory.GetSnapshot().ToDictionary(x => x.Key, x => x.Value);
-        var storedBefore = storage.CaptureRunState();
-        var playerPosition = player.transform.position;
+        Check(storage && player && inventory && catalog, "Storage hut, player, inventory and item catalog exist");
         var iron = catalog.items.First(x => x && x.item == Item.Iron);
         var coal = catalog.items.First(x => x && x.item == Item.Coal);
         var gold = catalog.items.First(x => x && x.item == Item.Gold);
-        StoragePanel panel = null;
-        try
+        var home = player.transform.position;
+
+        inventory.ResetAll();
+        storage.RestoreRunState(Array.Empty<SavedItem>());
+        Teleport(player, storage.transform.position + Vector3.up * 1.2f);
+        float started = Time.realtimeSinceStartup;
+        while (!storage.HasVisitor && Time.realtimeSinceStartup - started < 2) yield return new WaitForFixedUpdate();
+        Check(storage.HasVisitor, "Player inside the storage trigger");
+        started = Time.realtimeSinceStartup;
+        while (Time.realtimeSinceStartup - started < .4f) yield return null;
+        var entry = storage.EntryButton;
+        var entryGroup = storage.EntryGroup;
+        Check(entryGroup && entryGroup.alpha > .99f && entryGroup.interactable, "Entry sign fades in near the hut");
+        Check(entry.GetComponentInParent<Canvas>().renderMode == RenderMode.WorldSpace, "Entry sign is a world-space button");
+        Check(entryGroup.GetComponentInChildren<TextMeshProUGUI>().text == "Lager öffnen" && entryGroup.GetComponentInChildren<TextMeshProUGUI>().fontSize >= 28, "Entry label is readable");
+        Check(entry.GetComponent<GoldButtonFeedback>(), "Entry sign uses the gold wood button style");
+
+        entry.onClick.Invoke();
+        var panel = StoragePanel.Instance;
+        Check(panel && panel.IsOpen && storage.IsOpen && GameplayInputBlocker.IsBlocked, "Entry opens the storage panel and blocks gameplay");
+        yield return null; yield return null;
+        Check(entryGroup.alpha < 1 && !entryGroup.blocksRaycasts, "Entry sign fades out and stops taking clicks while the panel is open");
+        var layout = panel.transform.Find("Layout");
+        var backpackFrame = (RectTransform)layout.Find("Backpack Frame");
+        var storageFrame = (RectTransform)layout.Find("Storage Frame");
+        Check(backpackFrame.anchoredPosition.x < storageFrame.anchoredPosition.x, "Backpack on the left, storage on the right");
+        Check(layout.Find("Background").GetComponent<Image>().sprite.texture.name == "BuyBackground-v2", "Shop background artwork");
+
+        inventory.Add(iron, 10); inventory.Add(coal, 7); inventory.Add(gold, 3);
+        yield return null;
+        panel.Click(panel.BackpackSlots.First(x => x.item == iron), PointerEventData.InputButton.Left, false);
+        Check(storage.GetStoredCount(iron) == 1 && inventory.GetCount(iron) == 9, "Click deposits one");
+        panel.Click(panel.BackpackSlots.First(x => x.item == iron), PointerEventData.InputButton.Right, false);
+        Check(storage.GetStoredCount(iron) == 6 && inventory.GetCount(iron) == 4, "Right click deposits half (rounded up)");
+        panel.Click(panel.BackpackSlots.First(x => x.item == iron), PointerEventData.InputButton.Left, true);
+        Check(storage.GetStoredCount(iron) == 10 && inventory.GetCount(iron) == 0, "Shift click deposits the stack");
+        Check(panel.StorageSlots.Any(x => x.item == iron && x.amount == 10) && panel.BackpackSlots.All(x => x.item != iron), "Both grids refresh after moves");
+        panel.Click(panel.StorageSlots.First(x => x.item == iron), PointerEventData.InputButton.Left, false);
+        Check(storage.GetStoredCount(iron) == 9 && inventory.GetCount(iron) == 1, "Click on the storage side withdraws one");
+
+        panel.SetCategory(1);
+        Check(panel.BackpackSlots.Where(x => x.item).All(x => x.item.category == ItemCategory.Ore), "Ore tab filters the grids");
+        panel.SetCategory(0); panel.SetSearch(coal.displayName.ToUpperInvariant());
+        Check(panel.BackpackSlots.Count(x => x.item) == 1 && panel.BackpackSlots[0].item == coal, "Search filters items");
+        panel.SetSearch("");
+
+        Canvas.ForceUpdateCanvases();
+        var canvas = panel.GetComponentInParent<Canvas>().rootCanvas;
+        var camera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+        var drop = new PointerEventData(EventSystem.current)
+        {
+            button = PointerEventData.InputButton.Left,
+            position = RectTransformUtility.WorldToScreenPoint(camera, storageFrame.TransformPoint(storageFrame.rect.center))
+        };
+        panel.BeginDrag(panel.BackpackSlots.First(x => x.item == coal), drop); panel.Drop(drop);
+        Check(storage.GetStoredCount(coal) == 7 && inventory.GetCount(coal) == 0, "Dragging onto the storage side moves the whole stack");
+
+        panel.DepositOres();
+        Check(inventory.GetCount(iron) == 0 && inventory.GetCount(gold) == 0, "'Erze einlagern' stores all ores");
+        panel.WithdrawAll();
+        Check(storage.StoredItems.Count == 0 && inventory.GetCount(coal) == 7 && inventory.GetCount(iron) == 10, "'Alles entnehmen' empties the storage when the weight fits");
+        panel.DepositAll();
+        Check(inventory.GetCount(coal) == 0 && inventory.GetCount(iron) == 0 && inventory.GetCount(gold) == 0, "'Alles einlagern' stores resources");
+
+        if (iron.EffectiveWeight > 0)
         {
             inventory.ResetAll();
-            storage.RestoreRunState(Array.Empty<SavedItem>());
-            Teleport(player, storage.transform.position + Vector3.up * 1.2f);
-            float started = Time.realtimeSinceStartup;
-            while (!storage.HasVisitor && Time.realtimeSinceStartup - started < 2) yield return new WaitForFixedUpdate();
-            Check(storage.HasVisitor, "Player inside the storage trigger.");
-            yield return new WaitForSecondsRealtime(.35f);
-            var entry = storage.EntryButton;
-            Check(entry && entry.GetComponent<CanvasGroup>().alpha > .99f && entry.GetComponent<CanvasGroup>().interactable, "Entry button fades in near the hut.");
-            Check(entry.GetComponentInParent<Canvas>().renderMode == RenderMode.WorldSpace, "Entry button is a world-space sign.");
-            Check(entry.GetComponentInChildren<TextMeshProUGUI>().text == "Lager öffnen", "Entry label.");
-            Check(entry.GetComponent<GoldButtonFeedback>(), "Entry button uses the gold wood button style.");
-
-            entry.onClick.Invoke();
-            panel = StoragePanel.Instance;
-            Check(panel && panel.IsOpen && storage.IsOpen && GameplayInputBlocker.IsBlocked, "Entry opens the storage panel and blocks gameplay.");
+            double weight = iron.EffectiveWeight;
+            int fit = (int)Math.Floor(inventory.MaximumWeight / weight + 1e-6);
+            storage.RestoreRunState(new[] { new SavedItem { id = (int)Item.Iron, count = fit + 25 } });
             yield return null;
-            Check(entry.GetComponent<CanvasGroup>().alpha < 1 || !entry.GetComponent<CanvasGroup>().interactable, "Entry button hides while the panel is open.");
-            var layout = panel.transform.Find("Layout");
-            var backpackFrame = (RectTransform)layout.Find("Backpack Frame");
-            var storageFrame = (RectTransform)layout.Find("Storage Frame");
-            Check(backpackFrame.anchoredPosition.x < storageFrame.anchoredPosition.x, "Backpack is on the left, storage on the right.");
-            Check(layout.Find("Background").GetComponent<Image>().sprite.texture.name == "BuyBackground-v2", "Shop background artwork.");
-
-            inventory.Add(iron, 10); inventory.Add(coal, 7); inventory.Add(gold, 3);
+            panel.Click(panel.StorageSlots.First(x => x.item == iron), PointerEventData.InputButton.Left, true);
+            Check(inventory.GetCount(iron) == fit && storage.GetStoredCount(iron) == 25, $"Withdraw stops exactly at three times the carrying capacity ({fit} iron)");
+            Check(inventory.TotalWeight > inventory.CarryingCapacity && inventory.TotalWeight <= inventory.MaximumWeight + 1e-4,
+                "Player may carry above the capacity (slower) but not above the maximum");
+            Check(Mathf.Abs(inventory.MaximumWeight - inventory.CarryingCapacity * 3) < .001f, "Maximum is three times the capacity");
+            Check(storage.WithdrawUpTo(iron, 1) == 0, "No further withdraw at the maximum");
             yield return null;
-            var ironSlot = panel.BackpackSlots.First(x => x.item == iron);
-            panel.Click(ironSlot, PointerEventData.InputButton.Left, false);
-            Check(storage.GetStoredCount(iron) == 1 && inventory.GetCount(iron) == 9, "Click deposits one.");
-            panel.Click(panel.BackpackSlots.First(x => x.item == iron), PointerEventData.InputButton.Right, false);
-            Check(storage.GetStoredCount(iron) == 6 && inventory.GetCount(iron) == 4, "Right click deposits half (rounded up).");
-            panel.Click(panel.BackpackSlots.First(x => x.item == iron), PointerEventData.InputButton.Left, true);
-            Check(storage.GetStoredCount(iron) == 10 && inventory.GetCount(iron) == 0, "Shift click deposits the stack.");
-            Check(panel.StorageSlots.Any(x => x.item == iron && x.amount == 10) && panel.BackpackSlots.All(x => x.item != iron), "Grids refresh after moves.");
-            panel.Click(panel.StorageSlots.First(x => x.item == iron), PointerEventData.InputButton.Left, false);
-            Check(storage.GetStoredCount(iron) == 9 && inventory.GetCount(iron) == 1, "Click on the storage side withdraws one.");
-
-            panel.SetCategory(1);
-            Check(panel.BackpackSlots.Where(x => x.item).All(x => x.item.category == ItemCategory.Ore), "Ore tab filters both sides.");
-            panel.SetCategory(0); panel.SetSearch("kohle");
-            Check(panel.BackpackSlots.Count(x => x.item) == 1 && panel.BackpackSlots[0].item == coal, "Search filters items.");
-            panel.SetSearch("");
-
-            Canvas.ForceUpdateCanvases();
-            var coalSlot = panel.BackpackSlots.First(x => x.item == coal);
-            var canvas = panel.GetComponentInParent<Canvas>().rootCanvas;
-            var camera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
-            var drop = new PointerEventData(EventSystem.current)
-            {
-                button = PointerEventData.InputButton.Left,
-                position = RectTransformUtility.WorldToScreenPoint(camera, storageFrame.TransformPoint(storageFrame.rect.center)),
-                pressEventCamera = camera
-            };
-            panel.BeginDrag(coalSlot, drop); panel.Drop(drop);
-            Check(storage.GetStoredCount(coal) == 7 && inventory.GetCount(coal) == 0, "Dragging onto the storage side moves the whole stack.");
-
-            panel.DepositOres();
-            Check(inventory.GetCount(iron) == 0 && inventory.GetCount(gold) == 0, "Ore deposit button stores all ores.");
-            panel.WithdrawAll();
-            Check(storage.StoredItems.Count == 0 && inventory.GetCount(coal) == 7, "Withdraw all empties the storage when the weight fits.");
-            panel.DepositAll();
-            Check(inventory.GetCount(coal) == 0 && inventory.GetCount(iron) == 0, "Deposit all stores non-hotbar items.");
-
-            if (!GameplayTestSettings.NoWeight && iron.EffectiveWeight > 0)
-            {
-                inventory.ResetAll();
-                double weight = iron.EffectiveWeight;
-                int fit = (int)Math.Floor(inventory.MaximumWeight / weight + 1e-6);
-                storage.RestoreRunState(new[] { new SavedItem { id = (int)Item.Iron, count = fit + 25 } });
-                panel.Click(panel.StorageSlots.First(x => x.item == iron), PointerEventData.InputButton.Left, true);
-                Check(inventory.GetCount(iron) == fit && storage.GetStoredCount(iron) == 25, $"Withdraw stops exactly at three times the carrying capacity ({fit} iron).");
-                Check(inventory.TotalWeight > inventory.CarryingCapacity && inventory.TotalWeight <= inventory.MaximumWeight + 1e-4,
-                    "Player may carry above the capacity (slower) but not above the maximum.");
-                Check(Mathf.Abs(inventory.MaximumWeight - inventory.CarryingCapacity * 3) < .001f, "Maximum is three times the capacity.");
-                Check(storage.WithdrawUpTo(iron, 1) == 0, "No further withdraw at the maximum.");
-                yield return null;
-                var slower = (RectTransform)layout.Find("Weight Bar/Slower");
-                var normal = (RectTransform)layout.Find("Weight Bar/Normal");
-                Check(slower.sizeDelta.x > 1 && normal.sizeDelta.x > 1, "Weight bar shows the slower zone above the capacity.");
-            }
-
-            storage.Close();
-            Check(!panel.IsOpen && !GameplayInputBlocker.IsBlocked, "Close unblocks gameplay.");
-            entry.onClick.Invoke();
-            Check(panel.IsOpen, "Panel reopens.");
-            Teleport(player, playerPosition);
-            started = Time.realtimeSinceStartup;
-            while (panel.IsOpen && Time.realtimeSinceStartup - started < 2) yield return new WaitForFixedUpdate();
-            Check(!panel.IsOpen && !GameplayInputBlocker.IsBlocked, "Walking away closes the storage.");
-            result = "PASS: entry sign, chest layout (backpack left, storage right), click/shift/right-click/drag moves, filters, quick buttons, withdraw up to 3x carrying capacity, close rules.";
+            var slower = (RectTransform)layout.Find("Weight Bar/Slower");
+            var normal = (RectTransform)layout.Find("Weight Bar/Normal");
+            Check(normal.sizeDelta.x > 1 && slower.sizeDelta.x > 1, "Weight bar shows the slower zone above the capacity");
         }
-        finally
-        {
-            if (panel && panel.IsOpen) panel.Hide();
-            Teleport(player, playerPosition);
-            inventory.ResetAll(); foreach (var item in snapshot) inventory.Add(item.Key, item.Value);
-            storage.RestoreRunState(storedBefore);
-            File.WriteAllText("Temp/StorageUiChecks-result.txt", result);
-            Destroy(gameObject);
-        }
+
+        storage.Close();
+        Check(!panel.IsOpen && !GameplayInputBlocker.IsBlocked, "Close unblocks gameplay");
+        entry.onClick.Invoke();
+        Check(panel.IsOpen, "Panel reopens");
+        Teleport(player, home);
+        started = Time.realtimeSinceStartup;
+        while (panel.IsOpen && Time.realtimeSinceStartup - started < 2) yield return new WaitForFixedUpdate();
+        Check(!panel.IsOpen && !GameplayInputBlocker.IsBlocked, "Walking away closes the storage");
+        File.AppendAllText(Report, "COMPLETE " + checks + " checks\n");
     }
 
     static void Teleport(PlayerMovement player, Vector3 position)
@@ -153,4 +181,16 @@ public sealed class StorageUiProbe : MonoBehaviour
         if (body) { body.position = position; body.linearVelocity = Vector2.zero; }
         Physics2D.SyncTransforms();
     }
+
+    void Cleanup()
+    {
+        if (clean) return;
+        clean = true;
+        MetaProgression.EndRun();
+        MetaProgression.TestDirectory = meta; GameSaveSystem.TestDirectory = save;
+        JsonUtility.FromJsonOverwrite(gps, GpsSettings.Document.tests);
+        Object.Destroy(gameObject);
+    }
+
+    void OnDestroy() { if (!clean) Cleanup(); }
 }
