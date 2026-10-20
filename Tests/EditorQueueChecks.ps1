@@ -171,7 +171,7 @@ Check 'Benutzer als Inhaber bekommt laengere Frist' (((Ids) -join ',') -eq 'benu
 Q @('status', '-StaleMinutes', '0.05', '-UserStaleMinutes', '0.05') | Out-Null
 Check 'Benutzer-Frist einstellbar' (((Ids) -join ',') -eq 'a') "ids=$((Ids) -join ',')"
 $j = (Q @('status', '-Json')).out | ConvertFrom-Json
-Check 'Standardfristen 2 / 10 min' (($j.staleMinutes -eq 2) -and ($j.userStaleMinutes -eq 10)) "$($j.staleMinutes)/$($j.userStaleMinutes)"
+Check 'Standardfristen 4 / 10 min' (($j.staleMinutes -eq 4) -and ($j.userStaleMinutes -eq 10)) "$($j.staleMinutes)/$($j.userStaleMinutes)"
 
 # 12) status -Json liefert maschinenlesbare Daten fuer den lokalen Dienst / PrivOrg.
 Reset
@@ -209,8 +209,124 @@ try {
     $res = Invoke-RestMethod "$base/api/leave" -Method Post -ContentType 'application/json' -Body '{"project":"Mining Game"}'
     $mg = @($res.queue.projects | Where-Object { $_.project -eq 'Mining Game' })[0]
     Check 'Dienst: Benutzer ausgetragen' ($res.ok -and $mg.entries.Count -eq 1)
+    # Umsortieren und Bitte abschliessen ueber den Dienst (wie aus PrivOrg).
+    foreach ($w in 'b', 'c') { & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script join -Id $w -Who "Chat $w" -Project 'Mining Game' -QueueDir $svcDir | Out-Null }
+    $res = Invoke-RestMethod "$base/api/move" -Method Post -ContentType 'application/json' -Body '{"project":"Mining Game","id":"c","position":2}' -Headers @{ Origin = 'http://localhost:3000' }
+    $mg = @($res.queue.projects | Where-Object { $_.project -eq 'Mining Game' })[0]
+    Check 'Dienst: Wartende umsortieren' ($res.ok -and (($mg.entries | ForEach-Object { $_.id }) -join ',') -eq 'a,c,b') ($res | ConvertTo-Json -Depth 6 -Compress)
+    $code = 0
+    try { Invoke-WebRequest "$base/api/move" -Method Post -ContentType 'application/json' -Body '{"project":"Mining Game","id":"a","position":3}' -UseBasicParsing | Out-Null }
+    catch { $code = [int]$_.Exception.Response.StatusCode }
+    Check 'Dienst: Inhaber laesst sich nicht verschieben' ($code -eq 409) "code=$code"
+    $res = Invoke-RestMethod "$base/api/request-release" -Method Post -ContentType 'application/json' -Body '{"project":"Mining Game"}'
+    $mg = @($res.queue.projects | Where-Object { $_.project -eq 'Mining Game' })[0]
+    Check 'Dienst: Bitte abschliessen setzt Frist' ($res.ok -and $mg.entries[0].releaseDeadline -and ($mg.releaseMinutes -eq 5) -and ($mg.finalMinutes -eq 2))
+    $res = Invoke-RestMethod "$base/api/request-release" -Method Post -ContentType 'application/json' -Body '{"project":"Mining Game","cancel":true}'
+    $mg = @($res.queue.projects | Where-Object { $_.project -eq 'Mining Game' })[0]
+    Check 'Dienst: Bitte zuruecknehmen' ($res.ok -and -not $mg.entries[0].releaseDeadline)
 }
 finally { if (-not $srv.HasExited) { Stop-Process -Id $srv.Id -Force } }
+
+# 14) Umsortieren: Platz 1 gesperrt, Wartende frei verschiebbar.
+Reset
+foreach ($w in 'a', 'b', 'c', 'd') { Q @('join', '-Id', $w, '-Who', "Chat $w") | Out-Null }
+$r = Q @('move', '-Id', 'd', '-Position', '2')
+Check 'move: d auf Platz 2' (($r.code -eq 0) -and ((Ids) -join ',') -eq 'a,d,b,c') "ids=$((Ids) -join ',') $($r.out)"
+$r = Q @('move', '-Id', 'a', '-Position', '3')
+Check 'move: Inhaber gesperrt' (($r.code -eq 1) -and ((Ids) -join ',') -eq 'a,d,b,c')
+$r = Q @('move', '-Id', 'b', '-Position', '1')
+Check 'move: Platz 1 nicht erreichbar (wird Platz 2)' (((Ids) -join ',') -eq 'a,b,d,c') "ids=$((Ids) -join ',')"
+$r = Q @('move', '-Id', 'b', '-Position', '99')
+Check 'move: ans Ende' (((Ids) -join ',') -eq 'a,d,c,b') "ids=$((Ids) -join ',')"
+$r = Q @('move', '-Id', 'x', '-Position', '2')
+Check 'move: unbekannter Eintrag -> 3' ($r.code -eq 3)
+
+# 15) Bitte abschliessen: Frist, letzte Frist bei laufendem Test, Zuruecknehmen, nicht fuer den Benutzer.
+Reset
+Q @('join', '-Id', 'a', '-Who', 'Chat A') | Out-Null
+Q @('join', '-Id', 'b', '-Who', 'Chat B') | Out-Null
+$r = Q @('request-release', '-ReleaseMinutes', '0.05')
+Check 'Bitte gesendet' (($r.code -eq 0) -and $r.out -match 'Bitte gesendet') $r.out
+$r = Q @('heartbeat', '-Id', 'a')
+Check 'heartbeat zeigt die Bitte' ($r.out -match 'HINWEIS: .*um Freigabe des Editors gebeten.*endet um \d\d:\d\d Uhr') $r.out
+Q @('status') | Out-Null
+Check 'vor Ablauf bleibt der Inhaber' (((Ids) -join ',') -eq 'a,b')
+Start-Sleep -Seconds 4
+Q @('heartbeat', '-Id', 'b') | Out-Null
+Q @('status') | Out-Null
+Check 'nach Ablauf ohne Test: Inhaber entfernt' (((Ids) -join ',') -eq 'b') "ids=$((Ids) -join ',')"
+Check 'Bitte im Log vermerkt' ((Get-Content $logFile -Raw) -match 'VERDRAENGT \(Inhaber\) \[a\] Chat A: Bitte des Benutzers, Frist abgelaufen')
+
+Reset
+Q @('join', '-Id', 'a', '-Who', 'Chat A') | Out-Null
+Q @('join', '-Id', 'b', '-Who', 'Chat B') | Out-Null
+Q @('heartbeat', '-Id', 'a', '-Busy') | Out-Null
+$env:EDITOR_QUEUE_FINAL_MINUTES = '0.05'
+Q @('request-release', '-ReleaseMinutes', '0.05') | Out-Null
+Start-Sleep -Seconds 4
+Q @('heartbeat', '-Id', 'b') | Out-Null
+Q @('status') | Out-Null
+$top = @((Get-Content $queueFile -Raw | ConvertFrom-Json).entries)[0]
+Check 'testet noch: letzte Frist statt Entfernen' ((((Ids) -join ',') -eq 'a,b') -and $top.finalDeadline) "ids=$((Ids) -join ',')"
+$r = Q @('heartbeat', '-Id', 'a', '-Busy')
+Check 'heartbeat zeigt die letzte Frist' ($r.out -match 'HINWEIS: .*ueberfaellig.*letzte Frist') $r.out
+Start-Sleep -Seconds 4
+Q @('heartbeat', '-Id', 'b') | Out-Null
+Q @('status') | Out-Null
+Remove-Item Env:EDITOR_QUEUE_FINAL_MINUTES
+Check 'nach der letzten Frist entfernt, auch mitten im Test' (((Ids) -join ',') -eq 'b') "ids=$((Ids) -join ',')"
+
+Reset
+Q @('join', '-Id', 'a', '-Who', 'Chat A') | Out-Null
+Q @('request-release') | Out-Null
+$r = Q @('request-release', '-Cancel')
+$top = @((Get-Content $queueFile -Raw | ConvertFrom-Json).entries)[0]
+Check 'Bitte zuruecknehmen' (($r.out -match 'zurueckgenommen') -and -not $top.releaseDeadline) $r.out
+Reset
+Q @('join', '-User') | Out-Null
+$r = Q @('request-release')
+Check 'keine Bitte an den Benutzer' ($r.code -eq 1)
+
+# 16) Hook gibt Bitte und Verdraengung als Zusatzinfo an den Chat weiter (hoechstens einmal pro Minute).
+Reset
+Remove-Item (Join-Path $dir '.notice-*') -Force -ErrorAction SilentlyContinue
+$env:CLAUDE_CODE_SESSION_ID = 'sess-notice'
+Q @('join', '-Id', 'n', '-Who', 'Chat N') | Out-Null
+Remove-Item Env:CLAUDE_CODE_SESSION_ID
+Q @('join', '-Id', 'w', '-Who', 'Chat W') | Out-Null
+Q @('request-release', '-ReleaseMinutes', '0.05') | Out-Null
+$post = '{"session_id":"sess-notice","hook_event_name":"PostToolUse","tool_name":"Bash","tool_input":{"command":"git status"}}'
+$hbBefore = @((Get-Content $queueFile -Raw | ConvertFrom-Json).entries)[0].heartbeat
+$out = (Hook $post) -join ''
+$ctx = try { ($out | ConvertFrom-Json).hookSpecificOutput.additionalContext } catch { '' }
+Check 'Hook meldet die Bitte als Zusatzinfo (gueltiges JSON)' ($ctx -match 'um Freigabe des Editors gebeten') $out
+$out = (Hook $post) -join ''
+Check 'Hook meldet hoechstens einmal pro Minute' (-not $out) $out
+Check 'Hinweis setzt kein Lebenszeichen' ($hbBefore -eq @((Get-Content $queueFile -Raw | ConvertFrom-Json).entries)[0].heartbeat)
+Start-Sleep -Seconds 4
+Q @('heartbeat', '-Id', 'w') | Out-Null
+Q @('status') | Out-Null
+$out = (Hook $post) -join ''
+$ctx = try { ($out | ConvertFrom-Json).hookSpecificOutput.additionalContext } catch { '' }
+Check 'Hook meldet die Verdraengung' ($ctx -match 'entfernt') $out
+Remove-Item (Join-Path $dir '.notice-*') -Force -ErrorAction SilentlyContinue
+$out = (Hook $post) -join ''
+Check 'Verdraengung wird nur einmal gemeldet' (-not $out) $out
+$out = (Hook '{"session_id":"sess-other","hook_event_name":"PostToolUse","tool_name":"Bash","tool_input":{"command":"git status"}}') -join ''
+Check 'fremde Sitzung bekommt nichts' (-not $out) $out
+
+# 16b) Ein fehlgeschlagener Unity-Aufruf (PostToolUseFailure) gilt ebenfalls als beendet.
+Reset
+Remove-Item (Join-Path $dir '.notice-*') -Force -ErrorAction SilentlyContinue
+$env:CLAUDE_CODE_SESSION_ID = 'sess-fail'
+Q @('join', '-Id', 'f', '-Who', 'Chat F') | Out-Null
+Remove-Item Env:CLAUDE_CODE_SESSION_ID
+Hook '{"session_id":"sess-fail","hook_event_name":"PreToolUse","tool_name":"mcp__unity__run_script","tool_input":{}}' | Out-Null
+$busyOn = [bool]@((Get-Content $queueFile -Raw | ConvertFrom-Json).entries)[0].busySince
+Hook '{"session_id":"sess-fail","hook_event_name":"PostToolUseFailure","tool_name":"mcp__unity__run_script","tool_input":{},"error":"x"}' | Out-Null
+$busyOff = -not @((Get-Content $queueFile -Raw | ConvertFrom-Json).entries)[0].busySince
+Check 'PostToolUseFailure hebt den Schutz auf' ($busyOn -and $busyOff)
+Remove-Item (Join-Path $dir '.notice-*') -Force -ErrorAction SilentlyContinue
 
 Write-Output ''
 if ($failures -eq 0) { Write-Output 'Alle Editor-Warteschlangen-Checks bestanden.'; exit 0 }
