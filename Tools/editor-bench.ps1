@@ -93,18 +93,17 @@ UnityEditor.SceneManagement.StageUtility.GoToMainStage();
 UnityEditor.SceneManagement.EditorSceneManager.NewScene(UnityEditor.SceneManagement.NewSceneSetup.EmptyScene, UnityEditor.SceneManagement.NewSceneMode.Single);
 return "closed";
 '@
-# Nach dem Wechsel: Import und Szene asynchron (Unity bricht Befehle nach 5 s Hauptthread-Zeit ab, ein Import dauert laenger).
-$queueOpenCode = @"
-UnityEditor.EditorApplication.delayCall += () => {
-    UnityEditor.AssetDatabase.Refresh();
-    if (UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().path != "$scenePath")
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("$scenePath", UnityEditor.SceneManagement.OpenSceneMode.Single);
-};
-return "queued";
-"@
-$sceneStateCode = @'
-return "scene=" + UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().path + ";compiling=" + UnityEditor.EditorApplication.isCompiling;
+# Nach dem Wechsel: Import anstossen, dann Szene oeffnen, sobald der Editor nicht mehr importiert. Unity bricht einzelne Befehle
+# nach 5 s Hauptthread-Zeit ab (der Import laeuft trotzdem weiter); delayCall laeuft im Hintergrund-Editor nicht verlaesslich.
+$refreshCode = @'
+UnityEditor.AssetDatabase.Refresh();
+return "refreshed";
 '@
+$openSceneCode = @"
+if (UnityEditor.EditorApplication.isCompiling || UnityEditor.EditorApplication.isUpdating) return "busy";
+UnityEditor.SceneManagement.EditorSceneManager.OpenScene("$scenePath", UnityEditor.SceneManagement.OpenSceneMode.Single);
+return "opened";
+"@
 
 # Ein Durchgang des Dialog-Waechters ohne Schonfrist. Exit: 0 kein Dialog (mehr), 3 Editor laeuft nicht, 6 unbekannter Dialog offen.
 function Invoke-DialogCheck {
@@ -196,34 +195,20 @@ function Close-BenchScene {
     return $r.state
 }
 
-# Nach einer Git-Aenderung: Assets neu einlesen und SampleScene wieder oeffnen, dann warten, bis sie offen ist.
+# Nach einer Git-Aenderung: Assets neu einlesen und SampleScene wieder oeffnen (wartet bis zu 3 min auf den Import).
 function Open-BenchScene([string]$closed) {
     if ($closed -ne 'ok') { return }
-    $r = Invoke-BenchEditor $queueOpenCode 'Szene oeffnen'
-    if ($r.state -ne 'ok') {
-        if ($r.state -eq 'blocked') { Write-Host "Testbank-Editor durch Dialog blockiert:`n$($r.out)" }
-        else { Write-Host "Warnung: $scenePath nicht geoeffnet ($($r.state): $($r.out)). Im Editor selbst oeffnen." }
-        return
-    }
+    $r = Invoke-UnityEval $refreshCode
     $deadline = (Get-Date).AddSeconds(180)
-    $queued = Get-Date
     while ((Get-Date) -lt $deadline) {
-        if (-not (Step-Wait)) { Write-Host 'Nicht mehr oben in der Warteschlange: Editor wird nicht weiter angefasst.'; return }
-        $s = Invoke-UnityEval $sceneStateCode
-        if ($s.ok -and $s.out -match "scene=$([regex]::Escape($scenePath));") {
-            Write-Host "Unity: Assets neu eingelesen, $scenePath geoeffnet$(if ($s.out -match 'compiling=True') { ' (Skripte kompilieren noch)' })."
-            return
-        }
-        if (-not $s.ok) {
+        if ($r.ok -and $r.out -match '"result":"opened"') { Write-Host "Unity: Assets neu eingelesen, $scenePath geoeffnet (Skripte kompilieren ggf. noch)."; return }
+        if (-not $r.ok) {
             $check = Invoke-DialogCheck
             if ($check.code -eq 6) { Write-Host "Testbank-Editor durch Dialog blockiert:`n$($check.out)"; return }
             if ($check.code -eq 3) { Write-Host 'Testbank-Editor laeuft nicht mehr.'; return }
-            continue
         }
-        # Editor antwortet, Szene aber noch nicht offen: Auftrag ging bei einem Domain-Reload verloren -> erneut.
-        if ($s.out -match 'compiling=False' -and ((Get-Date) - $queued).TotalSeconds -gt 20) {
-            [void](Invoke-UnityEval $queueOpenCode); $queued = Get-Date
-        }
+        if (-not (Step-Wait)) { Write-Host 'Nicht mehr oben in der Warteschlange: Editor wird nicht weiter angefasst.'; return }
+        $r = Invoke-UnityEval $openSceneCode
     }
     Write-Host "Warnung: $scenePath nach 3 min noch nicht offen. Im Editor selbst oeffnen."
 }
