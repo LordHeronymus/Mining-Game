@@ -12,6 +12,7 @@ Alle unter `C:\IT\GameDev\Git Repos\EditorQueue\` (gleich für alle Branches und
 | `<Ordner>.log` | Protokoll: Anmeldung, Nachrücken, Abmeldung, Verdrängung mit Grund |
 | `<Ordner>.activity.json` | Aktivitätssignal des Editors (schreibt `Assets/Editor/EditorQueueActivity.cs`) |
 | `<Ordner>.lock` | Sperre für atomares Schreiben (exklusiv geöffnet, wird beim Prozessende automatisch frei) |
+| `<Ordner>.dialogs.json` | Nur Testbank: offene modale Dialoge des Editors und die zuletzt beantworteten (schreibt `Tools/editor-dialog.ps1`) |
 
 Claude-Worktrees unter `Mining Game/.claude/worktrees/…` zählen zum Editor von `Mining Game`. Andere Ordner/Projekte mit `-Project`, anderer Queue-Ordner mit `-QueueDir` oder `EDITOR_QUEUE_DIR`.
 
@@ -50,6 +51,7 @@ Tools/editor-queue.sh leave -Project "Mining Game 2" -Id <id>
 - `release` verweigert bei Änderungen (Exit 5): Gewollte Änderungen (z. B. Szenen) auf der Testbank committen, dann zeigt `release` den Befehl `git merge --ff-only <commit>` zum Übernehmen in den eigenen Branch; Testspuren mit `-Discard` verwerfen. Nicht versionierte Dateien (`Library`, `.mcp.json`) bleiben unberührt.
 - Die Unity-Werkzeuge (MCP) eines Chats zeigen auf den Editor aus der nicht versionierten `.mcp.json` seines Ordners (heute in `Mining Game` noch auf den Editor des Benutzers). Deshalb vor MCP-Nutzung `editor_status` prüfen (`projectPath` muss `Mining Game 2` sein), sonst `unity command --project-path "…Mining Game 2"` verwenden.
 - Zustand der Testbank: `Git Repos/EditorQueue/Mining Game 2.bench.json`.
+- `checkout` und `release -Discard` schliessen vor jeder Dateiänderung die offene Szene im Testbank-Editor ohne Speichern (beenden dabei auch den Play-Mode, per `unity command eval_file`) und öffnen danach `Assets/Scenes/SampleScene.unity` frisch (mit `AssetDatabase.Refresh`). So erscheint kein Dialog „The open scene(s) have been modified externally“. Läuft der Editor nicht, geht es ohne; blockiert ihn ein unbekannter Dialog, bricht `checkout` mit Exit 6 ab (siehe unten). `-NoEditor` lässt den Editor ganz in Ruhe.
 - **Ton:** Der Editor der Testbank läuft immer stumm (`Assets/Editor/TestBenchAudioMute.cs` setzt „Mute Audio“, nur im Ordner `<Projekt> 2`; der Editor des Benutzers bleibt unberührt). Nur für Audio-Tests als oberster Eintrag `Tools/editor-bench.sh audio-on -Id <id>` (oder Unity-Menü **Tools → Testbank → Ton an**), danach `audio-off`; `checkout` und `release` schalten ebenfalls wieder stumm. Schalter: `Git Repos/EditorQueue/Mining Game 2.audio-on`.
 
 ## Automatisches Lebenszeichen (Claude Code)
@@ -78,10 +80,38 @@ Im Admin-Tool PrivOrg zeigt das Modul **Editor-Warteschlange** (Dev/Owner) alle 
 powershell -NoProfile -ExecutionPolicy Bypass -File Tools/editor-queue-server.ps1
 ```
 
-- **Autostart:** `-Install` kopiert `editor-queue.ps1` und den Dienst nach `Git Repos/EditorQueue/bin` (unabhängig von Arbeitsordnern und Testbank) und legt eine Verknüpfung in den Windows-Autostart (startet unsichtbar, mit `-ProjectRoot` auf `Mining Game`). Nach Änderungen an den Skripten `-Install` erneut ausführen; entfernen mit `-Uninstall`.
+- **Autostart:** `-Install` kopiert `editor-queue.ps1`, `editor-dialog.ps1` und den Dienst nach `Git Repos/EditorQueue/bin` (unabhängig von Arbeitsordnern und Testbank) und legt eine Verknüpfung in den Windows-Autostart (startet unsichtbar, mit `-ProjectRoot` auf `Mining Game`). Nach Änderungen an den Skripten `-Install` erneut ausführen; entfernen mit `-Uninstall`.
 - **Gehostetes PrivOrg:** dessen Adresse freigeben, z. B. `-Install -AllowOrigin https://<projekt>.vercel.app` (mehrere mit Komma). `localhost`-Seiten sind immer erlaubt, alle anderen Herkünfte bekommen 403.
 - **Schnittstelle:** `GET /api/queue` (alle Arbeitsordner, je `status -Json`), `POST /api/join|heartbeat|leave` mit `{ "project": "<Ordner>", "purpose": "…" }`, immer als Benutzer (`-User`). Arbeitsordner sind der Projektordner, Geschwister `<Projekt> <n>` mit `ProjectSettings` und alle mit Warteschlange/Aktivitätssignal.
 - Doku auf PrivOrg-Seite: `docs/editor-queue.md` im PrivOrg-Repository.
+- **Dialog-Wächter:** Der Dienst prüft alle 3 s (`-DialogWatchSeconds`, 0 = aus) die Dialoge des Testbank-Editors, siehe nächster Abschnitt.
+
+## Dialoge im Testbank-Editor
+
+Ein modaler Unity-Dialog (z. B. „The open scene(s) have been modified externally“ nach einem Git-Wechsel) hält den ganzen Editor an: `unity command`, MCP und Play-Mode-Tests laufen dann in eine Zeitüberschreitung. `Tools/editor-dialog.sh` (PowerShell: `Tools/editor-dialog.ps1`) erkennt solche Dialoge über Windows (Fenster des Unity-Prozesses der Testbank mit Titel, Text und Knöpfen) und klickt Knöpfe per `BM_CLICK`. Es arbeitet nur mit dem Editor der Testbank (`<Projekt> 2`, Prozess über das Aktivitätssignal bzw. `-projectpath`), nie mit dem Editor des Benutzers.
+
+```bash
+Tools/editor-dialog.sh list                      # offene Dialoge: Titel, Text, Knöpfe; Exit 6 = Dialog offen, 3 = Editor läuft nicht
+Tools/editor-dialog.sh press "Reload"            # Knopf klicken (& und Gross/Klein egal); bei mehreren Dialogen -Title "<Teil>"
+Tools/editor-dialog.sh watch -Once               # bekannte Dialoge sofort beantworten (wie der Wächter)
+Tools/editor-dialog.sh list -All                 # alle sichtbaren Fenster des Editors (Fehlersuche)
+```
+
+**Regel für Chats:** Antwortet der Testbank-Editor nicht (MCP- oder `unity command`-Zeitüberschreitung), zuerst `list` prüfen. Bekannte Dialoge (Tabelle) mit `press` schliessen, unbekannte nicht raten, sondern dem Benutzer melden (Titel, Text, Knöpfe). `press` und automatische Antworten stehen im Protokoll `<Ordner>.log`.
+
+**Wächter:** Bekannte Dialoge beantwortet er automatisch, sobald sie 2 s offen sind (ein Chat kann sie vorher selbst schliessen); unbekannte klickt er nie, sondern trägt sie einmal ins Protokoll ein. Er läuft im lokalen Dienst (`editor-queue-server.ps1`, nach Änderungen `-Install` erneut ausführen und Dienst neu starten) und zusätzlich bei jedem Durchgang eines wartenden `wait` für die Testbank, also auch ohne Dienst.
+
+| Dialog (Titel/Text enthält) | Antwort des Wächters | Grund |
+| --- | --- | --- |
+| „modified externally“ | Reload | Szene wurde durch Git geändert, neu laden |
+| „Scene(s) Have Been Modified“ / „save the changes you made in the scene“ | Don't Save | die Testbank speichert keine Szenen |
+| „Safe Mode“ (Compilefehler beim Laden) | Ignore | Editor normal öffnen, Fehler stehen in der Konsole |
+| „API Update Required“ / „Script Updating Consent“ | No Thanks | Code eines Branches nicht automatisch umschreiben |
+| „Opening Project in Non-Matching Editor“ | keine (nur melden) | Editor-Version passt nicht: Benutzer fragen |
+
+- **Status:** Offene Dialoge stehen in `<Ordner>.dialogs.json`. Solange dort (höchstens 2 min alt) ein Dialog offen ist, gilt der Editor als **in Benutzung**: Niemand wird wegen eines Dialogs verdrängt. `editor-queue status` zeigt ihn als Editorzustand („Dialog offen …: '<Titel>' [Knöpfe] – …“), wartende `wait` melden ihn einmal mit „Editor blockiert: …“, PrivOrg sieht ihn im Editortext.
+- Fortschrittsfenster (Importieren, „Hold on“) gelten nicht als Dialog und werden nie geklickt.
+- Prüfen ohne Unity: `powershell -NoProfile -ExecutionPolicy Bypass -File Tests/EditorDialogChecks.ps1` (Testfenster ausserhalb des Bildschirms ohne Fokus, Queue-Ordner `Temp/EditorDialogTest`).
 
 ## Verdrängung verwaister Belegungen
 
