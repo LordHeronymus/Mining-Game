@@ -23,6 +23,7 @@ Die vollständige Änderungshistorie steht in `Docs/Changelog.md`. Dort nur bei 
 - **Generierte Grafiken:** Quellen, Prompts und Vergleichsbilder unter `Design/<Thema>/` an der Projektwurzel ablegen (z. B. `Prompts.json`), nicht unter `Assets/`: Unity würde sie sonst importieren. Nach `Assets/` kommt nur, was das Spiel tatsächlich verwendet.
 - **Gameplay-Werte** werden zentral über GPS (Gameplay Settings) bzw. das F1-Debugfenster einstellbar gemacht, nicht hart codiert.
 - **Benutzerprofile/Spielstände** bei Tests nicht verändern; isolierte Testprofile/-verzeichnisse verwenden.
+- **Befehlsaufrufe:** Skripte (`Tools/editor-queue.sh`, `Tools/editor-bench.sh`, `unity command`) und Git-Befehle einzeln und direkt aufrufen, ohne `cd`-Präfix, `for`-/`while`-Schleifen, Variablen (`$rc`, `$(…)`), `&&`-/`||`-Ketten oder Pipes. Wiederholtes Warten (z. B. bis der Editor antwortet) als einzelne Aufrufe nacheinander. Dateien mit den eingebauten Such- und Lesewerkzeugen durchsuchen und lesen statt mit `grep`/`cat`/`ls` in der Shell. Nur so greifen die festen Freigaben, sonst muss der Benutzer jeden Aufruf bestätigen.
 
 ## Tests im Unity Editor
 
