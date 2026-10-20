@@ -90,7 +90,11 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
         foreach (var button in panel.GetComponentsInChildren<Button>())
         {
             var feedback = button.GetComponent<HomeButtonFeedback>();
-            Check(feedback && !feedback.animateScale && feedback.normalPart == "SaveButton" && feedback.activePart == "SaveActive", button.name + " uses stationary shared button styling");
+            // Upgrade cards are clickable tiles with the selection card frame; every other control uses the save button style.
+            if (button.name.StartsWith("Upgrade "))
+                Check(feedback && feedback.normalPart == "SelectionCardNormal" && feedback.activePart == "SelectionCardHover", button.name + " uses the selection card frame");
+            else
+                Check(feedback && !feedback.animateScale && feedback.normalPart == "SaveButton" && feedback.activePart == "SaveActive", button.name + " uses stationary shared button styling");
             if (button.IsInteractable()) Check(button.navigation.mode == Navigation.Mode.Explicit &&
                 button.navigation.selectOnDown.transform.IsChildOf(panel.transform) && button.navigation.selectOnUp.transform.IsChildOf(panel.transform), button.name + " keyboard navigation stays inside modal");
         }
