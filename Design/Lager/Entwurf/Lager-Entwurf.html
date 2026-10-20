@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Lager Entwurf</title>
+<style>
+@font-face{font-family:Gar;src:url(../../../Assets/Resources/ArtifactDiscovery/EBGaramond.ttf)}
+body{margin:0;background:#0f0905;font-family:Gar,serif;color:#fff5e5}
+.stage{position:relative;width:1640px;height:924px;background:url(../../../Assets/Resources/Workbench/WorkshopBackground-v2.png) 0 0/1640px 924px;overflow:hidden}
+.a{position:absolute;box-sizing:border-box}
+.t{text-shadow:0 0 2px #1a0e06,1px 1px 0 #1a0e06,-1px 1px 0 #1a0e06,1px -1px 0 #1a0e06,-1px -1px 0 #1a0e06,0 2px 3px #000a;white-space:nowrap}
+.card{border-style:solid;border-width:16px 20px;border-image:url(card.png) 78 98 fill/16px 20px}
+.sel{border-style:solid;border-width:16px 20px;border-image:url(selected.png) 84 98 fill/16px 20px}
+.act{border-style:solid;border-width:16px 20px;border-image:url(action.png) 70 98 fill/16px 20px}
+.mid{display:flex;align-items:center;justify-content:center}
+.slot{width:138px;height:138px}
+.slot img{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);max-width:104px;max-height:96px}
+.cnt{position:absolute;right:-8px;bottom:-6px;min-width:52px;height:38px;padding:0 6px;font-size:24px}
+.empty{opacity:.45}
+.muted{color:#e0cfbb}
+.dim img{filter:grayscale(.7) brightness(.55)}
+.hint{font-size:20px;color:#e0cfbb}
+</style></head><body>
+<div class="stage" id="s"></div>
+<div style="height:40px"></div>
+<div id="b" style="position:relative;width:1640px;height:560px;background:url(../../../Assets/Resources/Workbench/WorkshopBackground-v2.png) 0 -360px/1640px 924px"></div>
+<script>
+const S=document.getElementById('s');
+const O='../../../Assets/GameObjects/Items/Sprites/Ores/',T='../../../Assets/GameObjects/Items/Tools/',C='../../../Assets/GameObjects/Items/Sprites/Crafting/';
+const icon={coal:O+'Coal_ItemIcon.png',copper:O+'Copper_ItemIcon.png',iron:O+'Iron_ItemIcon.png',gold:O+'Gold_ItemIcon.png',silver:O+'Silver_ItemIcon.png',ruby:O+'Ruby_ItemIcon.png',emerald:O+'Emerald_ItemIcon.png',titan:O+'Titanium_ItemIcon.png',steel:C+'Steel.png',torch:T+'torche.png',ladder:T+'Ladder.png',dynamite:T+'dynamite%204.png'};
+function el(cls,x,y,w,h,html=''){const d=document.createElement('div');d.className='a '+cls;Object.assign(d.style,{left:x+'px',top:y+'px',width:w+'px',height:h+'px'});d.innerHTML=html;S.appendChild(d);return d}
+function txt(s,x,y,w,h,size,align='center',extra=''){return el('t mid'+extra,x,y,w,h,s).style.cssText+=`;font-size:${size}px;justify-content:${align==='left'?'flex-start':align==='right'?'flex-end':'center'}`}
+txt('Lager',550,24,540,80,64);
+el('card',180,137,327,49,'<span class="t muted" style="position:absolute;left:30px;top:-2px;font-size:22px;font-style:italic">&#x1F50D;&#xFE0E; Item suchen …</span>');
+['Alle','Erze','Edelsteine','Werkzeug'].forEach((c,i)=>{el((i==0?'act':'card')+' mid t',524+i*158,137,148,49,c).style.fontSize='27px'});
+el('card mid t',1166,137,49,49,'<span style="font-size:24px;color:#ffc746">&#x2605;&#xFE0E;</span>');
+el('card t',1230,137,232,49,'<span style="position:absolute;left:-4px;top:2px;font-size:24px">&#x21C5;&#xFE0E; Sortieren</span>');
+// links: Rucksack, rechts: Lager (gleich grosse Hälften auf dem Shop-Hintergrund)
+S.style.backgroundImage='url(../../../Assets/Resources/Shop/BuyBackground-v2.png)';
+el('card',176,206,640,600,'').style.opacity=.55;
+el('card',832,206,640,600,'').style.opacity=.55;
+function slot(cls,x,y,it){el(cls+' slot',x,y,128,128,it?`<img src="${icon[it[0]]}" style="max-width:96px;max-height:88px"><div class="a card mid t cnt">${it[1]}</div>`:'');}
+txt('Rucksack',204,220,250,40,32,'left');
+txt('43 / 90 kg',560,220,230,40,24,'right');
+el('card',204,264,584,26,'<div style="position:absolute;left:-10px;top:-6px;width:33.3%;height:6px;border-radius:3px 0 0 3px;background:linear-gradient(#ffd36a,#d98a1c)"></div><div style="position:absolute;left:calc(-10px + 33.3%);top:-6px;width:14.4%;height:6px;background:linear-gradient(#ff9a5a,#c4501a)"></div><div style="position:absolute;left:calc(-10px + 33.3%);top:-10px;width:2px;height:14px;background:#fff5e5"></div>');
+txt('bis 30 kg normal schnell · darüber langsamer · max. 90 kg',204,292,584,26,19); S.lastChild.classList.add('hint');
+const pack=[['iron',22],['coal',31],['ruby',2],['gold',4],['torch',12],['ladder',8]];
+for(let i=0;i<12;i++) slot(i==0?'sel':pack[i]?'card':'card empty',220+(i%4)*140,330+Math.floor(i/4)*138,pack[i]);
+el('card mid t',204,748,282,50,'Erze einlagern').style.fontSize='26px';
+el('act mid t',506,748,282,50,'Alles einlagern').style.fontSize='26px';
+txt('Lager',860,220,250,40,32,'left');
+txt('9 Sorten',1200,220,245,40,24,'right'); S.lastChild.classList.add('muted');
+const store=[['copper',214],['iron',96],['coal',181],['silver',35],['gold',12],['emerald',6],['steel',14],['dynamite',5],['titan',9]];
+for(let i=0;i<12;i++) slot(store[i]?'card':'card empty',876+(i%4)*140,330+Math.floor(i/4)*138,store[i]);
+el('card',1440,330,13,404,'');
+el('card',860,748,300,50,'<span class="t" style="position:absolute;left:2px;top:3px;font-size:22px">Wert</span><span class="t" style="position:absolute;right:0;top:3px;font-size:24px;color:#ffc746">● 4 860</span>');
+el('card mid t',1180,748,264,50,'Alles entnehmen').style.fontSize='26px';
+txt('Klick: 1 Stück &nbsp;·&nbsp; Shift+Klick: ganzer Stapel &nbsp;·&nbsp; Rechtsklick: Hälfte &nbsp;·&nbsp; Ziehen und Ablegen',176,808,1296,30,20); S.lastChild.classList.add('hint');
+// Knopf-Varianten
+const B=document.getElementById('b');
+function bel(cls,x,y,w,h,html){const d=document.createElement('div');d.className='a '+cls;Object.assign(d.style,{left:x+'px',top:y+'px',width:w+'px',height:h+'px'});d.innerHTML=html;B.appendChild(d);return d}
+bel('t mid',0,10,1640,60,'<span style="font-size:40px">Knopf an der Lagerhütte</span>');
+bel('',120,110,520,416,'<img src="../../../Assets/Resources/SurfaceStorage/StorageHut.png" style="width:520px">');
+bel('card mid t',230,70,300,64,'<span style="font-size:30px">Lager öffnen</span><span class="a card mid" style="right:-30px;top:-14px;width:46px;height:46px;font-size:22px">E</span>');
+bel('',760,110,760,420,'').style.cssText+=';background:rgba(15,9,5,.72);border-radius:10px';
+const hov=bel('sel mid t',820,150,300,64,'<span style="font-size:30px">Lager öffnen</span><span class="a card mid" style="right:-30px;top:-14px;width:46px;height:46px;font-size:22px">E</span>');
+bel('t',1170,160,330,60,'<span style="font-size:24px">Maus darüber: goldener Rand</span>');
+bel('card mid t',820,260,300,64,'<span style="font-size:30px">Lager öffnen</span><span class="a card mid" style="right:-30px;top:-14px;width:46px;height:46px;font-size:22px">E</span>');
+bel('t',1170,270,330,60,'<span style="font-size:24px">Normal, blendet weich ein</span>');
+bel('card mid t',820,370,300,64,'<span style="font-size:30px">Lager öffnen</span><span class="a mid" style="right:-12px;top:-16px;width:34px;height:34px;border-radius:17px;background:#c4501a;font-size:20px;border:2px solid #ffc746">7</span>');
+bel('t',1170,370,330,70,'<span style="font-size:24px">Optional: Zahl zeigt neue<br>Erze im Rucksack</span>');
+</script></body></html>

@@ -23,11 +23,15 @@ param(
     [string]$Purpose,
     [switch]$User,
     [switch]$Json,
+    # heartbeat -Busy: ein Unity-Aufruf laeuft (Inhaber nie verdraengen); -Idle: Aufruf beendet.
+    [switch]$Busy,
+    [switch]$Idle,
     [string]$Project,
     [string]$QueueDir,
     [double]$TimeoutMinutes = 0,
     [int]$PollSeconds = 15,
-    [double]$StaleMinutes = 0
+    [double]$StaleMinutes = 0,
+    [double]$UserStaleMinutes = 0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -55,7 +59,13 @@ if (-not $Project) { $Project = Split-Path $ownerRoot -Leaf }
 if (-not $QueueDir) { $QueueDir = $env:EDITOR_QUEUE_DIR }
 if (-not $QueueDir) { $QueueDir = Join-Path (Split-Path $ownerRoot -Parent) 'EditorQueue' }
 if ($StaleMinutes -le 0 -and $env:EDITOR_QUEUE_STALE_MINUTES) { $StaleMinutes = [double]::Parse($env:EDITOR_QUEUE_STALE_MINUTES, $inv) }
-if ($StaleMinutes -le 0) { $StaleMinutes = 10 }
+# Kurz: wer zwischen Tests Code aendert, gibt den Editor frei (Lebenszeichen kommen nur von Editor-Nutzung).
+if ($StaleMinutes -le 0) { $StaleMinutes = 2 }
+if ($UserStaleMinutes -le 0 -and $env:EDITOR_QUEUE_USER_STALE_MINUTES) { $UserStaleMinutes = [double]::Parse($env:EDITOR_QUEUE_USER_STALE_MINUTES, $inv) }
+# Der Benutzer arbeitet von Hand im Editor und bekommt mehr Zeit.
+if ($UserStaleMinutes -le 0) { $UserStaleMinutes = 10 }
+# Ein laufender Unity-Aufruf (heartbeat -Busy) schuetzt hoechstens so lange, falls das Ende nie gemeldet wird.
+$BusyMaxMinutes = 15
 if ($PollSeconds -lt 1) { $PollSeconds = 1 }
 
 if (-not (Test-Path -LiteralPath $QueueDir)) { New-Item -ItemType Directory -Path $QueueDir -Force | Out-Null }
@@ -137,7 +147,7 @@ function Read-Queue {
             foreach ($e in @($data.entries)) { if ($null -ne $e) { [void]$list.Add($e) } }
         }
     }
-    foreach ($e in $list) { foreach ($p in 'id', 'who', 'session', 'purpose', 'kind', 'joined', 'heartbeat', 'topSince') { if (-not $e.PSObject.Properties[$p]) { Set-Prop $e $p $null } } }
+    foreach ($e in $list) { foreach ($p in 'id', 'who', 'session', 'purpose', 'kind', 'joined', 'heartbeat', 'topSince', 'busySince') { if (-not $e.PSObject.Properties[$p]) { Set-Prop $e $p $null } } }
     return , $list
 }
 
@@ -170,7 +180,7 @@ function Test-UnityRunning {
 }
 
 # Objektives Signal aus Assets/Editor/EditorQueueActivity.cs. busy = Editor wird nachweislich genutzt.
-function Get-EditorState {
+function Get-EditorState([double]$recentMinutes = $StaleMinutes) {
     $act = $null
     if (Test-Path -LiteralPath $activityFile) {
         for ($i = 0; $i -lt 3 -and $null -eq $act; $i++) {
@@ -189,7 +199,7 @@ function Get-EditorState {
             if (Get-Prop $act 'isPlaying') { return @{ busy = $true; text = 'Play-Mode laeuft' } }
             if (Get-Prop $act 'isCompiling') { return @{ busy = $true; text = 'Editor kompiliert/importiert' } }
             $txt = "letzte Aktivitaet $(FormatAge $lastAge): $evt"
-            return @{ busy = ($lastAge -lt $StaleMinutes); text = $txt }
+            return @{ busy = ($lastAge -lt $recentMinutes); text = $txt }
         }
         if (Test-UnityRunning) {
             if ($updAge -le $BlockedMaxMinutes) { return @{ busy = $true; text = "Editor offen, antwortet seit $(FormatAge $updAge) nicht (beschaeftigt?)" } }
@@ -216,10 +226,13 @@ function Update-Queue($list) {
     }
     if ($list.Count -gt 0) {
         $top = $list[0]
-        if ($top.topSince) {
+        # Ein laufender Unity-Aufruf (heartbeat -Busy, z. B. langes run_script) schuetzt den Inhaber.
+        $running = $top.busySince -and ((AgeMinutes $top.busySince) -lt $BusyMaxMinutes)
+        if ($top.topSince -and -not $running) {
+            $limit = if ($top.kind -eq 'user') { $UserStaleMinutes } else { $StaleMinutes }
             $age = [Math]::Min((AgeMinutes $top.heartbeat), (AgeMinutes $top.topSince))
-            if ($age -gt $StaleMinutes) {
-                $ed = Get-EditorState
+            if ($age -gt $limit) {
+                $ed = Get-EditorState $limit
                 if (-not $ed.busy) {
                     Write-Log "VERDRAENGT (Inhaber) $(Describe $top): kein Lebenszeichen seit $(FormatAge $age), Editor ungenutzt ($($ed.text))"
                     Write-Host "Verdraengt (Inhaber inaktiv, $($ed.text)): $(Describe $top)"
@@ -308,7 +321,7 @@ switch ($Command) {
                 $e = [pscustomobject][ordered]@{
                     id = $Id; who = $Who; session = $Session; purpose = $Purpose
                     kind = $(if ($User) { 'user' } else { 'agent' })
-                    joined = $now; heartbeat = $now; topSince = $null
+                    joined = $now; heartbeat = $now; topSince = $null; busySince = $null
                 }
                 # Der Benutzer reiht sich direkt hinter dem aktuellen Inhaber ein, ohne ihn zu verdraengen.
                 if ($User -and $list.Count -ge 1) { $list.Insert(1, $e); $i = 1 }
@@ -352,11 +365,15 @@ switch ($Command) {
         $pos = Invoke-Locked {
             param($list)
             $i = Find-Index $list
-            if ($i -ge 0) { $list[$i].heartbeat = Iso (Now) }
+            if ($i -ge 0) {
+                $list[$i].heartbeat = Iso (Now)
+                if ($Busy) { $list[$i].busySince = Iso (Now) }
+                elseif ($Idle) { $list[$i].busySince = $null }
+            }
             $i + 1
         }
         if ($pos -le 0) { Write-Output "Eintrag '$Id' ist nicht (mehr) in der Warteschlange."; exit 3 }
-        Write-Output "Lebenszeichen gesetzt, Position $pos."
+        Write-Output ("Lebenszeichen gesetzt{0}, Position $pos." -f $(if ($Busy) { ' (Unity-Aufruf laeuft)' } elseif ($Idle) { ' (Unity-Aufruf beendet)' } else { '' }))
         exit 0
     }
     'leave' {
@@ -395,11 +412,11 @@ switch ($Command) {
                     $pos++
                     [ordered]@{
                         position = $pos; id = $e.id; who = $e.who; session = $e.session; purpose = $e.purpose
-                        kind = $e.kind; joined = $e.joined; heartbeat = $e.heartbeat; topSince = $e.topSince
+                        kind = $e.kind; joined = $e.joined; heartbeat = $e.heartbeat; topSince = $e.topSince; busySince = $e.busySince
                     }
                 })
             $obj = [ordered]@{
-                project = $Project; now = (Iso (Now)); staleMinutes = $StaleMinutes
+                project = $Project; now = (Iso (Now)); staleMinutes = $StaleMinutes; userStaleMinutes = $UserStaleMinutes
                 editor = [ordered]@{ busy = [bool]$ed.busy; text = $ed.text }
                 entries = $rows
             }
