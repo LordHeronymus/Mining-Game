@@ -272,7 +272,9 @@ public static class GameSaveSystem
                 var layers = new Layer[4];
                 for (int i = 0; i < layers.Length; i++) layers[i] = ReadLayer(reader, catalog, state);
                 if (expanded.Position != expanded.Length) throw new InvalidDataException();
-                pending = new LoadedRun { state = state, layers = layers };
+                var ores = layers[1];
+                PaintedOreMigration.Apply(ores.tiles, ores.flags, ores.custom, ores.bounds, state.seed, state.width);
+                pending =new LoadedRun { state = state, layers = layers };
                 ActiveSlot = slot; HasPendingNewRun = false; InitialSaveError = null;
                 ActiveRunName = summary.name;
                 error = null; return true;
