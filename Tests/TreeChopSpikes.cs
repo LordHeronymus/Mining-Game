@@ -95,7 +95,7 @@ public static class TreeChopSpikes
             if (step != Step.Loading && playerLoop.Valid && playerLoop.Count > 0)
                 frames.Add((currentLabel, playerLoop.LastValue / 1e6f, gcAlloc.Valid && gcAlloc.Count > 0 ? gcAlloc.LastValue : 0));
             currentLabel = pendingLabel;
-            pendingLabel = step == Step.Falling ? "Fallen" : step == Step.Chop ? "zwischen Schlägen" : "Stillstand";
+            pendingLabel = step == Step.Falling ? "Fallen" : step == Step.Chop ? "zwischen Schlägen" : step == Step.Approach ? "Annähern" : "Stillstand";
             Drive();
         }
         catch (Exception ex) { failure = ex.ToString(); Finish(); }
@@ -129,10 +129,10 @@ public static class TreeChopSpikes
                 if (now < nextHit) return;
                 nextHit = now + .3;
                 bool last = tree.Health <= (Object.FindFirstObjectByType<SurfaceTrees>()?.HitDamage ?? 1f);
-                if (last && !InventoryManager.Instance.CanAdd(tree.GetComponentInParent<SurfaceTrees>() ? WoodItem() : null, 60))
-                    InventoryManager.Instance.ResetAll();
+                var wood = WoodItem();
+                if (last && wood && !InventoryManager.Instance.CanAdd(wood, 60)) InventoryManager.Instance.ResetAll();
                 using (hitMarker.Auto()) tree.Hit((Vector2)player.position);
-                pendingLabel = currentLabel = tree.IsFalling ? "Fällschlag" : "Schlag";
+                currentLabel = tree.IsFalling ? "Fällschlag" : "Schlag";
                 if (tree.IsFalling) Enter(Step.Falling);
                 return;
             case Step.Falling:
@@ -173,7 +173,6 @@ public static class TreeChopSpikes
         var position = tree.transform.position + new Vector3(-1.4f, .2f, 0);
         if (body) { body.position = position; body.linearVelocity = Vector2.zero; }
         player.position = position;
-        pendingLabel = "Annähern";
         Enter(Step.Approach);
     }
 
