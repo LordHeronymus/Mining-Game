@@ -345,6 +345,8 @@ public static class GameSaveSystem
         if (slot < 1 || slot > MaxSlots || IsBusy || !CanCaptureRun || (!allowLoading && LoadingProgress.Active))
         { complete?.Invoke(false, "Speichern ist gerade nicht möglich."); yield break; }
         if (createOnly && HasSlotData(slot)) { complete?.Invoke(false, "Speicherplatz ist bereits belegt."); yield break; }
+        // Fix the target before the first yield: a directory switch during the save must not redirect it.
+        string path = SlotPath(slot), directory = DirectoryPath;
         IsBusy = true;
         float previousScale = Time.timeScale;
         Time.timeScale = 0; GameplayInputBlocker.SetBlocked(owner, true);
@@ -396,7 +398,7 @@ public static class GameSaveSystem
                 var previous = createOnly ? null : GetSummary(slot);
                 summary.createdUtc = previous?.createdUtc ?? state.savedUtc;
                 summary.lastOpenedUtc = previous?.lastOpenedUtc ?? state.savedUtc;
-                string header = JsonUtility.ToJson(summary), path = SlotPath(slot);
+                string header = JsonUtility.ToJson(summary);
                 task = Task.Run(() => WriteAtomic(path, header, bytes, createOnly));
             }
             catch (Exception ex) { error = ex.Message; }
@@ -409,7 +411,7 @@ public static class GameSaveSystem
         IsBusy = false; Time.timeScale = previousScale;
         // An open pause/slot panel owns its own input gate; do not release it here.
         if (!(owner is RunPauseMenu) && !(owner is SaveSlotPanel)) GameplayInputBlocker.SetBlocked(owner, false);
-        if (error == null) { ActiveSlot = slot; activeDirectory = DirectoryPath; SlotsChanged?.Invoke(); }
+        if (error == null) { ActiveSlot = slot; activeDirectory = directory; SlotsChanged?.Invoke(); }
         else Debug.LogError("Tiefenhall: Speichern fehlgeschlagen: " + error);
         complete?.Invoke(error == null, error == null ? "Gespeichert" : "Spielstand konnte nicht gespeichert werden.");
     }

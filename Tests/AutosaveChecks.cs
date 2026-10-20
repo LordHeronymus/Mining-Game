@@ -73,6 +73,7 @@ public static class AutosaveChecks
         Check(player && camera && camera.GetComponent<CameraFollow>().enabled && camera.GetComponent<CameraFollow>().target == player.transform &&
             camera.GetComponent<CameraWorldBorderClamp>().enabled && GameplayTestSettings.CameraFollowEnabled, "Player camera follows and clamps");
     }
+    static int SavedMoney() => GameSaveSystem.IsBusy ? -1 : GameSaveSystem.GetSummary(2)?.money ?? -1;
     static int AddMoney(int amount) { StatsManager.Instance.AddMoney(amount); return StatsManager.Instance.Money; }
     static IEnumerator Checks()
     {
@@ -91,8 +92,8 @@ public static class AutosaveChecks
         GpsSettings.Preferences.autosaveIntervalMinutes = 4f / 60f;
         int money = AddMoney(111);
         double waitStart = EditorApplication.timeSinceStartup;
-        while (GameSaveSystem.GetSummary(2).money != money && EditorApplication.timeSinceStartup - waitStart < 20) yield return null;
-        Check(GameSaveSystem.GetSummary(2).money == money, "Timed autosave writes the active slot");
+        while (SavedMoney() != money && EditorApplication.timeSinceStartup - waitStart < 20) yield return null;
+        Check(SavedMoney() == money, "Timed autosave writes the active slot");
         yield return Settled();
         var notice = GameObject.Find("Autosave Notice")?.GetComponent<TextMeshProUGUI>();
         Check(notice && notice.alpha > 0, "Autosave shows a short notice");
@@ -102,26 +103,35 @@ public static class AutosaveChecks
         pause.Open(); yield return null;
         AddMoney(5);
         yield return Wait(6);
-        Check(GameSaveSystem.GetSummary(2).money == money, "No autosave while paused");
+        Check(SavedMoney() == money, "No autosave while paused");
         pause.Close(); yield return null;
         GpsSettings.Preferences.autosaveIntervalMinutes = 0;
         yield return Wait(6);
-        Check(GameSaveSystem.GetSummary(2).money == money, "Interval 0 disables autosave");
+        Check(SavedMoney() == money, "Interval 0 disables autosave");
 
         string active = GameSaveSystem.TestDirectory;
         GameSaveSystem.TestDirectory = active + "-other";
         Check(!GameSaveSystem.CanAutoSave && !GameSaveSystem.SaveActiveRunNow(RunAutosave.Instance) &&
             !Directory.Exists(GameSaveSystem.TestDirectory), "No automatic save into another save directory");
         GameSaveSystem.TestDirectory = active;
+        // Regression: a save still running while the directory switches must stay in, and stay bound to, its own directory.
+        RunAutosave.Instance.StartCoroutine(GameSaveSystem.Save(2, RunAutosave.Instance, null)); yield return null;
+        Check(GameSaveSystem.IsBusy, "In-flight save started");
+        GameSaveSystem.TestDirectory = active + "-other";
+        while (GameSaveSystem.IsBusy) yield return null;
+        Check(!GameSaveSystem.CanAutoSave && !GameSaveSystem.SaveActiveRunNow(RunAutosave.Instance) && !Directory.Exists(GameSaveSystem.TestDirectory),
+            "Directory switch during a save never redirects automatic saves");
+        GameSaveSystem.TestDirectory = active;
+        Check(GameSaveSystem.CanAutoSave, "Back in its own directory the run saves again");
 
         int nowMoney = AddMoney(3);
-        Check(GameSaveSystem.SaveActiveRunNow(RunAutosave.Instance) && GameSaveSystem.GetSummary(2).money == nowMoney && !GameSaveSystem.IsBusy,
+        Check(GameSaveSystem.SaveActiveRunNow(RunAutosave.Instance) && SavedMoney() == nowMoney && !GameSaveSystem.IsBusy,
             "Immediate save (play-mode stop) writes synchronously");
 
         int homeMoney = AddMoney(7);
         pause.Open(); yield return null;
         home.onClick.Invoke(); yield return Settled();
-        Check(MainMenuController.IsVisible && GameSaveSystem.GetSummary(2).money == homeMoney, "'Hauptmenü' saves and returns home");
+        Check(MainMenuController.IsVisible && SavedMoney() == homeMoney, "'Hauptmenü' saves and returns home");
         Check(other.SequenceEqual(File.ReadAllBytes(GameSaveSystem.SlotPath(1))), "Slot 1 still unchanged");
 
         // Leave a running game for the play-mode stop check done by the caller.
