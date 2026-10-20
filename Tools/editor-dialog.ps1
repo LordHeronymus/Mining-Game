@@ -70,6 +70,7 @@ $Rules = @(
     @{ name = 'scene-save'; match = 'Scene\(s\) Have Been Modified|save the changes you made in the scene'; press = "Don't Save"; why = 'die Testbank speichert keine Szenen' }
     @{ name = 'safe-mode'; match = 'Safe Mode'; press = 'Ignore'; why = 'Compilefehler: Editor normal oeffnen, die Fehler stehen in der Konsole' }
     @{ name = 'api-updater'; match = 'API Update Required|Script Updating Consent|API Updater'; press = 'No Thanks'; why = 'Code der Branches nicht automatisch umschreiben (veraltete API im eigenen Branch beheben)' }
+    @{ name = 'low-disk-space'; match = 'Low disk space|diskspace below'; press = 'OK'; why = 'nur Hinweis (Speicherplatz knapp, steht im Protokoll): Benutzer informieren' }
     @{ name = 'non-matching-editor'; match = 'Non-Matching Editor|different version of the Editor|Opening Project in'; press = $null; why = 'Editor-Version passt nicht: Benutzer fragen' }
 )
 
