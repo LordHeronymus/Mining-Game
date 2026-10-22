@@ -238,9 +238,10 @@ public class InventoryManager : MonoBehaviour
         item.category == ItemCategory.Powerup && _unlockedPowerups.Contains(item.item);
 
     // Apply a crafting transaction completely before notifying inventory listeners.
+    // The costs may be empty when the workbench takes every material from the storage hut.
     public bool TryExchange(IReadOnlyDictionary<ItemSO, int> costs, ItemSO output, int amount)
     {
-        if (!output || amount <= 0 || costs == null || costs.Count == 0) return false;
+        if (!output || amount <= 0 || costs == null) return false;
         bool outputIsPowerup = output.category == ItemCategory.Powerup;
         if (outputIsPowerup && (amount != 1 || IsPowerupUnlocked(output))) return false;
         foreach (var cost in costs)
