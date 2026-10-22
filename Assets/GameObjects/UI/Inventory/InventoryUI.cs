@@ -226,10 +226,8 @@ public class InventoryUI : MonoBehaviour
                     ? $"Cargo {weight:0.##} / ∞ kg"
                     : $"Cargo {weight:0.##} / {carryingCapacity:0.##} kg"
                 : "";
-            cargoWeight.color = !inventory || unlimited ? Cream
-                : weight > carryingCapacity * 2d ? OverweightRed
-                : weight > carryingCapacity ? OverweightYellow
-                : Cream;
+            int stage = !inventory || unlimited ? 0 : InventoryManager.CarryStage(weight, carryingCapacity);
+            cargoWeight.color = stage == 2 ? OverweightRed : stage == 1 ? OverweightYellow : Cream;
         }
         if (!IsOpen || !content) return;
         if (!workbench) workbench = FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include);

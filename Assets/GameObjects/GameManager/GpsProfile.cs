@@ -29,6 +29,7 @@ public sealed class GpsProfile : ScriptableObject
     public float levelUpAnimationOffsetSeconds;
     public float hotbarVerticalOffset, hotbarHoldDuration = .5f, masterVolume = 1f, musicVolume = 1f;
     public float autosaveIntervalMinutes = 3f;
+    public float dragPopScale = 1.28f, dragCarryScale = 1.12f, dragPopDuration = .24f;
 }
 [Serializable] public sealed class GpsRecord
 {

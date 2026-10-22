@@ -97,7 +97,7 @@ public sealed class SettingsStyleProbe : MonoBehaviour
         panel.Open(); Find(panel, "Tab Audio").onClick.Invoke(); yield return null;
         Check(panel.transform.Find("Layout/Audio").gameObject.activeSelf && !scroll.gameObject.activeInHierarchy, "Audio navigation selects only audio page");
         var audio = panel.GetComponentsInChildren<Slider>();
-        Check(audio.Length == 4, "All four audio sliders are present");
+        Check(audio.Length == 5, "All five audio sliders are present");
         Check(audio.All(s => Mathf.Approximately(s.handleRect.rect.height, 32) && s.handleRect.GetComponent<Image>().sprite == HomeUi.Sprite("SaveHandle")), "Slider grips retain correct size and original brass artwork");
         var ambience = audio.First(s => s.name == "Ambiente");
         const string preference = "settings.audio.ambience";

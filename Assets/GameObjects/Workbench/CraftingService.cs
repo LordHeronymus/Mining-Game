@@ -1,8 +1,21 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public readonly struct CraftOutcome
+{
+    public readonly int batches;
+    public readonly bool pickaxeUpgraded, energyUpgraded, carryUpgraded;
+    public CraftOutcome(int batches, bool pickaxe, bool energy, bool carry)
+    { this.batches = batches; pickaxeUpgraded = pickaxe; energyUpgraded = energy; carryUpgraded = carry; }
+}
+
 public static class CraftingService
 {
+    public static event System.Action<CraftingRecipe, CraftOutcome> Crafted;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => Crafted = null;
+
     public static bool IsOwnedPowerup(CraftingRecipe recipe, InventoryManager inventory) =>
         recipe && recipe.output && recipe.output.category == ItemCategory.Powerup &&
         inventory && inventory.IsPowerupUnlocked(recipe.output);
@@ -43,6 +56,8 @@ public static class CraftingService
             MetaProgression.RecordCraftedAmount(recipe.output.item, checked(recipe.outputAmount * batches), recipe.exotic);
             if (recipe.exotic) MetaProgression.RecordExoticCraft(recipe.output.item);
         }
+        Crafted?.Invoke(recipe, new CraftOutcome(batches, inventory.EquippedPickaxeLevel > previousPickaxe,
+            inventory.EnergyCapacityLevel > previousEnergy, inventory.CarryingCapacityLevel > previousCarrying));
         return true;
     }
 }
