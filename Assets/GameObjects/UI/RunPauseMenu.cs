@@ -30,17 +30,18 @@ public sealed class RunPauseMenu : MonoBehaviour
         var scrim = HomeUi.Image("Scrim", transform, Vector2.zero, Vector2.zero); HomeUi.Stretch(scrim.rectTransform);
         scrim.color = new Color(0, 0, 0, .62f); scrim.raycastTarget = true;
         layout = HomeUi.Rect("Pause Layout", transform, Vector2.zero, new Vector2(700, 1000));
-        // The run saves itself (RunAutosave and on leaving), so the menu has no manual save button.
-        HomeUi.Image("Board", layout, new Vector2(0, 45), new Vector2(650, 850), "Panel");
-        HomeUi.Label("Title", layout, "Tiefenhall", new Vector2(0, 383), new Vector2(560, 85), 62);
-        HomeUi.Button("Resume", layout, "Fortsetzen", new Vector2(0, 265), new Vector2(500, 76), Close, true);
-        HomeUi.Button("Load", layout, "Laden", new Vector2(0, 174), new Vector2(500, 76), () => SaveSlotPanel.Show(transform.parent, false));
-        HomeUi.Button("Progression", layout, "Fortschritt", new Vector2(0, 83), new Vector2(500, 76), () => MetaProgressionPanel.Show(transform.parent, true));
-        challengesButton = HomeUi.Button("Challenges", layout, "Herausforderungen", new Vector2(0, -8), new Vector2(500, 76), OpenChallenges);
-        HomeUi.Button("Settings", layout, "Einstellungen", new Vector2(0, -99), new Vector2(500, 76), () =>
+        // The run saves itself (RunAutosave and on leaving), so the menu has no manual save button;
+        // loading another save is only offered in the main menu. The status line sits in the strip below "Hauptmenü".
+        HomeUi.Image("Board", layout, new Vector2(0, 45), new Vector2(650, 699), "Panel");
+        HomeUi.Label("Title", layout, "Tiefenhall", new Vector2(0, 307.5f), new Vector2(560, 85), 62);
+        HomeUi.Button("Resume", layout, "Fortsetzen", new Vector2(0, 189.5f), new Vector2(500, 76), Close, true);
+        HomeUi.Button("Progression", layout, "Fortschritt", new Vector2(0, 98.5f), new Vector2(500, 76), () => MetaProgressionPanel.Show(transform.parent, true));
+        challengesButton = HomeUi.Button("Challenges", layout, "Herausforderungen", new Vector2(0, 7.5f), new Vector2(500, 76), OpenChallenges);
+        HomeUi.Button("Settings", layout, "Einstellungen", new Vector2(0, -83.5f), new Vector2(500, 76), () =>
             FindFirstObjectByType<SettingsPanel>(FindObjectsInactive.Include)?.Open());
-        HomeUi.Button("Home", layout, "Hauptmenü", new Vector2(0, -190), new Vector2(500, 76), SaveAndHome);
-        status = HomeUi.Label("Status", layout, "", new Vector2(0, -300), new Vector2(580, 60), 24);
+        HomeUi.Button("Home", layout, "Hauptmenü", new Vector2(0, -174.5f), new Vector2(500, 76), SaveAndHome);
+        status = HomeUi.Label("Status", layout, "", new Vector2(0, -243), new Vector2(440, 40), 24);
+        status.enableAutoSizing = true; status.fontSizeMin = 14; status.fontSizeMax = 24; // longer error messages shrink to fit the strip
         Visible(false); HomeUi.Fit(layout, new Vector2(780, 1070));
     }
     void Update()
