@@ -88,6 +88,7 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
     void OnEnable()
     {
         ambienceAltar=this;
+        GamePause.Changed+=PauseChanged;
         map=GetComponent<MapGenerator>();
         map.Generated+=RebuildVisuals;
         if(map.IsGenerated) RebuildVisuals();
@@ -95,6 +96,7 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
     void OnDisable()
     {
         if(ambienceAltar==this) ambienceAltar=null;
+        GamePause.Changed-=PauseChanged;
         StopAltarAmbience();
         altarAmbienceGain=0f; standardAmbienceGain=1f;
         completing=false;
@@ -182,7 +184,7 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
     }
     void Update()
     {
-        if(Application.isPlaying) UpdateAltarAmbience();
+        if(Application.isPlaying && !GamePause.IsPaused) UpdateAltarAmbience();
         if(!root || !hasLayout) return;
         if(Application.isPlaying)
         {
@@ -294,6 +296,21 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
             next.volume=0f;
             next.PlayScheduled(altarAmbienceNextStart);
         }
+    }
+    // The DSP clock runs on while the listener is paused: hold the queued loop segment and move the schedule.
+    void PauseChanged(bool paused)
+    {
+        if(!altarAmbienceRunning) return;
+        var next=altarAmbienceSources[1-altarAmbienceCurrent];
+        if(paused)
+        {
+            if(altarAmbienceTransitioning) return;
+            if(AudioSettings.dspTime>=altarAmbienceNextStart) {altarAmbienceTransitioning=true;altarAmbienceTransitionStart=altarAmbienceNextStart;}
+            else if(next) next.Stop();
+            return;
+        }
+        altarAmbienceNextStart+=GamePause.PausedDspSeconds; altarAmbienceTransitionStart+=GamePause.PausedDspSeconds;
+        if(!altarAmbienceTransitioning && next) next.PlayScheduled(altarAmbienceNextStart);
     }
     float AltarAmbienceLoopCrossfade => altarAmbienceClip
         ? Mathf.Min(5f,altarAmbienceClip.length*.25f) : .01f;
