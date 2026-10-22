@@ -6,7 +6,7 @@ public sealed class HotbarSlotDrag : MonoBehaviour, IPointerDownHandler, IDragHa
     const string HoldDurationKey = "hotbar.dragHoldDuration";
     public static float HoldDuration
     {
-        get => GpsSettings.Preferences.hotbarHoldDuration;
+        get => ItemDragGhost.HoldSeconds;
         set
         {
             if (float.IsNaN(value) || float.IsInfinity(value)) return;
@@ -18,35 +18,25 @@ public sealed class HotbarSlotDrag : MonoBehaviour, IPointerDownHandler, IDragHa
     public CompactHud hud;
     public int slotIndex;
 
-    bool pressed;
-    bool dragging;
-    bool suppressClick;
-    float pressedAt;
-    Vector2 pointerPosition;
+    readonly ItemDragHold hold = new();
 
     public void OnPointerDown(PointerEventData eventData)
     {
         if (eventData.button != PointerEventData.InputButton.Left || !hud || !hud.CanReorderSlot(slotIndex)) return;
-        pressed = true;
-        dragging = false;
-        pointerPosition = eventData.position;
-        pressedAt = Time.unscaledTime;
+        hold.Down(eventData.position);
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (eventData.button == PointerEventData.InputButton.Left) pointerPosition = eventData.position;
+        if (eventData.button != PointerEventData.InputButton.Left) return;
+        hold.Pointer = eventData.position;
+        if (hold.ShouldStart(true)) Begin();
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        if (eventData.button != PointerEventData.InputButton.Left || !pressed) return;
-        pointerPosition = eventData.position;
-        pressed = false;
-        if (!dragging) return;
-        hud.EndHotbarDrag(slotIndex, pointerPosition);
-        dragging = false;
-        suppressClick = true;
+        if (eventData.button == PointerEventData.InputButton.Left && hold.Up(eventData.position))
+            hud.EndHotbarDrag(slotIndex, eventData.position);
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -54,22 +44,23 @@ public sealed class HotbarSlotDrag : MonoBehaviour, IPointerDownHandler, IDragHa
         if (eventData.button == PointerEventData.InputButton.Right && hud) hud.ClearHotbarSlot(slotIndex);
     }
 
-    public bool ConsumeClick()
-    {
-        bool value = suppressClick;
-        suppressClick = false;
-        return value;
-    }
+    public bool ConsumeClick() => hold.ConsumeClick();
 
     void Update()
     {
-        if (!pressed || dragging || Time.unscaledTime - pressedAt < HoldDuration) return;
-        dragging = hud && hud.BeginHotbarDrag(slotIndex, pointerPosition);
+        if (hold.ShouldStart(false)) Begin();
+    }
+
+    // The ghost is grabbed at the press position; CompactHud moves it to the cursor every frame.
+    void Begin()
+    {
+        hold.Dragging = hud && hud.BeginHotbarDrag(slotIndex, hold.PressPosition);
+        if (!hold.Dragging) hold.Cancel();
     }
 
     void OnDisable()
     {
-        if (dragging && hud) hud.CancelHotbarDrag();
-        pressed = dragging = false;
+        if (hold.Dragging && hud) hud.CancelHotbarDrag();
+        hold.Cancel();
     }
 }

@@ -79,6 +79,41 @@ public static class EditorQueueActivity
         Selection.selectionChanged += () => Mark("Auswahl geaendert");
     }
 
+    const int QueueServicePort = 47615;
+    const double ServiceCheckSeconds = 60;
+    static double lastServiceCheck = double.NegativeInfinity;
+
+    // Startet Tools/editor-queue-server.ps1 ueber die Verknuepfung, die "-Install" in EditorQueue/bin anlegt,
+    // falls er noch nicht laeuft. Ein zweiter Editor findet den laufenden Dienst und tut nichts; ein doppelter
+    // Start beendet sich selbst, weil der Port belegt ist.
+    static void EnsureQueueService()
+    {
+        try
+        {
+            string shortcut = Path.Combine(queueDir, "bin", "editor-queue-server.lnk");
+            if (!File.Exists(shortcut) || QueueServiceRunning()) return;
+            Process.Start(new ProcessStartInfo(shortcut) { UseShellExecute = true, WindowStyle = ProcessWindowStyle.Hidden });
+            Debug.Log("Editor-Warteschlange: lokaler Dienst fuer PrivOrg gestartet (http://localhost:" + QueueServicePort + ").");
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("Editor-Warteschlange: lokaler Dienst konnte nicht gestartet werden: " + e.Message);
+        }
+    }
+
+    static bool QueueServiceRunning()
+    {
+        try
+        {
+            using (var client = new System.Net.Sockets.TcpClient())
+            {
+                var connect = client.ConnectAsync("127.0.0.1", QueueServicePort);
+                return connect.Wait(300) && client.Connected;
+            }
+        }
+        catch { return false; }
+    }
+
     static void Mark(string evt, bool immediate = false)
     {
         lastEvent = evt;
@@ -96,6 +131,14 @@ public static class EditorQueueActivity
         double t = EditorApplication.timeSinceStartup;
         if ((dirty && t - lastWrite >= MinWriteSeconds) || t - lastWrite >= HeartbeatSeconds)
             Write();
+
+        // Der lokale Dienst fuer PrivOrg startet mit dem ersten Editor (nicht mit Windows) und wird
+        // jede Minute geprueft, damit ein abgestuerzter Dienst wieder anlaeuft.
+        if (t - lastServiceCheck >= ServiceCheckSeconds)
+        {
+            lastServiceCheck = t;
+            EnsureQueueService();
+        }
     }
 
     static void OnQuit()
