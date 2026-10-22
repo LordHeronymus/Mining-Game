@@ -2,7 +2,7 @@
 
 Koordination zwischen den Agenten (Claude Code, Codex, Claude Cowork). Regeln siehe `CLAUDE.md` / `AGENTS.md` → „Zusammenarbeit mehrerer Agenten“.
 
-Arbeitsordner: `Git Repos/Mining Game` gehört dem Benutzer (sein Unity Editor), `Git Repos/Mining Game 2` ist die Testbank der Chats ohne festen Branch (`Tools/editor-bench.sh`); Chats arbeiten in eigenen Worktrees, siehe `AGENTS.md`.
+Arbeitsordner: `Git Repos/Mining Game` gehört dem Benutzer (sein Unity Editor), `Git Repos/Mining Game 2` ist die Testbank der Chats ohne festen Branch (`Tools/editor-bench.sh`); Chats arbeiten in eigenen Worktrees, siehe `AGENTS.md`. `Git Repos/Mining Game 3` ist ein solcher Worktree (kein Unity Editor) für Branch `claude/challenges-rework`, angelegt am 20.10.2026 für die lokalen Tests und den Merge des Challenges-Rework; nach dem Merge in `main` wird er nicht mehr gebraucht und darf entfernt werden (`git worktree remove "../Mining Game 3"`).
 
 ## Unity Editor
 
@@ -16,13 +16,13 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
-- 20.10.2026, Claude Code: Challenges-Rework lokal in der Testbank geprüft (8 von 10 Checks grün, 2 Korrekturen an Tafel und Tests, 2 veraltete UI-Checks ausserhalb der Challenges offen), Branch `claude/challenges-rework`, siehe Docs/Challenges.md §7.
-- 19.10.2026, Claude Code (Cloud): Challenges-Rework (täglich/wöchentlich/monatlich/Langzeit, Katalog, neue Zählstellen, UI, GPS) auf Branch `claude/challenges-rework`, `main` hineingeholt, Cloud-Suiten `challenges` (Läufe #27, #28) und `smoke` (Lauf #30) grün, Draft-PR offen; Merge nach `main` wartet auf Freigabe des Benutzers.
-- 19.10.2026, Claude Code: Alle 14 Erze als gemalte Einzelblöcke statt Shader-Adern (Kupfer, Eisen, Silber, Gold, Kohle, Platin, Titan, Wolfram, Mythril, Granat, Smaragd, Rubin, Diamant, Ultronium mit Pulsieren), Kupfer-Adern-System entfernt; Branch `claude/iron-tiles` mit `main` zusammengeführt und geprüft, bereit für `main` (Freigabe Benutzer), siehe Docs/Gemalte-Erze.md.
-- 18.10.2026, Claude Code: HUD-Größe in den Einstellungen bis 30 % einstellbar (vorher 50 %), Branch `claude/hud-scale`.
-- 18.10.2026, Claude Code: Editor-Warteschlange ausserhalb von Git (`Tools/editor-queue.*`, Aktivitätssignal `Assets/Editor/EditorQueueActivity.cs`, Doku `Docs/Editor-Warteschlange.md`) ersetzt die Tabelle „Unity Editor“.
-- 18.10.2026, Claude Code (Cloud): Cloud-Läufe mit 20-min-Limit und Abbruchgrund, `// CI: local-only`, Performance-Suite ohne Zeichnen (Lauf #17: 12 min, aussagekräftige CPU-Werte).
-- 18.10.2026, Claude Code (Cloud): Suite `performance` läuft in der Cloud vollständig durch (Benchmark-Player, Lauf #16); Werte wegen Software-Rendering nur eingeschränkt aussagekräftig, siehe Docs/Cloud-Tests.md.
-- 18.10.2026, Claude Code (Cloud): Cloud-Tests laufen (Personal-Lizenz über Unity-Konto), Live-Dashboard `Tools/CloudDashboard` und Live-Status-Issue #2; 2 fehlgeschlagene Checks als Todoist-Aufgabe erfasst.
-- 18.10.2026, Claude Code (Cloud): Cloud-Tests eingerichtet (GitHub-Workflow „Unity Checks“, CiCheckRunner, Tests/CI), siehe Docs/Cloud-Tests.md; Lizenz-Secrets muss der Benutzer noch anlegen.
-- 17.10.2026, Claude Code: Branch-Setup erneuert: `main` auf dem aktuellen Stand, Aufgaben auf eigenen Branches, zweiter Arbeitsordner `Mining Game 2` (Branch `claude/erz-optik`) für parallele Chats.
+- 22.10.2026, Claude Code: Challenges-Rework (täglich 7, wöchentlich 8, monatlich 6 plus Monatsprojekt, Langzeit-Medaillen, neue Zählstellen, Tafel mit 4 Tabs, GPS) lokal in der Testbank geprüft (alle Challenge-Prüfungen grün, Tafel-Fehler beim Periodenwechsel behoben; 2 fremde UI-Checks offen, in Todoist), `main` hineingeholt; Branch `claude/challenges-rework`, mit Freigabe des Benutzers per PR in `main`, siehe Docs/Challenges.md.
+- 22.10.2026, Claude Code (Cloud): main-Update gleich nach Play-Stopp, Hinweis im Game-Fenster bei neuem Stand, Stand („main aktuell“ / „N neue Commits“) in der Editor-Warteschlange und im PrivOrg-Modul, Code-Stand für jeden Editor (auch Testbank/Worktrees) in `editor-queue status`; Branch `claude/exciting-ramanujan-l0893x`, mit Freigabe des Benutzers in `main`.
+- 22.10.2026, Claude Code: Neue Leiter-Grafik „Grubenleiter“ (dunkles Eichenholz, Eisenplatten mit Nieten), ausgewählt aus 4 Varianten (Vorschauen unter `Design/Ladder`); Branch `claude/ladder-variants`, bereit für `main` (Freigabe Benutzer).
+- 22.10.2026, Claude Code: Energiemonolith nutzt das goldene Eingangsschild („Energie aufladen“, Klick lädt auf) wie Lager, Shop und Werkbank, altes „Energy“-Schild ausgeblendet; Branch `claude/energy-sign`, mit Freigabe des Benutzers per PR in `main`.
+- 22.10.2026, Claude Code: Speicher-Wächter: Sind alle Mining-Game-Ordner zusammen > 100 GB, räumt ein geplanter Windows-Task automatisch auf (alte LFS-Versionen, erledigte Arbeitsordner ≥ 2 Tage unbenutzt, alte Build Tests und Szenen-Backups, git gc), siehe Docs/Speicher-Bereinigung.md; Branch `claude/disk-cleanup`, mit Freigabe des Benutzers in `main` zusammengeführt.
+- 22.10.2026, Claude Code: Neue Arbeitsordner entstehen ohne `Design/` und `AudioMastering/` (Git-Hook, rund 1,4 statt 4,6 GB; nachholen mit `git sparse-checkout add Design/<Thema>/`), Regel in AGENTS.md, siehe Docs/Arbeitsordner-ohne-Design.md; Hook eingerichtet, Branch `claude/worktree-sparse`, mit Freigabe des Benutzers in `main` zusammengeführt.
+- 22.10.2026, Claude Code: Werkbank craftet auch mit Materialien aus dem Lager (Anzeige „+N Lager“, zuerst Rucksack, GPS Werkbank → Lager umschaltbar), Branch `claude/workbench-storage`, mit Freigabe des Benutzers in `main` zusammengeführt.
+- 22.10.2026, Claude Code: Eingangsschilder (Werkbank, Shop, Lager) mittig über der sichtbaren Gebäudegrafik mit gleichem Dachabstand; Branch `claude/workshop-button-d81ccb`, mit Freigabe des Benutzers in `main` zusammengeführt.
+- 22.10.2026, Claude Code: Einstellungen, Pausemenü und F1 pausieren das ganze Spiel inkl. Audio (zentrale `GamePause`, Ambience und Stimme setzen fort, keine Energie verloren); Branch `claude/settings-pause-288b53`, mit Freigabe des Benutzers in `main` zusammengeführt.
+- 22.10.2026, Claude Code: Eine Haltezeit für Lager, Inventar und Hotbar (F1 → UI → „Item ziehen“ → „Haltezeit bis Ziehen“, 0 = beim Bewegen); kurzer Klick bleibt Klick; Branch `claude/drag-hold`, mit Freigabe des Benutzers in `main` zusammengeführt.

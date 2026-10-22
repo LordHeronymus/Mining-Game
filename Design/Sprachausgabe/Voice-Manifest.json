@@ -1,0 +1,2019 @@
+[
+ {
+  "event": "EnergyLow",
+  "folder": "Energie_33",
+  "source": "Energie/33%",
+  "lines": [
+   {
+    "id": "Energie_33_01_Noch_gehts",
+    "text": "Noch_gehts",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Energie_33/01_Noch_gehts_V1.mp3",
+      "guid": "fdba67228fc54eb2b0827064d1bd26ef",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/33%/01_Noch_gehts_V1.mp3",
+      "lufs": -23.5,
+      "gain": 0.944,
+      "duration": 3.396
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Energie_33/01_Noch_gehts_V2.mp3",
+      "guid": "f490cae5afcc4c94af3813c2fcd17e1f",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/33%/02_Noch_gehts_V2.mp3",
+      "lufs": -23.7,
+      "gain": 0.966,
+      "duration": 3.239
+     }
+    ]
+   },
+   {
+    "id": "Energie_33_02_Wenig_Energie",
+    "text": "Wenig_Energie",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Energie_33/02_Wenig_Energie_V1.mp3",
+      "guid": "20f45abd082d489d82f3fe5fd8ecabdd",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/33%/03_Wenig_Energie_V1.mp3",
+      "lufs": -21.1,
+      "gain": 0.716,
+      "duration": 2.351
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Energie_33/02_Wenig_Energie_V2.mp3",
+      "guid": "f2d3b140e03d473aac94f2f1f2ac66a9",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/33%/04_Wenig_Energie_V2.mp3",
+      "lufs": -21.5,
+      "gain": 0.75,
+      "duration": 2.586
+     }
+    ]
+   },
+   {
+    "id": "Energie_33_03_Rueckweg",
+    "text": "Rueckweg",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Energie_33/03_Rueckweg_V1.mp3",
+      "guid": "753f135d045d4dbda9c8a6c291740ef0",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/33%/05_Rueckweg_V1.mp3",
+      "lufs": -21.6,
+      "gain": 0.759,
+      "duration": 3.709
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Energie_33/03_Rueckweg_V2.mp3",
+      "guid": "be77f74dd1314ac8a44111d3044474e8",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/33%/06_Rueckweg_V2.mp3",
+      "lufs": -22.2,
+      "gain": 0.813,
+      "duration": 4.127
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "EnergyCritical",
+  "folder": "Energie_15",
+  "source": "Energie/15%",
+  "lines": [
+   {
+    "id": "Energie_15_01_Jetzt_wirds_knapp",
+    "text": "Jetzt_wirds_knapp",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Energie_15/01_Jetzt_wirds_knapp_V1.mp3",
+      "guid": "ba7afcabe9c04e85962774941f886f95",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/15%/01_Jetzt_wirds_knapp_V1.mp3",
+      "lufs": -21.5,
+      "gain": 0.75,
+      "duration": 2.586
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Energie_15/01_Jetzt_wirds_knapp_V2.mp3",
+      "guid": "efe6002b793e4ec2898d80abf9648fb2",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/15%/02_Jetzt_wirds_knapp_V2.mp3",
+      "lufs": -22.8,
+      "gain": 0.871,
+      "duration": 2.926
+     }
+    ]
+   },
+   {
+    "id": "Energie_15_02_Muede_Beine",
+    "text": "Muede_Beine",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Energie_15/02_Muede_Beine_V1.mp3",
+      "guid": "806005381db34160992fdc5b36550e6d",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/15%/03_Muede_Beine_V1.mp3",
+      "lufs": -23.8,
+      "gain": 0.977,
+      "duration": 3.239
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Energie_15/02_Muede_Beine_V2.mp3",
+      "guid": "062abc174cf8487f9659cce35b9898aa",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/15%/04_Muede_Beine_V2.mp3",
+      "lufs": -25.9,
+      "gain": 1.0,
+      "duration": 3.474
+     }
+    ]
+   },
+   {
+    "id": "Energie_15_03_Paar_Schritte",
+    "text": "Paar_Schritte",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Energie_15/03_Paar_Schritte_V1.mp3",
+      "guid": "456500716e9645bebcc26de4b9fdb125",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/15%/05_Paar_Schritte_V1.mp3",
+      "lufs": -26.0,
+      "gain": 1.0,
+      "duration": 3.553
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Energie_15/03_Paar_Schritte_V2.mp3",
+      "guid": "aee4636b352e4072b0454eec29fdec13",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/15%/06_Paar_Schritte_V2.mp3",
+      "lufs": -27.2,
+      "gain": 1.0,
+      "duration": 3.971
+     }
+    ]
+   },
+   {
+    "id": "Energie_15_04_Dringend_Energie",
+    "text": "Dringend_Energie",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Energie_15/04_Dringend_Energie_V1.mp3",
+      "guid": "fe4d50fb48de4695b075a74e364a3f12",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/15%/07_Dringend_Energie_V1.mp3",
+      "lufs": -19.8,
+      "gain": 0.617,
+      "duration": 2.351
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Energie_15/04_Dringend_Energie_V2.mp3",
+      "guid": "018d90d7b0bd4263bc2cdbbb0e213cc9",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/15%/08_Dringend_Energie_V2.mp3",
+      "lufs": -21.0,
+      "gain": 0.708,
+      "duration": 2.508
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "EnergyRefilled",
+  "folder": "Energie_Aufgefuellt",
+  "source": "Energie/Refill",
+  "lines": [
+   {
+    "id": "Energie_Aufgefuellt_01_Das_tut_gut",
+    "text": "Das_tut_gut",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Energie_Aufgefuellt/01_Das_tut_gut_V1.mp3",
+      "guid": "17505be9c1894bff87efafbfb4006ea5",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/Refill/01_Das_tut_gut_V1.mp3",
+      "lufs": -24.1,
+      "gain": 1.0,
+      "duration": 2.116
+     }
+    ]
+   },
+   {
+    "id": "Energie_Aufgefuellt_02_Wieder_Kraft",
+    "text": "Wieder_Kraft",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Energie_Aufgefuellt/02_Wieder_Kraft_V1.mp3",
+      "guid": "9cd2f972335d490d9a7ffc7e29357c2f",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/Refill/03_Wieder_Kraft_V1.mp3",
+      "lufs": -21.1,
+      "gain": 0.716,
+      "duration": 2.586
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Energie_Aufgefuellt/02_Wieder_Kraft_V2.mp3",
+      "guid": "052ad94e6fb14ed1968ce43d54e5b189",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/Refill/04_Wieder_Kraft_V2.mp3",
+      "lufs": -21.9,
+      "gain": 0.785,
+      "duration": 3.082
+     }
+    ]
+   },
+   {
+    "id": "Energie_Aufgefuellt_03_Weiter_gehts",
+    "text": "Weiter_gehts",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Energie_Aufgefuellt/03_Weiter_gehts_V1.mp3",
+      "guid": "25a7f16efb4e4087982138852704c959",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/Refill/05_Weiter_gehts_V1.mp3",
+      "lufs": -19.9,
+      "gain": 0.624,
+      "duration": 2.429
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Energie_Aufgefuellt/03_Weiter_gehts_V2.mp3",
+      "guid": "09f42dfbf628404bb0dc58997721d671",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/Refill/06_Weiter_gehts_V2.mp3",
+      "lufs": -21.7,
+      "gain": 0.767,
+      "duration": 2.429
+     }
+    ]
+   },
+   {
+    "id": "Energie_Aufgefuellt_04_Leichter_von_der_Hand",
+    "text": "Leichter_von_der_Hand",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Energie_Aufgefuellt/04_Leichter_von_der_Hand_V1.mp3",
+      "guid": "452e61053468420dbaf6b00806048fd9",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/Refill/07_Leichter_von_der_Hand_V1.mp3",
+      "lufs": -20.1,
+      "gain": 0.638,
+      "duration": 2.429
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Energie_Aufgefuellt/04_Leichter_von_der_Hand_V2.mp3",
+      "guid": "ca562498c5a648368100cd20e00c2a3d",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/Refill/08_Leichter_von_der_Hand_V2.mp3",
+      "lufs": -22.4,
+      "gain": 0.832,
+      "duration": 2.429
+     }
+    ]
+   },
+   {
+    "id": "Energie_Aufgefuellt_05_Neue_Schaetze",
+    "text": "Neue_Schaetze",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Energie_Aufgefuellt/05_Neue_Schaetze_V1.mp3",
+      "guid": "c1bd7f253ff84df0825814b3ac59f191",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/Refill/09_Neue_Schaetze_V1.mp3",
+      "lufs": -18.8,
+      "gain": 0.55,
+      "duration": 2.691
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Energie_Aufgefuellt/05_Neue_Schaetze_V2.mp3",
+      "guid": "89826eb08f104af0b2205da7d7f24dd8",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/Refill/10_Neue_Schaetze_V2.mp3",
+      "lufs": -19.6,
+      "gain": 0.603,
+      "duration": 2.586
+     }
+    ]
+   },
+   {
+    "id": "Energie_Aufgefuellt_06_Was_da_unten_wartet",
+    "text": "Was_da_unten_wartet",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Energie_Aufgefuellt/06_Was_da_unten_wartet_V1.mp3",
+      "guid": "37a45304189246cf933f2198d88bca8c",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/Refill/11_Was_da_unten_wartet_V1.mp3",
+      "lufs": -19.5,
+      "gain": 0.596,
+      "duration": 2.847
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Energie_Aufgefuellt/06_Was_da_unten_wartet_V2.mp3",
+      "guid": "906d05cc3581415db7ae23a26f61b48e",
+      "source": "Assets/ZZZ New Assets/Speech/Energie/Refill/12_Was_da_unten_wartet_V2.mp3",
+      "lufs": -19.8,
+      "gain": 0.617,
+      "duration": 3.161
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "CarryStage1",
+  "folder": "Traglast_Stufe1",
+  "source": "Traglast/Ermüdung 1",
+  "lines": [
+   {
+    "id": "Traglast_Stufe1_01_Gut_gefuellt",
+    "text": "Gut_gefuellt",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe1/01_Gut_gefuellt_V1.mp3",
+      "guid": "6906141ebf6f40b8814bbb03827c0b3d",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 1/01_Gut_gefuellt_V1.mp3",
+      "lufs": -22.6,
+      "gain": 0.851,
+      "duration": 2.926
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe1/01_Gut_gefuellt_V2.mp3",
+      "guid": "8c66256e6127461ea2839b3cb130df5e",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 1/02_Gut_gefuellt_V2.mp3",
+      "lufs": -22.5,
+      "gain": 0.841,
+      "duration": 3.239
+     }
+    ]
+   },
+   {
+    "id": "Traglast_Stufe1_02_Traegt_sich_gut",
+    "text": "Traegt_sich_gut",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe1/02_Traegt_sich_gut_V1.mp3",
+      "guid": "c109e8205b99483d9fe279cd5130f0c5",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 1/03_Traegt_sich_gut_V1.mp3",
+      "lufs": -21.5,
+      "gain": 0.75,
+      "duration": 2.508
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe1/02_Traegt_sich_gut_V2.mp3",
+      "guid": "98728c65266f41b59cd3dd58b092ee90",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 1/04_Traegt_sich_gut_V2.mp3",
+      "lufs": -22.6,
+      "gain": 0.851,
+      "duration": 2.586
+     }
+    ]
+   },
+   {
+    "id": "Traglast_Stufe1_03_Etwas_langsamer",
+    "text": "Etwas_langsamer",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe1/03_Etwas_langsamer_V1.mp3",
+      "guid": "1e79845b81934381ace84b85fca1608a",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 1/05_Etwas_langsamer_V1.mp3",
+      "lufs": -21.4,
+      "gain": 0.741,
+      "duration": 3.709
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe1/03_Etwas_langsamer_V2.mp3",
+      "guid": "3d3d51ecd91a480a99d3cdeb4b6c43f6",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 1/06_Etwas_langsamer_V2.mp3",
+      "lufs": -23.8,
+      "gain": 0.977,
+      "duration": 4.284
+     }
+    ]
+   },
+   {
+    "id": "Traglast_Stufe1_04_Jeder_Stein",
+    "text": "Jeder_Stein",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe1/04_Jeder_Stein_V1.mp3",
+      "guid": "4c4adc9ef1974e98bb39a33b5385e327",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 1/07_Jeder_Stein_V1.mp3",
+      "lufs": -21.3,
+      "gain": 0.733,
+      "duration": 3.161
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe1/04_Jeder_Stein_V2.mp3",
+      "guid": "5bd224b3dd5547c2b78c4b5d138a20a2",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 1/08_Jeder_Stein_V2.mp3",
+      "lufs": -24.0,
+      "gain": 1.0,
+      "duration": 3.317
+     }
+    ]
+   },
+   {
+    "id": "Traglast_Stufe1_05_Passt_noch",
+    "text": "Passt_noch",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe1/05_Passt_noch_V1.mp3",
+      "guid": "2b9cd77764b745219817612302c85b9f",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 1/09_Passt_noch_V1.mp3",
+      "lufs": -22.7,
+      "gain": 0.861,
+      "duration": 3.553
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe1/05_Passt_noch_V2.mp3",
+      "guid": "9ed25b9ccc4349b3bc50bea81056f95b",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 1/10_Passt_noch_V2.mp3",
+      "lufs": -21.7,
+      "gain": 0.767,
+      "duration": 3.396
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "CarryStage2",
+  "folder": "Traglast_Stufe2",
+  "source": "Traglast/Ermüdung 2",
+  "lines": [
+   {
+    "id": "Traglast_Stufe2_01_Rucksack_schwer",
+    "text": "Rucksack_schwer",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe2/01_Rucksack_schwer_V1.mp3",
+      "guid": "59f1f9c4f52d4dba9cf8f35940b85fae",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 2/01_Rucksack_schwer_V1.mp3",
+      "lufs": -24.0,
+      "gain": 1.0,
+      "duration": 3.317
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe2/01_Rucksack_schwer_V2.mp3",
+      "guid": "ea843e61fc144ed88e81e8b790f36500",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 2/02_Rucksack_schwer_V2.mp3",
+      "lufs": -25.2,
+      "gain": 1.0,
+      "duration": 3.474
+     }
+    ]
+   },
+   {
+    "id": "Traglast_Stufe2_02_Kaum_vorankommen",
+    "text": "Kaum_vorankommen",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe2/02_Kaum_vorankommen_V1.mp3",
+      "guid": "24d3fc22899a4db2b373475da213a229",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 2/03_Kaum_vorankommen_V1.mp3",
+      "lufs": -20.7,
+      "gain": 0.684,
+      "duration": 3.004
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe2/02_Kaum_vorankommen_V2.mp3",
+      "guid": "dac64a587f6f41d089273b7aa19ceb8d",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 2/04_Kaum_vorankommen_V2.mp3",
+      "lufs": -22.7,
+      "gain": 0.861,
+      "duration": 3.396
+     }
+    ]
+   },
+   {
+    "id": "Traglast_Stufe2_03_Erze_verkaufen",
+    "text": "Erze_verkaufen",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe2/03_Erze_verkaufen_V1.mp3",
+      "guid": "bd664e49a12b42b9aec56ee4aa02040b",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 2/05_Erze_verkaufen_V1.mp3",
+      "lufs": -22.7,
+      "gain": 0.861,
+      "duration": 2.769
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe2/03_Erze_verkaufen_V2.mp3",
+      "guid": "894247c4f46b4973aa5aa2361bf7768e",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 2/06_Erze_verkaufen_V2.mp3",
+      "lufs": -23.9,
+      "gain": 0.989,
+      "duration": 2.926
+     }
+    ]
+   },
+   {
+    "id": "Traglast_Stufe2_04_Nicht_vom_Fleck",
+    "text": "Nicht_vom_Fleck",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe2/04_Nicht_vom_Fleck_V1.mp3",
+      "guid": "307ede7585544cff9beb5f323e2b6636",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 2/07_Nicht_vom_Fleck_V1.mp3",
+      "lufs": -19.5,
+      "gain": 0.596,
+      "duration": 3.317
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe2/04_Nicht_vom_Fleck_V2.mp3",
+      "guid": "d62b236f8b0143eb8635554f1c66a021",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 2/08_Nicht_vom_Fleck_V2.mp3",
+      "lufs": -19.7,
+      "gain": 0.61,
+      "duration": 3.971
+     }
+    ]
+   },
+   {
+    "id": "Traglast_Stufe2_05_Jeden_Stein",
+    "text": "Jeden_Stein",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe2/05_Jeden_Stein_V1.mp3",
+      "guid": "2e9572c07263400d8fef2d6b101e6231",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 2/09_Jeden_Stein_V1.mp3",
+      "lufs": -21.7,
+      "gain": 0.767,
+      "duration": 3.317
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe2/05_Jeden_Stein_V2.mp3",
+      "guid": "365f43e9fa9b440ab21645969859f1aa",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 2/10_Jeden_Stein_V2.mp3",
+      "lufs": -23.2,
+      "gain": 0.912,
+      "duration": 3.709
+     }
+    ]
+   },
+   {
+    "id": "Traglast_Stufe2_06_Rucksack_leichter",
+    "text": "Rucksack_leichter",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe2/06_Rucksack_leichter_V1.mp3",
+      "guid": "3fb727a9831f4a5a8e34c490bf92ad95",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 2/11_Rucksack_leichter_V1.mp3",
+      "lufs": -22.2,
+      "gain": 0.813,
+      "duration": 3.553
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Traglast_Stufe2/06_Rucksack_leichter_V2.mp3",
+      "guid": "22db81c2d37b4d02a75e14c971267507",
+      "source": "Assets/ZZZ New Assets/Speech/Traglast/Ermüdung 2/12_Rucksack_leichter_V2.mp3",
+      "lufs": -23.2,
+      "gain": 0.912,
+      "duration": 3.971
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "FallSmall",
+  "folder": "Sturz_Klein",
+  "source": "Verletzt/kleiner Sturz",
+  "lines": [
+   {
+    "id": "Sturz_Klein_01_Bloeder_Absatz",
+    "text": "Bloeder_Absatz",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Klein/01_Bloeder_Absatz_V1.mp3",
+      "guid": "877efd329d4343b098936022792920e3",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/kleiner Sturz/01_Bloeder_Absatz_V1.mp3",
+      "lufs": -22.8,
+      "gain": 0.871,
+      "duration": 2.691
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Klein/01_Bloeder_Absatz_V2.mp3",
+      "guid": "ebc6553a56bf46cb8ffcae157d2c54c4",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/kleiner Sturz/02_Bloeder_Absatz_V2.mp3",
+      "lufs": -24.1,
+      "gain": 1.0,
+      "duration": 2.586
+     }
+    ]
+   },
+   {
+    "id": "Sturz_Klein_02_Unsanft",
+    "text": "Unsanft",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Klein/02_Unsanft_V1.mp3",
+      "guid": "f52d32b1bd09459eb86ed94581c81297",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/kleiner Sturz/03_Unsanft_V1.mp3",
+      "lufs": -24.4,
+      "gain": 1.0,
+      "duration": 2.586
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Klein/02_Unsanft_V2.mp3",
+      "guid": "b40bcf7841de4f24a0eca650b725ec29",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/kleiner Sturz/04_Unsanft_V2.mp3",
+      "lufs": -23.9,
+      "gain": 0.989,
+      "duration": 2.847
+     }
+    ]
+   },
+   {
+    "id": "Sturz_Klein_03_Besser_aufpassen",
+    "text": "Besser_aufpassen",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Klein/03_Besser_aufpassen_V1.mp3",
+      "guid": "2ccd017321fb4fb6ad9e0122aee56215",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/kleiner Sturz/05_Besser_aufpassen_V1.mp3",
+      "lufs": -24.2,
+      "gain": 1.0,
+      "duration": 2.691
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Klein/03_Besser_aufpassen_V2.mp3",
+      "guid": "8a63375c591a49a49209520d6ab1f444",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/kleiner Sturz/06_Besser_aufpassen_V2.mp3",
+      "lufs": -25.5,
+      "gain": 1.0,
+      "duration": 2.769
+     }
+    ]
+   },
+   {
+    "id": "Sturz_Klein_04_Aufs_Knie",
+    "text": "Aufs_Knie",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Klein/04_Aufs_Knie_V1.mp3",
+      "guid": "47da6f2db27345e891989459220911a0",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/kleiner Sturz/08_Aufs_Knie_V2.mp3",
+      "lufs": -21.5,
+      "gain": 0.75,
+      "duration": 3.317
+     }
+    ]
+   },
+   {
+    "id": "Sturz_Klein_05_Schritt_unterschaetzt",
+    "text": "Schritt_unterschaetzt",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Klein/05_Schritt_unterschaetzt_V1.mp3",
+      "guid": "7af69f76b85a415683062c7ea751d064",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/kleiner Sturz/09_Schritt_unterschaetzt_V1.mp3",
+      "lufs": -23.5,
+      "gain": 0.944,
+      "duration": 2.769
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Klein/05_Schritt_unterschaetzt_V2.mp3",
+      "guid": "ae4b70da9f234a9291b97bfaff6eb4ae",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/kleiner Sturz/10_Schritt_unterschaetzt_V2.mp3",
+      "lufs": -24.0,
+      "gain": 1.0,
+      "duration": 3.082
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "FallBig",
+  "folder": "Sturz_Gross",
+  "source": "Verletzt/grosser Sturz",
+  "lines": [
+   {
+    "id": "Sturz_Gross_01_Ordentlich_wehgetan",
+    "text": "Ordentlich_wehgetan",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Gross/01_Ordentlich_wehgetan_V1.mp3",
+      "guid": "45ac1fa9dc9645f79485f0880b8f161e",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/grosser Sturz/01_Ordentlich_wehgetan_V1.mp3",
+      "lufs": -23.5,
+      "gain": 0.944,
+      "duration": 3.317
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Gross/01_Ordentlich_wehgetan_V2.mp3",
+      "guid": "bb0844ae41f3467785ee3349b82f04d5",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/grosser Sturz/02_Ordentlich_wehgetan_V2.mp3",
+      "lufs": -24.1,
+      "gain": 1.0,
+      "duration": 3.788
+     }
+    ]
+   },
+   {
+    "id": "Sturz_Gross_02_Zu_tief",
+    "text": "Zu_tief",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Gross/02_Zu_tief_V1.mp3",
+      "guid": "4831b946e56d423695ab7abb874fe832",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/grosser Sturz/03_Zu_tief_V1.mp3",
+      "lufs": -25.1,
+      "gain": 1.0,
+      "duration": 3.004
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Gross/02_Zu_tief_V2.mp3",
+      "guid": "0c0566ae913240d3a7de593edc07473d",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/grosser Sturz/04_Zu_tief_V2.mp3",
+      "lufs": -27.1,
+      "gain": 1.0,
+      "duration": 3.631
+     }
+    ]
+   },
+   {
+    "id": "Sturz_Gross_03_Einen_Moment",
+    "text": "Einen_Moment",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Gross/03_Einen_Moment_V1.mp3",
+      "guid": "c3cb1127d86941b1b9e17e73c9e46a7c",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/grosser Sturz/05_Einen_Moment_V1.mp3",
+      "lufs": -24.6,
+      "gain": 1.0,
+      "duration": 2.691
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Gross/03_Einen_Moment_V2.mp3",
+      "guid": "134d719ad35242ff961d9dc6f3c7837d",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/grosser Sturz/06_Einen_Moment_V2.mp3",
+      "lufs": -23.9,
+      "gain": 0.989,
+      "duration": 3.082
+     }
+    ]
+   },
+   {
+    "id": "Sturz_Gross_04_Viel_zu_knapp",
+    "text": "Viel_zu_knapp",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Gross/04_Viel_zu_knapp_V1.mp3",
+      "guid": "67123485db6e43d79f7cf1c3a9930226",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/grosser Sturz/07_Viel_zu_knapp_V1.mp3",
+      "lufs": -23.0,
+      "gain": 0.891,
+      "duration": 3.082
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Gross/04_Viel_zu_knapp_V2.mp3",
+      "guid": "fee4f931d8da46bd9e7a1b3faac986a9",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/grosser Sturz/08_Viel_zu_knapp_V2.mp3",
+      "lufs": -24.8,
+      "gain": 1.0,
+      "duration": 3.474
+     }
+    ]
+   },
+   {
+    "id": "Sturz_Gross_05_Noch_spueren",
+    "text": "Noch_spueren",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Gross/05_Noch_spueren_V1.mp3",
+      "guid": "c589e71cf1c942f4bd96ad6406defee4",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/grosser Sturz/09_Noch_spueren_V1.mp3",
+      "lufs": -23.8,
+      "gain": 0.977,
+      "duration": 4.049
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Gross/05_Noch_spueren_V2.mp3",
+      "guid": "f8be99bae14b44e98c23dd7ec827b86a",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/grosser Sturz/10_Noch_spueren_V2.mp3",
+      "lufs": -24.2,
+      "gain": 1.0,
+      "duration": 4.441
+     }
+    ]
+   },
+   {
+    "id": "Sturz_Gross_06_Auf_die_Beine",
+    "text": "Auf_die_Beine",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Gross/06_Auf_die_Beine_V1.mp3",
+      "guid": "3df57542ce0647e4bfb70302cc432da6",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/grosser Sturz/11_Auf_die_Beine_V1.mp3",
+      "lufs": -22.9,
+      "gain": 0.881,
+      "duration": 3.474
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Sturz_Gross/06_Auf_die_Beine_V2.mp3",
+      "guid": "6ee92b1d786b4f9ebfad0de9bf22d306",
+      "source": "Assets/ZZZ New Assets/Speech/Verletzt/grosser Sturz/12_Auf_die_Beine_V2.mp3",
+      "lufs": -22.1,
+      "gain": 0.804,
+      "duration": 3.709
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "OreSold",
+  "folder": "Shop_Verkauf",
+  "source": "Shop/Verkauf",
+  "lines": [
+   {
+    "id": "Shop_Verkauf_01_Die_Schlepperei_hat_sich_gelohnt",
+    "text": "Die_Schlepperei_hat_sich_gelohnt",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Verkauf/01_Die_Schlepperei_hat_sich_gelohnt_V1.mp3",
+      "guid": "ae8d708d2ea7428286b48900415804c6",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Verkauf/01_Die_Schlepperei_hat_sich_gelohnt.mp3",
+      "lufs": -20.8,
+      "gain": 0.692,
+      "duration": 2.926
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Verkauf/01_Die_Schlepperei_hat_sich_gelohnt_V2.mp3",
+      "guid": "e0cbbc1347d6411186acde313ca2cfbb",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Verkauf/01_Die_Schlepperei_hat_sich_gelohnt 1.mp3",
+      "lufs": -20.7,
+      "gain": 0.684,
+      "duration": 2.769
+     }
+    ]
+   },
+   {
+    "id": "Shop_Verkauf_02_Ein_guter_Fang_heute",
+    "text": "Ein_guter_Fang_heute",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Verkauf/02_Ein_guter_Fang_heute_V1.mp3",
+      "guid": "690c7f80c4a24cf6b43a54878028c8c4",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Verkauf/02_Ein_guter_Fang_heute.mp3",
+      "lufs": -23.6,
+      "gain": 0.955,
+      "duration": 2.116
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Verkauf/02_Ein_guter_Fang_heute_V2.mp3",
+      "guid": "fa37c409a44147639020833b9809ce5d",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Verkauf/02_Ein_guter_Fang_heute 2.mp3",
+      "lufs": -22.1,
+      "gain": 0.804,
+      "duration": 2.273
+     }
+    ]
+   },
+   {
+    "id": "Shop_Verkauf_03_Damit_laesst_sich_weiterarbeiten",
+    "text": "Damit_laesst_sich_weiterarbeiten",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Verkauf/03_Damit_laesst_sich_weiterarbeiten_V1.mp3",
+      "guid": "6a448d0991644d1d96337b4f9c0009e5",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Verkauf/03_Damit_laesst_sich_weiterarbeiten.mp3",
+      "lufs": -22.9,
+      "gain": 0.881,
+      "duration": 3.004
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Verkauf/03_Damit_laesst_sich_weiterarbeiten_V2.mp3",
+      "guid": "65933aab123443108ebed7206da54918",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Verkauf/03_Damit_laesst_sich_weiterarbeiten 1.mp3",
+      "lufs": -22.3,
+      "gain": 0.822,
+      "duration": 2.586
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Verkauf/03_Damit_laesst_sich_weiterarbeiten_V3.mp3",
+      "guid": "2db93dfc93c543aeb5490023a1e13627",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Verkauf/03_Damit_laesst_sich_weiterarbeiten 2.mp3",
+      "lufs": -22.1,
+      "gain": 0.804,
+      "duration": 2.429
+     }
+    ]
+   },
+   {
+    "id": "Shop_Verkauf_04_Der_Rucksack_ist_wieder_leichter",
+    "text": "Der_Rucksack_ist_wieder_leichter",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Verkauf/04_Der_Rucksack_ist_wieder_leichter_V1.mp3",
+      "guid": "1e9e79294eca40d88cba67a8e5f419a7",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Verkauf/04_Der_Rucksack_ist_wieder_leichter.mp3",
+      "lufs": -23.6,
+      "gain": 0.955,
+      "duration": 3.161
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Verkauf/04_Der_Rucksack_ist_wieder_leichter_V2.mp3",
+      "guid": "54431c39185b453283c47da69fa63c33",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Verkauf/04_Der_Rucksack_ist_wieder_leichter 2.mp3",
+      "lufs": -20.7,
+      "gain": 0.684,
+      "duration": 3.004
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "BlueprintBought",
+  "folder": "Shop_Bauplan",
+  "source": "Shop/Bauplan gekauft",
+  "lines": [
+   {
+    "id": "Shop_Bauplan_01_Bauplan_1",
+    "text": "Bauplan_1",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Bauplan/01_Bauplan_1_V1.wav",
+      "guid": "b04459033c1f4b78bb0b2f138924382a",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Bauplan gekauft/WS 1.wav",
+      "lufs": -22.2,
+      "gain": 0.813,
+      "duration": 2.586
+     }
+    ]
+   },
+   {
+    "id": "Shop_Bauplan_02_Bauplan_2",
+    "text": "Bauplan_2",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Bauplan/02_Bauplan_2_V1.wav",
+      "guid": "743edf35ffa44dfaba4f2fb596b84937",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Bauplan gekauft/WS 2.wav",
+      "lufs": -22.4,
+      "gain": 0.832,
+      "duration": 2.273
+     }
+    ]
+   },
+   {
+    "id": "Shop_Bauplan_03_Bauplan_3",
+    "text": "Bauplan_3",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Bauplan/03_Bauplan_3_V1.wav",
+      "guid": "06b728349d8c495ba11e4ad2941fe1f7",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Bauplan gekauft/WS 3.wav",
+      "lufs": -24.3,
+      "gain": 1.0,
+      "duration": 2.769
+     }
+    ]
+   },
+   {
+    "id": "Shop_Bauplan_04_Bauplan_4",
+    "text": "Bauplan_4",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Bauplan/04_Bauplan_4_V1.wav",
+      "guid": "0557efc9fad64a98b3a1d613af293d60",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Bauplan gekauft/WS 4.wav",
+      "lufs": -20.7,
+      "gain": 0.684,
+      "duration": 1.881
+     }
+    ]
+   },
+   {
+    "id": "Shop_Bauplan_05_Bauplan_5",
+    "text": "Bauplan_5",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Bauplan/05_Bauplan_5_V1.wav",
+      "guid": "7c103fddd500426dba052a31d445a1f8",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Bauplan gekauft/WS 5.wav",
+      "lufs": -21.5,
+      "gain": 0.75,
+      "duration": 2.038
+     }
+    ]
+   },
+   {
+    "id": "Shop_Bauplan_06_Bauplan_6",
+    "text": "Bauplan_6",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Bauplan/06_Bauplan_6_V1.wav",
+      "guid": "8a10048735b1493c9ec4604f48c5722d",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Bauplan gekauft/WS 6.wav",
+      "lufs": -22.4,
+      "gain": 0.832,
+      "duration": 2.586
+     }
+    ]
+   },
+   {
+    "id": "Shop_Bauplan_07_Bauplan_7",
+    "text": "Bauplan_7",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Bauplan/07_Bauplan_7_V1.wav",
+      "guid": "f0d7bfd0a79743a8a084c8352f2c32ea",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Bauplan gekauft/WS 7.wav",
+      "lufs": -22.9,
+      "gain": 0.881,
+      "duration": 2.847
+     }
+    ]
+   },
+   {
+    "id": "Shop_Bauplan_08_Bauplan_8",
+    "text": "Bauplan_8",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Bauplan/08_Bauplan_8_V1.wav",
+      "guid": "a44106828bf141e2bf4a17b6a7ce4a71",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Bauplan gekauft/WS 8.wav",
+      "lufs": -20.8,
+      "gain": 0.692,
+      "duration": 2.508
+     }
+    ]
+   },
+   {
+    "id": "Shop_Bauplan_09_Bauplan_9",
+    "text": "Bauplan_9",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Shop_Bauplan/09_Bauplan_9_V1.wav",
+      "guid": "8323a27c1f334982b3276920da79f92c",
+      "source": "Assets/ZZZ New Assets/Speech/Shop/Bauplan gekauft/WS 9.wav",
+      "lufs": -21.4,
+      "gain": 0.741,
+      "duration": 2.429
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "CraftedAxe",
+  "folder": "Werkbank_Axt",
+  "source": "Workshop/Axt gebaut",
+  "lines": [
+   {
+    "id": "Werkbank_Axt_01_Holzfaellen",
+    "text": "Holzfaellen",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Axt/01_Holzfaellen_V1.mp3",
+      "guid": "b83a3d64039748118a9c773a4c2adcc7",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Axt gebaut/01_Holzfaellen_V1.mp3",
+      "lufs": -20.4,
+      "gain": 0.661,
+      "duration": 2.926
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Axt/01_Holzfaellen_V2.mp3",
+      "guid": "9f479b55cae645938af45db5b74b48ce",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Axt gebaut/01_Holzfaellen_V2.mp3",
+      "lufs": -22.0,
+      "gain": 0.794,
+      "duration": 3.161
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Axt_02_Richtiges_Werkzeug",
+    "text": "Richtiges_Werkzeug",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Axt/02_Richtiges_Werkzeug_V1.mp3",
+      "guid": "11537189fd7943c685dd680d29593887",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Axt gebaut/02_Richtiges_Werkzeug_V1.mp3",
+      "lufs": -20.8,
+      "gain": 0.692,
+      "duration": 2.769
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Axt/02_Richtiges_Werkzeug_V2.mp3",
+      "guid": "25ec9e748faf47bd96535827d88f1a40",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Axt gebaut/02_Richtiges_Werkzeug_V2.mp3",
+      "lufs": -21.5,
+      "gain": 0.75,
+      "duration": 2.926
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Axt_03_Ab_in_den_Wald",
+    "text": "Ab_in_den_Wald",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Axt/03_Ab_in_den_Wald_V1.mp3",
+      "guid": "d9a5932586c6475f867ffaaf0ea02e46",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Axt gebaut/03_Ab_in_den_Wald_V1.mp3",
+      "lufs": -19.7,
+      "gain": 0.61,
+      "duration": 3.082
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Axt/03_Ab_in_den_Wald_V2.mp3",
+      "guid": "4758eb9b1469498887bbcc48c07194c7",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Axt gebaut/03_Ab_in_den_Wald_V2.mp3",
+      "lufs": -20.1,
+      "gain": 0.638,
+      "duration": 3.004
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Axt_04_Spitzhacke_Pause",
+    "text": "Spitzhacke_Pause",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Axt/04_Spitzhacke_Pause_V1.mp3",
+      "guid": "09a191e95ec14274bf8b351e9f732dbc",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Axt gebaut/04_Spitzhacke_Pause_V1.mp3",
+      "lufs": -20.5,
+      "gain": 0.668,
+      "duration": 2.769
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Axt/04_Spitzhacke_Pause_V2.mp3",
+      "guid": "7b069269c6154992b2c3e02533a84483",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Axt gebaut/04_Spitzhacke_Pause_V2.mp3",
+      "lufs": -21.9,
+      "gain": 0.785,
+      "duration": 3.004
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Axt_05_Ordentlich_Holz",
+    "text": "Ordentlich_Holz",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Axt/05_Ordentlich_Holz_V1.mp3",
+      "guid": "b83262ec83794a06902b8136fb488562",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Axt gebaut/05_Ordentlich_Holz_V1.mp3",
+      "lufs": -20.8,
+      "gain": 0.692,
+      "duration": 3.396
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Axt/05_Ordentlich_Holz_V2.mp3",
+      "guid": "29d94d26c67042f7870170fef458a399",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Axt gebaut/05_Ordentlich_Holz_V2.mp3",
+      "lufs": -21.8,
+      "gain": 0.776,
+      "duration": 3.553
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Axt_06_Dreimal_so_schnell",
+    "text": "Dreimal_so_schnell",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Axt/06_Dreimal_so_schnell_V1.mp3",
+      "guid": "13d8d405382a4b3c8ed1260e142ac391",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Axt gebaut/06_Dreimal_so_schnell_V1.mp3",
+      "lufs": -20.0,
+      "gain": 0.631,
+      "duration": 2.586
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Axt/06_Dreimal_so_schnell_V2.mp3",
+      "guid": "12f849611aed4890bad66f0917521b89",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Axt gebaut/06_Dreimal_so_schnell_V2.mp3",
+      "lufs": -20.9,
+      "gain": 0.7,
+      "duration": 2.847
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "CraftedScythe",
+  "folder": "Werkbank_Sense",
+  "source": "Workshop/Sense gebaut",
+  "lines": [
+   {
+    "id": "Werkbank_Sense_01_Gras_schneiden",
+    "text": "Gras_schneiden",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Sense/01_Gras_schneiden_V1.mp3",
+      "guid": "4e39cc4d7356405b93d7b3722e101466",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Sense gebaut/01_Gras_schneiden_V1.mp3",
+      "lufs": -20.8,
+      "gain": 0.692,
+      "duration": 3.239
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Sense/01_Gras_schneiden_V2.mp3",
+      "guid": "cb7eadc195ca4b8eb1a672b30360b734",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Sense gebaut/01_Gras_schneiden_V2.mp3",
+      "lufs": -21.9,
+      "gain": 0.785,
+      "duration": 3.317
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Sense_02_Pflanzenfasern",
+    "text": "Pflanzenfasern",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Sense/02_Pflanzenfasern_V1.mp3",
+      "guid": "865082e345b64860b044dfc75eb6ae85",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Sense gebaut/02_Pflanzenfasern_V1.mp3",
+      "lufs": -20.3,
+      "gain": 0.653,
+      "duration": 2.847
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Sense/02_Pflanzenfasern_V2.mp3",
+      "guid": "9db6ea7dfbeb4a3b8bd99a673586f26c",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Sense gebaut/02_Pflanzenfasern_V2.mp3",
+      "lufs": -22.0,
+      "gain": 0.794,
+      "duration": 2.847
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Sense_03_Ab_auf_die_Wiese",
+    "text": "Ab_auf_die_Wiese",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Sense/03_Ab_auf_die_Wiese_V1.mp3",
+      "guid": "a70c5be8b44246988a6d011a214868d7",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Sense gebaut/03_Ab_auf_die_Wiese_V1.mp3",
+      "lufs": -20.5,
+      "gain": 0.668,
+      "duration": 3.004
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Sense/03_Ab_auf_die_Wiese_V2.mp3",
+      "guid": "27e7ba2d53024a8b90705dcecd9de98f",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Sense gebaut/03_Ab_auf_die_Wiese_V2.mp3",
+      "lufs": -21.6,
+      "gain": 0.759,
+      "duration": 3.161
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Sense_04_Fasern_verarbeiten",
+    "text": "Fasern_verarbeiten",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Sense/04_Fasern_verarbeiten_V1.mp3",
+      "guid": "ea3c1b452f784571a237ec67e370c0e1",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Sense gebaut/04_Fasern_verarbeiten_V1.mp3",
+      "lufs": -23.0,
+      "gain": 0.891,
+      "duration": 3.474
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Sense/04_Fasern_verarbeiten_V2.mp3",
+      "guid": "7b418e740efe407ba338fe719d8ffd80",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Sense gebaut/04_Fasern_verarbeiten_V2.mp3",
+      "lufs": -25.6,
+      "gain": 1.0,
+      "duration": 4.049
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Sense_05_Hohes_Gras",
+    "text": "Hohes_Gras",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Sense/05_Hohes_Gras_V1.mp3",
+      "guid": "de8849cd0fd64f06b0a5f24a5e9fc445",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Sense gebaut/05_Hohes_Gras_V1.mp3",
+      "lufs": -20.5,
+      "gain": 0.668,
+      "duration": 3.709
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Sense/05_Hohes_Gras_V2.mp3",
+      "guid": "1fe7013a9b6c4e169e4579144680b506",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Sense gebaut/05_Hohes_Gras_V2.mp3",
+      "lufs": -21.5,
+      "gain": 0.75,
+      "duration": 3.971
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Sense_06_Material_zum_Weiterbauen",
+    "text": "Material_zum_Weiterbauen",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Sense/06_Material_zum_Weiterbauen_V1.mp3",
+      "guid": "3d9c7c5a3e644d9085d3adbb04a836ca",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Sense gebaut/06_Material_zum_Weiterbauen_V1.mp3",
+      "lufs": -20.0,
+      "gain": 0.631,
+      "duration": 3.474
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Sense/06_Material_zum_Weiterbauen_V2.mp3",
+      "guid": "e2a20c7da8174ab0922a165896b63d9d",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Sense gebaut/06_Material_zum_Weiterbauen_V2.mp3",
+      "lufs": -20.9,
+      "gain": 0.7,
+      "duration": 3.474
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "CraftedMedkit",
+  "folder": "Werkbank_MedKit",
+  "source": "Workshop/MedKit gebaut",
+  "lines": [
+   {
+    "id": "Werkbank_MedKit_01_Auf_die_Beine",
+    "text": "Auf_die_Beine",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_MedKit/01_Auf_die_Beine_V1.mp3",
+      "guid": "c0a48b2d88774a4ba4404d3c113b8e7f",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/MedKit gebaut/01_Auf_die_Beine_V1.mp3",
+      "lufs": -20.8,
+      "gain": 0.692,
+      "duration": 2.926
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_MedKit/01_Auf_die_Beine_V2.mp3",
+      "guid": "d252cd9b812649afb954a1eb020da6f4",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/MedKit gebaut/01_Auf_die_Beine_V2.mp3",
+      "lufs": -21.6,
+      "gain": 0.759,
+      "duration": 3.004
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_MedKit_02_Ausruhen_reicht_nicht",
+    "text": "Ausruhen_reicht_nicht",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_MedKit/02_Ausruhen_reicht_nicht_V1.mp3",
+      "guid": "c32c2cabf85a4160af94cd70302a025c",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/MedKit gebaut/02_Ausruhen_reicht_nicht_V1.mp3",
+      "lufs": -21.9,
+      "gain": 0.785,
+      "duration": 3.396
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_MedKit_03_Lieber_einpacken",
+    "text": "Lieber_einpacken",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_MedKit/03_Lieber_einpacken_V1.mp3",
+      "guid": "7a80d346c82b4ac0a2ba20b1d0a52b97",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/MedKit gebaut/03_Lieber_einpacken_V1.mp3",
+      "lufs": -20.7,
+      "gain": 0.684,
+      "duration": 2.926
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_MedKit/03_Lieber_einpacken_V2.mp3",
+      "guid": "e5dc83abf3e64011aac0660cab2eeef9",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/MedKit gebaut/03_Lieber_einpacken_V2.mp3",
+      "lufs": -21.6,
+      "gain": 0.759,
+      "duration": 3.317
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_MedKit_04_Verletzungen_versorgen",
+    "text": "Verletzungen_versorgen",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_MedKit/04_Verletzungen_versorgen_V1.mp3",
+      "guid": "0c46b2f63bdd4fb8bb6e26b0a81a5629",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/MedKit gebaut/04_Verletzungen_versorgen_V1.mp3",
+      "lufs": -20.3,
+      "gain": 0.653,
+      "duration": 3.161
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_MedKit/04_Verletzungen_versorgen_V2.mp3",
+      "guid": "94581577c6984c368da834ea783f7d57",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/MedKit gebaut/04_Verletzungen_versorgen_V2.mp3",
+      "lufs": -21.6,
+      "gain": 0.759,
+      "duration": 3.317
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_MedKit_05_Besser_vorbereitet",
+    "text": "Besser_vorbereitet",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_MedKit/05_Besser_vorbereitet_V1.mp3",
+      "guid": "2b62fbfd37004f6fb9ed54741f2f7da8",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/MedKit gebaut/05_Besser_vorbereitet_V1.mp3",
+      "lufs": -21.5,
+      "gain": 0.75,
+      "duration": 4.284
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_MedKit/05_Besser_vorbereitet_V2.mp3",
+      "guid": "06d84bab9ec444519501f714ebcecd52",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/MedKit gebaut/05_Besser_vorbereitet_V2.mp3",
+      "lufs": -21.8,
+      "gain": 0.776,
+      "duration": 4.519
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_MedKit_06_Gutes_Gefuehl",
+    "text": "Gutes_Gefuehl",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_MedKit/06_Gutes_Gefuehl_V1.mp3",
+      "guid": "381c3a2afd1544fa877bbeacead9a6a1",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/MedKit gebaut/06_Gutes_Gefuehl_V1.mp3",
+      "lufs": -23.8,
+      "gain": 0.977,
+      "duration": 3.553
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_MedKit/06_Gutes_Gefuehl_V2.mp3",
+      "guid": "6d67f2a0d9c442bf96fae1e70610e4aa",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/MedKit gebaut/06_Gutes_Gefuehl_V2.mp3",
+      "lufs": -22.8,
+      "gain": 0.871,
+      "duration": 3.474
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "CraftedTorches",
+  "folder": "Werkbank_Fackeln",
+  "source": "Workshop/Fackeln",
+  "lines": [
+   {
+    "id": "Werkbank_Fackeln_01_Wo_ich_hintrete",
+    "text": "Wo_ich_hintrete",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Fackeln/01_Wo_ich_hintrete_V1.mp3",
+      "guid": "94a8b56d30804474aed1bf49836e8b46",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Fackeln/02_Wo_ich_hintrete_V1.mp3",
+      "lufs": -20.4,
+      "gain": 0.661,
+      "duration": 3.474
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Fackeln/01_Wo_ich_hintrete_V2.mp3",
+      "guid": "504697663db447e38cb4bba3a6fdfa6f",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Fackeln/02_Wo_ich_hintrete_V2.mp3",
+      "lufs": -21.0,
+      "gain": 0.708,
+      "duration": 3.317
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Fackeln_02_Mehr_Fackeln",
+    "text": "Mehr_Fackeln",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Fackeln/02_Mehr_Fackeln_V1.mp3",
+      "guid": "016e9c4562394ec5b971d6ca3c8f7f31",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Fackeln/03_Mehr_Fackeln_V1.mp3",
+      "lufs": -20.1,
+      "gain": 0.638,
+      "duration": 2.691
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Fackeln/02_Mehr_Fackeln_V2.mp3",
+      "guid": "4392ceabc6c541548db97b54eb02833b",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Fackeln/03_Mehr_Fackeln_V2.mp3",
+      "lufs": -21.7,
+      "gain": 0.767,
+      "duration": 2.769
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Fackeln_03_Was_sich_verbirgt",
+    "text": "Was_sich_verbirgt",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Fackeln/03_Was_sich_verbirgt_V1.mp3",
+      "guid": "0b944d5057bf445f9778f0b33d832306",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Fackeln/04_Was_sich_verbirgt_V1.mp3",
+      "lufs": -23.5,
+      "gain": 0.944,
+      "duration": 3.239
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Fackeln/03_Was_sich_verbirgt_V2.mp3",
+      "guid": "0ee13d5df9524511a29282b96ca0b6b5",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Fackeln/04_Was_sich_verbirgt_V2.mp3",
+      "lufs": -24.8,
+      "gain": 1.0,
+      "duration": 3.709
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Fackeln_04_Gemuetlicher",
+    "text": "Gemuetlicher",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Fackeln/04_Gemuetlicher_V1.mp3",
+      "guid": "2d9236fd64804b9da6ae7d431a1a5c45",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Fackeln/05_Gemuetlicher_V1.mp3",
+      "lufs": -22.1,
+      "gain": 0.804,
+      "duration": 3.971
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Fackeln/04_Gemuetlicher_V2.mp3",
+      "guid": "0e70724a625148d7a6b3490dd2a5de22",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Fackeln/05_Gemuetlicher_V2.mp3",
+      "lufs": -22.9,
+      "gain": 0.881,
+      "duration": 4.049
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "CraftedPickaxe",
+  "folder": "Werkbank_Spitzhacke",
+  "source": "Workshop/Upgrades/Spitzhacke gecraftet",
+  "lines": [
+   {
+    "id": "Werkbank_Spitzhacke_01_Kann_sich_sehen_lassen",
+    "text": "Kann_sich_sehen_lassen",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Spitzhacke/01_Kann_sich_sehen_lassen_V1.mp3",
+      "guid": "4e07439ab4aa457aa57ffdd2d5aa60ec",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Spitzhacke gecraftet/01_Kann_sich_sehen_lassen_V1.mp3",
+      "lufs": -20.8,
+      "gain": 0.692,
+      "duration": 2.508
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Spitzhacke/01_Kann_sich_sehen_lassen_V2.mp3",
+      "guid": "986a6c95b2b446d6a75a31cb788bc167",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Spitzhacke gecraftet/02_Kann_sich_sehen_lassen_V2.mp3",
+      "lufs": -20.7,
+      "gain": 0.684,
+      "duration": 2.586
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Spitzhacke_02_Fels_an_den_Kragen",
+    "text": "Fels_an_den_Kragen",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Spitzhacke/02_Fels_an_den_Kragen_V1.mp3",
+      "guid": "ef4bbca835db4691a3334f9ae9b6f0a1",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Spitzhacke gecraftet/03_Fels_an_den_Kragen_V1.mp3",
+      "lufs": -21.3,
+      "gain": 0.733,
+      "duration": 2.691
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Spitzhacke/02_Fels_an_den_Kragen_V2.mp3",
+      "guid": "8ed908fd75284140be22fb1e9902b53b",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Spitzhacke gecraftet/04_Fels_an_den_Kragen_V2.mp3",
+      "lufs": -22.2,
+      "gain": 0.813,
+      "duration": 2.691
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Spitzhacke_03_Liegt_gut_in_der_Hand",
+    "text": "Liegt_gut_in_der_Hand",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Spitzhacke/03_Liegt_gut_in_der_Hand_V1.mp3",
+      "guid": "e53d14bc6d5849529e9b38f92ce7d085",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Spitzhacke gecraftet/05_Liegt_gut_in_der_Hand_V1.mp3",
+      "lufs": -21.2,
+      "gain": 0.724,
+      "duration": 3.553
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Spitzhacke/03_Liegt_gut_in_der_Hand_V2.mp3",
+      "guid": "738a8a2c4ca4410bba95a4636babfcc8",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Spitzhacke gecraftet/06_Liegt_gut_in_der_Hand_V2.mp3",
+      "lufs": -20.7,
+      "gain": 0.684,
+      "duration": 3.631
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Spitzhacke_04_Ein_Stueck_tiefer",
+    "text": "Ein_Stueck_tiefer",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Spitzhacke/04_Ein_Stueck_tiefer_V1.mp3",
+      "guid": "70ca6b74577a490da93052f57501770e",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Spitzhacke gecraftet/07_Ein_Stueck_tiefer_V1.mp3",
+      "lufs": -21.1,
+      "gain": 0.716,
+      "duration": 2.691
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Spitzhacke/04_Ein_Stueck_tiefer_V2.mp3",
+      "guid": "912150c1d7114257b1438e7cccef71e6",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Spitzhacke gecraftet/08_Ein_Stueck_tiefer_V2.mp3",
+      "lufs": -21.8,
+      "gain": 0.776,
+      "duration": 2.769
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Spitzhacke_05_Selbst_gebaut",
+    "text": "Selbst_gebaut",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Spitzhacke/05_Selbst_gebaut_V1.mp3",
+      "guid": "385c287f7254468dbdde6c8c7f0f7594",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Spitzhacke gecraftet/09_Selbst_gebaut_V1.mp3",
+      "lufs": -22.8,
+      "gain": 0.871,
+      "duration": 3.474
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Spitzhacke/05_Selbst_gebaut_V2.mp3",
+      "guid": "50e5d98ab99048eebe24b50e7af72556",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Spitzhacke gecraftet/10_Selbst_gebaut_V2.mp3",
+      "lufs": -21.8,
+      "gain": 0.776,
+      "duration": 3.239
+     }
+    ]
+   },
+   {
+    "id": "Werkbank_Spitzhacke_06_Was_du_draufhast",
+    "text": "Was_du_draufhast",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Spitzhacke/06_Was_du_draufhast_V1.mp3",
+      "guid": "c7127402d38a4adba0ee53b5c77114aa",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Spitzhacke gecraftet/11_Was_du_draufhast_V1.mp3",
+      "lufs": -22.1,
+      "gain": 0.804,
+      "duration": 2.273
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Werkbank_Spitzhacke/06_Was_du_draufhast_V2.mp3",
+      "guid": "a1f9953f885347ec912b21ece637d0a7",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Spitzhacke gecraftet/12_Was_du_draufhast_V2.mp3",
+      "lufs": -22.5,
+      "gain": 0.841,
+      "duration": 2.429
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "UpgradeEnergy",
+  "folder": "Upgrade_Energie",
+  "source": "Workshop/Upgrades/Energie Upgrade",
+  "lines": [
+   {
+    "id": "Upgrade_Energie_01_Laenger_durchhalten",
+    "text": "Laenger_durchhalten",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Energie/01_Laenger_durchhalten_V1.mp3",
+      "guid": "c0caca46401549959b4ee6f04cb5f974",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Energie Upgrade/01_Laenger_durchhalten_V1.mp3",
+      "lufs": -20.5,
+      "gain": 0.668,
+      "duration": 2.926
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Energie/01_Laenger_durchhalten_V2.mp3",
+      "guid": "81cdbd1d48f5455f8f56e2ffd7382d5e",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Energie Upgrade/02_Laenger_durchhalten_V2.mp3",
+      "lufs": -21.5,
+      "gain": 0.75,
+      "duration": 3.004
+     }
+    ]
+   },
+   {
+    "id": "Upgrade_Energie_02_Laengere_Touren",
+    "text": "Laengere_Touren",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Energie/02_Laengere_Touren_V1.mp3",
+      "guid": "1a1171bbeddb49d3abea1272d5d909ab",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Energie Upgrade/03_Laengere_Touren_V1.mp3",
+      "lufs": -19.9,
+      "gain": 0.624,
+      "duration": 2.429
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Energie/02_Laengere_Touren_V2.mp3",
+      "guid": "fd52fc29905b4d57aee7b88e64d6cd80",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Energie Upgrade/04_Laengere_Touren_V2.mp3",
+      "lufs": -19.6,
+      "gain": 0.603,
+      "duration": 2.351
+     }
+    ]
+   },
+   {
+    "id": "Upgrade_Energie_03_Energie_reicht_laenger",
+    "text": "Energie_reicht_laenger",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Energie/03_Energie_reicht_laenger_V1.mp3",
+      "guid": "dfdad73b6930413bb839eb07dcc3492e",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Energie Upgrade/05_Energie_reicht_laenger_V1.mp3",
+      "lufs": -20.5,
+      "gain": 0.668,
+      "duration": 3.082
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Energie/03_Energie_reicht_laenger_V2.mp3",
+      "guid": "8521d0d0993f456cbc675829daa8014f",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Energie Upgrade/06_Energie_reicht_laenger_V2.mp3",
+      "lufs": -20.7,
+      "gain": 0.684,
+      "duration": 3.239
+     }
+    ]
+   },
+   {
+    "id": "Upgrade_Energie_04_Mehr_Schlaege",
+    "text": "Mehr_Schlaege",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Energie/04_Mehr_Schlaege_V1.mp3",
+      "guid": "fa01f71e737244e69f085674370481fb",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Energie Upgrade/07_Mehr_Schlaege_V1.mp3",
+      "lufs": -20.7,
+      "gain": 0.684,
+      "duration": 2.691
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Energie/04_Mehr_Schlaege_V2.mp3",
+      "guid": "e53f33bc231043cbbed386c36b94c817",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Energie Upgrade/08_Mehr_Schlaege_V2.mp3",
+      "lufs": -20.3,
+      "gain": 0.653,
+      "duration": 2.586
+     }
+    ]
+   },
+   {
+    "id": "Upgrade_Energie_05_Mehr_Ausdauer",
+    "text": "Mehr_Ausdauer",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Energie/05_Mehr_Ausdauer_V1.mp3",
+      "guid": "4f9e1e0c3e9b4361bfbc8971b4d3a2da",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Energie Upgrade/09_Mehr_Ausdauer_V1.mp3",
+      "lufs": -20.9,
+      "gain": 0.7,
+      "duration": 3.082
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Energie/05_Mehr_Ausdauer_V2.mp3",
+      "guid": "056e05015a8342a0b286bb183716b37e",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Energie Upgrade/10_Mehr_Ausdauer_V2.mp3",
+      "lufs": -19.5,
+      "gain": 0.596,
+      "duration": 2.926
+     }
+    ]
+   },
+   {
+    "id": "Upgrade_Energie_06_Mehr_Zeit",
+    "text": "Mehr_Zeit",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Energie/06_Mehr_Zeit_V1.mp3",
+      "guid": "d9f2a138e01b4a4cb0c62d566a8fb2b4",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Energie Upgrade/11_Mehr_Zeit_V1.mp3",
+      "lufs": -20.3,
+      "gain": 0.653,
+      "duration": 2.926
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Energie/06_Mehr_Zeit_V2.mp3",
+      "guid": "2270d6fdd0d3474cb3a8887f0b125efd",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Energie Upgrade/12_Mehr_Zeit_V2.mp3",
+      "lufs": -21.4,
+      "gain": 0.741,
+      "duration": 3.004
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "UpgradeCarry",
+  "folder": "Upgrade_Traglast",
+  "source": "Workshop/Upgrades/Traglast Upgrade",
+  "lines": [
+   {
+    "id": "Upgrade_Traglast_01_Mehr_rein",
+    "text": "Mehr_rein",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Traglast/01_Mehr_rein_V1.mp3",
+      "guid": "8277f405a60841489e64ac426cc87a95",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Traglast Upgrade/01_Mehr_rein_V1.mp3",
+      "lufs": -20.7,
+      "gain": 0.684,
+      "duration": 2.508
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Traglast/01_Mehr_rein_V2.mp3",
+      "guid": "076612db68cd43959bd9eb66e79827ce",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Traglast Upgrade/01_Mehr_rein_V2.mp3",
+      "lufs": -22.6,
+      "gain": 0.851,
+      "duration": 2.926
+     }
+    ]
+   },
+   {
+    "id": "Upgrade_Traglast_02_Mehr_heimbringen",
+    "text": "Mehr_heimbringen",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Traglast/02_Mehr_heimbringen_V1.mp3",
+      "guid": "962c1632d78a48f1b7cd89dc4ebf6e42",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Traglast Upgrade/02_Mehr_heimbringen_V1.mp3",
+      "lufs": -20.1,
+      "gain": 0.638,
+      "duration": 2.847
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Traglast/02_Mehr_heimbringen_V2.mp3",
+      "guid": "e3611089909d46748bded7ae5098e56a",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Traglast Upgrade/02_Mehr_heimbringen_V2.mp3",
+      "lufs": -21.8,
+      "gain": 0.776,
+      "duration": 2.926
+     }
+    ]
+   },
+   {
+    "id": "Upgrade_Traglast_03_Gute_Funde",
+    "text": "Gute_Funde",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Traglast/03_Gute_Funde_V1.mp3",
+      "guid": "613d7c29b66842c9ac837674138bd679",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Traglast Upgrade/03_Gute_Funde_V1.mp3",
+      "lufs": -20.7,
+      "gain": 0.684,
+      "duration": 2.429
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Traglast/03_Gute_Funde_V2.mp3",
+      "guid": "3f99d6e95e6c48d1ae863dde71144f08",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Traglast Upgrade/03_Gute_Funde_V2.mp3",
+      "lufs": -21.0,
+      "gain": 0.708,
+      "duration": 2.429
+     }
+    ]
+   },
+   {
+    "id": "Upgrade_Traglast_04_Weniger_schwer",
+    "text": "Weniger_schwer",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Traglast/04_Weniger_schwer_V1.mp3",
+      "guid": "8395a9259f6d4fa291114e54e9f2a1b0",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Traglast Upgrade/04_Weniger_schwer_V1.mp3",
+      "lufs": -20.4,
+      "gain": 0.661,
+      "duration": 3.004
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Traglast/04_Weniger_schwer_V2.mp3",
+      "guid": "55849213a31b4eb38c88750752c33fff",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Traglast Upgrade/04_Weniger_schwer_V2.mp3",
+      "lufs": -21.3,
+      "gain": 0.733,
+      "duration": 3.082
+     }
+    ]
+   },
+   {
+    "id": "Upgrade_Traglast_05_Ausflug",
+    "text": "Ausflug",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Traglast/05_Ausflug_V1.mp3",
+      "guid": "af2d58a0e470480fab2c4f22a2c4dfb9",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Traglast Upgrade/05_Ausflug_V1.mp3",
+      "lufs": -20.1,
+      "gain": 0.638,
+      "duration": 2.926
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Traglast/05_Ausflug_V2.mp3",
+      "guid": "d76f8ed315b94db59daa28beb1f38e81",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Traglast Upgrade/05_Ausflug_V2.mp3",
+      "lufs": -21.8,
+      "gain": 0.776,
+      "duration": 3.474
+     }
+    ]
+   },
+   {
+    "id": "Upgrade_Traglast_06_Weniger_liegen_lassen",
+    "text": "Weniger_liegen_lassen",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Traglast/06_Weniger_liegen_lassen_V1.mp3",
+      "guid": "2302d50fd5ad4c818ed2e79428282370",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Traglast Upgrade/06_Weniger_liegen_lassen_V1.mp3",
+      "lufs": -19.9,
+      "gain": 0.624,
+      "duration": 2.847
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Upgrade_Traglast/06_Weniger_liegen_lassen_V2.mp3",
+      "guid": "9acc17dc274b4fea952c4bf90ce062b0",
+      "source": "Assets/ZZZ New Assets/Speech/Workshop/Upgrades/Traglast Upgrade/06_Weniger_liegen_lassen_V2.mp3",
+      "lufs": -19.6,
+      "gain": 0.603,
+      "duration": 3.082
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "event": "NewWorld",
+  "folder": "Neue_Welt",
+  "source": "neue Welt",
+  "lines": [
+   {
+    "id": "Neue_Welt_01_Neue_Welt_A",
+    "text": "Neue_Welt_A",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Neue_Welt/01_Neue_Welt_A_V1.wav",
+      "guid": "5b97e3edef8f4f9f90c718f9f4936b0d",
+      "source": "Assets/ZZZ New Assets/Speech/neue Welt/ElevenLabs_2026-10-04T12_25_03__s50_v4.wav",
+      "lufs": -20.0,
+      "gain": 0.631,
+      "duration": 2.769
+     },
+     {
+      "path": "Assets/AC Audio/Voice/Neue_Welt/01_Neue_Welt_A_V2.wav",
+      "guid": "180ff0cc224344f1b981f0b0dc2fb085",
+      "source": "Assets/ZZZ New Assets/Speech/neue Welt/ElevenLabs_2026-10-04T12_25_03__s50_v4 (1).wav",
+      "lufs": -19.7,
+      "gain": 0.61,
+      "duration": 2.691
+     }
+    ]
+   },
+   {
+    "id": "Neue_Welt_02_Neue_Welt_B",
+    "text": "Neue_Welt_B",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Neue_Welt/02_Neue_Welt_B_V1.wav",
+      "guid": "1a483dd7272541f3ab1d8d289cedb6f5",
+      "source": "Assets/ZZZ New Assets/Speech/neue Welt/ElevenLabs_2026-10-04T12_25_48__s50_v4.wav",
+      "lufs": -20.2,
+      "gain": 0.646,
+      "duration": 2.273
+     }
+    ]
+   },
+   {
+    "id": "Neue_Welt_03_Neue_Welt_C",
+    "text": "Neue_Welt_C",
+    "takes": [
+     {
+      "path": "Assets/AC Audio/Voice/Neue_Welt/03_Neue_Welt_C_V1.wav",
+      "guid": "4cc65fead7274702998642a3af57f601",
+      "source": "Assets/ZZZ New Assets/Speech/neue Welt/ElevenLabs_2026-10-04T12_25_50__s50_v4.wav",
+      "lufs": -20.1,
+      "gain": 0.638,
+      "duration": 2.429
+     }
+    ]
+   }
+  ]
+ }
+]

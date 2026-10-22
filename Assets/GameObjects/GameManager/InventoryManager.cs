@@ -53,6 +53,9 @@ public class InventoryManager : MonoBehaviour
     public float MovementWeightFactor => GameplayTestSettings.NoWeight
         ? 1f : CalculateMovementWeightFactor(TotalWeight, CarryingCapacity);
 
+    public static int CarryStage(double weight, float capacity) =>
+        capacity <= 0f ? 0 : weight > 2d * capacity ? 2 : weight > capacity ? 1 : 0;
+
     public static float CalculateMovementWeightFactor(double totalWeight, float carryingCapacity)
     {
         double overload = Math.Max(0d, totalWeight / Math.Max(0.01f, carryingCapacity) - 1d);
@@ -190,7 +193,13 @@ public class InventoryManager : MonoBehaviour
         return AddInternal(item, amount, enforceWeightLimit: false);
     }
 
-    bool AddInternal(ItemSO item, int amount, bool enforceWeightLimit)
+    // Moving items out of the storage hut is a transfer, not a find, so it skips the item-gained feed.
+    public bool AddTransferred(ItemSO item, int amount = 1)
+    {
+        return AddInternal(item, amount, enforceWeightLimit: true, announce: false);
+    }
+
+    bool AddInternal(ItemSO item, int amount, bool enforceWeightLimit, bool announce = true)
     {
         if (item && item.category == ItemCategory.Powerup)
             return amount == 1 && UnlockPowerup(item);
@@ -201,7 +210,7 @@ public class InventoryManager : MonoBehaviour
         _counts[item] = _counts.TryGetValue(item, out var cur) ? cur + amount : amount;
         OnItemChanged?.Invoke(item, _counts[item]);
         OnInventoryChanged?.Invoke();
-        OnItemGained?.Invoke(item, amount);
+        if (announce) OnItemGained?.Invoke(item, amount);
         return true;
     }
 
@@ -229,9 +238,10 @@ public class InventoryManager : MonoBehaviour
         item.category == ItemCategory.Powerup && _unlockedPowerups.Contains(item.item);
 
     // Apply a crafting transaction completely before notifying inventory listeners.
+    // The costs may be empty when the workbench takes every material from the storage hut.
     public bool TryExchange(IReadOnlyDictionary<ItemSO, int> costs, ItemSO output, int amount)
     {
-        if (!output || amount <= 0 || costs == null || costs.Count == 0) return false;
+        if (!output || amount <= 0 || costs == null) return false;
         bool outputIsPowerup = output.category == ItemCategory.Powerup;
         if (outputIsPowerup && (amount != 1 || IsPowerupUnlocked(output))) return false;
         foreach (var cost in costs)

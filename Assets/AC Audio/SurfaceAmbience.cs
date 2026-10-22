@@ -31,8 +31,26 @@ public sealed class SurfaceAmbience : MonoBehaviour
         }
     }
 
+    void OnEnable() => GamePause.Changed += PauseChanged;
+
+    // The DSP clock runs on while the listener is paused: hold the queued loop segment and move the schedule.
+    void PauseChanged(bool paused)
+    {
+        if (!running) return;
+        if (paused)
+        {
+            if (transitioning) return;
+            if (AudioSettings.dspTime >= nextStart) { transitioning = true; transitionStart = nextStart; }
+            else sources[1 - current].Stop();
+            return;
+        }
+        nextStart += GamePause.PausedDspSeconds; transitionStart += GamePause.PausedDspSeconds;
+        if (!transitioning) sources[1 - current].PlayScheduled(nextStart);
+    }
+
     void Update()
     {
+        if (GamePause.IsPaused) return;
         float target = clip ? 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(
             fadeStartDepth, Mathf.Max(fadeStartDepth + 1, fadeEndDepth), GetDepth())) : 0f;
         gain = target;
@@ -89,7 +107,7 @@ public sealed class SurfaceAmbience : MonoBehaviour
         running = transitioning = false;
     }
 
-    void OnDisable() { StopPlayback(); gain = 0f; }
+    void OnDisable() { GamePause.Changed -= PauseChanged; StopPlayback(); gain = 0f; }
 
     void OnDestroy()
     {
