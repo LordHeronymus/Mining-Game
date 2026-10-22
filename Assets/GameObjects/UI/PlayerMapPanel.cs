@@ -50,12 +50,14 @@ public sealed class PlayerMapPanel : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => Create();
+    static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => CreateFor(scene.name);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void Create()
+    static void Create() => CreateFor(SceneManager.GetActiveScene().name);
+
+    internal static void CreateFor(string sceneName)
     {
-        if (FindFirstObjectByType<PlayerMapPanel>(FindObjectsInactive.Include)) return;
+        if (sceneName == RunNavigation.MenuScene || FindFirstObjectByType<PlayerMapPanel>(FindObjectsInactive.Include)) return;
         var canvas = GameObject.Find("ScreenCanvas");
         if (!canvas || !canvas.GetComponent<Canvas>()) return;
         var root = new GameObject("PlayerMapPanel", typeof(RectTransform));
@@ -234,12 +236,18 @@ public sealed class PlayerMapPanel : MonoBehaviour
         }
         if (!Input.GetMouseButton(0)) dragging = false;
         if (!dragging) return;
-        Vector3 delta = Input.mousePosition - lastPointer;
+        Vector2 cells = DragCells(viewport, uiCamera, lastPointer, Input.mousePosition, cellSize);
         lastPointer = Input.mousePosition;
-        float scale = Mathf.Max(.01f, layout.localScale.x);
-        centerX -= delta.x / (cellSize * scale);
-        centerDepth += delta.y / (cellSize * scale);
+        centerX -= cells.x;
+        centerDepth += cells.y;
         ClampView();
+    }
+
+    internal static Vector2 DragCells(RectTransform viewport, Camera uiCamera, Vector2 from, Vector2 to, float cellSize)
+    {
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(viewport, from, uiCamera, out var start) ||
+            !RectTransformUtility.ScreenPointToLocalPointInRectangle(viewport, to, uiCamera, out var end)) return Vector2.zero;
+        return (end - start) / Mathf.Max(.01f, cellSize);
     }
 
     void ClampView()
