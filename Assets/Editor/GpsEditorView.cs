@@ -16,6 +16,8 @@ public sealed partial class GpsEditorView
     public void Draw(string tab)
     {
         if(tab=="Audio") { DrawAudioCatalog(); if(!Foldout("Audio/Advanced","Ablauf und Mischung"))return; }
+        // Each hierarchy level (Ablauf und Mischung → section → group → value) is indented one step.
+        using (new EditorGUI.IndentLevelScope(tab=="Audio" ? 1 : 0))
         foreach (string title in GpsSchema.Sections.Where(section => section.tab == tab).Select(section => section.title).Distinct())
         {
             if(tab=="Audio" && (title=="Einzelclips" || title=="Gesamtpegel"))continue;
@@ -23,6 +25,7 @@ public sealed partial class GpsEditorView
             using (new EditorGUILayout.VerticalScope(Theme.Card))
             {
                 if (!Foldout(tab + "/" + title, title)) continue;
+                using var sectionIndent = new EditorGUI.IndentLevelScope();
                 var fields = GpsSchema.SectionFields(tab, title).ToArray();
                 if (title == "Item-Icons")
                 {
@@ -38,7 +41,9 @@ public sealed partial class GpsEditorView
                 foreach (var group in fields.GroupBy(pair => pair.record.key))
                 {
                     var record = group.First().record;
-                    if (!string.IsNullOrEmpty(record.name) && fields.Select(pair => pair.record.key).Distinct().Count() > 1 && group.Count() > 1 && !Foldout(tab + "/" + title + "/" + record.key, record.name)) continue;
+                    bool grouped = !string.IsNullOrEmpty(record.name) && fields.Select(pair => pair.record.key).Distinct().Count() > 1 && group.Count() > 1;
+                    if (grouped && !Foldout(tab + "/" + title + "/" + record.key, record.name)) continue;
+                    using (new EditorGUI.IndentLevelScope(grouped ? 1 : 0))
                     foreach (var pair in group)
                     {
                         var root = GpsSettings.GetValue(record.key, pair.field.name)?.Copy(); if (root == null) continue;
