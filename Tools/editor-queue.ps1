@@ -312,6 +312,20 @@ function Get-EditorState([double]$recentMinutes = $StaleMinutes) {
     return @{ busy = $false; text = 'Editor nicht offen, kein Aktivitaetssignal' }
 }
 
+# Stand gegenueber origin/main laut Assets/Editor/MainAutoUpdate.cs (nur im Ordner des Benutzers), sonst $null.
+# Nur bei offenem Editor mit frischem Signal: ein geschlossener Editor prueft nicht mehr.
+function Get-MainState {
+    if (-not (Test-Path -LiteralPath $activityFile)) { return $null }
+    try { $act = [IO.File]::ReadAllText($activityFile, $utf8) | ConvertFrom-Json } catch { return $null }
+    $state = Get-Prop $act 'mainState'
+    if (-not $state -or (Get-Prop $act 'closed') -or (AgeMinutes (Get-Prop $act 'updated')) -gt $FreshMinutes) { return $null }
+    $behind = Get-Prop $act 'mainBehind'
+    return [ordered]@{
+        state = $state; text = (Get-Prop $act 'mainText'); behind = $(if ($null -eq $behind) { -1 } else { [int]$behind })
+        checked = (Get-Prop $act 'mainChecked'); current = ($state -eq 'aktuell')
+    }
+}
+
 # Raeumt verwaiste Eintraege ab und setzt den Startzeitpunkt des obersten Eintrags.
 function Update-Queue($list) {
     $now = Now
@@ -382,6 +396,8 @@ function Show-Queue($list) {
     $ed = Get-EditorState
     Write-Output "Editor-Warteschlange '$Project' ($queueFile)"
     Write-Output "Editor: $($ed.text)$(if ($ed.busy) { ' [in Benutzung]' })"
+    $main = Get-MainState
+    if ($main) { Write-Output "Stand: $($main.text) (geprueft $(FormatAge (AgeMinutes $main.checked)))" }
     if ($list.Count -eq 0) { Write-Output '  (leer - Editor frei)'; return }
     for ($i = 0; $i -lt $list.Count; $i++) {
         $e = $list[$i]
@@ -614,6 +630,9 @@ switch ($Command) {
         if ($Json) {
             # Maschinenlesbar fuer den lokalen Dienst (Tools/editor-queue-server.ps1) und PrivOrg.
             $ed = Get-EditorState
+            # Stand gegenueber main auch im Editortext, damit das PrivOrg-Modul ihn ohne eigene Anpassung zeigt.
+            $main = Get-MainState
+            $edText = if ($main) { "$($ed.text) | Stand: $($main.text)" } else { $ed.text }
             $pos = 0
             $rows = @(foreach ($e in $list) {
                     $pos++
@@ -626,7 +645,8 @@ switch ($Command) {
             $obj = [ordered]@{
                 project = $Project; now = (Iso (Now)); staleMinutes = $StaleMinutes; userStaleMinutes = $UserStaleMinutes
                 releaseMinutes = $ReleaseMinutes; finalMinutes = $FinalMinutes
-                editor = [ordered]@{ busy = [bool]$ed.busy; text = $ed.text }
+                editor = [ordered]@{ busy = [bool]$ed.busy; text = $edText }
+                main = $main
                 entries = $rows
             }
             ConvertTo-Json -InputObject $obj -Depth 5 -Compress
