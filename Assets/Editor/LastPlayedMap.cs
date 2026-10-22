@@ -30,14 +30,26 @@ public static class LastPlayedMap
                 StripPreviewForPlay();
             }
             if (state == PlayModeStateChange.ExitingPlayMode) Capture();
-            if (state == PlayModeStateChange.EnteredEditMode) Restore();
+            if (state == PlayModeStateChange.EnteredEditMode) { ForgetDestroyedMaps(); Restore(); }
         };
     }
 
     static void StoreInitialSnapshot(MapGenerator map, MapGenerator.MapGenerationSnapshot snapshot)
     {
         if (!Application.isPlaying || !map || snapshot == null || string.IsNullOrEmpty(map.gameObject.scene.path)) return;
+        ForgetDestroyedMaps();
         initialSnapshots[map] = snapshot;
+    }
+
+    // Every new world reloads the scene, so earlier maps are destroyed. CaptureInitialNow never writes their
+    // snapshot; drop it instead of holding the complete tile arrays until the next Play start.
+    static void ForgetDestroyedMaps()
+    {
+        scheduledInitialCaptures.RemoveWhere(map => !map);
+        List<MapGenerator> destroyed = null;
+        foreach (var map in initialSnapshots.Keys)
+            if (!map) (destroyed ??= new List<MapGenerator>()).Add(map);
+        if (destroyed != null) foreach (var map in destroyed) initialSnapshots.Remove(map);
     }
 
     static void CaptureInitial(MapGenerator map)
