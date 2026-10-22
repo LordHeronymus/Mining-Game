@@ -8,12 +8,18 @@ using UnityEngine;
 // Die Testbank der Chats ("<Projekt> 2", Docs/Editor-Warteschlange.md) laeuft stumm, damit Tests den
 // Benutzer nicht stoeren. Ton nur fuer Audio-Tests: Tools/editor-bench.sh audio-on (oder Menue
 // Tools/Testbank/Ton an) legt <Git Repos>/EditorQueue/<Testbank>.audio-on an; checkout, release und
-// audio-off entfernen die Datei wieder. Der Editor des Benutzers ist davon nicht betroffen.
+// audio-off entfernen die Datei wieder. Der Editor des Benutzers ist davon nicht betroffen: Unity speichert
+// "Mute Audio" als gemeinsame EditorPrefs-Einstellung aller Editoren (AudioMasterMute), deshalb schaltet die
+// Testbank nur ihren laufenden Editor stumm und stellt den gespeicherten Wert sofort wieder her.
 [InitializeOnLoad]
 public static class TestBenchAudioMute
 {
     const double CheckSeconds = 1;
     const string MenuRoot = "Tools/Testbank/";
+    const string SharedMutePref = "AudioMasterMute";
+    const double RestoreSeconds = 5;
+    static bool sharedBefore;
+    static double restoreUntil = double.NegativeInfinity;
 
     static readonly bool isBench;
     static readonly string markerPath;
@@ -50,7 +56,15 @@ public static class TestBenchAudioMute
     static void Apply()
     {
         bool mute = !AudioAllowed;
-        if (EditorUtility.audioMasterMute != mute) EditorUtility.audioMasterMute = mute;
+        if (EditorUtility.audioMasterMute != mute)
+        {
+            // Unity schreibt die gemeinsame Einstellung verzoegert; einige Sekunden lang den vorherigen Wert halten.
+            if (EditorApplication.timeSinceStartup >= restoreUntil) sharedBefore = EditorPrefs.GetBool(SharedMutePref, false);
+            EditorUtility.audioMasterMute = mute;
+            restoreUntil = EditorApplication.timeSinceStartup + RestoreSeconds;
+        }
+        if (EditorApplication.timeSinceStartup < restoreUntil && EditorPrefs.GetBool(SharedMutePref, false) != sharedBefore)
+            EditorPrefs.SetBool(SharedMutePref, sharedBefore);
     }
 
     [MenuItem(MenuRoot + "Ton an (Audio-Test)")]
