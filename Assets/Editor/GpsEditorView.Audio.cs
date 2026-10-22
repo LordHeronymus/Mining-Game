@@ -34,6 +34,7 @@ public sealed partial class GpsEditorView
             {
                 bool open=Foldout("Audio/Catalog/"+category,category+" ("+entries.Length+")");
                 if(!open && string.IsNullOrWhiteSpace(audioSearch))continue;
+                using var clipIndent=new EditorGUI.IndentLevelScope();
                 foreach(var entry in entries)
                 {
                     string key=entry.children.Find(v=>v.name=="clip").text;
