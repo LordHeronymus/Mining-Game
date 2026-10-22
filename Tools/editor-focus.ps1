@@ -295,8 +295,19 @@ public static class BenchFocusGuard {
     }
 
     // Aktiviert ein Fenster aus diesem Hintergrundprozess. Windows erlaubt das nicht jedem Prozess, deshalb in Stufen.
+    // Stufen: direkt; kurzer Alt-Tastendruck (gibt Vordergrundrechte, die unbelegte Taste dazwischen verhindert das Alt-Menue);
+    // zuletzt AttachThreadInput an den Unity-Thread (kann warten, solange Unity beschaeftigt ist, z. B. beim Play-Start).
     static string Restore(IntPtr t) {
+        var sw = Stopwatch.StartNew();
         if (SetForegroundWindow(t) && GetForegroundWindow() == t) return "direkt";
+        long direct = sw.ElapsedMilliseconds;
+        keybd_event(VK_MENU, 0, KEYEVENTF_EXTENDEDKEY, UIntPtr.Zero);
+        keybd_event(VK_NOMENU, 0, 0, UIntPtr.Zero);
+        keybd_event(VK_NOMENU, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+        keybd_event(VK_MENU, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, UIntPtr.Zero);
+        SetForegroundWindow(t);
+        if (GetForegroundWindow() == t) return string.Format("Alt-Taste, direkt {0} ms abgelehnt", direct);
+        long alt = sw.ElapsedMilliseconds;
         uint me = GetCurrentThreadId(), dummy;
         uint fgThread = GetWindowThreadProcessId(GetForegroundWindow(), out dummy);
         uint tThread = GetWindowThreadProcessId(t, out dummy);
@@ -304,16 +315,8 @@ public static class BenchFocusGuard {
         bool a2 = tThread != 0 && tThread != me && tThread != fgThread && AttachThreadInput(me, tThread, true);
         try { BringWindowToTop(t); SetForegroundWindow(t); }
         finally { if (a1) AttachThreadInput(me, fgThread, false); if (a2) AttachThreadInput(me, tThread, false); }
-        if (GetForegroundWindow() == t) return "AttachThreadInput";
-        // Letzte Stufe: kurzer Alt-Tastendruck gibt Vordergrundrechte; die unbelegte Taste dazwischen verhindert das Alt-Menue.
-        keybd_event(VK_MENU, 0, KEYEVENTF_EXTENDEDKEY, UIntPtr.Zero);
-        keybd_event(VK_NOMENU, 0, 0, UIntPtr.Zero);
-        keybd_event(VK_NOMENU, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
-        SetForegroundWindow(t);
-        keybd_event(VK_MENU, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, UIntPtr.Zero);
-        if (GetForegroundWindow() == t) return "Alt-Taste";
-        Thread.Sleep(30);
-        return GetForegroundWindow() == t ? "Alt-Taste" : null;
+        if (GetForegroundWindow() == t) return string.Format("AttachThreadInput, direkt {0} ms / Alt {1} ms abgelehnt", direct, alt - direct);
+        return null;
     }
 
     static IntPtr PickTarget(uint bench) {
@@ -358,7 +361,7 @@ public static class BenchFocusGuard {
     static string Describe(IntPtr h, uint pid) {
         string t = Caption(h);
         if (t.Length > 60) t = t.Substring(0, 60) + "...";
-        return string.Format("'{0}' ({1})", t, ProcName(pid));
+        return string.Format("'{0}' ({1} {2})", t, ProcName(pid), pid);
     }
 
     static string DesktopNote(IntPtr target) {
