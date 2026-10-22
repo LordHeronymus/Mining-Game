@@ -40,6 +40,12 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
     float rowY;
     bool building, committing, pausing;
     float previousScale = 1f;
+#if UNITY_EDITOR
+    // Eigene Werte im Benutzerordner (GpsUserOverrides): Anzahl, Zurücksetzen (zweimal klicken) und Vorschlag als Standard.
+    TextMeshProUGUI overridesLabel;
+    string overrideRoots = "";
+    float resetArmedUntil = -1;
+#endif
     static readonly Color Panel = new(.105f, .115f, .13f, 1f), Control = new(.17f, .18f, .2f, 1f), Accent = new(.78f, .63f, .35f, 1f);
     static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
 
@@ -87,7 +93,13 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         if (!RunNavigation.IsTransitioning && !LoadingProgress.Active) Time.timeScale = previousScale;
         GamePause.Set(this, false);
     }
-    void OnDestroy() { EndPause(); GameplayInputBlocker.SetBlocked(this, false);GpsSettings.Changed -= ConfigurationChanged; GpsSettings.Saved -= Refresh; }
+    void OnDestroy()
+    {
+        EndPause(); GameplayInputBlocker.SetBlocked(this, false);GpsSettings.Changed -= ConfigurationChanged; GpsSettings.Saved -= Refresh;
+#if UNITY_EDITOR
+        GpsUserOverrides.Changed -= OverridesChanged;
+#endif
+    }
     void Build()
     {
         font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF") ?? TMP_Settings.defaultFontAsset;
@@ -97,6 +109,17 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         card.anchorMin = card.anchorMax = card.pivot = new Vector2(.5f, .5f); card.anchoredPosition = Vector2.zero;
         card.gameObject.AddComponent<Image>().color = Panel;
         title = Label(card, "Debug Settings", new Vector2(28, -25), new Vector2(650, 38), 28);
+#if UNITY_EDITOR
+        if (GpsUserOverrides.Active)
+        {
+            title.rectTransform.sizeDelta = new Vector2(300, 38);
+            overridesLabel = Label(card, "", new Vector2(340, -26), new Vector2(560, 38), 20);
+            Button(card, "Zurücksetzen", new Vector2(910, -26), new Vector2(200, 38), ResetOverrides);
+            Button(card, "Als Standard vorschlagen", new Vector2(1120, -26), new Vector2(320, 38), () => GpsUserOverrides.Propose?.Invoke());
+            overrideRoots = OverrideRoots();
+            GpsUserOverrides.Changed += OverridesChanged;
+        }
+#endif
         Button(card, "Speichern", new Vector2(1450, -26), new Vector2(145, 38), Save);
         Button(card, "Schließen", new Vector2(1600, -26), new Vector2(145, 38), Close);
         var tabs = TabLabels;
@@ -140,6 +163,15 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         title.text = "Debug Settings" + (GpsSettings.HasUnsavedChanges ? " *" : "");
         var group = card.GetComponent<CanvasGroup>(); if (!group) group=card.gameObject.AddComponent<CanvasGroup>();
         group.alpha = GpsSettings.Preferences.panelElementAlpha;
+#if UNITY_EDITOR
+        if (overridesLabel)
+        {
+            int count = GpsUserOverrides.Count;
+            overridesLabel.text = count == 0 ? "Keine eigenen Werte" : count + (count == 1 ? " eigener Wert" : " eigene Werte") + " (nur lokal)";
+            overridesLabel.color = count == 0 ? new Color(.6f, .62f, .65f) : Accent;
+        }
+        if (!string.IsNullOrEmpty(GpsUserOverrides.LastMessage)) { status.text = GpsUserOverrides.LastMessage; GpsUserOverrides.LastMessage = null; }
+#endif
         if (building) return;
         foreach (var refresh in refreshValues) refresh();
     }
@@ -148,6 +180,29 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         if (!committing && !building && IsOpen) { float position=scroll.verticalNormalizedPosition; BuildPage(); scroll.verticalNormalizedPosition=position; }
         Refresh();
     }
+#if UNITY_EDITOR
+    static string OverrideRoots() => string.Join("\n", GpsUserOverrides.OverriddenRoots().Select(root => root.record + "/" + root.field));
+    // Neu bauen nur, wenn ein Feld eigen wird oder wieder Standard ist, damit laufende Eingaben nicht unterbrochen werden.
+    void OverridesChanged()
+    {
+        string roots = OverrideRoots();
+        if (roots != overrideRoots && !building && IsOpen) { overrideRoots = roots; float position=scroll.verticalNormalizedPosition; BuildPage(); scroll.verticalNormalizedPosition=position; }
+        overrideRoots = roots; Refresh();
+    }
+    void ResetOverrides()
+    {
+        EventSystem.current?.SetSelectedGameObject(null);
+        var fields = GpsUserOverrides.OverriddenRoots().ToList();
+        if (fields.Count == 0) { status.text = "Keine eigenen Werte."; return; }
+        if (Time.realtimeSinceStartup > resetArmedUntil)
+        { resetArmedUntil = Time.realtimeSinceStartup + 4; status.text = "Nochmals klicken: " + fields.Count + " Felder auf die Standardwerte von main zurücksetzen."; return; }
+        resetArmedUntil = -1;
+        status.text = GpsSettings.ResetToDefaults(fields, out string error) ? "Eigene Werte auf Standard zurückgesetzt (vorherige Datei: GpsOverrides.json.bak)." : error;
+    }
+    static bool Own(string record, string field) => GpsUserOverrides.Active && GpsUserOverrides.IsOverridden(record, field);
+    void ResetButton(string record, string field, Vector2 position) => Button(content, "×", position, new Vector2(50, 30), () =>
+    { status.text = GpsSettings.ResetToDefaults(new[] { (record, field) }, out string error) ? "Auf Standard zurückgesetzt." : error; });
+#endif
     void BuildPage()
     {
         if (!content || building) return;
@@ -224,10 +279,10 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
     // One step per hierarchy level (section → group → value → nested list), wide enough to read the nesting at a glance.
     const float IndentStep = 32;
     static float Indent(int level) => level * IndentStep;
-    bool Header(string key, string label, int indent)
+    bool Header(string key, string label, int indent, float reserve = 0)
     {
         bool open = expanded.Contains(key);
-        Button(content, (open ? "− " : "+ ") + label, new Vector2(Indent(indent), -rowY), new Vector2(1690 - Indent(indent), 32), () =>
+        Button(content, (open ? "− " : "+ ") + label, new Vector2(Indent(indent), -rowY), new Vector2(1690 - Indent(indent) - reserve, 32), () =>
         { if (!expanded.Add(key)) expanded.Remove(key); float position = scroll.verticalNormalizedPosition; BuildPage(); scroll.verticalNormalizedPosition = position; });
         rowY += 40; return open;
     }
@@ -265,9 +320,16 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
             }
             return;
         }
+        bool own = false;
+#if UNITY_EDITOR
+        own = node == root && Own(record, root.name);
+#endif
         if (node.kind == GpsValueKind.Object || node.kind == GpsValueKind.Array)
         {
-            if (!Header(path, label, indent)) return;
+#if UNITY_EDITOR
+            if (own) ResetButton(record, root.name, new Vector2(1640, -rowY));
+#endif
+            if (!Header(path, own ? label + " (eigen)" : label, indent, own ? 56 : 0)) return;
             Type type = GpsCodec.ResolveType(node.type);
             for (int i = 0; i < node.children.Count; i++)
             {
@@ -298,7 +360,12 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
             return;
         }
         float x = 20 + Indent(indent), inputX = 650;
-        Label(content, label, new Vector2(x, -rowY), new Vector2(inputX - x - 20, 32), 21);
+#if UNITY_EDITOR
+        // Knopf vor dem Label anlegen: Checks suchen das Eingabefeld als nächstes Element nach dem Label.
+        if (own) ResetButton(record, root.name, new Vector2(inputX - 62, -rowY));
+#endif
+        var labelText = Label(content, own ? label + " (eigen)" : label, new Vector2(x, -rowY), new Vector2(inputX - x - (own ? 72 : 20), 32), 21);
+        if (own) labelText.color = Accent;
         switch (node.kind)
         {
             case GpsValueKind.Boolean:

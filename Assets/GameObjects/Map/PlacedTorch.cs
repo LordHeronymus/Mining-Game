@@ -127,7 +127,16 @@ public sealed class PlacedTorch : MonoBehaviour
         if (!InventoryManager.Instance.TryRemove(item)) return false;
         CreateAt(map, item, target);
         AudioManager.Instance?.PlayTorchSound(true);
+        if (item.item == global::Item.Torche) MetaProgressionRuntime.RecordPlaced(MetaProgressionRuntime.TorchesPlaced, CountTorches(map));
         return true;
+    }
+
+    // Lava lamps are excluded: the challenge counts torches standing in the map at once (high-water mark).
+    public static int CountTorches(MapGenerator owner)
+    {
+        int count = 0;
+        foreach (var torch in active) if (torch && torch.map == owner && !torch.IsLavaLamp) count++;
+        return count;
     }
 
     public static void CreateAt(MapGenerator map, ItemSO item, Vector3Int target)

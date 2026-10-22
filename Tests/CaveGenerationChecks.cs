@@ -40,7 +40,7 @@ public static class CaveGenerationChecks
                 Check(first[index] == repeated[index], "Cave generation is not seed-stable.");
                 if (first[index]) carved++;
                 if (first[index] != changed[index]) changedCells++;
-                // Caves may reach the side borders on purpose; only depth and the reserved area stay protected.
+                // Tunnels may reach the side borders (CaveGenerator ignores the legacy border padding).
                 if (y < settings.minimumDepth || Reserved(x, y))
                     Check(!first[index], "Cave generation entered a protected area.");
             }
@@ -88,7 +88,8 @@ public static class CaveGenerationChecks
             generatedMap.useOreSettings = sceneMap.useOreSettings;
             generatedMap.oreSettings = sceneMap.oreSettings;
             generatedMap.GenerateMap(seed);
-            // GenerateMap applies the GPS generation settings (size, caves), so compare against the map it built.
+            // GenerateMap applies the GPS generation settings (map size, caves) first, so compare against
+            // the size and cave settings the map was actually generated with.
             int mapWidth = generatedMap.mapWidth, mapHeight = generatedMap.mapHeight;
             var generatedChamber = generatedMap.AltarChamber ? generatedMap.AltarChamber.Layout : default;
             var generatedMask = generatedMap.CreateCaveMask(seed, mapWidth, mapHeight, generatedChamber);

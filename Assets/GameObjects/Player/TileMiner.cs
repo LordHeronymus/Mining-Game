@@ -699,7 +699,7 @@ public class TileMiner : MonoBehaviour
             (!inventory || !inventory.CanAdd(block.itemDrop, amount))) return false;
         if (block && block.itemDrop && amount > 0) inventory.Add(block.itemDrop, amount);
         MetaProgressionRuntime.RecordMining(cell, block && block.itemDrop ? block.itemDrop : null, amount, artifact,
-            block, map ? map.layers : null, ore != null);
+            block, map ? map.layers : null, ore != null, explosive, map);
         int points = BlockRegistry.GetPoints(block, ore);
         Vector2 minedPosition = tilemap.GetCellCenterWorld(cell);
         OnBlockMined?.Invoke(minedPosition, points);

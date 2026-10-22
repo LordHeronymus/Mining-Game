@@ -95,7 +95,7 @@ public sealed class ProgressionTimelineRunner:MonoBehaviour
         Check(MetaProgression.GetRank("money")==1 && MetaProgression.AvailablePowerPoints==points-1,"Real spend updates persisted upgrade");
         Find(panel,"Back").onClick.Invoke();yield return null;Check(panel.ShowingOverview,"Detail Back returns to overview");
         Find(panel,"Open Herausforderungen").onClick.Invoke();yield return null;
-        Check(panel.GetComponentsInChildren<TMP_Text>().Any(t=>t.text=="Meilensteine"),"Challenges remain reachable");Find(panel,"Challenges Back").onClick.Invoke();yield return null;
+        Check(panel.GetComponentsInChildren<TMP_Text>().Any(t=>t.text=="Monatlich"),"Challenges remain reachable");Find(panel,"Challenges Back").onClick.Invoke();yield return null;
         Find(panel,"Open Baupläne").onClick.Invoke();yield return null;Check(panel.GetComponentsInChildren<TMP_Text>().Any(t=>t.text=="Im Fundpool"),"Catalog distinguishes find-pool unlocks");
         Find(panel,"Blueprints Back").onClick.Invoke();yield return null;
         // Fit the actual modal into three root sizes without modifying the game camera.

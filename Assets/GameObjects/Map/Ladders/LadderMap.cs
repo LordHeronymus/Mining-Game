@@ -9,7 +9,10 @@ public sealed class LadderMap : MonoBehaviour
     public Material ladderMaterial;
     [SerializeField] Tilemap tiles;
     MapGenerator map;
+    int placed = -1;
     public Tilemap Tiles => tiles;
+    // Segments in the map (-1 = unknown). Save restores write the tilemap directly, so the runtime recounts at bind.
+    public int PlacedCount => placed >= 0 ? placed : RecountPlaced();
     public MapGenerator Map => map ? map : map = GetComponent<MapGenerator>();
 
     public Tilemap EnsureTiles()
@@ -33,8 +36,14 @@ public sealed class LadderMap : MonoBehaviour
     }
 
     void Awake() => EnsureTiles();
-    public void Clear() { if (tiles) tiles.ClearAllTiles(); }
+    public void Clear() { if (tiles) tiles.ClearAllTiles(); placed = 0; }
     public bool Has(Vector3Int cell) => tiles && tiles.HasTile(cell);
+    public int RecountPlaced()
+    {
+        placed = 0;
+        if (tiles) foreach (var cell in tiles.cellBounds.allPositionsWithin) if (tiles.HasTile(cell)) placed++;
+        return placed;
+    }
 
     public bool CanPlace(Vector3Int cell)
     {
@@ -56,8 +65,11 @@ public sealed class LadderMap : MonoBehaviour
         if (materialItem.item != Item.Ladder && materialItem.item != Item.IronLadder) return false;
         var tile = materialItem.item == Item.IronLadder ? Resources.Load<Tile>("Exotics/IronLadderTile") : segment;
         if (!tile || !inventory.TryRemove(materialItem)) return false;
+        int count = PlacedCount + 1;
         EnsureTiles().SetTile(cell, tile);
+        placed = count;
         AudioManager.Instance?.Play(SoundType.LadderPlace, true);
+        MetaProgressionRuntime.RecordPlaced(MetaProgressionRuntime.LaddersPlaced, count);
         return true;
     }
 
@@ -69,6 +81,7 @@ public sealed class LadderMap : MonoBehaviour
         if (GameplayInputBlocker.IsBlocked || !inventory || !returnedItem || !Has(cell) || !InReach(cell, player, reach) ||
             !inventory.CanAdd(returnedItem)) return false;
         tiles.SetTile(cell, null);
+        if (placed > 0) placed--;
         inventory.Add(returnedItem);
         AudioManager.Instance?.Play(SoundType.LadderRemove, true);
         return true;
