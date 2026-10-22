@@ -144,6 +144,8 @@ public sealed class WorkbenchPanel : MonoBehaviour
         {
             transform.SetAsLastSibling();
             SubscribeInventory();
+            // Recipe costs may have changed while closed (F1/GPS), so rebuild the ingredient rows.
+            renderedRecipe = null;
             Refresh();
         }
         else if (EventSystem.current && EventSystem.current.currentSelectedGameObject &&
