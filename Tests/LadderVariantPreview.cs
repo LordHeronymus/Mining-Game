@@ -75,9 +75,10 @@ public sealed class LadderVariantPreviewProbe:MonoBehaviour
             while(map.Terrain.HasTile(cell) && hits++<200)hit.Invoke(miner,new object[]{cell,.5f});
             if(map.Terrain.HasTile(cell)){map.Terrain.SetTile(cell,null);map.OreOverlay.SetTile(cell,null);Log("Cleared directly "+cell);}
         }
-        // Leave a floor below the shaft like a freshly dug one.
-        yield return null;
-        var centre=map.Terrain.GetCellCenterWorld(new Vector3Int(x,top-3,0));
+        // Let the mining dust and rubble settle before capturing.
+        yield return new WaitForSeconds(5f);
+        var cellSize=map.Terrain.layoutGrid.cellSize.y;
+        var centre=map.Terrain.GetCellCenterWorld(new Vector3Int(x,top,0))+Vector3.down*cellSize*1.6f;
         Directory.CreateDirectory(Output);
         Fill(ladders,x,top,depth,ladders.segment);yield return null;
         Capture(map,centre,"Heute");
@@ -110,10 +111,11 @@ public sealed class LadderVariantPreviewProbe:MonoBehaviour
 
     void Capture(MapGenerator map,Vector3 centre,string name)
     {
-        const int width=720,height=1100;
+        const int width=760,height=1300;
         var view=new GameObject("Ladder preview camera",typeof(Camera)).GetComponent<Camera>();
-        view.CopyFrom(Camera.main);view.enabled=false;view.orthographic=true;view.orthographicSize=2.6f;
-        view.transform.position=new Vector3(centre.x,centre.y+.35f,-10);
+        view.CopyFrom(Camera.main);view.enabled=false;view.orthographic=true;
+        view.orthographicSize=map.Terrain.layoutGrid.cellSize.y*3.6f;
+        view.transform.position=new Vector3(centre.x,centre.y,-10);
         var target=new RenderTexture(width,height,24,RenderTextureFormat.ARGB32);
         var pixels=new Texture2D(width,height,TextureFormat.RGBA32,false);var previous=RenderTexture.active;
         try
