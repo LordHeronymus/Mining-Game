@@ -329,7 +329,7 @@ public class AudioManager : MonoBehaviour
 
     public static float TunedVolume(AudioClip clip, float volume, AudioSource source = null)
     {
-        return GameAudioLifecycle.IsStopping ? 0f : GpsAudio.Volume(clip, volume, source) * PlayerSettings.Sfx;
+        return GameAudioLifecycle.IsStopping ? 0f : GpsAudio.Volume(clip, volume, source) * PlayerSettings.Sfx * VoiceLinePlayer.DuckFactor;
     }
 
     public static float TunedAmbienceVolume(AudioClip clip, float volume, AudioSource source = null)
