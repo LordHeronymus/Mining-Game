@@ -302,10 +302,10 @@ public static class GpsUserOverrides
                     case 'f': text.Append('\f'); break;
                     case 'e': text.Append('\x1b'); break;
                     case ' ': text.Append(' '); break;
-                    case '_': text.Append(' '); break;
-                    case 'N': text.Append('\u0085'); break;
-                    case 'L': text.Append(' '); break;
-                    case 'P': text.Append(' '); break;
+                    case '_': text.Append((char)0x00A0); break;
+                    case 'N': text.Append((char)0x0085); break;
+                    case 'L': text.Append((char)0x2028); break;
+                    case 'P': text.Append((char)0x2029); break;
                     case 'x': text.Append((char)Convert.ToInt32(yaml.Substring(i, 2), 16)); i += 2; break;
                     case 'u': text.Append((char)Convert.ToInt32(yaml.Substring(i, 4), 16)); i += 4; break;
                     case 'U': text.Append(char.ConvertFromUtf32(Convert.ToInt32(yaml.Substring(i, 8), 16))); i += 8; break;
