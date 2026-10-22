@@ -47,6 +47,11 @@ public static class EditorQueueActivity
         public bool isCompiling;
         public bool closed;
         public int processId;
+        // Stand gegenueber origin/main (nur im Ordner des Benutzers, siehe MainAutoUpdate), sonst leer.
+        public string mainState;
+        public string mainText;
+        public int mainBehind;
+        public string mainChecked;
     }
 
     static EditorQueueActivity()
@@ -90,6 +95,7 @@ public static class EditorQueueActivity
     {
         try
         {
+            RefreshInstalledScripts();
             string shortcut = Path.Combine(queueDir, "bin", "editor-queue-server.lnk");
             if (!File.Exists(shortcut) || QueueServiceRunning()) return;
             Process.Start(new ProcessStartInfo(shortcut) { UseShellExecute = true, WindowStyle = ProcessWindowStyle.Hidden });
@@ -98,6 +104,25 @@ public static class EditorQueueActivity
         catch (Exception e)
         {
             Debug.LogWarning("Editor-Warteschlange: lokaler Dienst konnte nicht gestartet werden: " + e.Message);
+        }
+    }
+
+    // Der Dienst ruft bei jeder Abfrage die Kopien in EditorQueue/bin auf. Im Ordner des Benutzers (main,
+    // MainAutoUpdate) werden sie nach einem Update aufgefrischt, damit PrivOrg neue Felder ohne erneutes
+    // "-Install" sieht. Die Testbank und Worktrees kopieren nie: sie koennen aeltere Branch-Staende haben.
+    static void RefreshInstalledScripts()
+    {
+        if (!MainAutoUpdate.Tracked || MainAutoUpdate.State != "aktuell") return;   // nur auf aktuellem main
+        string bin = Path.Combine(queueDir, "bin");
+        if (!Directory.Exists(bin)) return;
+        foreach (string name in new[] { "editor-queue.ps1", "editor-dialog.ps1", "editor-queue-server.ps1" })
+        {
+            string source = Path.Combine(projectRoot, "Tools", name), target = Path.Combine(bin, name);
+            if (!File.Exists(source) || !File.Exists(target)) continue;
+            byte[] next = File.ReadAllBytes(source);
+            if (next.AsSpan().SequenceEqual(File.ReadAllBytes(target))) continue;
+            File.WriteAllBytes(target, next);
+            Debug.Log("Editor-Warteschlange: " + name + " in " + bin + " aktualisiert.");
         }
     }
 
@@ -121,6 +146,10 @@ public static class EditorQueueActivity
         dirty = true;
         if (immediate) Write();
     }
+
+    // Neuer Inhalt (z. B. Stand gegenueber main) ohne Benutzeraktivitaet: beim naechsten Update schreiben,
+    // ohne lastActivity zu verschieben (sonst haelt ein Hintergrund-fetch den Editor kuenstlich "in Benutzung").
+    public static void RequestWrite() => dirty = true;
 
     static void OnUpdate()
     {
@@ -164,6 +193,10 @@ public static class EditorQueueActivity
             isCompiling = EditorApplication.isCompiling || EditorApplication.isUpdating,
             closed = closed,
             processId = Process.GetCurrentProcess().Id,
+            mainState = MainAutoUpdate.Tracked ? MainAutoUpdate.State : "",
+            mainText = MainAutoUpdate.Tracked ? MainAutoUpdate.StatusText : "",
+            mainBehind = MainAutoUpdate.Tracked ? MainAutoUpdate.Behind : -1,
+            mainChecked = MainAutoUpdate.Tracked ? MainAutoUpdate.CheckedUtc : "",
         };
         try
         {
