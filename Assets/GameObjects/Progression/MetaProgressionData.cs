@@ -67,13 +67,24 @@ using UnityEngine;
     public List<string> resourceSources = new(), regions = new(), discoveries = new();
     public List<int> crafts = new(), exoticCrafts = new();
     public List<string> objectiveIds = new(), completedObjectives = new(), milestones = new();
+    // Replay guards: value follows the world save, peak never decreases (see MetaProgression.CreditTally).
+    public List<MetaRunTally> tallies = new();
 }
+
+[Serializable] public sealed class MetaRunTally { public string id; public long value, peak; }
+[Serializable] public sealed class MetaMilestoneAward { public string id; public int xp; }
+[Serializable] public sealed class MetaLifetimeCounter { public string id; public long value; }
 
 [Serializable] public sealed class MetaProfile
 {
     public int reachedMiningLayer;
     public long periodRewardXp, challengeClockUtc;
+    // Legacy period states; converted to challengeRounds on load and left empty, so older builds still read the profile.
     public List<MetaChallengePeriodState> challengePeriods = new();
+    // New challenge data lives in fields older builds ignore; all of its XP is part of periodRewardXp.
+    public List<MetaChallengeRound> challengeRounds = new();
+    public List<MetaMilestoneAward> milestoneAwards = new();
+    public List<MetaLifetimeCounter> lifetimeCounters = new();
     public int version = 1;
     public long revision, totalXp;
     public List<MetaUpgradeRank> upgrades = new();
@@ -88,4 +99,16 @@ public sealed class MetaChallengeProgress
     public string id, name, metric, subject;
     public int current, target, xp;
     public bool completed, permanent;
+    public int tier = -1;            // ChallengeTier of period tasks and projects
+    public int kind;                 // 0 period task, 1 monthly project, 2 lifetime milestone line, 3 run objective
+    public int medal, stage, stages; // milestone lines: reached stages (medal 1 Bronze .. 4 Platin)
+    public string unit, icon, family;
+    public int[] stageTargets, stageXp;
+    public int stagesDone;
+}
+
+public sealed class MetaChallengeBonus
+{
+    public int done, required, xp;
+    public bool awarded;
 }

@@ -40,7 +40,8 @@ public static class CaveGenerationChecks
                 Check(first[index] == repeated[index], "Cave generation is not seed-stable.");
                 if (first[index]) carved++;
                 if (first[index] != changed[index]) changedCells++;
-                if (y < settings.minimumDepth || x < 5 || x >= width - 5 || Reserved(x, y))
+                // Tunnels may reach the side borders (CaveGenerator ignores the legacy border padding).
+                if (y < settings.minimumDepth || Reserved(x, y))
                     Check(!first[index], "Cave generation entered a protected area.");
             }
         Check(carved > 500, "Cave generation carved too little terrain.");
@@ -87,14 +88,17 @@ public static class CaveGenerationChecks
             generatedMap.useOreSettings = sceneMap.useOreSettings;
             generatedMap.oreSettings = sceneMap.oreSettings;
             generatedMap.GenerateMap(seed);
+            // GenerateMap applies the GPS generation settings (map size, caves) first, so compare against
+            // the size and cave settings the map was actually generated with.
+            int mapWidth = generatedMap.mapWidth, mapHeight = generatedMap.mapHeight;
             var generatedChamber = generatedMap.AltarChamber ? generatedMap.AltarChamber.Layout : default;
-            var generatedMask = generatedMap.CreateCaveMask(seed, width, height, generatedChamber);
-            for (int y = 0; y < height; y++)
-                for (int x = 0; x < width; x++)
+            var generatedMask = generatedMap.CreateCaveMask(seed, mapWidth, mapHeight, generatedChamber);
+            for (int y = 0; y < mapHeight; y++)
+                for (int x = 0; x < mapWidth; x++)
                 {
-                    if (!generatedMask[y * width + x]) continue;
+                    if (!generatedMask[y * mapWidth + x]) continue;
                     integratedCaves++;
-                    var cell = new Vector3Int(x - width / 2, -y, 0);
+                    var cell = new Vector3Int(x - mapWidth / 2, -y, 0);
                     Check(!generatedMap.Terrain.HasTile(cell) && !generatedMap.OreOverlay.HasTile(cell) &&
                         !generatedMap.ArtifactOverlay.HasTile(cell),
                         "Generated cave contains terrain, ore, or an artifact.");

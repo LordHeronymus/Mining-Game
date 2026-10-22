@@ -1,23 +1,28 @@
 #if UNITY_EDITOR
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Debug = UnityEngine.Debug;
 
-// Haelt den Ordner des Benutzers ("Mining Game") automatisch auf dem neuesten origin/main
-// (Docs/Main-Auto-Update.md). Jede Minute im Leerlauf: git fetch, dann nur ein Fast-Forward,
-// wenn main ausgecheckt ist, keine offene Szene ungespeichert ist und weder Play-Mode noch
-// Kompilierung laufen. Lokal geaenderte Dateien bleiben erhalten; muesste Git eine davon
-// ueberschreiben, bricht es ab. Danach laedt Unity die Assets neu.
-// Waehrend Play-Mode/Kompilierung wird nur geprueft (fetch, nichts geholt): Ein neuer Stand
-// erscheint als Hinweis im Game-Fenster und wird direkt nach dem Play-Stopp geholt.
-// Den Stand ("main aktuell", "N neue Commits", Grund fuers Aussetzen) meldet EditorQueueActivity
-// an die Editor-Warteschlange und damit an das PrivOrg-Modul.
-// Testbank ("Mining Game 2") und Worktrees bleiben unberuehrt.
+// Haelt den Ordner des Benutzers ("Mining Game") automatisch auf dem neuesten origin/main (Docs/Main-Auto-Update.md).
+// Jede Minute im Leerlauf: git fetch und nachsehen (MainSyncGit.Inspect, Hintergrund). Ist main neuer oder weicht das
+// lokale main ab, wird im Edit Mode aktualisiert (MainSyncGit.Update, Hintergrund), nie waehrend Play-Mode oder Kompilierung:
+// - Lokale Commits auf main und lokal geaenderte Dateien, die main ebenfalls aendert, kommen zuerst als Sicherung auf
+//   backup/mining-game-auto; dann folgt main origin/main. Andere lokale Aenderungen bleiben stehen.
+// - Eigene GPS-Werte in GpsProfile.asset (lokal geaendert oder in lokalen Commits) gehen vorher in die nicht versionierte
+//   Ueberschreibungs-Schicht (GpsUserOverrides); das Profil selbst wird danach auf den Stand von main gesetzt.
+// - Ist eine offene, unveraenderte Szene betroffen, wird sie fuer die Aktualisierung kurz geschlossen und danach neu
+//   geoeffnet (kein "modified externally"-Dialog). Eine Szene mit ungespeicherten Aenderungen, die main aendert, blockiert.
+// - Danach AssetDatabase.Refresh (Skripte kompilieren, Assets neu laden) und GPS neu einlesen.
+// Waehrend Play-Mode/Kompilierung wird nur geprueft: Ein neuer Stand erscheint als Hinweis im Game-Fenster und wird direkt
+// nach dem Play-Stopp geholt. Stand: Fenstertitel, Tools → main-Sync, Editor-Warteschlange/PrivOrg (EditorQueueActivity);
+// Protokoll: Logs/main-sync.log. Testbank ("Mining Game 2") und Worktrees bleiben unberuehrt.
 [InitializeOnLoad]
 public static class MainAutoUpdate
 {
@@ -32,21 +37,30 @@ public static class MainAutoUpdate
 
     static readonly string projectRoot;
     static double nextCheck;
-    static Task<Result> running;
+    static Task<MainSyncGit.Status> inspecting;
+    static Task<MainSyncGit.Outcome> updating;
+    static bool manualRun;
     static string lastSkip;
     static int noticeBehind;
     static double lastNotice = double.NegativeInfinity;
+    static MainSyncGit.Status pending;
+    static SceneSetup[] closedScenes;
+    static bool gpsTouched;
 
-    // Stand fuer die Editor-Warteschlange (EditorQueueActivity schreibt ihn in die Aktivitaetsdatei).
+    // Stand fuer Editor-Warteschlange und Statusfenster.
     public static bool Tracked => projectRoot != null;
+    public static string ProjectRoot => projectRoot;
+    public static bool Busy => inspecting != null || updating != null;
     public static string State { get; private set; } = "";   // aktuell | veraltet | ausgesetzt | aus | "" (noch nicht geprueft)
     public static string StatusText { get; private set; } = "";
     public static int Behind { get; private set; } = -1;
     public static string CheckedUtc { get; private set; } = "";
+    public static string Head { get; private set; } = "";
+    public static string Subject { get; private set; } = "";
+    public static IReadOnlyList<string> LocalChanges { get; private set; } = Array.Empty<string>();
+    public static event Action StatusChanged;
 
-    sealed class Result { public string state, text, skip; public int behind = -1; public bool updated; }
-
-    static bool Enabled { get => EditorPrefs.GetBool(EnabledKey, true); set => EditorPrefs.SetBool(EnabledKey, value); }
+    public static bool Enabled { get => EditorPrefs.GetBool(EnabledKey, true); set => EditorPrefs.SetBool(EnabledKey, value); }
 
     static MainAutoUpdate()
     {
@@ -59,38 +73,63 @@ public static class MainAutoUpdate
         EditorApplication.playModeStateChanged += state =>
         {
             if (state == PlayModeStateChange.EnteredEditMode) nextCheck = EditorApplication.timeSinceStartup + AfterPlaySeconds;
+            // Waehrend Git Dateien tauscht, darf kein Play starten (halb aktualisierter Stand).
+            if (state == PlayModeStateChange.ExitingEditMode && updating != null)
+            {
+                EditorApplication.isPlaying = false;
+                Notify("main wird gerade aktualisiert – Play gleich nochmals starten");
+            }
         };
+        EditorApplication.updateMainWindowTitle += descriptor => { if (projectRoot != null) descriptor.title += "   ·   " + ShortStatus; };
         // Der Stand ueberlebt das Neuladen der Skripte nach einem Update (SessionState gilt bis zum Editor-Neustart).
         State = SessionState.GetString(StateKey, ""); StatusText = SessionState.GetString(StateKey + ".text", "");
         Behind = SessionState.GetInt(StateKey + ".behind", -1); CheckedUtc = SessionState.GetString(StateKey + ".checked", "");
+        Head = SessionState.GetString(StateKey + ".head", ""); Subject = SessionState.GetString(StateKey + ".subject", "");
         if (!Enabled) SetStatus("aus", "automatisches Aktualisieren ausgeschaltet", -1);
+        EditorApplication.delayCall += EditorApplication.UpdateMainWindowTitle;
     }
+
+    public static string ShortStatus => State switch
+    {
+        "aktuell" => "main aktuell @ " + Short(Head),
+        "veraltet" => "main: " + Behind + (Behind == 1 ? " neuer Commit" : " neue Commits") + " wartet",
+        "ausgesetzt" => "main blockiert – Tools → main-Sync",
+        "aus" => "main-Sync aus",
+        _ => "main wird geprüft",
+    };
+    public static string Short(string sha) => string.IsNullOrEmpty(sha) ? "?" : sha.Substring(0, Math.Min(7, sha.Length));
 
     [MenuItem(MenuPath)]
     static void Toggle()
     {
         Enabled = !Enabled;
-        Debug.Log("main automatisch aktualisieren: " + (Enabled ? "an" : "aus"));
+        MainSyncLog.Write("Automatisches Aktualisieren " + (Enabled ? "eingeschaltet" : "ausgeschaltet"));
         if (Enabled) nextCheck = 0; else SetStatus("aus", "automatisches Aktualisieren ausgeschaltet", -1);
     }
     [MenuItem(MenuPath, true)]
     static bool ToggleValidate() { Menu.SetChecked(MenuPath, Enabled); return projectRoot != null; }
 
     [MenuItem(NowPath)]
-    static void UpdateNow() { lastSkip = null; if (!Start(true)) Debug.Log("main aktualisieren: " + (lastSkip ?? "läuft bereits")); }
+    public static void UpdateNow() { lastSkip = null; if (!Start(true)) Debug.Log("main aktualisieren: läuft bereits"); }
     [MenuItem(NowPath, true)]
     static bool UpdateNowValidate() => projectRoot != null;
 
     static void OnUpdate()
     {
-        if (running != null)
+        if (inspecting != null)
         {
-            if (!running.IsCompleted) return;
-            var result = running.IsFaulted
-                ? new Result { state = "ausgesetzt", text = "Fehler: " + running.Exception?.GetBaseException().Message, skip = "Fehler: " + running.Exception?.GetBaseException().Message }
-                : running.Result;
-            running = null;
-            Apply(result);
+            if (!inspecting.IsCompleted) return;
+            var status = inspecting.IsFaulted ? new MainSyncGit.Status { error = "Fehler: " + inspecting.Exception?.GetBaseException().Message } : inspecting.Result;
+            inspecting = null;
+            Inspected(status);
+            return;
+        }
+        if (updating != null)
+        {
+            if (!updating.IsCompleted) return;
+            var outcome = updating.IsFaulted ? new MainSyncGit.Outcome { error = "Fehler: " + updating.Exception?.GetBaseException().Message } : updating.Result;
+            updating = null;
+            Updated(outcome);
             return;
         }
         if (!Enabled || EditorApplication.timeSinceStartup < nextCheck) return;
@@ -98,71 +137,164 @@ public static class MainAutoUpdate
         Start(false);
     }
 
-    static void Apply(Result result)
-    {
-        if (result.state != null) SetStatus(result.state, result.text, result.behind);
-        if (result.updated)
-        {
-            lastSkip = null; noticeBehind = 0;
-            Debug.Log("main automatisch aktualisiert, Assets werden neu geladen.");
-            AssetDatabase.Refresh();
-            return;
-        }
-        if (result.behind > 0 && EditorApplication.isPlayingOrWillChangePlaymode) NotifyPlaying(result.behind);
-        if (result.skip != null) Skip(result.skip);
-    }
-
     static bool Start(bool manual)
     {
-        if (running != null) return false;
+        if (Busy) return false;
+        manualRun = manual;
         string root = projectRoot;
-        // Play-Mode oder Kompilierung: nur nachsehen, ob main neuer ist; geholt wird erst danach.
-        if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling || EditorApplication.isUpdating)
-        {
-            bool playing = EditorApplication.isPlayingOrWillChangePlaymode;
-            lastSkip = "Play-Mode oder Kompilierung läuft";
-            running = Task.Run(() => Pull(root, manual, null, playing ? "wird nach dem Play-Stopp geholt" : "wird nach dem Kompilieren geholt"));
-            return false;
-        }
-        string dirtyScene = null;
-        for (int i = 0; i < SceneManager.sceneCount; i++)
-            if (SceneManager.GetSceneAt(i).isDirty) { dirtyScene = SceneManager.GetSceneAt(i).name; break; }
-        running = Task.Run(() => Pull(root, manual, dirtyScene == null ? null : "Szene " + dirtyScene + " ist nicht gespeichert", null));
+        inspecting = Task.Run(() => MainSyncGit.Inspect(root, true));
         return true;
     }
 
-    // Läuft im Hintergrund. blocked: Grund, warum nicht geholt werden darf (ungespeicherte Szene);
-    // waitText: nur pruefen (Play-Mode/Kompilierung), der Text sagt, wann geholt wird.
-    static Result Pull(string root, bool manual, string blocked, string waitText)
+    static bool EditorBusy => EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling || EditorApplication.isUpdating;
+
+    // Hauptthread: entscheiden, ob und wie aktualisiert wird.
+    static void Inspected(MainSyncGit.Status status)
     {
-        if (Git(root, "rev-parse --abbrev-ref HEAD", out string branch) != 0)
-            return new Result { state = "ausgesetzt", text = "git nicht verfügbar", skip = "git nicht verfügbar" };
-        if (branch != "main")
-            return new Result { state = "ausgesetzt", text = "ausgecheckt ist " + branch + ", nicht main", skip = manual ? "ausgecheckt ist " + branch + ", nicht main" : null };
-        if (Git(root, "fetch -q origin main", out string fetch) != 0)
-            return new Result { state = "ausgesetzt", text = "git fetch fehlgeschlagen", skip = "git fetch fehlgeschlagen: " + fetch };
-        Git(root, "rev-list --count HEAD..origin/main", out string behindText);
-        int.TryParse(behindText, out int behind);
-        if (behind == 0) return new Result { state = "aktuell", text = "main aktuell", behind = 0, skip = manual ? "bereits aktuell" : null };
-        string commits = behind + (behind == 1 ? " neuer Commit" : " neue Commits") + " auf main";
-        Git(root, "rev-list --count origin/main..HEAD", out string ahead);
-        if (ahead != "0")
+        if (status.error != null) { Block(status.error, -1); return; }
+        if (status.branch != "main") { Block("ausgecheckt ist " + status.branch + ", nicht main", -1, quiet: !manualRun); return; }
+        if (status.busy != null) { Block(status.busy, -1); return; }
+        Head = status.head; Subject = status.subject;
+        SessionState.SetString(StateKey + ".head", Head); SessionState.SetString(StateKey + ".subject", Subject);
+        LocalChanges = status.dirty.Where(path => !status.conflicts.Contains(path) && path != MainSyncGit.GpsProfilePath).ToList();
+        if (!status.NeedsUpdate) { Current(manualRun ? "bereits aktuell" : null); return; }
+
+        string commits = status.behind + (status.behind == 1 ? " neuer Commit" : " neue Commits") + " auf main";
+        if (EditorBusy)
         {
-            string reason = "lokales main hat eigene Commits (" + ahead + "), kein Fast-Forward";
-            return new Result { state = "ausgesetzt", text = commits + ", nicht geholt: " + reason, behind = behind, skip = reason };
+            bool playing = EditorApplication.isPlayingOrWillChangePlaymode;
+            string text = (status.behind > 0 ? commits : "lokales main weicht ab") + ", " + (playing ? "wird nach dem Play-Stopp geholt" : "wird nach dem Kompilieren geholt");
+            SetStatus("veraltet", text, status.behind);
+            if (status.behind > 0 && playing) NotifyPlaying(status.behind);
+            return;
         }
-        if (waitText != null) return new Result { state = "veraltet", text = commits + ", " + waitText, behind = behind };
-        if (blocked != null) return new Result { state = "ausgesetzt", text = commits + ", nicht geholt: " + blocked, behind = behind, skip = blocked };
-        // Lokale Änderungen blockieren nicht: Git bricht den Fast-Forward selbst ab, bevor es eine geänderte Datei überschreiben müsste.
-        if (Git(root, "merge --ff-only -q origin/main", out string merge) == 0)
-            return new Result { state = "aktuell", text = "main aktuell", behind = 0, updated = true };
-        bool conflict = merge.Contains("would be overwritten") || merge.Contains("untracked working tree files");
-        return new Result
+        // Ungespeicherte Szene, die main aendert: nicht ueberschreiben, das waere stiller Datenverlust.
+        for (int i = 0; i < SceneManager.sceneCount; i++)
         {
-            state = "ausgesetzt", behind = behind,
-            text = commits + ", nicht geholt: " + (conflict ? "neue Commits ändern lokal geänderte Dateien" : "Fast-Forward fehlgeschlagen"),
-            skip = conflict ? "neue Commits ändern Dateien, die hier lokal geändert sind, nichts übernommen:\n" + merge : "Fast-Forward fehlgeschlagen: " + merge,
-        };
+            var scene = SceneManager.GetSceneAt(i);
+            if (scene.isDirty && status.incoming.Contains(scene.path))
+            {
+                Block(commits + ", nicht geholt: Szene " + scene.name + " hat ungespeicherte Änderungen und wird von main geändert (speichern oder verwerfen)", status.behind);
+                Notify("main wartet: Szene " + scene.name + " speichern oder verwerfen");
+                return;
+            }
+        }
+        gpsTouched = status.gpsDirty || status.gpsInLocalCommits || status.incoming.Contains(MainSyncGit.GpsProfilePath);
+        // Offene GPS-Änderungen zuerst speichern, solange das Profil noch dem geladenen Stand entspricht.
+        if (gpsTouched) { GpsSettings.CommitPendingNow(); if (GpsSettings.HasUnsavedChanges) GpsSettings.Save(out _); }
+        var extra = new List<string>();
+        if (status.gpsDirty || status.gpsInLocalCommits)
+        {
+            if (TakeOverGpsValues(status)) { if (status.gpsDirty) extra.Add(MainSyncGit.GpsProfilePath); }
+            else if (!status.conflicts.Contains(MainSyncGit.GpsProfilePath) && status.behind == 0 && status.ahead == 0) { gpsTouched = false; Current(null); return; }
+        }
+        CloseAffectedScenes(status);
+        pending = status;
+        string root = projectRoot;
+        string reason = (status.behind > 0 ? commits : "main angleichen") + (status.ahead > 0 ? ", " + status.ahead + " lokale Commits" : "");
+        SetStatus("veraltet", (status.behind > 0 ? commits : "lokales main weicht ab") + ", wird jetzt geholt", status.behind);
+        updating = Task.Run(() => MainSyncGit.Update(root, status, reason, extra));
+    }
+
+    // Hauptthread nach den Git-Schritten: Unity neu laden, Szenen wieder oeffnen, protokollieren.
+    static void Updated(MainSyncGit.Outcome outcome)
+    {
+        var status = pending; pending = null;
+        if (outcome.backup != null)
+        {
+            var parts = new List<string>();
+            if (status.ahead > 0) parts.Add(status.ahead + (status.ahead == 1 ? " lokaler Commit" : " lokale Commits"));
+            if (outcome.restored.Count > 0) parts.Add("lokale Fassung von " + string.Join(", ", outcome.restored));
+            MainSyncLog.Write("Gesichert auf " + MainSyncGit.BackupBranch + " @ " + Short(outcome.backup) + ": " + string.Join("; ", parts), true);
+        }
+        if (!outcome.ok)
+        {
+            // Teilweise geänderte Dateien (z. B. zurückgesetztes GpsProfile) trotzdem neu einlesen.
+            AssetDatabase.Refresh();
+            ReopenScenes();
+            if (gpsTouched && !EditorApplication.isPlayingOrWillChangePlaymode) GpsSettings.ReloadFromProfile();
+            gpsTouched = false; GpsUserOverrides.Hold = false;
+            Block("Aktualisierung fehlgeschlagen: " + outcome.error, status.behind);
+            return;
+        }
+        Head = outcome.head; Subject = status.subject;
+        SessionState.SetString(StateKey + ".head", Head); SessionState.SetString(StateKey + ".subject", Subject);
+        if (status.head != status.target)
+            MainSyncLog.Write("Aktualisiert " + Short(status.head) + " → " + Short(outcome.head) + " (" + status.behind + (status.behind == 1 ? " Commit" : " Commits") + "): " + Subject, true);
+        lastSkip = null; noticeBehind = 0;
+        AssetDatabase.Refresh();
+        ReopenScenes();
+        if (gpsTouched && !EditorApplication.isPlayingOrWillChangePlaymode) GpsSettings.ReloadFromProfile();
+        gpsTouched = false; GpsUserOverrides.Hold = false;
+        Current(null);
+        if (outcome.backup != null) Notify("main aktualisiert – lokale Änderungen gesichert (" + MainSyncGit.BackupBranch + ")");
+    }
+
+    // Eigene GPS-Werte aus GpsProfile.asset (lokale Aenderung oder lokale Commits) in die Ueberschreibungs-Schicht uebernehmen.
+    // Bestehende eigene Werte gehen vor: Sie lagen schon ueber dem lokalen Profil und waren damit das, was der Benutzer sah.
+    static bool TakeOverGpsValues(MainSyncGit.Status status)
+    {
+        if (!GpsUserOverrides.Active) return false;
+        GpsDocument local, baseline;
+        try { local = GpsUserOverrides.ParseProfileYaml(status.gpsLocalYaml); baseline = GpsUserOverrides.ParseProfileYaml(status.gpsBaseYaml); }
+        catch (Exception ex) { local = baseline = null; MainSyncLog.Write("GpsProfile.asset nicht lesbar: " + ex.Message); }
+        if (local == null || baseline == null)
+        {
+            MainSyncLog.Write("Eigene GPS-Werte nicht übernommen: GpsProfile.asset nicht lesbar. Die lokale Fassung bleibt bzw. kommt in die Sicherung.", true);
+            return false;
+        }
+        var found = GpsUserOverrides.Diff(local, baseline, GpsSettings.Profile);
+        var merged = GpsUserOverrides.Merge(GpsUserOverrides.Entries, found);
+        int added = merged.Count - GpsUserOverrides.Count;
+        try { GpsUserOverrides.Write(merged); }
+        catch (Exception ex) { MainSyncLog.Write("Eigene GPS-Werte nicht gespeichert: " + ex.Message, true); return false; }
+        // Bis das Profil zurückgesetzt und neu geladen ist, stehen diese Werte noch im geladenen Profil; ein Speichern
+        // dazwischen darf sie nicht als "gleich wie Standard" aus der Datei werfen.
+        GpsUserOverrides.Hold = true;
+        if (added > 0)
+            MainSyncLog.Write(added + (added == 1 ? " eigener GPS-Wert" : " eigene GPS-Werte") + " aus GpsProfile.asset übernommen: " +
+                string.Join(", ", found.Take(12).Select(entry => entry.record.Split(':').Last() + "/" + entry.path + " = " + GpsUserOverrides.Describe(entry.value))) +
+                (found.Count > 12 ? " …" : ""), true);
+        return true;
+    }
+
+    static void CloseAffectedScenes(MainSyncGit.Status status)
+    {
+        closedScenes = null;
+        bool affected = false, dirty = false;
+        for (int i = 0; i < SceneManager.sceneCount; i++)
+        {
+            var scene = SceneManager.GetSceneAt(i);
+            affected |= status.incoming.Contains(scene.path) || status.conflicts.Contains(scene.path);
+            dirty |= scene.isDirty;
+        }
+        // Mit einer anderen ungespeicherten Szene offen nichts schliessen; Unity fragt dann selbst nach dem Neuladen.
+        if (!affected || dirty) return;
+        closedScenes = EditorSceneManager.GetSceneManagerSetup();
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+    }
+    static void ReopenScenes()
+    {
+        if (closedScenes == null) return;
+        var setup = closedScenes; closedScenes = null;
+        try { if (setup.Length > 0) EditorSceneManager.RestoreSceneManagerSetup(setup); }
+        catch (Exception ex) { Debug.LogWarning("Szene nach der Aktualisierung nicht wieder geöffnet: " + ex.Message); }
+    }
+
+    static void Current(string message)
+    {
+        string text = "aktuell auf origin/main @ " + Short(Head) + (string.IsNullOrEmpty(Subject) ? "" : " – " + Subject);
+        if (EditorUtility.scriptCompilationFailed) text += " (Achtung: Skripte haben Kompilierfehler)";
+        SetStatus("aktuell", text, 0);
+        if (message != null) Debug.Log("main aktualisieren: " + message);
+    }
+
+    static void Block(string reason, int behind, bool quiet = false)
+    {
+        SetStatus("ausgesetzt", reason, behind);
+        if (quiet || reason == lastSkip) return;
+        lastSkip = reason;
+        MainSyncLog.Write("Ausgesetzt: " + reason, true);
     }
 
     // Hinweis oben im Game-Fenster: der Benutzer sieht, warum eine gemergte Änderung noch fehlt.
@@ -170,40 +302,30 @@ public static class MainAutoUpdate
     {
         double now = EditorApplication.timeSinceStartup;
         if (behind == noticeBehind && now - lastNotice < NoticeRepeatSeconds) return;
-        if (behind != noticeBehind) Debug.Log("main: " + behind + (behind == 1 ? " neuer Commit" : " neue Commits") + ", wird nach dem Play-Stopp geholt.");
+        if (behind != noticeBehind) MainSyncLog.Write("main: " + behind + (behind == 1 ? " neuer Commit" : " neue Commits") + ", wird nach dem Play-Stopp geholt.");
         noticeBehind = behind; lastNotice = now;
-        var text = new GUIContent("Neuer Stand auf main (" + behind + (behind == 1 ? " Commit" : " Commits") + ")\nPlay beenden zum Aktualisieren");
+        Notify("Neuer Stand auf main (" + behind + (behind == 1 ? " Commit" : " Commits") + ")\nPlay beenden zum Aktualisieren");
+    }
+    static void Notify(string text)
+    {
+        var content = new GUIContent(text);
         foreach (var window in Resources.FindObjectsOfTypeAll<EditorWindow>())
-            if (window.GetType().Name == "GameView") window.ShowNotification(text, 8);
+            if (window.GetType().Name == "GameView" || window is SceneView) window.ShowNotification(content, 8);
     }
 
     static void SetStatus(string state, string text, int behind)
     {
         CheckedUtc = DateTime.UtcNow.ToString("o"); SessionState.SetString(StateKey + ".checked", CheckedUtc);
-        if (state == State && text == StatusText && behind == Behind) return;
-        State = state; StatusText = text; Behind = behind;
-        SessionState.SetString(StateKey, state); SessionState.SetString(StateKey + ".text", text); SessionState.SetInt(StateKey + ".behind", behind);
-        EditorQueueActivity.RequestWrite();
-    }
-
-    static void Skip(string reason)
-    {
-        if (reason == lastSkip) return;
-        lastSkip = reason;
-        Debug.Log("main automatisch aktualisieren ausgesetzt: " + reason);
-    }
-
-    static int Git(string root, string args, out string output)
-    {
-        var psi = new ProcessStartInfo("git", "-C \"" + root + "\" " + args)
-        { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
-        psi.Environment["LC_ALL"] = "C"; // englische Git-Meldungen, damit Pull() sie erkennt
-        using var process = Process.Start(psi);
-        var error = process.StandardError.ReadToEndAsync();
-        output = process.StandardOutput.ReadToEnd().Trim();
-        if (!process.WaitForExit(120000)) { try { process.Kill(); } catch { } output = "Zeitlimit"; return -1; }
-        if (process.ExitCode != 0) output = (output + " " + error.Result).Trim();
-        return process.ExitCode;
+        if (state != State || text != StatusText || behind != Behind)
+        {
+            // Zustandswechsel ins Protokoll; Gründe fürs Aussetzen schreibt Block selbst.
+            if (state != State && state != "ausgesetzt") MainSyncLog.Write("Stand: " + text);
+            State = state; StatusText = text; Behind = behind;
+            SessionState.SetString(StateKey, state); SessionState.SetString(StateKey + ".text", text); SessionState.SetInt(StateKey + ".behind", behind);
+            EditorQueueActivity.RequestWrite();
+            EditorApplication.UpdateMainWindowTitle();
+        }
+        StatusChanged?.Invoke();
     }
 }
 #endif
