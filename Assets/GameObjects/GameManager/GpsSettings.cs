@@ -18,7 +18,11 @@ public static class GpsSettings
     const double CommitDelaySeconds = .35;
     // Checks switch this off (or use a save test directory) so driving the menu never writes the real profile.
     public static bool AutoCommit = true;
+#if UNITY_EDITOR
     static bool CanAutoCommit => AutoCommit && string.IsNullOrEmpty(GameSaveSystem.TestDirectory) && string.IsNullOrEmpty(MetaProgression.TestDirectory);
+#else
+    static bool CanAutoCommit => AutoCommit && string.IsNullOrEmpty(MetaProgression.TestDirectory); // No save test directory in builds.
+#endif
     public static event Action Changed;
     public static event Action Saved;
     public static string Warning { get; private set; }

@@ -28,6 +28,11 @@ public sealed class VoiceLinePlayer : MonoBehaviour
     int blockedScene;
 
     static double Now => Time.realtimeSinceStartupAsDouble;
+#if UNITY_EDITOR
+    static bool IsolatedTest => !string.IsNullOrEmpty(GameSaveSystem.TestDirectory);
+#else
+    static bool IsolatedTest => false; // GameSaveSystem.TestDirectory exists in the editor only.
+#endif
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics() { Instance = null; DuckFactor = 1f; }
@@ -173,7 +178,7 @@ public sealed class VoiceLinePlayer : MonoBehaviour
         bool stopping = GameAudioLifecycle.IsStopping;
         bool canStart = director.PendingForced ? !stopping
             : Armed && !stopping && Time.timeScale > 0f && !endScreen &&
-              string.IsNullOrEmpty(GameSaveSystem.TestDirectory) && PlayerSettings.Voice > 0f;
+              !IsolatedTest && PlayerSettings.Voice > 0f;
         if (director.Update(now, config, canStart, out var play))
         {
             energyWatcher.Acknowledge(play.trigger); carryWatcher.Acknowledge(play.trigger);
