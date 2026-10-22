@@ -113,7 +113,8 @@ public sealed class ItemDragGhost : MonoBehaviour
 
 // Press-and-hold to pick up an item, shared by storage, inventory and hotbar slots. Drag mode starts once the item
 // was held for ItemDragGhost.HoldSeconds (wherever the pointer is by then), or with no hold time as soon as it moves.
-// The ghost is grabbed at the press position. A click that ends a drag is swallowed.
+// The ghost is grabbed at the press position. A click that ends a drag is swallowed. The hold is measured in real
+// time: frame time would jump after a slow frame and could count the hold as done right after the press.
 public sealed class ItemDragHold
 {
     bool pressed, suppressClick;
@@ -125,14 +126,14 @@ public sealed class ItemDragHold
     {
         pressed = true; Dragging = suppressClick = false;
         PressPosition = Pointer = position;
-        pressedAt = Time.unscaledTime;
+        pressedAt = Time.realtimeSinceStartup;
     }
 
     public bool ShouldStart(bool moved)
     {
         if (!pressed || Dragging) return false;
         float hold = ItemDragGhost.HoldSeconds;
-        return hold <= 0f ? moved : Time.unscaledTime - pressedAt >= hold;
+        return hold <= 0f ? moved : Time.realtimeSinceStartup - pressedAt >= hold;
     }
 
     // Returns whether a drag was running, which the caller then drops at the release position.
