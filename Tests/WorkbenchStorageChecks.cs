@@ -84,7 +84,8 @@ public sealed class WorkbenchStorageProbe : MonoBehaviour
         Check(storage && inventory && panel, "Storage hut, inventory and workbench exist");
         Check(SurfaceStorageBuilding.Active.Count == 1 && SurfaceStorageBuilding.Active[0] == storage, "The generated hut is the only active storage");
         var nails = panel.recipes.First(r => r && r.name == "Nails");
-        Check(RecipeUnlocks.IsUnlocked(nails) && nails.TryGetCosts(out var costs) && costs.Count == 1, "Nails recipe is unlocked with one ingredient");
+        bool validCosts = nails.TryGetCosts(out var costs);
+        Check(RecipeUnlocks.IsUnlocked(nails) && validCosts && costs.Count == 1, "Nails recipe is unlocked with one ingredient");
         var material = costs.Keys.First();
         int cost = costs[material], output = nails.outputAmount;
         var catalog = Resources.Load<ItemCatalog>("ItemCatalog");
