@@ -63,6 +63,9 @@ public sealed class LadderVariantPreviewProbe:MonoBehaviour
         var map=Object.FindFirstObjectByType<MapGenerator>();
         var ladders=Object.FindFirstObjectByType<LadderMap>();
         var player=Object.FindFirstObjectByType<PlayerMovement>();
+        var follow=Camera.main?Camera.main.GetComponent<CameraFollow>():null;
+        Log("Camera follow active: "+(follow && follow.enabled && follow.target==player.transform &&
+            Camera.main.GetComponent<CameraWorldBorderClamp>().enabled && GameplayTestSettings.CameraFollowEnabled));
         var miner=Object.FindFirstObjectByType<TileMiner>();
         var hit=typeof(TileMiner).GetMethod("ApplyMiningHit",BindingFlags.NonPublic|BindingFlags.Instance);
         int x=map.Terrain.WorldToCell(player.transform.position).x+9;
