@@ -332,6 +332,8 @@ public sealed class StoragePanel : MonoBehaviour
         }
     }
 
+    public void CancelDrag() => EndDrag();
+
     void EndDrag()
     {
         dragged = null;
@@ -673,25 +675,54 @@ public sealed class StoragePanel : MonoBehaviour
     }
 }
 
-// Left click moves one, Shift moves the stack, right click moves half; dragging to the other side moves the stack.
+// Left click moves one, Shift moves the stack, right click moves half; holding an item picks it up (see ItemDragHold)
+// and dropping it on the other side moves the stack.
 public sealed class StorageSlotInput : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler,
-    IBeginDragHandler, IDragHandler, IEndDragHandler
+    IPointerDownHandler, IPointerUpHandler, IDragHandler
 {
     public StoragePanel panel;
     public StoragePanel.Slot slot;
+    readonly ItemDragHold hold = new();
 
     public void OnPointerClick(PointerEventData data)
     {
         // A drag released on its own slot still reports a click; the drop already decided what moves.
-        if (data.dragging || data.button == PointerEventData.InputButton.Middle) return;
+        if (hold.ConsumeClick() || data.dragging || data.button == PointerEventData.InputButton.Middle) return;
         panel.Click(slot, data.button, Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
         panel.Hover(slot, slot.rect.gameObject.activeInHierarchy);
     }
     public void OnPointerEnter(PointerEventData data) => panel.Hover(slot, true);
     public void OnPointerExit(PointerEventData data) => panel.Hover(slot, false);
-    public void OnBeginDrag(PointerEventData data) { if (data.button == PointerEventData.InputButton.Left) panel.BeginDrag(slot, data); }
-    public void OnDrag(PointerEventData data) => panel.Drag(data);
-    public void OnEndDrag(PointerEventData data) => panel.Drop(data);
+    public void OnPointerDown(PointerEventData data) { if (data.button == PointerEventData.InputButton.Left && slot?.item) hold.Down(data.position); }
+    public void OnDrag(PointerEventData data)
+    {
+        if (data.button != PointerEventData.InputButton.Left) return;
+        hold.Pointer = data.position;
+        if (hold.Dragging) panel.Drag(data);
+        else if (hold.ShouldStart(true)) Begin();
+    }
+    public void OnPointerUp(PointerEventData data)
+    {
+        if (data.button == PointerEventData.InputButton.Left && hold.Up(data.position)) panel.Drop(data);
+    }
+    void Update()
+    {
+        if (hold.ShouldStart(false)) Begin();
+    }
+    void Begin()
+    {
+        if (!panel || slot == null || !slot.item) { hold.Cancel(); return; }
+        hold.Dragging = true;
+        panel.BeginDrag(slot, Pointer(hold.PressPosition));
+        panel.Drag(Pointer(hold.Pointer));
+    }
+    static PointerEventData Pointer(Vector2 position) =>
+        new(EventSystem.current) { button = PointerEventData.InputButton.Left, position = position };
+    void OnDisable()
+    {
+        if (hold.Dragging && panel) panel.CancelDrag();
+        hold.Cancel();
+    }
 }
 
 public sealed class StorageHoverHint : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler

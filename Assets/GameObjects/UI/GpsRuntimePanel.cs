@@ -38,7 +38,8 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
     string itemIconSearch = "";
     int itemIconCategory;
     float rowY;
-    bool building, committing;
+    bool building, committing, pausing;
+    float previousScale = 1f;
     static readonly Color Panel = new(.105f, .115f, .13f, 1f), Control = new(.17f, .18f, .2f, 1f), Accent = new(.78f, .63f, .35f, 1f);
     static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
 
@@ -48,6 +49,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (!Application.isPlaying) return;
+        bool wasOpen = IsOpen;
         if (!instance)
         {
             HomeUi.EnsureEventSystem();
@@ -60,6 +62,12 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         }
         instance.gameObject.SetActive(true); instance.transform.SetAsLastSibling();
         GameplayInputBlocker.SetBlocked(instance, true); instance.BuildPage(); instance.Refresh();
+        // Inside a run the panel pauses the whole game like the settings; previews play past the pause.
+        if (!wasOpen && !instance.pausing && !MainMenuController.IsVisible && !LoadingProgress.Active && !RunNavigation.IsTransitioning)
+        {
+            instance.pausing = true; instance.previousScale = Time.timeScale; Time.timeScale = 0f;
+            GamePause.Set(instance, true);
+        }
 #endif
     }
     public static void Close()
@@ -70,8 +78,16 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         if (EventSystem.current?.currentSelectedGameObject)
         { EventSystem.current.SetSelectedGameObject(null); }
         GameplayInputBlocker.SetBlocked(instance, false); instance.gameObject.SetActive(false);
+        instance.EndPause();
     }
-    void OnDestroy() { GameplayInputBlocker.SetBlocked(this, false); GpsSettings.Changed -= ConfigurationChanged; GpsSettings.Saved -= Refresh; }
+    void EndPause()
+    {
+        if (!pausing) return;
+        pausing = false;
+        if (!RunNavigation.IsTransitioning && !LoadingProgress.Active) Time.timeScale = previousScale;
+        GamePause.Set(this, false);
+    }
+    void OnDestroy() { EndPause(); GameplayInputBlocker.SetBlocked(this, false);GpsSettings.Changed -= ConfigurationChanged; GpsSettings.Saved -= Refresh; }
     void Build()
     {
         font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF") ?? TMP_Settings.defaultFontAsset;
@@ -139,6 +155,8 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         for (int i = content.childCount - 1; i >= 0; i--) { var child = content.GetChild(i); child.gameObject.SetActive(false); Object.Destroy(child.gameObject); }
         rowY = 0;
         bool showAudioOptions=true;
+        // Audio sections sit inside "Ablauf und Mischung" and are indented one level below it.
+        int baseIndent=tab=="Audio" ? 1 : 0;
         if(tab=="Audio") { BuildAudioCatalog(); showAudioOptions=Header("Audio/Advanced","Ablauf und Mischung",0); }
         foreach (string section in GpsSchema.Sections.Where(section => section.tab == tab).Select(section => section.title).Distinct())
         {
@@ -146,10 +164,10 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
             var fields = GpsSchema.SectionFields(tab, section).ToArray();
             if (fields.Length == 0) continue;
             string sectionKey = tab + "/" + section;
-            if (!Header(sectionKey, section, 0)) continue;
+            if (!Header(sectionKey, section, baseIndent)) continue;
             if (section == "Item-Icons")
             {
-                Label(content, "Items suchen", new Vector2(44, -rowY), new Vector2(190, 32), 20);
+                Label(content, "Items suchen", new Vector2(20 + Indent(1), -rowY), new Vector2(190, 32), 20);
                 Input(content, new Vector2(250, -rowY), new Vector2(794, 32), itemIconSearch,
                     value => { itemIconSearch = value; BuildPage(); });
                 Dropdown(new Vector2(1100, -rowY), ItemIconLayout.Categories, itemIconCategory,
@@ -161,12 +179,13 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
             {
                 var record = group.First().record;
                 bool multiple = group.Count() > 1 && fields.Select(field => field.record.key).Distinct().Count() > 1 && !string.IsNullOrEmpty(record.assetKey);
-                if (multiple && !Header(sectionKey + "/" + record.key, record.name, 1)) continue;
+                if (multiple && !Header(sectionKey + "/" + record.key, record.name, baseIndent + 1)) continue;
+                int valueIndent = baseIndent + (multiple ? 2 : 1);
                 foreach (var entry in group)
                 {
                     var root = GpsSettings.GetValue(record.key, entry.field.name)?.Copy(); if (root == null) continue;
                     string label = !string.IsNullOrEmpty(record.assetKey) && group.Count() == 1 && fields.Length > 1 ? record.name : entry.field.label;
-                    DrawValue(record.key, root, root, entry.field, label, sectionKey + "/" + record.key + "/" + root.name, 1, null,
+                    DrawValue(record.key, root, root, entry.field, label, sectionKey + "/" + record.key + "/" + root.name, valueIndent, null,
                         () => { committing=true; try { if (!GpsSettings.SetValueAndCommit(record.key, root, out string error)) status.text = error; } finally { committing=false; } });
                 }
                 if (section == "Item-Icons" && GpsSettings.Profile.Resolve(record.assetKey) is ItemSO ore) BuildShopIconPreview(ore);
@@ -184,7 +203,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
     }
     void BuildShopIconPreview(ItemSO ore)
     {
-        var card = Rect("Icon Preview", content, new Vector2(44, -rowY), new Vector2(608, 232));
+        var card = Rect("Icon Preview", content, new Vector2(20 + Indent(1), -rowY), new Vector2(608, 232));
         var background = card.gameObject.AddComponent<Image>(); background.sprite = HomeUi.Sprite("SelectionCardNormal");
         background.type = Image.Type.Sliced; background.pixelsPerUnitMultiplier = 5.5f; background.raycastTarget = false;
         var icon = Rect("Ore", card, new Vector2(20, -18), new Vector2(260, 194)).gameObject.AddComponent<Image>();
@@ -202,10 +221,13 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         rowY += 248;
     }
 
+    // One step per hierarchy level (section → group → value → nested list), wide enough to read the nesting at a glance.
+    const float IndentStep = 32;
+    static float Indent(int level) => level * IndentStep;
     bool Header(string key, string label, int indent)
     {
         bool open = expanded.Contains(key);
-        Button(content, (open ? "− " : "+ ") + label, new Vector2(indent * 24, -rowY), new Vector2(1690 - indent * 24, 32), () =>
+        Button(content, (open ? "− " : "+ ") + label, new Vector2(Indent(indent), -rowY), new Vector2(1690 - Indent(indent), 32), () =>
         { if (!expanded.Add(key)) expanded.Remove(key); float position = scroll.verticalNormalizedPosition; BuildPage(); scroll.verticalNormalizedPosition = position; });
         rowY += 40; return open;
     }
@@ -232,13 +254,13 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         }
         if (node.name=="layerIndices" && node.kind==GpsValueKind.Array)
         {
-            Label(content,label,new Vector2(20+indent*24,-rowY),new Vector2(600,32),21); rowY+=37;
+            Label(content,label,new Vector2(20+Indent(indent),-rowY),new Vector2(600,32),21); rowY+=37;
             var layers=GpsSettings.Document.records.Find(entry=>entry.type==typeof(MapGenerator).AssemblyQualifiedName)?.fields.Find(field=>field.name=="layers")?.children;
             if (layers!=null) for (int i=0;i<layers.Count;i++)
             {
                 int index=i; bool has=node.children.Any(value=>value.number==index);
                 string name=layers[i].children.Find(value=>value.name=="name")?.text;
-                Button(content,(has ? "[x] " : "[ ] ")+(string.IsNullOrEmpty(name) ? "Layer "+(i+1) : name),new Vector2(44+indent*24,-rowY),new Vector2(950,30),()=>
+                Button(content,(has ? "[x] " : "[ ] ")+(string.IsNullOrEmpty(name) ? "Layer "+(i+1) : name),new Vector2(20+Indent(indent+1),-rowY),new Vector2(950,30),()=>
                 { if (has) node.children.RemoveAll(value=>value.number==index); else node.children.Add(GpsCodec.Read(node.children.Count.ToString(),typeof(int),index,GpsSettings.Profile.Key)); commit(); BuildPage(); }); rowY+=36;
             }
             return;
@@ -264,7 +286,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
             }
             if (node.kind == GpsValueKind.Array)
             {
-                Button(content, "+", new Vector2(20 + indent * 24, -rowY), new Vector2(50, 28), () =>
+                Button(content, "+", new Vector2(20 + Indent(indent), -rowY), new Vector2(50, 28), () =>
                 {
                     Type element = type.IsArray ? type.GetElementType() : type.GetGenericArguments()[0];
                     var child = node.children.Count > 0 ? node.children.Last().Copy() : GpsCodec.Read("0", element,
@@ -275,7 +297,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
             }
             return;
         }
-        float x = 20 + indent * 24, inputX = 650;
+        float x = 20 + Indent(indent), inputX = 650;
         Label(content, label, new Vector2(x, -rowY), new Vector2(inputX - x - 20, 32), 21);
         switch (node.kind)
         {
@@ -374,7 +396,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         if (Header("test-actions", "Spielzustand", 0))
         {
             ActionRow("Zum Spawn", GpsTestActions.TeleportSpawn); ActionRow("Zum Altar", GpsTestActions.TeleportAltar);
-            Label(content, "Aktuelle HP", new Vector2(24, -rowY), new Vector2(600, 30), 21);
+            Label(content, "Aktuelle HP", new Vector2(Indent(1), -rowY), new Vector2(600, 30), 21);
             Input(content, new Vector2(650, -rowY), new Vector2(350, 30), (StatsManager.Instance ? StatsManager.Instance.Health : 0).ToString("0.##", Culture),
                 text => { if (TryNumber(text, out float health)) GpsTestActions.SetHealth(health); }); rowY += 37;
             foreach (int damage in new[] { 90, 40, 10, 1 }) { int amount = damage; ActionRow(amount + " Schaden", () => StatsManager.Instance?.ApplyDamage(amount)); }
@@ -383,7 +405,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         if (Header("test-items", "Items und Powerups", 0))
         {
             var choices = GpsSchema.Choices(typeof(ItemSO)); int selected = 0, amount = 10;
-            Dropdown(new Vector2(24, -rowY), choices.Select(entry => GpsSchema.DisplayName(entry.asset)).ToArray(), 0, index => selected = index);
+            Dropdown(new Vector2(Indent(1), -rowY), choices.Select(entry => GpsSchema.DisplayName(entry.asset)).ToArray(), 0, index => selected = index);
             Input(content, new Vector2(1020, -rowY), new Vector2(230, 30), "10", text => { if (int.TryParse(text, out int value)) amount = Mathf.Clamp(value, 1, 999999); });
             Button(content, "Geben", new Vector2(1280, -rowY), new Vector2(200, 30), () => { if (choices.Count > selected) GpsTestActions.GiveItem((ItemSO)choices[selected].asset, amount); }); rowY += 40;
         }
@@ -415,7 +437,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         (VoiceLineEvent.CraftedTorches, "Fackeln hergestellt"), (VoiceLineEvent.CraftedPickaxe, "Spitzhacke hergestellt"), (VoiceLineEvent.UpgradeEnergy, "Energie-Upgrade"),
         (VoiceLineEvent.UpgradeCarry, "Traglast-Upgrade"), (VoiceLineEvent.NewWorld, "Neue Welt"), (VoiceLineEvent.SaveLoaded, "Spielstand geladen"),
     };
-    void ActionRow(string label, Action action) { Button(content, label, new Vector2(24, -rowY), new Vector2(720, 32), action); rowY += 40; }
+    void ActionRow(string label, Action action) { Button(content, label, new Vector2(Indent(1), -rowY), new Vector2(720, 32), action); rowY += 40; }
     void GenerateMap()
     {
         var map = Object.FindFirstObjectByType<MapGenerator>(); if (!map) return;
