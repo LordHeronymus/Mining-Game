@@ -17,6 +17,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
+- 22.10.2026, Claude Code: Speicher-Wächter: Sind alle Mining-Game-Ordner zusammen > 100 GB, räumt ein geplanter Windows-Task automatisch auf (alte LFS-Versionen, erledigte Arbeitsordner ≥ 2 Tage unbenutzt, alte Build Tests und Szenen-Backups, git gc), siehe Docs/Speicher-Bereinigung.md; Branch `claude/disk-cleanup`, bereit für `main` (Freigabe Benutzer).
 - 22.10.2026, Claude Code: F1 → UI → „Item ziehen“: Pop-Stärke, Grösse beim Tragen und Pop-Dauer einstellbar (Haltezeit weiterhin unter UI → Hotbar); Rechtsklick auf ein Hotbar-Item nimmt es aus der Hotbar (bleibt im Inventar); Branch `claude/drag-settings`, mit Freigabe des Benutzers in `main` zusammengeführt.
 - 20.10.2026, Claude Code (Cloud): Sprachausgabe des Charakters (169 Clips, Sprach-System mit Abklingzeit/Priorität, Auslöser an Energie, Traglast, Sturz, Shop, Werkbank, neue Welt; Regler „Stimme“, GPS/F1), Branch `claude/exciting-ramanujan-l0893x`, mit Freigabe des Benutzers in `main` zusammengeführt; lokale Hörabnahme und Commit des aktualisierten `GpsProfile.asset` ausstehend, siehe Docs/Sprachausgabe.md.
 - 20.10.2026, Claude Code: Gezogenes Item poppt beim Start des Ziehens kurz auf (128 % → 112 %) und wird deckend mit Schatten getragen (Lager, Inventar, Hotbar); Branch `claude/drag-pop`, mit Freigabe des Benutzers in `main` zusammengeführt.
@@ -26,4 +27,3 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 - 20.10.2026, Claude Code: Gezogenes Item (Drag & Drop) sieht in Lager, Inventar und Hotbar genau aus wie im Slot (Lager zeigte Leiter/Fackel/Dynamit gespiegelt), gemeinsames `ItemDragGhost`; Branch `claude/drag-ghost`, mit Freigabe des Benutzers in `main` zusammengeführt.
 - 20.10.2026, Claude Code: Alte Spielstände bekommen beim Laden die gemalten Erze (gleiche Erzart, Grösse und Stelle, seedstabil), Branch `claude/painted-ore-migration-3f7f47`, in `main`.
 - 20.10.2026, Claude Code: Pausemenü „Speichern“ speichert direkt in den aktiven Spielstand (keine Slot-Auswahl mehr, Rückfall nur ohne aktiven Slot); Branch `claude/save-active`, mit Freigabe des Benutzers in `main`.
-- 20.10.2026, Claude Code: Lag beim Baumfällen behoben (Sammelsound wurde beim ersten Holz synchron geladen), Messskript `Tests/TreeChopSpikes.cs`, Branch `claude/tree-lag`, mit Freigabe des Benutzers in `main`.
