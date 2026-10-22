@@ -507,7 +507,7 @@ public class AudioManager : MonoBehaviour
 
     public void SetLowHealthHeartbeat(bool playing, bool immediate = false)
     {
-        if (!lowHealthHeartbeatSource) return;
+        if (!lowHealthHeartbeatSource || GamePause.IsPaused && !immediate) return;
         if (!playing && immediate)
         {
             lowHealthHeartbeatRequested = false;

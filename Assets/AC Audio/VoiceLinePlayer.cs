@@ -271,7 +271,9 @@ public sealed class VoiceLinePlayer : MonoBehaviour
         }
         if (hold)
         {
+            // The full pause (pause menu, settings) holds the line until it continues; other stops drop it.
             if (!paused) { if (!loading) source.Pause(); paused = true; pausedSince = now; }
+            else if (GamePause.IsPaused) pausedSince = now;
             else if (now - pausedSince > settings.pauseDropSeconds) Drop(now);
             return;
         }

@@ -76,8 +76,32 @@ public sealed class SecondLayerAmbience : MonoBehaviour
         ghostWhisperSource.volume = 0f;
     }
 
+    void OnEnable() => GamePause.Changed += PauseChanged;
+
+    // The DSP clock runs on while the listener is paused: hold the queued loop segment and move the schedule.
+    // The wind, song and whisper timers skip the pause as well.
+    void PauseChanged(bool paused)
+    {
+        if (!paused)
+        {
+            double shift = GamePause.PausedDspSeconds;
+            nextWindStateChange += shift; nextTribalSongTime += shift; tribalSongStartTime += shift; nextGhostWhisperTime += shift;
+        }
+        if (!running) return;
+        if (paused)
+        {
+            if (transitioning) return;
+            if (AudioSettings.dspTime >= nextStart) { transitioning = true; transitionStart = nextStart; }
+            else sources[1 - current].Stop();
+            return;
+        }
+        nextStart += GamePause.PausedDspSeconds; transitionStart += GamePause.PausedDspSeconds;
+        if (!transitioning) sources[1 - current].PlayScheduled(nextStart);
+    }
+
     void Update()
     {
+        if (GamePause.IsPaused) return;
         float gain = clip ? GetLayerGain() : 0f;
         UpdateWind(gain);
         UpdateTribalSong();
@@ -318,7 +342,7 @@ public sealed class SecondLayerAmbience : MonoBehaviour
         if (stopGhostWhispers && ghostWhisperSource) { ghostWhisperSource.Stop(); ghostWhisperSource.volume = 0f; }
     }
 
-    void OnDisable() { StopPlayback(true, true); }
+    void OnDisable() { GamePause.Changed -= PauseChanged; StopPlayback(true, true); }
 
     void OnDestroy()
     {
