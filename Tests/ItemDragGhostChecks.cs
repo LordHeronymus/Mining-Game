@@ -132,6 +132,14 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
             Check(!storageGhost.gameObject.activeSelf, "Storage ghost hides after drop");
         }
         Log("PASS Storage: " + panel.BackpackSlots.Count(x => x.item) + " items");
+        {
+            var slot = panel.BackpackSlots.First(x => x.item);
+            var item = slot.item; int count = inventory.GetCount(item);
+            yield return Hold("Storage", slot.frame.gameObject, Screen(slot.icon.rectTransform, ScreenCenter(slot.icon.rectTransform)),
+                () => Field<Image>(panel, "dragGhost"));
+            HoldChecks();
+            Check(inventory.GetCount(item) == count, "Storage hold: releasing a held item on its own slot moves nothing (click swallowed)");
+        }
         storage.Close();
         Teleport(player, home);
         yield return new WaitForFixedUpdate(); yield return null;
@@ -165,6 +173,12 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
             inventoryCount++;
         }
         Log("PASS Inventory: " + inventoryCount + " items");
+        {
+            var cell = inventoryUi.GetComponentsInChildren<InventoryCellDrag>().First(x => x.item?.Invoke());
+            yield return Hold("Inventory", cell.gameObject, Screen(cell.icon.rectTransform, ScreenCenter(cell.icon.rectTransform)),
+                () => Field<Image>(inventoryUi, "draggedIcon"));
+            HoldChecks();
+        }
 
         // Hotbar (while the inventory is open the slots may be reordered); slots are set directly so no layout is saved.
         var originalSlots = (ItemSO[])hud.slots.Clone();
@@ -196,6 +210,15 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
                 hud.CancelHotbarDrag();
             }
             Log("PASS Hotbar: " + hotbarItems.Count + " items");
+            {
+                var drag = Field<HotbarSlotDrag[]>(hud, "slotDrags")[0];
+                var icon = Field<Image[]>(hud, "icons")[0];
+                int selected = hud.SelectedSlot;
+                yield return Hold("Hotbar", drag.gameObject, Screen(icon.rectTransform, ScreenCenter(icon.rectTransform)),
+                    () => Field<Image>(hud, "dragIcon"));
+                HoldChecks();
+                Check(hud.slots[0] == hotbarItems[0] && hud.SelectedSlot == selected, "Hotbar hold: release on its own slot keeps the slot and selection");
+            }
 
             // GPS (UI → Item ziehen) drives the pop; values are changed in memory only and restored.
             var prefs = GpsSettings.Preferences;
@@ -279,6 +302,50 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
         Check(Mathf.Sign(source.rectTransform.lossyScale.x) == Mathf.Sign(ghost.rectTransform.lossyScale.x) &&
               Mathf.Sign(source.rectTransform.lossyScale.y) == Mathf.Sign(ghost.rectTransform.lossyScale.y),
             ui + ": same mirroring for " + item.displayName);
+    }
+
+    // Press-and-hold (GPS hotbarHoldDuration, used by all three UIs): no drag before the hold time, drag after it,
+    // gone after release; with hold 0 a press alone starts nothing, moving starts the drag. Nested coroutines bypass
+    // the error wrapper in Start, so Hold only records and HoldChecks throws.
+    readonly List<(bool ok, string label)> holdResults = new();
+    IEnumerator Hold(string ui, GameObject target, Vector2 position, Func<Image> ghost)
+    {
+        holdResults.Clear();
+        bool Carried() { var image = ghost(); return image && image.gameObject.activeInHierarchy; }
+        void Send<T>(Vector2 at, ExecuteEvents.EventFunction<T> handler) where T : IEventSystemHandler =>
+            ExecuteEvents.Execute(target, new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left, position = at }, handler);
+        IEnumerator Wait(float seconds) { float end = Time.realtimeSinceStartup + seconds; while (Time.realtimeSinceStartup < end) yield return null; }
+        var prefs = GpsSettings.Preferences;
+        float original = prefs.hotbarHoldDuration;
+        try
+        {
+            prefs.hotbarHoldDuration = .3f;
+            Send(position, ExecuteEvents.pointerDownHandler);
+            yield return Wait(.12f);
+            holdResults.Add((!Carried(), $"{ui} hold: no drag before the hold time"));
+            yield return Wait(.3f);
+            holdResults.Add((Carried(), $"{ui} hold: drag mode starts after the hold time without moving"));
+            Send(position, ExecuteEvents.pointerUpHandler);
+            Send(position, ExecuteEvents.pointerClickHandler);
+            holdResults.Add((!Carried(), $"{ui} hold: ghost hides after release"));
+
+            prefs.hotbarHoldDuration = 0f;
+            Send(position, ExecuteEvents.pointerDownHandler);
+            yield return Wait(.12f);
+            holdResults.Add((!Carried(), $"{ui} hold 0: a press alone starts no drag"));
+            Send(position + new Vector2(30, 0), ExecuteEvents.dragHandler);
+            holdResults.Add((Carried(), $"{ui} hold 0: moving starts the drag at once"));
+            Send(position, ExecuteEvents.pointerUpHandler);
+            Send(position, ExecuteEvents.pointerClickHandler);
+            holdResults.Add((!Carried(), $"{ui} hold 0: ghost hides after release"));
+        }
+        finally { prefs.hotbarHoldDuration = original; }
+    }
+
+    void HoldChecks()
+    {
+        foreach (var (ok, label) in holdResults) Check(ok, label);
+        Log("PASS " + holdResults[0].label.Split(' ')[0] + " hold: " + holdResults.Count + " checks");
     }
 
     // Drag start pops: the item grows quickly past the carry size, then settles at CarryScale.

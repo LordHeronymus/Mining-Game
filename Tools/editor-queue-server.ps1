@@ -6,7 +6,7 @@
 
 .EXAMPLE
   powershell -NoProfile -ExecutionPolicy Bypass -File Tools/editor-queue-server.ps1            # starten
-  powershell -NoProfile -ExecutionPolicy Bypass -File Tools/editor-queue-server.ps1 -Install   # Autostart mit Windows
+  powershell -NoProfile -ExecutionPolicy Bypass -File Tools/editor-queue-server.ps1 -Install   # Start mit dem ersten Unity Editor
   powershell -NoProfile -ExecutionPolicy Bypass -File Tools/editor-queue-server.ps1 -Uninstall
 
   GET  /api/queue                      -> { projects: [ <status -Json je Projekt> ] }
@@ -30,7 +30,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $queueScript = Join-Path $PSScriptRoot 'editor-queue.ps1'
 $dialogScript = Join-Path $PSScriptRoot 'editor-dialog.ps1'
-$shortcut = Join-Path ([Environment]::GetFolderPath('Startup')) 'Mining Game Editor-Warteschlange.lnk'
+# Frueher Autostart mit Windows; wird bei -Install/-Uninstall entfernt.
+$legacyShortcut = Join-Path ([Environment]::GetFolderPath('Startup')) 'Mining Game Editor-Warteschlange.lnk'
 
 # --- Projekte -------------------------------------------------------------------
 
@@ -43,14 +44,19 @@ $reposDir = Split-Path $ownerRoot -Parent
 if (-not $QueueDir) { $QueueDir = $env:EDITOR_QUEUE_DIR }
 if (-not $QueueDir) { $QueueDir = Join-Path $reposDir 'EditorQueue' }
 
+# Startverknuepfung im festen Ordner: Assets/Editor/EditorQueueActivity.cs oeffnet sie, wenn ein Unity Editor
+# startet und der Dienst noch nicht laeuft (kein Autostart mit Windows mehr).
+$bin = Join-Path $QueueDir 'bin'
+$shortcut = Join-Path $bin 'editor-queue-server.lnk'
+
 if ($Uninstall) {
-    if (Test-Path -LiteralPath $shortcut) { Remove-Item -LiteralPath $shortcut; Write-Output "Autostart entfernt: $shortcut" }
-    else { Write-Output 'Kein Autostart eingerichtet.' }
+    foreach ($s in $shortcut, $legacyShortcut) { if (Test-Path -LiteralPath $s) { Remove-Item -LiteralPath $s; Write-Output "Entfernt: $s" } }
+    Write-Output 'Der Dienst startet nicht mehr automatisch.'
     exit 0
 }
 if ($Install) {
     # Kopie in einen festen Ordner ausserhalb von Git: Arbeitsordner und Testbank wechseln ihren Stand.
-    $bin = Join-Path $QueueDir 'bin'
+    if (Test-Path -LiteralPath $legacyShortcut) { Remove-Item -LiteralPath $legacyShortcut; Write-Output "Windows-Autostart entfernt: $legacyShortcut" }
     New-Item -ItemType Directory -Path $bin -Force | Out-Null
     foreach ($name in 'editor-queue.ps1', 'editor-queue-server.ps1', 'editor-dialog.ps1') { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination (Join-Path $bin $name) -Force }
     $target = Join-Path $bin 'editor-queue-server.ps1'
@@ -63,9 +69,9 @@ if ($Install) {
     $lnk.WorkingDirectory = $bin
     $lnk.Description = 'Lokaler Dienst der Unity-Editor-Warteschlange fuer PrivOrg'
     $lnk.Save()
-    Write-Output "Autostart eingerichtet: $shortcut"
+    Write-Output "Startverknuepfung angelegt: $shortcut"
     Write-Output "Skripte kopiert nach $bin (nach Aenderungen -Install erneut ausfuehren)."
-    Write-Output "Startet beim naechsten Anmelden; jetzt sofort starten mit: Start-Process '$shortcut'"
+    Write-Output "Startet mit dem ersten Unity Editor; jetzt sofort starten mit: Start-Process '$shortcut'"
     exit 0
 }
 
