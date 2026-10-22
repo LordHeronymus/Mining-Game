@@ -113,7 +113,7 @@ public static class CraftingService
             MetaProgression.RecordCraftUpgrade("energy-upgrades", previousEnergy, inventory.EnergyCapacityLevel);
             MetaProgression.RecordCraftUpgrade("carrying-upgrades", previousCarrying, inventory.CarryingCapacityLevel);
             MetaProgression.RecordCraft(recipe.output.item);
-            MetaProgression.RecordCraftedAmount(recipe.output.item, checked(recipe.outputAmount * batches), recipe.exotic);
+            MetaProgression.RecordCraftedAmount(recipe.output.item, checked(recipe.outputAmount * batches), recipe.exotic, batches);
             if (recipe.exotic) MetaProgression.RecordExoticCraft(recipe.output.item);
         }
         Crafted?.Invoke(recipe, new CraftOutcome(batches, inventory.EquippedPickaxeLevel > previousPickaxe,
