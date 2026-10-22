@@ -54,7 +54,7 @@ public static class GpsUiChecks
         Check(graphic.canvasRenderer,"Curve graph has a CanvasRenderer for masking and rendering");
         var curve=GpsSettings.GetValue(record.key,"oreDensityCurve");
         var inputs=Panel.GetComponentsInChildren<TMP_InputField>();
-        var yInput=inputs.First(input=>Mathf.Approximately(input.GetComponent<RectTransform>().anchoredPosition.x,584));
+        var yInput=inputs.First(input=>Mathf.Approximately(input.GetComponent<RectTransform>().anchoredPosition.x,592));
         dropdown.value=1;yield return null;
         Check(yInput.text==curve.curve.keys[1].value.ToString("0.###",System.Globalization.CultureInfo.InvariantCulture),"Selecting a curve point refreshes the numeric value");
         yInput.SetTextWithoutNotify("0.75");yInput.onEndEdit.Invoke("0.75");yield return null;

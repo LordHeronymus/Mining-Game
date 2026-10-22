@@ -73,6 +73,11 @@ public static class PlayerSettings
         var dead = new List<CanvasScaler>();
         foreach (var entry in References) if (!entry.Key) dead.Add(entry.Key);
         foreach (var scaler in dead) References.Remove(scaler);
+        // Building overlays (shop, workbench, storage) keep their size; UI-Größe only affects the rest of the UI.
+        if (!Application.isPlaying) return;
+        foreach (var panel in Object.FindObjectsByType<ShopPanel>(FindObjectsInactive.Include, FindObjectsSortMode.None)) UiScaleExempt.Attach(panel);
+        foreach (var panel in Object.FindObjectsByType<WorkbenchPanel>(FindObjectsInactive.Include, FindObjectsSortMode.None)) UiScaleExempt.Attach(panel);
+        foreach (var panel in Object.FindObjectsByType<StoragePanel>(FindObjectsInactive.Include, FindObjectsSortMode.None)) UiScaleExempt.Attach(panel);
     }
 
     public static float Music
