@@ -17,7 +17,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
-- 20.10.2026, Claude Code (Cloud): Sprachausgabe des Charakters (169 Clips, Sprach-System mit Abklingzeit/Priorität, Auslöser an Energie, Traglast, Sturz, Shop, Werkbank, neue Welt; Regler „Stimme“, GPS/F1), Branch `claude/exciting-ramanujan-l0893x`, PR offen, lokale Hörabnahme ausstehend, siehe Docs/Sprachausgabe.md.
+- 20.10.2026, Claude Code (Cloud): Sprachausgabe des Charakters (169 Clips, Sprach-System mit Abklingzeit/Priorität, Auslöser an Energie, Traglast, Sturz, Shop, Werkbank, neue Welt; Regler „Stimme“, GPS/F1), Branch `claude/exciting-ramanujan-l0893x`, mit Freigabe des Benutzers in `main` zusammengeführt; lokale Hörabnahme und Commit des aktualisierten `GpsProfile.asset` ausstehend, siehe Docs/Sprachausgabe.md.
 - 20.10.2026, Claude Code: Gezogenes Item poppt beim Start des Ziehens kurz auf (128 % → 112 %) und wird deckend mit Schatten getragen (Lager, Inventar, Hotbar); Branch `claude/drag-pop`, mit Freigabe des Benutzers in `main` zusammengeführt.
 - 20.10.2026, Claude Code: Testbank-Dialoge: `Tools/editor-dialog.sh list/press` erkennt und schliesst modale Unity-Dialoge der Testbank, Wächter im Queue-Dienst und in `wait` beantwortet bekannte (z. B. „modified externally“ → Reload), meldet unbekannte; `editor-bench` schliesst die Szene vor dem Wechsel; Branch `claude/bench-dialogs-62a367`, bereit für `main` (Freigabe Benutzer), Dienst danach mit `-Install` neu einrichten.
 - 20.10.2026, Claude Code: Autosave alle 3 min Spielzeit (GPS Spieler → Autosave), Pausemenü ohne „Speichern“, „Hauptmenü“ und Play-Stopp speichern automatisch; Branch `claude/autosave`, mit Freigabe des Benutzers in `main`.
