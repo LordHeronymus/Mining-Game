@@ -4,10 +4,14 @@ using UnityEngine.UI;
 // A dragged item looks exactly like the slot icon it was picked up from: same sprite, size, world scale
 // (including the ItemIconLayout flips) and rotation. The point where the icon was grabbed stays under the cursor.
 // Entering drag mode is marked by a short pop: the item jumps up, then settles slightly enlarged with a drop shadow
-// while it is carried.
+// while it is carried. Strength, carry size and duration come from GPS (UI → Item ziehen); a third of the duration
+// is the jump, the rest the settle.
 public sealed class ItemDragGhost : MonoBehaviour
 {
-    public const float PopScale = 1.28f, CarryScale = 1.12f, PopSeconds = .08f, SettleSeconds = .16f;
+    public static float PopScale => Mathf.Max(1f, GpsSettings.Preferences.dragPopScale);
+    public static float CarryScale => Mathf.Max(.1f, GpsSettings.Preferences.dragCarryScale);
+    static float PopSeconds => Mathf.Max(0f, GpsSettings.Preferences.dragPopDuration) / 3f;
+    static float SettleSeconds => PopSeconds * 2f;
     const float ShadowDistance = 5f;
     // A slow frame (e.g. loading or a screenshot) advances the pop by at most this much, so it is never skipped.
     const float MaxStep = 1f / 30f;
@@ -67,13 +71,15 @@ public sealed class ItemDragGhost : MonoBehaviour
     // Quick ease-out up to PopScale, then a smooth settle down to CarryScale.
     public static float Lift(float seconds)
     {
+        float pop = PopSeconds, settleSeconds = SettleSeconds;
+        if (pop <= 0f) return CarryScale;
         if (seconds <= 0f) return 1f;
-        if (seconds < PopSeconds)
+        if (seconds < pop)
         {
-            float t = seconds / PopSeconds;
+            float t = seconds / pop;
             return Mathf.LerpUnclamped(1f, PopScale, 1f - (1f - t) * (1f - t));
         }
-        float settle = Mathf.Clamp01((seconds - PopSeconds) / SettleSeconds);
+        float settle = Mathf.Clamp01((seconds - pop) / settleSeconds);
         return Mathf.Lerp(PopScale, CarryScale, Mathf.SmoothStep(0f, 1f, settle));
     }
 
