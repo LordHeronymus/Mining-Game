@@ -42,7 +42,7 @@ public sealed class GamePauseProbe : MonoBehaviour
         save = GameSaveSystem.TestDirectory; meta = MetaProgression.TestDirectory;
         GameSaveSystem.TestDirectory = Path.GetFullPath("Temp/GamePause-" + DateTime.UtcNow.Ticks);
         MetaProgression.TestDirectory = Path.Combine(GameSaveSystem.TestDirectory, "Profile");
-        noEnergy = GameplayTestSettings.NoEnergyConsume;
+        noEnergy = GpsSettings.Tests.noEnergyConsume;
         File.WriteAllText(Report, "");
         var routine = Run();
         while (true)
@@ -96,7 +96,8 @@ public sealed class GamePauseProbe : MonoBehaviour
     {
         RunNavigation.NewGame("Pause-Test");
         yield return Ready();
-        if (noEnergy) Note("NOTE NoEnergyConsume is on: energy drain after resume not checked");
+        // In memory only (restored in Cleanup): the energy checks need the normal drain.
+        GpsSettings.Tests.noEnergyConsume = false;
         var energy = Object.FindFirstObjectByType<EnergyManager>();
         var settings = Object.FindFirstObjectByType<SettingsPanel>(FindObjectsInactive.Include);
         var pause = Object.FindFirstObjectByType<RunPauseMenu>();
@@ -126,9 +127,10 @@ public sealed class GamePauseProbe : MonoBehaviour
             var voiceSource = Field<AudioSource>(voice, "source");
             float voiceWait = Time.realtimeSinceStartup + 5;
             while (!(voiceSource.isPlaying && voiceSource.timeSamples > 0) && Time.realtimeSinceStartup < voiceWait) yield return null;
-            bool voiceRunning = voiceSource.isPlaying && voiceSource.clip && voiceSource.clip.length > 3f;
-            if (!voiceRunning) Note("NOTE " + name + ": no voice line longer than 3 s running, voice checks skipped");
-            yield return Wait(.3f);
+            yield return Wait(.2f);
+            bool voiceRunning = voiceSource.isPlaying && voiceSource.clip && voiceSource.clip.length - voiceSource.time > .6f;
+            Note(name + ": voice " + (voiceSource.clip ? voiceSource.clip.name + " " + voiceSource.clip.length.ToString("0.00") + " s at " +
+                voiceSource.time.ToString("0.00") : "none") + ", playing=" + voiceSource.isPlaying + (voiceRunning ? "" : " – voice checks skipped"));
 
             open(); yield return null; yield return null;
             Check(Time.timeScale == 0f && GamePause.IsPaused && AudioListener.pause && GameplayInputBlocker.IsBlocked,
@@ -158,7 +160,7 @@ public sealed class GamePauseProbe : MonoBehaviour
                 name + ": close resumes time and audio");
             yield return Wait(1f);
             var after = Take(energy, ambience, voiceSource);
-            Check(after.played > during.played && (noEnergy || after.energy < during.energy), name + ": play time and energy run again");
+            Check(after.played > during.played && after.energy < during.energy, name + ": play time and energy run again");
             if (ambience) Check(ambience.isPlaying && after.ambience != during.ambience, name + ": ambience continues");
             if (voiceRunning && voiceSource.isPlaying)
                 Check(after.voice > during.voice, name + ": voice line continues from where it stopped (" + during.voice + " → " + after.voice + ")");
@@ -199,6 +201,7 @@ public sealed class GamePauseProbe : MonoBehaviour
     {
         if (clean) return;
         clean = true;
+        GpsSettings.Tests.noEnergyConsume = noEnergy;
         MetaProgression.EndRun();
         MetaProgression.TestDirectory = meta;
         GameSaveSystem.TestDirectory = save;

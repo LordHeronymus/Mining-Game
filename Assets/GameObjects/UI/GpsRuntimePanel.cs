@@ -49,6 +49,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (!Application.isPlaying) return;
+        bool wasOpen = IsOpen;
         if (!instance)
         {
             HomeUi.EnsureEventSystem();
@@ -59,7 +60,6 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
             scaler.referenceResolution = new Vector2(1920, 1080); scaler.matchWidthOrHeight = .5f;
             instance = root.AddComponent<GpsRuntimePanel>(); instance.Build();
         }
-        bool wasOpen = IsOpen;
         instance.gameObject.SetActive(true); instance.transform.SetAsLastSibling();
         GameplayInputBlocker.SetBlocked(instance, true); instance.BuildPage(); instance.Refresh();
         // Inside a run the panel pauses the whole game like the settings; previews play past the pause.
