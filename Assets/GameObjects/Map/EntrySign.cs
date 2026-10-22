@@ -29,6 +29,51 @@ public sealed class EntrySign : MonoBehaviour
 
     static float Area(SpriteRenderer renderer) => renderer.bounds.size.x * renderer.bounds.size.y;
 
+    static readonly System.Collections.Generic.Dictionary<Sprite, float> visibleCenters = new();
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetCache() => visibleCenters.Clear();
+
+    // World x of the centre of the opaque pixels. Building sprites carry uneven transparent margins
+    // (the workshop's art sits 60 px right of its image centre), so the bounds centre is off.
+    // The texture is not CPU-readable; a small GPU copy is read once per sprite and cached.
+    public static float VisibleCenterX(SpriteRenderer renderer)
+    {
+        var sprite = renderer.sprite;
+        if (!sprite) return renderer.bounds.center.x;
+        if (!visibleCenters.TryGetValue(sprite, out float local))
+        {
+            local = sprite.bounds.center.x;
+            try
+            {
+                var texture = sprite.texture;
+                var area = sprite.textureRect;
+                const int width = 256;
+                int height = Mathf.Max(1, Mathf.RoundToInt(width * area.height / area.width));
+                var target = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32);
+                Graphics.Blit(texture, target, new Vector2(area.width / texture.width, area.height / texture.height),
+                    new Vector2(area.x / texture.width, area.y / texture.height));
+                var previous = RenderTexture.active;
+                RenderTexture.active = target;
+                var copy = new Texture2D(width, height, TextureFormat.RGBA32, false);
+                copy.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                copy.Apply(false);
+                RenderTexture.active = previous;
+                RenderTexture.ReleaseTemporary(target);
+                var pixels = copy.GetPixels32();
+                Destroy(copy);
+                int min = width, max = -1;
+                for (int y = 0; y < height; y++)
+                    for (int x = 0; x < width; x++)
+                        if (pixels[y * width + x].a > 128) { if (x < min) min = x; if (x > max) max = x; }
+                if (max >= min) local = ((min + max + 1) * .5f / width * area.width - sprite.pivot.x) / sprite.pixelsPerUnit;
+            }
+            catch (System.Exception) { }
+            visibleCenters[sprite] = local;
+        }
+        return renderer.transform.TransformPoint(new Vector3(renderer.flipX ? -local : local, 0, 0)).x;
+    }
+
     public static EntrySign Create(Transform building, SpriteRenderer sprite, string caption, UnityAction onClick, int layer)
     {
         var canvasObject = new GameObject("EntrySign", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster), typeof(CanvasGroup));
@@ -85,7 +130,7 @@ public sealed class EntrySign : MonoBehaviour
         // World-space placement and size: buildings may be scaled (the shop is), the sign must not be.
         parentScale = Mathf.Max(.0001f, Mathf.Abs(building.lossyScale.x));
         baseY = sprite.bounds.max.y + .58f;
-        rect.position = new Vector3(sprite.bounds.center.x, baseY, building.position.z);
+        rect.position = new Vector3(VisibleCenterX(sprite), baseY, building.position.z);
         rect.localScale = Vector3.one * (WorldScale / parentScale);
         // Apply after sizing: GoldButtonFeedback picks the wide button artwork from the final aspect ratio.
         GoldButtonFeedback.Apply(Button, null, null);
