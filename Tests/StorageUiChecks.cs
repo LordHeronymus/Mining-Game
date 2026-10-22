@@ -97,8 +97,10 @@ public sealed class StorageUiProbe : MonoBehaviour
         Check(storage.EntrySign.Label.text == "Lager öffnen", "Entry label");
         var workshopSign = Object.FindFirstObjectByType<WorkbenchBuilding>().EntrySign;
         var shopSign = Object.FindFirstObjectByType<ShopBuilding>().EntrySign;
+        var energySign = Object.FindFirstObjectByType<EnergyMonolyth>().EntrySign;
         Check(workshopSign && shopSign && workshopSign.Label.text == "Werkbank öffnen" && shopSign.Label.text == "Shop öffnen", "Workshop and shop use the same gold entry sign");
-        foreach (var sign in new[] { storage.EntrySign, workshopSign, shopSign })
+        Check(energySign && energySign.Label.text == "Energie aufladen", "Energy monolith uses the same gold entry sign");
+        foreach (var sign in new[] { storage.EntrySign, workshopSign, shopSign, energySign })
         {
             Check(sign.Button.GetComponent<GoldButtonFeedback>() && Mathf.Approximately(sign.Label.fontSize, storage.EntrySign.Label.fontSize), sign.Label.text + ": same style and font size");
             Check(sign.Label.GetPreferredValues(sign.Label.text).x <= sign.Label.rectTransform.rect.width + .5f, sign.Label.text + ": text fits between the end caps");
