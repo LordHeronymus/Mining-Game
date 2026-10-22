@@ -1,0 +1,19 @@
+{
+  "task": "Leiter-Sprites neu im Stil der Oberflaechen-Gebaeude (Workshop, Shop, Lager): gemaltes warmes Holz, Messing-/Eisenbeschlaege mit Nieten, dunkle Konturen, weiche Schattierung. Nur Vorschau, noch kein Einbau.",
+  "method": "Kein Bildgenerator verfuegbar: prozedural gemalt mit Generator/LadderPainter.cs (C#, System.Drawing, signierte Distanzfelder, periodisches Rauschen fuer die Holzmaserung). Vorschauen im Spiel mit Tests/LadderVariantPreview.cs (Testbank, isolierter Spielstand, Laufzeit-Tiles, keine Assets veraendert).",
+  "format": {
+    "size": "1254 x 1254 px, wie Assets/GameObjects/Map/Ladders/LadderSegment.png",
+    "pixelsPerUnit": 2508,
+    "tileWorldSize": 0.5,
+    "pivot": "Mitte",
+    "background": "transparent, weicher Schlagschatten nach rechts unten fuer Lesbarkeit vor Erde und Stein",
+    "tiling": "vertikal nahtlos: Holme haengen nur ueber kachelperiodisches Rauschen von y ab; Beschlaege an der Naht werden je zur Haelfte oben und unten gezeichnet",
+    "endPieces": "keine: LadderMap kennt nur ein Segment (Tile segment), kein Kopf-/Fussteil"
+  },
+  "variants": {
+    "A_Grubenleiter": "Robuste Grubenleiter: breite dunkle Eichenholme, Sprossen als Bohlen, Eisenplatten mit vier Eck-Nieten und Mittelbolzen an jeder Verbindung, Eisenband um die Holme an der Kachelnaht.",
+    "B_Messing": "Schlichte Holzleiter in Honigholz mit runden Sprossen (Rundstaebe), Messing-Rosetten mit Pyramiden-Nieten wie an Lager/Workshop, Messinghuelsen an den Sprossenenden, kleine Messingnieten auf den Holmen.",
+    "C_Seilleiter": "Seilleiter: zwei gedrehte Hanfseile, runde Holzsprossen, die seitlich ueberstehen und mit drei Seilwicklungen festgezurrt sind.",
+    "D_Schutzleisten": "Abgenutzte Leiter: verwittertes graubraunes Holz mit Rissen, Eisen-Schutzleisten an den Holm-Aussenkanten (genietet), ausgetretene Sprossen mit Eisenkante vorne, Eisenwinkel an den Sprossenenden."
+  }
+}
