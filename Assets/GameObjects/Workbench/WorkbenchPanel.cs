@@ -30,6 +30,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
     static readonly Color Muted = new Color32(224, 207, 187, 255);
     static readonly Color Enough = new Color32(150, 224, 109, 255);
     static readonly Color Missing = new Color32(232, 134, 101, 255);
+    static readonly Color Stored = new Color32(132, 196, 236, 255);
     const float CraftingPickupLeadTime = .3f;
     const float LayoutWidth = 1640, LayoutHeight = 924;
     const float GridWidth = 758, GridHeight = 570, CardWidth = 178, CardHeight = 180, ColumnPitch = 192, RowPitch = 195;
@@ -228,8 +229,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
 
     public bool CraftSelected()
     {
-        if (craftingPending || !SelectedRecipe || !inventory || Quantity <= 0 ||
-            CraftingService.GetMaxCraftable(SelectedRecipe, inventory) < Quantity) return false;
+        if (craftingPending || !SelectedRecipe || !inventory || !CraftingService.CanCraft(SelectedRecipe, inventory, Quantity)) return false;
         craftingPending = true;
         StartCoroutine(CompleteCraftAfterSound(SelectedRecipe, Quantity));
         Refresh();
@@ -330,9 +330,12 @@ public sealed class WorkbenchPanel : MonoBehaviour
         foreach (var row in ingredientRows)
         {
             int owned = inventory ? inventory.GetCount(row.item) : 0;
+            int stored = CraftingService.GetStoredCount(row.item);
             long needed = (long)row.amount * Quantity;
-            string color = ColorUtility.ToHtmlStringRGB(owned >= needed ? Enough : Missing);
-            row.count.text = $"<color=#{color}>{owned}</color> / {needed}";
+            string color = ColorUtility.ToHtmlStringRGB((long)owned + stored >= needed ? Enough : Missing);
+            // Storage materials are listed separately so the player sees what leaves the hut.
+            string storage = stored > 0 ? $" <color=#{ColorUtility.ToHtmlStringRGB(Stored)}>+{stored} Lager</color>" : "";
+            row.count.text = $"<color=#{color}>{owned}</color>{storage} / {needed}";
         }
         long output = (long)SelectedRecipe.outputAmount * Quantity;
         resultText.text = $"Ergebnis: {output} {SelectedRecipe.ResultName(output)}";
@@ -341,7 +344,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
         minus.interactable = Quantity > 1;
         plus.interactable = Quantity < max;
         maximum.interactable = max > 0 && Quantity != max;
-        craft.interactable = !craftingPending && max >= Quantity;
+        craft.interactable = !craftingPending && CraftingService.CanCraft(SelectedRecipe, inventory, Quantity);
     }
 
     void LoadVisualStyle()
