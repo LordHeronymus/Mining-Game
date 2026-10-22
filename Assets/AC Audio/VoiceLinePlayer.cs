@@ -22,7 +22,7 @@ public sealed class VoiceLinePlayer : MonoBehaviour
     AudioClip activeClip;
     VoiceLineTake activeTake;
     VoiceLinePlay nextPlay;
-    bool revealPending, revealRestored, endScreen, paused, loading, fading, preloadStarted, lastNoWeight, resumeAfterBlock, sawLoading;
+    bool revealPending, revealRestored, endScreen, paused, loading, fading, testLine, preloadStarted, lastNoWeight, resumeAfterBlock, sawLoading;
     double pausedSince, loadingStart, fadeStart, nextPoll, nextEnergySearch, lastMaxEnergy;
     float fade = 1f, fadeFrom = 1f, lastCapacity;
     int blockedScene;
@@ -226,7 +226,8 @@ public sealed class VoiceLinePlayer : MonoBehaviour
     void Clear()
     {
         activeClip = null; activeTake = null;
-        paused = loading = fading = false; fade = 1f;
+        paused = loading = fading = testLine = false; fade = 1f;
+        if (source) source.ignoreListenerPause = false;
     }
 
     void Begin(VoiceLinePlay play, double now)
@@ -235,6 +236,8 @@ public sealed class VoiceLinePlayer : MonoBehaviour
         var take = library ? library.Take(play.trigger, play.line, play.take) : null;
         if (take == null || !take.clip) { director.Finished(now); return; }
         activeTake = take; activeClip = take.clip; source.clip = activeClip;
+        // Only forced test lines (F1) start during the full pause; they play through it.
+        testLine = GamePause.IsPaused; source.ignoreListenerPause = testLine;
         if (activeClip.loadState == AudioDataLoadState.Loaded) { StartClip(); return; }
         if (activeClip.loadState != AudioDataLoadState.Loading) activeClip.LoadAudioData();
         loading = true; loadingStart = now;
@@ -260,7 +263,7 @@ public sealed class VoiceLinePlayer : MonoBehaviour
             if (fade <= 0f) Begin(nextPlay, now);
             return;
         }
-        bool hold = Time.timeScale <= 0f && !endScreen;
+        bool hold = Time.timeScale <= 0f && !endScreen && !testLine;
         if (loading)
         {
             var state = activeClip.loadState;

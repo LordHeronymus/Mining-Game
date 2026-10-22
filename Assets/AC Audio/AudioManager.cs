@@ -310,6 +310,7 @@ public class AudioManager : MonoBehaviour
             previewSource.playOnAwake = false;
             previewSource.loop = false;
             previewSource.spatialBlend = 0f;
+            previewSource.ignoreListenerPause = true; // F1 previews play while the game is paused
         }
         if (previewStop != null) StopCoroutine(previewStop);
         previewSource.Stop();
