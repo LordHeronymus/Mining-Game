@@ -310,6 +310,7 @@ public class AudioManager : MonoBehaviour
             previewSource.playOnAwake = false;
             previewSource.loop = false;
             previewSource.spatialBlend = 0f;
+            previewSource.ignoreListenerPause = true; // F1 previews play while the game is paused
         }
         if (previewStop != null) StopCoroutine(previewStop);
         previewSource.Stop();
@@ -507,7 +508,7 @@ public class AudioManager : MonoBehaviour
 
     public void SetLowHealthHeartbeat(bool playing, bool immediate = false)
     {
-        if (!lowHealthHeartbeatSource) return;
+        if (!lowHealthHeartbeatSource || GamePause.IsPaused && !immediate) return;
         if (!playing && immediate)
         {
             lowHealthHeartbeatRequested = false;

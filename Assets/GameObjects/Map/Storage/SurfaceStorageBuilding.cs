@@ -7,9 +7,16 @@ using UnityEngine.UI;
 [RequireComponent(typeof(BoxCollider2D))]
 public sealed class SurfaceStorageBuilding : MonoBehaviour
 {
+    static readonly List<SurfaceStorageBuilding> active = new();
     readonly Dictionary<ItemSO, int> stored = new();
     readonly HashSet<Collider2D> visitors = new();
     EntrySign entrySign;
+
+    // Enabled storage huts in the order they appeared; the workbench takes materials from them in this order.
+    public static IReadOnlyList<SurfaceStorageBuilding> Active => active;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => active.Clear();
 
     public bool IsOpen => StoragePanel.Instance && StoragePanel.Instance.IsOpen && StoragePanel.Instance.Storage == this;
     public bool HasVisitor => visitors.Count > 0;
@@ -90,8 +97,14 @@ public sealed class SurfaceStorageBuilding : MonoBehaviour
         if (IsOpen) StoragePanel.Instance.Hide();
     }
 
+    void OnEnable()
+    {
+        if (!active.Contains(this)) active.Add(this);
+    }
+
     void OnDisable()
     {
+        active.Remove(this);
         Close();
         visitors.Clear();
     }
@@ -146,6 +159,25 @@ public sealed class SurfaceStorageBuilding : MonoBehaviour
         // Floating point rounding can leave the estimate one item above what CanAdd accepts.
         for (int i = 0; i < 3 && amount > 0 && !inventory.CanAdd(item, amount); i++) amount--;
         return amount > 0 && inventory.CanAdd(item, amount) ? amount : 0;
+    }
+
+    // Crafting consumes stored materials directly; they never pass through the inventory.
+    public int TakeForCrafting(ItemSO item, int amount)
+    {
+        int count = GetStoredCount(item);
+        amount = Mathf.Min(amount, count);
+        if (amount <= 0) return 0;
+        if (count == amount) stored.Remove(item);
+        else stored[item] = count - amount;
+        StorageChanged?.Invoke();
+        return amount;
+    }
+
+    public void ReturnFromCrafting(ItemSO item, int amount)
+    {
+        if (!item || amount <= 0) return;
+        stored[item] = (int)Math.Min(int.MaxValue, (long)GetStoredCount(item) + amount);
+        StorageChanged?.Invoke();
     }
 
     public int WithdrawUpTo(ItemSO item, int amount)
