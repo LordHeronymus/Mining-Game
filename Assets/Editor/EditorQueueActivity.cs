@@ -65,6 +65,8 @@ public static class EditorQueueActivity
         if (EditorApplication.isPlayingOrWillChangePlaymode) lastEvent = "Skripte geladen (Play-Mode)";
 
         EditorApplication.update += OnUpdate;
+        // Der lokale Dienst fuer PrivOrg startet mit dem ersten Editor (nicht mit Windows).
+        EditorApplication.delayCall += EnsureQueueService;
         EditorApplication.playModeStateChanged += s => Mark("Play-Mode: " + s, true);
         EditorApplication.pauseStateChanged += s => Mark("Pause: " + s, true);
         EditorApplication.projectChanged += () => Mark("Projekt geaendert");
@@ -77,6 +79,39 @@ public static class EditorQueueActivity
         Undo.undoRedoPerformed += () => Mark("Undo/Redo");
         Undo.postprocessModifications += mods => { Mark("Eigenschaft geaendert"); return mods; };
         Selection.selectionChanged += () => Mark("Auswahl geaendert");
+    }
+
+    const int QueueServicePort = 47615;
+
+    // Startet Tools/editor-queue-server.ps1 ueber die Verknuepfung, die "-Install" in EditorQueue/bin anlegt,
+    // falls er noch nicht laeuft. Ein zweiter Editor findet den laufenden Dienst und tut nichts; ein doppelter
+    // Start beendet sich selbst, weil der Port belegt ist.
+    static void EnsureQueueService()
+    {
+        try
+        {
+            string shortcut = Path.Combine(queueDir, "bin", "editor-queue-server.lnk");
+            if (!File.Exists(shortcut) || QueueServiceRunning()) return;
+            Process.Start(new ProcessStartInfo(shortcut) { UseShellExecute = true, WindowStyle = ProcessWindowStyle.Hidden });
+            Debug.Log("Editor-Warteschlange: lokaler Dienst fuer PrivOrg gestartet (http://localhost:" + QueueServicePort + ").");
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("Editor-Warteschlange: lokaler Dienst konnte nicht gestartet werden: " + e.Message);
+        }
+    }
+
+    static bool QueueServiceRunning()
+    {
+        try
+        {
+            using (var client = new System.Net.Sockets.TcpClient())
+            {
+                var connect = client.ConnectAsync("127.0.0.1", QueueServicePort);
+                return connect.Wait(300) && client.Connected;
+            }
+        }
+        catch { return false; }
     }
 
     static void Mark(string evt, bool immediate = false)
