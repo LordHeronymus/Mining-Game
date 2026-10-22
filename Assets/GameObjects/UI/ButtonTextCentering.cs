@@ -19,7 +19,7 @@ public sealed class ButtonTextCentering : MonoBehaviour
 
     TMP_Text text;
     Image frame;
-    float requestedSize = -1, appliedSize = -1;
+    float requestedSize = -1, appliedSize = -1, fittedHeight = -1;
     bool subscribed;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -104,7 +104,14 @@ public sealed class ButtonTextCentering : MonoBehaviour
         text.OnPreRenderText += Shift;
         GpsSettings.Changed += Refresh;
     }
-    void OnRectTransformDimensionsChange() { if (subscribed) Refresh(); }
+    // The frame artwork settles after the first frames (GoldButtonFeedback sets its pixel density in LateUpdate,
+    // layouts resize buttons), so the fit follows changes of the visible inner height.
+    void LateUpdate()
+    {
+        if (!frame) return;
+        float height = InnerFrame(frame).height;
+        if (Mathf.Abs(height - fittedHeight) > .01f) Refresh();
+    }
 
     void Refresh()
     {
@@ -116,11 +123,13 @@ public sealed class ButtonTextCentering : MonoBehaviour
     // Largest font size at which the highest umlaut and the lowest descender fit around the centred cap line.
     void FitSize()
     {
-        if (!frame || !text.font) return;
+        if (!frame) return;
+        var inner = InnerFrame(frame);
+        fittedHeight = inner.height;
+        if (!text.font) return;
         float current = text.enableAutoSizing ? text.fontSizeMax : text.fontSize;
         if (requestedSize < 0 || Mathf.Abs(current - appliedSize) > .01f) requestedSize = current;
-        var inner = InnerFrame(frame);
-        float height = Mathf.Abs(text.rectTransform.InverseTransformVector(frame.rectTransform.TransformVector(new Vector3(0, inner.height))).y);
+        float height = Mathf.Max(0, text.rectTransform.InverseTransformVector(frame.rectTransform.TransformVector(new Vector3(0, inner.height))).y);
         var face = text.font.faceInfo;
         var extents = Extents(text.font);
         float half = Mathf.Max(extents.x - face.capLine / 2, face.capLine / 2 - extents.y);
