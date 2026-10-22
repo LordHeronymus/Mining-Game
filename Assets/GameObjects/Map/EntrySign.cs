@@ -47,6 +47,9 @@ public sealed class EntrySign : MonoBehaviour
 
     static readonly System.Collections.Generic.Dictionary<Sprite, Rect> opaqueRects = new();
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetCache() => opaqueRects.Clear();
+
     // Normalised rect (0..1 of the sprite rect) holding pixels at least half opaque. Building textures are not
     // readable, so the sprite is blitted into a small render texture once and read back from there.
     static Rect OpaqueRect(Sprite sprite)
