@@ -196,6 +196,60 @@ public sealed class ItemDragGhostProbe : MonoBehaviour
                 hud.CancelHotbarDrag();
             }
             Log("PASS Hotbar: " + hotbarItems.Count + " items");
+
+            // GPS (UI → Item ziehen) drives the pop; values are changed in memory only and restored.
+            var prefs = GpsSettings.Preferences;
+            float popScale = prefs.dragPopScale, carryScale = prefs.dragCarryScale, popDuration = prefs.dragPopDuration;
+            try
+            {
+                prefs.dragPopScale = 1.6f; prefs.dragCarryScale = 1.3f; prefs.dragPopDuration = .45f;
+                Check(Mathf.Abs(ItemDragGhost.Lift(.15f) - 1.6f) < .001f, "GPS: pop peaks at the configured strength after a third of the duration");
+                Check(Mathf.Abs(ItemDragGhost.Lift(.45f) - 1.3f) < .001f, "GPS: pop ends at the configured carry size after the duration");
+                var icon = Field<Image[]>(hud, "icons")[0];
+                var position = Screen(icon.rectTransform, ScreenCenter(icon.rectTransform));
+                Check(hud.BeginHotbarDrag(1, position), "GPS: hotbar drag starts");
+                var ghost = Field<Image>(hud, "dragIcon");
+                pin = () => hud.GetType().GetMethod("MoveDraggedIcon", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(hud, new object[] { position });
+                yield return Pop(ghost);
+                pin = null;
+                float factor = ghost.GetComponent<ItemDragGhost>().Factor;
+                Check(popPeak > 1.5f && popPeak <= 1.6001f, $"GPS: configured pop strength reached (peak {popPeak:0.000})");
+                Check(Mathf.Abs(factor - 1.3f) < .001f, $"GPS: configured carry size reached ({factor:0.000})");
+                hud.CancelHotbarDrag();
+                prefs.dragPopDuration = 0f;
+                Check(Mathf.Abs(ItemDragGhost.Lift(.01f) - 1.3f) < .001f, "GPS: duration 0 carries at once without pop");
+                Log($"PASS GPS: peak {popPeak:0.000}, carried at {factor:0.000}");
+            }
+            finally { prefs.dragPopScale = popScale; prefs.dragCarryScale = carryScale; prefs.dragPopDuration = popDuration; }
+
+            // Right-click takes an item off the hotbar; the saved layout is restored afterwards.
+            var layout = Enumerable.Range(0, 8).Select(i => PlayerPrefs.GetInt("CompactHud.Slot." + i, int.MinValue)).ToArray();
+            int layoutVersion = PlayerPrefs.GetInt("CompactHud.SlotLayoutVersion", 0);
+            try
+            {
+                var drags = Field<HotbarSlotDrag[]>(hud, "slotDrags");
+                PointerEventData Click(PointerEventData.InputButton button) => new PointerEventData(EventSystem.current) { button = button };
+                var before = (ItemSO[])hud.slots.Clone();
+                ExecuteEvents.Execute(drags[1].gameObject, Click(PointerEventData.InputButton.Left), ExecuteEvents.pointerClickHandler);
+                Check(hud.slots[1] == before[1], "Right-click: left click keeps the item in the hotbar");
+                ExecuteEvents.Execute(drags[1].gameObject, Click(PointerEventData.InputButton.Right), ExecuteEvents.pointerClickHandler);
+                Check(!hud.slots[1], "Right-click: item leaves the hotbar");
+                for (int i = 0; i < 8; i++) if (i != 1) Check(hud.slots[i] == before[i], "Right-click: other slot " + (i + 1) + " unchanged");
+                Check(PlayerPrefs.GetInt("CompactHud.Slot.1", 0) == int.MinValue, "Right-click: removal is saved in the hotbar layout");
+                yield return null; Canvas.ForceUpdateCanvases();
+                Check(!Field<Image[]>(hud, "icons")[1].enabled, "Right-click: slot shows no icon");
+                ExecuteEvents.Execute(drags[1].gameObject, Click(PointerEventData.InputButton.Right), ExecuteEvents.pointerClickHandler);
+                Check(!hud.slots[1], "Right-click: empty slot stays empty");
+                Check(InventoryManager.Instance.GetCount(before[1]) > 0, "Right-click: item stays in the inventory");
+                Log("PASS Right-click: " + before[1].displayName + " removed from slot 2");
+            }
+            finally
+            {
+                for (int i = 0; i < 8; i++)
+                    if (layout[i] == int.MinValue) PlayerPrefs.DeleteKey("CompactHud.Slot." + i); else PlayerPrefs.SetInt("CompactHud.Slot." + i, layout[i]);
+                if (layoutVersion == 0) PlayerPrefs.DeleteKey("CompactHud.SlotLayoutVersion"); else PlayerPrefs.SetInt("CompactHud.SlotLayoutVersion", layoutVersion);
+                PlayerPrefs.Save();
+            }
         }
         finally
         {
