@@ -3,11 +3,11 @@ using System.Collections;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
-using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 // Requires a fresh Play start on the free MainMenu. Uses isolated save/profile directories.
-// Captures the in-game pause menu today and two layouts without "Laden" (rearranged at runtime only, no code change).
+// Captures the in-game pause menu (5 buttons, no "Laden"), once plain, once with the "Speichern …" status line
+// and once with a long error message, and checks that the status line stays inside the board above its frame.
 // Output: Temp/PauseMenuPreview/*.png, report Temp/PauseMenuPreview.txt
 public static class PauseMenuPreview
 {
@@ -27,6 +27,13 @@ public sealed class PauseMenuPreviewProbe : MonoBehaviour
     const string Report = "Temp/PauseMenuPreview.txt", Output = "Temp/PauseMenuPreview";
     string save, meta;
     bool clean;
+    int checks;
+
+    void Check(bool ok, string label)
+    {
+        if (!ok) throw new Exception(label);
+        File.AppendAllText(Report, "PASS " + (++checks) + " " + label + "\n");
+    }
 
     IEnumerator Start()
     {
@@ -67,50 +74,35 @@ public sealed class PauseMenuPreviewProbe : MonoBehaviour
         var pause = Object.FindFirstObjectByType<RunPauseMenu>();
         pause.Open(); yield return null;
         var layout = (RectTransform)typeof(RunPauseMenu).GetField("layout", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(pause);
-        RectTransform Part(string name) => (RectTransform)layout.Find(name);
-        void Place(string name, float y, Vector2? size = null)
-        {
-            var rect = Part(name); rect.anchoredPosition = new Vector2(0, y);
-            if (size.HasValue) rect.sizeDelta = size.Value;
-        }
+        var status = (TMPro.TextMeshProUGUI)typeof(RunPauseMenu).GetField("status", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(pause);
+        Check(!layout.Find("Load"), "No \"Laden\" button in the pause menu");
+        Check(layout.Find("Resume") && layout.Find("Progression") && layout.Find("Challenges") && layout.Find("Settings") && layout.Find("Home"),
+            "Fortsetzen, Fortschritt, Herausforderungen, Einstellungen, Hauptmenü present");
         UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
-        yield return Capture("Heute");
+        yield return Capture("Final");
 
-        // Variant A: "Laden" gone, everything below moves up one row, the board loses one row (91) and stays centred.
-        Part("Load").gameObject.SetActive(false);
-        const float shift = -45.5f;
-        Place("Board", 90.5f + shift, new Vector2(650, 759));
-        Place("Title", 383 + shift);
-        Place("Resume", 265 + shift); Place("Progression", 174 + shift); Place("Challenges", 83 + shift);
-        Place("Settings", -8 + shift); Place("Home", -99 + shift);
-        Place("Status", -209 + shift);
-        yield return Capture("Variante-A");
+        var board = (RectTransform)layout.Find("Board");
+        var home = (RectTransform)layout.Find("Home");
+        float frame = 40; // the brass frame along the board's bottom edge
+        foreach (var (name, text) in new[] { ("Final-Speichern", "Speichern …"),
+            ("Final-Fehler", "Speichern fehlgeschlagen: Der Spielstand konnte nicht geschrieben werden.") })
+        {
+            status.text = text; status.ForceMeshUpdate();
+            yield return Capture(name);
+            var bounds = status.textBounds;
+            float top = status.rectTransform.anchoredPosition.y + bounds.max.y, bottom = status.rectTransform.anchoredPosition.y + bounds.min.y;
+            float boardBottom = board.anchoredPosition.y - board.sizeDelta.y * .5f, homeBottom = home.anchoredPosition.y - home.sizeDelta.y * .5f;
+            Check(top < homeBottom && bottom > boardBottom + frame && bounds.size.x <= status.rectTransform.sizeDelta.x + 1,
+                name + ": status text between \"Hauptmenü\" and frame (text " + bottom.ToString("0") + ".." + top.ToString("0") +
+                ", button bottom " + homeBottom.ToString("0") + ", board bottom " + boardBottom.ToString("0") + ", size " + status.fontSize.ToString("0") + ")");
+        }
+        status.text = "";
 
-        // Variant B: board height as today, "Hauptmenü" stays at the bottom, separated by the main menu's brass divider.
-        Place("Board", 45, new Vector2(650, 850));
-        Place("Title", 383);
-        Place("Resume", 265); Place("Progression", 174); Place("Challenges", 83); Place("Settings", -8);
-        Place("Home", -190); Place("Status", -300);
-        Divider(layout, -99);
-        yield return Capture("Variante-B");
-        File.AppendAllText(Report, "COMPLETE 3 captures\n");
-    }
-
-    // Same brass rail with diamond as MainMenuController.BuildHeaderDivider.
-    static void Divider(RectTransform layout, float y)
-    {
-        var divider = HomeUi.Rect("Preview Divider", layout, new Vector2(0, y), new Vector2(436, 22));
-        HomeUi.Image("Rail Shadow", divider, new Vector2(0, -2), new Vector2(436, 5)).color = new Color32(29, 12, 3, 220);
-        HomeUi.Image("Gold Rail", divider, Vector2.zero, new Vector2(436, 3)).color = new Color32(183, 103, 28, 255);
-        HomeUi.Image("Rail Highlight", divider, new Vector2(0, 1), new Vector2(436, 1)).color = new Color32(255, 218, 125, 255);
-        var shadow = HomeUi.Image("Diamond Shadow", divider, new Vector2(0, -2), new Vector2(18, 18));
-        shadow.color = new Color32(29, 12, 3, 255); shadow.rectTransform.localRotation = Quaternion.Euler(0, 0, 45);
-        var border = HomeUi.Image("Diamond Rim", divider, Vector2.zero, new Vector2(16, 16));
-        border.color = new Color32(255, 212, 109, 255); border.rectTransform.localRotation = Quaternion.Euler(0, 0, 45);
-        var inset = HomeUi.Image("Diamond Inset", divider, Vector2.zero, new Vector2(11, 11));
-        inset.color = new Color32(107, 48, 10, 255); inset.rectTransform.localRotation = Quaternion.Euler(0, 0, 45);
-        var center = HomeUi.Image("Diamond Gold", divider, Vector2.zero, new Vector2(7, 7));
-        center.color = new Color32(232, 160, 52, 255); center.rectTransform.localRotation = Quaternion.Euler(0, 0, 45);
+        var player = Object.FindFirstObjectByType<PlayerMovement>();
+        var cam = Camera.main;
+        Check(player && cam.GetComponent<CameraFollow>().enabled && cam.GetComponent<CameraFollow>().target == player.transform &&
+            cam.GetComponent<CameraWorldBorderClamp>().enabled && GameplayTestSettings.CameraFollowEnabled, "Camera follows player");
+        File.AppendAllText(Report, "COMPLETE " + checks + " checks\n");
     }
 
     IEnumerator Capture(string name)
