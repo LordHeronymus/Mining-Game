@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -61,6 +63,12 @@ public static class AutosaveStutterChecks
     static IEnumerator Wait(float seconds)
     { double until = EditorApplication.timeSinceStartup + seconds; while (EditorApplication.timeSinceStartup < until) yield return null; }
     static double Ms => Time.unscaledDeltaTime * 1000.0;
+    // The running autosave's file write (null while it still captures), read from the save system's job.
+    static Task AutosaveWrite()
+    {
+        var job = typeof(GameSaveSystem).GetField("autosave", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
+        return job == null ? null : (Task)job.GetType().GetField("write").GetValue(job);
+    }
     static string Stats(List<double> ms)
     {
         if (ms.Count == 0) return "keine Frames";
@@ -85,40 +93,52 @@ public static class AutosaveStutterChecks
         while (EditorApplication.timeSinceStartup < until) { yield return null; baseline.Add(Ms); }
         lines.Add("Ohne Speichern: " + Stats(baseline));
 
-        // Real timed autosaves through RunAutosave, frame times as the player sees them.
+        // Real timed autosaves through RunAutosave, frame times as the player sees them, split into capture and file write.
         GpsSettings.Preferences.autosaveIntervalMinutes = 3f / 60f;
         for (int save = 1; save <= Saves; save++)
         {
             double waitStart = EditorApplication.timeSinceStartup;
             while (!GameSaveSystem.IsAutoSaving) { if (EditorApplication.timeSinceStartup - waitStart > 15) throw new Exception("Autosave did not start"); yield return null; }
-            double start = Time.realtimeSinceStartupAsDouble;
-            var during = new List<double>(); int frozen = 0;
-            while (GameSaveSystem.IsAutoSaving) { yield return null; during.Add(Ms); if (Time.timeScale == 0 || GameplayInputBlocker.IsBlocked) frozen++; }
-            double seconds = Time.realtimeSinceStartupAsDouble - start;
+            double start = Time.realtimeSinceStartupAsDouble, written = 0;
+            var capture = new List<double>(); var write = new List<double>(); int frozen = 0, collections = GC.CollectionCount(0);
+            while (GameSaveSystem.IsAutoSaving)
+            {
+                bool writing = AutosaveWrite() != null;
+                if (writing && written == 0) written = Time.realtimeSinceStartupAsDouble;
+                yield return null;
+                (writing ? write : capture).Add(Ms);
+                if (Time.timeScale == 0 || GameplayInputBlocker.IsBlocked) frozen++;
+            }
+            double end = Time.realtimeSinceStartupAsDouble;
             var after = new List<double>();
             for (int i = 0; i < 10; i++) { yield return null; after.Add(Ms); }
-            lines.Add($"Autosave {save}: dauert {seconds * 1000:0} ms, Spiel angehalten/blockiert in {frozen} Frames; waehrenddessen {Stats(during)}; " +
-                $"Frames > 16,7 ms: {during.Count(x => x > 1000.0 / 60)}, > 33 ms: {during.Count(x => x > 33)}; danach Max {after.Max():0.0} ms");
+            var during = capture.Concat(write).ToList();
+            lines.Add($"Autosave {save}: dauert {(end - start) * 1000:0} ms, Spiel angehalten/blockiert in {frozen} Frames; waehrenddessen {Stats(during)}; " +
+                $"Frames > 16,7 ms: {during.Count(x => x > 1000.0 / 60)}, > 33 ms: {during.Count(x => x > 33)}; " +
+                $"Erfassen {(written - start) * 1000:0} ms (Max {capture.DefaultIfEmpty(0).Max():0.0} ms), Schreiben {(end - written) * 1000:0} ms (Max {write.DefaultIfEmpty(0).Max():0.0} ms); " +
+                $"GC {GC.CollectionCount(0) - collections}; danach Max {after.Max():0.0} ms");
         }
         GpsSettings.Preferences.autosaveIntervalMinutes = 0;
         yield return Wait(1);
 
-        // Main-thread cost of each step of the save coroutine (what can produce one long frame).
+        // Main-thread cost per frame: capture slices, the final frame (rest of the run + changed rows), background write.
         for (int save = 1; save <= Saves; save++)
         {
             var routine = GameSaveSystem.Autosave(RunAutosave.Instance, null);
-            var steps = new List<double>(); var watch = new Stopwatch();
+            var watch = new Stopwatch(); var wall = new Stopwatch();
+            double final = 0, slice = 0; int steps = 0;
             while (true)
             {
-                watch.Restart(); bool more = routine.MoveNext(); watch.Stop();
-                steps.Add(watch.Elapsed.TotalMilliseconds);
+                bool capturing = AutosaveWrite() == null;
+                watch.Restart(); bool more = routine.MoveNext(); watch.Stop(); steps++;
+                double ms = watch.Elapsed.TotalMilliseconds;
+                if (capturing && AutosaveWrite() != null) { final = ms; wall.Start(); }
+                else if (capturing) slice = Math.Max(slice, ms);
                 if (!more) break;
                 yield return null;
             }
-            int worst = steps.IndexOf(steps.Max());
-            var sorted = steps.OrderBy(x => x).ToList();
-            lines.Add($"Schritte {save}: {steps.Count} Schritte, Summe {steps.Sum():0.0} ms, Median {sorted[sorted.Count / 2]:0.00} ms, " +
-                $"laengster Schritt {steps[worst]:0.0} ms (Nr. {worst + 1}), zweitlaengster {sorted[^2]:0.0} ms");
+            lines.Add($"Schritte {save}: {steps} Schritte, Erfassen pro Bild max {slice:0.0} ms, letztes Bild {final:0.0} ms, " +
+                $"Schreiben im Hintergrund {wall.Elapsed.TotalMilliseconds:0} ms");
             yield return Wait(1);
         }
         lines.Add($"Spielstand {new FileInfo(GameSaveSystem.SlotPath(1)).Length / 1024} KB");

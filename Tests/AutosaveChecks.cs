@@ -140,9 +140,13 @@ public static class AutosaveChecks
         }
         Check(SavedMoney() == money, "Timed autosave writes the active slot");
         Check(started && !halted, "Autosave keeps the game running (no pause, no input block, not busy)");
-        yield return Settled();
+        // The file is complete a frame before the autosave coroutine reports it and the notice fades in.
         var notice = GameObject.Find("Autosave Notice")?.GetComponent<TextMeshProUGUI>();
+        waitStart = EditorApplication.timeSinceStartup;
+        while (notice && notice.alpha <= 0 && EditorApplication.timeSinceStartup - waitStart < 1) yield return null;
         Check(notice && notice.alpha > 0, "Autosave shows a short notice");
+        // The capture took longer than the 4 s test interval; the finished autosave still restarts the interval.
+        Check(!GameSaveSystem.IsAutoSaving, "No second autosave right after the first");
         Check(other.SequenceEqual(File.ReadAllBytes(GameSaveSystem.SlotPath(1))) && !GameSaveSystem.HasSlotData(3), "Other slots untouched");
         Check(Time.timeScale > 0 && !GameplayInputBlocker.IsBlocked, "Game continues after autosave");
 

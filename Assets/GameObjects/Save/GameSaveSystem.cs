@@ -31,10 +31,12 @@ public static class GameSaveSystem
     static string activeDirectory;
     // The autosave runs beside the game and never blocks other saves, loads, menus or navigation:
     // they drop its unfinished capture or wait for its file write first (SettleAutosave).
-    sealed class AutosaveJob { public RunSnapshot snapshot; public Task write; public bool cancelled; }
+    sealed class AutosaveJob { public MonoBehaviour owner; public RunSnapshot snapshot; public Task write; public bool cancelled; }
     static AutosaveJob autosave;
     const double AutosaveFrameMilliseconds = 1;
-    public static bool IsAutoSaving => autosave != null && (autosave.write == null || !autosave.write.IsCompleted);
+    // Until its coroutine has finished; once its owner is gone, until its file write has finished.
+    public static bool IsAutoSaving => autosave != null &&
+        (autosave.owner && autosave.owner.isActiveAndEnabled || autosave.write is { IsCompleted: false });
     public static bool HasPendingLoad => pending != null;
 #if UNITY_EDITOR
     public static string TestDirectory;
@@ -384,7 +386,7 @@ public static class GameSaveSystem
         string path = SlotPath(slot), directory = DirectoryPath;
         AutosaveJob job = null;
         float previousScale = Time.timeScale;
-        if (background) autosave = job = new AutosaveJob();
+        if (background) autosave = job = new AutosaveJob { owner = owner };
         else
         {
             IsBusy = true;
@@ -486,10 +488,16 @@ public static class GameSaveSystem
     sealed class RunSnapshot : IDisposable
     {
         const int FinalRows = 8; // Changed rows left for the final frame; more are caught up beforehand.
+        // The captured rows of every layer share one buffer that all saves reuse, so capturing allocates almost nothing
+        // (per-row arrays used to trigger a garbage collection hitch). Saves never overlap: a capture starts only after
+        // the previous file write has finished (IsBusy, IsAutoSaving, SettleAutosave).
+        public static readonly MemoryStream Rows = new();
+        public static readonly BinaryWriter RowWriter = new(Rows);
         readonly LayerSnapshot[] layers;
         bool tracking;
         public RunSnapshot(MapGenerator map)
         {
+            Rows.SetLength(0);
             var ladders = map.GetComponent<LadderMap>();
             layers = new[] { map.Terrain, map.EnsureOreOverlay(), map.EnsureArtifactOverlay(), ladders ? ladders.EnsureTiles() : null }
                 .Select(tiles => new LayerSnapshot(tiles)).ToArray();
@@ -529,31 +537,31 @@ public static class GameSaveSystem
     {
         public readonly Tilemap tiles;
         BoundsInt bounds = new BoundsInt(0, 0, 0, 0, 0, 1);
-        byte[][] rows = Array.Empty<byte[]>();
+        // Where each captured row lies in RunSnapshot.Rows; a recaptured row is appended again.
+        int[] offsets = Array.Empty<int>(), lengths = Array.Empty<int>();
         bool[] changed = Array.Empty<bool>();
         int next, scan;
         TileBase[] row = Array.Empty<TileBase>();
         readonly List<TileBase> palette = new();
         readonly Dictionary<TileBase, int> ids = new();
-        readonly MemoryStream buffer = new();
-        readonly BinaryWriter writer;
         string[] keys = Array.Empty<string>();
         public int ChangedRows { get; private set; }
-        public LayerSnapshot(Tilemap tiles) { this.tiles = tiles; writer = new BinaryWriter(buffer); if (tiles) Restart(); }
+        public LayerSnapshot(Tilemap tiles) { this.tiles = tiles; if (tiles) Restart(); }
         // Bounds grow when a tile is placed outside them; the layer is then captured again.
         bool Moved => tiles && tiles.cellBounds != bounds;
-        public bool Incomplete => next < rows.Length || Moved;
+        public bool Incomplete => next < offsets.Length || Moved;
         public void Advance()
         {
             if (Moved) Restart();
-            else if (next < rows.Length) { rows[next] = Capture(next); next++; }
+            else if (next < offsets.Length) { Capture(next); next++; }
             else Recapture();
         }
         void Restart()
         {
             bounds = tiles.cellBounds;
             if ((long)bounds.size.x * bounds.size.y > MaxCells) throw new InvalidDataException("Welt ist zu groß.");
-            rows = new byte[bounds.size.y][]; changed = new bool[bounds.size.y]; next = scan = 0; ChangedRows = 0;
+            offsets = new int[bounds.size.y]; lengths = new int[bounds.size.y]; changed = new bool[bounds.size.y];
+            next = scan = 0; ChangedRows = 0;
             if (row.Length != bounds.size.x) row = new TileBase[bounds.size.x];
         }
         public void MarkChanged(NativeArray<Vector3Int> positions)
@@ -568,7 +576,7 @@ public static class GameSaveSystem
         void Recapture()
         {
             while (!changed[scan]) scan = (scan + 1) % changed.Length;
-            rows[scan] = Capture(scan); changed[scan] = false; ChangedRows--;
+            Capture(scan); changed[scan] = false; ChangedRows--;
         }
         public void Finish(SaveAssetCatalog catalog)
         {
@@ -576,11 +584,11 @@ public static class GameSaveSystem
             while (ChangedRows > 0) Recapture();
             keys = palette.Select(catalog.Key).ToArray();
         }
-        byte[] Capture(int index)
+        void Capture(int index)
         {
-            int width = bounds.size.x, y = bounds.yMin + index;
+            int width = bounds.size.x, y = bounds.yMin + index, start = (int)RunSnapshot.Rows.Length;
+            var writer = RunSnapshot.RowWriter;
             tiles.GetTilesBlockNonAlloc(new BoundsInt(bounds.xMin, y, 0, width, 1, 1), row);
-            buffer.SetLength(0);
             for (int x = 0; x < width; x++)
             {
                 var tile = row[x];
@@ -594,13 +602,14 @@ public static class GameSaveSystem
                 if (custom)
                 { writer.Write(color.r); writer.Write(color.g); writer.Write(color.b); writer.Write(color.a); for (int n = 0; n < 16; n++) writer.Write(matrix[n]); }
             }
-            writer.Flush(); return buffer.ToArray();
+            offsets[index] = start; lengths[index] = (int)RunSnapshot.Rows.Length - start;
         }
         public void Write(BinaryWriter output)
         {
             output.Write(bounds.xMin); output.Write(bounds.yMin); output.Write(bounds.size.x); output.Write(bounds.size.y);
             output.Write(keys.Length); foreach (string key in keys) output.Write(key);
-            foreach (var bytes in rows) output.Write(bytes);
+            byte[] data = RunSnapshot.Rows.GetBuffer();
+            for (int i = 0; i < offsets.Length; i++) output.Write(data, offsets[i], lengths[i]);
         }
     }
     // Worker thread: uses only captured data and precomputed paths.
