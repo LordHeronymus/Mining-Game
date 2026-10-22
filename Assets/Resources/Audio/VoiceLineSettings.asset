@@ -1,0 +1,163 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7384d8d5254d459aa22dc97eb7d60e69, type: 3}
+  m_Name: VoiceLineSettings
+  m_EditorClassIdentifier: 
+  enabled: 1
+  volume: 1
+  globalCooldownSeconds: 20
+  minimumGapSeconds: 1.5
+  reactionGapSeconds: 4
+  interruptPriorityGap: 25
+  interruptFadeSeconds: 0.15
+  pauseDropSeconds: 1.5
+  energyLowFraction: 0.33
+  energyCriticalFraction: 0.15
+  energyRearmMargin: 0.05
+  carryRearmMargin: 0.1
+  refillMinimumFraction: 0.1
+  refillTargetFraction: 0.8
+  saleMinimumCarryShare: 0.3
+  smallFallMinimumDamage: 5
+  watcherPollSeconds: 0.25
+  preloadClipsPerFrame: 8
+  duckOtherAudio: 1
+  duckVolume: 0.7
+  duckFadeSeconds: 0.2
+  debugLog: 0
+  events:
+  - trigger: 0
+    priority: 75
+    playChancePercent: 100
+    cooldownSeconds: 120
+    delaySeconds: 0
+    maxWaitSeconds: 10
+    ignoreGlobalCooldown: 1
+  - trigger: 1
+    priority: 85
+    playChancePercent: 100
+    cooldownSeconds: 60
+    delaySeconds: 0.3
+    maxWaitSeconds: 10
+    ignoreGlobalCooldown: 1
+  - trigger: 2
+    priority: 45
+    playChancePercent: 100
+    cooldownSeconds: 60
+    delaySeconds: 0.9
+    maxWaitSeconds: 5
+    ignoreGlobalCooldown: 0
+  - trigger: 3
+    priority: 40
+    playChancePercent: 100
+    cooldownSeconds: 180
+    delaySeconds: 0.3
+    maxWaitSeconds: 10
+    ignoreGlobalCooldown: 0
+  - trigger: 4
+    priority: 65
+    playChancePercent: 100
+    cooldownSeconds: 120
+    delaySeconds: 0.3
+    maxWaitSeconds: 10
+    ignoreGlobalCooldown: 1
+  - trigger: 5
+    priority: 90
+    playChancePercent: 50
+    cooldownSeconds: 60
+    delaySeconds: 0.8
+    maxWaitSeconds: 2
+    ignoreGlobalCooldown: 1
+  - trigger: 6
+    priority: 100
+    playChancePercent: 100
+    cooldownSeconds: 20
+    delaySeconds: 1.1
+    maxWaitSeconds: 2.5
+    ignoreGlobalCooldown: 1
+  - trigger: 7
+    priority: 35
+    playChancePercent: 50
+    cooldownSeconds: 120
+    delaySeconds: 1
+    maxWaitSeconds: 4
+    ignoreGlobalCooldown: 0
+  - trigger: 8
+    priority: 50
+    playChancePercent: 70
+    cooldownSeconds: 45
+    delaySeconds: 0.7
+    maxWaitSeconds: 5
+    ignoreGlobalCooldown: 0
+  - trigger: 9
+    priority: 55
+    playChancePercent: 100
+    cooldownSeconds: 0
+    delaySeconds: 0.5
+    maxWaitSeconds: 8
+    ignoreGlobalCooldown: 0
+  - trigger: 10
+    priority: 55
+    playChancePercent: 100
+    cooldownSeconds: 0
+    delaySeconds: 0.5
+    maxWaitSeconds: 8
+    ignoreGlobalCooldown: 0
+  - trigger: 11
+    priority: 40
+    playChancePercent: 50
+    cooldownSeconds: 180
+    delaySeconds: 0.5
+    maxWaitSeconds: 4
+    ignoreGlobalCooldown: 0
+  - trigger: 12
+    priority: 40
+    playChancePercent: 40
+    cooldownSeconds: 180
+    delaySeconds: 0.5
+    maxWaitSeconds: 4
+    ignoreGlobalCooldown: 0
+  - trigger: 13
+    priority: 60
+    playChancePercent: 100
+    cooldownSeconds: 0
+    delaySeconds: 0.5
+    maxWaitSeconds: 8
+    ignoreGlobalCooldown: 1
+  - trigger: 14
+    priority: 60
+    playChancePercent: 100
+    cooldownSeconds: 0
+    delaySeconds: 0.5
+    maxWaitSeconds: 8
+    ignoreGlobalCooldown: 1
+  - trigger: 15
+    priority: 60
+    playChancePercent: 100
+    cooldownSeconds: 0
+    delaySeconds: 0.5
+    maxWaitSeconds: 8
+    ignoreGlobalCooldown: 1
+  - trigger: 16
+    priority: 80
+    playChancePercent: 100
+    cooldownSeconds: 0
+    delaySeconds: 1
+    maxWaitSeconds: 6
+    ignoreGlobalCooldown: 1
+  - trigger: 17
+    priority: 80
+    playChancePercent: 100
+    cooldownSeconds: 0
+    delaySeconds: 1
+    maxWaitSeconds: 6
+    ignoreGlobalCooldown: 1

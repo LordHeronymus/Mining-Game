@@ -32,6 +32,8 @@ public static partial class GpsSchema
         ["resourceXpMultiplier"] = "Ressourcen-XP-Multiplikator", ["discoveryXp"] = "Entdeckungs-XP",
         ["efficiencyMaxBonus"] = "Maximaler Effizienzbonus", ["efficiencyReferenceXpPerMinute"] = "Effizienzreferenz (XP/min)",
         ["layerIndex"] = "Layer", ["breaking"] = "Bruch", ["soundType"] = "Soundtyp", ["clipIndex"] = "Clip", ["tuning"] = "Klang",
+        ["trigger"] = "Ereignis", ["priority"] = "Priorität", ["playChancePercent"] = "Chance (%)", ["cooldownSeconds"] = "Abklingzeit (s)",
+        ["delaySeconds"] = "Verzögerung (s)", ["maxWaitSeconds"] = "Max. Wartezeit (s)", ["ignoreGlobalCooldown"] = "Ohne globale Pause",
     };
     // Attribute lookups never change while the scripts are loaded; validation asks for the same child fields often.
     static readonly Dictionary<System.Reflection.FieldInfo, (string inspectorName, RangeAttribute range, MinAttribute min)> fieldAttributes = new();
