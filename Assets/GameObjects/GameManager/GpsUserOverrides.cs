@@ -167,16 +167,30 @@ public static class GpsUserOverrides
         {
             case GpsValueKind.Boolean: return a.flag == b.flag;
             case GpsValueKind.Text: case GpsValueKind.Reference: return (a.text ?? "") == (b.text ?? "");
-            case GpsValueKind.Vector: return a.vector.x == b.vector.x && a.vector.y == b.vector.y && a.vector.z == b.vector.z && a.vector.w == b.vector.w;
-            case GpsValueKind.Color: return a.color.r == b.color.r && a.color.g == b.color.g && a.color.b == b.color.b && a.color.a == b.color.a;
-            case GpsValueKind.Curve: return JsonUtility.ToJson(a.curve ?? new GpsCurve()) == JsonUtility.ToJson(b.curve ?? new GpsCurve());
+            case GpsValueKind.Vector: return Close(a.vector.x, b.vector.x) && Close(a.vector.y, b.vector.y) && Close(a.vector.z, b.vector.z) && Close(a.vector.w, b.vector.w);
+            case GpsValueKind.Color: return Close(a.color.r, b.color.r) && Close(a.color.g, b.color.g) && Close(a.color.b, b.color.b) && Close(a.color.a, b.color.a);
+            case GpsValueKind.Curve:
+                var x = a.curve ?? new GpsCurve(); var y = b.curve ?? new GpsCurve();
+                if (x.preWrap != y.preWrap || x.postWrap != y.postWrap || x.keys.Count != y.keys.Count) return false;
+                for (int i = 0; i < x.keys.Count; i++)
+                {
+                    var p = x.keys[i]; var q = y.keys[i];
+                    if (!Close(p.time, q.time) || !Close(p.value, q.value) || !Close(p.inTangent, q.inTangent) || !Close(p.outTangent, q.outTangent) ||
+                        !Close(p.inWeight, q.inWeight) || !Close(p.outWeight, q.outWeight) || p.weightedMode != q.weightedMode) return false;
+                }
+                return true;
             case GpsValueKind.Object: case GpsValueKind.Array:
                 if (a.children.Count != b.children.Count) return false;
                 for (int i = 0; i < a.children.Count; i++) if (!Same(a.children[i], b.children[i])) return false;
                 return true;
+            case GpsValueKind.Number: return Close(a.number, b.number);
             default: return a.number == b.number;
         }
     }
+    // Unitys JSON-Leser rundet lange Kommazahlen nicht immer gleich ("0.45176199078559878" vs. "0.4517619907855988"
+    // nach erneutem Speichern). Solche Unterschiede in der letzten Stelle sind keine eigenen Werte.
+    static bool Close(double a, double b) => a == b || Math.Abs(a - b) <= 1e-9 * Math.Max(Math.Abs(a), Math.Abs(b));
+    static bool Close(float a, float b) => a == b || Math.Abs(a - b) <= 1e-6f * Math.Max(Math.Abs(a), Math.Abs(b));
 
     // Lesbarer Wert für Protokoll und PR-Text.
     public static string Describe(GpsValue node)
@@ -186,7 +200,7 @@ public static class GpsUserOverrides
         {
             case GpsValueKind.Boolean: return node.flag ? "an" : "aus";
             case GpsValueKind.Text: case GpsValueKind.Reference: return string.IsNullOrEmpty(node.text) ? "–" : node.text;
-            case GpsValueKind.Vector: return "(" + string.Join("; ", new[] { node.vector.x, node.vector.y, node.vector.z, node.vector.w }.Select(Number)) + ")";
+            case GpsValueKind.Vector: return "(" + string.Join("; ", new[] { node.vector.x, node.vector.y, node.vector.z, node.vector.w }.Select(value => Number(value))) + ")";
             case GpsValueKind.Color: return "#" + ColorUtility.ToHtmlStringRGBA(node.color);
             case GpsValueKind.Curve: return "Kurve (" + (node.curve?.keys.Count ?? 0) + " Punkte)";
             case GpsValueKind.Object: case GpsValueKind.Array: return node.kind == GpsValueKind.Array ? "Liste (" + node.children.Count + ")" : "Objekt";

@@ -50,7 +50,7 @@ public static class GpsUserOverridesChecks
             if (string.IsNullOrEmpty(committed)) SessionState.EraseString("GPS.Committed"); else SessionState.SetString("GPS.Committed", committed);
             try { Directory.Delete(temp, true); } catch { }
         }
-        return new { mode = Application.isPlaying ? "play" : "edit", count = checks.Count, checks };
+        return new { mode = Application.isPlaying ? "play" : "edit", count = checks.Count, checks, proposalNoiseLines = noiseLines };
     }
 
     static GpsDocument Shipped() => GpsSettings.ShippedDocument();
@@ -60,8 +60,16 @@ public static class GpsUserOverridesChecks
     {
         string yaml = File.ReadAllText(ProfilePath);
         var parsed = GpsUserOverrides.ParseProfileYaml(yaml);
-        Check(parsed != null && JsonUtility.ToJson(parsed) == JsonUtility.ToJson(JsonUtility.FromJson<GpsDocument>(GpsSettings.Profile.documentJson)),
-            "Profiltext aus der Datei ergibt dasselbe Dokument wie Unity");
+        // Vergleich mit Unitys eigenem Lesen derselben Datei (frische Kopie; das geladene Profil kann im Speicher abweichen).
+        var fresh = UnityEditorInternal.InternalEditorUtility.LoadSerializedFileAndForget(ProfilePath).OfType<GpsProfile>().First();
+        var loaded = JsonUtility.FromJson<GpsDocument>(fresh.documentJson);
+        UnityEngine.Object.DestroyImmediate(fresh);
+        Check(parsed != null && parsed.records.Count == loaded.records.Count && GpsUserOverrides.Diff(parsed, loaded, GpsSettings.Profile).Count == 0 &&
+            GpsUserOverrides.Diff(loaded, parsed, GpsSettings.Profile).Count == 0, "Profiltext aus der Datei ergibt dasselbe Dokument wie Unity");
+        var noiseA = new GpsValue { name = "n", kind = GpsValueKind.Number, number = JsonUtility.FromJson<GpsValue>("{\"number\":0.45176199078559878}").number };
+        var noiseB = new GpsValue { name = "n", kind = GpsValueKind.Number, number = JsonUtility.FromJson<GpsValue>("{\"number\":0.4517619907855988}").number };
+        var real = new GpsValue { name = "n", kind = GpsValueKind.Number, number = .4518 };
+        Check(GpsUserOverrides.Same(noiseA, noiseB) && !GpsUserOverrides.Same(noiseA, real), "Rundung in der letzten Stelle ist kein eigener Wert, echte Änderung schon");
         Check(GpsUserOverrides.ExtractScalar("x\n  key: \"a b\n    c\\\n    d\n\n    e\\ \n    f\"\n", "key") == "a b cd\ne  f", "YAML-Faltung, maskierter Umbruch, Leerzeile");
         Check(GpsUserOverrides.ExtractScalar("x\n  key: \"\\u00e4\\\"\\\\\"\n", "key") == "ä\"\\", "YAML-Escapes");
         Check(GpsUserOverrides.ParseProfileYaml("kein Profil") == null, "Fremder Text ergibt kein Dokument");
@@ -149,9 +157,10 @@ public static class GpsUserOverridesChecks
         var changed = Shipped();
         float target = changed.preferences.hotbarHoldDuration + .05f;
         changed.preferences.hotbarHoldDuration = target;
-        string file = GpsDefaultsProposal.WriteProfile(Path.GetFullPath("."), profile, changed);
+        string file = GpsDefaultsProposal.WriteProfile(Path.GetFullPath("."), profile, Shipped());
+        var baseline = GpsUserOverrides.ParseProfileYaml(File.ReadAllText(file));
+        file = GpsDefaultsProposal.WriteProfile(Path.GetFullPath("."), profile, changed);
         var local = GpsUserOverrides.ParseProfileYaml(File.ReadAllText(file));
-        var baseline = GpsUserOverrides.ParseProfileYaml(File.ReadAllText(ProfilePath));
         var found = GpsUserOverrides.Diff(local, baseline, profile);
         Check(found.Count == 1 && found[0].record == "preferences" && found[0].path == "hotbarHoldDuration", "Übernahme findet genau den geänderten Wert");
         GpsUserOverrides.Write(GpsUserOverrides.Merge(GpsUserOverrides.Entries, found));
@@ -165,11 +174,17 @@ public static class GpsUserOverridesChecks
     {
         string file = GpsDefaultsProposal.WriteProfile(Path.GetFullPath("."), GpsSettings.Profile, Shipped());
         string written = File.ReadAllText(file).Replace("\r\n", "\n"), original = File.ReadAllText(ProfilePath).Replace("\r\n", "\n");
-        int at = 0; while (at < Math.Min(written.Length, original.Length) && written[at] == original[at]) at++;
-        Check(written == original, "Vorschlags-Profil ohne Änderung = bisherige Datei (erster Unterschied bei Zeichen " + at + ": '" +
-            Snip(original, at) + "' / '" + Snip(written, at) + "')");
+        const string Marker = "\n  documentJson: ";
+        Check(written.Substring(0, written.IndexOf(Marker)) == original.Substring(0, original.IndexOf(Marker)), "Vorschlag: Kopf (fileID, Skript) unverändert");
+        Check(written.Substring(written.IndexOf("\n  assets:")) == original.Substring(original.IndexOf("\n  assets:")), "Vorschlag: Asset-Liste unverändert");
+        var a = GpsUserOverrides.ParseProfileYaml(written); var b = Shipped();
+        Check(GpsUserOverrides.Diff(a, b, GpsSettings.Profile).Count == 0 && GpsUserOverrides.Diff(b, a, GpsSettings.Profile).Count == 0,
+            "Vorschlag schreibt genau das übergebene Profil");
+        var lines = written.Split('\n'); var old = original.Split('\n');
+        noiseLines = lines.Length == old.Length ? lines.Where((line, i) => line != old[i]).Count() : -1;
         File.Delete(file);
     }
+    static int noiseLines;
     static string Snip(string text, int at) => at >= text.Length ? "<Ende>" : text.Substring(at, Math.Min(60, text.Length - at)).Replace("\n", "⏎");
 
     static async Task PanelChecks()
