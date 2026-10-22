@@ -693,7 +693,7 @@ public sealed class StorageSlotInput : MonoBehaviour, IPointerClickHandler, IPoi
     }
     public void OnPointerEnter(PointerEventData data) => panel.Hover(slot, true);
     public void OnPointerExit(PointerEventData data) => panel.Hover(slot, false);
-    public void OnPointerDown(PointerEventData data) { if (data.button == PointerEventData.InputButton.Left && slot?.item) hold.Down(data.position); }
+    public void OnPointerDown(PointerEventData data) { hold.Press(); if (data.button == PointerEventData.InputButton.Left && slot?.item) hold.Down(data.position); }
     public void OnDrag(PointerEventData data)
     {
         if (data.button != PointerEventData.InputButton.Left) return;
