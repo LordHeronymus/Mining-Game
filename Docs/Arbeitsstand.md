@@ -14,10 +14,10 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 | --- | --- | --- | --- | --- | --- | --- |
 | Claude Code | Performance abschliessen: Ladebildschirm ohne Ruckler, keine Lag-Spikes, ≥ 100 FPS – pausiert, Zwischenstand im Changelog | claude/performance | Mining Game | Map (MapGenerator, Tilemap-Abonnenten, Rubble, Collider, Erzadern, Bäume, Gras), Loading, GPS-Codec/Schema, GameSaveSystem, AudioManager, Tests/Performance* | nein | 17.10.2026 19:45 |
 | Claude Code (Cloud) | Challenges-Rework: Aufgaben-Baukasten, Stufen, wöchentliche Rotation, Monats-Challenges, Boni, gestufte Meilensteine (Konzept Docs/Challenges-Konzept.md) | claude/challenges-rework | Cloud | Progression (MetaProgression*, MetaChallengePeriods, Catalog), ChallengePanel/ChallengeArt, neue Zählstellen (Dynamit, Fackeln, Leitern, Rückkehr), GPS, Tests/*Challenge* | nein (Cloud-Workflow) | 18.10.2026 |
-| Claude Code | Eingangsschild „Werkbank öffnen“ optisch über Gebäude zentrieren (auch Shop/Lager) | claude/workshop-button-d81ccb | .claude/worktrees/workshop-button-d81ccb | EntrySign.cs, Tests/StorageUiChecks.cs | ja (Testbank) | 22.10.2026 |
 
 ## Zuletzt abgeschlossen
 
+- 22.10.2026, Claude Code: Eingangsschilder (Werkbank, Shop, Lager) mittig über der sichtbaren Gebäudegrafik mit gleichem Dachabstand; Branch `claude/workshop-button-d81ccb`, PR offen, `main` erst nach Freigabe.
 - 22.10.2026, Claude Code: F1 → UI → „Item ziehen“: Pop-Stärke, Grösse beim Tragen und Pop-Dauer einstellbar (Haltezeit weiterhin unter UI → Hotbar); Rechtsklick auf ein Hotbar-Item nimmt es aus der Hotbar (bleibt im Inventar); Branch `claude/drag-settings`, mit Freigabe des Benutzers in `main` zusammengeführt.
 - 20.10.2026, Claude Code (Cloud): Sprachausgabe des Charakters (169 Clips, Sprach-System mit Abklingzeit/Priorität, Auslöser an Energie, Traglast, Sturz, Shop, Werkbank, neue Welt; Regler „Stimme“, GPS/F1), Branch `claude/exciting-ramanujan-l0893x`, mit Freigabe des Benutzers in `main` zusammengeführt; lokale Hörabnahme und Commit des aktualisierten `GpsProfile.asset` ausstehend, siehe Docs/Sprachausgabe.md.
 - 20.10.2026, Claude Code: Gezogenes Item poppt beim Start des Ziehens kurz auf (128 % → 112 %) und wird deckend mit Schatten getragen (Lager, Inventar, Hotbar); Branch `claude/drag-pop`, mit Freigabe des Benutzers in `main` zusammengeführt.
@@ -27,4 +27,3 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 - 20.10.2026, Claude Code: Gezogenes Item (Drag & Drop) sieht in Lager, Inventar und Hotbar genau aus wie im Slot (Lager zeigte Leiter/Fackel/Dynamit gespiegelt), gemeinsames `ItemDragGhost`; Branch `claude/drag-ghost`, mit Freigabe des Benutzers in `main` zusammengeführt.
 - 20.10.2026, Claude Code: Alte Spielstände bekommen beim Laden die gemalten Erze (gleiche Erzart, Grösse und Stelle, seedstabil), Branch `claude/painted-ore-migration-3f7f47`, in `main`.
 - 20.10.2026, Claude Code: Pausemenü „Speichern“ speichert direkt in den aktiven Spielstand (keine Slot-Auswahl mehr, Rückfall nur ohne aktiven Slot); Branch `claude/save-active`, mit Freigabe des Benutzers in `main`.
-- 20.10.2026, Claude Code: Lag beim Baumfällen behoben (Sammelsound wurde beim ersten Holz synchron geladen), Messskript `Tests/TreeChopSpikes.cs`, Branch `claude/tree-lag`, mit Freigabe des Benutzers in `main`.

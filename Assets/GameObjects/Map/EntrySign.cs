@@ -53,7 +53,7 @@ public sealed class EntrySign : MonoBehaviour
     {
         var full = new Rect(0, 0, 1, 1);
         var texture = sprite.texture;
-        if (!texture || !SystemInfo.supportsRenderTextures) return full;
+        if (!texture) return full;
         var source = sprite.textureRect;
         float shrink = Mathf.Min(1, 512 / Mathf.Max(source.width, source.height));
         int width = Mathf.Max(1, Mathf.RoundToInt(source.width * shrink)), height = Mathf.Max(1, Mathf.RoundToInt(source.height * shrink));
