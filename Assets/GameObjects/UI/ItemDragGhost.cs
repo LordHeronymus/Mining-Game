@@ -8,6 +8,9 @@ using UnityEngine.UI;
 // is the jump, the rest the settle.
 public sealed class ItemDragGhost : MonoBehaviour
 {
+    // How long an item must be held before drag mode starts (storage, inventory, hotbar); 0 = as soon as it moves.
+    // The GPS field keeps its old hotbar name so existing profiles keep their value.
+    public static float HoldSeconds => Mathf.Max(0f, GpsSettings.Preferences.hotbarHoldDuration);
     public static float PopScale => Mathf.Max(1f, GpsSettings.Preferences.dragPopScale);
     public static float CarryScale => Mathf.Max(.1f, GpsSettings.Preferences.dragCarryScale);
     static float PopSeconds => Mathf.Max(0f, GpsSettings.Preferences.dragPopDuration) / 3f;
@@ -106,4 +109,49 @@ public sealed class ItemDragGhost : MonoBehaviour
         return rect.parent is RectTransform parent &&
                RectTransformUtility.ScreenPointToWorldPointInRectangle(parent, screenPosition, eventCamera, out world);
     }
+}
+
+// Press-and-hold to pick up an item, shared by storage, inventory and hotbar slots. Drag mode starts once the item
+// was held for ItemDragGhost.HoldSeconds (wherever the pointer is by then), or with no hold time as soon as it moves.
+// The ghost is grabbed at the press position. A click that ends a drag is swallowed. The hold is measured in real
+// time: frame time would jump after a slow frame and could count the hold as done right after the press.
+public sealed class ItemDragHold
+{
+    bool pressed, suppressClick;
+    float pressedAt;
+    public bool Dragging;
+    public Vector2 PressPosition, Pointer;
+
+    public void Down(Vector2 position)
+    {
+        pressed = true; Dragging = suppressClick = false;
+        PressPosition = Pointer = position;
+        pressedAt = Time.realtimeSinceStartup;
+    }
+
+    public bool ShouldStart(bool moved)
+    {
+        if (!pressed || Dragging) return false;
+        float hold = ItemDragGhost.HoldSeconds;
+        return hold <= 0f ? moved : Time.realtimeSinceStartup - pressedAt >= hold;
+    }
+
+    // Returns whether a drag was running, which the caller then drops at the release position.
+    public bool Up(Vector2 position)
+    {
+        Pointer = position;
+        bool wasDragging = Dragging;
+        pressed = Dragging = false;
+        if (wasDragging) suppressClick = true;
+        return wasDragging;
+    }
+
+    public bool ConsumeClick()
+    {
+        bool value = suppressClick;
+        suppressClick = false;
+        return value;
+    }
+
+    public void Cancel() => pressed = Dragging = false;
 }

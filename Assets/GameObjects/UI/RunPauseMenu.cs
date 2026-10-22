@@ -57,13 +57,13 @@ public sealed class RunPauseMenu : MonoBehaviour
     {
         if (IsOpen) return;
         IsOpen = true; previousScale = Time.timeScale; Time.timeScale = 0;
-        GameplayInputBlocker.SetBlocked(this, true); transform.SetAsLastSibling(); Visible(true);
+        GameplayInputBlocker.SetBlocked(this, true); GamePause.Set(this, true); transform.SetAsLastSibling(); Visible(true);
         status.text = "";
     }
     public void Close()
     {
         if (GameSaveSystem.IsBusy || challengesPanel) return;
-        IsOpen = false; GameplayInputBlocker.SetBlocked(this, false); Visible(false);
+        IsOpen = false; GameplayInputBlocker.SetBlocked(this, false); GamePause.Set(this, false); Visible(false);
         if (!RunNavigation.IsTransitioning && !LoadingProgress.Active) Time.timeScale = previousScale;
         UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
     }
@@ -90,5 +90,5 @@ public sealed class RunPauseMenu : MonoBehaviour
     }
     void Visible(bool show) { group.alpha = show ? 1 : 0; group.interactable = group.blocksRaycasts = show; }
     void OnRectTransformDimensionsChange() => HomeUi.Fit(layout, new Vector2(780, 1070));
-    void OnDestroy() { IsOpen = false; GameplayInputBlocker.SetBlocked(this, false); }
+    void OnDestroy() { IsOpen = false; GameplayInputBlocker.SetBlocked(this, false); GamePause.Set(this, false); }
 }
