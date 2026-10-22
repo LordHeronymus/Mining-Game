@@ -194,7 +194,9 @@ public static class ThinVeinMediumPreviewChecks
         }
         var variants = stone.variants;
         if (variants == null || variants.Length == 0) return null;
-        return (variants[OreVeins.Hash(map.ActiveSeed, x, y, 0x1234u) % (uint)variants.Length] as Tile)?.sprite;
+        var tile = variants[OreVeins.Hash(map.ActiveSeed, x, y, 0x1234u) % (uint)variants.Length];
+        // Layer stones are rule tiles (tilemap extras); their default sprite is a public field.
+        return tile is Tile plain ? plain.sprite : tile ? tile.GetType().GetField("m_DefaultSprite")?.GetValue(tile) as Sprite : null;
     }
 
     static int Span(int[] cells, int width) => Mathf.Max(cells.Max(i => i % width) - cells.Min(i => i % width), cells.Max(i => i / width) - cells.Min(i => i / width)) + 1;
