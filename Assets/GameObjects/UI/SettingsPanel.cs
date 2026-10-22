@@ -102,6 +102,7 @@ public sealed class SettingsPanel : MonoBehaviour
         transform.SetAsLastSibling();
         SetVisible(true);
         GameplayInputBlocker.SetBlocked(this, true);
+        GamePause.Set(this, true);
         InfoPanel.Instance?.ShowPanel(false);
         SetTab(current);
         RefreshBindingTexts();
@@ -115,6 +116,7 @@ public sealed class SettingsPanel : MonoBehaviour
         SetVisible(false);
         GameplayInputBlocker.SetBlocked(this, false);
         Time.timeScale = previousTimeScale;
+        GamePause.Set(this, false);
         InfoPanel.Instance?.ShowPanel(true);
         if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null);
     }

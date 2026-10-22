@@ -38,7 +38,8 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
     string itemIconSearch = "";
     int itemIconCategory;
     float rowY;
-    bool building, committing;
+    bool building, committing, pausing;
+    float previousScale = 1f;
     static readonly Color Panel = new(.105f, .115f, .13f, 1f), Control = new(.17f, .18f, .2f, 1f), Accent = new(.78f, .63f, .35f, 1f);
     static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
 
@@ -48,6 +49,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (!Application.isPlaying) return;
+        bool wasOpen = IsOpen;
         if (!instance)
         {
             HomeUi.EnsureEventSystem();
@@ -60,6 +62,12 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         }
         instance.gameObject.SetActive(true); instance.transform.SetAsLastSibling();
         GameplayInputBlocker.SetBlocked(instance, true); instance.BuildPage(); instance.Refresh();
+        // Inside a run the panel pauses the whole game like the settings; previews play past the pause.
+        if (!wasOpen && !instance.pausing && !MainMenuController.IsVisible && !LoadingProgress.Active && !RunNavigation.IsTransitioning)
+        {
+            instance.pausing = true; instance.previousScale = Time.timeScale; Time.timeScale = 0f;
+            GamePause.Set(instance, true);
+        }
 #endif
     }
     public static void Close()
@@ -70,8 +78,16 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         if (EventSystem.current?.currentSelectedGameObject)
         { EventSystem.current.SetSelectedGameObject(null); }
         GameplayInputBlocker.SetBlocked(instance, false); instance.gameObject.SetActive(false);
+        instance.EndPause();
     }
-    void OnDestroy() { GameplayInputBlocker.SetBlocked(this, false); GpsSettings.Changed -= ConfigurationChanged; GpsSettings.Saved -= Refresh; }
+    void EndPause()
+    {
+        if (!pausing) return;
+        pausing = false;
+        if (!RunNavigation.IsTransitioning && !LoadingProgress.Active) Time.timeScale = previousScale;
+        GamePause.Set(this, false);
+    }
+    void OnDestroy() { EndPause(); GameplayInputBlocker.SetBlocked(this, false);GpsSettings.Changed -= ConfigurationChanged; GpsSettings.Saved -= Refresh; }
     void Build()
     {
         font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF") ?? TMP_Settings.defaultFontAsset;
