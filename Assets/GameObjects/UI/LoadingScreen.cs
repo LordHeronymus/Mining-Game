@@ -24,6 +24,10 @@ public sealed class LoadingScreen : MonoBehaviour
     public static string TransitionPhase { get; private set; } = "Idle";
     static readonly Unity.Profiling.ProfilerMarker BuildMarker = new("Loading.BuildScreen");
     static readonly Unity.Profiling.ProfilerMarker ShowMarker = new("Loading.ShowScreen");
+    public static event System.Action<bool> GameplayRevealed;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => GameplayRevealed = null;
 
     public static IEnumerator FadeToBlack()
     {
@@ -217,7 +221,8 @@ public sealed class LoadingScreen : MonoBehaviour
         TransitionPhase = "GameplayFadeIn";
         yield return FadeFromBlack();
         TransitionPhase = "Idle";
-        GameplayInputBlocker.SetBlocked(this, false); Time.timeScale = 1f; LoadingProgress.Dismiss(); gameObject.SetActive(false);
+        GameplayInputBlocker.SetBlocked(this, false); Time.timeScale = 1f; LoadingProgress.Dismiss();
+        GameplayRevealed?.Invoke(LoadingProgress.Restoring); gameObject.SetActive(false);
     }
 
     void OnDisable() => RestoreLoadingPriority();

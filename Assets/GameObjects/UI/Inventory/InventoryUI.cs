@@ -29,6 +29,7 @@ public class InventoryUI : MonoBehaviour
     Image draggedIcon;
     AudioClip hotbarErrorClip;
     ItemSO draggedItem;
+    Vector3 draggedGrabOffset;
     CompactHud hotbarHud;
     float warningUntil;
     readonly List<Image> tabs = new();
@@ -135,7 +136,7 @@ public class InventoryUI : MonoBehaviour
         var stats = StatsManager.Instance;
         return stats && stats.TryUseMedkit(item);
     }
-    public void BeginItemDrag(ItemSO item, Vector2 screenPosition)
+    public void BeginItemDrag(ItemSO item, Vector2 screenPosition, Image source = null)
     {
         if (!IsOpen || !item) return;
         draggedItem = item;
@@ -150,22 +151,26 @@ public class InventoryUI : MonoBehaviour
         var rootCanvas = canvas ? canvas.rootCanvas : null;
         if (rootCanvas && draggedIcon.transform.parent != rootCanvas.transform)
             draggedIcon.transform.SetParent(rootCanvas.transform, false);
+        if (!source) source = cells.FirstOrDefault(c => c.item == item)?.icon;
         draggedIcon.sprite = item.icon;
-        draggedIcon.color = new Color(1f, 1f, 1f, .9f);
+        draggedGrabOffset = ItemDragGhost.Begin(draggedIcon, source, screenPosition, DragEventCamera);
+        draggedIcon.color = Color.white;
         draggedIcon.gameObject.SetActive(true);
         draggedIcon.transform.SetAsLastSibling();
         MoveDraggedIcon(screenPosition);
     }
     public void MoveDraggedIcon(Vector2 screenPosition)
     {
-        var canvas = GetComponentInParent<Canvas>();
-        var rootCanvas = canvas ? canvas.rootCanvas : null;
-        var coordinateRoot = rootCanvas ? (RectTransform)rootCanvas.transform : (RectTransform)transform;
-        Camera eventCamera = rootCanvas && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay
-            ? rootCanvas.worldCamera : null;
-        if (!draggedIcon || !RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                coordinateRoot, screenPosition, eventCamera, out var local)) return;
-        ItemIconLayout.Apply(draggedItem, draggedIcon.rectTransform, local);
+        if (draggedIcon) ItemDragGhost.Move(draggedIcon, draggedGrabOffset, screenPosition, DragEventCamera);
+    }
+    Camera DragEventCamera
+    {
+        get
+        {
+            var canvas = GetComponentInParent<Canvas>();
+            var rootCanvas = canvas ? canvas.rootCanvas : null;
+            return rootCanvas && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? rootCanvas.worldCamera : null;
+        }
     }
     public void EndItemDrag(Vector2 screenPosition)
     {
@@ -221,10 +226,8 @@ public class InventoryUI : MonoBehaviour
                     ? $"Cargo {weight:0.##} / ∞ kg"
                     : $"Cargo {weight:0.##} / {carryingCapacity:0.##} kg"
                 : "";
-            cargoWeight.color = !inventory || unlimited ? Cream
-                : weight > carryingCapacity * 2d ? OverweightRed
-                : weight > carryingCapacity ? OverweightYellow
-                : Cream;
+            int stage = !inventory || unlimited ? 0 : InventoryManager.CarryStage(weight, carryingCapacity);
+            cargoWeight.color = stage == 2 ? OverweightRed : stage == 1 ? OverweightYellow : Cream;
         }
         if (!IsOpen || !content) return;
         if (!workbench) workbench = FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include);
@@ -368,6 +371,7 @@ public class InventoryUI : MonoBehaviour
         var drag = c.rect.gameObject.AddComponent<InventoryCellDrag>();
         drag.owner = this;
         drag.item = () => c.item;
+        drag.icon = c.icon;
         button.onClick.AddListener(() => { if (c.item) SelectItem(c.item); }); return c;
     }
 }

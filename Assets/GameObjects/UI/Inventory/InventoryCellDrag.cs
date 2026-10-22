@@ -1,11 +1,13 @@
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public sealed class InventoryCellDrag : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public InventoryUI owner;
     public Func<ItemSO> item;
+    public Image icon;
     bool dragging;
 
     public void OnPointerClick(PointerEventData eventData)
@@ -19,7 +21,7 @@ public sealed class InventoryCellDrag : MonoBehaviour, IPointerClickHandler, IBe
     {
         if (eventData.button != PointerEventData.InputButton.Left || !owner || item == null || !item()) return;
         dragging = true;
-        owner.BeginItemDrag(item(), eventData.position);
+        owner.BeginItemDrag(item(), eventData.position, icon);
     }
 
     public void OnDrag(PointerEventData eventData)

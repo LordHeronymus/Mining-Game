@@ -9,9 +9,11 @@ public class ShopManager : MonoBehaviour
 
     public event Action<ItemSO, int, int> OnItemSold;
     public event Action<int> OnSellAll;
+    public static event Action<int, double, bool> Sold; // (money, soldWeight, sellAll)
+    public static event Action<CraftingRecipe> RecipeBought;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStaticState() => Instance = null;
+    static void ResetStaticState() { Instance = null; Sold = null; RecipeBought = null; }
 
     public bool TryBuyRecipe(CraftingRecipe recipe)
     {
@@ -22,6 +24,7 @@ public class ShopManager : MonoBehaviour
         stats.AddMoney(-recipe.ShopPrice);
         ItemFeed.Instance?.ShowRecipe(recipe);
         AudioManager.Instance?.PlayShopPaperSound();
+        RecipeBought?.Invoke(recipe);
         return true;
     }
 
@@ -73,6 +76,7 @@ public class ShopManager : MonoBehaviour
         StatsManager.Instance.AddMoney(value);
         if (MetaProgressionRuntime.RewardsAllowed) MetaProgression.RecordSale(value);
         OnItemSold?.Invoke(item, qty, value);
+        Sold?.Invoke(value, item.EffectiveWeight * (double)qty, false);
 
         if (qty > 1) StartCoroutine(SellSound(qty));
         else AudioManager.Instance.Play(SoundType.SellItem);
@@ -87,6 +91,7 @@ public class ShopManager : MonoBehaviour
 
         int total = 0;
         int soldCount = 0;
+        double soldWeight = 0d;
 
         IReadOnlyDictionary<ItemSO, int> snap = inv.GetSnapshot();
 
@@ -101,6 +106,7 @@ public class ShopManager : MonoBehaviour
             {
                 total += entry.item.worth * entry.count;
                 soldCount += entry.count;
+                soldWeight += entry.item.EffectiveWeight * (double)entry.count;
             }
         }
 
@@ -109,6 +115,7 @@ public class ShopManager : MonoBehaviour
             StatsManager.Instance.AddMoney(total);
             if (MetaProgressionRuntime.RewardsAllowed) MetaProgression.RecordSale(total);
             OnSellAll?.Invoke(total);
+            Sold?.Invoke(total, soldWeight, true);
         }
 
         if (soldCount > 0) StartCoroutine(SellSound(soldCount));

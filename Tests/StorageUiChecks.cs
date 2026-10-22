@@ -94,7 +94,20 @@ public sealed class StorageUiProbe : MonoBehaviour
         var entryGroup = storage.EntryGroup;
         Check(entryGroup && entryGroup.alpha > .99f && entryGroup.interactable, "Entry sign fades in near the hut");
         Check(entry.GetComponentInParent<Canvas>().renderMode == RenderMode.WorldSpace, "Entry sign is a world-space button");
-        Check(entryGroup.GetComponentInChildren<TextMeshProUGUI>().text == "Lager öffnen" && entryGroup.GetComponentInChildren<TextMeshProUGUI>().fontSize >= 28, "Entry label is readable");
+        Check(storage.EntrySign.Label.text == "Lager öffnen", "Entry label");
+        var workshopSign = Object.FindFirstObjectByType<WorkbenchBuilding>().EntrySign;
+        var shopSign = Object.FindFirstObjectByType<ShopBuilding>().EntrySign;
+        Check(workshopSign && shopSign && workshopSign.Label.text == "Werkbank öffnen" && shopSign.Label.text == "Shop öffnen", "Workshop and shop use the same gold entry sign");
+        foreach (var sign in new[] { storage.EntrySign, workshopSign, shopSign })
+        {
+            Check(sign.Button.GetComponent<GoldButtonFeedback>() && Mathf.Approximately(sign.Label.fontSize, storage.EntrySign.Label.fontSize), sign.Label.text + ": same style and font size");
+            Check(sign.Label.GetPreferredValues(sign.Label.text).x <= sign.Label.rectTransform.rect.width + .5f, sign.Label.text + ": text fits between the end caps");
+            System.Func<EntrySign, float> baseScale = s => s.transform.lossyScale.x / (.92f + .08f * s.Group.alpha);
+            Check(Mathf.Abs(baseScale(sign) - baseScale(storage.EntrySign)) < .0001f, sign.Label.text + ": same world size on scaled buildings");
+            var main = EntrySign.MainSprite(sign.transform.parent);
+            Check(((RectTransform)sign.transform).TransformPoint(((RectTransform)sign.transform).rect.min).y > main.bounds.max.y, sign.Label.text + ": floats above the roof");
+        }
+        Check(!Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None).Any(c => c.name == "EnterButtonCanvas" && c.gameObject.activeInHierarchy), "Old Enter signs are hidden");
         Check(entry.GetComponent<GoldButtonFeedback>(), "Entry sign uses the gold wood button style");
 
         entry.onClick.Invoke();
@@ -107,6 +120,16 @@ public sealed class StorageUiProbe : MonoBehaviour
         var storageFrame = (RectTransform)layout.Find("Storage Frame");
         Check(backpackFrame.anchoredPosition.x < storageFrame.anchoredPosition.x, "Backpack on the left, storage on the right");
         Check(layout.Find("Background").GetComponent<Image>().sprite.texture.name == "BuyBackground-v2", "Shop background artwork");
+        for (int frame = 0; frame < 4; frame++) yield return null;
+        var bottom =new[] { "Deposit Ores", "Deposit All", "Withdraw All" }.Select(n => layout.Find(n).GetComponentInChildren<TextMeshProUGUI>()).ToArray();
+        Check(bottom.All(x => Mathf.Abs(x.fontSize - bottom[0].fontSize) < .01f) && ((RectTransform)layout.Find("Value")).rect.height == ((RectTransform)layout.Find("Withdraw All")).rect.height,
+            "Bottom buttons share size and font size");
+        var slotIcon = panel.BackpackSlots[0];
+        Check(Vector2.Distance(slotIcon.iconCenter, new Vector2(slotIcon.rect.rect.width / 2, -slotIcon.rect.rect.height / 2)) < .5f &&
+            Mathf.Abs(slotIcon.iconRect.rect.width / slotIcon.iconRect.rect.height - 134f / 106f) < .01f, "Storage icons are centred like inventory icons");
+        var hud = Object.FindFirstObjectByType<CompactHud>();
+        var hotbarIcon = hud.GetComponentsInChildren<Image>(true).First(x => x.name == "Item");
+        Check(Mathf.Abs(hotbarIcon.rectTransform.sizeDelta.x / hotbarIcon.rectTransform.sizeDelta.y - 134f / 106f) < .01f, "Hotbar icons use the inventory icon box");
 
         inventory.Add(iron, 10); inventory.Add(coal, 7); inventory.Add(gold, 3);
         yield return null;

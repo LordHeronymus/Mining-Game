@@ -59,11 +59,14 @@ public sealed class StoragePanel : MonoBehaviour
     TMP_InputField searchField;
     Image dragGhost;
     Slot dragged;
+    Vector3 dragGrabOffset;
     InventoryManager inventory;
     SurfaceStorageBuilding subscribedStorage;
     string hoverHint;
     float weightWarning;
     bool dirty;
+    readonly List<TextMeshProUGUI> actionLabels = new();
+    int actionLabelFrames;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatic() => Instance = null;
@@ -134,6 +137,7 @@ public sealed class StoragePanel : MonoBehaviour
     {
         if (!IsOpen) return;
         if (dirty) Refresh();
+        MatchActionLabels();
         if (weightText) weightText.color = weightWarning > 0
             ? Color.Lerp(WeightColor(), Color.red, Mathf.PingPong(weightWarning * 6, 1))
             : WeightColor();
@@ -291,12 +295,13 @@ public sealed class StoragePanel : MonoBehaviour
         dragged = slot;
         if (!dragGhost)
         {
-            dragGhost = Rect("Drag Ghost", layout, 0, 0, 104, 96).gameObject.AddComponent<Image>();
+            dragGhost = Rect("Drag Ghost", layout, 0, 0, ItemIconLayout.CellIconSize(new Vector2(Cell, Cell)).x, ItemIconLayout.CellIconSize(new Vector2(Cell, Cell)).y).gameObject.AddComponent<Image>();
             dragGhost.raycastTarget = false; dragGhost.preserveAspect = true;
             dragGhost.rectTransform.anchorMin = dragGhost.rectTransform.anchorMax = dragGhost.rectTransform.pivot = new Vector2(.5f, .5f);
         }
         dragGhost.sprite = slot.item.icon;
-        dragGhost.color = new Color(1, 1, 1, .85f);
+        dragGrabOffset = ItemDragGhost.Begin(dragGhost, slot.icon, data.position, EventCamera);
+        dragGhost.color = Color.white;
         dragGhost.transform.SetAsLastSibling();
         dragGhost.gameObject.SetActive(true);
         Drag(data);
@@ -304,9 +309,7 @@ public sealed class StoragePanel : MonoBehaviour
 
     public void Drag(PointerEventData data)
     {
-        if (!dragGhost || dragged == null) return;
-        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(layout, data.position, EventCamera, out var local))
-            dragGhost.rectTransform.anchoredPosition = local;
+        if (dragGhost && dragged != null) ItemDragGhost.Move(dragGhost, dragGrabOffset, data.position, EventCamera);
     }
 
     public void Drop(PointerEventData data)
@@ -497,15 +500,27 @@ public sealed class StoragePanel : MonoBehaviour
         storageContent = ScrollArea("Storage", layout, 876, 330, out storageScroll);
         AddScrollbar(storageScroll, 1436, 330);
 
-        Hint(Button("Deposit Ores", layout, "Erze einlagern", 204, 748, 282, 50, DepositOres), "Legt alle Erze aus dem Rucksack ins Lager");
-        Hint(Button("Deposit All", layout, "Alles einlagern", 506, 748, 282, 50, DepositAll), "Legt alles ins Lager – Gegenstände in der Schnellleiste bleiben im Rucksack");
-        var value = Panel("Value", layout, 860, 748, 300, 50, rowSprite);
-        valueText = Label(value.transform, "", 20, 0, 260, 50, 26, TextAlignmentOptions.Midline);
+        Hint(Button("Deposit Ores", layout, "Erze einlagern", 204, 745, 282, 56, DepositOres), "Legt alle Erze aus dem Rucksack ins Lager");
+        Hint(Button("Deposit All", layout, "Alles einlagern", 506, 745, 282, 56, DepositAll), "Legt alles ins Lager – Gegenstände in der Schnellleiste bleiben im Rucksack");
+        var value = Panel("Value", layout, 860, 745, 282, 56, rowSprite);
+        valueText = Label(value.transform, "", 20, 0, 242, 56, 26, TextAlignmentOptions.Midline);
         valueText.richText = true;
-        Hint(Button("Withdraw All", layout, "Alles entnehmen", 1180, 748, 264, 50, WithdrawAll), "Nimmt so viel aus dem Lager, wie der Rucksack tragen kann");
+        Hint(Button("Withdraw All", layout, "Alles entnehmen", 1162, 745, 282, 56, WithdrawAll), "Nimmt so viel aus dem Lager, wie der Rucksack tragen kann");
+        foreach (var name in new[] { "Deposit Ores", "Deposit All", "Withdraw All" })
+            actionLabels.Add(layout.Find(name).GetComponentInChildren<TextMeshProUGUI>());
         hintText = Label(layout, ControlsHint, 176, 810, 1296, 32, 21, TextAlignmentOptions.Midline);
         hintText.color = Muted;
         FitLayout();
+    }
+
+    // GoldButtonFeedback auto-sizes each caption to its own length; once that has run, all action buttons
+    // take the smallest size so the bottom row reads as one set.
+    void MatchActionLabels()
+    {
+        if (actionLabelFrames > 2 || ++actionLabelFrames <= 2) return;
+        foreach (var label in actionLabels) label.ForceMeshUpdate();
+        float size = actionLabels.Min(label => label.fontSize);
+        foreach (var label in actionLabels) { label.enableAutoSizing = false; label.fontSize = size; }
     }
 
     RectTransform Fill(RectTransform bar, string name, Color color)
@@ -529,7 +544,8 @@ public sealed class StoragePanel : MonoBehaviour
         button.targetGraphic = frame;
         button.navigation = new Navigation { mode = Navigation.Mode.None };
         GoldButtonFeedback.Apply(button, rowSprite, selectedRowSprite);
-        var icon = Panel("Icon", frame.transform, 14, 8, 100, 92, null);
+        var iconSize = ItemIconLayout.CellIconSize(new Vector2(Cell, Cell));
+        var icon = Panel("Icon", frame.transform, (Cell - iconSize.x) / 2, (Cell - iconSize.y) / 2, iconSize.x, iconSize.y, null);
         icon.preserveAspect = true;
         ShopVisualTheme.CenterImage(icon);
         var badge = Panel("Count", frame.transform, 60, 90, 62, 32, rowSprite);
@@ -629,11 +645,13 @@ public sealed class StoragePanel : MonoBehaviour
         text.text = caption; text.color = Cream; text.fontStyle = FontStyles.Normal;
         text.fontSize = size; text.enableAutoSizing = true; text.fontSizeMin = size * .65f; text.fontSizeMax = size;
         text.alignment = alignment switch {
-            TextAlignmentOptions.Left => TextAlignmentOptions.MidlineLeft,
-            TextAlignmentOptions.Center => TextAlignmentOptions.Midline,
-            TextAlignmentOptions.Right => TextAlignmentOptions.MidlineRight,
+            TextAlignmentOptions.MidlineLeft => TextAlignmentOptions.Left,
+            TextAlignmentOptions.Midline => TextAlignmentOptions.Center,
+            TextAlignmentOptions.MidlineRight => TextAlignmentOptions.Right,
             _ => alignment
         };
+        // Middle (line-box) alignment, not Midline: Midline centres the visible glyphs, so a descender such as
+        // the g in "einlagern" pushes the whole caption up compared with captions without descenders.
         text.textWrappingMode = TextWrappingModes.NoWrap;
         text.overflowMode = TextOverflowModes.Ellipsis;
         text.raycastTarget = false;

@@ -61,6 +61,7 @@ public sealed class CompactHud : MonoBehaviour
     Image dragIcon;
     Image pickaxeIcon;
     int draggedSlot = -1;
+    Vector3 dragGrabOffset;
     bool wasBuilding;
     int lastMoney = int.MinValue, lastPoints = int.MinValue, lastDepth = int.MinValue,
         lastHealth = int.MinValue, lastMaxHealth = int.MinValue, lastEnergy = int.MinValue, lastMax = int.MinValue;
@@ -268,6 +269,13 @@ public sealed class CompactHud : MonoBehaviour
     {
         AssignSlotInternal(index, item, true);
     }
+    // Right-click on a hotbar slot takes the item off the hotbar (it stays in the inventory).
+    public bool ClearHotbarSlot(int index)
+    {
+        if (!CanReorderHotbar || draggedSlot > 0 || index < 1 || index > 8 || !slots[index - 1]) return false;
+        AssignSlotInternal(index, null, true);
+        return true;
+    }
     public void RestoreRunSlots(int[] ids, int selected)
     {
         for (int i = 0; i < slots.Length; i++)
@@ -328,13 +336,14 @@ public sealed class CompactHud : MonoBehaviour
         draggedSlot = index;
         if (!dragIcon)
         {
-            dragIcon = Image("Dragged Item", transform, 0, 0, 58, 58, null, Color.white);
+            dragIcon = Image("Dragged Item", transform, 0, 0, 58, 58 * 106f / 134f, null, Color.white);
             dragIcon.rectTransform.anchorMin = dragIcon.rectTransform.anchorMax = dragIcon.rectTransform.pivot = new Vector2(.5f, .5f);
             dragIcon.preserveAspect = true;
         }
         dragIcon.sprite = slots[index - 1].icon;
         dragIcon.transform.SetParent(hotbar.parent, false);
-        dragIcon.color = new Color(1f, 1f, 1f, .9f);
+        dragGrabOffset = ItemDragGhost.Begin(dragIcon, icons[index - 1], screenPosition, HotbarEventCamera());
+        dragIcon.color = Color.white;
         dragIcon.gameObject.SetActive(true);
         dragIcon.transform.SetAsLastSibling();
         MoveDraggedIcon(screenPosition);
@@ -371,9 +380,7 @@ public sealed class CompactHud : MonoBehaviour
     }
     void MoveDraggedIcon(Vector2 screenPosition)
     {
-        if (!dragIcon || !RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)dragIcon.transform.parent,
-            screenPosition, HotbarEventCamera(), out var local)) return;
-        ItemIconLayout.Apply(slots[draggedSlot - 1], dragIcon.rectTransform, local);
+        if (dragIcon) ItemDragGhost.Move(dragIcon, dragGrabOffset, screenPosition, HotbarEventCamera());
     }
     const string SlotLayoutVersion = "CompactHud.SlotLayoutVersion";
     const string SlotLayoutPrefix = "CompactHud.Slot.";
@@ -479,6 +486,7 @@ public sealed class CompactHud : MonoBehaviour
     void ApplyHotbarIconLayout(ItemSO item, RectTransform icon)
     {
         icon.anchorMin = icon.anchorMax = icon.pivot = new Vector2(.5f, .5f);
+        icon.sizeDelta = ItemIconLayout.CellIconSize(new Vector2(SocketSize, SocketSize));
         ItemIconLayout.Apply(item, icon, new Vector2(0, HotbarIconVerticalOffset));
     }
     void OnRectTransformDimensionsChange() => Fit();
