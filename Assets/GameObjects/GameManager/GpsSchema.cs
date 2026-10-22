@@ -68,6 +68,9 @@ public static partial class GpsSchema
                 return "Layer "+((int)(node.children.Find(field=>field.name=="layerIndex")?.number??0)+1)+" · "+
                     Enum.GetName(typeof(SoundType),(int)(node.children.Find(field=>field.name=="soundType")?.number??0))+" · Clip "+
                     ((int)(node.children.Find(field=>field.name=="clipIndex")?.number??0)+1);
+            var trigger = node.children.FirstOrDefault(child => child.name == "trigger" && child.kind == GpsValueKind.Enum);
+            if (trigger != null && GpsCodec.ResolveType(trigger.type) is Type triggerType && triggerType.IsEnum)
+                return Enum.GetName(triggerType, (int)trigger.number) ?? trigger.number.ToString();
             var name = node.children.FirstOrDefault(child => child.name == "name");
             if (!string.IsNullOrEmpty(name?.text)) return name.text;
             var asset = node.children.FirstOrDefault(child => child.name == "tile" || child.name == "clip" || child.name == "pickaxe" || child.name == "item");

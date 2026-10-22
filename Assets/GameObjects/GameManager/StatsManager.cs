@@ -35,6 +35,7 @@ public class StatsManager : MonoBehaviour
     [Min(0f)] public float fallDamageHeightBlocks = 3f;
     [Min(0f)] public float fallDamageBase = 5f;
     [Min(1f)] public float fallDamageExponent = 1.5f;
+    [Min(0f)] public float bigFallDamageThreshold = 30f;
     [Min(0f)] public float healthRegenPerSecond = 2f;
     [Min(0f)] public float healthRegenDelay = 3f;
     [Range(0f, 1f)] public float healthRegenLimitFraction = 0.5f;

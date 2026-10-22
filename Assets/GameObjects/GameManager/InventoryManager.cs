@@ -53,6 +53,9 @@ public class InventoryManager : MonoBehaviour
     public float MovementWeightFactor => GameplayTestSettings.NoWeight
         ? 1f : CalculateMovementWeightFactor(TotalWeight, CarryingCapacity);
 
+    public static int CarryStage(double weight, float capacity) =>
+        capacity <= 0f ? 0 : weight > 2d * capacity ? 2 : weight > capacity ? 1 : 0;
+
     public static float CalculateMovementWeightFactor(double totalWeight, float carryingCapacity)
     {
         double overload = Math.Max(0d, totalWeight / Math.Max(0.01f, carryingCapacity) - 1d);

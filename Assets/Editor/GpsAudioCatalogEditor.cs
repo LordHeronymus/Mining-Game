@@ -43,6 +43,7 @@ public static class GpsAudioCatalogEditor
     {
         string p=path.ToLowerInvariant();
         if(p.Contains("/archive/"))return "Archiv";
+        if(p.Contains("/voice/"))return "Stimme";
         if(p.Contains("/home"))return p.Contains("homeclick")?"Shop und UI":"Homescreen";
         if(p.Contains("/loading"))return "Ladebildschirm";
         if(p.Contains("workshopfavorite")||p.Contains("workshopunfavorite"))return "Shop und UI";
