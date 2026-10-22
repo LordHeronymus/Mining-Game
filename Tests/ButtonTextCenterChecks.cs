@@ -13,8 +13,8 @@ using Object = UnityEngine.Object;
 // Requires a fresh Play start from MainMenu. Runs in an isolated save/meta profile.
 // Measures every button caption in the main views: glyph ink stays inside the visible gold rim (also for the worst
 // case Ä/g at the label's font size), and the gap above the cap line equals the gap below the baseline.
-// Screenshots: Temp/ButtonText/<Vorher|Nachher>-<View>.png (+ -Zoom crops); report: Temp/ButtonTextCenterChecks.txt.
-// The phase is "Nachher" once the runtime component ButtonTextCentering exists, so the same script records both states.
+// Screenshots: Temp/ButtonText/Nachher-<View>.png (+ -Zoom crops); report: Temp/ButtonTextCenterChecks.txt.
+// (The "Vorher" images of 22.10.2026 came from the first commit of this script, before ButtonTextCentering existed.)
 public static class ButtonTextCenterChecks
 {
     public static object Main()
@@ -47,7 +47,7 @@ public sealed class ButtonTextCenterProbe : MonoBehaviour
         GameSaveSystem.TestDirectory = Path.GetFullPath("Temp/ButtonTextCenter-" + DateTime.UtcNow.Ticks);
         MetaProgression.TestDirectory = Path.Combine(GameSaveSystem.TestDirectory, "Profile");
         GpsSettings.Document.tests.testModeDisabled = true;
-        phase = AppDomain.CurrentDomain.GetAssemblies().Any(a => a.GetType("ButtonTextCentering") != null) ? "Nachher" : "Vorher";
+        phase = "Nachher";
         Directory.CreateDirectory("Temp/ButtonText");
         File.WriteAllText(Report, "Phase " + phase + "\n");
         var routine = Run();
@@ -59,6 +59,7 @@ public sealed class ButtonTextCenterProbe : MonoBehaviour
             if (!more) break;
             yield return next;
         }
+        WriteEntries();
         File.AppendAllLines(Report, lines);
         File.AppendAllText(Report, "\n" + (failures == 0 ? "PASS" : "FAIL") + " " + labels + " captions, " + failures + " outside tolerance\n");
         if (failed.Count > 0) File.AppendAllLines(Report, failed.Prepend("Abweichungen:"));
@@ -84,6 +85,34 @@ public sealed class ButtonTextCenterProbe : MonoBehaviour
         Canvas.ForceUpdateCanvases();
         float end = Time.realtimeSinceStartup + .7f;
         while (Time.realtimeSinceStartup < end) yield return null;
+    }
+
+    static IEnumerator Unblocked()
+    {
+        float end = Time.realtimeSinceStartup + 5;
+        while (GameplayInputBlocker.IsBlocked && Time.realtimeSinceStartup < end) yield return null;
+        yield return null;
+    }
+
+    // The GPS offset moves a caption live by the given share of its font size.
+    IEnumerator OffsetFollowsGps(WorkbenchPanel workbench)
+    {
+        var craft = Find(workbench, "Craft").GetComponentInChildren<TMP_Text>();
+        var centering = craft.GetComponent<ButtonTextCentering>();
+        var prefs = GpsSettings.Preferences;
+        float old = prefs.buttonTextOffset;
+        bool ok;
+        try
+        {
+            craft.ForceMeshUpdate(); float before = centering.AppliedShift;
+            prefs.buttonTextOffset = old + .05f; GpsSettings.NotifyConfigurationChanged();
+            craft.ForceMeshUpdate(); float after = centering.AppliedShift;
+            ok = Mathf.Abs(after - before - .05f * craft.fontSize) < .2f;
+            lines.Add($"GPS-Versatz +5 % verschiebt \"{craft.text}\" um {after - before:0.00} (erwartet {.05f * craft.fontSize:0.00}): {(ok ? "ok" : "FEHLER")}");
+        }
+        finally { prefs.buttonTextOffset = old; GpsSettings.NotifyConfigurationChanged(); }
+        if (!ok) { failures++; failed.Add("GPS-Versatz wirkt nicht"); }
+        yield return null;
     }
 
     static Button Find(Component root, string name) => root.GetComponentsInChildren<Button>(true).FirstOrDefault(b => b.name == name);
@@ -143,22 +172,24 @@ public sealed class ButtonTextCenterProbe : MonoBehaviour
         workbench.SetQuantity(Mathf.Max(1, 4 / Mathf.Max(1, nails.outputAmount)));
         yield return Settle();
         yield return View("Werkbank", workbench.transform, "Craft", "Category_Tools");
-        workbench.ShowPanel(false); yield return null;
+        if (phase == "Nachher") yield return OffsetFollowsGps(workbench);
+        workbench.ShowPanel(false); yield return Unblocked();
 
         var storage = SurfaceStorageBuilding.Active.FirstOrDefault();
         if (storage)
         {
-            storage.Open(); yield return Settle();
-            yield return View("Lager", StoragePanel.Instance.transform, "Deposit Ores", "Close");
-            storage.Close(); yield return null;
+            var storagePanel = StoragePanel.Ensure();
+            storagePanel.Show(storage); yield return Settle();
+            yield return View("Lager", storagePanel.transform, "Deposit Ores", "Close");
+            storagePanel.Hide(); yield return Unblocked();
         }
 
         var shop = Object.FindFirstObjectByType<ShopPanel>(FindObjectsInactive.Include);
         if (shop)
         {
             shop.ShowPanel(true); yield return Settle();
-            yield return View("Shop", shop.transform);
-            shop.ShowPanel(false); yield return null;
+            yield return View("Shop", shop.transform, "Sell All");
+            shop.ShowPanel(false); yield return Unblocked();
         }
 
         var inventoryUi = Object.FindFirstObjectByType<InventoryUI>(FindObjectsInactive.Include);
@@ -174,7 +205,7 @@ public sealed class ButtonTextCenterProbe : MonoBehaviour
     {
         foreach (var button in root.GetComponentsInChildren<Button>(false))
         {
-            if (!button.isActiveAndEnabled) continue;
+            if (!button.isActiveAndEnabled || button.GetComponentsInParent<CanvasGroup>().Any(g => g.alpha < .05f)) continue;
             var frame = button.targetGraphic as Image;
             if (!frame) frame = button.GetComponent<Image>();
             if (!frame) continue;
@@ -211,31 +242,13 @@ public sealed class ButtonTextCenterProbe : MonoBehaviour
         }
     }
 
-    // Visible gold rim inside the slice border, measured on the source artwork (left, top, right, bottom).
-    static Vector4 Insets(Image image)
-    {
-        var sprite = image.sprite;
-        if (!sprite) return Vector4.zero;
-        var border = sprite.border;
-        float factor = sprite.name.StartsWith("SelectionCard") ? 87f / 125 : sprite.name.StartsWith("Save") ? 48f / 55 : 1;
-        if (image.type == Image.Type.Sliced)
-        {
-            float ppu = image.pixelsPerUnitMultiplier * sprite.pixelsPerUnit / 100f;
-            return new Vector4(border.x, border.w * factor, border.z, border.y * factor) / Mathf.Max(.0001f, ppu);
-        }
-        var rect = image.rectTransform.rect; var size = sprite.rect.size;
-        return new Vector4(border.x / size.x * rect.width, border.w * factor / size.y * rect.height, border.z / size.x * rect.width, border.y * factor / size.y * rect.height);
-    }
-
     void Measure(string view, Button button, Image frame, TMP_Text label)
     {
         if (!frame || !label || !label.isActiveAndEnabled || string.IsNullOrWhiteSpace(label.text)) return;
         label.ForceMeshUpdate();
         var info = label.textInfo;
         var frameRect = frame.rectTransform;
-        var inset = Insets(frame);
-        var inner = frameRect.rect;
-        inner.xMin += inset.x; inner.xMax -= inset.z; inner.yMax -= inset.y; inner.yMin += inset.w;
+        var inner = ButtonTextCentering.InnerFrame(frame);
         float inkTop = float.MinValue, inkBottom = float.MaxValue, inkLeft = float.MaxValue, inkRight = float.MinValue;
         float firstBase = float.NaN, lastBase = float.NaN, scale = 0;
         bool letters = false;
@@ -266,13 +279,27 @@ public sealed class ButtonTextCenterProbe : MonoBehaviour
         bool sidesInside = inkLeft >= inner.xMin - InkTolerance && inkRight <= inner.xMax + InkTolerance;
         bool worstInside = worstTop <= inner.yMax + InkTolerance && worstBottom >= inner.yMin - InkTolerance;
         bool centred = Mathf.Abs(balance) <= BalanceTolerance;
-        bool component = label.GetComponent("ButtonTextCentering") != null;
+        bool component = label.GetComponent<ButtonTextCentering>();
         bool ok = !visibleFrame || (inkInside && sidesInside && worstInside && centred && (phase == "Vorher" || component));
-        string line = $"{view} | {button.name} | \"{label.text}\" | {label.fontSize:0.#}pt | Rahmen innen {inner.height:0.#} | oben {topGap:0.0} unten {bottomGap:0.0} Differenz {balance:+0.0;-0.0;0.0}"
+        string metrics = $"{label.fontSize:0.#}pt | Rahmen innen {inner.height:0.#} | oben {topGap:0.0} unten {bottomGap:0.0} Differenz {balance:+0.0;-0.0;0.0}"
             + $" | Tinte {(inkInside ? "innen" : "RAGT HERAUS")}{(sidesInside ? "" : " (seitlich)")} | Ä/g {(worstInside ? "passt" : "RAGT HERAUS")}"
             + (visibleFrame ? "" : " | Rahmen unsichtbar") + (phase == "Nachher" ? component ? " | zentriert" : " | OHNE Zentrierung" : "");
-        lines.Add(line);
-        if (!ok) { failures++; failed.Add(line); }
+        entries.Add((view, $"{button.name} \"{label.text}\"", metrics, ok));
+        if (!ok) failures++;
+    }
+
+    readonly List<(string view, string caption, string metrics, bool ok)> entries = new();
+
+    // Buttons of one kind (e.g. 30 key bindings) share their metrics; one line per view and metric set.
+    void WriteEntries()
+    {
+        foreach (var group in entries.GroupBy(e => (e.view, e.metrics)))
+        {
+            var captions = group.Select(e => e.caption).ToList();
+            string line = $"{group.Key.view} | {group.Key.metrics} | {captions.Count}× {string.Join(", ", captions.Take(4))}{(captions.Count > 4 ? ", …" : "")}";
+            lines.Add(line);
+            if (!group.First().ok) failed.Add(line);
+        }
     }
 
     static Vector2 ToFrame(TMP_Text label, RectTransform frame, Vector2 local) => frame.InverseTransformPoint(label.rectTransform.TransformPoint(local));

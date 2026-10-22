@@ -398,10 +398,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
         {
             var category = (CraftingRecipe.RecipeCategory)i;
             var tab = Button("Category_" + category, layout, categories[i], 524 + i * 158, 137, 148, 49, () => SetCategory(category));
-            var label = tab.GetComponentInChildren<TextMeshProUGUI>();
-            label.fontSizeMax = 25;
-            if (category == CraftingRecipe.RecipeCategory.Tools)
-                label.rectTransform.anchoredPosition += Vector2.down * 3f;
+            tab.GetComponentInChildren<TextMeshProUGUI>().fontSizeMax = 25;
             categoryTabs.Add(tab.GetComponent<Image>());
         }
         favoriteFilter = Button("Favorites", layout, "", 1166, 137, 49, 49, () => SetFavoritesOnly(!OnlyFavorites)).GetComponent<Image>();

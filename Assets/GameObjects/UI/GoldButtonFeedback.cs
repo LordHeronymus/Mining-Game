@@ -86,6 +86,7 @@ public sealed class GoldButtonFeedback : MonoBehaviour, IPointerEnterHandler, IP
         {
             labelsStyled = true;
             if (!card) ProtectLabels();
+            ButtonTextCentering.Apply(button, image);
         }
         image.color = enabled ? Color.white : new Color(.45f, .45f, .45f, .8f);
         highlight.type = image.type; highlight.preserveAspect = image.preserveAspect;
