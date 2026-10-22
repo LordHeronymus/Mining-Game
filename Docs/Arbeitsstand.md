@@ -17,6 +17,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
+- 22.10.2026, Claude Code: Speicher-Wächter: Sind alle Mining-Game-Ordner zusammen > 100 GB, räumt ein geplanter Windows-Task automatisch auf (alte LFS-Versionen, erledigte Arbeitsordner ≥ 2 Tage unbenutzt, alte Build Tests und Szenen-Backups, git gc), siehe Docs/Speicher-Bereinigung.md; Branch `claude/disk-cleanup`, mit Freigabe des Benutzers in `main` zusammengeführt.
 - 22.10.2026, Claude Code: Neue Arbeitsordner entstehen ohne `Design/` und `AudioMastering/` (Git-Hook, rund 1,4 statt 4,6 GB; nachholen mit `git sparse-checkout add Design/<Thema>/`), Regel in AGENTS.md, siehe Docs/Arbeitsordner-ohne-Design.md; Hook eingerichtet, Branch `claude/worktree-sparse`, mit Freigabe des Benutzers in `main` zusammengeführt.
 - 22.10.2026, Claude Code: Werkbank craftet auch mit Materialien aus dem Lager (Anzeige „+N Lager“, zuerst Rucksack, GPS Werkbank → Lager umschaltbar), Branch `claude/workbench-storage`, mit Freigabe des Benutzers in `main` zusammengeführt.
 - 22.10.2026, Claude Code: Eingangsschilder (Werkbank, Shop, Lager) mittig über der sichtbaren Gebäudegrafik mit gleichem Dachabstand; Branch `claude/workshop-button-d81ccb`, mit Freigabe des Benutzers in `main` zusammengeführt.
@@ -26,4 +27,3 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 - 22.10.2026, Claude Code (Cloud): Einstellungen (F1 und Editor-Fenster) mit sichtbarer Hierarchie: jede Ebene eine Stufe eingerückt, F1-Stufe breiter; Branch `claude/exciting-ramanujan-l0893x`.
 - 22.10.2026, Claude Code: F1 → UI → „Item ziehen“: Pop-Stärke, Grösse beim Tragen und Pop-Dauer einstellbar (Haltezeit weiterhin unter UI → Hotbar); Rechtsklick auf ein Hotbar-Item nimmt es aus der Hotbar (bleibt im Inventar); Branch `claude/drag-settings`, mit Freigabe des Benutzers in `main` zusammengeführt.
 - 20.10.2026, Claude Code (Cloud): Sprachausgabe des Charakters (169 Clips, Sprach-System mit Abklingzeit/Priorität, Auslöser an Energie, Traglast, Sturz, Shop, Werkbank, neue Welt; Regler „Stimme“, GPS/F1), Branch `claude/exciting-ramanujan-l0893x`, mit Freigabe des Benutzers in `main` zusammengeführt; lokale Hörabnahme und Commit des aktualisierten `GpsProfile.asset` ausstehend, siehe Docs/Sprachausgabe.md.
-- 20.10.2026, Claude Code: Gezogenes Item poppt beim Start des Ziehens kurz auf (128 % → 112 %) und wird deckend mit Schatten getragen (Lager, Inventar, Hotbar); Branch `claude/drag-pop`, mit Freigabe des Benutzers in `main` zusammengeführt.
