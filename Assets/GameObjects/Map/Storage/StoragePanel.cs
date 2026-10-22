@@ -88,7 +88,9 @@ public sealed class StoragePanel : MonoBehaviour
         rect.gameObject.layer = parent.gameObject.layer;
         rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
         rect.offsetMin = rect.offsetMax = Vector2.zero;
-        return rect.gameObject.AddComponent<StoragePanel>();
+        var panel = rect.gameObject.AddComponent<StoragePanel>();
+        UiScaleExempt.Attach(panel);
+        return panel;
     }
 
     void Awake()
