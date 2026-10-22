@@ -10,7 +10,8 @@ using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 // Pipeline run_script: invoke MetaProgressionUiChecks.Main in the main menu.
-// This UI-only suite never changes XP, ranks, recipes, gameplay saves or profile paths.
+// This UI-only suite never changes XP, ranks, recipes or gameplay saves. After reading the home label it switches to an
+// isolated meta profile, because opening the challenge tabs draws and saves rounds.
 public static class MetaProgressionUiChecks
 {
     public static object Main()
@@ -29,7 +30,8 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
     MetaProgressionPanel panel;
     long originalXp;
     int[] originalRanks;
-    bool finished;
+    bool finished, isolatedSet;
+    string previousMeta, isolated;
 
     void Check(bool value, string description)
     {
@@ -39,8 +41,6 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
     Button Button(string name) => panel.GetComponentsInChildren<Button>(true).First(b => b.name == name);
     IEnumerator Start()
     {
-        originalXp = MetaProgression.TotalXp;
-        originalRanks = MetaProgressionCatalog.Upgrades.Select(u => MetaProgression.GetRank(u.id)).ToArray();
         var routines = new Stack<IEnumerator>(); routines.Push(Run());
         while (routines.Count > 0)
         {
@@ -61,6 +61,11 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
         // Main menu layout is attached to ScreenCanvas, not the scene controller.
         if (!entrance) entrance = GameObject.Find("ScreenCanvas").GetComponentsInChildren<Button>(true).First(b => b.name == "Progression");
         Check(entrance.GetComponentInChildren<TMP_Text>().text.Contains("Level " + MetaProgression.Level), "Home entry exposes current level");
+        previousMeta = MetaProgression.TestDirectory;
+        isolated = Path.GetFullPath("Temp/MetaProgressionUi-" + DateTime.UtcNow.Ticks + "/Profile");
+        MetaProgression.TestDirectory = isolated; isolatedSet = true;
+        originalXp = MetaProgression.TotalXp;
+        originalRanks = MetaProgressionCatalog.Upgrades.Select(u => MetaProgression.GetRank(u.id)).ToArray();
         entrance.onClick.Invoke(); yield return null;
         panel = Object.FindFirstObjectByType<MetaProgressionPanel>();
         Check(panel && MetaProgressionPanel.IsOpen && !panel.IsReadOnly, "Home opens editable progression");
@@ -73,7 +78,8 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
         var board = panel.transform.Find("Upgrades Layout/Board").GetComponent<Image>();
         Check(board.material && board.material.shader.name.Contains("PanelWoodTone"), "Progression shares dark panel wood shader");
         var scroll = panel.GetComponentInChildren<ScrollRect>();
-        Check(scroll && scroll.content.rect.height > scroll.viewport.rect.height && scroll.verticalScrollbar, "All upgrades are scrollable with a scrollbar");
+        // The ten current upgrades fit the viewport exactly; scrolling is only required once the list is taller.
+        Check(scroll && scroll.verticalScrollbar && scroll.content.rect.height >= scroll.viewport.rect.height - 1, "All upgrades are reachable (scrollbar when taller than the viewport)");
         foreach (var definition in MetaProgressionCatalog.Upgrades)
         {
             var buy = Button("Buy " + definition.id);
@@ -84,7 +90,11 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
         foreach (var button in panel.GetComponentsInChildren<Button>())
         {
             var feedback = button.GetComponent<HomeButtonFeedback>();
-            Check(feedback && !feedback.animateScale && feedback.normalPart == "SaveButton" && feedback.activePart == "SaveActive", button.name + " uses stationary shared button styling");
+            // Upgrade cards are clickable tiles with the selection card frame; every other control uses the save button style.
+            if (button.name.StartsWith("Upgrade "))
+                Check(feedback && feedback.normalPart == "SelectionCardNormal" && feedback.activePart == "SelectionCardHover", button.name + " uses the selection card frame");
+            else
+                Check(feedback && !feedback.animateScale && feedback.normalPart == "SaveButton" && feedback.activePart == "SaveActive", button.name + " uses stationary shared button styling");
             if (button.IsInteractable()) Check(button.navigation.mode == Navigation.Mode.Explicit &&
                 button.navigation.selectOnDown.transform.IsChildOf(panel.transform) && button.navigation.selectOnUp.transform.IsChildOf(panel.transform), button.name + " keyboard navigation stays inside modal");
         }
@@ -113,17 +123,25 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
             Check(corners.All(c=>challengeRoot.rect.Contains(challengeRoot.InverseTransformPoint(c))), "Challenge board fits "+size);
         }
         HomeUi.Stretch(challengeRoot); yield return null;
-        foreach (var challenge in MetaProgression.GetChallenges())
+        // Each tab lists its own views; the monthly project is an extra tile in front of the monthly tasks.
+        foreach (var period in new[] { ChallengePeriod.Daily, ChallengePeriod.Weekly, ChallengePeriod.Monthly, ChallengePeriod.Lifetime })
         {
-            var row = challengeScroll.content.Find("Challenge " + challenge.id);
-            Check(row && row.Find("Progress").GetComponent<TMP_Text>().text.Any(char.IsLetter), challenge.id + " counter names the objective unit");
-            Check(row.Find("Icon").GetComponent<Image>().sprite && !row.GetComponentsInChildren<TMP_Text>().Any(t => t.isTextOverflowing), challenge.id + " icon and tile text fit");
+            challengesPanel.GetComponentsInChildren<Button>(true).First(b => b.name == "Challenge Tab " + period).onClick.Invoke(); yield return null;
+            var ids = MetaProgression.GetChallenges(period).Select(c => c.id).ToList();
+            if (period == ChallengePeriod.Monthly && MetaProgression.GetMonthlyProject() is MetaChallengeProgress project) ids.Insert(0, project.id);
+            Check(ids.Count > 0 && challengeScroll.content.Cast<Transform>().Count(t => t.gameObject.activeSelf) == ids.Count, period + " shows one tile per challenge");
+            foreach (var id in ids)
+            {
+                var row = challengeScroll.content.Cast<Transform>().FirstOrDefault(t => t.gameObject.activeSelf && t.name == "Challenge " + id);
+                Check(row && row.Find("Progress").GetComponent<TMP_Text>().text.Any(char.IsLetter), id + " counter names the objective unit");
+                Check(row.Find("Icon").GetComponent<Image>().sprite && !row.GetComponentsInChildren<TMP_Text>().Any(t => t.isTextOverflowing), id + " icon and tile text fit");
+            }
+            yield return Capture("Challenges-" + period);
         }
         Check(Time.timeScale == 0 && GameplayInputBlocker.IsBlocked, "Challenge panel preserves parent pause and blocker");
-        yield return Capture("Challenges");
         challengeScroll.verticalNormalizedPosition=0; yield return null;
-        var lastChallenge=(RectTransform)challengeScroll.content.Find("Challenge "+MetaProgression.GetChallenges().Last().id);
-        Check(challengeScroll.viewport.rect.Contains(challengeScroll.viewport.InverseTransformPoint(lastChallenge.TransformPoint(lastChallenge.rect.center))), "Last challenge tile reachable by scrolling");
+        var lastChallenge=(RectTransform)challengeScroll.content.Find("Challenge "+MetaProgression.GetChallenges(ChallengePeriod.Lifetime).Last().id);
+        Check(challengeScroll.viewport.rect.Contains(challengeScroll.viewport.InverseTransformPoint(lastChallenge.TransformPoint(lastChallenge.rect.center))), "Last lifetime tile reachable by scrolling");
         Button("Challenges Back").onClick.Invoke(); yield return null;
         Check(panel.ShowingOverview && !Object.FindFirstObjectByType<ChallengePanel>(), "Challenge Back returns directly to the timeline");
         Button("Open Baupläne").onClick.Invoke(); yield return null;
@@ -193,7 +211,9 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
         if (finished) return;
         finished = true;
         if (panel) panel.Close();
+        RestoreProfile();
         Destroy(gameObject);
     }
-    void OnDestroy() { if (!finished && panel) panel.Close(); }
+    void RestoreProfile() { if (isolatedSet && MetaProgression.TestDirectory == isolated) MetaProgression.TestDirectory = previousMeta; isolatedSet = false; }
+    void OnDestroy() { if (!finished && panel) panel.Close(); if (!finished) RestoreProfile(); }
 }

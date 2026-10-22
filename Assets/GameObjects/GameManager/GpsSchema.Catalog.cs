@@ -61,6 +61,8 @@ public static partial class GpsSchema
             new GpsFieldSpec("carryingCapacityLevels", "Traglast (kg)")),
         new GpsSectionSpec("Upgrades", "Metaprogression", typeof(GpsPreferences), "",
             new GpsFieldSpec("metaProgression", "Erfahrung", applyTime: GpsApplyTime.NewRun)),
+        new GpsSectionSpec("Upgrades", "Herausforderungen", typeof(GpsPreferences), "",
+            new GpsFieldSpec("challenges", "XP, Anzahl und Mengen")),
         new GpsSectionSpec("Upgrades", "Energiekapazität", typeof(UpgradeSettings), "",
             new GpsFieldSpec("energyCapacityMultipliers", "Energiekapazität (×)")),
         new GpsSectionSpec("Upgrades", "Spitzhacken", typeof(UpgradeSettings), "",
