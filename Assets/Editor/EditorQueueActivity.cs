@@ -65,8 +65,6 @@ public static class EditorQueueActivity
         if (EditorApplication.isPlayingOrWillChangePlaymode) lastEvent = "Skripte geladen (Play-Mode)";
 
         EditorApplication.update += OnUpdate;
-        // Der lokale Dienst fuer PrivOrg startet mit dem ersten Editor (nicht mit Windows).
-        EditorApplication.delayCall += EnsureQueueService;
         EditorApplication.playModeStateChanged += s => Mark("Play-Mode: " + s, true);
         EditorApplication.pauseStateChanged += s => Mark("Pause: " + s, true);
         EditorApplication.projectChanged += () => Mark("Projekt geaendert");
@@ -82,6 +80,8 @@ public static class EditorQueueActivity
     }
 
     const int QueueServicePort = 47615;
+    const double ServiceCheckSeconds = 60;
+    static double lastServiceCheck = double.NegativeInfinity;
 
     // Startet Tools/editor-queue-server.ps1 ueber die Verknuepfung, die "-Install" in EditorQueue/bin anlegt,
     // falls er noch nicht laeuft. Ein zweiter Editor findet den laufenden Dienst und tut nichts; ein doppelter
@@ -131,6 +131,14 @@ public static class EditorQueueActivity
         double t = EditorApplication.timeSinceStartup;
         if ((dirty && t - lastWrite >= MinWriteSeconds) || t - lastWrite >= HeartbeatSeconds)
             Write();
+
+        // Der lokale Dienst fuer PrivOrg startet mit dem ersten Editor (nicht mit Windows) und wird
+        // jede Minute geprueft, damit ein abgestuerzter Dienst wieder anlaeuft.
+        if (t - lastServiceCheck >= ServiceCheckSeconds)
+        {
+            lastServiceCheck = t;
+            EnsureQueueService();
+        }
     }
 
     static void OnQuit()
