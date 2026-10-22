@@ -108,6 +108,11 @@ public sealed class StorageUiProbe : MonoBehaviour
             Check(Mathf.Abs(baseScale(sign) - baseScale(storage.EntrySign)) < .0001f, sign.Label.text + ": same world size on scaled buildings");
             var main = EntrySign.MainSprite(sign.transform.parent);
             Check(((RectTransform)sign.transform).TransformPoint(((RectTransform)sign.transform).rect.min).y > main.bounds.max.y, sign.Label.text + ": floats above the roof");
+            Check(Mathf.Abs(sign.transform.position.x - EntrySign.VisibleCenterX(main)) < .01f, sign.Label.text + ": centred over the visible building");
+        }
+        {
+            var workshopMain = EntrySign.MainSprite(workshopSign.transform.parent);
+            Check(EntrySign.VisibleCenterX(workshopMain) - workshopMain.bounds.center.x > .1f, "Workshop: visible art sits right of its image centre and the sign follows it");
         }
         Check(!Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None).Any(c => c.name == "EnterButtonCanvas" && c.gameObject.activeInHierarchy), "Old Enter signs are hidden");
         Check(entry.GetComponent<GoldButtonFeedback>(), "Entry sign uses the gold wood button style");
