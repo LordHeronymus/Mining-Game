@@ -23,6 +23,8 @@ param(
     [string]$ProjectRoot,
     # Dialog-Waechter fuer den Editor der Testbank ("<Projekt> 2"): Pruefintervall in Sekunden, 0 = aus (Tools/editor-dialog.ps1).
     [int]$DialogWatchSeconds = 3,
+    # Ohne Fokus-Waechter (Tools/editor-focus.ps1): die Testbank darf sich nach vorne holen. Zur Laufzeit: editor-focus.ps1 off/on.
+    [switch]$NoFocusGuard,
     [switch]$Install,
     [switch]$Uninstall
 )
@@ -30,6 +32,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $queueScript = Join-Path $PSScriptRoot 'editor-queue.ps1'
 $dialogScript = Join-Path $PSScriptRoot 'editor-dialog.ps1'
+$focusScript = Join-Path $PSScriptRoot 'editor-focus.ps1'
 # Frueher Autostart mit Windows; wird bei -Install/-Uninstall entfernt.
 $legacyShortcut = Join-Path ([Environment]::GetFolderPath('Startup')) 'Mining Game Editor-Warteschlange.lnk'
 
@@ -58,7 +61,7 @@ if ($Install) {
     # Kopie in einen festen Ordner ausserhalb von Git: Arbeitsordner und Testbank wechseln ihren Stand.
     if (Test-Path -LiteralPath $legacyShortcut) { Remove-Item -LiteralPath $legacyShortcut; Write-Output "Windows-Autostart entfernt: $legacyShortcut" }
     New-Item -ItemType Directory -Path $bin -Force | Out-Null
-    foreach ($name in 'editor-queue.ps1', 'editor-queue-server.ps1', 'editor-dialog.ps1') { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination (Join-Path $bin $name) -Force }
+    foreach ($name in 'editor-queue.ps1', 'editor-queue-server.ps1', 'editor-dialog.ps1', 'editor-focus.ps1') { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination (Join-Path $bin $name) -Force }
     $target = Join-Path $bin 'editor-queue-server.ps1'
     $shell = New-Object -ComObject WScript.Shell
     $lnk = $shell.CreateShortcut($shortcut)
@@ -161,6 +164,13 @@ function Watch-Dialogs {
     try { & $dialogScript watch -Once -Quiet -Project $benchName -ProjectRoot $ownerRoot -QueueDir $QueueDir | Out-Null } catch { }
 }
 if ($DialogWatchSeconds -gt 0) { Write-Output "Dialog-Waechter fuer '$benchName' alle $DialogWatchSeconds s." }
+
+# Fokus-Waechter: holt das Fenster des Benutzers zurueck, wenn sich die Testbank von selbst nach vorne holt (eigener Thread
+# in diesem Prozess, reagiert sofort auf Fensterwechsel). Protokoll mit "FOKUS" in <Testbank>.log.
+if (-not $NoFocusGuard -and (Test-Path -LiteralPath $focusScript)) {
+    try { & $focusScript start -Project $benchName -ProjectRoot $ownerRoot -QueueDir $QueueDir | ForEach-Object { Write-Output $_ } }
+    catch { Write-Output "Fokus-Waechter nicht gestartet: $($_.Exception.Message)" }
+}
 
 try {
     while ($listener.IsListening) {
