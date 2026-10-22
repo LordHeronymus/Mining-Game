@@ -413,6 +413,7 @@ public sealed class SurfaceTallGrass : MonoBehaviour
             (uint)medicinalHerbVariants.Length)];
         healingHerbSites.Add(selectedX);
         target.Initialize(this, selectedX, true);
+        ApplyPatchSize(target);
     }
 
     SurfaceTrees FindTrees()
