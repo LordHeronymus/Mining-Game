@@ -21278,7 +21278,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.45176199078559878,\n                                    \"flag\":
+    \"number\": 0.4517619907855988,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -21502,7 +21502,7 @@ MonoBehaviour:
     \"volume\",\n                                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.23405052721500398,\n                                    \"flag\":
+    \"number\": 0.234050527215004,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -21950,7 +21950,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.29189541935920718,\n                                    \"flag\":
+    \"number\": 0.2918954193592072,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -22062,7 +22062,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.21308490633964539,\n                                    \"flag\":
+    \"number\": 0.2130849063396454,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -22734,7 +22734,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.21769607067108155,\n                                    \"flag\":
+    \"number\": 0.2176960706710816,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -22958,7 +22958,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.27572885155677798,\n                                    \"flag\":
+    \"number\": 0.275728851556778,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -23518,7 +23518,7 @@ MonoBehaviour:
     \"volume\",\n                                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.12410057336091995,\n                                    \"flag\":
+    \"number\": 0.12410057336091997,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -24638,7 +24638,7 @@ MonoBehaviour:
     \"volume\",\n                                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.20963022112846375,\n                                    \"flag\":
+    \"number\": 0.20963022112846378,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -25422,7 +25422,7 @@ MonoBehaviour:
     \"volume\",\n                                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.46805045008659365,\n                                    \"flag\":
+    \"number\": 0.4680504500865937,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -27214,7 +27214,7 @@ MonoBehaviour:
     \"volume\",\n                                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.19689278304576875,\n                                    \"flag\":
+    \"number\": 0.19689278304576877,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -27326,7 +27326,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.25378212332725527,\n                                    \"flag\":
+    \"number\": 0.2537821233272553,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -29454,7 +29454,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.24311907589435578,\n                                    \"flag\":
+    \"number\": 0.24311907589435576,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -29790,7 +29790,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.20746386051177979,\n                                    \"flag\":
+    \"number\": 0.2074638605117798,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -30014,7 +30014,7 @@ MonoBehaviour:
     \"volume\",\n                                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.23603732883930207,\n                                    \"flag\":
+    \"number\": 0.2360373288393021,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -30238,7 +30238,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.30977877974510195,\n                                    \"flag\":
+    \"number\": 0.309778779745102,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -30574,7 +30574,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.31114229559898379,\n                                    \"flag\":
+    \"number\": 0.3111422955989838,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -42948,14 +42948,15 @@ MonoBehaviour:
     0.550000011920929,\n        \"panelElementAlpha\": 1.0,\n        \"loadingTwinkleFrequency\":
     1.0,\n        \"levelUpAnimationOffsetSeconds\": 0.0,\n        \"hotbarVerticalOffset\":
     0.0,\n        \"hotbarHoldDuration\": 0.5,\n        \"masterVolume\": 1.0,\n       
-    \"musicVolume\": 1.0\n    },\n    \"tests\": {\n        \"version\": 9,\n       
-    \"diggingMultiplier\": 1.0,\n        \"movementMultiplier\": 5.0,\n        \"diggingMultiplierEnabled\":
-    true,\n        \"movementMultiplierEnabled\": true,\n        \"hasMiningHitOffsetOverride\":
+    \"musicVolume\": 1.0,\n        \"autosaveIntervalMinutes\": 3.0\n    },\n   
+    \"tests\": {\n        \"version\": 9,\n        \"diggingMultiplier\": 1.0,\n       
+    \"movementMultiplier\": 5.0,\n        \"diggingMultiplierEnabled\": true,\n       
+    \"movementMultiplierEnabled\": true,\n        \"hasMiningHitOffsetOverride\":
     false,\n        \"miningHitOffsetMs\": 100.0,\n        \"smartCursorStrokeWidth\":
     0.5,\n        \"godMode\": false,\n        \"noEnergyConsume\": true,\n       
     \"flyMode\": true,\n        \"noClip\": true,\n        \"noWeight\": true,\n       
     \"infiniteMoney\": false,\n        \"globalLighting\": true,\n        \"cameraFollow\":
-    true,\n        \"testModeDisabled\": false,\n        \"discardPlayedMap\": false,\n       
+    true,\n        \"testModeDisabled\": true,\n        \"discardPlayedMap\": false,\n       
     \"dayNightMode\": 0,\n        \"homescreenBackground\": 0\n    }\n}"
   assets:
   - key: f557a84e75d990345a1618e999c55e45:11400000
