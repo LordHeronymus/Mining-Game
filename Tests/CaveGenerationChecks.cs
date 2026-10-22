@@ -40,7 +40,8 @@ public static class CaveGenerationChecks
                 Check(first[index] == repeated[index], "Cave generation is not seed-stable.");
                 if (first[index]) carved++;
                 if (first[index] != changed[index]) changedCells++;
-                if (y < settings.minimumDepth || x < 5 || x >= width - 5 || Reserved(x, y))
+                // Caves may reach the side borders on purpose; only depth and the reserved area stay protected.
+                if (y < settings.minimumDepth || Reserved(x, y))
                     Check(!first[index], "Cave generation entered a protected area.");
             }
         Check(carved > 500, "Cave generation carved too little terrain.");

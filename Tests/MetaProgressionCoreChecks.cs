@@ -222,6 +222,10 @@ public static class MetaProgressionCoreChecks
     static void AsyncPersistence()
     {
         Fresh("async"); MetaProgression.BeginRun("async-world");
+        // The first resource of a fresh profile would also open the daily/weekly challenge periods,
+        // whose own background save starts before the count changes. Open them up front and persist.
+        MetaProgression.GetChallenges(ChallengePeriod.Daily); MetaProgression.GetChallenges(ChallengePeriod.Weekly);
+        WaitForSave(); Check(MetaProgression.Save() && !MetaProgression.IsSaving, "challenge periods persisted before async check");
         MetaProgression.RecordResource(Item.Copper, 1, "a");
         Check(MetaProgression.RequestSave() && MetaProgression.IsSaving, "autosave queued on worker");
         MetaProgression.RecordResource(Item.Copper, 1, "b");
