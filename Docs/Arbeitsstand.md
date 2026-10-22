@@ -17,7 +17,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
-- 22.10.2026, Claude Code: Eine Haltezeit für Lager, Inventar und Hotbar (F1 → UI → „Item ziehen“ → „Haltezeit bis Ziehen“, 0 = beim Bewegen); kurzer Klick bleibt Klick; Branch `claude/drag-hold`, bereit für `main` (Freigabe Benutzer).
+- 22.10.2026, Claude Code: Eine Haltezeit für Lager, Inventar und Hotbar (F1 → UI → „Item ziehen“ → „Haltezeit bis Ziehen“, 0 = beim Bewegen); kurzer Klick bleibt Klick; Branch `claude/drag-hold`, mit Freigabe des Benutzers in `main` zusammengeführt.
 - 22.10.2026, Claude Code: Warteschlangen-Dienst für PrivOrg startet mit dem ersten Unity Editor statt mit Windows (Editor prüft jede Minute, startet ihn auch nach Absturz neu), Branch `claude/queue-service-on-editor`.
 - 22.10.2026, Claude Code (Cloud): Einstellungen (F1 und Editor-Fenster) mit sichtbarer Hierarchie: jede Ebene eine Stufe eingerückt, F1-Stufe breiter; Branch `claude/exciting-ramanujan-l0893x`.
 - 22.10.2026, Claude Code: F1 → UI → „Item ziehen“: Pop-Stärke, Grösse beim Tragen und Pop-Dauer einstellbar (Haltezeit weiterhin unter UI → Hotbar); Rechtsklick auf ein Hotbar-Item nimmt es aus der Hotbar (bleibt im Inventar); Branch `claude/drag-settings`, mit Freigabe des Benutzers in `main` zusammengeführt.
