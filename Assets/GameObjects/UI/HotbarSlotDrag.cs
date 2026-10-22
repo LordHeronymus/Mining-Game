@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public sealed class HotbarSlotDrag : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
+public sealed class HotbarSlotDrag : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler, IPointerClickHandler
 {
     const string HoldDurationKey = "hotbar.dragHoldDuration";
     public static float HoldDuration
@@ -47,6 +47,11 @@ public sealed class HotbarSlotDrag : MonoBehaviour, IPointerDownHandler, IDragHa
         hud.EndHotbarDrag(slotIndex, pointerPosition);
         dragging = false;
         suppressClick = true;
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Right && hud) hud.ClearHotbarSlot(slotIndex);
     }
 
     public bool ConsumeClick()
