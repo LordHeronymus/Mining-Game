@@ -312,6 +312,110 @@ function Get-EditorState([double]$recentMinutes = $StaleMinutes) {
     return @{ busy = $false; text = 'Editor nicht offen, kein Aktivitaetssignal' }
 }
 
+# Stand gegenueber origin/main laut Assets/Editor/MainAutoUpdate.cs (nur im Ordner des Benutzers), sonst $null.
+# Nur bei offenem Editor mit frischem Signal: ein geschlossener Editor prueft nicht mehr.
+function Get-MainState {
+    if (-not (Test-Path -LiteralPath $activityFile)) { return $null }
+    try { $act = [IO.File]::ReadAllText($activityFile, $utf8) | ConvertFrom-Json } catch { return $null }
+    $state = Get-Prop $act 'mainState'
+    if (-not $state -or (Get-Prop $act 'closed') -or (AgeMinutes (Get-Prop $act 'updated')) -gt $FreshMinutes) { return $null }
+    $behind = Get-Prop $act 'mainBehind'
+    return [ordered]@{
+        state = $state; text = (Get-Prop $act 'mainText'); behind = $(if ($null -eq $behind) { -1 } else { [int]$behind })
+        checked = (Get-Prop $act 'mainChecked'); current = ($state -eq 'aktuell')
+    }
+}
+
+# --- Code-Stand je Arbeitsordner (fuer PrivOrg: ist der Editor auf dem neuesten Stand?) -------------
+# Ordner Mining Game: gegen origin/main; Testbank: gegen den geholten Branch (<Ordner>.bench.json);
+# andere Ordner: gegen origin/<Branch>. Zwischengespeichert in <Ordner>.code.json (30 s), git fetch hoechstens alle 3 min.
+$codeFile = Join-Path $QueueDir "$Project.code.json"
+$CodeRefreshSeconds = 30
+$FetchMinutes = 3
+
+function Invoke-Git([string]$folder, [string[]]$gitArgs, [int]$timeoutMs = 15000) {
+    # Als Zeichenkette (ArgumentList fehlt in Windows PowerShell 5.1, unter der der Dienst laeuft).
+    $quoted = foreach ($a in (@('-C', $folder) + $gitArgs)) { if ($a -match '[\s"]') { '"' + ($a -replace '"', '\"') + '"' } else { $a } }
+    $psi = New-Object System.Diagnostics.ProcessStartInfo 'git', ($quoted -join ' ')
+    $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true
+    $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
+    $psi.Environment['LC_ALL'] = 'C'
+    try {
+        $p = [System.Diagnostics.Process]::Start($psi)
+        $err = $p.StandardError.ReadToEndAsync(); $out = $p.StandardOutput.ReadToEndAsync()
+        if (-not $p.WaitForExit($timeoutMs)) { try { $p.Kill() } catch { }; return @{ code = -1; out = 'Zeitlimit' } }
+        return @{ code = $p.ExitCode; out = $out.Result.Trim(); err = $err.Result.Trim() }
+    }
+    catch { return @{ code = -1; out = $_.Exception.Message } }
+}
+
+function Get-ProjectFolder {
+    if (Test-Path -LiteralPath $activityFile) {
+        try { $path = Get-Prop ([IO.File]::ReadAllText($activityFile, $utf8) | ConvertFrom-Json) 'projectPath' } catch { $path = $null }
+        if ($path -and (Test-Path -LiteralPath (Join-Path $path '.git'))) { return $path }
+    }
+    $sibling = Join-Path (Split-Path $QueueDir -Parent) $Project
+    if (Test-Path -LiteralPath (Join-Path $sibling '.git')) { return $sibling }
+    return $null
+}
+
+function Plural([int]$n, [string]$one, [string]$many) { if ($n -eq 1) { "1 $one" } else { "$n $many" } }
+
+function Measure-CodeState($previous) {
+    $folder = Get-ProjectFolder
+    if (-not $folder) { return $null }
+    $head = Invoke-Git $folder @('rev-parse', '--abbrev-ref', 'HEAD')
+    if ($head.code -ne 0) { return [ordered]@{ folder = $folder; text = 'kein Git-Stand lesbar'; current = $null; checked = (Iso (Now)) } }
+    $branch = $head.out
+    $sha = (Invoke-Git $folder @('rev-parse', '--short', 'HEAD')).out
+    $subject = (Invoke-Git $folder @('log', '-1', '--format=%s')).out
+    $bench = $null
+    $benchFile = Join-Path $QueueDir "$Project.bench.json"
+    if (Test-Path -LiteralPath $benchFile) { try { $bench = [IO.File]::ReadAllText($benchFile, $utf8) | ConvertFrom-Json } catch { } }
+    # Vergleichsziel: geholter Testbank-Branch, sonst der ausgecheckte Branch.
+    $ref = if ($bench -and (Get-Prop $bench 'ref')) { [string](Get-Prop $bench 'ref') } elseif ($branch -ne 'HEAD') { $branch } else { $null }
+    $label = if ($bench) { "Testbank: $ref" } elseif ($ref) { $ref } else { "losgeloest bei $sha" }
+    $fetched = Get-Prop $previous 'fetched'
+    $remote = $null; $behind = -1; $ahead = -1
+    if ($ref -and $ref -notmatch '^[0-9a-f]{7,40}$') {
+        if ((AgeMinutes $fetched) -ge $FetchMinutes) {
+            [void](Invoke-Git $folder @('fetch', '-q', 'origin', $ref) 30000)
+            $fetched = Iso (Now)
+        }
+        if ((Invoke-Git $folder @('rev-parse', '--verify', '--quiet', "refs/remotes/origin/$ref")).code -eq 0) {
+            $remote = "origin/$ref"
+            $base = if ($bench -and (Get-Prop $bench 'sha')) { [string](Get-Prop $bench 'sha') } else { 'HEAD' }
+            $behind = [int](Invoke-Git $folder @('rev-list', '--count', "$base..$remote")).out
+            $ahead = [int](Invoke-Git $folder @('rev-list', '--count', "$remote..HEAD")).out
+        }
+    }
+    $changed = @((Invoke-Git $folder @('status', '--porcelain', '--untracked-files=no')).out -split "`n" | Where-Object { $_ }).Count
+    $parts = New-Object System.Collections.Generic.List[string]
+    if (-not $ref) { $current = $null }
+    elseif (-not $remote) { $current = $null; $parts.Add('nur lokal, nicht auf GitHub') }
+    else {
+        $current = ($behind -eq 0)
+        if ($behind -gt 0) { $parts.Add((Plural $behind 'neuer Commit' 'neue Commits') + " auf $remote") } else { $parts.Add('aktuell') }
+        if ($ahead -gt 0) { $parts.Add((Plural $ahead 'eigener Commit' 'eigene Commits') + ' nicht auf GitHub') }
+    }
+    if ($changed -gt 0) { $parts.Add((Plural $changed 'Datei' 'Dateien') + ' lokal geaendert') }
+    $text = "$label ($sha)" + $(if ($parts.Count) { ', ' + ($parts -join ', ') } else { '' })
+    return [ordered]@{
+        folder = $folder; branch = $branch; ref = $ref; testbench = [bool]$bench; sha = $sha; subject = $subject
+        remote = $remote; behind = $behind; ahead = $ahead; changed = $changed; current = $current
+        text = $text; fetched = $fetched; checked = (Iso (Now))
+    }
+}
+
+function Get-CodeState {
+    $cached = $null
+    if (Test-Path -LiteralPath $codeFile) { try { $cached = [IO.File]::ReadAllText($codeFile, $utf8) | ConvertFrom-Json } catch { } }
+    if ($cached -and (AgeMinutes (Get-Prop $cached 'checked')) * 60 -lt $CodeRefreshSeconds) { return $cached }
+    $state = Measure-CodeState $cached
+    if ($state) { try { [IO.File]::WriteAllText($codeFile, (ConvertTo-Json -InputObject $state -Compress), $utf8) } catch { } }
+    return $state
+}
+
 # Raeumt verwaiste Eintraege ab und setzt den Startzeitpunkt des obersten Eintrags.
 function Update-Queue($list) {
     $now = Now
@@ -382,6 +486,10 @@ function Show-Queue($list) {
     $ed = Get-EditorState
     Write-Output "Editor-Warteschlange '$Project' ($queueFile)"
     Write-Output "Editor: $($ed.text)$(if ($ed.busy) { ' [in Benutzung]' })"
+    $main = Get-MainState
+    $code = Get-CodeState
+    if ($code) { Write-Output "Code:  $($code.text)" }
+    if ($main) { Write-Output "Stand: $($main.text) (geprueft $(FormatAge (AgeMinutes $main.checked)))" }
     if ($list.Count -eq 0) { Write-Output '  (leer - Editor frei)'; return }
     for ($i = 0; $i -lt $list.Count; $i++) {
         $e = $list[$i]
@@ -614,6 +722,12 @@ switch ($Command) {
         if ($Json) {
             # Maschinenlesbar fuer den lokalen Dienst (Tools/editor-queue-server.ps1) und PrivOrg.
             $ed = Get-EditorState
+            # Code-Stand auch im Editortext, damit das PrivOrg-Modul ihn ohne eigene Anpassung zeigt.
+            # Im Ordner des Benutzers sagt MainAutoUpdate genauer, wann geholt wird (z. B. nach dem Play-Stopp).
+            $main = Get-MainState
+            $code = Get-CodeState
+            $standText = if ($main -and -not $main.current) { $main.text } elseif ($code) { $code.text } elseif ($main) { $main.text } else { $null }
+            $edText = if ($standText) { "$($ed.text) | Stand: $standText" } else { $ed.text }
             $pos = 0
             $rows = @(foreach ($e in $list) {
                     $pos++
@@ -626,7 +740,9 @@ switch ($Command) {
             $obj = [ordered]@{
                 project = $Project; now = (Iso (Now)); staleMinutes = $StaleMinutes; userStaleMinutes = $UserStaleMinutes
                 releaseMinutes = $ReleaseMinutes; finalMinutes = $FinalMinutes
-                editor = [ordered]@{ busy = [bool]$ed.busy; text = $ed.text }
+                editor = [ordered]@{ busy = [bool]$ed.busy; text = $edText }
+                main = $main
+                code = $code
                 entries = $rows
             }
             ConvertTo-Json -InputObject $obj -Depth 5 -Compress

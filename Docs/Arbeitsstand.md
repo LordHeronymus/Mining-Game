@@ -17,6 +17,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
+- 22.10.2026, Claude Code (Cloud): main-Update gleich nach Play-Stopp, Hinweis im Game-Fenster bei neuem Stand, Stand („main aktuell“ / „N neue Commits“) in der Editor-Warteschlange und im PrivOrg-Modul, Code-Stand für jeden Editor (auch Testbank/Worktrees) in `editor-queue status`; Branch `claude/exciting-ramanujan-l0893x`, mit Freigabe des Benutzers in `main`.
 - 22.10.2026, Claude Code: Neue Leiter-Grafik „Grubenleiter“ (dunkles Eichenholz, Eisenplatten mit Nieten), ausgewählt aus 4 Varianten (Vorschauen unter `Design/Ladder`); Branch `claude/ladder-variants`, bereit für `main` (Freigabe Benutzer).
 - 22.10.2026, Claude Code: Energiemonolith nutzt das goldene Eingangsschild („Energie aufladen“, Klick lädt auf) wie Lager, Shop und Werkbank, altes „Energy“-Schild ausgeblendet; Branch `claude/energy-sign`, mit Freigabe des Benutzers per PR in `main`.
 - 22.10.2026, Claude Code: Speicher-Wächter: Sind alle Mining-Game-Ordner zusammen > 100 GB, räumt ein geplanter Windows-Task automatisch auf (alte LFS-Versionen, erledigte Arbeitsordner ≥ 2 Tage unbenutzt, alte Build Tests und Szenen-Backups, git gc), siehe Docs/Speicher-Bereinigung.md; Branch `claude/disk-cleanup`, mit Freigabe des Benutzers in `main` zusammengeführt.
@@ -26,4 +27,3 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 - 22.10.2026, Claude Code: Einstellungen, Pausemenü und F1 pausieren das ganze Spiel inkl. Audio (zentrale `GamePause`, Ambience und Stimme setzen fort, keine Energie verloren); Branch `claude/settings-pause-288b53`, mit Freigabe des Benutzers in `main` zusammengeführt.
 - 22.10.2026, Claude Code: Eine Haltezeit für Lager, Inventar und Hotbar (F1 → UI → „Item ziehen“ → „Haltezeit bis Ziehen“, 0 = beim Bewegen); kurzer Klick bleibt Klick; Branch `claude/drag-hold`, mit Freigabe des Benutzers in `main` zusammengeführt.
 - 22.10.2026, Claude Code: Warteschlangen-Dienst für PrivOrg startet mit dem ersten Unity Editor statt mit Windows (Editor prüft jede Minute, startet ihn auch nach Absturz neu), Branch `claude/queue-service-on-editor`.
-- 22.10.2026, Claude Code (Cloud): Einstellungen (F1 und Editor-Fenster) mit sichtbarer Hierarchie: jede Ebene eine Stufe eingerückt, F1-Stufe breiter; Branch `claude/exciting-ramanujan-l0893x`.
