@@ -1,8 +1,8 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Saves the running game into its own slot every few minutes of play (GPS: Spieler → Autosave),
-// and once more when play mode stops or the application quits.
+// Saves the running game into its own slot every few minutes of play (GPS: Spieler → Autosave) while the game
+// keeps running, and once more when play mode stops or the application quits.
 [DefaultExecutionOrder(-1050)]
 public sealed class RunAutosave : MonoBehaviour
 {
@@ -46,6 +46,8 @@ public sealed class RunAutosave : MonoBehaviour
     public static float IntervalSeconds => Mathf.Clamp(GpsSettings.Preferences.autosaveIntervalMinutes, 0f, 60f) * 60f;
 
     void Awake() { Instance = this; GameSaveSystem.SlotsChanged += Saved; }
+    // Leaving the run stops its autosave coroutine; drop the unfinished capture with it.
+    void OnDisable() => GameSaveSystem.StopAutosave();
     void OnDestroy() { if (Instance == this) Instance = null; GameSaveSystem.SlotsChanged -= Saved; }
     // Any successful save (also leaving to the main menu) restarts the interval.
     void Saved() => SecondsSinceSave = 0;
@@ -67,8 +69,9 @@ public sealed class RunAutosave : MonoBehaviour
         SecondsSinceSave += Time.unscaledDeltaTime;
         float interval = IntervalSeconds;
         // Wait while a panel holds the gameplay input, so a save never interrupts shop or dialog interaction.
-        if (interval <= 0 || SecondsSinceSave < interval || GameplayInputBlocker.IsBlocked || !GameSaveSystem.CanAutoSave) return;
+        if (interval <= 0 || SecondsSinceSave < interval || GameplayInputBlocker.IsBlocked || !GameSaveSystem.CanAutoSave ||
+            GameSaveSystem.IsAutoSaving) return;
         SecondsSinceSave = 0;
-        StartCoroutine(GameSaveSystem.Save(GameSaveSystem.ActiveSlot, this, (ok, _) => { if (ok) noticeUntil = Time.unscaledTime + NoticeSeconds; }));
+        StartCoroutine(GameSaveSystem.Autosave(this, (ok, _) => { if (ok) noticeUntil = Time.unscaledTime + NoticeSeconds; }));
     }
 }

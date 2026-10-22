@@ -13,6 +13,7 @@ Alle unter `C:\IT\GameDev\Git Repos\EditorQueue\` (gleich für alle Branches und
 | `<Ordner>.activity.json` | Aktivitätssignal des Editors (schreibt `Assets/Editor/EditorQueueActivity.cs`) |
 | `<Ordner>.lock` | Sperre für atomares Schreiben (exklusiv geöffnet, wird beim Prozessende automatisch frei) |
 | `<Ordner>.dialogs.json` | Nur Testbank: offene modale Dialoge des Editors und die zuletzt beantworteten (schreibt `Tools/editor-dialog.ps1`) |
+| `<Ordner>.focus-guard-off` | Nur Testbank: vorhanden = Fokus-Wächter aus (`Tools/editor-focus.ps1 off/on`) |
 
 Claude-Worktrees unter `Mining Game/.claude/worktrees/…` zählen zum Editor von `Mining Game`. Andere Ordner/Projekte mit `-Project`, anderer Queue-Ordner mit `-QueueDir` oder `EDITOR_QUEUE_DIR`.
 
@@ -86,7 +87,7 @@ Im Admin-Tool PrivOrg zeigt das Modul **Editor-Warteschlange** (Dev/Owner) alle 
 powershell -NoProfile -ExecutionPolicy Bypass -File Tools/editor-queue-server.ps1
 ```
 
-- **Start mit dem ersten Editor:** `-Install` kopiert `editor-queue.ps1`, `editor-dialog.ps1` und den Dienst nach `Git Repos/EditorQueue/bin` (unabhängig von Arbeitsordnern und Testbank) und legt dort die Startverknüpfung `editor-queue-server.lnk` an (startet unsichtbar, mit `-ProjectRoot` auf `Mining Game`). Kein Windows-Autostart mehr (ein alter Eintrag wird entfernt): `Assets/Editor/EditorQueueActivity.cs` prüft in jedem offenen Unity Editor jede Minute, ob auf Port 47615 etwas antwortet, und öffnet sonst die Verknüpfung. So läuft der Dienst, sobald der erste Editor offen ist, und startet nach einem Absturz von selbst wieder; ein doppelter Start beendet sich, weil der Port belegt ist. Ist kein Editor offen, zeigt PrivOrg „Dienst nicht erreichbar“. Nach Änderungen an den Skripten `-Install` erneut ausführen; `-Uninstall` entfernt die Verknüpfung (dann startet der Dienst nicht mehr automatisch).
+- **Start mit dem ersten Editor:** `-Install` kopiert `editor-queue.ps1`, `editor-dialog.ps1`, `editor-focus.ps1` und den Dienst nach `Git Repos/EditorQueue/bin` (unabhängig von Arbeitsordnern und Testbank) und legt dort die Startverknüpfung `editor-queue-server.lnk` an (startet unsichtbar, mit `-ProjectRoot` auf `Mining Game`). Kein Windows-Autostart mehr (ein alter Eintrag wird entfernt): `Assets/Editor/EditorQueueActivity.cs` prüft in jedem offenen Unity Editor jede Minute, ob auf Port 47615 etwas antwortet, und öffnet sonst die Verknüpfung. So läuft der Dienst, sobald der erste Editor offen ist, und startet nach einem Absturz von selbst wieder; ein doppelter Start beendet sich, weil der Port belegt ist. Ist kein Editor offen, zeigt PrivOrg „Dienst nicht erreichbar“. Nach Änderungen an den Skripten `-Install` erneut ausführen; `-Uninstall` entfernt die Verknüpfung (dann startet der Dienst nicht mehr automatisch).
 - **Gehostetes PrivOrg:** dessen Adresse freigeben, z. B. `-Install -AllowOrigin https://<projekt>.vercel.app` (mehrere mit Komma). `localhost`-Seiten sind immer erlaubt, alle anderen Herkünfte bekommen 403.
 - **Schnittstelle:** `GET /api/queue` (alle Arbeitsordner, je `status -Json`), `POST /api/join|heartbeat|leave` mit `{ "project": "<Ordner>", "purpose": "…" }`, immer als Benutzer (`-User`); `POST /api/move` mit `{ "project", "id", "position" }` (409 für Platz 1) und `POST /api/request-release` mit `{ "project", "cancel": false|true }`. Arbeitsordner sind der Projektordner, Geschwister `<Projekt> <n>` mit `ProjectSettings` und alle mit Warteschlange/Aktivitätssignal.
 - **Code-Stand je Editor** (alle Arbeitsordner, auch bei geschlossenem Editor): `status` zeigt „Code: …“, `status -Json` liefert `code = { folder, branch, ref, testbench, sha, subject, remote, behind, ahead, changed, current, text, fetched, checked }`. Verglichen wird der Ordner `Mining Game` mit `origin/main`, die Testbank mit dem geholten Branch (`<Ordner>.bench.json`, ab dem geholten Commit) und andere Ordner mit `origin/<Branch>`. `current` ist `true` (aktuell), `false` (neue Commits auf GitHub) oder `null` (losgelöst bzw. nur lokal). Texte z. B. „main (69c7482), aktuell“, „Testbank: claude/x (2bb54f1), 1 neuer Commit auf origin/claude/x“, „claude/y (d2ed911), aktuell, 1 eigener Commit nicht auf GitHub“, dazu „N Dateien lokal geändert“. Zwischengespeichert in `<Ordner>.code.json` (30 s), `git fetch` des Branches höchstens alle 3 min.
@@ -94,6 +95,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File Tools/editor-queue-server.ps
 - `editor.text` endet mit „| Stand: …“ (bei veraltetem `main` dessen Text, sonst der Code-Stand), so zeigt das PrivOrg-Modul den Stand schon ohne eigene Anpassung. Für eine eigene Anzeige (z. B. grüner/gelber Punkt je Editor) `code.current` und `code.text` verwenden.
 - Doku auf PrivOrg-Seite: `docs/editor-queue.md` im PrivOrg-Repository.
 - **Dialog-Wächter:** Der Dienst prüft alle 3 s (`-DialogWatchSeconds`, 0 = aus) die Dialoge des Testbank-Editors, siehe nächster Abschnitt.
+- **Fokus-Wächter:** Der Dienst holt das Fenster des Benutzers zurück, wenn sich die Testbank selbst nach vorne holt, siehe „Testbank auf eigenem Desktop“.
 
 ## Dialoge im Testbank-Editor
 
@@ -122,6 +124,18 @@ Tools/editor-dialog.sh list -All                 # alle sichtbaren Fenster des E
 - **Status:** Offene Dialoge stehen in `<Ordner>.dialogs.json`. Solange dort (höchstens 2 min alt) ein Dialog offen ist, gilt der Editor als **in Benutzung**: Niemand wird wegen eines Dialogs verdrängt. `editor-queue status` zeigt ihn als Editorzustand („Dialog offen …: '<Titel>' [Knöpfe] – …“), wartende `wait` melden ihn einmal mit „Editor blockiert: …“, PrivOrg sieht ihn im Editortext.
 - Fortschrittsfenster (Importieren, „Hold on“) gelten nicht als Dialog und werden nie geklickt.
 - Prüfen ohne Unity: `powershell -NoProfile -ExecutionPolicy Bypass -File Tests/EditorDialogChecks.ps1` (Testfenster ausserhalb des Bildschirms ohne Fokus, Queue-Ordner `Temp/EditorDialogTest`).
+
+## Testbank auf eigenem Desktop: Fokus-Wächter
+
+Liegt der Testbank-Editor auf einem zweiten virtuellen Windows-Desktop, springt Windows auf diesen Desktop, sobald sich die Testbank selbst nach vorne holt (z. B. Play-Start eines Chats). Zwei Gegenmittel:
+
+- **An der Quelle:** `Assets/Editor/TestBenchPlayUnfocused.cs` stellt im Testbank-Editor (nur `<Projekt> 2`) alle Game-Fenster auf „Play Unfocused“: Der Play-Mode startet, ohne dass Unity das Game-Fenster nach vorne holt. Der Editor des Benutzers bleibt unberührt. Unsere Werkzeuge (`editor-bench`, `unity command`, `editor-dialog`) holen das Fenster nie selbst nach vorne.
+- **Fokus-Wächter** (`Tools/editor-focus.ps1`, läuft im lokalen Dienst als eigener Thread): Er reagiert sofort auf jeden Fensterwechsel (`SetWinEventHook(EVENT_SYSTEM_FOREGROUND)`, kein Abfragen). Kommt ein Fenster des Testbank-Editors (Prozess über das Aktivitätssignal bzw. `-projectpath`) nach vorne, ohne dass der Benutzer es wollte, aktiviert er sofort wieder das zuletzt benutzte Fenster; Windows wechselt dabei auf dessen Desktop zurück. Das Testbank-Fenster wird nie minimiert.
+  - **Absicht des Benutzers** (dann bleibt die Testbank vorne): Mausklick in den letzten 1,5 s auf ein Testbank-Fenster oder auf Taskleiste/Task-Ansicht/Startmenü, oder in den letzten 2,5 s eine Wechsel-Taste (Win…, z. B. Win+Strg+Pfeil oder Win+Tab, Alt+Tab, Alt+Esc). Der Wächter liest dazu nur, wann und wohin geklickt bzw. ob eine solche Taste gedrückt wurde (Low-Level-Hooks), keine Texteingaben.
+  - Windows erlaubt Hintergrundprozessen das Aktivieren nur eingeschränkt; der Wächter versucht es direkt, dann mit `AttachThreadInput`, zuletzt mit einem kurzen Alt-Tastendruck (mit unbelegter Zwischentaste, damit kein Menü aufgeht). Holt sich die Testbank den Fokus mehr als 6-mal in 20 s, pausiert er 60 s.
+  - **Protokoll:** Jeder Eingriff steht mit `FOKUS` in `<Ordner>.log` (Testbank), z. B. „Testbank kam von selbst nach vorne ('Game' (Unity)), zurück zu '…' (direkt, 3 ms, Desktop des Benutzers aktiv)“ oder „Testbank bewusst geöffnet (Klick auf die Testbank vor 120 ms), bleibt vorne“.
+  - **Ein-/Ausschalten:** `Tools/editor-focus.ps1 off` (legt `Git Repos/EditorQueue/Mining Game 2.focus-guard-off` an, wirkt sofort) bzw. `on`; `status` zeigt Zustand und letzte Eingriffe. Dienst ganz ohne Wächter: `-NoFocusGuard`.
+  - Ohne Dienst bzw. zur Fehlersuche: `powershell -NoProfile -ExecutionPolicy Bypass -File Tools/editor-focus.ps1 watch -Trace` (zeigt jeden Fensterwechsel; `-DryRun` nur beobachten). Läuft der Wächter schon im Dienst, verweigert `watch` (Exit 4).
 
 ## Verdrängung verwaister Belegungen
 
