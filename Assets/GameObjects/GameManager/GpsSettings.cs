@@ -75,9 +75,13 @@ public static class GpsSettings
         LoadPersonalPreferences(document);
 #endif
         ItemIconLayout.Migrate(document, profile);
+#if UNITY_EDITOR
+        if (GpsUserOverrides.Active) ApplyUserOverrides();
+#endif
         savedJson = JsonUtility.ToJson(document);
 #if UNITY_EDITOR
-        var committed = UnityEditor.SessionState.GetString("GPS.Committed", "");
+        // Mit eigener Überschreibungs-Schicht ist Profil + Datei immer der gespeicherte Stand.
+        var committed = GpsUserOverrides.Active ? "" : UnityEditor.SessionState.GetString("GPS.Committed", "");
         if (!string.IsNullOrEmpty(committed)) savedJson = JsonUtility.ToJson(JsonUtility.FromJson<GpsDocument>(committed));
 #endif
         dirty = savedJson != JsonUtility.ToJson(document);
@@ -124,6 +128,54 @@ public static class GpsSettings
         foreach (string field in PersonalPreferences)
             UnityEditor.EditorPrefs.SetFloat(PersonalPreferenceKey(field), (float)GpsCodec.Get(data.preferences, field));
     }
+    // Eigene Werte (UserSettings/GpsOverrides.json) über das geladene Profil legen. Was inzwischen dem Standard entspricht
+    // oder dessen Stelle es nicht mehr gibt, fällt aus der Datei; Letzteres steht mit Wert in der Konsole.
+    static void ApplyUserOverrides()
+    {
+        var list = GpsUserOverrides.Entries.ToList();
+        if (list.Count == 0) return;
+        var stale = new List<GpsUserOverrides.Entry>();
+        GpsUserOverrides.Apply(document, profile, list, stale);
+        foreach (var entry in stale)
+            Debug.LogWarning("Eigener GPS-Wert passt nicht mehr zum Profil und wurde entfernt: " + entry.record + " / " + entry.path +
+                " = " + GpsUserOverrides.Describe(entry.value) + " (alte Datei: " + GpsUserOverrides.FilePath + ".bak)");
+        var effective = GpsUserOverrides.Diff(document, ShippedDocument(), profile);
+        if (stale.Count > 0 || effective.Count != list.Count)
+        {
+            int same = list.Count - stale.Count - effective.Count;
+            if (same > 0) Debug.Log(same + " eigene GPS-Werte entsprechen jetzt dem Standard und wurden aus der Überschreibung entfernt.");
+            try { GpsUserOverrides.Write(effective); } catch (Exception ex) { Warning = "Eigene GPS-Werte speichern fehlgeschlagen: " + ex.Message; }
+        }
+    }
+    // Nach einer Aktualisierung von main: Profil neu einlesen, eigene Werte wieder darüberlegen.
+    public static void ReloadFromProfile()
+    {
+        CommitPendingNow();
+        pendingCommits.Clear(); document = null; savedJson = null; shippedJson = null;
+        EnsureLoaded(); ApplyAssets();
+        if (!Application.isPlaying) ApplyLoadedComponents();
+        Changed?.Invoke();
+    }
+    // Setzt Felder auf die Standardwerte des Profils zurück und speichert nur diese Felder.
+    public static bool ResetToDefaults(IEnumerable<(string key, string field)> fields, out string error)
+    {
+        error = null;
+        var shipped = ShippedDocument(); var list = fields.ToList();
+        foreach (var (key, field) in list)
+        {
+            GpsValue node;
+            if (key == "preferences" || key == "tests")
+            {
+                object target = key == "preferences" ? shipped.preferences : shipped.tests;
+                node = GpsCodec.Read(field, GpsCodec.MemberType(target.GetType(), field), GpsCodec.Get(target, field), Profile.Key);
+            }
+            else node = shipped.records.Find(record => record.key == key)?.fields.Find(value => value.name == field)?.Copy();
+            if (node != null && !SetValue(key, node, out error)) return false;
+        }
+        pendingCommits.RemoveAll(list.Contains);
+        if (!CommitFields(list, out error)) return false;
+        Changed?.Invoke(); return true;
+    }
 #endif
     public static bool IsValidOverride(GpsRecord record, GpsValue node)
     {
@@ -142,6 +194,8 @@ public static class GpsSettings
     {
 #if UNITY_EDITOR
         profile = Resources.Load<GpsProfile>(ResourceName);
+        // Mit Überschreibungs-Schicht bleibt das Profil unverändert; der gespeicherte Stand kommt aus Profil + Datei.
+        if (GpsUserOverrides.Active) { Reload(); return; }
         string json = UnityEditor.SessionState.GetString("GPS.Committed", profile ? profile.documentJson : "");
         if (profile && !string.IsNullOrEmpty(json)) profile.documentJson = AssetJson(JsonUtility.FromJson<GpsDocument>(json));
 #endif
@@ -188,7 +242,8 @@ public static class GpsSettings
         var previous=GetValue(key,node.name);
         if (previous!=null && JsonUtility.ToJson(previous)==JsonUtility.ToJson(node)) return true;
 #if UNITY_EDITOR
-        if (!Application.isPlaying && profile) UnityEditor.Undo.RecordObject(profile, "GPS ändern");
+        bool writeThrough = !Application.isPlaying && profile && !GpsUserOverrides.Active;
+        if (writeThrough) UnityEditor.Undo.RecordObject(profile, "GPS ändern");
 #endif
         if (key == "preferences" || key == "tests") GpsCodec.Set(key == "preferences" ? Preferences : (object)Tests, node.name, GpsCodec.Write(node, Profile.Resolve));
         else
@@ -206,7 +261,7 @@ public static class GpsSettings
         }
         if (key == "tests") ApplyTestConfiguration();
 #if UNITY_EDITOR
-        if (!Application.isPlaying && profile)
+        if (writeThrough)
         { profile.documentJson = AssetJson(document); UnityEditor.EditorUtility.SetDirty(profile); }
 #endif
         dirty=true;
@@ -315,6 +370,15 @@ public static class GpsSettings
         {
 #if UNITY_EDITOR
             if (!profile) throw new InvalidOperationException("GPS-Profil fehlt.");
+            if (GpsUserOverrides.Active)
+            {
+                // Benutzerordner: nur die Abweichungen vom Profil in die nicht versionierte Datei, das Profil bleibt unberührt.
+                var entries = GpsUserOverrides.Diff(data, ShippedDocument(), profile);
+                GpsUserOverrides.Write(GpsUserOverrides.Hold ? GpsUserOverrides.Merge(entries, GpsUserOverrides.Entries) : entries);
+                SavePersonalPreferences(data);
+                UnityEditor.SessionState.SetString("GPS.Committed", json);
+                return true;
+            }
             UnityEditor.Undo.RecordObject(profile, "GPS speichern");
             profile.documentJson = AssetJson(data);
             SavePersonalPreferences(data);
