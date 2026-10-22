@@ -269,6 +269,13 @@ public sealed class CompactHud : MonoBehaviour
     {
         AssignSlotInternal(index, item, true);
     }
+    // Right-click on a hotbar slot takes the item off the hotbar (it stays in the inventory).
+    public bool ClearHotbarSlot(int index)
+    {
+        if (!CanReorderHotbar || draggedSlot > 0 || index < 1 || index > 8 || !slots[index - 1]) return false;
+        AssignSlotInternal(index, null, true);
+        return true;
+    }
     public void RestoreRunSlots(int[] ids, int selected)
     {
         for (int i = 0; i < slots.Length; i++)
