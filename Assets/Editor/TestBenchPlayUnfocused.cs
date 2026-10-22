@@ -16,6 +16,9 @@ public static class TestBenchPlayUnfocused
     static readonly Type playModeView = typeof(EditorWindow).Assembly.GetType("UnityEditor.PlayModeView");
     static readonly PropertyInfo behaviorProperty = playModeView?.GetProperty("enterPlayModeBehavior", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
+    const double CheckSeconds = 2;
+    static double nextCheck;
+
     static TestBenchPlayUnfocused()
     {
         if (Application.isBatchMode || !IsBench()) return;
@@ -24,7 +27,13 @@ public static class TestBenchPlayUnfocused
             Debug.LogWarning("Testbank: PlayModeView.enterPlayModeBehavior nicht gefunden, Play-Mode startet mit Fokus.");
             return;
         }
-        EditorApplication.delayCall += Apply;
+        // delayCall laeuft im Hintergrund-Editor nicht verlaesslich; neu geoeffnete Game-Fenster ebenfalls erfassen.
+        EditorApplication.update += () =>
+        {
+            if (EditorApplication.timeSinceStartup < nextCheck) return;
+            nextCheck = EditorApplication.timeSinceStartup + CheckSeconds;
+            Apply();
+        };
         EditorApplication.playModeStateChanged += state => { if (state == PlayModeStateChange.ExitingEditMode) Apply(); };
     }
 
