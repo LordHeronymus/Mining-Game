@@ -4,11 +4,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using TMPro;
+using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 
-// Autosave: timed save into the active slot, no save during pause, "Hauptmenü" saves, no manual save button,
+// Autosave: timed save into the active slot while the game keeps running, consistent world when tiles change during
+// the save, other saves supersede a running autosave, no save during pause, "Hauptmenü" saves, no manual save button,
 // immediate save for play-mode stop, and no automatic save into a different save directory.
 // Ends inside the run with both test directories still set (see output) so the caller can stop play mode and verify the exit save.
 public static class AutosaveChecks
@@ -18,7 +21,7 @@ public static class AutosaveChecks
     static string output, testDirectory;
     static float oldInterval;
     static bool background;
-    static int frame;
+    static int frame, failedSaves;
     static double began;
 
     public static object Main()
@@ -32,10 +35,13 @@ public static class AutosaveChecks
         MetaProgression.TestDirectory = Path.Combine(testDirectory, "MetaProfile");
         oldInterval = GpsSettings.Preferences.autosaveIntervalMinutes;
         background = Application.runInBackground; Application.runInBackground = true;
-        began = EditorApplication.timeSinceStartup; frame = -1; passed.Clear(); routines.Clear();
+        began = EditorApplication.timeSinceStartup; frame = -1; failedSaves = 0; passed.Clear(); routines.Clear();
+        Application.logMessageReceived += Logged;
         routines.Push(Checks()); EditorApplication.update += Tick;
         return output;
     }
+    static void Logged(string message, string stack, LogType type)
+    { if (message.Contains("Speichern fehlgeschlagen")) failedSaves++; }
     static void Tick()
     {
         if (!EditorApplication.isPlaying || EditorApplication.timeSinceStartup - began > 300)
@@ -77,6 +83,36 @@ public static class AutosaveChecks
     }
     static int SavedMoney() => GameSaveSystem.IsBusy ? -1 : GameSaveSystem.GetSummary(2)?.money ?? -1;
     static int AddMoney(int amount) { StatsManager.Instance.AddMoney(amount); return StatsManager.Instance.Money; }
+    static Tilemap Terrain => UnityEngine.Object.FindFirstObjectByType<MapGenerator>().Terrain;
+    static Vector3Int TileInRow(Tilemap tiles, int y)
+    {
+        var bounds = tiles.cellBounds;
+        for (int x = bounds.xMin; x < bounds.xMax; x++) { var cell = new Vector3Int(x, y, 0); if (tiles.HasTile(cell)) return cell; }
+        throw new Exception("No tile in row " + y);
+    }
+    // The autosave relies on every tile change being reported while it happens (GameSaveSystem.RunSnapshot).
+    static void CallbackCheck()
+    {
+        int reported = 0;
+        Action<Tilemap, NativeArray<Vector3Int>> probe = (source, positions) => { if (source && source.name == "Callback Probe") reported += positions.Length; };
+        var grid = new GameObject("Callback Probe Grid", typeof(Grid));
+        var child = new GameObject("Callback Probe"); child.transform.SetParent(grid.transform);
+        var tiles = child.AddComponent<Tilemap>(); var cell = Vector3Int.zero;
+        var tile = Terrain.GetTile(TileInRow(Terrain, Terrain.cellBounds.yMin + 1));
+        Tilemap.tilemapPositionsChanged += probe;
+        try
+        {
+            tiles.SetTile(cell, tile); bool set = reported > 0; reported = 0;
+            tiles.SetTile(cell, null); bool cleared = reported > 0; reported = 0;
+            tiles.SetTile(cell, tile); reported = 0;
+            tiles.SetTileFlags(cell, TileFlags.None); bool flags = reported > 0; reported = 0;
+            tiles.SetColor(cell, Color.red); bool color = reported > 0; reported = 0;
+            tiles.SetTransformMatrix(cell, Matrix4x4.Scale(new Vector3(2, 2, 1))); bool matrix = reported > 0;
+            Check(set && cleared, "Tile changes are reported synchronously");
+            passed.Add($"Info: synchronously reported SetTileFlags {flags}, SetColor {color}, SetTransformMatrix {matrix}");
+        }
+        finally { Tilemap.tilemapPositionsChanged -= probe; UnityEngine.Object.Destroy(grid); }
+    }
     static IEnumerator Checks()
     {
         StartRun("Other run"); yield return Settled();
@@ -84,6 +120,7 @@ public static class AutosaveChecks
         StartRun("Active run"); yield return Settled();
         Check(GameSaveSystem.ActiveSlot == 2 && RunAutosave.Instance, "Second run in slot 2 with autosave");
         CameraCheck();
+        CallbackCheck();
         byte[] other = File.ReadAllBytes(GameSaveSystem.SlotPath(1));
 
         var pause = UnityEngine.Object.FindFirstObjectByType<RunPauseMenu>();
@@ -94,8 +131,15 @@ public static class AutosaveChecks
         GpsSettings.Preferences.autosaveIntervalMinutes = 4f / 60f;
         int money = AddMoney(111);
         double waitStart = EditorApplication.timeSinceStartup;
-        while (SavedMoney() != money && EditorApplication.timeSinceStartup - waitStart < 20) yield return null;
+        bool started = false, halted = false;
+        while (SavedMoney() != money && EditorApplication.timeSinceStartup - waitStart < 30)
+        {
+            if (GameSaveSystem.IsAutoSaving)
+            { started = true; halted |= Time.timeScale == 0 || GameplayInputBlocker.IsBlocked || GameSaveSystem.IsBusy; }
+            yield return null;
+        }
         Check(SavedMoney() == money, "Timed autosave writes the active slot");
+        Check(started && !halted, "Autosave keeps the game running (no pause, no input block, not busy)");
         yield return Settled();
         var notice = GameObject.Find("Autosave Notice")?.GetComponent<TextMeshProUGUI>();
         Check(notice && notice.alpha > 0, "Autosave shows a short notice");
@@ -108,6 +152,7 @@ public static class AutosaveChecks
         Check(SavedMoney() == money, "No autosave while paused");
         pause.Close(); yield return null;
         GpsSettings.Preferences.autosaveIntervalMinutes = 0;
+        while (GameSaveSystem.IsAutoSaving) yield return null;
         yield return Wait(6);
         Check(SavedMoney() == money, "Interval 0 disables autosave");
 
@@ -125,16 +170,53 @@ public static class AutosaveChecks
             "Directory switch during a save never redirects automatic saves");
         GameSaveSystem.TestDirectory = active;
         Check(GameSaveSystem.CanAutoSave, "Back in its own directory the run saves again");
+        // An autosave running while the directory switches gives up instead of writing anywhere.
+        bool switched = true;
+        var routine = GameSaveSystem.Autosave(RunAutosave.Instance, (ok, _) => switched = ok);
+        routine.MoveNext(); yield return null;
+        GameSaveSystem.TestDirectory = active + "-other";
+        while (routine.MoveNext()) yield return null;
+        Check(!switched && !Directory.Exists(GameSaveSystem.TestDirectory), "Autosave gives up after a directory switch");
+        GameSaveSystem.TestDirectory = active;
 
         int nowMoney = AddMoney(3);
         Check(GameSaveSystem.SaveActiveRunNow(RunAutosave.Instance) && SavedMoney() == nowMoney && !GameSaveSystem.IsBusy,
             "Immediate save (play-mode stop) writes synchronously");
+        RunAutosave.Instance.StartCoroutine(GameSaveSystem.Autosave(RunAutosave.Instance, null)); yield return null;
+        int duringMoney = AddMoney(4);
+        Check(GameSaveSystem.IsAutoSaving && GameSaveSystem.SaveActiveRunNow(RunAutosave.Instance) && SavedMoney() == duringMoney &&
+            !GameSaveSystem.IsAutoSaving, "Immediate save during an autosave supersedes it");
+        yield return null;
 
+        // Rows are captured from the bottom: the second row is captured within the first steps, the top rows only later.
+        // Removing a tile in each and adding money in between must all reach the save of the final frame.
+        var terrain = Terrain; var bounds = terrain.cellBounds;
+        Vector3Int early = TileInRow(terrain, bounds.yMin + 1), late = TileInRow(terrain, bounds.yMax - 2);
+        bool autosaved = false;
+        routine = GameSaveSystem.Autosave(RunAutosave.Instance, (ok, _) => autosaved = ok);
+        for (int i = 0; i < 3 && routine.MoveNext(); i++) yield return null;
+        Check(GameSaveSystem.IsAutoSaving && !GameSaveSystem.IsBusy && Time.timeScale > 0, "Autosave captures while the game runs");
+        terrain.SetTile(early, null); terrain.SetTile(late, null);
+        int tileMoney = AddMoney(13);
+        while (routine.MoveNext()) yield return null;
+        Check(autosaved && SavedMoney() == tileMoney, "Autosave with tile changes completes");
+        RunNavigation.MainMenu(); yield return Settled();
+        Button(Home.transform, "Continue").onClick.Invoke(); yield return Settled();
+        terrain = Terrain;
+        Check(GameSaveSystem.ActiveSlot == 2 && !terrain.HasTile(early) && !terrain.HasTile(late) && StatsManager.Instance.Money == tileMoney,
+            "Reloaded world matches the autosave (row changed after its capture included)");
+        CameraCheck();
+
+        pause = UnityEngine.Object.FindFirstObjectByType<RunPauseMenu>(); home = Button(pause.transform, "Home");
         int homeMoney = AddMoney(7);
+        RunAutosave.Instance.StartCoroutine(GameSaveSystem.Autosave(RunAutosave.Instance, null)); yield return null;
+        Check(GameSaveSystem.IsAutoSaving, "Autosave running before 'Hauptmenü'");
         pause.Open(); yield return null;
         home.onClick.Invoke(); yield return Settled();
-        Check(MainMenuController.IsVisible && SavedMoney() == homeMoney, "'Hauptmenü' saves and returns home");
+        Check(MainMenuController.IsVisible && SavedMoney() == homeMoney && !GameSaveSystem.IsAutoSaving,
+            "'Hauptmenü' during an autosave saves and returns home");
         Check(other.SequenceEqual(File.ReadAllBytes(GameSaveSystem.SlotPath(1))), "Slot 1 still unchanged");
+        Check(failedSaves == 0, "No failed save logged");
 
         // Leave a running game for the play-mode stop check done by the caller.
         Button(Home.transform, "Continue").onClick.Invoke(); yield return Settled();
@@ -146,6 +228,7 @@ public static class AutosaveChecks
     static void Finish(string result, bool failed)
     {
         EditorApplication.update -= Tick;
+        Application.logMessageReceived -= Logged;
         GpsSettings.Preferences.autosaveIntervalMinutes = oldInterval;
         Application.runInBackground = background;
         // On success TestDirectory stays set until the caller has stopped play mode and checked the exit save.

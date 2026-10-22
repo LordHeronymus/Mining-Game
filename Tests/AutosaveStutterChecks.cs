@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // Measures the hitch of an autosave: frame times before and during real timed autosaves,
-// how long the game stays frozen (timeScale 0), and the main-thread cost of each save step.
+// whether the game is ever frozen (timeScale 0), and the main-thread cost of each autosave step.
 // Runs in isolated save/meta directories and returns to the homescreen with both reset. CI: local-only
 public static class AutosaveStutterChecks
 {
@@ -90,15 +90,15 @@ public static class AutosaveStutterChecks
         for (int save = 1; save <= Saves; save++)
         {
             double waitStart = EditorApplication.timeSinceStartup;
-            while (!GameSaveSystem.IsBusy) { if (EditorApplication.timeSinceStartup - waitStart > 15) throw new Exception("Autosave did not start"); yield return null; }
+            while (!GameSaveSystem.IsAutoSaving) { if (EditorApplication.timeSinceStartup - waitStart > 15) throw new Exception("Autosave did not start"); yield return null; }
             double start = Time.realtimeSinceStartupAsDouble;
             var during = new List<double>(); int frozen = 0;
-            while (GameSaveSystem.IsBusy) { yield return null; during.Add(Ms); if (Time.timeScale == 0) frozen++; }
+            while (GameSaveSystem.IsAutoSaving) { yield return null; during.Add(Ms); if (Time.timeScale == 0 || GameplayInputBlocker.IsBlocked) frozen++; }
             double seconds = Time.realtimeSinceStartupAsDouble - start;
             var after = new List<double>();
             for (int i = 0; i < 10; i++) { yield return null; after.Add(Ms); }
-            lines.Add($"Autosave {save}: Spiel steht {seconds * 1000:0} ms ({frozen} Frames angehalten); waehrenddessen {Stats(during)}; " +
-                $"Frames > 33 ms: {during.Count(x => x > 33)}; danach Max {after.Max():0.0} ms");
+            lines.Add($"Autosave {save}: dauert {seconds * 1000:0} ms, Spiel angehalten/blockiert in {frozen} Frames; waehrenddessen {Stats(during)}; " +
+                $"Frames > 16,7 ms: {during.Count(x => x > 1000.0 / 60)}, > 33 ms: {during.Count(x => x > 33)}; danach Max {after.Max():0.0} ms");
         }
         GpsSettings.Preferences.autosaveIntervalMinutes = 0;
         yield return Wait(1);
@@ -106,7 +106,7 @@ public static class AutosaveStutterChecks
         // Main-thread cost of each step of the save coroutine (what can produce one long frame).
         for (int save = 1; save <= Saves; save++)
         {
-            var routine = GameSaveSystem.Save(GameSaveSystem.ActiveSlot, RunAutosave.Instance, null);
+            var routine = GameSaveSystem.Autosave(RunAutosave.Instance, null);
             var steps = new List<double>(); var watch = new Stopwatch();
             while (true)
             {
@@ -116,8 +116,9 @@ public static class AutosaveStutterChecks
                 yield return null;
             }
             int worst = steps.IndexOf(steps.Max());
-            lines.Add($"Schritte {save}: {steps.Count} Schritte, Summe {steps.Sum():0.0} ms, laengster Schritt {steps[worst]:0.0} ms (Nr. {worst + 1}), " +
-                $"Schritte 1-3: {string.Join(" / ", steps.Take(3).Select(x => x.ToString("0.0")))} ms, uebrige Max {steps.Skip(3).DefaultIfEmpty(0).Max():0.0} ms");
+            var sorted = steps.OrderBy(x => x).ToList();
+            lines.Add($"Schritte {save}: {steps.Count} Schritte, Summe {steps.Sum():0.0} ms, Median {sorted[sorted.Count / 2]:0.00} ms, " +
+                $"laengster Schritt {steps[worst]:0.0} ms (Nr. {worst + 1}), zweitlaengster {sorted[^2]:0.0} ms");
             yield return Wait(1);
         }
         lines.Add($"Spielstand {new FileInfo(GameSaveSystem.SlotPath(1)).Length / 1024} KB");
