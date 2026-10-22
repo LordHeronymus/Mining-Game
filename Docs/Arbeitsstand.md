@@ -13,6 +13,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
 | Claude Code | Performance abschliessen: Ladebildschirm ohne Ruckler, keine Lag-Spikes, ≥ 100 FPS – pausiert, Zwischenstand im Changelog | claude/performance | Mining Game | Map (MapGenerator, Tilemap-Abonnenten, Rubble, Collider, Erzadern, Bäume, Gras), Loading, GPS-Codec/Schema, GameSaveSystem, AudioManager, Tests/Performance* | nein | 17.10.2026 19:45 |
+| Claude Code | main-Sync robust: eigene F1/GPS-Anpassungen als nicht versionierte Überschreibungs-Schicht (UserSettings), Aktualisierung mit Sicherung lokaler Commits/Änderungen, Statusfenster, Protokoll | claude/main-sync-2e953f | .claude/worktrees/settings-pause-288b53 | GpsSettings (Speichern), GpsProfileEditor, GpsRuntimePanel/GameplaySettingsWindow (Knöpfe), MainAutoUpdate, Docs/Main-Auto-Update.md, AGENTS.md | ja (Testbank) | 22.10.2026 |
 | Claude Code (Cloud) | Challenges-Rework: Aufgaben-Baukasten, Stufen, wöchentliche Rotation, Monats-Challenges, Boni, gestufte Meilensteine (Konzept Docs/Challenges-Konzept.md) | claude/challenges-rework | Cloud | Progression (MetaProgression*, MetaChallengePeriods, Catalog), ChallengePanel/ChallengeArt, neue Zählstellen (Dynamit, Fackeln, Leitern, Rückkehr), GPS, Tests/*Challenge* | nein (Cloud-Workflow) | 18.10.2026 |
 
 ## Zuletzt abgeschlossen
