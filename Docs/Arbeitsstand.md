@@ -17,6 +17,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
+- 22.10.2026, Claude Code: Neue Arbeitsordner entstehen ohne `Design/` und `AudioMastering/` (Git-Hook, rund 1,4 statt 4,6 GB; nachholen mit `git sparse-checkout add Design/<Thema>/`), Regel in AGENTS.md, siehe Docs/Arbeitsordner-ohne-Design.md; Hook eingerichtet, Branch `claude/worktree-sparse`, bereit für `main` (Freigabe Benutzer).
 - 22.10.2026, Claude Code: Warteschlangen-Dienst für PrivOrg startet mit dem ersten Unity Editor statt mit Windows (Editor prüft jede Minute, startet ihn auch nach Absturz neu), Branch `claude/queue-service-on-editor`.
 - 22.10.2026, Claude Code (Cloud): Einstellungen (F1 und Editor-Fenster) mit sichtbarer Hierarchie: jede Ebene eine Stufe eingerückt, F1-Stufe breiter; Branch `claude/exciting-ramanujan-l0893x`.
 - 22.10.2026, Claude Code: F1 → UI → „Item ziehen“: Pop-Stärke, Grösse beim Tragen und Pop-Dauer einstellbar (Haltezeit weiterhin unter UI → Hotbar); Rechtsklick auf ein Hotbar-Item nimmt es aus der Hotbar (bleibt im Inventar); Branch `claude/drag-settings`, mit Freigabe des Benutzers in `main` zusammengeführt.
@@ -26,4 +27,3 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 - 20.10.2026, Claude Code: Autosave alle 3 min Spielzeit (GPS Spieler → Autosave), Pausemenü ohne „Speichern“, „Hauptmenü“ und Play-Stopp speichern automatisch; Branch `claude/autosave`, mit Freigabe des Benutzers in `main`.
 - 20.10.2026, Claude Code: Editor-Warteschlange: Benutzer sortiert Wartende per Drag & Drop um (PrivOrg, `move`), Knopf „Bitte abschliessen“ (5 min, bei laufendem Test einmalig 2 min mehr, Hook meldet es dem Chat), Frist ohne Editor-Nutzung 4 min; Branch `claude/editor-queue-reorder`.
 - 20.10.2026, Claude Code: Gezogenes Item (Drag & Drop) sieht in Lager, Inventar und Hotbar genau aus wie im Slot (Lager zeigte Leiter/Fackel/Dynamit gespiegelt), gemeinsames `ItemDragGhost`; Branch `claude/drag-ghost`, mit Freigabe des Benutzers in `main` zusammengeführt.
-- 20.10.2026, Claude Code: Alte Spielstände bekommen beim Laden die gemalten Erze (gleiche Erzart, Grösse und Stelle, seedstabil), Branch `claude/painted-ore-migration-3f7f47`, in `main`.
