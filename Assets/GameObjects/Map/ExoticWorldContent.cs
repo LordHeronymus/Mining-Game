@@ -221,9 +221,16 @@ public sealed class ExoticWorldContent : MonoBehaviour
         ValidateState(saved, map.GeneratedWidth, map.GeneratedHeight);
         PlacedDynamite.Clear(map);
         state = JsonUtility.FromJson<ExoticWorldState>(JsonUtility.ToJson(saved));
-        if (state.pendingCache >= (state.caches?.Length ?? 0)) { state.pendingCache = -1; state.pendingChoices = null; }
+        RepairPending(state);
         BuildVisuals();
         if (state.dynamite != null) foreach (var charge in state.dynamite) PlacedDynamite.Restore(map, charge);
+    }
+    // Recipes that are no longer exotic (GPS/F1) drop out of an open choice; an empty choice frees the find again.
+    static void RepairPending(ExoticWorldState state)
+    {
+        if (state.pendingChoices != null) state.pendingChoices = Array.FindAll(state.pendingChoices, id => ExoticCatalog.Find(id) != null);
+        if (state.pendingCache >= (state.caches?.Length ?? 0) || (state.pendingCache >= 0 && (state.pendingChoices?.Length ?? 0) == 0))
+        { state.pendingCache = -1; state.pendingChoices = null; }
     }
     public static void ValidateState(ExoticWorldState state, int width, int height)
     {
@@ -247,8 +254,9 @@ public sealed class ExoticWorldContent : MonoBehaviour
             if (state.caches[state.pendingCache].claimed || state.pendingChoices == null || state.pendingChoices.Length == 0)
                 throw new System.IO.InvalidDataException("Ungültige Bauplanauswahl.");
             var ids = new HashSet<string>();
-            foreach (string id in state.pendingChoices) if (string.IsNullOrEmpty(id) || !ids.Add(id) || !ExoticCatalog.Find(id))
-                throw new System.IO.InvalidDataException("Unbekannter exotischer Bauplan.");
+            // Unknown ids stay loadable: RestoreState drops them, like PendingChoices skips them.
+            foreach (string id in state.pendingChoices) if (string.IsNullOrEmpty(id) || !ids.Add(id))
+                throw new System.IO.InvalidDataException("Ungültige Bauplanauswahl.");
         }
     }
     static bool ValidCell(Vector3Int cell, int width, int height) => cell.z == 0 && cell.x >= -width / 2 &&
