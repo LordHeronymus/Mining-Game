@@ -58,7 +58,6 @@ public static class MoneyDisplayChecks
 
             // A new change during a count starts from the value shown now, not from the old target.
             Add(-1500);
-            Elapsed(0f);
             Check(MoneyDisplay.Shown == 2000, "Abgang beginnt beim angezeigten Wert");
             Elapsed(.5f);
             long down = MoneyDisplay.Shown;
