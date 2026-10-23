@@ -25,7 +25,7 @@ public sealed class LevelUpContactProbe:MonoBehaviour {
   MetaProgression.BeginRun("contact-seed",new MetaRunState{runId="contact-seed",progressXp=MetaProgressionCatalog.XpForLevel(24),ended=true});MetaProgression.EndRun();RunNavigation.NewGame("Glow-Kontakt-Test");yield return Ready();
   var player=Object.FindFirstObjectByType<PlayerMovement>();Check(player&&Camera.main.GetComponent<CameraFollow>().target==player.transform&&Camera.main.GetComponent<CameraFollow>().enabled&&Camera.main.GetComponent<CameraWorldBorderClamp>().enabled,"Fresh gameplay camera follow and clamp");
   var view=GameplayLevelUpPresentation.Instance;long xp=MetaProgression.TotalXp;
-  Check(GameplayLevelUpPresentation.Preview(),"Actual level-up preview starts");yield return new WaitForSecondsRealtime(.4f);
+  Check(GameplayLevelUpPresentation.Preview(),"Actual level-up preview starts");yield return new WaitForSecondsRealtime(.4f+view.SoundSyncSeconds);
   var lights=view.GetComponentsInChildren<LevelUpGlowGraphic>();var back=lights.Single(g=>!g.front);var sprite=Resources.Load<LevelUpPresentationAssets>("Progression/LevelUpPresentation").medallion;
   Check(back.material.GetTexture("_SealTex")==sprite.texture,"Halo uses original seal alpha texture");
   Check((view.GetComponent<Canvas>().additionalShaderChannels&AdditionalCanvasShaderChannels.TexCoord1)!=0,"Canvas carries silhouette mode to shader");
