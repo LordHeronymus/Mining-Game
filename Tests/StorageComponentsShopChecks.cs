@@ -50,7 +50,8 @@ public static class StorageComponentsShopChecks
                 !CraftingService.IsComponent(torch.output), "Nägel und Seil sind Baukomponenten, die Fackel nicht");
             Check(recipes.Where(r => r.output.category == ItemCategory.Tool || r.output.category == ItemCategory.Powerup || r.output.category == ItemCategory.Consumable)
                 .All(r => !CraftingService.IsComponent(r.output)), "Werkzeuge, Powerups und Verbrauchsgüter bleiben im Rucksack");
-            Check(nails.TryGetCosts(out var nailCosts) && torch.TryGetCosts(out var torchCosts), "Rezeptkosten gelesen");
+            bool nailRecipe = nails.TryGetCosts(out var nailCosts), torchRecipe = torch.TryGetCosts(out var torchCosts);
+            Check(nailRecipe && torchRecipe, "Rezeptkosten gelesen");
 
             void Fill(CraftingRecipe recipe, Dictionary<ItemSO, int> costs, int batches, bool inStorage)
             {
