@@ -243,6 +243,10 @@ public static class GpsSettings
         if (spec == null) { error = "Unbekannte GPS-Einstellung."; return false; }
         if (!GpsCodec.ValidateShape(node,GpsCodec.MemberType(type,node.name),out error)) return false;
         if (!ValidateBounds(node, spec, out error) || !ValidateReferences(node,out error)) return false;
+        // A larger world could be generated but never saved; checked here so stored override files stay loadable.
+        if (type == typeof(MapGenerator) && (node.name == "mapWidth" || node.name == "mapHeight") && node.number *
+            (record.fields.Find(field => field.name == (node.name == "mapWidth" ? "mapHeight" : "mapWidth"))?.number ?? 1) > GameSaveSystem.MaxCells)
+        { error = "Karte zu groß: Breite × Tiefe höchstens " + GameSaveSystem.MaxCells + " Zellen."; return false; }
         var previous=GetValue(key,node.name);
         if (previous!=null && JsonUtility.ToJson(previous)==JsonUtility.ToJson(node)) return true;
 #if UNITY_EDITOR

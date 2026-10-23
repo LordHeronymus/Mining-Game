@@ -15,7 +15,7 @@ using UnityEngine.Tilemaps;
 public static class GameSaveSystem
 {
     const int Magic = 0x54484631;
-    const int MaxCells = 2000000;
+    internal const int MaxCells = 2000000;
     const int MaxFileBytes = 64 * 1024 * 1024;
     const int MaxExpandedBytes = 256 * 1024 * 1024;
     public const int MaxSlots = 10;
@@ -72,7 +72,8 @@ public static class GameSaveSystem
         public TileFlags[] flags;
         public readonly Dictionary<int, (Color color, Matrix4x4 matrix)> custom = new();
     }
-    sealed class LoadedRun { public RunSaveState state; public Layer[] layers; }
+    // source: the file that was loaded (the recovery copy after a fallback).
+    sealed class LoadedRun { public RunSaveState state; public Layer[] layers; public string source; }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void Reset()
@@ -209,17 +210,25 @@ public static class GameSaveSystem
         if (slot == ActiveSlot) ActiveRunName = name.Trim();
         return true;
     }
-    static bool UpdateMetadata(int slot, Action<Summary> change, out string error)
+    // Without a source, the first file with a valid envelope is rewritten. A loaded run passes its own file instead:
+    // after a fallback to the recovery copy, its payload becomes the main file and the rejected one the recovery copy.
+    static bool UpdateMetadata(int slot, Action<Summary> change, out string error, string source = null)
     {
         error = "Spielstand konnte nicht aktualisiert werden.";
         if (slot < 1 || slot > MaxSlots) return false;
         SettleAutosave();
         try
         {
-            var summary = GetSummary(slot); if (summary == null) return false;
-            ReadEnvelope(SlotPath(slot) + (summary.recovered ? ".bak" : ""), out var header, out var payload);
+            if (source == null)
+            {
+                var summary = GetSummary(slot); if (summary == null) return false;
+                source = SlotPath(slot) + (summary.recovered ? ".bak" : "");
+            }
+            ReadEnvelope(source, out var header, out var payload);
+            if (header.slot != slot) return false;
             NormalizeDates(header); change(header); header.recovered = false;
-            WriteEnvelopeAtomic(SlotPath(slot), JsonUtility.ToJson(header), payload, false);
+            string path = source.EndsWith(".bak", StringComparison.Ordinal) ? source.Substring(0, source.Length - 4) : source;
+            WriteEnvelopeAtomic(path, JsonUtility.ToJson(header), payload, false);
             error = null; SlotsChanged?.Invoke(); return true;
         }
         catch (Exception ex) { Debug.LogWarning("Tiefenhall: Metadatenänderung fehlgeschlagen: " + ex.Message); return false; }
@@ -292,11 +301,11 @@ public static class GameSaveSystem
                     state.progression = new MetaRunState { runId = "legacy-" + summary.createdUtc + "-" + state.seed + "-" + state.width + "-" + state.height,
                         loadout = new MetaLoadout() };
                 var layers = new Layer[4];
-                for (int i = 0; i < layers.Length; i++) layers[i] = ReadLayer(reader, catalog, state);
+                for (int i = 0; i < layers.Length; i++) layers[i] = ReadLayer(reader, catalog, state, i == LadderLayer);
                 if (expanded.Position != expanded.Length) throw new InvalidDataException();
                 var ores = layers[1];
                 PaintedOreMigration.Apply(ores.tiles, ores.flags, ores.custom, ores.bounds, state.seed, state.width);
-                pending =new LoadedRun { state = state, layers = layers };
+                pending =new LoadedRun { state = state, layers = layers, source = path };
                 ActiveSlot = slot; activeDirectory = DirectoryPath; HasPendingNewRun = false; InitialSaveError = null;
                 ActiveRunName = summary.name;
                 error = null; return true;
@@ -442,7 +451,7 @@ public static class GameSaveSystem
             try
             {
                 var state = Capture();
-                snapshot.Finish(catalog);
+                snapshot.Finish(catalog, state.width, state.height);
                 var summary = new Summary { slot = slot, name = ActiveRunName, savedUtc = state.savedUtc, money = state.stats.money,
                     points = state.stats.points, playedSeconds = state.playedSeconds,
                     depth = UnityEngine.Object.FindFirstObjectByType<CompactHud>()?.DepthMeters ?? 0,
@@ -478,13 +487,14 @@ public static class GameSaveSystem
         var map = UnityEngine.Object.FindFirstObjectByType<MapGenerator>();
         var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement>();
         var hud = UnityEngine.Object.FindFirstObjectByType<CompactHud>();
+        var visual = player.GetComponent<MinerPlayerVisual>();
         var state = new RunSaveState { seed = map.ActiveSeed, width = map.GeneratedWidth, height = map.GeneratedHeight,
             progression = MetaProgression.CaptureRunState(),
             exotics = ExoticWorldContent.Ensure(map).CaptureState(),
             placedLights = PlacedTorch.Capture(map),
             generationSettings = GpsSettings.CaptureGeneration(map),
             savedUtc = DateTime.UtcNow.Ticks, playedSeconds = PlayedSeconds, playerPosition = player.transform.position,
-            playerVelocity = player.GetComponent<Rigidbody2D>().linearVelocity, facingLeft = player.transform.localScale.x < 0,
+            playerVelocity = player.GetComponent<Rigidbody2D>().linearVelocity, facingLeft = visual && visual.FacingLeft,
             inventory = InventoryManager.Instance.CaptureRunState(), stats = StatsManager.Instance.CaptureRunState(),
             energy = UnityEngine.Object.FindFirstObjectByType<EnergyManager>().energy, recipes = RecipeUnlocks.CaptureRunState(),
             altar = map.AltarChamber.CaptureState(), discovery = map.GetComponent<PlayerMapDiscovery>()?.CaptureState(),
@@ -538,9 +548,9 @@ public static class GameSaveSystem
                 if (expired()) return true;
             }
         }
-        public void Finish(SaveAssetCatalog catalog)
+        public void Finish(SaveAssetCatalog catalog, int width, int height)
         {
-            foreach (var layer in layers) layer.Finish(catalog);
+            for (int i = 0; i < layers.Length; i++) layers[i].Finish(catalog, width, height, i == LadderLayer);
             Dispose();
         }
         // Worker thread: writes captured data only.
@@ -596,10 +606,12 @@ public static class GameSaveSystem
             while (!changed[scan]) scan = (scan + 1) % changed.Length;
             Capture(scan); changed[scan] = false; ChangedRows--;
         }
-        public void Finish(SaveAssetCatalog catalog)
+        public void Finish(SaveAssetCatalog catalog, int width, int height, bool ladders)
         {
             while (Incomplete) Advance();
             while (ChangedRows > 0) Recapture();
+            // A file that loading would reject is never written: the previous save stays intact.
+            if (!ValidLayerBounds(bounds, width, height, ladders)) throw new InvalidDataException("Ungültige Weltgrenzen.");
             keys = palette.Select(catalog.Key).ToArray();
         }
         void Capture(int index)
@@ -646,11 +658,19 @@ public static class GameSaveSystem
         summary.lastOpenedUtc = previous?.lastOpenedUtc ?? state.savedUtc;
         WriteEnvelopeAtomic(path, JsonUtility.ToJson(summary), compressed, createOnly);
     }
-    static Layer ReadLayer(BinaryReader reader, SaveAssetCatalog catalog, RunSaveState state)
+    const int LadderLayer = 3;
+    // Saving and loading share these limits. Ladders may stand free in the sky up to LadderMap.SkyRows above the surface;
+    // the other layers stay within the map.
+    static bool ValidLayerBounds(BoundsInt bounds, int width, int height, bool ladders)
+    {
+        int x = bounds.xMin, y = bounds.yMin, w = bounds.size.x, h = bounds.size.y, sky = ladders ? LadderMap.SkyRows : 0;
+        return w >= 0 && h >= 0 && (long)w * h <= MaxCells && w <= width + 8 && h <= height + 8 + sky &&
+            x >= -width / 2 - 4 && x <= width / 2 + 4 && y >= -height - 4 && y <= 4 + sky;
+    }
+    static Layer ReadLayer(BinaryReader reader, SaveAssetCatalog catalog, RunSaveState state, bool ladders)
     {
         int x = reader.ReadInt32(), y = reader.ReadInt32(), w = reader.ReadInt32(), h = reader.ReadInt32();
-        if (w < 0 || h < 0 || (long)w * h > MaxCells || w > state.width + 8 || h > state.height + 8 ||
-            x < -state.width / 2 - 4 || x > state.width / 2 + 4 || y < -state.height - 4 || y > 4)
+        if (!ValidLayerBounds(new BoundsInt(x, y, 0, w, h, 1), state.width, state.height, ladders))
             throw new InvalidDataException("Ungültige Weltgrenzen.");
         var layer = new Layer { bounds = new BoundsInt(x, y, 0, w, h, 1), tiles = new TileBase[w * h], flags = new TileFlags[w * h] };
         int paletteCount = reader.ReadInt32(); if (paletteCount < 0 || paletteCount > 65536) throw new InvalidDataException();
@@ -732,7 +752,7 @@ public static class GameSaveSystem
             storage.RestoreRunState(run.state.storage?.FirstOrDefault(x => x.key == StorageKey(storage.transform))?.items);
         var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement>();
         player.transform.position = run.state.playerPosition;
-        var scale = player.transform.localScale; scale.x = Mathf.Abs(scale.x) * (run.state.facingLeft ? -1 : 1); player.transform.localScale = scale;
+        var visual = player.GetComponent<MinerPlayerVisual>(); if (visual) visual.FacingLeft = run.state.facingLeft;
         var body = player.GetComponent<Rigidbody2D>(); body.position = run.state.playerPosition; body.linearVelocity = run.state.playerVelocity;
         player.GetComponent<TileMiner>()?.RestoreRunState(run.state.mining);
         UnityEngine.Object.FindFirstObjectByType<EnergyManager>().energy = Mathf.Clamp(run.state.energy, 0, StatsManager.Instance.MaxEnergy);
@@ -753,9 +773,11 @@ public static class GameSaveSystem
             yield return lighting.PrepareForLoading(data, LoadingProgress.Report);
         }
         LoadingProgress.SetStage(7); yield return null; yield return new WaitForEndOfFrame();
-        UpdateMetadata(ActiveSlot, s => s.lastOpenedUtc = DateTime.UtcNow.Ticks, out _);
+        MarkOpened(run);
         LoadingProgress.Complete();
     }
+
+    static void MarkOpened(LoadedRun run) => UpdateMetadata(ActiveSlot, s => s.lastOpenedUtc = DateTime.UtcNow.Ticks, out _, run.source);
 
     static IEnumerator ExpandSavedLayer(Layer layer, BoundsInt bounds, Action<TileBase[]> complete)
     {

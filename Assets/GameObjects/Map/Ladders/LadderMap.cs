@@ -45,11 +45,14 @@ public sealed class LadderMap : MonoBehaviour
         return placed;
     }
 
+    // Highest ladder row above the surface (row 0); saves accept ladder layers up to it (GameSaveSystem.ValidLayerBounds).
+    public const int SkyRows = 1024;
+
     public bool CanPlace(Vector3Int cell)
     {
         int width = Map.GeneratedWidth;
         return segment && cell.z == 0 && cell.x >= -width / 2 && cell.x < -width / 2 + width &&
-            cell.y >= 1 - Map.GeneratedHeight && !Map.IsGenerationStreaming &&
+            cell.y >= 1 - Map.GeneratedHeight && cell.y <= SkyRows && !Map.IsGenerationStreaming &&
             !Map.Terrain.HasTile(cell) && !Has(cell);
     }
 
