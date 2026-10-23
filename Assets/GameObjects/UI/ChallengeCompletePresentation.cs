@@ -119,7 +119,7 @@ public sealed class ChallengeCompletePresentation : MonoBehaviour
         flashImage = Picture("Hit Glow", banner, sealAt, new Vector2(300, 300), Soft()); flash = flashImage.rectTransform;
         ringImage = Picture("Hit Ring", banner, sealAt, new Vector2(100, 100), Ring()); ring = ringImage.rectTransform;
         sealImage = Picture("Seal", banner, sealAt, new Vector2(124, 124), ChallengeArt.Sprite(7)); seal = sealImage.rectTransform;
-        sealImage.preserveAspect = true;
+        sealImage.preserveAspect = true; ChallengeSealCheck.Attach(sealImage);
         for (int i = 0; i < 18; i++) sparks.Add(Picture("Spark " + i, banner, sealAt, new Vector2(12, 12), Soft()).rectTransform);
         Hide();
     }

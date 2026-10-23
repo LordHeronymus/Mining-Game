@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Challenge-Siegel: Haken-Versatz in F1 (UI → Challenge-Siegel) | `claude/siegel-haken-mittig` | Cloud + Testbank | `ChallengeSealCheck.cs`, `ChallengeArt.cs`, `ChallengeCompletePresentation.cs`, `ChallengePanel.cs`, `GpsProfile.cs`, `GpsSchema.Catalog.cs`, `Resources/Progression/ChallengeSealCheck.png` | ja (Warteschlange Testbank) | 23.10.2026 21:25 |
 
 ## Zuletzt abgeschlossen
 

@@ -46,6 +46,8 @@ public sealed class GpsProfile : ScriptableObject
     // horizontal centring by the visible ink instead of the advance widths.
     public float buttonTextOffset, buttonTextPadding = 1f;
     public bool buttonTextInkCenterX = true;
+    // Tick in the gold challenge seal (ChallengeSealCheck): offset in seal image pixels, + = right / up.
+    public float sealCheckOffsetX, sealCheckOffsetY;
     // Carrying (InventoryManager, PlayerMovement): maximum load as a multiple of the capacity, speed factor at that
     // maximum (linear from 1 at the capacity), and the jump height in blocks a load can never push below.
     public float carryOverloadMaxMultiplier = 2f, carryOverloadMinSpeed = 1f / 3f, carryMinJumpBlocks = 1.2f;
