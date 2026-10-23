@@ -16,7 +16,7 @@ public static class CompactHudChecks
         var hud=UnityEngine.Object.FindFirstObjectByType<CompactHud>();var inv=InventoryManager.Instance;var stats=StatsManager.Instance;
         int[] amounts={24,8,5,3,18,245};
         for(int i=0;i<6;i++)inv.Add(hud.slots[i],amounts[i]);
-        stats.AddMoney(12450-stats.Money);
+        stats.AddMoney(12450-stats.Money);MoneyDisplay.Finish();
         typeof(StatsManager).GetProperty("Points").SetValue(stats,86500);
         hud.energy.consumptionMultiplier=0;hud.energy.energy=hud.energy.stats.MaxEnergy*.72f;
         var update=typeof(CompactHud).GetMethod("LateUpdate",BindingFlags.NonPublic|BindingFlags.Instance);update.Invoke(hud,null);

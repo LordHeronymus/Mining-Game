@@ -74,7 +74,7 @@ public sealed class CompactHud : MonoBehaviour
     int draggedSlot = -1;
     Vector3 dragGrabOffset;
     bool wasBuilding;
-    int lastMoney = int.MinValue, lastPoints = int.MinValue, lastDepth = int.MinValue,
+    int lastPoints = int.MinValue, lastDepth = int.MinValue,
         lastHealth = int.MinValue, lastMaxHealth = int.MinValue, lastEnergy = int.MinValue, lastMax = int.MinValue;
     static readonly Color Cream = new Color32(255,245,229,255);
     // Same carry stages and colours as the inventory's cargo line.
@@ -183,7 +183,6 @@ public sealed class CompactHud : MonoBehaviour
         }
         if (stats)
         {
-            if (stats.Money != lastMoney) { lastMoney = stats.Money; moneyValue.text = ShopMoneyFormatter.Format(stats.Money); }
             if (stats.Points != lastPoints) { lastPoints = stats.Points; pointsValue.text = Format(stats.Points); }
             healthFill.FillAmount = Mathf.Clamp01(stats.Health / Mathf.Max(1f, stats.MaxHealth));
             int currentHealth = Mathf.CeilToInt(stats.Health), maximumHealth = Mathf.CeilToInt(stats.MaxHealth);
@@ -732,7 +731,7 @@ public sealed class CompactHud : MonoBehaviour
         Frame("Counter Frame",counters,596,106,"Vitals",85);
         CounterDivider(224); CounterDivider(410);
         var coin=Image("Coin",counters,38,25,58,58,coinSprite,Color.white); coin.preserveAspect=true;
-        moneyValue=StatusText("Money","",110,20,105,66,36);
+        moneyValue=StatusText("Money","",110,20,105,66,36); MoneyDisplay.Bind(moneyValue);
         StatusText("Points Label","Punkte",243,16,149,29,27);
         pointsValue=StatusText("Points","",243,45,149,46,37);
         StatusText("Depth Label","Tiefe",430,16,137,29,27);
