@@ -179,4 +179,14 @@ public static class GpsCodec
         return true;
     }
     public static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+    // Write converts integers with overflow checks; float schema limits (max: int.MaxValue rounds up to 2^31) do not keep them in range.
+    public static bool FitsInteger(double value, Type type)
+    {
+        if (type == null) return false;
+        // Same limits as Convert.ToInt32 (rounds first), without boxing or exceptions: ValidateDocument checks every integer node.
+        if (type == typeof(int)) return value >= -2147483648.5 && value < 2147483647.5;
+        try { Convert.ChangeType(value, type); return true; }
+        catch (Exception ex) when (ex is OverflowException || ex is InvalidCastException) { return false; }
+    }
+    public static double ClampInteger(double value, Type type) => type == typeof(int) ? Math.Clamp(value, int.MinValue, int.MaxValue) : value;
 }

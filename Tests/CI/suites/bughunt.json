@@ -28,6 +28,9 @@
       "name": "BughuntExoticsChecks"
     },
     {
+      "name": "BughuntGpsFieldChecks"
+    },
+    {
       "name": "BughuntGpsPersistenceChecks"
     },
     {

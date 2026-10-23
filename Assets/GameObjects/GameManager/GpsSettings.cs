@@ -341,6 +341,8 @@ public static class GpsSettings
         error = null;
         if ((node.kind == GpsValueKind.Number || node.kind == GpsValueKind.Integer) &&
             (node.number < spec.min || node.number > spec.max)) { error = spec.label + ": Wert außerhalb des Bereichs."; return false; }
+        if (node.kind == GpsValueKind.Integer && !GpsCodec.FitsInteger(node.number, GpsCodec.ResolveType(node.type)))
+        { error = spec.label + ": Wert außerhalb des Bereichs."; return false; }
         if (node.kind==GpsValueKind.Vector)
             for (int i=0;i<GpsSchema.VectorDimension(node);i++)
                 if (node.vector[i]<spec.min || node.vector[i]>spec.max) { error=spec.label+": Wert außerhalb des Bereichs."; return false; }
