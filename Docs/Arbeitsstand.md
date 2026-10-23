@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Ruf der Tiefe (alte Wochenaufgabe) 750 → 300 Blöcke | `claude/ruf-der-tiefe-300` | Cloud-Klon, Tests Testbank | `MetaChallengePeriods.cs`, `Tests/ChallengeReworkChecks.cs`, `Docs/Challenges.md` | ja (Testbank) | 23.10.2026 19:25 |
 
 ## Zuletzt abgeschlossen
 
