@@ -70,7 +70,7 @@ Der erste Schritt „Budget“ (`Tests/CI/budget.py`) vergleicht den Verbrauch d
 
 - Übersprungene Läufe brechen nach wenigen Sekunden ab (PR: grün mit Hinweis, manuell bei Rot: Fehler) und schreiben einen Kommentar „Übersprungen (Drosselung)“ ins Issue #2. Jeder Statuskommentar zeigt die Stufe, die Budget-Linie und den Grund.
 - Öffentliches Repository: Läufe auf Standard-Runnern sind kostenlos, die Stufe wird nur angezeigt, nichts gedrosselt.
-- Datenquelle: Mit dem Repository-Secret `ACTIONS_BILLING_TOKEN` (Fine-grained Token, Account permissions → **Plan: Read**) liest der Schritt die offizielle Abrechnung aller Repositories („genau“). Ohne Secret schätzt er aus den Laufzeiten dieses Repositories; scheitert beides, läuft alles ungedrosselt.
+- Datenquelle: Mit dem Repository-Secret `ACTIONS_BILLING_TOKEN` (Fine-grained Token, Account permissions → **Plan: Read**) liest der Schritt die offizielle Abrechnung aller Repositories („genau“). Minuten öffentlicher Repositories zählen nicht (kostenlos). Ohne Secret schätzt er aus den Laufzeiten dieses Repositories (öffentlich: 0); scheitert beides, läuft alles ungedrosselt.
 - Kontingent: Repository-Variable `ACTIONS_INCLUDED_MINUTES` (Standard 2000). Lokal prüfen: `GITHUB_TOKEN=… python3 Tests/CI/budget.py --print`.
 - Anzeige: PrivOrg → Cloud-Tests → Kästchen „Actions-Minuten“ (Graph Verbrauch gegen Budget-Linie, gleiche Rechnung).
 

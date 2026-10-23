@@ -16,7 +16,7 @@ Public repositories run free on standard runners: the level is reported, nothing
   budget.py --print   only prints the decision (local check; set GITHUB_TOKEN/BILLING_TOKEN)
 
 Sources: the official usage report with BILLING_TOKEN (secret ACTIONS_BILLING_TOKEN, fine-grained
-token with the account permission "Plan: Read"), otherwise an estimate from this repository's runs,
+token with the account permission "Plan: Read"; minutes of public repositories left out), otherwise an estimate from this repository's runs,
 otherwise "unknown" (never blocks). Errors never fail the job, except a blocked manual run.
 """
 import argparse
@@ -94,7 +94,17 @@ def is_actions_minutes(item):
     return product == "actions" and (unit in ("minutes", "minute") or (not unit and any(os_ in sku for os_ in ("linux", "windows", "mac"))))
 
 
-def official_usage(token, now):
+def is_public(name, token, cache={}):
+    """Public repositories run free on standard runners; unknown ones count."""
+    if name not in cache:
+        try:
+            cache[name] = api(f"/repos/{name}", token).get("private") is False
+        except Exception:
+            cache[name] = False
+    return cache[name]
+
+
+def official_usage(token, now, repo_token):
     login = api("/user", token)["login"]
     body = api(f"/users/{urllib.parse.quote(login)}/settings/billing/usage?year={now.year}&month={now.month}", token)
     start, end = month_bounds(now)
@@ -110,6 +120,9 @@ def official_usage(token, now):
                 continue
         except ValueError:
             pass
+        repo = str(item.get("repositoryName") or "")
+        if repo.count("/") == 1 and is_public(repo, repo_token or token):
+            continue
         quantity = item.get("quantity")
         used += quantity if isinstance(quantity, (int, float)) else 0
     return round(used, 1)
@@ -148,13 +161,16 @@ def measure(now, included):
     notes = []
     if billing:
         try:
-            return official_usage(billing, now), "official", notes
+            return official_usage(billing, now, token), "official", notes
         except Exception as error:  # wrong permission or expired token: fall back
             notes.append(f"Offizielle Abrechnung nicht lesbar ({error}); Schätzung aus diesem Repository.")
     else:
         notes.append("Kein Secret ACTIONS_BILLING_TOKEN: Schätzung nur aus diesem Repository.")
     if token:
         try:
+            if is_public(REPO, token):
+                notes.append("Dieses Repository ist öffentlich: Seine Läufe zählen nicht zum Kontingent.")
+                return 0.0, "estimate", notes
             return estimated_usage(token, now), "estimate", notes
         except Exception as error:
             notes.append(f"Schätzung fehlgeschlagen ({error}).")
