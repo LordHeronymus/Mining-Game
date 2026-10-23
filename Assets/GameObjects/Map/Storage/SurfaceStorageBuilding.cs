@@ -112,6 +112,31 @@ public sealed class SurfaceStorageBuilding : MonoBehaviour
 
     public int GetStoredCount(ItemSO item) => item && stored.TryGetValue(item, out int count) ? count : 0;
 
+    // Sum over all active huts; the workbench and the shop read the storage this way.
+    public static int TotalStored(ItemSO item)
+    {
+        if (!item) return 0;
+        long total = 0;
+        foreach (var storage in active)
+            if (storage) total += storage.GetStoredCount(item);
+        return (int)Math.Min(int.MaxValue, total);
+    }
+
+    // Empties the huts in order and returns how much was taken.
+    public static int TakeFromAll(ItemSO item, int amount)
+    {
+        int taken = 0;
+        foreach (var storage in active)
+        {
+            if (taken >= amount) break;
+            if (storage) taken += storage.TakeForCrafting(item, amount - taken);
+        }
+        return taken;
+    }
+
+    // Crafted building components land in the first hut.
+    public static SurfaceStorageBuilding First => active.FirstOrDefault(s => s);
+
     public SavedItem[] CaptureRunState() => stored.Where(e => e.Key && e.Value > 0)
         .Select(e => new SavedItem { id = (int)e.Key.item, count = e.Value }).ToArray();
     public void RestoreRunState(SavedItem[] state)
@@ -172,6 +197,8 @@ public sealed class SurfaceStorageBuilding : MonoBehaviour
         StorageChanged?.Invoke();
         return amount;
     }
+
+    public bool CanStore(ItemSO item, int amount) => item && amount > 0 && GetStoredCount(item) <= int.MaxValue - amount;
 
     public void ReturnFromCrafting(ItemSO item, int amount)
     {

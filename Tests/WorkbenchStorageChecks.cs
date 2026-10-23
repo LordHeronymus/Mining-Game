@@ -26,7 +26,7 @@ public sealed class WorkbenchStorageProbe : MonoBehaviour
 {
     const string Report = "Temp/WorkbenchStorageChecks.txt";
     string save, meta, gps;
-    bool usesStorage, storageFirst, clean;
+    bool usesStorage, storageFirst, componentsToStorage, clean;
     int checks;
     GameObject extraStorage;
 
@@ -40,6 +40,7 @@ public sealed class WorkbenchStorageProbe : MonoBehaviour
     {
         save = GameSaveSystem.TestDirectory; meta = MetaProgression.TestDirectory; gps = JsonUtility.ToJson(GpsSettings.Tests);
         usesStorage = GpsSettings.Preferences.workbenchUsesStorage; storageFirst = GpsSettings.Preferences.workbenchStorageFirst;
+        componentsToStorage = GpsSettings.Preferences.workbenchComponentsToStorage;
         GameSaveSystem.TestDirectory = Path.GetFullPath("Temp/WorkbenchStorage-" + DateTime.UtcNow.Ticks);
         MetaProgression.TestDirectory = Path.Combine(GameSaveSystem.TestDirectory, "Profile");
         GpsSettings.Document.tests.testModeDisabled = true;
@@ -78,6 +79,9 @@ public sealed class WorkbenchStorageProbe : MonoBehaviour
         RunNavigation.NewGame("Werkbank-Lager-Test"); yield return Ready();
         var prefs = GpsSettings.Preferences;
         prefs.workbenchUsesStorage = true; prefs.workbenchStorageFirst = false;
+        // These checks cover the materials; with the switch on the nails themselves would go into the storage
+        // (covered by StorageComponentsShopChecks).
+        prefs.workbenchComponentsToStorage = false;
         var storage = Object.FindFirstObjectByType<SurfaceStorageBuilding>();
         var inventory = InventoryManager.Instance;
         var panel = Object.FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include);
@@ -222,6 +226,7 @@ public sealed class WorkbenchStorageProbe : MonoBehaviour
         {
             CraftingService.Crafted -= onCrafted; inventory.OnItemGained -= onGained;
             prefs.workbenchUsesStorage = usesStorage; prefs.workbenchStorageFirst = storageFirst;
+            prefs.workbenchComponentsToStorage = componentsToStorage;
         }
         File.AppendAllText(Report, "COMPLETE " + checks + " checks\n");
     }
@@ -246,6 +251,7 @@ public sealed class WorkbenchStorageProbe : MonoBehaviour
         if (clean) return;
         clean = true;
         GpsSettings.Preferences.workbenchUsesStorage = usesStorage; GpsSettings.Preferences.workbenchStorageFirst = storageFirst;
+        GpsSettings.Preferences.workbenchComponentsToStorage = componentsToStorage;
         MetaProgression.EndRun();
         MetaProgression.TestDirectory = meta; GameSaveSystem.TestDirectory = save;
         JsonUtility.FromJsonOverwrite(gps, GpsSettings.Document.tests);

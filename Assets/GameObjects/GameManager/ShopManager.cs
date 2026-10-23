@@ -42,19 +42,57 @@ public class ShopManager : MonoBehaviour
     // The sell page lists ores only; every sell path uses the same rule so nothing hidden is sold.
     public static bool IsSellable(ItemSO item) => item && item.category == ItemCategory.Ore && item.worth > 0;
 
+    // GPS Shop → Lager: ores in the storage huts are listed and sold together with the backpack.
+    public static bool SellsFromStorage => GpsSettings.Preferences.shopSellsFromStorage;
+    public static int StoredCount(ItemSO item) => SellsFromStorage ? SurfaceStorageBuilding.TotalStored(item) : 0;
+
+    public static int StockCount(ItemSO item)
+    {
+        var inv = InventoryManager.Instance;
+        return inv ? (int)Math.Min(int.MaxValue, (long)inv.GetCount(item) + StoredCount(item)) : 0;
+    }
+
+    // Ores in the backpack and (with the GPS switch) in the storage huts, combined per item.
+    public static Dictionary<ItemSO, int> OreStock()
+    {
+        var stock = new Dictionary<ItemSO, int>();
+        var inv = InventoryManager.Instance;
+        if (!inv) return stock;
+        foreach (var kv in inv.GetSnapshot())
+            if (kv.Key && kv.Key.category == ItemCategory.Ore && kv.Value > 0) stock[kv.Key] = kv.Value;
+        if (SellsFromStorage)
+            foreach (var storage in SurfaceStorageBuilding.Active)
+                if (storage)
+                    foreach (var kv in storage.StoredItems)
+                        if (kv.Key && kv.Key.category == ItemCategory.Ore && kv.Value > 0)
+                            stock[kv.Key] = (int)Math.Min(int.MaxValue, (long)(stock.TryGetValue(kv.Key, out int n) ? n : 0) + kv.Value);
+        return stock;
+    }
+
     public bool CanSell(ItemSO item, int qty = 1)
     {
         if (!IsSellable(item) || qty <= 0) return false;
-        var inv = InventoryManager.Instance;
-        if (!inv) return false;
-        return inv.GetCount(item) >= qty;
+        return StockCount(item) >= qty;
     }
 
     public int GetMaxSellable(ItemSO item)
     {
         if (!item || item.worth <= 0) return 0;
+        return StockCount(item);
+    }
+
+    // The backpack is sold first (it lightens the load), then the storage huts in order.
+    bool TryRemoveStock(ItemSO item, int qty, out double backpackWeight)
+    {
+        backpackWeight = 0d;
         var inv = InventoryManager.Instance;
-        return inv ? inv.GetCount(item) : 0;
+        int fromInventory = Mathf.Min(qty, inv.GetCount(item));
+        int fromStorage = qty - fromInventory;
+        if (fromStorage > StoredCount(item)) return false;
+        if (fromInventory > 0 && !inv.TryRemove(item, fromInventory)) return false;
+        if (fromStorage > 0 && SurfaceStorageBuilding.TakeFromAll(item, fromStorage) != fromStorage) return false;
+        backpackWeight = item.EffectiveWeight * (double)fromInventory;
+        return true;
     }
 
     public int GetSellValue(ItemSO item, int qty = 1)
@@ -67,19 +105,17 @@ public class ShopManager : MonoBehaviour
     {
         if (!CanSell(item, qty)) return false;
 
-        var inv = InventoryManager.Instance;
         int value = GetSellValue(item, qty);
 
         // Bestand wirklich entfernen
-        if (!inv.TryRemove(item, qty)) return false;
+        if (!TryRemoveStock(item, qty, out double soldWeight)) return false;
 
         StatsManager.Instance.AddMoney(value);
         if (MetaProgressionRuntime.RewardsAllowed) MetaProgression.RecordSale(value);
         OnItemSold?.Invoke(item, qty, value);
-        Sold?.Invoke(value, item.EffectiveWeight * (double)qty, false);
+        Sold?.Invoke(value, soldWeight, false);
 
-        if (qty > 1) StartCoroutine(SellSound(qty));
-        else AudioManager.Instance.Play(SoundType.SellItem);
+        PlaySellSound(qty);
 
         return true;
     }
@@ -93,20 +129,13 @@ public class ShopManager : MonoBehaviour
         int soldCount = 0;
         double soldWeight = 0d;
 
-        IReadOnlyDictionary<ItemSO, int> snap = inv.GetSnapshot();
-
-        var buffer = new List<(ItemSO item, int count)>();
-        foreach (var kv in snap)
-            if (IsSellable(kv.Key) && kv.Value > 0)
-                buffer.Add((kv.Key, kv.Value));
-
-        foreach (var entry in buffer)
+        foreach (var entry in OreStock())
         {
-            if (inv.TryRemove(entry.item, entry.count))
+            if (IsSellable(entry.Key) && TryRemoveStock(entry.Key, entry.Value, out double weight))
             {
-                total += entry.item.worth * entry.count;
-                soldCount += entry.count;
-                soldWeight += entry.item.EffectiveWeight * (double)entry.count;
+                total += entry.Key.worth * entry.Value;
+                soldCount += entry.Value;
+                soldWeight += weight;
             }
         }
 
@@ -118,10 +147,17 @@ public class ShopManager : MonoBehaviour
             Sold?.Invoke(total, soldWeight, true);
         }
 
-        if (soldCount > 0) StartCoroutine(SellSound(soldCount));
+        if (soldCount > 0) PlaySellSound(soldCount);
         return total;
     }
 
+
+    void PlaySellSound(int count)
+    {
+        if (!AudioManager.Instance) return;
+        if (count > 1 && isActiveAndEnabled) StartCoroutine(SellSound(count));
+        else AudioManager.Instance.Play(SoundType.SellItem);
+    }
 
     IEnumerator SellSound(int count)
     {

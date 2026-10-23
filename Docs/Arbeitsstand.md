@@ -13,6 +13,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
 | Claude Code (Cloud, Projekt-Thread „Cloud Play-, Optik- und Performance-Tests“) | Performance abschliessen (Übergabe Docs/Performance-Uebergabe.md), Play-Mode-Checks und Vorschaubilder in der Cloud | claude/compassionate-brahmagupta-32gx9j | Cloud | Loading (LoadingScreen, LoadingProgress, MapGenerator-Ladeablauf), GameSaveSystem.TestDirectory (Player-Build), UI-Panels Awake, Audio-Vorwärmen, GameplayAssetPreload, Tests/CI, Workflow, Tools/CloudDashboard | nein | 23.10.2026 12:45 (übernommen 12:50) |
+| Claude Code (Cloud, Projekt-Thread „Baukomponenten ins Lager“) | Baukomponenten (Nägel, Seil …) aus der Werkbank direkt ins Lager, Shop verkauft Erze auch aus dem Lager, 100 Energie = 25 Coins | claude/komponenten-lager-shop | Cloud | CraftingService, InventoryManager.TryExchange, SurfaceStorageBuilding, ShopManager, SellPage, WorkbenchPanel (Ergebnistext), EnergyMonolyth, GPS (Werkbank/Shop → Lager, rechargeCost) | nein | 23.10.2026 13:55 |
 
 ## Zuletzt abgeschlossen
 
