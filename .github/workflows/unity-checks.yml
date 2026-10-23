@@ -21,7 +21,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write  # publishes preview images to the branch ci-previews
   actions: read
   issues: write
 
@@ -139,6 +139,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python3 Tests/CI/progress.py final --conclusion "${{ job.status }}"
+
+      - name: Publish previews
+        if: always() && hashFiles('Artifacts/previews/**') != ''
+        continue-on-error: true
+        env:
+          RUN: ${{ github.run_number }}
+          REF: ${{ github.head_ref || github.ref_name }}
+        run: bash Tests/CI/publish-previews.sh
 
       - name: Upload artifacts
         if: always()

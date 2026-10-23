@@ -125,6 +125,8 @@ if grep -q '"mode": "player"' "$ARTIFACTS/plan.json"; then
   exit $code
 fi
 
+# Images written during the run (Temp/, Design/) become previews; the workflow publishes them (Docs/Cloud-Tests.md).
+touch "$ARTIFACTS/.started"
 ARGS=(-projectPath "$PWD" -executeMethod MiningGame.CI.CiCheckRunner.Run
       -ciPlan "$ARTIFACTS/plan.json" -ciOutput "$ARTIFACTS" -logFile "$ARTIFACTS/editor.log")
 # Guard against modal dialogs or hangs: the runner's own timeouts cannot fire if the editor blocks.
@@ -190,4 +192,7 @@ return_licence
 
 # Check reports and previews the scripts write to Temp/.
 find Temp -maxdepth 1 -type f \( -name '*.txt' -o -name '*.json' -o -name '*.csv' -o -name '*.png' \) -exec cp {} "$ARTIFACTS/temp/" \; 2>/dev/null || true
+find Temp Design -type f -name '*.png' -newer "$ARTIFACTS/.started" 2>/dev/null | head -n 60 | while read -r image; do
+  mkdir -p "$ARTIFACTS/previews/$(dirname "$image")" && cp "$image" "$ARTIFACTS/previews/$image"
+done
 exit $code
