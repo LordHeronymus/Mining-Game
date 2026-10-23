@@ -31,6 +31,11 @@ public static class LedgeAssistChecks
         var root = new GameObject("Ledge assist fixture");
         SceneManager.MoveGameObjectToScene(root, scene);
         var report = new List<string>();
+        // An open game panel (level-up, intro) blocks movement input; the fixture player must not depend on it.
+        var openPanels = (HashSet<Behaviour>)typeof(GameplayInputBlocker).GetField("OpenPanels", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+        var parkedPanels = new List<Behaviour>(openPanels);
+        if (parkedPanels.Count > 0) report.Add("Note: open panels parked during the check: " + string.Join(", ", parkedPanels.ConvertAll(panel => panel ? panel.GetType().Name : "null")));
+        openPanels.Clear();
         try
         {
             var body = CreateActor(root, stats, playerSize, gravityScale, out var movement);
@@ -52,7 +57,7 @@ public static class LedgeAssistChecks
                 }
                 UnityEngine.Object.DestroyImmediate(terrain);
             }
-            if (failures.Count > 0) throw new Exception($"Niche not entered in {failures.Count}/{total} cases:\n" + string.Join("\n", failures));
+            if (failures.Count > 0) throw new Exception(string.Join("\n", report) + $"\nNiche not entered in {failures.Count}/{total} cases:\n" + string.Join("\n", failures));
             if (total < 24) throw new Exception($"Too few niche cases fit the player ({total}, skipped {skipped}).");
             report.Add($"PASS niche entry: {passed}/{total} cases (skipped {skipped} variants too low for the player); without assist {baselinePassed} of {total / 2} low-niche cases");
 
@@ -61,6 +66,7 @@ public static class LedgeAssistChecks
         }
         finally
         {
+            foreach (var panel in parkedPanels) if (panel) openPanels.Add(panel);
             shapes.Dispose();
             UnityEngine.Object.DestroyImmediate(root);
             SceneManager.UnloadSceneAsync(scene);
