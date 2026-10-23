@@ -488,7 +488,7 @@ Bisher kamen jede Woche alle 16. Jetzt rotieren 8 aus dem ganzen Pool. Die Namen
 | # | Alt: Name · Kennzahl · Menge · XP | Neu: Vorlage (Familie) | Neue Mengen W (T/M siehe 8.1) | Freischaltung neu | Begründung |
 | --- | --- | --- | --- | --- | --- |
 | 0 | Schätze des Berges · resources · 500 · 600 | `ores` (Abbau) ↑ | 250/600/1'200/4'000 | immer | Mengen in Stufen. Mit #14 zusammengelegt |
-| 1 | Ruf der Tiefe · depth (Zuwachs) · 750 · 1'000 | `depth` (Erkundung) | je Schicht: S1 30/45/80/– … S5 700/950/1'100/1'190 | Ziele je Schicht | Neue Zählweise ab der Oberfläche. Der Zuwachs von 750 war pro Welt nur einmal zu haben |
+| 1 | Ruf der Tiefe · depth (Zuwachs) · 750 · 1'000 | `depth` (Erkundung) | je Schicht: S1 30/45/80/– … S5 700/950/1'100/1'190 | Ziele je Schicht | Neue Zählweise ab der Oberfläche. Der Zuwachs von 750 war pro Welt nur einmal zu haben. Eine noch offene alte Wochenaufgabe verlangt seit 23.10.2026 nur noch 300 (Fortschritt bleibt, ab 300 fehlt ein Block) |
 | 2 | Meister am Amboss · crafted · 25 · 800 | `crafted` (Handwerk) ↑ | 60/150/300/800 | immer | Ohne Materialien, mit Wiederholungsschutz. Mit #15 zusammengelegt |
 | 3 | Kupferglut · copper · 150 · 500 | `ore` · Kupfer ↑ | 120/280/560/1'600 | immer | Mengen in Stufen |
 | 4 | Goldene Geschäfte · sales · 10'000 · 1'000 | `sales` (Handel) | S1 2'400/6'000/15'000/45'000 · S3 8'000/20'000/50'000/150'000 | immer | Handelsfaktor statt fester Menge. 10'000 waren auf S1 kaum machbar |
