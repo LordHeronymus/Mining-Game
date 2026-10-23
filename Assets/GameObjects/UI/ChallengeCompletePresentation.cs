@@ -114,7 +114,7 @@ public sealed class ChallengeCompletePresentation : MonoBehaviour
         title = Label("Title", new Vector2(6, 40), new Vector2(360, 30), 24, ProgressionArt.Gold);
         nameText = Label("Name", new Vector2(-4, 3), new Vector2(340, 50), 40, Cream); nameText.fontSizeMin = 24;
         xpText = Label("Reward", new Vector2(6, -36), new Vector2(360, 28), 22, Muted);
-        var sealAt = new Vector2(Width * .5f - 62, 0);
+        var sealAt = new Vector2(Width * .5f - 72, 0);
         chargeImage = Picture("Charge Glow", banner, sealAt, new Vector2(150, 150), Soft()); charge = chargeImage.rectTransform;
         flashImage = Picture("Hit Glow", banner, sealAt, new Vector2(300, 300), Soft()); flash = flashImage.rectTransform;
         ringImage = Picture("Hit Ring", banner, sealAt, new Vector2(100, 100), Ring()); ring = ringImage.rectTransform;
@@ -282,7 +282,7 @@ public sealed class ChallengeCompletePresentation : MonoBehaviour
             spark.gameObject.SetActive(on);
             if (!on) continue;
             float angle = i * 2.39996f, reach = 120 + 80 * Mathf.Repeat(i * .618f, 1);
-            var at = new Vector2(Width * .5f - 62, 0) + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * reach * EaseOut(wave) + Vector2.down * 40 * wave * wave;
+            var at = new Vector2(Width * .5f - 72, 0) + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * reach * EaseOut(wave) + Vector2.down * 40 * wave * wave;
             spark.anchoredPosition = at; spark.localScale = Vector3.one * (1.2f - .6f * wave);
             spark.GetComponent<Image>().color = new Color(1, .9f, .55f, Mathf.Pow(1 - wave, 1.5f));
         }
