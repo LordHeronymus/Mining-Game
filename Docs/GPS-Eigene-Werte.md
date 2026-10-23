@@ -9,8 +9,9 @@ Code: `Assets/GameObjects/GameManager/GpsUserOverrides.cs` (Schicht, Vergleich, 
 - **Nur im Benutzerordner** aktiv (`GpsUserOverrides.Active`: Ordnername `Mining Game`). Testbank, Worktrees und Cloud arbeiten wie bisher direkt mit dem Profil; dort ändern Chats Standardwerte und committen sie auf ihrem Branch.
 - **Gespeichert wird nur, was vom Standard abweicht**, und zwar so fein wie möglich: In Listen und Objekten (z. B. ein Feld eines Erzes in `oreSettings`) nur das einzelne Feld. Neue Standardwerte von `main` kommen also an, solange nicht genau dieser Wert selbst überschrieben ist. Für jede Liste auf dem Weg ist die Länge vermerkt; wurde die Liste auf `main` umgebaut, gilt der Eintrag als veraltet und wird mit Wert in der Konsole gemeldet statt falsch angewendet.
 - Einträge, die inzwischen dem Standard entsprechen (z. B. nach einem gemergten Vorschlag), fallen beim Laden von selbst weg.
-- **Lautstärke** (Master, Musik) bleibt wie bisher persönlich in den EditorPrefs und gehört nie in die Schicht.
-- Vor jedem Schreiben bleibt die vorherige Datei als `GpsOverrides.json.bak`; eine unlesbare Datei wird als `GpsOverrides.json.defekt-<Zeit>` beiseitegelegt.
+- **Lautstärke** (Master, Musik) bleibt wie bisher persönlich in den EditorPrefs und gehört nie in die Schicht. Der Schlüssel gilt je Projektordner (`MiningGame.GPS.<Ordner-Hash>.<Feld>`), damit Testbank und Arbeitsordner die Lautstärke des Benutzers nicht verändern; der frühere gemeinsame Wert wird einmalig übernommen.
+- Vor jedem Schreiben bleibt die vorherige Datei als `GpsOverrides.json.bak`; Speichern ohne geänderte Einträge (z. B. Aufklappen im Editorfenster) schreibt nicht und lässt die `.bak` stehen. Eine unlesbare Datei wird als `GpsOverrides.json.defekt-<Zeit>` beiseitegelegt.
+- Im Benutzerordner kommen nur Clips in die Clipliste, die das Profil kennt; lokale, nicht versionierte Clips sind erst nach dem Zusammenführen nach main einstellbar. Enthält eine ganz gespeicherte Liste Einträge, deren Asset fehlt, fallen nur diese Einträge weg.
 - Rückgängig (Strg+Z) wirkt im Benutzerordner nicht auf GPS-Werte (das Profil wird nicht mehr verändert); stattdessen zurücksetzen.
 
 ## Im F1-Fenster / Debug Settings

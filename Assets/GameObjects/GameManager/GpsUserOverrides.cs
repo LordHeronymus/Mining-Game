@@ -77,7 +77,8 @@ public static class GpsUserOverrides
     {
         EnsureLoaded();
         string json = JsonUtility.ToJson(new FileData { savedUtc = DateTime.UtcNow.ToString("o"), entries = list }, true);
-        if (File.Exists(FilePath) && File.ReadAllText(FilePath) == json) { entries = list; RebuildRoots(); return; }
+        // Gleiche Einträge: Datei und .bak bleiben, wie sie sind (sonst ersetzte schon ein Klick ohne Änderung die Sicherung).
+        if (File.Exists(FilePath) && Unchanged(File.ReadAllText(FilePath), list)) { entries = list; RebuildRoots(); return; }
         Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
         string temp = FilePath + ".tmp";
         File.WriteAllText(temp, json);
@@ -85,6 +86,12 @@ public static class GpsUserOverrides
         else File.Move(temp, FilePath);
         entries = list; RebuildRoots();
         Changed?.Invoke();
+    }
+    // Vergleicht mit dem Zeitstempel der vorhandenen Datei, damit nur die Einträge zählen.
+    static bool Unchanged(string text, List<Entry> list)
+    {
+        try { return JsonUtility.ToJson(new FileData { savedUtc = JsonUtility.FromJson<FileData>(text)?.savedUtc, entries = list }, true) == text; }
+        catch { return false; }
     }
 
     // ---------- Anwenden und Vergleichen ----------
@@ -102,7 +109,7 @@ public static class GpsUserOverrides
             foreach (var entry in group)
                 if (Replace(root, entry)) count++; else stale?.Add(entry);
             if (count == 0) continue;
-            if (!GpsSettings.IsValidOverride(owner, root))
+            if (!GpsSettings.IsValidOverride(owner, root) && !(DropUnresolved(group.ToList(), root, profile) && GpsSettings.IsValidOverride(owner, root)))
             {
                 stale?.AddRange(group.Where(entry => !stale.Contains(entry)));
                 Store(doc, profile, owner, before);
@@ -113,6 +120,20 @@ public static class GpsUserOverrides
         }
         return applied;
     }
+
+    // Eine ganz gespeicherte Liste kann Einträge für Assets enthalten, die es nur lokal gab (z. B. ein nicht versionierter Clip):
+    // nur diese Einträge fallen weg, nicht die ganze Liste mit allen übrigen eigenen Werten.
+    static bool DropUnresolved(List<Entry> group, GpsValue root, GpsProfile profile)
+    {
+        if (!profile || root.kind != GpsValueKind.Array || group.Count != 1 || group[0].path.IndexOf('/') >= 0) return false;
+        int removed = root.children.RemoveAll(child => Unresolved(child, profile));
+        if (removed == 0) return false;
+        for (int i = 0; i < root.children.Count; i++) root.children[i].name = i.ToString();
+        Debug.LogWarning("Eigener GPS-Wert " + group[0].record + " / " + group[0].path + ": " + removed + " Listeneintrag/-einträge ohne Asset entfernt (alte Datei: " + FilePath + ".bak)");
+        return true;
+    }
+    static bool Unresolved(GpsValue node, GpsProfile profile) =>
+        node.kind == GpsValueKind.Reference && !string.IsNullOrEmpty(node.text) && !profile.Resolve(node.text) || node.children.Any(child => Unresolved(child, profile));
 
     // Was in current vom baseline abweicht, so fein wie möglich (gleiche Objekt-/Listenstruktur → einzelne Kinder).
     public static List<Entry> Diff(GpsDocument current, GpsDocument baseline, GpsProfile profile)
