@@ -69,6 +69,8 @@ using UnityEngine;
     public List<string> objectiveIds = new(), completedObjectives = new(), milestones = new();
     // Replay guards: value follows the world save, peak never decreases (see MetaProgression.CreditTally).
     public List<MetaRunTally> tallies = new();
+    // Round and milestone-stage XP earned in this run. Display only: it is already part of profile.periodRewardXp.
+    public long rewardXp;
 }
 
 [Serializable] public sealed class MetaRunTally { public string id; public long value, peak; }

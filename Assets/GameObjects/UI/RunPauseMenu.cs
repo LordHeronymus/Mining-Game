@@ -59,7 +59,7 @@ public sealed class RunPauseMenu : MonoBehaviour
         if (IsOpen) return;
         IsOpen = true; previousScale = Time.timeScale; Time.timeScale = 0;
         GameplayInputBlocker.SetBlocked(this, true); GamePause.Set(this, true); transform.SetAsLastSibling(); Visible(true);
-        status.text = "";
+        status.text = MetaProgression.ProfileWarning ?? "";
     }
     public void Close()
     {

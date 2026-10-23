@@ -138,7 +138,16 @@ public sealed class GameOverPanel : MonoBehaviour
     {
         if (!IsOpen || ExpeditionResultPanel.IsOpen || RunNavigation.IsTransitioning) return;
         var result = ExpeditionResultPanel.Show(transform.parent);
-        if (!result) return;
+        if (!result)
+        {
+            // Without a run there is nothing to summarise: leave instead of keeping the only button dead.
+            if (MetaProgression.CurrentRun == null && !LoadingProgress.Active && !GameSaveSystem.IsBusy)
+            {
+                AudioManager.Instance?.StopGameOverMusic();
+                RunNavigation.MainMenu();
+            }
+            return;
+        }
         StopAllCoroutines();
         IsOpen = false;
         group.alpha = 0;

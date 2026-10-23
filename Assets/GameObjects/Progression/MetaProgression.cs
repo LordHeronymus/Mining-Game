@@ -11,12 +11,13 @@ public static partial class MetaProgression
 {
     const int FormatVersion = 1, MaxFileBytes = 64 * 1024 * 1024;
     const double WorkWindow = 300d;
+    const long MaxRewardDisplayXp = 1000000000000L;
     static MetaProfile profile;
     static MetaRunState run;
     static string loadedPath, testDirectory;
     static string loadedSelection;
     static int loadedSelectionMode = -1;
-    static bool dirty, writeBlocked, recovered, milestonePending;
+    static bool dirty, writeBlocked, recovered, milestonePending, writeFailed;
     static readonly MetaLoadout neutralLoadout = new();
     static double saveElapsed;
     static long mainLength = -1, mainWriteTicks = -1;
@@ -27,9 +28,28 @@ public static partial class MetaProgression
     public static bool IsSaving => pendingSave != null;
     static readonly HashSet<string> sources = new(), regions = new(), discoveries = new();
     static readonly Dictionary<int, MetaResourceCount> resourceCounts = new();
+    // Cell ledger of `run` (revealed, mined and ore cells); non-null exactly while run != null (RebuildCaches / ClearCaches).
+    static MetaCellLedger cells;
+    // Read limit of a run ledger (older builds: 2,000,000). Covers every run a 64 MiB profile can hold; this build writes a few thousand.
+    const int MaxLedgerEntries = 6000000;
+    // Step 1 ships false (chunks are read and kept, new cells are still written as legacy keys); Step 2 sets true.
+    static readonly bool CellChunkWriter = false;
+    public static bool? CellChunkWriterOverride { get; set; }   // tests; honoured only in isolated profiles
+    static bool WriteChunks => Isolated && CellChunkWriterOverride.HasValue ? CellChunkWriterOverride.Value : CellChunkWriter;
+    // The writer mode of the current run's ledger (fixed when the run was attached), else the mode the next run gets.
+    public static bool WritesCellChunks { get { EnsureLoaded(); return cells?.Writes ?? WriteChunks; } }
     public static event Action Changed;
     public static string LastError { get; private set; }
     public static bool RecoveredFromBackup { get { EnsureLoaded(); return recovered; } }
+    // Shown in the pause menu: progress that is not reaching the disk must not stay silent while the world saves fine.
+    public static string ProfileWarning
+    {
+        get {
+            EnsureLoaded();
+            if (writeBlocked) return "Fortschritt wird nicht gespeichert: " + (LastError ?? "Profil gesperrt.");
+            return writeFailed && dirty ? "Fortschritt konnte nicht gespeichert werden." : null;
+        }
+    }
 
     public static string TestDirectory
     {
@@ -62,20 +82,20 @@ public static partial class MetaProgression
     static void Reset()
     {
         ClearSession(); testDirectory = null; Changed = null; ChallengeTestUtc = null;
-        ChallengeSettingsOverride = null; ChallengeTimeZoneOverride = null; CreditedBlocks = 0;
+        ChallengeSettingsOverride = null; ChallengeTimeZoneOverride = null; CreditedBlocks = 0; CellChunkWriterOverride = null;
     }
     static void ClearSession()
     {
         CompletePending(true, false);
         if (profile != null && dirty && !writeBlocked) SaveCurrentProfile();
-        profile = null; run = null; loadedPath = null; dirty = writeBlocked = recovered = milestonePending = false;
+        profile = null; run = null; loadedPath = null; dirty = writeBlocked = recovered = milestonePending = writeFailed = false;
         loadedSelection = null; loadedSelectionMode = -1;
         LastError = null; saveElapsed = 0d; ClearCaches(); transientRounds.Clear(); awardedStages = null;
         mainLength = mainWriteTicks = -1; mainValid = false;
         changeGeneration = pendingGeneration = pendingRevision = 0; saveAfterPending = false;
     }
     public static void Reload() => ClearSession();
-    static void ClearCaches() { sources.Clear(); regions.Clear(); discoveries.Clear(); resourceCounts.Clear(); }
+    static void ClearCaches() { sources.Clear(); regions.Clear(); discoveries.Clear(); resourceCounts.Clear(); cells = null; }
 
     static void EnsureLoaded()
     {
@@ -92,8 +112,14 @@ public static partial class MetaProgression
         MetaProfile best = null; string bestPath = null; bool any = false, future = false;
         foreach (string candidate in new[] { path, path + ".bak", path + ".tmp" }) {
             if (!File.Exists(candidate)) continue;
-            any = true;
-            bool valid = TryRead(candidate, out var result, out bool newer);
+            // A damaged journal alone is an interrupted first write, nothing to protect: the next write replaces it.
+            any |= !candidate.EndsWith(".tmp", StringComparison.Ordinal);
+            bool valid = ReadCandidate(candidate, out var result, out bool newer, out bool unreadable);
+            // A main file that is only briefly locked must not be replaced by the older backup.
+            for (int attempt = 0; unreadable && candidate == path && attempt < 3; attempt++) {
+                System.Threading.Thread.Sleep(40);
+                valid = ReadCandidate(candidate, out result, out newer, out unreadable);
+            }
             if (candidate == path) { mainValid = valid; RememberMainStamp(); }
             if (valid && (best == null || result.revision > best.revision)) { best = result; bestPath = candidate; }
             future |= newer;
@@ -104,6 +130,8 @@ public static partial class MetaProgression
             LastError = "Das Fortschrittsprofil stammt aus einer neueren Spielversion.";
         } else if (best != null) {
             profile = best; recovered = bestPath != path;
+            // Legacy cell keys are folded into chunk records once and written at once (main file now, .bak on the next write).
+            if (WriteChunks && CompactLedgers(profile)) { MarkDirty(); RequestSave(); }
         } else {
             profile = new MetaProfile(); writeBlocked = any;
             if (any) LastError = "Das Fortschrittsprofil konnte nicht gelesen werden. Die Dateien bleiben erhalten.";
@@ -140,7 +168,7 @@ public static partial class MetaProgression
         if (added) { saved = new MetaUpgradeRank { id = upgradeId }; profile.upgrades.Add(saved); }
         saved.rank++;
         MarkDirty();
-        if (!Save()) { saved.rank--; if (added) profile.upgrades.Remove(saved); MarkDirty(); return false; }
+        if (!Save()) { saved.rank--; if (added) profile.upgrades.Remove(saved); MarkDirty(); DiscardJournal(); return false; }
         Changed?.Invoke(); return true;
     }
     public static bool RefundAll()
@@ -150,8 +178,14 @@ public static partial class MetaProgression
         if (writeBlocked) return false;
         var previous = profile.upgrades;
         profile.upgrades = new List<MetaUpgradeRank>(); MarkDirty();
-        if (!Save()) { profile.upgrades = previous; MarkDirty(); return false; }
+        if (!Save()) { profile.upgrades = previous; MarkDirty(); DiscardJournal(); return false; }
         Changed?.Invoke(); return true;
+    }
+    // A purchase that was rolled back must not come back from its journal on the next start.
+    static void DiscardJournal()
+    {
+        try { if (loadedPath != null && File.Exists(loadedPath + ".tmp")) File.Delete(loadedPath + ".tmp"); }
+        catch (IOException) { } catch (UnauthorizedAccessException) { }
     }
     public static MetaLoadout CreateLoadout()
     {
@@ -172,8 +206,9 @@ public static partial class MetaProgression
         result.startingLadders = Mathf.RoundToInt(UpgradeEffect("ladders", GetRank("ladders")));
         return result;
     }
-    // Effects and their validation bounds both come from the catalog, so retuning a step or rank
-    // count cannot make existing loadouts invalid.
+    // Effects and their validation bounds both come from the catalog. Raising a step or rank count is safe; lowering
+    // one (or changing XP, costs, ids or the level curve) rejects existing profiles and world saves, so the catalog is
+    // frozen (Tests/ProgressionChecks.cs, Docs/Progression.md) and changes need a migration first.
     static float UpgradeEffect(string id, int rank) => MetaProgressionCatalog.Upgrade(id) is MetaUpgradeDefinition definition ? rank * definition.step : 0f;
     static float MaxUpgradeEffect(string id) => MetaProgressionCatalog.Upgrade(id) is MetaUpgradeDefinition definition ? UpgradeEffect(id, definition.maxRank) : 0f;
 
@@ -185,7 +220,8 @@ public static partial class MetaProgression
         if (run != null) Save();
         var existing = profile.runs.Find(value => value.runId == runId);
         if (existing == null) {
-            existing = saved == null ? new MetaRunState { runId = runId, loadout = CreateLoadout(), settings = CurrentSettings() } : Clone(saved);
+            existing = saved == null ? new MetaRunState { runId = runId, loadout = CreateLoadout(), settings = CurrentSettings() } : CopyRun(saved);
+            existing.resourceSources.RemoveAll(IsPayoutMarker);
             profile.runs.Add(existing);
         } else if (saved != null) {
             MergeLedger(existing, saved);
@@ -207,7 +243,7 @@ public static partial class MetaProgression
     {
         EnsureLoaded();
         if (run == null) return null;
-        Save(); return Clone(run);
+        FlushCells(); Save(); return CopyRun(run);
     }
     public static void EndRun()
     {
@@ -220,12 +256,31 @@ public static partial class MetaProgression
         run.ended = true; run.won |= victory; CheckChallenges(); MarkChanged(false); Save();
     }
     public static void RecordVictory() => RecordRunFinished(true);
-    static bool HasRun() { EnsureLoaded(); return run != null && !writeBlocked; }
-
-    public static void TickActive(float seconds)
+    // Ends the run without any reward (debug victory): later events of this run earn nothing.
+    public static void MarkRunEnded()
     {
+        EnsureLoaded();
+        if (run == null || run.ended) return;
+        run.ended = true;
+        if (!writeBlocked) { MarkDirty(); Save(); }
+        Changed?.Invoke();
+    }
+    // A read-only profile (newer version, unreadable) still records into the run ledger, so world saves keep the
+    // progress and merge it once the profile can be written again. Profile-only state checks writeBlocked itself
+    // (rounds stay transient, lifetime counters and milestone stages wait), and nothing reaches the profile file.
+    static bool HasRun() { EnsureLoaded(); return run != null; }
+
+    // Runs every frame (also in menus and while input is blocked): a change made while the worker was writing,
+    // such as a level-up or a payout, is written as soon as that write has finished, not seconds later.
+    public static void PumpSaves()
+    {
+        if (profile == null) return;
         CompletePending(false);
         if (saveAfterPending && pendingSave == null) RequestSave();
+    }
+    public static void TickActive(float seconds)
+    {
+        PumpSaves();
         if (!HasRun() || run.ended || float.IsNaN(seconds) || float.IsInfinity(seconds) || seconds <= 0f) return;
         double elapsed = Math.Min(seconds, 60f);
         run.activeSeconds += elapsed;
@@ -269,10 +324,24 @@ public static partial class MetaProgression
         if (weight <= 0d) return;
         if (sourceId != null) {
             if (sourceId.Length == 0 || sourceId.Length > 144) return;
-            string key = (int)item + ":" + sourceId;
-            if (!sources.Add(key)) return;
-            run.resourceSources.Add(key);
+            // "x:y" is the cell of a mined ore block (same identity as the Vector3Int overload); other ids stay string keys.
+            bool fresh = MetaCellLedger.TryParseCell(sourceId, 0, out int x, out int y)
+                ? MarkCell(MetaCellLedger.OreKind((int)item), x, y, (int)item, sourceId)
+                : AddLedgerKey((int)item + ":" + sourceId);
+            if (!fresh) return;
         }
+        CreditResource(item, count, weight);
+    }
+    // A mined ore block: the cell is the replay guard (the old key was "<item>:x:y").
+    public static void RecordResource(Item item, int count, Vector3Int cell)
+    {
+        if (!HasRun() || run.ended || count <= 0) return;
+        double weight = MetaProgressionCatalog.ResourceWeight(item);
+        if (weight <= 0d || !MarkCell(MetaCellLedger.OreKind((int)item), cell.x, cell.y, (int)item)) return;
+        CreditResource(item, count, weight);
+    }
+    static void CreditResource(Item item, int count, double weight)
+    {
         if (!resourceCounts.TryGetValue((int)item, out var counter)) {
             counter = new MetaResourceCount { item = (int)item };
             resourceCounts.Add(counter.item, counter); run.resources.Add(counter);
@@ -289,6 +358,39 @@ public static partial class MetaProgression
         }
         counter.count = next; AwardProgress(reward); CheckChallenges(); MarkChanged(false);
     }
+    static bool AddLedgerKey(string key) { if (!sources.Add(key)) return false; run.resourceSources.Add(key); return true; }
+
+    // Replay guard of one revealed, mined or ore cell: true when the cell is new for this run (it is recorded then).
+    // id: the cell as the old key spelled it (session-culture "x:y", or the caller's source id).
+    static bool MarkCell(int kind, int x, int y, int item = -1, string id = null)
+    {
+        bool inDomain = MetaCellLedger.InDomain(kind, x, y);
+        if (!inDomain || cells.StringCells) {
+            id ??= x + ":" + y;
+            if (HasLegacyKey(kind, item, id)) return false;
+            if (!inDomain) return AddLedgerKey(LegacyPrefix(kind, item) + id);
+        }
+        if (!cells.Add(kind, x, y)) return false;
+        // Read-only rollout step: older builds keep their string guard for cells this build records.
+        if (!cells.Writes) run.resourceSources.Add(LegacyPrefix(kind, item) + (id ?? x + ":" + y));
+        return true;
+    }
+    static bool HasCell(int kind, int x, int y, int item = -1)
+    {
+        bool inDomain = MetaCellLedger.InDomain(kind, x, y);
+        if (inDomain && cells.Contains(kind, x, y)) return true;
+        return (!inDomain || cells.StringCells) && HasLegacyKey(kind, item, x + ":" + y);
+    }
+    // Old string lookup (out-of-domain cells, unfoldable spellings); mined cells also under the old layer-block keys.
+    static bool HasLegacyKey(int kind, int item, string id)
+    {
+        if (sources.Contains(LegacyPrefix(kind, item) + id)) return true;
+        if (kind == MetaCellLedger.Mined) foreach (string legacy in LegacyMinedKeys) if (sources.Contains(legacy + id)) return true;
+        return false;
+    }
+    static string LegacyPrefix(int kind, int item) => kind == MetaCellLedger.Revealed ? "revealed:" : kind == MetaCellLedger.Mined ? "mined:" : item + ":";
+    public static bool HasMinedBlock(Vector3Int cell) => HasRun() && HasCell(MetaCellLedger.Mined, cell.x, cell.y);
+    public static bool HasRevealedCell(int x, int depth) => HasRun() && HasCell(MetaCellLedger.Revealed, x, depth);
     public static void RecordDiscovery(string id)
     {
         if (!HasRun() || run.ended || string.IsNullOrWhiteSpace(id) || id.Length > 160 || !discoveries.Add(id)) return;
@@ -398,7 +500,7 @@ public static partial class MetaProgression
     {
         long total = profile.periodRewardXp;
         foreach (var state in profile.runs) {
-            state.earnedXp = (long)Math.Floor(state.progressXp + state.efficiencyXp) + state.challengeXp + state.milestoneXp;
+            state.earnedXp = (long)Math.Floor(state.progressXp + state.efficiencyXp) + state.challengeXp + state.milestoneXp + state.rewardXp;
             total += (long)Math.Floor(state.progressXp + state.efficiencyXp) + state.challengeXp;
         }
         foreach (string id in profile.completedMilestones) total += MetaProgressionCatalog.Challenge(id)?.xp ?? 0;
@@ -407,10 +509,20 @@ public static partial class MetaProgression
     static void RebuildCaches()
     {
         ClearCaches(); if (run == null) return;
-        foreach (var id in run.resourceSources) sources.Add(id);
+        // Cell keys and chunk records go into the ledger, every other string into sources. The writer mode is fixed per attach.
+        cells = MetaCellLedger.Attach(run.resourceSources, sources, WriteChunks);
         foreach (var id in run.regions) regions.Add(id);
         foreach (var id in run.discoveries) discoveries.Add(id);
         foreach (var counter in run.resources) resourceCounts[counter.item] = counter;
+    }
+    // Writes the changed chunk records into run.resourceSources (write mode); every serialization or copy of the run calls it first.
+    static void FlushCells() { if (run != null && cells != null) cells.Flush(run.resourceSources); }
+    // Load migration (write mode only): legacy cell keys and duplicate records of every run become one record per chunk.
+    static bool CompactLedgers(MetaProfile value)
+    {
+        bool changed = false;
+        foreach (var state in value.runs) if (state?.resourceSources != null) changed |= MetaCellLedger.Compact(state.resourceSources);
+        return changed;
     }
     static void MergeLedger(MetaRunState target, MetaRunState saved)
     {
@@ -420,10 +532,11 @@ public static partial class MetaProgression
         target.efficiencyXp = Math.Max(target.efficiencyXp, saved.efficiencyXp);
         target.challengeXp = Math.Max(target.challengeXp, saved.challengeXp);
         target.milestoneXp = Math.Max(target.milestoneXp, saved.milestoneXp);
+        target.rewardXp = Math.Max(target.rewardXp, saved.rewardXp);
         target.won |= saved.won;
         // A finished world can be loaded for play, but its already earned rewards remain final.
         target.ended |= saved.ended;
-        Union(target.resourceSources, saved.resourceSources); Union(target.regions, saved.regions); Union(target.discoveries, saved.discoveries);
+        Union(target.resourceSources, saved.resourceSources.Where(key => !IsPayoutMarker(key))); Union(target.regions, saved.regions); Union(target.discoveries, saved.discoveries);
         Union(target.crafts, saved.crafts); Union(target.exoticCrafts, saved.exoticCrafts);
         Union(target.completedObjectives, saved.completedObjectives); Union(target.milestones, saved.milestones);
         target.challengeXp = target.completedObjectives.Sum(id => (long)MetaProgressionCatalog.Challenge(id).xp);
@@ -446,16 +559,28 @@ public static partial class MetaProgression
             merged.Add(new MetaRunTally { id = tally.id, value = tally.value,
                 peak = Math.Max(Math.Max(tally.peak, tally.value), known == null ? 0 : Math.Max(known.peak, known.value)) });
         }
-        // A world saved by an older build has no tallies at all (not even the marker tally). Treat it as being at the
-        // peak, otherwise its new sales and crafts would earn nothing until the old total is reached again. Replays
-        // through such a save are therefore not guarded; saves of this build keep their own values.
+        // A world saved by an older build has no tallies at all (not even the marker tally), but older builds keep the
+        // ledger: the save's own highest "tp:" marker is where each tally stood when this build last wrote that world
+        // (none in saves from before tallies existed, or in synthetic ledgers of saves without progression). Starting
+        // there guards replays through such a save, while sales made in an older build since then still count.
         bool aware = saved.tallies != null && saved.tallies.Exists(tally => tally != null && tally.id == TallyAware);
+        var savedPeaks = aware ? null : SavedTallyPeaks(saved.resourceSources);
         foreach (var tally in existing)
             if (tally != null && ids.Add(tally.id)) merged.Add(new MetaRunTally { id = tally.id, peak = Math.Max(tally.peak, tally.value) });
         target.tallies = RepairTallies(merged);
         RestoreTallyPeaks(target);
-        if (!aware) foreach (var tally in target.tallies) if (!saved.tallies?.Exists(value => value != null && value.id == tally.id) ?? true) tally.value = Math.Max(tally.value, tally.peak);
+        if (!aware)
+            foreach (var tally in target.tallies)
+                if (tally.id != TallyAware && (!saved.tallies?.Exists(value => value != null && value.id == tally.id) ?? true))
+                    tally.value = Math.Min(tally.peak, savedPeaks.TryGetValue(tally.id, out long mark) ? mark : 0);
         MarkTallyAware(target);
+    }
+    static Dictionary<string, long> SavedTallyPeaks(List<string> ledger)
+    {
+        var peaks = new Dictionary<string, long>();
+        if (ledger != null) foreach (string key in ledger)
+            if (TryTallyMarker(key, out string id, out long peak) && (!peaks.TryGetValue(id, out long known) || peak > known)) peaks[id] = peak;
+        return peaks;
     }
     // Tells MergeTallies that a world snapshot was written by a build that keeps tallies (older builds drop the list).
     const string TallyAware = "tallies";
@@ -489,7 +614,11 @@ public static partial class MetaProgression
         if (marked != null) ledger.RemoveAll(key => TryTallyMarker(key, out string id, out _) && expected.TryGetValue(id, out string wanted) && !(key == wanted && present.Add(key)));
         foreach (string key in expected.Values) if (!present.Contains(key) && key.Length <= MaxLedgerKey) ledger.Add(key);
     }
-    static void Union<T>(List<T> target, List<T> source)
+    // Payout markers ("cr:", "cx:", "ct:", "cs:", "cm:") are only trusted in the profile's own ledger, which is written in
+    // the same file as the XP they stand for. One that only a world save has comes from a profile that was rolled back or
+    // failed to save: that XP was never kept, so the reward stays open instead of counting as paid without XP.
+    static bool IsPayoutMarker(string key) => key != null && key.Length > 3 && key[0] == 'c' && key[2] == ':' && "rxtsm".IndexOf(key[1]) >= 0;
+    static void Union<T>(List<T> target, IEnumerable<T> source)
     {
         var set = new HashSet<T>(target);
         foreach (T entry in source) if (set.Add(entry)) target.Add(entry);
@@ -514,7 +643,7 @@ public static partial class MetaProgression
         if (pendingSave != null) { saveAfterPending |= changeGeneration != pendingGeneration; return true; }
         saveAfterPending = false;
         if (!dirty && File.Exists(loadedPath)) return true;
-        RecalculateTotal();
+        FlushCells(); RecalculateTotal();
         var snapshot = CopyProfile(profile);
         snapshot.revision = profile.revision + 1;
         pendingGeneration = changeGeneration; pendingRevision = snapshot.revision;
@@ -539,6 +668,7 @@ public static partial class MetaProgression
             mainLength = result.length; mainWriteTicks = result.writeTicks; mainValid = true; recovered = false;
             dirty = changeGeneration != pendingGeneration;
         } else dirty = true;
+        writeFailed = !result.success;
         LastError = result.error;
         if (notify && previousError != LastError) Changed?.Invoke();
     }
@@ -552,6 +682,8 @@ public static partial class MetaProgression
     }
     static bool SaveCurrentProfile()
     {
+        // Also when write-blocked: BeginRun attaches the next ledger from the list.
+        FlushCells();
         if (writeBlocked) return false;
         if (!dirty && File.Exists(loadedPath)) return true;
         long previousRevision = profile.revision;
@@ -561,6 +693,7 @@ public static partial class MetaProgression
             mainLength = result.length; mainWriteTicks = result.writeTicks; mainValid = true; recovered = false;
             dirty = false; saveElapsed = 0d;
         } else { profile.revision = previousRevision; dirty = true; }
+        writeFailed = !result.success;
         LastError = result.error;
         return result.success;
     }
@@ -569,6 +702,7 @@ public static partial class MetaProgression
     {
         var result = new WriteResult();
         string temporary = path + ".tmp", backup = path + ".bak";
+        bool journal = false, futureMain = false;
         try {
             string payload = JsonUtility.ToJson(snapshot);
             string encoded = JsonUtility.ToJson(new Envelope { payload = payload, sha256 = Hash(payload) });
@@ -576,12 +710,13 @@ public static partial class MetaProgression
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             byte[] bytes = new UTF8Encoding(false).GetBytes(encoded);
             using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None)) { stream.Write(bytes, 0, bytes.Length); stream.Flush(true); }
+            journal = true;
             if (File.Exists(path)) {
                 var mainInfo = new FileInfo(path);
                 bool validMain = knownValid;
                 if (mainInfo.Length != knownLength || mainInfo.LastWriteTimeUtc.Ticks != knownWriteTicks) {
                     validMain = TryRead(path, out _, out bool future);
-                    if (future) throw new IOException("Das Fortschrittsprofil wurde durch eine neuere Spielversion ersetzt.");
+                    if (future) { futureMain = true; throw new IOException("Das Fortschrittsprofil wurde durch eine neuere Spielversion ersetzt."); }
                 }
                 if (!validMain && !File.Exists(path + ".invalid")) File.Copy(path, path + ".invalid");
                 File.Replace(temporary, path, validMain ? backup : null);
@@ -591,7 +726,8 @@ public static partial class MetaProgression
             // both damaged. Repair that backup too before declaring recovery complete.
             if (!File.Exists(backup) || (recovery && !TryRead(backup, out _, out _))) File.Copy(path, backup, true);
         } catch (Exception error) when (error is IOException || error is UnauthorizedAccessException || error is ArgumentException || error is NotSupportedException) {
-            try { if (File.Exists(temporary)) File.Delete(temporary); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            // A complete journal stays when only replacing the main file failed: EnsureLoaded recovers it by its higher revision.
+            if (!journal || futureMain) try { if (File.Exists(temporary)) File.Delete(temporary); } catch (IOException) { } catch (UnauthorizedAccessException) { }
             result.error = (result.success ? "Fortschritt gespeichert; Sicherung fehlgeschlagen: " : "Fortschritt konnte nicht gespeichert werden: ") + error.Message;
         }
         if (result.success) {
@@ -611,20 +747,23 @@ public static partial class MetaProgression
             milestoneAwards = source.milestoneAwards.Where(award => award != null).Select(award => new MetaMilestoneAward { id = award.id, xp = award.xp }).ToList(),
             lifetimeCounters = source.lifetimeCounters.Where(counter => counter != null).Select(counter => new MetaLifetimeCounter { id = counter.id, value = counter.value }).ToList(),
             runs = new List<MetaRunState>(source.runs.Count) };
-        foreach (var state in source.runs) {
-            var copied = new MetaRunState { version = state.version, runId = state.runId, loadout = CopyLoadout(state.loadout),
-                settings = state.settings.Sanitized(), maxDepth = state.maxDepth, activeSeconds = state.activeSeconds,
-                recentWorkXp = state.recentWorkXp, workWindowSeconds = state.workWindowSeconds, progressXp = state.progressXp,
-                efficiencyXp = state.efficiencyXp, earnedXp = state.earnedXp, challengeXp = state.challengeXp, milestoneXp = state.milestoneXp,
-                ended = state.ended, won = state.won, resourceSources = new List<string>(state.resourceSources), regions = new List<string>(state.regions),
-                discoveries = new List<string>(state.discoveries), crafts = new List<int>(state.crafts), exoticCrafts = new List<int>(state.exoticCrafts),
-                objectiveIds = new List<string>(state.objectiveIds), completedObjectives = new List<string>(state.completedObjectives), milestones = new List<string>(state.milestones),
-                resources = new List<MetaResourceCount>(state.resources.Count),
-                tallies = (state.tallies ?? new List<MetaRunTally>()).Where(tally => tally != null).Select(tally => new MetaRunTally { id = tally.id, value = tally.value, peak = tally.peak }).ToList() };
-            foreach (var resource in state.resources) copied.resources.Add(new MetaResourceCount { item = resource.item, count = resource.count });
-            copy.runs.Add(copied);
-        }
+        foreach (var state in source.runs) copy.runs.Add(CopyRun(state));
         return copy;
+    }
+    // Deep copy of a run. Every MetaRunState field must be copied here (MetaCellLedgerChecks C11 guards it).
+    static MetaRunState CopyRun(MetaRunState state)
+    {
+        var copied = new MetaRunState { version = state.version, runId = state.runId, loadout = CopyLoadout(state.loadout),
+            settings = state.settings.Sanitized(), maxDepth = state.maxDepth, activeSeconds = state.activeSeconds,
+            recentWorkXp = state.recentWorkXp, workWindowSeconds = state.workWindowSeconds, progressXp = state.progressXp,
+            efficiencyXp = state.efficiencyXp, earnedXp = state.earnedXp, challengeXp = state.challengeXp, milestoneXp = state.milestoneXp, rewardXp = state.rewardXp,
+            ended = state.ended, won = state.won, resourceSources = new List<string>(state.resourceSources), regions = new List<string>(state.regions),
+            discoveries = new List<string>(state.discoveries), crafts = new List<int>(state.crafts), exoticCrafts = new List<int>(state.exoticCrafts),
+            objectiveIds = new List<string>(state.objectiveIds), completedObjectives = new List<string>(state.completedObjectives), milestones = new List<string>(state.milestones),
+            resources = new List<MetaResourceCount>(state.resources.Count),
+            tallies = (state.tallies ?? new List<MetaRunTally>()).Where(tally => tally != null).Select(tally => new MetaRunTally { id = tally.id, value = tally.value, peak = tally.peak }).ToList() };
+        foreach (var resource in state.resources) copied.resources.Add(new MetaResourceCount { item = resource.item, count = resource.count });
+        return copied;
     }
     static List<MetaUpgradeRank> CopyRanks(List<MetaUpgradeRank> ranks)
     {
@@ -638,9 +777,12 @@ public static partial class MetaProgression
         startMoney = loadout.startMoney, startingTorches = loadout.startingTorches, startingLadders = loadout.startingLadders,
         buildReachBonus = loadout.buildReachBonus, carryCapacityBonus = loadout.carryCapacityBonus
     };
-    static bool TryRead(string path, out MetaProfile result, out bool newer)
+    // A single TryRead overload: checks look it up by name.
+    static bool TryRead(string path, out MetaProfile result, out bool newer) => ReadCandidate(path, out result, out newer, out _);
+    // unreadable: the file could not be opened (e.g. briefly locked by a scanner), which says nothing about its content.
+    static bool ReadCandidate(string path, out MetaProfile result, out bool newer, out bool unreadable)
     {
-        result = null; newer = false;
+        result = null; newer = false; unreadable = false;
         try {
             var info = new FileInfo(path);
             if (!info.Exists || info.Length <= 0 || info.Length > MaxFileBytes) return false;
@@ -652,7 +794,8 @@ public static partial class MetaProgression
             if (candidate != null && candidate.version > FormatVersion) { newer = true; return false; }
             if (!ValidateProfile(candidate)) return false;
             result = candidate; return true;
-        } catch (Exception error) when (error is IOException || error is UnauthorizedAccessException || error is ArgumentException || error is NotSupportedException) { return false; }
+        } catch (Exception error) when (error is IOException || error is UnauthorizedAccessException) { unreadable = true; return false; }
+        catch (Exception error) when (error is ArgumentException || error is NotSupportedException) { return false; }
     }
     static string Hash(string text)
     {
@@ -689,12 +832,13 @@ public static partial class MetaProgression
     {
         if (value == null || value.version != FormatVersion || string.IsNullOrWhiteSpace(value.runId) || value.runId.Length > 160 || value.maxDepth < 0 || value.maxDepth > 100000 || value.loadout == null || value.settings == null) return false;
         if (!Finite(value.activeSeconds) || !Finite(value.recentWorkXp) || !Finite(value.workWindowSeconds) || !Finite(value.progressXp) || !Finite(value.efficiencyXp) || value.progressXp > 1000000000000d || value.efficiencyXp > value.progressXp * .200001d || value.earnedXp < 0 || value.earnedXp > 1200000010000L || value.challengeXp < 0 || value.milestoneXp < 0 || value.activeSeconds > 10000000000d || value.workWindowSeconds > WorkWindow || value.recentWorkXp > value.progressXp + .001d) return false;
-        if (!ValidStrings(value.resourceSources, 2000000) || !ValidStrings(value.regions, 1000000) || !ValidStrings(value.discoveries, 100000) || !ValidStrings(value.objectiveIds, 3) || !ValidStrings(value.completedObjectives, 20) || !ValidStrings(value.milestones, 100)) return false;
+        if (!ValidStrings(value.resourceSources, MaxLedgerEntries) || !ValidStrings(value.regions, 1000000) || !ValidStrings(value.discoveries, 100000) || !ValidStrings(value.objectiveIds, 3) || !ValidStrings(value.completedObjectives, 20) || !ValidStrings(value.milestones, 100)) return false;
         if (value.resources == null || value.resources.Count > 100 || value.resources.Any(entry => entry == null || entry.count < 0 || entry.count > 10000000 || MetaProgressionCatalog.ResourceWeight((Item)entry.item) <= 0f) || value.resources.Select(entry => entry.item).Distinct().Count() != value.resources.Count) return false;
         if (value.crafts == null || value.exoticCrafts == null || value.crafts.Count > 1000 || value.exoticCrafts.Count > 1000 || value.crafts.Any(entry => entry < 0) || value.exoticCrafts.Any(entry => entry < 0) || value.crafts.Distinct().Count() != value.crafts.Count || value.exoticCrafts.Distinct().Count() != value.exoticCrafts.Count) return false;
         if (value.objectiveIds.Any(id => MetaProgressionCatalog.Challenge(id)?.permanent != false) || value.completedObjectives.Any(id => !value.objectiveIds.Contains(id)) || value.milestones.Any(id => MetaProgressionCatalog.Challenge(id)?.permanent != true)) return false;
         if (value.challengeXp != value.completedObjectives.Sum(id => (long)MetaProgressionCatalog.Challenge(id).xp) || value.milestoneXp != value.milestones.Sum(id => (long)MetaProgressionCatalog.Challenge(id).xp)) return false;
         value.settings = value.settings.Sanitized();
+        value.rewardXp = Math.Min(MaxRewardDisplayXp, Math.Max(0, value.rewardXp));
         // Challenge tallies are repaired, never a reason to reject a world save.
         value.tallies = RepairTallies(value.tallies);
         var loadout = value.loadout;
