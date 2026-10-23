@@ -12,6 +12,7 @@ using Object = UnityEngine.Object;
 
 // Checks for the F1/GPS bound fixes: grass cluster size below 2 or with max < min, element alpha 0,
 // camera depth offset in front of the near plane and powerups in the starting resources with an amount above 1.
+// R3-gps-files-2: a player file in the overrides format clamps values below new bounds like the full legacy file.
 // Runs in Edit Mode on a temporary profile; the real profile, overrides, scene and player files stay untouched.
 public static class BughuntGpsBoundsChecks
 {
@@ -107,6 +108,16 @@ public static class BughuntGpsBoundsChecks
             Check(loaded.preferences.panelElementAlpha == GpsPreferences.MinPanelElementAlpha && Field(loaded, typeof(SurfaceTallGrass), "clusterSize").vector.x == 2,
                 "Spielerdatei: Werte unter der Grenze werden geklemmt");
             Check(GpsSettings.ValidateDocument(loaded, out string error), "Geladenes Dokument ist gültig: " + error);
+            // R3-gps-files-2: current builds write only overrides ("gps-overrides"); such a file clamps the value too instead of dropping it.
+            var shippedCluster = Field(original, typeof(SurfaceTallGrass), "clusterSize");
+            var ownCluster = shippedCluster.Copy(); ownCluster.vector = new Vector4(1, shippedCluster.vector.y + 5, 0, 0);
+            var grassOverride = new GpsRecord { key = grassRecord.key, type = grassRecord.type, assetKey = grassRecord.assetKey, name = grassRecord.name, fields = new List<GpsValue> { ownCluster } };
+            string overridesPath = Path.Combine(directory, "gps-overrides.json");
+            File.WriteAllText(overridesPath, "{\"format\":\"gps-overrides\",\"version\":1,\"records\":[" + JsonUtility.ToJson(grassOverride) + "]}");
+            var fromOverrides = GpsFileStore.Load(overridesPath, Copy(original), out warning);
+            var size = Field(fromOverrides, typeof(SurfaceTallGrass), "clusterSize").vector;
+            Check(warning == null && size.x == 2 && size.y == shippedCluster.vector.y + 5,
+                "Spielerdatei im Overrides-Format: Clustergrösse (1; " + (shippedCluster.vector.y + 5) + ") wird geklemmt statt verworfen (" + size + ")");
 
             // R2-gps-bounds-3: the camera depth stays between near and far plane; X/Y and the default -10 stay untouched.
             var cameraObject = new GameObject("BughuntGpsBoundsChecks Camera") { hideFlags = HideFlags.HideAndDontSave }; temporaryObjects.Add(cameraObject);

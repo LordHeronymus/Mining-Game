@@ -14,6 +14,8 @@ using Object = UnityEngine.Object;
 // - unchanged saves keep GpsOverrides.json and its .bak, an unchanged value queues no commit
 // - personal volume uses a per-project EditorPrefs key and takes over the former shared value once
 // - list entries are renumbered on SetValue, so overrides never address duplicate names
+// - R3-gps-files-0: a clip added to the catalog on main keeps all own clip values (matched by clip, older files by position)
+// - R3-gps-files-3: resetting a narrow deep own map works although the default width alone is too large next to the own depth
 // Runs on a temporary profile and temporary override file; profile text, SessionState and EditorPrefs are restored exactly.
 public static class BughuntGpsPersistenceChecks
 {
@@ -48,6 +50,8 @@ public static class BughuntGpsPersistenceChecks
             OverrideFileChecks();
             CommitChecks(temporary, original);
             ClipCatalogChecks(temporary, original);
+            CatalogGrowthChecks(temporary, original);
+            ResetChecks(temporary, original);
             SessionChecks(profile, original, originalJson);
             VolumeChecks();
             File.WriteAllLines("Temp/BughuntGpsPersistenceChecks.txt", lines.Append("PASS (" + lines.Count + ")"));
@@ -157,6 +161,89 @@ public static class BughuntGpsPersistenceChecks
         Check(Near(result.children[0].children.Find(child => child.name == "volume").number, tuned), "Übrige eigene Clipwerte bleiben erhalten");
         var effective = GpsUserOverrides.Diff(loaded, GpsSettings.ShippedDocument(), temporary);
         Check(effective.Any(item => item.record == audio.key && item.path == "clips/0/volume") && effective.All(item => item.path != "clips"), "Danach gespeichert als einzelner Clipwert");
+    }
+
+    // R3-gps-files-0: main appends a clip to the catalog (Populate in every work folder); own clip values stay on their clip.
+    static void CatalogGrowthChecks(GpsProfile temporary, GpsDocument original)
+    {
+        GpsSettings.UseProfile(temporary, Copy(original));
+        string audioKey = Record(original, typeof(AudioClipTuningSettingsAsset)).key;
+        GpsValue Clips(GpsDocument data) => Record(data, typeof(AudioClipTuningSettingsAsset)).fields.Find(field => field.name == "clips");
+        string ClipKey(GpsValue entry) => entry.children.Find(child => child.name == "clip")?.text;
+        double Volume(GpsDocument data, string clip) => Clips(data).children.First(entry => ClipKey(entry) == clip).children.Find(child => child.name == "volume").number;
+        void Renumber(GpsValue list) { for (int i = 0; i < list.children.Count; i++) list.children[i].name = i.ToString(); }
+        double Tune(GpsValue entry) { var volume = entry.children.Find(child => child.name == "volume"); volume.number = volume.number > .5 ? volume.number - .25 : volume.number + .25; return volume.number; }
+
+        // Older main: the catalog has one clip less. Own values on the first and the last clip of that catalog.
+        var before = Copy(original); var shorter = Clips(before);
+        Check(shorter.children.Count >= 3 && shorter.children.Select(ClipKey).Distinct().Count() == shorter.children.Count, "Clipkatalog mit eindeutigen Clips");
+        shorter.children.RemoveAt(shorter.children.Count - 1);
+        var own = Copy(before); var ownClips = Clips(own);
+        string first = ClipKey(ownClips.children[0]), last = ClipKey(ownClips.children[ownClips.children.Count - 1]);
+        double firstVolume = Tune(ownClips.children[0]), lastVolume = Tune(ownClips.children[ownClips.children.Count - 1]);
+        var entries = GpsUserOverrides.Diff(own, before, temporary).Where(entry => entry.record == audioKey).ToList();
+        Check(entries.Count == 2 && entries.All(entry => entry.path.StartsWith("clips/", StringComparison.Ordinal) && entry.arrays.Count == 1 && entry.keys.Count == 1) &&
+            entries.Select(entry => entry.keys[0]).SequenceEqual(new[] { first, last }), "Eigene Clipwerte werden mit ihrem Clip gespeichert");
+
+        // Newer main: one clip more at the end.
+        var grown = Copy(original); var stale = new List<GpsUserOverrides.Entry>();
+        int applied = GpsUserOverrides.Apply(grown, temporary, entries, stale);
+        Check(applied == 2 && stale.Count == 0 && Near(Volume(grown, first), firstVolume) && Near(Volume(grown, last), lastVolume),
+            "Neuer Clip von main verwirft eigene Clipwerte nicht (angewendet " + applied + ", veraltet " + stale.Count + ")");
+        // A clip moved inside the catalog: the own value follows its clip, not the position.
+        var moved = Copy(original); var movedClips = Clips(moved);
+        var head = movedClips.children[0]; movedClips.children.RemoveAt(0); movedClips.children.Add(head); Renumber(movedClips);
+        stale.Clear(); applied = GpsUserOverrides.Apply(moved, temporary, entries, stale);
+        Check(applied == 2 && stale.Count == 0 && Near(Volume(moved, first), firstVolume) && Near(Volume(moved, last), lastVolume), "Verschobener Clip behält seinen eigenen Wert");
+        // A clip removed from the catalog: only its own value is stale, nothing lands on the clip now at its position.
+        var removed = Copy(original); var removedClips = Clips(removed);
+        string next = ClipKey(removedClips.children[1]); double nextVolume = Volume(removed, next);
+        removedClips.children.RemoveAt(0); Renumber(removedClips);
+        stale.Clear(); applied = GpsUserOverrides.Apply(removed, temporary, entries, stale);
+        Check(applied == 1 && stale.Count == 1 && stale[0].keys[0] == first && Near(Volume(removed, next), nextVolume) && Near(Volume(removed, last), lastVolume),
+            "Eigener Wert eines entfernten Clips gilt als veraltet, ohne den nächsten Clip zu treffen");
+
+        // Older override file without clip keys: in the catalog that only grew, the position still applies.
+        var keyless = entries.Select(entry => new GpsUserOverrides.Entry { record = entry.record, path = entry.path, arrays = entry.arrays.ToList(), value = entry.value.Copy() }).ToList();
+        var legacy = Copy(original); stale.Clear();
+        applied = GpsUserOverrides.Apply(legacy, temporary, keyless, stale);
+        Check(applied == 2 && stale.Count == 0 && Near(Volume(legacy, first), firstVolume) && Near(Volume(legacy, last), lastVolume), "Ältere Datei ohne Clipschlüssel übersteht einen neuen Clip");
+        // Loading such a file stores the clip keys right away.
+        var applyUser = typeof(GpsSettings).GetMethod("ApplyUserOverrides", Hidden);
+        Check(applyUser != null, "GpsSettings.ApplyUserOverrides vorhanden");
+        GpsUserOverrides.TestActive = true; GpsUserOverrides.Write(keyless);
+        GpsSettings.UseProfile(temporary, Copy(original));
+        applyUser.Invoke(null, null);
+        var stored = GpsUserOverrides.Entries.Where(entry => entry.record == audioKey).ToList();
+        Check(stored.Count == 2 && stored.All(entry => entry.keys.Count == entry.arrays.Count) &&
+            Near(Volume(GpsSettings.Document, first), firstVolume) && Near(Volume(GpsSettings.Document, last), lastVolume), "Laden ergänzt den Clipschlüssel älterer Einträge");
+        GpsUserOverrides.Write(new List<GpsUserOverrides.Entry>()); GpsUserOverrides.TestActive = false;
+        GpsSettings.UseProfile(temporary, Copy(original));
+    }
+
+    // R3-gps-files-3: "Zurücksetzen" sets width before depth; the default width next to an own depth may exceed MaxCells alone.
+    static void ResetChecks(GpsProfile temporary, GpsDocument original)
+    {
+        GpsUserOverrides.TestActive = true; GpsUserOverrides.Write(new List<GpsUserOverrides.Entry>());
+        GpsSettings.UseProfile(temporary, Copy(original));
+        var map = Record(GpsSettings.Document, typeof(MapGenerator));
+        var width = GpsSettings.GetValue(map.key, "mapWidth"); var height = GpsSettings.GetValue(map.key, "mapHeight");
+        var shipped = Record(GpsSettings.ShippedDocument(), typeof(MapGenerator)).fields;
+        double defaultWidth = shipped.Find(field => field.name == "mapWidth").number, defaultHeight = shipped.Find(field => field.name == "mapHeight").number;
+        double deep = Math.Floor(2000000 / defaultWidth) + 1, narrow = Math.Floor(2000000 / deep);
+        Check(deep <= 10000 && narrow >= 1 && narrow < defaultWidth, "Testkarte " + narrow + " × " + deep + " liegt im Einzelbereich");
+        width.number = narrow; height.number = deep;
+        Check(GpsSettings.SetValue(map.key, width, out string error) && GpsSettings.SetValue(map.key, height, out error), "Schmale tiefe Karte ist setzbar: " + error);
+        var fields = new[] { (map.key, "mapWidth"), (map.key, "mapHeight") };
+        Check(GpsSettings.CommitFields(fields, out error) && GpsUserOverrides.IsOverridden(map.key, "mapWidth") && GpsUserOverrides.IsOverridden(map.key, "mapHeight"),
+            "Eigene Kartengrösse gespeichert: " + error);
+        Check(GpsSettings.ResetToDefaults(fields, out error), "Zurücksetzen (Breite vor Tiefe) gelingt: " + error);
+        Check(GpsSettings.GetValue(map.key, "mapWidth").number == defaultWidth && GpsSettings.GetValue(map.key, "mapHeight").number == defaultHeight &&
+            !GpsUserOverrides.IsOverridden(map.key, "mapWidth") && !GpsUserOverrides.IsOverridden(map.key, "mapHeight"), "Standardgrösse wiederhergestellt und gespeichert");
+        var wide = GpsSettings.GetValue(map.key, "mapWidth"); wide.number = Math.Floor(2000000 / defaultHeight) + 1;
+        Check(wide.number > 10000 || !GpsSettings.SetValue(map.key, wide, out error), "Zu grosse Karte wird weiterhin abgelehnt");
+        GpsUserOverrides.Write(new List<GpsUserOverrides.Entry>()); GpsUserOverrides.TestActive = false;
+        GpsSettings.UseProfile(temporary, Copy(original));
     }
 
     // A-gps-3: the remembered committed state belongs to one profile text.

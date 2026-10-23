@@ -182,7 +182,8 @@ public static class GpsSettings
             Debug.LogWarning("Eigener GPS-Wert passt nicht mehr zum Profil und wurde entfernt: " + entry.record + " / " + entry.path +
                 " = " + GpsUserOverrides.Describe(entry.value) + " (alte Datei: " + GpsUserOverrides.FilePath + ".bak)");
         var effective = GpsUserOverrides.Diff(document, ShippedDocument(), profile);
-        if (stale.Count > 0 || effective.Count != list.Count)
+        // Ältere Einträge ohne Clipschlüssel bekommen ihn gleich, bevor main den Clipkatalog erweitert.
+        if (stale.Count > 0 || effective.Count != list.Count || list.Any(entry => (entry.keys?.Count ?? 0) < entry.arrays.Count))
         {
             int same = list.Count - stale.Count - effective.Count;
             if (same > 0) Debug.Log(same + " eigene GPS-Werte entsprechen jetzt dem Standard und wurden aus der Überschreibung entfernt.");
@@ -203,16 +204,25 @@ public static class GpsSettings
     {
         error = null;
         var shipped = ShippedDocument(); var list = fields.ToList();
-        foreach (var (key, field) in list)
+        // Width and depth are checked against each other (MaxCells): a field refused next to an own value that is reset
+        // later in the list gets another pass, so 300 × 6000 resets to 600 × 1200 in any order.
+        var open = list;
+        while (open.Count > 0)
         {
-            GpsValue node;
-            if (key == "preferences" || key == "tests")
+            var refused = new List<(string key, string field)>();
+            foreach (var (key, field) in open)
             {
-                object target = key == "preferences" ? shipped.preferences : shipped.tests;
-                node = GpsCodec.Read(field, GpsCodec.MemberType(target.GetType(), field), GpsCodec.Get(target, field), Profile.Key);
+                GpsValue node;
+                if (key == "preferences" || key == "tests")
+                {
+                    object target = key == "preferences" ? shipped.preferences : shipped.tests;
+                    node = GpsCodec.Read(field, GpsCodec.MemberType(target.GetType(), field), GpsCodec.Get(target, field), Profile.Key);
+                }
+                else node = shipped.records.Find(record => record.key == key)?.fields.Find(value => value.name == field)?.Copy();
+                if (node != null && !SetValue(key, node, out error)) refused.Add((key, field));
             }
-            else node = shipped.records.Find(record => record.key == key)?.fields.Find(value => value.name == field)?.Copy();
-            if (node != null && !SetValue(key, node, out error)) return false;
+            if (refused.Count == open.Count) return false;
+            open = refused;
         }
         pendingCommits.RemoveAll(list.Contains);
         if (!CommitFields(list, out error)) return false;

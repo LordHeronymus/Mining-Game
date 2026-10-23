@@ -15,8 +15,9 @@ using UnityEngine;
 public static class GpsUserOverrides
 {
     public const string UserFolder = "Mining Game";
-    // path: Feldname, darunter Kindnamen mit "/"; arrays: Länge jeder Liste auf dem Weg, damit verschobene Einträge nicht falsch treffen.
-    [Serializable] public sealed class Entry { public string record, path; public List<int> arrays = new(); public GpsValue value; }
+    // path: Feldname, darunter Kindnamen mit "/"; arrays: Länge jeder Liste auf dem Weg, damit verschobene Einträge nicht falsch treffen;
+    // keys: Clip jedes Listeneintrags auf dem Weg ("" ohne), damit neue Clips von main eigene Clipwerte nicht verwerfen.
+    [Serializable] public sealed class Entry { public string record, path; public List<int> arrays = new(); public List<string> keys = new(); public GpsValue value; }
     [Serializable] sealed class FileData { public int version = 1; public string savedUtc; public List<Entry> entries = new(); }
 
     // Checks schalten die Schicht ausserhalb des Benutzerordners ein und schreiben in eine temporäre Datei.
@@ -148,7 +149,7 @@ public static class GpsUserOverrides
             foreach (var field in record.fields)
             {
                 var otherField = other.fields.Find(item => item.name == field.name);
-                if (otherField != null) DiffNode(record.key, field, otherField, field.name, new List<int>(), result);
+                if (otherField != null) DiffNode(record.key, field, otherField, field.name, new List<int>(), new List<string>(), result);
             }
         }
         foreach (var (key, type) in Virtual)
@@ -156,7 +157,7 @@ public static class GpsUserOverrides
             {
                 if (key == "preferences" && Personal.Contains(spec.name)) continue;
                 var a = VirtualNode(current, profile, key, spec.name); var b = VirtualNode(baseline, profile, key, spec.name);
-                if (a != null && b != null) DiffNode(key, a, b, spec.name, new List<int>(), result);
+                if (a != null && b != null) DiffNode(key, a, b, spec.name, new List<int>(), new List<string>(), result);
             }
         return result;
     }
@@ -172,15 +173,19 @@ public static class GpsUserOverrides
     }
     static bool Overlaps(string a, string b) => a == b || a.StartsWith(b + "/", StringComparison.Ordinal) || b.StartsWith(a + "/", StringComparison.Ordinal);
 
-    static void DiffNode(string record, GpsValue a, GpsValue b, string path, List<int> arrays, List<Entry> result)
+    static void DiffNode(string record, GpsValue a, GpsValue b, string path, List<int> arrays, List<string> keys, List<Entry> result)
     {
         if (Same(a, b)) return;
         bool nested = a.kind == b.kind && (a.kind == GpsValueKind.Object || a.kind == GpsValueKind.Array) &&
             a.children.Count == b.children.Count && a.children.Select(child => child.name).SequenceEqual(b.children.Select(child => child.name));
-        if (!nested) { result.Add(new Entry { record = record, path = path, arrays = arrays.ToList(), value = a.Copy() }); return; }
-        var inner = a.kind == GpsValueKind.Array ? arrays.Append(a.children.Count).ToList() : arrays;
-        for (int i = 0; i < a.children.Count; i++) DiffNode(record, a.children[i], b.children[i], path + "/" + a.children[i].name, inner, result);
+        if (!nested) { result.Add(new Entry { record = record, path = path, arrays = arrays.ToList(), keys = keys.ToList(), value = a.Copy() }); return; }
+        bool list = a.kind == GpsValueKind.Array;
+        var inner = list ? arrays.Append(a.children.Count).ToList() : arrays;
+        for (int i = 0; i < a.children.Count; i++)
+            DiffNode(record, a.children[i], b.children[i], path + "/" + a.children[i].name, inner, list ? keys.Append(Key(a.children[i])).ToList() : keys, result);
     }
+    // Stabiler Schlüssel eines Listeneintrags: sein Clip (Clipkatalog), sonst "".
+    static string Key(GpsValue node) => node.children.Find(child => child.name == "clip" && child.kind == GpsValueKind.Reference)?.text ?? "";
 
     public static bool Same(GpsValue a, GpsValue b)
     {
@@ -275,8 +280,13 @@ public static class GpsUserOverrides
         int array = 0;
         for (int i = 1; i < parts.Length; i++)
         {
-            if (node.kind == GpsValueKind.Array && (array >= entry.arrays.Count || entry.arrays[array++] != node.children.Count)) return false;
-            parent = node; node = node.children.Find(child => child.name == parts[i]);
+            parent = node;
+            if (node.kind == GpsValueKind.Array)
+            {
+                node = Element(node, parts[i], array < entry.arrays.Count ? entry.arrays[array] : -1, array < (entry.keys?.Count ?? 0) ? entry.keys[array] : "");
+                array++;
+            }
+            else node = node.children.Find(child => child.name == parts[i]);
             if (node == null) return false;
         }
         if (node.kind != entry.value.kind) return false;
@@ -289,6 +299,21 @@ public static class GpsUserOverrides
         }
         else parent.children[parent.children.IndexOf(node)] = value;
         return true;
+    }
+
+    // Listeneintrag mit Clip: über den Clip, auch wenn main neue Clips angehängt hat. Ohne Schlüssel (oder doppelt) über die Position,
+    // aber nur bei gleicher Länge; ältere Einträge ohne gespeicherten Clip treffen im nur angehängten Katalog weiter ihre Position.
+    static GpsValue Element(GpsValue list, string name, int length, string key)
+    {
+        if (!string.IsNullOrEmpty(key))
+        {
+            var keyed = list.children.Where(child => Key(child) == key).Take(2).ToList();
+            if (keyed.Count == 1) return keyed[0];
+            if (keyed.Count == 0) return null;
+        }
+        var node = list.children.Find(child => child.name == name);
+        if (length == list.children.Count) return node;
+        return string.IsNullOrEmpty(key) && length > 0 && length < list.children.Count && node != null && Key(node).Length > 0 ? node : null;
     }
 
     // ---------- GpsProfile.asset als Text lesen (für Versionen aus Git, ohne Unity-Import) ----------
