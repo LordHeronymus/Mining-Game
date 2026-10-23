@@ -241,6 +241,7 @@ public sealed class CompactHud : MonoBehaviour
         // One world unit corresponds to one metre; tile width is 0.5 world units.
         float surface = map && map.Terrain ? map.Terrain.CellToWorld(Vector3Int.up).y : 0;
         DepthMeters = player ? Mathf.Max(0, Mathf.FloorToInt(surface - player.transform.position.y)) : 0;
+        if (player) GameSaveSystem.MaxDepthMeters = Mathf.Max(GameSaveSystem.MaxDepthMeters, DepthMeters);
         if (DepthMeters != lastDepth) { lastDepth = DepthMeters; depthValue.text = Format(DepthMeters) + " m"; }
         if (carryPlaque && carryPlaque.gameObject.activeSelf) RefreshCarryWeight();
     }

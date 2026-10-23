@@ -27,6 +27,8 @@ public static class GameSaveSystem
     public static bool HasPendingNewRun { get; private set; }
     public static string InitialSaveError { get; private set; }
     public static float PlayedSeconds { get; set; }
+    // Deepest point of the active run in metres (HUD depth), shown on the save tile.
+    public static int MaxDepthMeters { get; set; }
     public static event Action SlotsChanged;
     static LoadedRun pending;
     // Directory the active run belongs to; automatic saves never follow a later TestDirectory switch into another profile.
@@ -61,6 +63,9 @@ public static class GameSaveSystem
     {
         public int slot, depth, money, points;
         public int homeLayer;
+        // maxDepth: deepest point in metres. Older headers lack it (hasMaxDepth false) and keep showing depth.
+        public int maxDepth;
+        public bool hasMaxDepth;
         public string name;
         public long savedUtc;
         public long createdUtc, lastOpenedUtc;
@@ -81,7 +86,7 @@ public static class GameSaveSystem
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void Reset()
     {
-        IsBusy = false; pending = null; PlayedSeconds = 0; SlotsChanged = null;
+        IsBusy = false; pending = null; PlayedSeconds = 0; MaxDepthMeters = 0; SlotsChanged = null;
         autosave?.snapshot?.Dispose(); autosave = null; normalSave = null;
         ActiveSlot = -1; activeDirectory = null; ActiveRunName = null; HasPendingNewRun = false; InitialSaveError = null;
 #if UNITY_EDITOR
@@ -132,7 +137,7 @@ public static class GameSaveSystem
         int slot = NextFreeSlot();
         if (slot < 1 || IsBusy) return false;
         GpsSettings.ApplyNewRunAssets();
-        CancelPendingLoad(); PlayedSeconds = 0;
+        CancelPendingLoad(); PlayedSeconds = 0; MaxDepthMeters = 0;
         ActiveSlot = slot; activeDirectory = DirectoryPath; HasPendingNewRun = true; InitialSaveError = null;
         ActiveRunName = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
         MetaProgression.BeginRun(Guid.NewGuid().ToString("N"));
@@ -463,6 +468,7 @@ public static class GameSaveSystem
                 var summary = new Summary { slot = slot, name = ActiveRunName, savedUtc = state.savedUtc, money = state.stats.money,
                     points = state.stats.points, playedSeconds = state.playedSeconds,
                     depth = UnityEngine.Object.FindFirstObjectByType<CompactHud>()?.DepthMeters ?? 0,
+                    maxDepth = state.maxDepthMeters, hasMaxDepth = true,
                     homeLayer = HomeLandscape.LayerAtDepth(state.progression?.maxDepth ?? 0, state.generationSettings) };
                 task = Task.Run(() => WriteRun(path, slot, state, summary, snapshot, createOnly));
                 if (job != null) job.write = task;
@@ -502,6 +508,7 @@ public static class GameSaveSystem
             placedLights = PlacedTorch.Capture(map),
             generationSettings = GpsSettings.CaptureGeneration(map),
             savedUtc = DateTime.UtcNow.Ticks, playedSeconds = PlayedSeconds, playerPosition = player.transform.position,
+            maxDepthMeters = Mathf.Max(MaxDepthMeters, hud ? hud.DepthMeters : 0),
             playerVelocity = player.GetComponent<Rigidbody2D>().linearVelocity, facingLeft = visual && visual.FacingLeft,
             inventory = InventoryManager.Instance.CaptureRunState(), stats = StatsManager.Instance.CaptureRunState(),
             energy = UnityEngine.Object.FindFirstObjectByType<EnergyManager>().energy, recipes = RecipeUnlocks.CaptureRunState(),
@@ -775,6 +782,7 @@ public static class GameSaveSystem
         if (run.state.placedLights != null) PlacedTorch.Restore(map, run.state.placedLights);
         else foreach (var cell in run.state.torches ?? Array.Empty<Vector3Int>()) PlacedTorch.CreateAt(map, torchItem, cell);
         PlayedSeconds = run.state.playedSeconds;
+        MaxDepthMeters = RestoredMaxDepth(map, run.state);
         RunNavigation.EnsurePlayerCamera(player.transform);
         Physics2D.SyncTransforms();
         // Climb and fall are not saved: hang on again at a touched ladder, and count a running fall from the loaded height.
@@ -791,6 +799,16 @@ public static class GameSaveSystem
         LoadingProgress.Complete();
     }
 
+    // Saves before the stored maximum only know the deepest row (progression, in cells) and the player's position.
+    internal static int RestoredMaxDepth(MapGenerator map, RunSaveState state)
+    {
+        int depth = Mathf.Clamp(state.maxDepthMeters, 0, 1000000);
+        if (!map || !map.Terrain) return depth;
+        float surface = map.Terrain.CellToWorld(Vector3Int.up).y;
+        int rows = Mathf.Clamp(state.progression?.maxDepth ?? 0, 0, 100000);
+        depth = Mathf.Max(depth, Mathf.FloorToInt(surface - map.Terrain.CellToWorld(new Vector3Int(0, 1 - rows, 0)).y));
+        return Mathf.Max(depth, Mathf.FloorToInt(surface - state.playerPosition.y));
+    }
     static void MarkOpened(LoadedRun run) => UpdateMetadata(ActiveSlot, s => {
         s.lastOpenedUtc = DateTime.UtcNow.Ticks;
         if (run.main != null) { s.name = run.main.name; s.createdUtc = run.main.createdUtc; }
