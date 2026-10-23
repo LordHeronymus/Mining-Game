@@ -8,6 +8,9 @@
     { "name": "MetaProgressionCoreChecks" },
     { "name": "ProgressionChecks" },
     { "name": "ChallengeMigrationChecks" },
+    { "name": "ChallengeReworkChecks" },
+    { "name": "ChallengeSettingsChecks" },
+    { "name": "ChallengeCoreChecks" },
     { "name": "VoiceLineChecks" }
   ]
 }
