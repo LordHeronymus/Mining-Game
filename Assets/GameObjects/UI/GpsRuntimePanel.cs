@@ -521,6 +521,8 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         GpsSettings.ApplyGeneration(map);
         map.GenerateMap();
         ExoticWorldContent.Ensure(map).Regenerate();
+        // The old player spot lies in the new rock: start at the spawn like on a fresh map, with a new fall measurement.
+        GpsTestActions.TeleportSpawn(map, Object.FindFirstObjectByType<PlayerMovement>());
     }
     static bool TryNumber(string text, out float value) => float.TryParse(text.Replace(',', '.'), NumberStyles.Float, Culture, out value) && GpsCodec.Finite(value);
     static RectTransform Rect(string name, Transform parent, Vector2 position, Vector2 size)

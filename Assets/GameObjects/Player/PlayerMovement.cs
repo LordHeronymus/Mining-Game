@@ -57,6 +57,8 @@ public class PlayerMovement : MonoBehaviour
     {
         GpsSettings.ApplyComponent(this);
         rb = GetComponent<Rigidbody2D>();
+        // Terrain chunks are hollow outlines: a discrete step of a long fall can pass the floor edge and sink into the rock.
+        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         col = GetComponent<Collider2D>();
         colliderWasEnabled = col && col.enabled;
         colliderWasTrigger = col && col.isTrigger;

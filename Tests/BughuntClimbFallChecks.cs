@@ -63,7 +63,7 @@ public static class BughuntClimbFallChecks
                 "Nach dem Neustart beginnt ein Sturz an der aktuellen Fusshöhe (" + measured + "), nicht am alten Gipfel");
 
             // Teleport and save restore both restart the fall measurement.
-            string teleport = Body(File.ReadAllText("Assets/GameObjects/UI/GpsTestActions.cs"), "static void Teleport(Vector3 position)");
+            string teleport = Body(File.ReadAllText("Assets/GameObjects/UI/GpsTestActions.cs"), "static void Teleport(PlayerMovement player, Vector3 position)");
             int moved = teleport.IndexOf("player.transform.position = position;", StringComparison.Ordinal);
             int teleportSync = teleport.IndexOf("Physics2D.SyncTransforms();", StringComparison.Ordinal);
             int teleportFall = teleport.IndexOf("player.RestartFallTracking();", StringComparison.Ordinal);

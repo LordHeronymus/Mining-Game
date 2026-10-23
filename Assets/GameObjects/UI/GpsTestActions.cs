@@ -20,9 +20,9 @@ public static class GpsTestActions
         var altar = Object.FindFirstObjectByType<UltroniumAltarChamber>();
         if (altar && altar.Layout.valid) Teleport(altar.AltarPosition + new Vector3(-altar.CellSize * 2.5f, altar.CellSize * .15f));
     }
-    public static void TeleportSpawn()
+    public static void TeleportSpawn() => TeleportSpawn(Object.FindFirstObjectByType<MapGenerator>(), Object.FindFirstObjectByType<PlayerMovement>());
+    internal static void TeleportSpawn(MapGenerator map, PlayerMovement player)
     {
-        var map = Object.FindFirstObjectByType<MapGenerator>(); var player = Object.FindFirstObjectByType<PlayerMovement>();
         if (!map || !player || !map.Terrain || !map.Terrain.layoutGrid) return;
         var terrain = map.Terrain; var cell = Vector3Int.zero; if (!terrain.HasTile(cell)) return;
         var center = terrain.GetCellCenterWorld(cell);
@@ -30,11 +30,12 @@ public static class GpsTestActions
         var collider = player.GetComponent<Collider2D>();
         float half = collider && collider.enabled ? collider.bounds.extents.y : cellHeight * .3f;
         float offset = collider ? collider.transform.TransformVector((Vector3)collider.offset).y : 0;
-        Teleport(new Vector3(center.x, center.y + cellHeight * .5f + half - offset + .03f, player.transform.position.z));
+        Teleport(player, new Vector3(center.x, center.y + cellHeight * .5f + half - offset + .03f, player.transform.position.z));
     }
-    static void Teleport(Vector3 position)
+    static void Teleport(Vector3 position) => Teleport(Object.FindFirstObjectByType<PlayerMovement>(), position);
+    static void Teleport(PlayerMovement player, Vector3 position)
     {
-        var player = Object.FindFirstObjectByType<PlayerMovement>(); if (!player) return;
+        if (!player) return;
         player.GetComponent<PlayerLadder>()?.Detach();
         var body = player.GetComponent<Rigidbody2D>(); if (body) { body.position = position; body.linearVelocity = Vector2.zero; }
         player.transform.position = position;
