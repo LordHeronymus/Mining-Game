@@ -26,7 +26,6 @@ public partial class SellPage : MonoBehaviour
     [SerializeField] private Button sell1Button;
     [SerializeField] private Button sell10Button;
     [SerializeField] private Button sellMaxButton;
-    [SerializeField] private Button sellAllButton;
 
     [Header("Settings")]
     [SerializeField] float lerpCounterTime = 0.5f;
@@ -38,8 +37,7 @@ public partial class SellPage : MonoBehaviour
         BuildSellView();
         if (sell1Button) sell1Button.onClick.AddListener(() => Sell(1));
         if (sell10Button) sell10Button.onClick.AddListener(() => Sell(10));
-        if (sellMaxButton) sellMaxButton.onClick.AddListener(SellWithCurrentModifier);
-        if (sellAllButton) sellAllButton.onClick.AddListener(SellAll);
+        if (sellMaxButton) sellMaxButton.onClick.AddListener(SellChosenAmount);
 
         gameObject.SetActive(true);
         HandleMoney(StatsManager.Instance ? StatsManager.Instance.Money : 0);
@@ -159,6 +157,7 @@ public partial class SellPage : MonoBehaviour
         _selected = newSelected;
 
         SyncOreCards();
+        SyncAmountSlider();
 
         ApplySelectionHighlight();
         UpdateDetails();
@@ -168,6 +167,7 @@ public partial class SellPage : MonoBehaviour
     public void SelectItem(ItemSO item)
     {
         _selected = item;
+        SyncAmountSlider();
 
         ApplySelectionHighlight();
         UpdateDetails();
@@ -254,20 +254,6 @@ public partial class SellPage : MonoBehaviour
         if (sell1Button) sell1Button.interactable = canSellSelected && count >= 1;
         if (sell10Button) sell10Button.interactable = canSellSelected && count >= 10;
         UpdateSellActionButton();
-
-        // ---- Sell All: nur aktiv, wenn es IRGENDEIN verkaufbares Ore gibt ----
-        bool canSellAny = false;
-
-        foreach (var kv in ShopManager.OreStock())
-        {
-            if (ShopManager.IsSellable(kv.Key))
-            {
-                canSellAny = true;
-                break;
-            }
-        }
-
-        if (sellAllButton) sellAllButton.interactable = canSellAny;
     }
 
     private void UpdateSellActionButton()
@@ -275,41 +261,21 @@ public partial class SellPage : MonoBehaviour
         if (!sellMaxButton) return;
 
         int count = _selected ? ShopManager.StockCount(_selected) : 0;
-        bool controlHeld = GameBindings.Held(GameAction.SellAll);
-        bool shiftHeld = GameBindings.Held(GameAction.SellTen);
         bool canSellSelected = _selected && _selected.worth > 0 && count > 0;
-        bool canSellCurrentQuantity = canSellSelected && (!shiftHeld || controlHeld || count >= 10);
-
-        string labelText = "Erz verkaufen";
-        if (_selected)
-        {
-            if (controlHeld)
-                labelText = $"Alles {_selected.displayName} verkaufen";
-            else if (shiftHeld)
-                labelText = $"10 {_selected.displayName} verkaufen";
-            else
-                labelText = $"1 {_selected.displayName} verkaufen";
-        }
+        string labelText = _selected ? $"{CurrentSaleCount(count)} {_selected.displayName} verkaufen" : "Erz verkaufen";
 
         var label = sellMaxButton.GetComponentInChildren<TextMeshProUGUI>();
         if (label && label.text != labelText) label.text = labelText;
-        sellMaxButton.interactable = canSellCurrentQuantity;
+        sellMaxButton.interactable = canSellSelected;
         if (totalWorthText) totalWorthText.text = ShopMoneyFormatter.Format(_selected ? (long)_selected.worth * CurrentSaleCount(count) : 0);
         CenterStatValue(oreWorthText, unitPriceCoin);
         CenterStatValue(totalWorthText, proceedsCoin);
     }
 
-    private void SellWithCurrentModifier()
+    private void SellChosenAmount()
     {
-        bool controlHeld = GameBindings.Held(GameAction.SellAll);
-        bool shiftHeld = GameBindings.Held(GameAction.SellTen);
-
-        if (controlHeld)
-            SellMax();
-        else if (shiftHeld)
-            Sell(10);
-        else
-            Sell(1);
+        if (!_selected) return;
+        Sell(CurrentSaleCount(ShopManager.StockCount(_selected)));
     }
 
     private void Sell(int qty)
@@ -330,13 +296,6 @@ public partial class SellPage : MonoBehaviour
         if (have <= 0) return;
 
         ShopManager.Instance?.TrySell(_selected, have);
-        Rebuild();
-    }
-
-    private void SellAll()
-    {
-        if (!_selected) return;
-        ShopManager.Instance?.SellAll();
         Rebuild();
     }
 }
