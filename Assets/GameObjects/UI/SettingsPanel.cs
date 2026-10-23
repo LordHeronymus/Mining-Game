@@ -208,8 +208,8 @@ public sealed class SettingsPanel : MonoBehaviour
 
     void BuildDisplay()
     {
-        const float rowSpacing = 148, rowHeight = 68;
-        float firstRowY = (PageHeight - 2 * rowSpacing - rowHeight) * .5f;
+        const float rowSpacing = 124, rowHeight = 68;
+        float firstRowY = (PageHeight - 3 * rowSpacing - rowHeight) * .5f;
         Label(displayPage.transform, "Vollbild", 16, firstRowY, 340, rowHeight, 28);
         var fullscreen = Button("Vollbild", displayPage.transform, PlayerSettings.Fullscreen ? "Ein" : "Aus",
             668, firstRowY, 250, rowHeight, null);
@@ -222,6 +222,14 @@ public sealed class SettingsPanel : MonoBehaviour
             value => PlayerSettings.UiScale = value, .8f, 1.2f, false);
         AddSlider(displayPage.transform, "HUD-Größe", firstRowY + 2 * rowSpacing, () => PlayerSettings.HudScale,
             value => PlayerSettings.HudScale = value, PlayerSettings.MinHudScale, 1f, false);
+        Label(displayPage.transform, "Traglast im HUD", 16, firstRowY + 3 * rowSpacing, 340, rowHeight, 28);
+        var carryWeight = Button("Traglast im HUD", displayPage.transform, PlayerSettings.ShowCarryWeight ? "Ein" : "Aus",
+            668, firstRowY + 3 * rowSpacing, 250, rowHeight, null);
+        carryWeight.onClick.AddListener(() =>
+        {
+            PlayerSettings.ShowCarryWeight = !PlayerSettings.ShowCarryWeight;
+            carryWeight.GetComponentInChildren<TextMeshProUGUI>().text = PlayerSettings.ShowCarryWeight ? "Ein" : "Aus";
+        });
     }
 
     void BuildKeys()
@@ -358,6 +366,8 @@ public sealed class SettingsPanel : MonoBehaviour
             slider.value = slider.name == "HUD-Größe" ? PlayerSettings.HudScale : PlayerSettings.UiScale;
         var fullscreen = displayPage.transform.Find("Vollbild");
         if (fullscreen) fullscreen.GetComponentInChildren<TextMeshProUGUI>().text = PlayerSettings.Fullscreen ? "Ein" : "Aus";
+        var carryWeight = displayPage.transform.Find("Traglast im HUD");
+        if (carryWeight) carryWeight.GetComponentInChildren<TextMeshProUGUI>().text = PlayerSettings.ShowCarryWeight ? "Ein" : "Aus";
         status.text = "";
     }
 
