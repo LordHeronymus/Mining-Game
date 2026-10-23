@@ -734,19 +734,24 @@ public static class ChallengeReworkChecks
         var wrong = guarded.Where(id => !(PeakMarkers(id).Count == 1 && PeakMarkers(id)[0] == "tp:" + id + ":" + peaks[id])).ToList();
         Check(wrong.Count == 0 && peaks["sales"] > 0 && peaks["placed:torches-placed"] == 15, "replay: each tally keeps exactly one tp marker holding its peak (" + string.Join(", ", wrong) + ")");
         var mainWorld = Clone(world); mainWorld.tallies.Clear();
-        foreach (var snapshotWorld in new[] { world, mainWorld }) {
-            bool fromOlder = snapshotWorld == mainWorld;
-            string which = fromOlder ? "an older build's" : "this build's";
+        for (int pass = 0; pass < 3; pass++) {
+            // 0: this build's save from before the 4000 sale. 1: an older build's save (no tallies) from before it.
+            // 2: an older build's save written after it: older builds keep the ledger, so it carries the profile's tp markers.
+            MetaRunState snapshotWorld = pass == 0 ? world : pass == 1 ? mainWorld : MetaProgression.CaptureRunState();
+            if (pass == 2) snapshotWorld.tallies.Clear();
+            bool fromOlder = pass > 0, current = pass == 2;
+            string which = !fromOlder ? "this build's" : current ? "a current older build's" : "an older build's";
             long s1 = Pr("probe-sales"), c1 = Pr("probe-crafted"), t1 = Pr("probe-torches-placed"), l1 = Counter("sales");
             MetaProgression.CurrentRun.tallies.Clear(); // the older build rewrote the profile without them
             MetaProgression.BeginRun(runId, snapshotWorld);
             MetaProgression.RecordSale(4000); MetaProgression.RecordCraftedAmount(Item.BridgePart, 6); MetaProgression.RecordPlacedCount("torches-placed", 15);
-            // An older build's world save carries no tallies: it counts as being at the peak, so new sales and crafts count
-            // at once instead of stalling until the old total; placements stay guarded by the world's torch count.
-            long sale = fromOlder ? 4000 : 0, craft = fromOlder ? 6 : 0;
+            // A save without tallies stands where its own tp markers say: replaying the sale after an old save credits
+            // nothing, while a save that already holds the newest markers counts new sales and crafts at once.
+            // Placements stay guarded by the world's torch count.
+            long sale = current ? 4000 : 0, craft = current ? 6 : 0;
             Check(Pr("probe-sales") == s1 + sale && Pr("probe-crafted") == c1 + craft && Pr("probe-torches-placed") == t1 && Counter("sales") == l1 + sale,
-                fromOlder ? "replay: after an older build's world save new sales and crafts count at once, placements stay guarded"
-                      : "replay: after an older build dropped the tallies, replaying from this build's world save credits nothing (tp markers)");
+                current ? "replay: after a current older build's world save new sales and crafts count at once, placements stay guarded"
+                      : "replay: after " + which + " world save from before the sale, replaying it credits nothing (tp markers)");
             peaks["sales"] += sale; peaks["crafted"] += craft;
             wrong = guarded.Where(id => Peak(id) != peaks[id] || !(PeakMarkers(id).Count == 1 && PeakMarkers(id)[0] == "tp:" + id + ":" + peaks[id])).ToList();
             Check(wrong.Count == 0, "replay: " + which + " world save: peaks restored from the markers, one tp marker each (" + string.Join(", ", wrong) + ")");
