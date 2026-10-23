@@ -139,6 +139,7 @@ public static partial class MetaProgression
             value.challengePeriods.Clear();
             // One round per period; the newest start wins.
             value.challengeRounds = rounds.GroupBy(round => round.period).Select(group => group.OrderByDescending(round => round.startUtc).First()).OrderBy(round => round.period).ToList();
+            foreach (var round in value.challengeRounds) LowerLegacyDepth(round);
             value.lifetimeCounters = RepairCounters(value.lifetimeCounters);
             value.trackedChallenges = RepairTracked(value.trackedChallenges);
             value.milestoneAwards = RepairAwards(value.milestoneAwards);
@@ -157,6 +158,19 @@ public static partial class MetaProgression
             round.tasks ??= new List<MetaChallengeTask>(); round.masks ??= new List<MetaChallengeMask>(); round.runValues ??= new List<MetaChallengeRunValue>();
             return ChallengeEngine.Sanitize(round);
         } catch (Exception) { return false; }
+    }
+
+    // "Ruf der Tiefe" of the legacy week asked for 750 blocks: an open task asks for LegacyDepthTarget instead. Progress is
+    // kept; progress at or above the new target stops one block short, so the next deeper block pays it the normal way.
+    const int LegacyDepthTarget = 300;
+    static void LowerLegacyDepth(MetaChallengeRound round)
+    {
+        if (round.format != 1) return;
+        foreach (var task in round.tasks) {
+            if (task == null || task.id != "legacy-depth-gain" || task.done || task.target <= LegacyDepthTarget) continue;
+            task.target = LegacyDepthTarget;
+            task.progress = Math.Min(task.progress, LegacyDepthTarget - 1);
+        }
     }
 
     // The checks the legacy code applied to a stored state; false drops the state.
