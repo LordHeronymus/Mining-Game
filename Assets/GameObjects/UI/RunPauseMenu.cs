@@ -50,6 +50,7 @@ public sealed class RunPauseMenu : MonoBehaviour
     void Update()
     {
         if (resumedFrame >= 0 && Time.frameCount > resumedFrame) { resumedFrame = -1; if (!IsOpen) GameplayInputBlocker.SetBlocked(this, false); }
+        RunFocusPause.Poll(this);
         if (!LoadingProgress.Active && Time.timeScale > 0 && !MainMenuController.IsVisible && !GameOverPanel.IsOpen && !GameVictoryPanel.IsOpen)
             GameSaveSystem.PlayedSeconds += Time.deltaTime;
         bool escape = Input.GetKeyDown(KeyCode.Escape);

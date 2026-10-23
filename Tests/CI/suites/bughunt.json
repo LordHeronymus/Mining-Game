@@ -28,6 +28,9 @@
       "name": "BughuntExoticsChecks"
     },
     {
+      "name": "BughuntFocusPauseChecks"
+    },
+    {
       "name": "BughuntGpsFieldChecks"
     },
     {
