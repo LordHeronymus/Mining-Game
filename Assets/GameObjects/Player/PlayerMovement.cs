@@ -27,6 +27,7 @@ public class PlayerMovement : MonoBehaviour
     public bool ledgeAssist = true;
     public float ledgeAssistUpCells = .35f;   // feet may be this far below the ledge top
     public float ledgeAssistDownCells = .15f; // or this far above it
+    public float ledgeAssistSpeedFactor = .5f; // push-in speed as a share of the run speed
 
     Rigidbody2D rb;
     Collider2D col;
@@ -194,11 +195,21 @@ public class PlayerMovement : MonoBehaviour
         if (!jumpMap) jumpMap = Object.FindFirstObjectByType<MapGenerator>();
         float blockHeight = jumpMap && jumpMap.Terrain
             ? Mathf.Abs((jumpMap.Terrain.CellToWorld(Vector3Int.up) - jumpMap.Terrain.CellToWorld(Vector3Int.zero)).y) : 1f;
-        float weightScaledJumpHeight = Mathf.Clamp(stats.JumpHeightBlocks, 0f, 100f) *
-            Mathf.Sqrt(Mathf.Clamp01(stats.MovementWeightFactor));
+        float weightScaledJumpHeight = LoadedJumpHeightBlocks(stats.JumpHeightBlocks, stats.MovementWeightFactor,
+            GpsSettings.Preferences.carryMinJumpBlocks);
         float height = Mathf.Max(0f, weightScaledJumpHeight * blockHeight - TakeoffClearance());
         float speed = CalculateJumpSpeed(height, -Physics2D.gravity.y * rb.gravityScale, rb.linearDamping, Time.fixedDeltaTime);
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, speed);
+    }
+
+    // A load lowers the jump, but never below the GPS minimum (one cell up must always work);
+    // a base jump that is lower than that minimum stays as it is.
+    public static float LoadedJumpHeightBlocks(float baseBlocks, float weightFactor, float minimumBlocks)
+    {
+        float unloaded = float.IsNaN(baseBlocks) ? 0f : Mathf.Clamp(baseBlocks, 0f, 100f);
+        float minimum = float.IsNaN(minimumBlocks) ? 0f : Mathf.Clamp(minimumBlocks, 0f, 100f);
+        float factor = float.IsNaN(weightFactor) ? 1f : Mathf.Clamp01(weightFactor);
+        return Mathf.Max(unloaded * Mathf.Sqrt(factor), Mathf.Min(unloaded, minimum));
     }
 
     bool TryStartLedgeAssist(bool grounded)
@@ -234,8 +245,7 @@ public class PlayerMovement : MonoBehaviour
         ledgeAssistDir = dir;
         ledgeAssistStartX = rb.position.x;
         ledgeAssistDistance = distance;
-        float speed = Mathf.Max(.5f, stats ? stats.EffectiveMoveSpeed : 1f);
-        ledgeAssistRemaining = Mathf.Min(.5f, distance / speed + .1f);
+        ledgeAssistRemaining = Mathf.Min(1f, distance / LedgeAssistSpeed + .1f);
         HoldLedgeAssistVelocity();
         return true;
     }
@@ -258,9 +268,10 @@ public class PlayerMovement : MonoBehaviour
     // The next step adds gravity before it moves, so this upward speed keeps the height exactly.
     void HoldLedgeAssistVelocity()
     {
-        float speed = Mathf.Max(Mathf.Abs(rb.linearVelocity.x), stats ? stats.EffectiveMoveSpeed : 1f, .5f);
-        rb.linearVelocity = new Vector2(ledgeAssistDir * speed, -Physics2D.gravity.y * rb.gravityScale * Time.fixedDeltaTime);
+        rb.linearVelocity = new Vector2(ledgeAssistDir * LedgeAssistSpeed, -Physics2D.gravity.y * rb.gravityScale * Time.fixedDeltaTime);
     }
+
+    float LedgeAssistSpeed => Mathf.Max(.5f, Mathf.Clamp(ledgeAssistSpeedFactor, 0f, 2f) * (stats ? stats.EffectiveMoveSpeed : 1f));
 
     bool OverlapsGround(Vector2 center, Vector2 size)
     {

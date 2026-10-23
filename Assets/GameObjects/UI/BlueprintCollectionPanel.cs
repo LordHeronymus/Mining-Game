@@ -47,11 +47,11 @@ public sealed class BlueprintCollectionPanel : MonoBehaviour
         var bar=track.gameObject.AddComponent<Scrollbar>();bar.handleRect=handle.rectTransform;bar.targetGraphic=handle;
         bar.direction=Scrollbar.Direction.BottomToTop;bar.navigation=new Navigation {mode=Navigation.Mode.None};
         scroll.verticalScrollbar=bar;scroll.verticalScrollbarVisibility=ScrollRect.ScrollbarVisibility.AutoHide;
-        var back=HomeUi.Button("Blueprints Back",layout,"Zurück",new Vector2(-483,-370),new Vector2(340,70),Close);
+        HomeUi.Button("Blueprints Back",layout,"Zurück",new Vector2(-483,-370),new Vector2(340,70),Close);
         MetaProgression.Changed+=OnProgressChanged;
         Rebuild();scroll.verticalNormalizedPosition=1;
         HomeUi.Fit(layout,new Vector2(1600,980));ProgressionArt.Navigation(transform);
-        UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(back.gameObject);
+        UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
     }
 
     void Rebuild()
@@ -143,7 +143,7 @@ public sealed class BlueprintCollectionPanel : MonoBehaviour
         }
         var name=Text("Name",tile,recipe.output.displayName,new Vector2(0,-30),new Vector2(350,54),29,TextAlignmentOptions.Center);
         name.textWrappingMode=TextWrappingModes.Normal;name.fontSizeMin=22;
-        string state=recipe.exotic ? learned?"Im Run gelernt":available?"Im Fundpool":"Gesperrt" : "Ohne Levelbindung";
+        string state=recipe.exotic ? learned?"Im Run gelernt":available?"Freigeschaltet":"Gesperrt" : "Ohne Levelbindung";
         Text("State",tile,state,new Vector2(0,-79),new Vector2(350,29),22,TextAlignmentOptions.Center).color=recipe.exotic && (available || learned)?ExoticDesign.Cyan:Muted;
     }
 

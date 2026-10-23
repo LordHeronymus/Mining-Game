@@ -7,7 +7,7 @@ using UnityEngine.UI;
 // The width follows the caption so the text never runs into the brass end caps.
 public sealed class EntrySign : MonoBehaviour
 {
-    const float FadeDuration = .12f, Height = 92, FontSize = 40, CapMargin = 86, WorldScale = .01f, RoofGap = .45f;
+    const float FadeDuration = .12f, Height = 92, FontSize = 40, CapMargin = 86, WorldScale = .01f, RoofGap = .27f;
     static readonly Color Cream = new Color32(255, 245, 229, 255);
 
     public bool Visible { get; set; }
@@ -158,7 +158,11 @@ public sealed class EntrySign : MonoBehaviour
         Fit();
         // Apply after sizing: GoldButtonFeedback picks the wide button artwork from the final aspect ratio.
         GoldButtonFeedback.Apply(Button, null, null);
-        ButtonTextCentering.Apply(Label, Button.GetComponent<Image>());
+        // GoldButtonFeedback sets the slice density only in its first LateUpdate. Set it now, or the caption
+        // centring measures the end caps at full artwork size and keeps that too wide side margin for good.
+        var plaque = Button.GetComponent<Image>();
+        GoldButtonFeedback.SetPixelsPerUnit(plaque, plaque.sprite.rect.height / Height);
+        ButtonTextCentering.Apply(Label, plaque);
 
         Group = GetComponent<CanvasGroup>();
         Group.alpha = 0;

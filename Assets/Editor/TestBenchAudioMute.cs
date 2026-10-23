@@ -1,11 +1,10 @@
 #if UNITY_EDITOR
 using System;
 using System.IO;
-using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 
-// Die Testbank der Chats ("<Projekt> 2", Docs/Editor-Warteschlange.md) laeuft stumm, damit Tests den
+// Die Testbaenke der Chats ("<Projekt> 2" und "<Projekt> 3", TestBenchNames, Docs/Editor-Warteschlange.md) laufen stumm, damit Tests den
 // Benutzer nicht stoeren. Ton nur fuer Audio-Tests: Tools/editor-bench.sh audio-on (oder Menue
 // Tools/Testbank/Ton an) legt <Git Repos>/EditorQueue/<Testbank>.audio-on an; checkout, release und
 // audio-off entfernen die Datei wieder. Der Editor des Benutzers ist davon nicht betroffen: Unity speichert
@@ -28,16 +27,9 @@ public static class TestBenchAudioMute
     static TestBenchAudioMute()
     {
         if (Application.isBatchMode) return;
-        string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, "..")).TrimEnd('\\', '/');
-        var owner = Regex.Match(projectRoot, @"^(.*?)[\\/]\.claude[\\/]worktrees[\\/]");
-        string ownerRoot = owner.Success ? owner.Groups[1].Value : projectRoot;
-        string projectName = Path.GetFileName(ownerRoot);
-        // Gleiche Regel wie Tools/editor-bench.ps1: die Testbank ist der Ordner "<Projekt> 2".
-        isBench = !owner.Success && projectName.EndsWith(" 2", StringComparison.Ordinal);
+        isBench = TestBenchNames.IsBench;
         if (!isBench) return;
-        string env = Environment.GetEnvironmentVariable("EDITOR_QUEUE_DIR");
-        string queueDir = !string.IsNullOrEmpty(env) ? env : Path.Combine(Path.GetDirectoryName(ownerRoot) ?? ownerRoot, "EditorQueue");
-        markerPath = Path.Combine(queueDir, projectName + ".audio-on");
+        markerPath = Path.Combine(TestBenchNames.QueueDir, TestBenchNames.FolderName + ".audio-on");
         Apply();
         EditorApplication.update += OnUpdate;
         EditorApplication.playModeStateChanged += _ => Apply();
