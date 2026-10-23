@@ -117,8 +117,8 @@ public partial class SellPage
         var hit = area.gameObject.AddComponent<Image>(); hit.color = Color.clear;
         var rail = SellFrame("Rail", area, 0, 26, 444, 24, theme.CardFrame);
         rail.pixelsPerUnitMultiplier = 12; rail.raycastTarget = true;
-        var slide = SellRect("Handle Slide Area", area, 40, 0, 364, 76);
         var fill = SellFrame("Fill", SellRect("Fill Area", area, 40, 30, 364, 16), 0, 0, 364, 16, theme.ActionFrame);
+        var slide = SellRect("Handle Slide Area", area, 40, 0, 364, 76); // after the fill, so the handle covers it
         fill.pixelsPerUnitMultiplier = 14;
         fill.rectTransform.anchorMin = Vector2.zero; fill.rectTransform.anchorMax = new Vector2(0, 1);
         fill.rectTransform.offsetMin = new Vector2(-36, 0); fill.rectTransform.offsetMax = Vector2.zero;
