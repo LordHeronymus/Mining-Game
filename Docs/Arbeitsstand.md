@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Gras wächst überall gleich wahrscheinlich nach | `claude/gras-ganze-karte` | Cloud-Klon, Test auf Testbank | `SurfaceTallGrass.cs`, `GpsProfile.asset` (Fasergras), `Tests/GrassRegrowthChecks.cs` | ja (Testbank) | 23.10.2026 21:05 |
 
 ## Zuletzt abgeschlossen
 
