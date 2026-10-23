@@ -31,6 +31,8 @@ public static partial class GpsSchema
         ["explorationCellThreshold"] = "Entdeckte Zellen pro Gebiet", ["explorationXp"] = "Erkundungs-XP",
         ["resourceXpMultiplier"] = "Ressourcen-XP-Multiplikator", ["discoveryXp"] = "Entdeckungs-XP",
         ["efficiencyMaxBonus"] = "Maximaler Effizienzbonus", ["efficiencyReferenceXpPerMinute"] = "Effizienzreferenz (XP/min)",
+        ["depthXpMaxFactor"] = "Tiefenfaktor in voller Tiefe (×)", ["depthXpFullDepth"] = "Volle Tiefe für Tiefenfaktor (Blöcke)",
+        ["resourceXpExponent"] = "Erz-XP-Exponent (1 = ohne Abnahme)",
         ["layerIndex"] = "Layer", ["breaking"] = "Bruch", ["soundType"] = "Soundtyp", ["clipIndex"] = "Clip", ["tuning"] = "Klang",
         ["trigger"] = "Ereignis", ["priority"] = "Priorität", ["playChancePercent"] = "Chance (%)", ["cooldownSeconds"] = "Abklingzeit (s)",
         ["delaySeconds"] = "Verzögerung (s)", ["maxWaitSeconds"] = "Max. Wartezeit (s)", ["ignoreGlobalCooldown"] = "Ohne globale Pause",
