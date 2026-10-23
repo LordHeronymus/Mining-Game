@@ -192,7 +192,7 @@ public sealed class StorageUiProbe : MonoBehaviour
             Check(inventory.GetCount(iron) == fit && storage.GetStoredCount(iron) == 25, $"Withdraw stops exactly at three times the carrying capacity ({fit} iron)");
             Check(inventory.TotalWeight > inventory.CarryingCapacity && inventory.TotalWeight <= inventory.MaximumWeight + 1e-4,
                 "Player may carry above the capacity (slower) but not above the maximum");
-            Check(Mathf.Abs(inventory.MaximumWeight - inventory.CarryingCapacity * 3) < .001f, "Maximum is three times the capacity");
+            Check(Mathf.Abs(inventory.MaximumWeight - inventory.CarryingCapacity * InventoryManager.OverloadMaxMultiplier) < .001f, "Maximum is the GPS multiple of the capacity");
             Check(storage.WithdrawUpTo(iron, 1) == 0, "No further withdraw at the maximum");
             yield return null;
             var slower = (RectTransform)layout.Find("Weight Bar/Slower");

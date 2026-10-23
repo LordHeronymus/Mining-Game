@@ -172,11 +172,21 @@ public class PlayerMovement : MonoBehaviour
         if (!jumpMap) jumpMap = Object.FindFirstObjectByType<MapGenerator>();
         float blockHeight = jumpMap && jumpMap.Terrain
             ? Mathf.Abs((jumpMap.Terrain.CellToWorld(Vector3Int.up) - jumpMap.Terrain.CellToWorld(Vector3Int.zero)).y) : 1f;
-        float weightScaledJumpHeight = Mathf.Clamp(stats.JumpHeightBlocks, 0f, 100f) *
-            Mathf.Sqrt(Mathf.Clamp01(stats.MovementWeightFactor));
+        float weightScaledJumpHeight = LoadedJumpHeightBlocks(stats.JumpHeightBlocks, stats.MovementWeightFactor,
+            GpsSettings.Preferences.carryMinJumpBlocks);
         float height = Mathf.Max(0f, weightScaledJumpHeight * blockHeight - TakeoffClearance());
         float speed = CalculateJumpSpeed(height, -Physics2D.gravity.y * rb.gravityScale, rb.linearDamping, Time.fixedDeltaTime);
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, speed);
+    }
+
+    // A load lowers the jump, but never below the GPS minimum (one cell up must always work);
+    // a base jump that is lower than that minimum stays as it is.
+    public static float LoadedJumpHeightBlocks(float baseBlocks, float weightFactor, float minimumBlocks)
+    {
+        float unloaded = float.IsNaN(baseBlocks) ? 0f : Mathf.Clamp(baseBlocks, 0f, 100f);
+        float minimum = float.IsNaN(minimumBlocks) ? 0f : Mathf.Clamp(minimumBlocks, 0f, 100f);
+        float factor = float.IsNaN(weightFactor) ? 1f : Mathf.Clamp01(weightFactor);
+        return Mathf.Max(unloaded * Mathf.Sqrt(factor), Mathf.Min(unloaded, minimum));
     }
 
     float TakeoffClearance()

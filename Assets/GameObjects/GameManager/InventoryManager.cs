@@ -22,7 +22,13 @@ public class InventoryManager : MonoBehaviour
         set => SetCarryingCapacityLevel(value, true);
     }
     public float CarryingCapacity => (upgradeSettings ? upgradeSettings.GetCarryingCapacity(carryingCapacityLevel) : 30f) + MetaProgression.CurrentLoadout.carryCapacityBonus;
-    public float MaximumWeight => CarryingCapacity * 3f;
+    public float MaximumWeight => CarryingCapacity * OverloadMaxMultiplier;
+    // GPS Bewegung → Traglast: up to the capacity the player moves freely; beyond it the speed falls linearly
+    // until the maximum load (multiple of the capacity), where only the minimum speed factor is left.
+    public static float OverloadMaxMultiplier => Sanitize(GpsSettings.Preferences.carryOverloadMaxMultiplier, 2f, 1f, 10f);
+    public static float OverloadMinSpeed => Sanitize(GpsSettings.Preferences.carryOverloadMinSpeed, 1f / 3f, .05f, 1f);
+    static float Sanitize(float value, float fallback, float min, float max) =>
+        float.IsNaN(value) || float.IsInfinity(value) || value <= 0f ? fallback : Mathf.Clamp(value, min, max);
     public ItemSO EquippedPickaxe { get; private set; }
     public int EquippedPickaxeLevel
     {
@@ -56,10 +62,15 @@ public class InventoryManager : MonoBehaviour
     public static int CarryStage(double weight, float capacity) =>
         capacity <= 0f ? 0 : weight > 2d * capacity ? 2 : weight > capacity ? 1 : 0;
 
-    public static float CalculateMovementWeightFactor(double totalWeight, float carryingCapacity)
+    public static float CalculateMovementWeightFactor(double totalWeight, float carryingCapacity) =>
+        CalculateMovementWeightFactor(totalWeight, carryingCapacity, OverloadMaxMultiplier, OverloadMinSpeed);
+
+    public static float CalculateMovementWeightFactor(double totalWeight, float carryingCapacity, float maxMultiplier, float minSpeed)
     {
         double overload = Math.Max(0d, totalWeight / Math.Max(0.01f, carryingCapacity) - 1d);
-        return (float)(1d / (1d + 2d * overload));
+        if (overload <= 0d) return 1f;
+        double t = Math.Min(1d, overload / Math.Max(0.0001d, maxMultiplier - 1d));
+        return (float)(1d + (Mathf.Clamp(minSpeed, 0f, 1f) - 1d) * t);
     }
 
     public bool CanFitWeight(double additionalWeight) => GameplayTestSettings.NoWeight || additionalWeight <= 0d ||
