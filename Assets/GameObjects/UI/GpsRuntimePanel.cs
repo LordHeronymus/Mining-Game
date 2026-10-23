@@ -90,7 +90,9 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
     {
         if (!pausing) return;
         pausing = false;
-        if (!RunNavigation.IsTransitioning && !LoadingProgress.Active) Time.timeScale = previousScale;
+        // A test action may have ended the run meanwhile (lethal damage, energy): the end screens own the time then.
+        if (!RunNavigation.IsTransitioning && !LoadingProgress.Active && !GameOverPanel.IsOpen && !GameVictoryPanel.IsOpen &&
+            !ExpeditionResultPanel.IsOpen) Time.timeScale = previousScale;
         GamePause.Set(this, false);
     }
     void OnDestroy()

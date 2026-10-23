@@ -133,9 +133,7 @@ public class StatsManager : MonoBehaviour
     {
         RefreshEnergyCapacity();
         float healthFraction = Health / MaxHealth;
-        bool heartbeatActive = Health > 0f && !GameOverPanel.IsOpen && !GameVictoryPanel.IsOpen && !UltroniumAltarChamber.VictorySequenceActive &&
-            healthFraction <= LowHealthHeartbeatThresholdFraction;
-        AudioManager.Instance?.SetLowHealthHeartbeat(heartbeatActive);
+        AudioManager.Instance?.SetLowHealthHeartbeat(LowHealthHeartbeatActive(Health, healthFraction));
 
 
         bool medkitActive = IsMedkitActive;
@@ -149,6 +147,11 @@ public class StatsManager : MonoBehaviour
         Health = nextHealth;
         OnHealthChanged?.Invoke(Health, MaxHealth);
     }
+
+    // No warning heartbeat once the run has ended: climax, end screens and the expedition result.
+    internal static bool LowHealthHeartbeatActive(float health, float healthFraction) => health > 0f &&
+        !GameOverPanel.IsOpen && !GameVictoryPanel.IsOpen && !ExpeditionResultPanel.IsOpen && !UltroniumAltarChamber.VictorySequenceActive &&
+        healthFraction <= LowHealthHeartbeatThresholdFraction;
 
     public bool CompleteAltarVictory(UltroniumAltarChamber altar)
     {
@@ -200,7 +203,9 @@ public class StatsManager : MonoBehaviour
 
     public bool TryUseMedkit(ItemSO medkit = null)
     {
-        if (Health <= 0f || Health >= MaxHealth - 0.001f || IsMedkitActive || GameOverPanel.IsOpen) return false;
+        // The medkit only multiplies the regeneration; with regeneration 0 it could not heal and is kept.
+        if (Health <= 0f || Health >= MaxHealth - 0.001f || IsMedkitActive || GameOverPanel.IsOpen ||
+            healthRegenPerSecond * MedkitRegenMultiplier <= 0f) return false;
         var inventory = InventoryManager.Instance;
         if (!inventory || (medkit && medkit.item != Item.Medkit)) return false;
         if (!medkit)

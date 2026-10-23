@@ -130,7 +130,7 @@ public sealed class GameVictoryPanel : MonoBehaviour
     void ContinueToResults()
     {
         if (!IsOpen || ExpeditionResultPanel.IsOpen || RunNavigation.IsTransitioning) return;
-        var result = ExpeditionResultPanel.Show(transform.parent);
+        var result = ExpeditionResultPanel.ShowOrLeave(transform.parent);
         if (!result) return;
         StopAllCoroutines();
         IsOpen = false;

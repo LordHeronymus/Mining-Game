@@ -67,10 +67,10 @@ public class EnergyManager : MonoBehaviour
         if (tileMiner.IsMingin) consumption += diggingConsumption * MetaProgression.CurrentLoadout.miningEnergyMultiplier;
         consumption *= consumptionMultiplier;
 
-        if (!GameplayTestSettings.NoEnergyConsume)
+        if (DrainsEnergy)
             energy = Mathf.Max(energy - consumption * Time.deltaTime, 0f);
 
-        if (energy <= 0f && !GameOverPanel.IsOpen && !GameVictoryPanel.IsOpen)
+        if (EndsRun(energy))
             FindFirstObjectByType<GameOverPanel>(FindObjectsInactive.Include)?.Show();
 
         UpdateLowEnergyWarning();
@@ -82,6 +82,11 @@ public class EnergyManager : MonoBehaviour
         if (energyText && energyText.gameObject.activeInHierarchy)
             energyText.text = $"{Mathf.CeilToInt(energy).ToString()} / {stats.MaxEnergy}";
     }
+
+    // The altar climax is protected like damage (StatsManager.CanTakeDamage): no drain, no energy death.
+    internal static bool DrainsEnergy => !GameplayTestSettings.NoEnergyConsume && !UltroniumAltarChamber.VictorySequenceActive;
+    // Energy stays 0 behind the end screens, so the result screen must not be covered by a new game over.
+    internal static bool EndsRun(float energy) => energy <= 0f && !UltroniumAltarChamber.VictorySequenceActive && GameOverPanel.CanShow;
 
     public void DrainEnergy(float amount)
     {
