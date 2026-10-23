@@ -69,6 +69,7 @@ public sealed class MapLighting : MonoBehaviour
     Color32[] torchLightPixels;
     Color32[] torchUploadPatchPixels;
     Light2D torchLight;
+    Vector4 torchLightRect;
     GameObject surfaceGlow;
     Material surfaceGlowMaterial;
     Mesh surfaceGlowMesh;
@@ -711,6 +712,8 @@ public sealed class MapLighting : MonoBehaviour
         properties.SetTexture(TerrainOcclusionTexId, texture);
         properties.SetVector(TerrainOcclusionRectId, material.GetVector(TerrainOcclusionRectId));
         properties.SetVector(TerrainOcclusionSizeId, new Vector4(width, height, 0f, 0f));
+        properties.SetTexture("_MapTorchLightTex", torchLightTexture);
+        properties.SetVector("_MapTorchLightRect", torchLightRect);
         properties.SetVectorArray(UltroniumSourcesId, ultroniumSources);
         properties.SetInt(UltroniumCountId, material.GetInt(UltroniumCountId));
         properties.SetVector("_AltarSource", material.GetVector("_AltarSource"));
@@ -855,6 +858,8 @@ public sealed class MapLighting : MonoBehaviour
         torchObject.transform.position = new Vector3(bounds.center.x,
             bounds.center.y + .5f * SurfaceLightRows * cellSizeY, 0f);
         torchObject.transform.localScale = new Vector3(bounds.size.x / width, cellSizeY, 1f);
+        torchLightRect = new Vector4(bounds.min.x, bounds.min.y, 1f / Mathf.Max(bounds.size.x, .001f),
+            1f / Mathf.Max(bounds.size.y + SurfaceLightRows * cellSizeY, .001f));
         torchLight = torchObject.AddComponent<Light2D>();
         torchLight.enabled = false;
         torchLight.lightType = Light2D.LightType.Sprite;

@@ -12,6 +12,10 @@ TEXTURE2D(_AltarMask);
 SAMPLER(sampler_AltarMask);
 float4 _AltarRect;
 float4 _AltarMaskSize;
+// Torch/headlamp light including the rows above the terrain (set by MapLighting for backgrounds).
+TEXTURE2D(_MapTorchLightTex);
+SAMPLER(sampler_MapTorchLightTex);
+float4 _MapTorchLightRect;
 
 float MapSurfaceDarknessFade(float2 maskUV)
 {
@@ -70,6 +74,14 @@ float MapTorchVisibility(float2 source, float2 destination)
 
 float MapTorchLight(float2 worldPos)
 {
+    // The field texture continues above the surface, so the soil lip of the background
+    // above a shaft is lit like the shaft below it (same values as the occlusion mask's g).
+    if (_MapTorchLightRect.z > 0)
+    {
+        float2 lightUv = (worldPos - _MapTorchLightRect.xy) * _MapTorchLightRect.zw;
+        if (any(lightUv < 0) || any(lightUv > 1)) return 0;
+        return saturate(SAMPLE_TEXTURE2D(_MapTorchLightTex, sampler_MapTorchLightTex, lightUv).a);
+    }
     float2 uv = (worldPos - _TerrainOcclusionRect.xy) * _TerrainOcclusionRect.zw;
     if (any(uv < 0) || any(uv > 1)) return 0;
     return saturate(SAMPLE_TEXTURE2D(_TerrainOcclusionTex, sampler_TerrainOcclusionTex, uv).g);
