@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Haken im Challenge-Siegel mittig (Bild verschoben) | `claude/siegel-haken-mittig` | Cloud + Testbank | `Resources/Progression/ChallengeAtlas.png` (Teil 7, Siegel) | ja (Warteschlange Testbank) | 23.10.2026 20:55 |
 
 ## Zuletzt abgeschlossen
 
