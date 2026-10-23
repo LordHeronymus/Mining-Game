@@ -374,9 +374,9 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
                 var toggleButton = Button(content, (node.flag ^ spec.invertBoolean) ? "An" : "Aus", new Vector2(inputX, -rowY), new Vector2(140, 30), () => { node.flag = !node.flag; commit(); BuildPage(); });
                 break;
             case GpsValueKind.Reference:
-                var choices = GpsSchema.Choices(GpsCodec.ResolveType(node.type));
-                Dropdown(new Vector2(inputX, -rowY), choices.Select(entry => GpsSchema.DisplayName(entry.asset)).Prepend("—").ToArray(),
-                    choices.FindIndex(entry => entry.key == node.text) + 1, selected => { node.text = selected == 0 ? null : choices[selected - 1].key; commit(); });
+                var choices = GpsSchema.Choices(GpsCodec.ResolveType(node.type), parent, node.name); int none = GpsSchema.IsLayerStone(parent, node.name) ? 0 : 1;
+                Dropdown(new Vector2(inputX, -rowY), choices.Select(entry => GpsSchema.DisplayName(entry.asset)).Prepend("—").Skip(1 - none).ToArray(),
+                    choices.FindIndex(entry => entry.key == node.text) + none, selected => { node.text = selected < none ? null : choices[selected - none].key; commit(); });
                 if (GpsSettings.Profile.Resolve(node.text) is AudioClip clip)
                     Button(content, "Play", new Vector2(1588, -rowY), new Vector2(90, 30), () => GpsTestActions.PreviewClip(clip));
                 break;

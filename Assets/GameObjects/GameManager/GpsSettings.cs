@@ -223,7 +223,7 @@ public static class GpsSettings
         var spec = GpsSchema.Spec(record, node.name);
         var type = GpsCodec.MemberType(GpsCodec.ResolveType(record.type) ?? typeof(object), node.name);
         return spec != null && type != null && GpsCodec.Validate(node, out _) && GpsCodec.ValidateShape(node, type, out _) &&
-            ValidateBounds(node, spec, out _) && ValidateReferences(node, out _);
+            ValidateBounds(node, spec, out _) && ValidateReferences(node, out _) && ValidateLayerStones(GpsCodec.ResolveType(record.type), node, out _);
     }
     public static void UseProfile(GpsProfile source, GpsDocument data)
     {
@@ -291,7 +291,7 @@ public static class GpsSettings
         var spec = GpsSchema.Fields(type, key.Split(':').Last()).FirstOrDefault(field => field.name == node.name);
         if (spec == null) { error = "Unbekannte GPS-Einstellung."; return false; }
         if (!GpsCodec.ValidateShape(node,GpsCodec.MemberType(type,node.name),out error)) return false;
-        if (!ValidateBounds(node, spec, out error) || !ValidateReferences(node,out error)) return false;
+        if (!ValidateBounds(node, spec, out error) || !ValidateReferences(node,out error) || !ValidateLayerStones(type, node, out error)) return false;
         // A larger world could be generated but never saved; checked here so stored override files stay loadable.
         if (type == typeof(MapGenerator) && (node.name == "mapWidth" || node.name == "mapHeight") && node.number *
             (record.fields.Find(field => field.name == (node.name == "mapWidth" ? "mapHeight" : "mapWidth"))?.number ?? 1) > GameSaveSystem.MaxCells)
@@ -555,11 +555,28 @@ public static class GpsSettings
                 var starts = layers?.children.Select(layer => (int)(layer.children.Find(field => field.name == "startDepth")?.number ?? 0)).ToArray();
                 if (starts == null || starts.Length == 0 || starts[0] != 0 || starts.Distinct().Count() != starts.Length || starts.Any(start => start < 0 || start >= height) || !starts.SequenceEqual(starts.OrderBy(start => start)))
                 { error = "Layerstarts müssen bei 0 beginnen und innerhalb der Karte aufsteigend sein."; return false; }
+                if (!ValidateLayerStones(typeof(MapGenerator), layers, out error)) return false;
             }
         }
         if (data.preferences.startingResources == null || data.preferences.startingResources.money < 0 || data.preferences.startingResources.items == null ||
             data.preferences.startingResources.items.Any(entry => entry.amount < 1 || !StartingResourcesSettings.Resolve(entry.itemId)))
         { error = "Ungültige Startressourcen."; return false; }
+        return true;
+    }
+    // Same rule as MapGenerationSampler: every layer needs a stone block, dirt only in the top layer. The sampler
+    // throws otherwise, so a new run would never leave the loading screen.
+    static bool ValidateLayerStones(Type owner, GpsValue node, out string error)
+    {
+        error = null;
+        if (owner != typeof(MapGenerator) || node == null || node.name != "layers") return true;
+        var ordered = node.children.OrderBy(layer => layer.children.Find(field => field.name == "startDepth")?.number ?? 0).ToList();
+        for (int i = 0; i < ordered.Count; i++)
+        {
+            string key = ordered[i].children.Find(field => field.name == "stone")?.text;
+            var stone = profile && !string.IsNullOrEmpty(key) ? profile.Resolve(key) as Block : null;
+            if (!stone || (!stone.IsStone && !(i == 0 && stone.id == BlockType.Dirt)))
+            { error = "Layer " + (i + 1) + ": Gesteinsart muss ein Stein sein (Erde nur im obersten Layer)."; return false; }
+        }
         return true;
     }
     public static IEnumerable<Object> Targets(GpsRecord record)
@@ -628,6 +645,8 @@ public static class GpsSettings
     static void ApplyField(Object target, GpsValue node, bool effects = true)
     {
         if (!target || GpsCodec.MemberType(target.GetType(), node.name) == null) return;
+        // Defensive: invalid layers (e.g. a hand-edited profile) keep the map's current ones instead of breaking generation.
+        if (target is MapGenerator && !ValidateLayerStones(typeof(MapGenerator), node, out string layerError)) { Debug.LogWarning(layerError); return; }
         applying = true;
         try
         {
