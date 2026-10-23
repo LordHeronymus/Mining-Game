@@ -16,6 +16,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
+- 23.10.2026, Claude Code (Cloud): Bäume wachsen langsamer: Nachwuchs 200–480 s statt 100–240 s (halb so oft), volle Grösse nach 2 Stunden Spielzeit statt 15 Minuten (GPS „Wachstum“ 0,375 % pro Minute bei 45 % Grössenbonus); nur GPS-Standardwerte; Branch `claude/baum-nachwachsen`, PR bereit für `main` (Freigabe und Abnahme im Spiel Benutzer).
 - 23.10.2026, Claude Code (Cloud): Kein Einsammel-Bling mehr beim Laden eines Spielstands (Startausrüstung wird beim Laden still vergeben), Doppelklick auf einen Spielstand unter „Spielstände“ startet ihn direkt; Prüfskript `Tests/LoadPickupFeedChecks.cs` in der Cloud grün (#187); Branch `claude/load-bling`, mit Freigabe des Benutzers per PR #75 in `main` (Klang-Abnahme lokal).
 - 23.10.2026, Claude Code (Cloud): Musikregler neu skaliert: 100 % = bisherige 20 % (GPS-Wert `musicCeiling`, F1 → Audio → Gesamtpegel), gespeicherte Reglerstände einmalig umgerechnet (20 % wird 100 %, Musik bleibt gleich laut); Cloud-Lauf #184 `MusicRoutingChecks`/`RobustnessFixChecks` grün; Branch `claude/music-volume-scale`, mit Freigabe des Benutzers per PR #70 in `main` (Klang-Abnahme lokal).
 - 23.10.2026, Claude Code (Cloud): Bauplan-Bilder im Shop mit 512 px und BC7 statt unkomprimiert (rund 270 MB weniger im Speicher), lokal auf der Testbank geprüft, kein sichtbarer Unterschied.
