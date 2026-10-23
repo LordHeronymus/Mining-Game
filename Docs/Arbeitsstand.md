@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Challenge erfüllt: Ton N1 und Banner oben mit Siegel (Variante B) | `claude/challenge-erfuellt` | Cloud | neu `ChallengeCompletePresentation`, `GameplayLevelUpPresentation` (wartet auf Banner), neuer Clip unter `AC Audio/UI` | Testbank | 23.10.2026 18:45 |
 
 ## Zuletzt abgeschlossen
 
