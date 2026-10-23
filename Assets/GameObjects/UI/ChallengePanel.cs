@@ -195,7 +195,7 @@ public sealed class ChallengePanel : MonoBehaviour
     static void BuildProject(RectTransform tile, MetaChallengeProgress project)
     {
         Frame(tile); Rim(tile, TierColors[(int)ChallengeTier.Project]);
-        if (!project.completed) TrackStar(tile, new Vector2(-616, 96), project.track);
+        if (!project.completed) TrackStar(tile, new Vector2(-598, 82), project.track);
         var icon = HomeUi.Image("Icon", tile, new Vector2(-540, 8), new Vector2(190, 146));
         icon.sprite = Icon(project); icon.preserveAspect = true;
         Text("Kicker", tile, "Monatsprojekt", new Vector2(-540, -98), new Vector2(200, 30), 22, TextAlignmentOptions.Center).color = ProgressionArt.Gold;
