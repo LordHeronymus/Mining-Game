@@ -11,12 +11,13 @@ public static partial class MetaProgression
 {
     const int FormatVersion = 1, MaxFileBytes = 64 * 1024 * 1024;
     const double WorkWindow = 300d;
+    const long MaxRewardDisplayXp = 1000000000000L;
     static MetaProfile profile;
     static MetaRunState run;
     static string loadedPath, testDirectory;
     static string loadedSelection;
     static int loadedSelectionMode = -1;
-    static bool dirty, writeBlocked, recovered, milestonePending;
+    static bool dirty, writeBlocked, recovered, milestonePending, writeFailed;
     static readonly MetaLoadout neutralLoadout = new();
     static double saveElapsed;
     static long mainLength = -1, mainWriteTicks = -1;
@@ -30,6 +31,15 @@ public static partial class MetaProgression
     public static event Action Changed;
     public static string LastError { get; private set; }
     public static bool RecoveredFromBackup { get { EnsureLoaded(); return recovered; } }
+    // Shown in the pause menu: progress that is not reaching the disk must not stay silent while the world saves fine.
+    public static string ProfileWarning
+    {
+        get {
+            EnsureLoaded();
+            if (writeBlocked) return "Fortschritt wird nicht gespeichert: " + (LastError ?? "Profil gesperrt.");
+            return writeFailed && dirty ? "Fortschritt konnte nicht gespeichert werden." : null;
+        }
+    }
 
     public static string TestDirectory
     {
@@ -68,7 +78,7 @@ public static partial class MetaProgression
     {
         CompletePending(true, false);
         if (profile != null && dirty && !writeBlocked) SaveCurrentProfile();
-        profile = null; run = null; loadedPath = null; dirty = writeBlocked = recovered = milestonePending = false;
+        profile = null; run = null; loadedPath = null; dirty = writeBlocked = recovered = milestonePending = writeFailed = false;
         loadedSelection = null; loadedSelectionMode = -1;
         LastError = null; saveElapsed = 0d; ClearCaches(); transientRounds.Clear(); awardedStages = null;
         mainLength = mainWriteTicks = -1; mainValid = false;
@@ -92,7 +102,8 @@ public static partial class MetaProgression
         MetaProfile best = null; string bestPath = null; bool any = false, future = false;
         foreach (string candidate in new[] { path, path + ".bak", path + ".tmp" }) {
             if (!File.Exists(candidate)) continue;
-            any = true;
+            // A damaged journal alone is an interrupted first write, nothing to protect: the next write replaces it.
+            any |= !candidate.EndsWith(".tmp", StringComparison.Ordinal);
             bool valid = TryRead(candidate, out var result, out bool newer);
             if (candidate == path) { mainValid = valid; RememberMainStamp(); }
             if (valid && (best == null || result.revision > best.revision)) { best = result; bestPath = candidate; }
@@ -140,7 +151,7 @@ public static partial class MetaProgression
         if (added) { saved = new MetaUpgradeRank { id = upgradeId }; profile.upgrades.Add(saved); }
         saved.rank++;
         MarkDirty();
-        if (!Save()) { saved.rank--; if (added) profile.upgrades.Remove(saved); MarkDirty(); return false; }
+        if (!Save()) { saved.rank--; if (added) profile.upgrades.Remove(saved); MarkDirty(); DiscardJournal(); return false; }
         Changed?.Invoke(); return true;
     }
     public static bool RefundAll()
@@ -150,8 +161,14 @@ public static partial class MetaProgression
         if (writeBlocked) return false;
         var previous = profile.upgrades;
         profile.upgrades = new List<MetaUpgradeRank>(); MarkDirty();
-        if (!Save()) { profile.upgrades = previous; MarkDirty(); return false; }
+        if (!Save()) { profile.upgrades = previous; MarkDirty(); DiscardJournal(); return false; }
         Changed?.Invoke(); return true;
+    }
+    // A purchase that was rolled back must not come back from its journal on the next start.
+    static void DiscardJournal()
+    {
+        try { if (loadedPath != null && File.Exists(loadedPath + ".tmp")) File.Delete(loadedPath + ".tmp"); }
+        catch (IOException) { } catch (UnauthorizedAccessException) { }
     }
     public static MetaLoadout CreateLoadout()
     {
@@ -186,6 +203,7 @@ public static partial class MetaProgression
         var existing = profile.runs.Find(value => value.runId == runId);
         if (existing == null) {
             existing = saved == null ? new MetaRunState { runId = runId, loadout = CreateLoadout(), settings = CurrentSettings() } : Clone(saved);
+            existing.resourceSources.RemoveAll(IsPayoutMarker);
             profile.runs.Add(existing);
         } else if (saved != null) {
             MergeLedger(existing, saved);
@@ -216,16 +234,33 @@ public static partial class MetaProgression
     }
     public static void RecordRunFinished(bool victory)
     {
-        if (!HasRun()) return;
+        // A read-only profile still ends the run, otherwise the result screen never opens.
+        if (!HasRun()) { MarkRunEnded(); return; }
         run.ended = true; run.won |= victory; CheckChallenges(); MarkChanged(false); Save();
     }
     public static void RecordVictory() => RecordRunFinished(true);
+    // Ends the run without any reward (debug victory, read-only profile): later events of this run earn nothing.
+    public static void MarkRunEnded()
+    {
+        EnsureLoaded();
+        if (run == null || run.ended) return;
+        run.ended = true;
+        if (!writeBlocked) { MarkDirty(); Save(); }
+        Changed?.Invoke();
+    }
     static bool HasRun() { EnsureLoaded(); return run != null && !writeBlocked; }
 
-    public static void TickActive(float seconds)
+    // Runs every frame (also in menus and while input is blocked): a change made while the worker was writing,
+    // such as a level-up or a payout, is written as soon as that write has finished, not seconds later.
+    public static void PumpSaves()
     {
+        if (profile == null) return;
         CompletePending(false);
         if (saveAfterPending && pendingSave == null) RequestSave();
+    }
+    public static void TickActive(float seconds)
+    {
+        PumpSaves();
         if (!HasRun() || run.ended || float.IsNaN(seconds) || float.IsInfinity(seconds) || seconds <= 0f) return;
         double elapsed = Math.Min(seconds, 60f);
         run.activeSeconds += elapsed;
@@ -398,7 +433,7 @@ public static partial class MetaProgression
     {
         long total = profile.periodRewardXp;
         foreach (var state in profile.runs) {
-            state.earnedXp = (long)Math.Floor(state.progressXp + state.efficiencyXp) + state.challengeXp + state.milestoneXp;
+            state.earnedXp = (long)Math.Floor(state.progressXp + state.efficiencyXp) + state.challengeXp + state.milestoneXp + state.rewardXp;
             total += (long)Math.Floor(state.progressXp + state.efficiencyXp) + state.challengeXp;
         }
         foreach (string id in profile.completedMilestones) total += MetaProgressionCatalog.Challenge(id)?.xp ?? 0;
@@ -420,10 +455,11 @@ public static partial class MetaProgression
         target.efficiencyXp = Math.Max(target.efficiencyXp, saved.efficiencyXp);
         target.challengeXp = Math.Max(target.challengeXp, saved.challengeXp);
         target.milestoneXp = Math.Max(target.milestoneXp, saved.milestoneXp);
+        target.rewardXp = Math.Max(target.rewardXp, saved.rewardXp);
         target.won |= saved.won;
         // A finished world can be loaded for play, but its already earned rewards remain final.
         target.ended |= saved.ended;
-        Union(target.resourceSources, saved.resourceSources); Union(target.regions, saved.regions); Union(target.discoveries, saved.discoveries);
+        Union(target.resourceSources, saved.resourceSources.Where(key => !IsPayoutMarker(key))); Union(target.regions, saved.regions); Union(target.discoveries, saved.discoveries);
         Union(target.crafts, saved.crafts); Union(target.exoticCrafts, saved.exoticCrafts);
         Union(target.completedObjectives, saved.completedObjectives); Union(target.milestones, saved.milestones);
         target.challengeXp = target.completedObjectives.Sum(id => (long)MetaProgressionCatalog.Challenge(id).xp);
@@ -446,16 +482,28 @@ public static partial class MetaProgression
             merged.Add(new MetaRunTally { id = tally.id, value = tally.value,
                 peak = Math.Max(Math.Max(tally.peak, tally.value), known == null ? 0 : Math.Max(known.peak, known.value)) });
         }
-        // A world saved by an older build has no tallies at all (not even the marker tally). Treat it as being at the
-        // peak, otherwise its new sales and crafts would earn nothing until the old total is reached again. Replays
-        // through such a save are therefore not guarded; saves of this build keep their own values.
+        // A world saved by an older build has no tallies at all (not even the marker tally), but older builds keep the
+        // ledger: the save's own highest "tp:" marker is where each tally stood when this build last wrote that world
+        // (none in saves from before tallies existed, or in synthetic ledgers of saves without progression). Starting
+        // there guards replays through such a save, while sales made in an older build since then still count.
         bool aware = saved.tallies != null && saved.tallies.Exists(tally => tally != null && tally.id == TallyAware);
+        var savedPeaks = aware ? null : SavedTallyPeaks(saved.resourceSources);
         foreach (var tally in existing)
             if (tally != null && ids.Add(tally.id)) merged.Add(new MetaRunTally { id = tally.id, peak = Math.Max(tally.peak, tally.value) });
         target.tallies = RepairTallies(merged);
         RestoreTallyPeaks(target);
-        if (!aware) foreach (var tally in target.tallies) if (!saved.tallies?.Exists(value => value != null && value.id == tally.id) ?? true) tally.value = Math.Max(tally.value, tally.peak);
+        if (!aware)
+            foreach (var tally in target.tallies)
+                if (tally.id != TallyAware && (!saved.tallies?.Exists(value => value != null && value.id == tally.id) ?? true))
+                    tally.value = Math.Min(tally.peak, savedPeaks.TryGetValue(tally.id, out long mark) ? mark : 0);
         MarkTallyAware(target);
+    }
+    static Dictionary<string, long> SavedTallyPeaks(List<string> ledger)
+    {
+        var peaks = new Dictionary<string, long>();
+        if (ledger != null) foreach (string key in ledger)
+            if (TryTallyMarker(key, out string id, out long peak) && (!peaks.TryGetValue(id, out long known) || peak > known)) peaks[id] = peak;
+        return peaks;
     }
     // Tells MergeTallies that a world snapshot was written by a build that keeps tallies (older builds drop the list).
     const string TallyAware = "tallies";
@@ -489,7 +537,11 @@ public static partial class MetaProgression
         if (marked != null) ledger.RemoveAll(key => TryTallyMarker(key, out string id, out _) && expected.TryGetValue(id, out string wanted) && !(key == wanted && present.Add(key)));
         foreach (string key in expected.Values) if (!present.Contains(key) && key.Length <= MaxLedgerKey) ledger.Add(key);
     }
-    static void Union<T>(List<T> target, List<T> source)
+    // Payout markers ("cr:", "cx:", "ct:", "cs:", "cm:") are only trusted in the profile's own ledger, which is written in
+    // the same file as the XP they stand for. One that only a world save has comes from a profile that was rolled back or
+    // failed to save: that XP was never kept, so the reward stays open instead of counting as paid without XP.
+    static bool IsPayoutMarker(string key) => key != null && key.Length > 3 && key[0] == 'c' && key[2] == ':' && "rxtsm".IndexOf(key[1]) >= 0;
+    static void Union<T>(List<T> target, IEnumerable<T> source)
     {
         var set = new HashSet<T>(target);
         foreach (T entry in source) if (set.Add(entry)) target.Add(entry);
@@ -539,6 +591,7 @@ public static partial class MetaProgression
             mainLength = result.length; mainWriteTicks = result.writeTicks; mainValid = true; recovered = false;
             dirty = changeGeneration != pendingGeneration;
         } else dirty = true;
+        writeFailed = !result.success;
         LastError = result.error;
         if (notify && previousError != LastError) Changed?.Invoke();
     }
@@ -561,6 +614,7 @@ public static partial class MetaProgression
             mainLength = result.length; mainWriteTicks = result.writeTicks; mainValid = true; recovered = false;
             dirty = false; saveElapsed = 0d;
         } else { profile.revision = previousRevision; dirty = true; }
+        writeFailed = !result.success;
         LastError = result.error;
         return result.success;
     }
@@ -569,6 +623,7 @@ public static partial class MetaProgression
     {
         var result = new WriteResult();
         string temporary = path + ".tmp", backup = path + ".bak";
+        bool journal = false, futureMain = false;
         try {
             string payload = JsonUtility.ToJson(snapshot);
             string encoded = JsonUtility.ToJson(new Envelope { payload = payload, sha256 = Hash(payload) });
@@ -576,12 +631,13 @@ public static partial class MetaProgression
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             byte[] bytes = new UTF8Encoding(false).GetBytes(encoded);
             using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None)) { stream.Write(bytes, 0, bytes.Length); stream.Flush(true); }
+            journal = true;
             if (File.Exists(path)) {
                 var mainInfo = new FileInfo(path);
                 bool validMain = knownValid;
                 if (mainInfo.Length != knownLength || mainInfo.LastWriteTimeUtc.Ticks != knownWriteTicks) {
                     validMain = TryRead(path, out _, out bool future);
-                    if (future) throw new IOException("Das Fortschrittsprofil wurde durch eine neuere Spielversion ersetzt.");
+                    if (future) { futureMain = true; throw new IOException("Das Fortschrittsprofil wurde durch eine neuere Spielversion ersetzt."); }
                 }
                 if (!validMain && !File.Exists(path + ".invalid")) File.Copy(path, path + ".invalid");
                 File.Replace(temporary, path, validMain ? backup : null);
@@ -591,7 +647,8 @@ public static partial class MetaProgression
             // both damaged. Repair that backup too before declaring recovery complete.
             if (!File.Exists(backup) || (recovery && !TryRead(backup, out _, out _))) File.Copy(path, backup, true);
         } catch (Exception error) when (error is IOException || error is UnauthorizedAccessException || error is ArgumentException || error is NotSupportedException) {
-            try { if (File.Exists(temporary)) File.Delete(temporary); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            // A complete journal stays when only replacing the main file failed: EnsureLoaded recovers it by its higher revision.
+            if (!journal || futureMain) try { if (File.Exists(temporary)) File.Delete(temporary); } catch (IOException) { } catch (UnauthorizedAccessException) { }
             result.error = (result.success ? "Fortschritt gespeichert; Sicherung fehlgeschlagen: " : "Fortschritt konnte nicht gespeichert werden: ") + error.Message;
         }
         if (result.success) {
@@ -615,7 +672,7 @@ public static partial class MetaProgression
             var copied = new MetaRunState { version = state.version, runId = state.runId, loadout = CopyLoadout(state.loadout),
                 settings = state.settings.Sanitized(), maxDepth = state.maxDepth, activeSeconds = state.activeSeconds,
                 recentWorkXp = state.recentWorkXp, workWindowSeconds = state.workWindowSeconds, progressXp = state.progressXp,
-                efficiencyXp = state.efficiencyXp, earnedXp = state.earnedXp, challengeXp = state.challengeXp, milestoneXp = state.milestoneXp,
+                efficiencyXp = state.efficiencyXp, earnedXp = state.earnedXp, challengeXp = state.challengeXp, milestoneXp = state.milestoneXp, rewardXp = state.rewardXp,
                 ended = state.ended, won = state.won, resourceSources = new List<string>(state.resourceSources), regions = new List<string>(state.regions),
                 discoveries = new List<string>(state.discoveries), crafts = new List<int>(state.crafts), exoticCrafts = new List<int>(state.exoticCrafts),
                 objectiveIds = new List<string>(state.objectiveIds), completedObjectives = new List<string>(state.completedObjectives), milestones = new List<string>(state.milestones),
@@ -695,6 +752,7 @@ public static partial class MetaProgression
         if (value.objectiveIds.Any(id => MetaProgressionCatalog.Challenge(id)?.permanent != false) || value.completedObjectives.Any(id => !value.objectiveIds.Contains(id)) || value.milestones.Any(id => MetaProgressionCatalog.Challenge(id)?.permanent != true)) return false;
         if (value.challengeXp != value.completedObjectives.Sum(id => (long)MetaProgressionCatalog.Challenge(id).xp) || value.milestoneXp != value.milestones.Sum(id => (long)MetaProgressionCatalog.Challenge(id).xp)) return false;
         value.settings = value.settings.Sanitized();
+        value.rewardXp = Math.Min(MaxRewardDisplayXp, Math.Max(0, value.rewardXp));
         // Challenge tallies are repaired, never a reason to reject a world save.
         value.tallies = RepairTallies(value.tallies);
         var loadout = value.loadout;

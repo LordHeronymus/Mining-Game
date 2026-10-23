@@ -319,6 +319,7 @@ public static partial class MetaProgression
         gain.xp = Math.Max(0, gain.xp);
         if (gain.xp > 0 || gain.completed > 0) WritePaidMarkers(round);
         profile.periodRewardXp += gain.xp;
+        run.rewardXp += gain.xp;
         return gain;
     }
 
@@ -358,6 +359,7 @@ public static partial class MetaProgression
                 profile.milestoneAwards.Add(new MetaMilestoneAward { id = stage.id, xp = xp });
                 awarded.Add(stage.id);
                 profile.periodRewardXp += xp;
+                run.rewardXp += xp;
                 AddMarker("cm:" + stage.id);
                 milestonePending = true; MarkDirty();
             }

@@ -68,6 +68,7 @@ public sealed class MetaProgressionRuntime : MonoBehaviour
 
     void Update()
     {
+        MetaProgression.PumpSaves();
         if (LoadingProgress.Active || RunNavigation.IsTransitioning ||
             SceneManager.GetActiveScene().name != RunNavigation.GameScene) return;
         if (MetaProgression.CurrentRun == null) return;
@@ -294,6 +295,7 @@ public sealed class MetaProgressionRuntime : MonoBehaviour
     public static void RecordVictory()
     {
         if (RewardsAllowed) MetaProgression.RecordVictory();
+        else MetaProgression.MarkRunEnded();
         MetaProgression.Save();
     }
 }
