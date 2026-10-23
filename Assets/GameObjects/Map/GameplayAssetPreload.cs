@@ -28,8 +28,30 @@ public static class GameplayAssetPreload
         ("Mining/MiningCracksFiveStages", typeof(Texture2D)), ("Mining/MiningCracksLit", typeof(Material)),
         ("Torches/TorchHolderSprite", typeof(Sprite)), ("Exotics/LavaGlow", typeof(Sprite)),
     };
+    // Read synchronously in the Awake of the game scene's UI panels (WorkbenchPanel, BuyPage, ShopVisualTheme,
+    // CompactHud, SettingsPanel): mostly uncompressed 1254² textures, together over 150 MB, in the single frame that
+    // integrates the scene. Requested from the main menu, so the scene finds them in memory.
+    static readonly (string path, Type type)[] SceneStartAssets =
+    {
+        ("Workbench/WorkshopBackground-v2", typeof(Sprite)), ("Workbench/ItemGlow", typeof(Shader)),
+        ("Shop/BuyFrames-v2", typeof(Texture2D)), ("Shop/BuyBackground-v2", typeof(Sprite)),
+        ("GameOverCoin", typeof(Texture2D)), ("ArtifactDiscovery/TitleFont", typeof(TMPro.TMP_FontAsset)),
+        ("ItemCatalog", typeof(ItemCatalog)),
+        ("HUDv1/Tray", typeof(Sprite)), ("HUDv1/Divider", typeof(Sprite)), ("HUDv1/DividerCap", typeof(Sprite)),
+        ("HUDv1/SocketNormal", typeof(Sprite)), ("HUDv1/SocketHover", typeof(Sprite)), ("HUDv1/SocketSelected", typeof(Sprite)),
+        // BuyPage blueprint cards (BuyPage.Awake, Add calls)
+        ("Shop/MedkitRecipe", typeof(Sprite)), ("Shop/BackpackRecipe", typeof(Sprite)), ("Shop/LoadBeltRecipe", typeof(Sprite)),
+        ("Shop/HeavyDutyBootsRecipe", typeof(Sprite)), ("Shop/ReinforcedBackpackRecipe", typeof(Sprite)),
+        ("Shop/SpringGreavesRecipe", typeof(Sprite)), ("Shop/LoadFrameRecipe", typeof(Sprite)), ("Shop/ExoskeletonRecipe", typeof(Sprite)),
+        ("Shop/CrystalPendantRecipe", typeof(Sprite)), ("Shop/CopperEnergyBraceletRecipe", typeof(Sprite)),
+        ("Shop/EnergyStorageVialRecipe", typeof(Sprite)), ("Shop/RuneBeltRecipe", typeof(Sprite)), ("Shop/CrystalHeartRecipe", typeof(Sprite)),
+        ("Shop/CrystalHarnessRecipe", typeof(Sprite)), ("Shop/TravelMonolithRecipe", typeof(Sprite)), ("Shop/IronPickaxeRecipe", typeof(Sprite)),
+        ("Shop/SteelPickaxeRecipe", typeof(Sprite)), ("Shop/TitaniumPickaxeRecipe", typeof(Sprite)), ("Shop/TungstenPickaxeRecipe", typeof(Sprite)),
+        ("Shop/ObsidianPickaxeRecipe", typeof(Sprite)), ("Shop/MythrilPickaxeRecipe", typeof(Sprite)), ("Shop/DiamondPickaxeRecipe", typeof(Sprite)),
+    };
     // The requests also keep the loaded assets referenced until their owners pick them up.
     static readonly List<ResourceRequest> requests = new();
+    static readonly List<ResourceRequest> sceneStartRequests = new();
 
     public static void Begin()
     {
@@ -37,7 +59,14 @@ public static class GameplayAssetPreload
         foreach (var (path, type) in Assets) requests.Add(Resources.LoadAsync(path, type));
     }
 
+    // Called by the main menu: the requests load in the background while the player is still choosing.
+    public static void BeginSceneStart()
+    {
+        if (sceneStartRequests.Count > 0) return;
+        foreach (var (path, type) in SceneStartAssets) sceneStartRequests.Add(Resources.LoadAsync(path, type));
+    }
+
     // Enter Play Mode without a domain reload keeps static state; start every play session with fresh requests.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetRequests() => requests.Clear();
+    static void ResetRequests() { requests.Clear(); sceneStartRequests.Clear(); }
 }

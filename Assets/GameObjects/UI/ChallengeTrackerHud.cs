@@ -9,7 +9,7 @@ using UnityEngine.UI;
 // Child of CompactHud, so it shares the HUD's fade (CanvasGroup) and scales like the counters. Never takes clicks.
 public sealed class ChallengeTrackerHud : MonoBehaviour
 {
-    const float Width = 384, Header = 34, RowHeight = 58, Padding = 14, Top = 134, Margin = 18;
+    const float Width = 384, RowHeight = 58, Padding = 14, PaddingRight = 26, Top = 134, Margin = 18, Header = 40;
     const float RefreshDelay = .5f, IdleRefresh = 5;
     static readonly CultureInfo German = CultureInfo.GetCultureInfo("de-DE");
     static readonly Color Cream = new Color32(255, 245, 229, 255), Muted = new Color32(193, 178, 152, 255);
@@ -25,7 +25,6 @@ public sealed class ChallengeTrackerHud : MonoBehaviour
     }
 
     RectTransform panel;
-    Image frame;
     readonly List<Row> rows = new();
     bool dirty = true;
     float nextRefresh, idleRefresh;
@@ -50,36 +49,49 @@ public sealed class ChallengeTrackerHud : MonoBehaviour
     {
         panel = Place("Tracker Panel", transform, 0, 0, Width, Header);
         panel.anchorMin = panel.anchorMax = panel.pivot = Vector2.one;
-        var sprite = Resources.Load<Sprite>("HUDv1/Vitals");
-        frame = panel.gameObject.AddComponent<Image>();
-        frame.sprite = sprite ? sprite : HomeUi.Sprite("SelectionCardNormal");
-        frame.type = Image.Type.Sliced; frame.raycastTarget = false;
-        // Same wood and corner size as the counter frame above it (106 high, 85 corner units).
-        frame.pixelsPerUnitMultiplier = frame.sprite.rect.height / 70f;
-        frame.material = HudV1Art.DarkWood(frame.sprite);
-        var title = Label("Title", panel, "Herausforderungen", Padding + 6, 8, Width - 2 * Padding - 12, 24, 19, TextAlignmentOptions.Left);
-        title.color = ProgressionArt.Gold;
+        Frame(panel.gameObject, 70);
+        // Title centred between two fine gold rules, each ending in a small gold gem.
+        Label("Title", panel, "Herausforderungen", Width * .5f - 100, 9, 200, 26, 20, TextAlignmentOptions.Center).color = ProgressionArt.Gold;
+        float length = Width * .5f - 134;
+        foreach (float x in new[] { 30f, Width * .5f + 104 }) {
+            var rule = Place("Title Rule", panel, x, 22, length, 1.5f).gameObject.AddComponent<Image>();
+            rule.color = new Color(ProgressionArt.Gold.r, ProgressionArt.Gold.g, ProgressionArt.Gold.b, .65f); rule.raycastTarget = false;
+            var gem = Place("Title Gem", panel, x < Width * .5f ? x - 7 : x + length - 5, 17, 12, 12).gameObject.AddComponent<ChallengeGem>();
+            gem.color = ProgressionArt.Gold; gem.raycastTarget = false;
+        }
         for (int i = 0; i < MetaProgression.TrackedShown; i++) rows.Add(BuildRow(i));
         panel.gameObject.SetActive(false);
     }
 
+    // HUD wood frame; cornerUnits sets how large the brass corners are drawn (the counter frame uses 85 at 106 high).
+    static void Frame(GameObject target, float cornerUnits)
+    {
+        var sprite = Resources.Load<Sprite>("HUDv1/Vitals");
+        var image = target.AddComponent<Image>();
+        image.sprite = sprite ? sprite : HomeUi.Sprite("SelectionCardNormal");
+        image.type = Image.Type.Sliced; image.raycastTarget = false;
+        image.pixelsPerUnitMultiplier = image.sprite.rect.height / cornerUnits;
+        image.material = HudV1Art.DarkWood(image.sprite);
+    }
+
     Row BuildRow(int index)
     {
-        var row = new Row { rect = Place("Tracked " + index, panel, Padding, Header + index * RowHeight, Width - 2 * Padding, RowHeight) };
+        float width = Width - Padding - PaddingRight;
+        var row = new Row { rect = Place("Tracked " + index, panel, Padding, Header + index * RowHeight, width, RowHeight) };
         if (index > 0) {
-            var rule = Place("Rule", row.rect, 46, 0, Width - 2 * Padding - 58, 1).gameObject.AddComponent<Image>();
+            var rule = Place("Rule", row.rect, 46, 0, width - 46, 1).gameObject.AddComponent<Image>();
             rule.color = new Color(ProgressionArt.Gold.r, ProgressionArt.Gold.g, ProgressionArt.Gold.b, .22f); rule.raycastTarget = false;
         }
         row.icon = Place("Icon", row.rect, 2, 7, 42, 42).gameObject.AddComponent<Image>();
         row.icon.preserveAspect = true; row.icon.raycastTarget = false;
         row.gem = Place("Tier Gem", row.rect, 31, 35, 16, 16).gameObject.AddComponent<ChallengeGem>();
         row.gem.raycastTarget = false;
-        float textWidth = Width - 2 * Padding - 56;
-        row.name = Label("Name", row.rect, "", 54, 6, textWidth - 104, 26, 21, TextAlignmentOptions.Left);
-        row.counter = Label("Counter", row.rect, "", 54 + textWidth - 102, 8, 102, 24, 18, TextAlignmentOptions.Right);
+        float textLeft = 54, textWidth = width - textLeft;
+        row.name = Label("Name", row.rect, "", textLeft, 6, textWidth - 96, 26, 21, TextAlignmentOptions.Left);
+        row.counter = Label("Counter", row.rect, "", textLeft + textWidth - 94, 8, 94, 24, 18, TextAlignmentOptions.Right);
         row.counter.color = Muted;
         // Brass hairline around a dark groove, so an empty bar still reads as a bar on the dark wood.
-        var track = Place("Progress Track", row.rect, 54, 38, textWidth, 10).gameObject.AddComponent<Image>();
+        var track = Place("Progress Track", row.rect, textLeft, 38, textWidth, 10).gameObject.AddComponent<Image>();
         track.color = new Color(ProgressionArt.Gold.r, ProgressionArt.Gold.g, ProgressionArt.Gold.b, .45f); track.raycastTarget = false;
         var groove = Place("Groove", track.transform, 1, 1, textWidth - 2, 8).gameObject.AddComponent<Image>();
         groove.color = new Color(.05f, .03f, .02f, .92f); groove.raycastTarget = false;
