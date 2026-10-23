@@ -11,6 +11,7 @@ public static class PlayerSettings
     const string FullscreenKey = "settings.display.fullscreen";
     const string UiScaleKey = "settings.display.uiScale";
     const string HudScaleKey = "settings.display.hudScale";
+    const string ShowCarryWeightKey = "settings.display.showCarryWeight";
     public const float DefaultHudScale = .8f, MinHudScale = .3f;
     static readonly Dictionary<CanvasScaler, Vector2> References = new();
 
@@ -38,6 +39,22 @@ public static class PlayerSettings
             ApplyHudScale();
             PlayerPrefs.Save();
         }
+    }
+    // Shows the carried weight against the carrying capacity below the vitals in the HUD; on by default.
+    public static bool ShowCarryWeight
+    {
+        get => PlayerPrefs.GetInt(ShowCarryWeightKey, 1) != 0;
+        set
+        {
+            PlayerPrefs.SetInt(ShowCarryWeightKey, value ? 1 : 0);
+            ApplyCarryWeightVisibility();
+            PlayerPrefs.Save();
+        }
+    }
+    public static void ApplyCarryWeightVisibility()
+    {
+        foreach (var hud in Object.FindObjectsByType<CompactHud>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            hud.RefreshCarryWeightVisibility();
     }
     public static void ApplyHudScale()
     {
@@ -96,10 +113,10 @@ public static class PlayerSettings
     {
         Master=1; Music=1; PlayerPrefs.DeleteKey(AmbienceKey); PlayerPrefs.DeleteKey(SfxKey); PlayerPrefs.DeleteKey(VoiceKey);
         PlayerPrefs.DeleteKey(FullscreenKey); PlayerPrefs.DeleteKey(UiScaleKey);
-        PlayerPrefs.DeleteKey(HudScaleKey);
+        PlayerPrefs.DeleteKey(HudScaleKey); PlayerPrefs.DeleteKey(ShowCarryWeightKey);
         PlayerPrefs.Save();
         ApplyAudio(); Screen.fullScreen = true; ApplyUiScale();
-        ApplyHudScale();
+        ApplyHudScale(); ApplyCarryWeightVisibility();
         GameBindings.RestoreDefaults();
     }
 }
