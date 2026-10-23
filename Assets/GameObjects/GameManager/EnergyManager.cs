@@ -22,6 +22,8 @@ public class EnergyManager : MonoBehaviour
     AudioSource lowEnergySource;
     float nextLowEnergyBeepTime;
     bool lowEnergyWarningActive;
+    // Counts the warning beeps so the HUD can pulse the energy value in time with them.
+    public int LowEnergyBeepCount { get; private set; }
 
     const float LowEnergyWarningThreshold = .15f;
     const float LowEnergyFastThreshold = .01f;
@@ -126,6 +128,7 @@ public class EnergyManager : MonoBehaviour
             Mathf.Lerp(1f, 1.25f, urgency), lowEnergySource);
         lowEnergySource.volume = AudioManager.TunedVolume(lowEnergyBeep, 1f, lowEnergySource);
         lowEnergySource.Play();
+        LowEnergyBeepCount++;
         nextLowEnergyBeepTime = Time.time + interval;
     }
 }

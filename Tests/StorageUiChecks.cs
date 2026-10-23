@@ -103,7 +103,8 @@ public sealed class StorageUiProbe : MonoBehaviour
         foreach (var sign in new[] { storage.EntrySign, workshopSign, shopSign, energySign })
         {
             Check(sign.Button.GetComponent<GoldButtonFeedback>() && Mathf.Approximately(sign.Label.fontSize, storage.EntrySign.Label.fontSize), sign.Label.text + ": same style and font size");
-            Check(sign.Label.GetPreferredValues(sign.Label.text).x <= sign.Label.rectTransform.rect.width + .5f, sign.Label.text + ": text fits between the end caps");
+            float preferred = sign.Label.GetPreferredValues(sign.Label.text).x, box = sign.Label.rectTransform.rect.width;
+            Check(preferred <= box + .5f, sign.Label.text + $": text fits between the end caps (needs {preferred:0.0}, box {box:0.0}, side margins {sign.Label.margin.x:0.0}/{sign.Label.margin.z:0.0})");
             System.Func<EntrySign, float> baseScale = s => s.transform.lossyScale.x / (.92f + .08f * s.Group.alpha);
             Check(Mathf.Abs(baseScale(sign) - baseScale(storage.EntrySign)) < .0001f, sign.Label.text + ": same world size on scaled buildings");
             var main = EntrySign.MainSprite(sign.transform.parent);
@@ -192,7 +193,7 @@ public sealed class StorageUiProbe : MonoBehaviour
             Check(inventory.GetCount(iron) == fit && storage.GetStoredCount(iron) == 25, $"Withdraw stops exactly at three times the carrying capacity ({fit} iron)");
             Check(inventory.TotalWeight > inventory.CarryingCapacity && inventory.TotalWeight <= inventory.MaximumWeight + 1e-4,
                 "Player may carry above the capacity (slower) but not above the maximum");
-            Check(Mathf.Abs(inventory.MaximumWeight - inventory.CarryingCapacity * 3) < .001f, "Maximum is three times the capacity");
+            Check(Mathf.Abs(inventory.MaximumWeight - inventory.CarryingCapacity * InventoryManager.OverloadMaxMultiplier) < .001f, "Maximum is the GPS multiple of the capacity");
             Check(storage.WithdrawUpTo(iron, 1) == 0, "No further withdraw at the maximum");
             yield return null;
             var slower = (RectTransform)layout.Find("Weight Bar/Slower");
