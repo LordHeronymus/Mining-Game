@@ -104,7 +104,12 @@ public static partial class MetaProgression
             if (!File.Exists(candidate)) continue;
             // A damaged journal alone is an interrupted first write, nothing to protect: the next write replaces it.
             any |= !candidate.EndsWith(".tmp", StringComparison.Ordinal);
-            bool valid = TryRead(candidate, out var result, out bool newer);
+            bool valid = TryRead(candidate, out var result, out bool newer, out bool unreadable);
+            // A main file that is only briefly locked must not be replaced by the older backup.
+            for (int attempt = 0; unreadable && candidate == path && attempt < 3; attempt++) {
+                System.Threading.Thread.Sleep(40);
+                valid = TryRead(candidate, out result, out newer, out unreadable);
+            }
             if (candidate == path) { mainValid = valid; RememberMainStamp(); }
             if (valid && (best == null || result.revision > best.revision)) { best = result; bestPath = candidate; }
             future |= newer;
@@ -234,12 +239,11 @@ public static partial class MetaProgression
     }
     public static void RecordRunFinished(bool victory)
     {
-        // A read-only profile still ends the run, otherwise the result screen never opens.
-        if (!HasRun()) { MarkRunEnded(); return; }
+        if (!HasRun()) return;
         run.ended = true; run.won |= victory; CheckChallenges(); MarkChanged(false); Save();
     }
     public static void RecordVictory() => RecordRunFinished(true);
-    // Ends the run without any reward (debug victory, read-only profile): later events of this run earn nothing.
+    // Ends the run without any reward (debug victory): later events of this run earn nothing.
     public static void MarkRunEnded()
     {
         EnsureLoaded();
@@ -248,7 +252,10 @@ public static partial class MetaProgression
         if (!writeBlocked) { MarkDirty(); Save(); }
         Changed?.Invoke();
     }
-    static bool HasRun() { EnsureLoaded(); return run != null && !writeBlocked; }
+    // A read-only profile (newer version, unreadable) still records into the run ledger, so world saves keep the
+    // progress and merge it once the profile can be written again. Profile-only state checks writeBlocked itself
+    // (rounds stay transient, lifetime counters and milestone stages wait), and nothing reaches the profile file.
+    static bool HasRun() { EnsureLoaded(); return run != null; }
 
     // Runs every frame (also in menus and while input is blocked): a change made while the worker was writing,
     // such as a level-up or a payout, is written as soon as that write has finished, not seconds later.
@@ -695,9 +702,11 @@ public static partial class MetaProgression
         startMoney = loadout.startMoney, startingTorches = loadout.startingTorches, startingLadders = loadout.startingLadders,
         buildReachBonus = loadout.buildReachBonus, carryCapacityBonus = loadout.carryCapacityBonus
     };
-    static bool TryRead(string path, out MetaProfile result, out bool newer)
+    static bool TryRead(string path, out MetaProfile result, out bool newer) => TryRead(path, out result, out newer, out _);
+    // unreadable: the file could not be opened (e.g. briefly locked by a scanner), which says nothing about its content.
+    static bool TryRead(string path, out MetaProfile result, out bool newer, out bool unreadable)
     {
-        result = null; newer = false;
+        result = null; newer = false; unreadable = false;
         try {
             var info = new FileInfo(path);
             if (!info.Exists || info.Length <= 0 || info.Length > MaxFileBytes) return false;
@@ -709,7 +718,8 @@ public static partial class MetaProgression
             if (candidate != null && candidate.version > FormatVersion) { newer = true; return false; }
             if (!ValidateProfile(candidate)) return false;
             result = candidate; return true;
-        } catch (Exception error) when (error is IOException || error is UnauthorizedAccessException || error is ArgumentException || error is NotSupportedException) { return false; }
+        } catch (Exception error) when (error is IOException || error is UnauthorizedAccessException) { unreadable = true; return false; }
+        catch (Exception error) when (error is ArgumentException || error is NotSupportedException) { return false; }
     }
     static string Hash(string text)
     {
