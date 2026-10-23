@@ -658,7 +658,8 @@ public sealed class CompactHud : MonoBehaviour
             buttons[i].onClick.AddListener(()=> { if (!slotDrags[slot].ConsumeClick()) ActivateHotbarSlot(index); });
             selections[i+1]=Image("Selection",bg.transform,0,0,SocketSize,SocketSize,selectedSprite,Color.white);
             icons[i]=Image("Item",bg.transform,12,12,86,86,null,Color.white); icons[i].preserveAspect=true;
-            keyLabels[i]=Text("Key",bg.transform,"",10,5,26,29,27,TextAlignmentOptions.TopLeft);
+            keyLabels[i]=Text("Key",bg.transform,"",10,5,KeyLabelWidth,29,27,TextAlignmentOptions.TopLeft);
+            keyLabels[i].fontSizeMin=KeyLabelMinSize;
             var badge=Image("Count Badge",bg.transform,0,0,40,27,null,new Color(0,0,0,0));
             badge.rectTransform.anchorMin=badge.rectTransform.anchorMax=badge.rectTransform.pivot=new Vector2(1,0);
             badge.rectTransform.anchoredPosition=new Vector2(-9,8);
@@ -682,7 +683,21 @@ public sealed class CompactHud : MonoBehaviour
     {
         var key = GameBindings.Get(action, 0);
         if (key == KeyCode.None) key = GameBindings.Get(action, 1);
-        return key == KeyCode.None ? "" : GameBindings.Display(key);
+        return key == KeyCode.None ? "" : ShortKey(key);
+    }
+    // The socket label has room for about three characters; long key names get a short form.
+    internal const float KeyLabelWidth = 26, KeyLabelMinSize = 12;
+    internal static string ShortKey(KeyCode key)
+    {
+        if (key >= KeyCode.Keypad0 && key <= KeyCode.Keypad9) return "N" + ((int)key - (int)KeyCode.Keypad0);
+        if (key >= KeyCode.Mouse0 && key <= KeyCode.Mouse6) return "M" + ((int)key - (int)KeyCode.Mouse0 + 1);
+        var text = key switch
+        {
+            KeyCode.Space => "Lt", KeyCode.LeftShift or KeyCode.RightShift => "Sh",
+            KeyCode.LeftControl or KeyCode.RightControl => "Str", KeyCode.LeftAlt or KeyCode.RightAlt => "Alt",
+            _ => GameBindings.Display(key)
+        };
+        return text.Length <= 3 ? text : text.Substring(0, 3);
     }
 }
 

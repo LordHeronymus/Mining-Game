@@ -11,7 +11,7 @@ using Object = UnityEngine.Object;
 
 // Edit Mode. Key binding fixes: Esc can be captured again for "Einstellungen", the settings key does not close
 // workbench/storage/shop while a search field is focused (Esc still does), closing the shop releases a selected
-// search field, and the hotbar key labels follow the current bindings. Uses a temporary EventSystem that is never
+// search field, and the hotbar key labels follow the current bindings in a short form (at most three characters). Uses a temporary EventSystem that is never
 // enabled (EventSystem.current stays untouched); hotbar binding PlayerPrefs are restored. Result in
 // Temp/BughuntKeyBindingChecks.txt.
 public static class BughuntKeyBindingChecks
@@ -112,11 +112,23 @@ public static class BughuntKeyBindingChecks
             GameBindings.Set(GameAction.Slot1, 0, KeyCode.Z);
             Check(GameBindings.Version != version && Label(GameAction.Slot1) == "Z", "Hotbar 1 auf Z zeigt Z und meldet die Änderung");
             GameBindings.Set(GameAction.Slot2, 0, KeyCode.None);
-            Check(Label(GameAction.Slot2) == "Num 2", "Leere erste Taste zeigt die zweite Taste");
+            Check(Label(GameAction.Slot2) == "N2", "Leere erste Taste zeigt die zweite Taste (kurz)");
             GameBindings.Set(GameAction.Slot2, 1, KeyCode.None);
             Check(Label(GameAction.Slot2) == "", "Ohne Taste bleibt die Beschriftung leer");
             GameBindings.Set(GameAction.Slot3, 0, KeyCode.Alpha4);
             Check(Label(GameAction.Slot3) == "4" && Label(GameAction.Slot4) == "4", "Getauschte Ziffern werden angezeigt");
+            // R4-input-0: long key names get a short form that fits the socket label (about three characters).
+            var shortKey = Method(typeof(CompactHud), "ShortKey", StaticMembers);
+            string Short(KeyCode key) => (string)shortKey.Invoke(null, new object[] { key });
+            var tooLong = ((KeyCode[])Enum.GetValues(typeof(KeyCode))).Where(key => key != KeyCode.None && Short(key).Length > 3).ToArray();
+            Check(tooLong.Length == 0, "Alle Tastennamen der Hotbar haben höchstens 3 Zeichen" + (tooLong.Length > 0 ? " (" + tooLong[0] + ")" : ""));
+            Check(Short(KeyCode.Alpha1) == "1" && Short(KeyCode.Keypad3) == "N3" && Short(KeyCode.LeftShift) == "Sh" &&
+                  Short(KeyCode.LeftControl) == "Str" && Short(KeyCode.Mouse3) == "M4" && Short(KeyCode.F12) == "F12" && Short(KeyCode.Z) == "Z",
+                "Kurzformen für Ziffern, Num, Shift, Strg, Maus und F-Tasten");
+            GameBindings.Set(GameAction.Slot5, 0, KeyCode.LeftShift);
+            Check(Label(GameAction.Slot5) == "Sh", "Hotbar-Beschriftung nutzt die Kurzform");
+            var minSize = typeof(CompactHud).GetField("KeyLabelMinSize", StaticMembers);
+            Check(minSize != null && (float)minSize.GetValue(null) <= 12f, "Tastenfeld darf die Schrift für drei Zeichen verkleinern");
             var refresh = Method(typeof(CompactHud), "RefreshKeyLabels", InstanceMembers);
             var versionGetter = typeof(GameBindings).GetProperty("Version", StaticMembers)?.GetGetMethod(true);
             Check(versionGetter != null && Calls(Method(typeof(CompactHud), "Update", InstanceMembers), versionGetter) &&
