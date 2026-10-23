@@ -4,7 +4,7 @@ Die Prüfskripte aus `Tests/*Checks.cs` laufen auch ohne lokalen Editor: GitHub 
 
 ## Bestandteile
 
-- `.github/workflows/unity-checks.yml`: Workflow „Unity Checks“. Startet manuell (Actions → Unity Checks → Run workflow) und bei Pull Requests nach `main`.
+- `.github/workflows/unity-checks.yml`: Workflow „Unity Checks“. Startet manuell (Actions → Unity Checks → Run workflow) und bei Pull Requests nach `main` (gedrosselt, siehe „Drosselung“).
 - `Tests/CI/prepare.py`: wählt die Checks (Suite oder Liste), kopiert sie nach `Assets/Editor/CIChecks/` (per `.gitignore` ausgeschlossen) und schreibt `Artifacts/plan.json`.
 - `Tests/CI/suites/*.json`: Suiten. `smoke` = schnelle Edit-Mode-Checks, `play` = Play-Mode ab MainMenu.
 - `Tests/CI/run-in-container.sh`: Lizenzaktivierung und Unity-Start im Container.
@@ -57,6 +57,22 @@ Cloud-Sessions (Claude Code im Browser/App) und der Workflow „Unity Checks“ 
 ## Play-Mode in der Cloud
 
 Im `-batchmode` rendert der Editor kein Game-Fenster, daher kehren Coroutinen mit `WaitForEndOfFrame` (Blenden, Ladebildschirm) nie zurück und Play-Checks hängen (Lauf #7). Der Editor mit Oberfläche (ohne `-batchmode`, Xvfb + Mesa, `-automated`) beendet sich ohne Unity-Hub-Anmeldung direkt nach der Lizenzprüfung („Access token is unavailable“, Läufe #8–#12); diese Variante ist nur noch manuell mit `editorui = 1` aktivierbar. Play-Checks (`play:`) laufen deshalb in der Cloud derzeit nicht.
+
+## Drosselung (Actions-Minuten)
+
+Der erste Schritt „Budget“ (`Tests/CI/budget.py`) vergleicht den Verbrauch des Monats mit einer Budget-Linie: pro angefangenem Tag 3 % des Kontingents (am 23. also 69 %, am 30. 90 %, höchstens 100 %; Monat in UTC, Erneuerung am 1.). Daraus folgt die Stufe:
+
+| Stufe | Bedingung | Wirkung |
+| --- | --- | --- |
+| 🟢 grün | Verbrauch auf oder unter der Linie | alles läuft normal |
+| 🟡 gelb | bis 10 Prozentpunkte darüber | kein automatischer PR-Lauf bei jedem Push; ein PR-Lauf erst mit Label `cloud-check` (einmal am Schluss). Manuelle Läufe ohne `checks` laufen mit Suite `smoke` |
+| 🔴 rot | mehr als 10 Punkte darüber oder weniger als 5 % übrig | nur manuelle Läufe mit Eingabe `force` (nur mit Freigabe des Benutzers) |
+
+- Übersprungene Läufe brechen nach wenigen Sekunden ab (PR: grün mit Hinweis, manuell bei Rot: Fehler) und schreiben einen Kommentar „Übersprungen (Drosselung)“ ins Issue #2. Jeder Statuskommentar zeigt die Stufe, die Budget-Linie und den Grund.
+- Öffentliches Repository: Läufe auf Standard-Runnern sind kostenlos, die Stufe wird nur angezeigt, nichts gedrosselt.
+- Datenquelle: Mit dem Repository-Secret `ACTIONS_BILLING_TOKEN` (Fine-grained Token, Account permissions → **Plan: Read**) liest der Schritt die offizielle Abrechnung aller Repositories („genau“). Ohne Secret schätzt er aus den Laufzeiten dieses Repositories; scheitert beides, läuft alles ungedrosselt.
+- Kontingent: Repository-Variable `ACTIONS_INCLUDED_MINUTES` (Standard 2000). Lokal prüfen: `GITHUB_TOKEN=… python3 Tests/CI/budget.py --print`.
+- Anzeige: PrivOrg → Cloud-Tests → Kästchen „Actions-Minuten“ (Graph Verbrauch gegen Budget-Linie, gleiche Rechnung).
 
 ## Zeitlimit und Nur-lokal-Checks
 
