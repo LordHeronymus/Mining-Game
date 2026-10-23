@@ -97,7 +97,7 @@ public sealed class ProgressionTimelineRunner:MonoBehaviour
         Find(panel,"Back").onClick.Invoke();yield return null;Check(panel.ShowingOverview,"Detail Back returns to overview");
         Find(panel,"Open Herausforderungen").onClick.Invoke();yield return null;
         Check(panel.GetComponentsInChildren<TMP_Text>().Any(t=>t.text=="Monatlich"),"Challenges remain reachable");Find(panel,"Challenges Back").onClick.Invoke();yield return null;
-        Find(panel,"Open Baupläne").onClick.Invoke();yield return null;Check(panel.GetComponentsInChildren<TMP_Text>().Any(t=>t.text=="Im Fundpool"),"Catalog distinguishes find-pool unlocks");
+        Find(panel,"Open Baupläne").onClick.Invoke();yield return null;Check(panel.GetComponentsInChildren<TMP_Text>().Any(t=>t.text=="Freigeschaltet"),"Catalog distinguishes find-pool unlocks");
         Find(panel,"Blueprints Back").onClick.Invoke();yield return null;
         // Fit the actual modal into three root sizes without modifying the game camera.
         var root=(RectTransform)panel.transform; var anchorsMin=root.anchorMin;var anchorsMax=root.anchorMax;
@@ -141,7 +141,7 @@ public sealed class ProgressionTimelineRunner:MonoBehaviour
         yield return new WaitForSecondsRealtime(3.7f);
         Check(result.AnimationComplete && result.GetComponentInChildren<ProgressionTimeline>().DisplayedLevel==MetaProgression.Level,"XP animation completes while paused");
         Check(MetaProgression.TotalXp==total,"XP animation never grants XP again");
-        Check(result.GetComponentsInChildren<TMP_Text>().Any(t=>t.text=="NEU") && result.GetComponentsInChildren<TMP_Text>().Any(t=>t.text=="Im Fundpool"),"New exotic blueprint highlighted as fund-pool unlock");
+        Check(result.GetComponentsInChildren<TMP_Text>().Any(t=>t.text=="NEU") && result.GetComponentsInChildren<TMP_Text>().Any(t=>t.text=="Freigeschaltet"),"New exotic blueprint highlighted as fund-pool unlock");
         yield return Shot("Expedition-Result");Find(result,"Spend Points").onClick.Invoke();yield return Ready();yield return new WaitForSecondsRealtime(.4f);
         panel=Object.FindFirstObjectByType<MetaProgressionPanel>();
         Check(MainMenuController.IsVisible && panel && !panel.IsReadOnly && !panel.ShowingOverview && MetaProgression.CanEdit,"Punkte verteilen transitions home and opens editable upgrades");
