@@ -307,7 +307,7 @@ Die Standardwerte stehen im Code. `GpsProfile.asset` enthält den Abschnitt erst
   - Bei Runden ohne Bonus (umgewandelte alte Runden) nur „x / y erledigt“.
   - Im Tab Langzeit „x / 74 Stufen erreicht“.
   - Je Aufgabe ein Punkt (bis 16), im Tab Langzeit keine Punkte.
-- **Kacheln:** Sie sind im bestehenden V3-Stil gehalten. Rand und Plakette zeigen die Stufenfarbe, und die Plakette nennt die Stufe:
+- **Kacheln:** Sie sind im bestehenden V3-Stil gehalten. Die Stufenfarbe zeigt sich als weiches Leuchten an der inneren Holzkante (oben am hellsten, unten schwach) und als geschliffener Edelstein in Messingfassung auf den beiden oberen Eckplatten (`ChallengeTierRim`, `ChallengeGem` in `ChallengeArt.cs`; seit 23.10.2026 statt der flachen Farblinien). Die Plakette ist in der Stufenfarbe getönt und nennt die Stufe:
   - Leicht grün (112, 196, 96)
   - Mittel blau (86, 156, 232)
   - Schwer violett (170, 108, 230)
@@ -323,6 +323,9 @@ Die Standardwerte stehen im Code. `GpsProfile.asset` enthält den Abschnitt erst
   - Die Plakette nennt die nächste Medaille mit ihrer XP, denn diese Stufe zahlt die angezeigte XP.
 - **Run-Ziele:** Die drei Ziele des laufenden Runs stehen im Tab Langzeit nach den Linien. Ihre Plakette heisst „Run-Ziel“, ohne Rand.
 - Alle Texte sind auf die Kachelgrössen ausgemessen (bis 10'000'000 XP).
+- **Verfolgen (Stern):** Jede nicht erledigte Kachel (auch Projekt, Langzeit-Linien und Run-Ziele) hat links oben einen Stern. Ein Klick markiert sie, ein zweiter hebt die Markierung auf. Unten steht der Hinweis „Mit dem Stern verfolgst du Herausforderungen im Spiel.“
+  - **HUD:** `ChallengeTrackerHud` (Kind von `CompactHud`, rechts unter Geld/Punkte/Tiefe) zeigt höchstens 4 markierte, nicht erledigte Aufgaben in Markierreihenfolge: Symbol, Edelstein in Stufen- bzw. nächster Medaillenfarbe, Name, „x / y“ und Fortschrittsbalken. Ist eine erledigt, fällt sie heraus und die nächste Markierung rückt nach. Ohne Markierung ist die Liste unsichtbar. Sie nimmt keine Klicks an und blendet sich mit dem HUD aus.
+  - **Speicherung:** Profilfeld `trackedChallenges` (Liste von Schlüsseln, höchstens 32, älteste fallen weg; ältere Versionen ignorieren das Feld). Schlüssel `MetaChallengeProgress.track`: Runden-Aufgaben `<Id>@<Rundenstart>`, also endet die Markierung mit ihrer Runde und gilt nicht für die gleiche Aufgabe einer späteren Runde; Langzeit `Lifetime-<Linie>`; Run-Ziele `Run-<RunId>-<Ziel>` (bleiben markiert, solange ein anderer Run geladen ist). Code: `MetaChallengeTracking.cs`.
 
 ## 7. Tests
 
