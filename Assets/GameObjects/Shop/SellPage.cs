@@ -127,11 +127,9 @@ public partial class SellPage : MonoBehaviour
         if (!content || InventoryManager.Instance == null) return;
         ItemSO previousSelected = _selected;
         _buffer.Clear();
-        foreach (var kv in InventoryManager.Instance.GetSnapshot())
-        {
-            if (kv.Key != null && kv.Key.category == ItemCategory.Ore && kv.Value > 0 && MatchesSearch(kv.Key))
-                _buffer.Add((kv.Key, kv.Value));
-        }
+        // Backpack and storage huts combined, so ores in the storage can be sold from the shop.
+        foreach (var kv in ShopManager.OreStock())
+            if (MatchesSearch(kv.Key)) _buffer.Add((kv.Key, kv.Value));
 
         _buffer.Sort((a, b) => string.Compare(
             a.item.displayName,
@@ -225,11 +223,13 @@ public partial class SellPage : MonoBehaviour
             detailsPanel.SetActive(true);
         }
 
-        int count = InventoryManager.Instance?.GetCount(_selected) ?? 0;
+        int count = ShopManager.StockCount(_selected);
         int worth = _selected.worth;
         long total = (long)worth * CurrentSaleCount(count);
 
         if (oreNameText) oreNameText.text = _selected.displayName;
+        int stored = ShopManager.StoredCount(_selected);
+        if (oreKindText) oreKindText.text = stored > 0 ? $"Erz · davon {ShopMoneyFormatter.Format(stored)} im Lager" : "Erz";
         if (selectedOreIcon)
         {
             selectedOreIcon.sprite = _selected.icon;
@@ -248,7 +248,7 @@ public partial class SellPage : MonoBehaviour
 
     private void UpdateButtons()
     {
-        int count = (_selected && InventoryManager.Instance) ? InventoryManager.Instance.GetCount(_selected) : 0;
+        int count = _selected ? ShopManager.StockCount(_selected) : 0;
         bool canSellSelected = _selected && _selected.worth > 0 && count > 0;
 
         if (sell1Button) sell1Button.interactable = canSellSelected && count >= 1;
@@ -258,15 +258,12 @@ public partial class SellPage : MonoBehaviour
         // ---- Sell All: nur aktiv, wenn es IRGENDEIN verkaufbares Ore gibt ----
         bool canSellAny = false;
 
-        if (InventoryManager.Instance != null)
+        foreach (var kv in ShopManager.OreStock())
         {
-            foreach (var kv in InventoryManager.Instance.GetSnapshot())
+            if (ShopManager.IsSellable(kv.Key))
             {
-                if (ShopManager.IsSellable(kv.Key) && kv.Value > 0)
-                {
-                    canSellAny = true;
-                    break;
-                }
+                canSellAny = true;
+                break;
             }
         }
 
@@ -277,9 +274,7 @@ public partial class SellPage : MonoBehaviour
     {
         if (!sellMaxButton) return;
 
-        int count = (_selected && InventoryManager.Instance)
-            ? InventoryManager.Instance.GetCount(_selected)
-            : 0;
+        int count = _selected ? ShopManager.StockCount(_selected) : 0;
         bool controlHeld = GameBindings.Held(GameAction.SellAll);
         bool shiftHeld = GameBindings.Held(GameAction.SellTen);
         bool canSellSelected = _selected && _selected.worth > 0 && count > 0;
@@ -320,7 +315,7 @@ public partial class SellPage : MonoBehaviour
     private void Sell(int qty)
     {
         if (!_selected || InventoryManager.Instance == null) return;
-        int have = InventoryManager.Instance.GetCount(_selected);
+        int have = ShopManager.StockCount(_selected);
         if (have <= 0) return;
 
         int q = Mathf.Min(qty, have);
@@ -331,7 +326,7 @@ public partial class SellPage : MonoBehaviour
     private void SellMax()
     {
         if (!_selected || InventoryManager.Instance == null) return;
-        int have = InventoryManager.Instance.GetCount(_selected);
+        int have = ShopManager.StockCount(_selected);
         if (have <= 0) return;
 
         ShopManager.Instance?.TrySell(_selected, have);

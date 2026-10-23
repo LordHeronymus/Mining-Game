@@ -12,6 +12,7 @@
     { "name": "ChallengeReworkChecks" },
     { "name": "ChallengeSettingsChecks" },
     { "name": "ChallengeCoreChecks" },
-    { "name": "VoiceLineChecks" }
+    { "name": "VoiceLineChecks" },
+    { "name": "StorageComponentsShopChecks" }
   ]
 }

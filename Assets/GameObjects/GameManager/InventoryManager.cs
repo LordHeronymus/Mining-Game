@@ -241,17 +241,20 @@ public class InventoryManager : MonoBehaviour
 
     // Apply a crafting transaction completely before notifying inventory listeners.
     // The costs may be empty when the workbench takes every material from the storage hut.
-    public bool TryExchange(IReadOnlyDictionary<ItemSO, int> costs, ItemSO output, int amount)
+    // outputToInventory false: the output went elsewhere (crafted components into the storage hut); only the
+    // costs leave the backpack, but the gain is still announced for the item feed.
+    public bool TryExchange(IReadOnlyDictionary<ItemSO, int> costs, ItemSO output, int amount, bool outputToInventory = true)
     {
         if (!output || amount <= 0 || costs == null) return false;
         bool outputIsPowerup = output.category == ItemCategory.Powerup;
         if (outputIsPowerup && (amount != 1 || IsPowerupUnlocked(output))) return false;
+        bool addsOutput = outputToInventory && !outputIsPowerup;
         foreach (var cost in costs)
             if (!cost.Key || cost.Value <= 0 || GetCount(cost.Key) < cost.Value) return false;
         costs.TryGetValue(output, out int outputCost);
-        long finalOutput = outputIsPowerup ? 0 : (long)GetCount(output) - outputCost + amount;
-        if (!outputIsPowerup && finalOutput > int.MaxValue) return false;
-        double changeInWeight = outputIsPowerup ? 0d : output.EffectiveWeight * (double)amount;
+        long finalOutput = addsOutput ? (long)GetCount(output) - outputCost + amount : 0;
+        if (addsOutput && finalOutput > int.MaxValue) return false;
+        double changeInWeight = addsOutput ? output.EffectiveWeight * (double)amount : 0d;
         foreach (var cost in costs) changeInWeight -= cost.Key.EffectiveWeight * (double)cost.Value;
         if (!CanFitWeight(changeInWeight)) return false;
         if (outputIsPowerup && !UnlockPowerup(output, false)) return false;
@@ -264,7 +267,7 @@ public class InventoryManager : MonoBehaviour
             else _counts[cost.Key] = remaining;
             changed.Add(cost.Key);
         }
-        if (!outputIsPowerup)
+        if (addsOutput)
         {
             _counts[output] = (int)finalOutput;
             _ownedThisRun.Add(output);

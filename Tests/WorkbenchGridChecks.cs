@@ -20,6 +20,9 @@ public static class WorkbenchGridChecks
         var favoriteState = panel.recipes.ToDictionary(x => x, x => PlayerPrefs.GetInt(x.FavoriteKey, 0));
         var bridge = panel.recipes.First(x => x.output.item == Item.BridgePart);
         var rope = panel.recipes.First(x => x.output.item == Item.Rope);
+        // The rope is checked in the backpack; with the switch on it would go into the storage hut.
+        bool componentsToStorage = GpsSettings.Preferences.workbenchComponentsToStorage;
+        GpsSettings.Preferences.workbenchComponentsToStorage = false;
         try
         {
             inventory.ResetAll();
@@ -81,6 +84,7 @@ public static class WorkbenchGridChecks
         }
         finally
         {
+            GpsSettings.Preferences.workbenchComponentsToStorage = componentsToStorage;
             inventory.ResetAll(); foreach (var pair in snapshot) inventory.Add(pair.Key, pair.Value);
             foreach (var pair in favoriteState) if (panel.IsFavorite(pair.Key) != (pair.Value == 1)) panel.ToggleFavorite(pair.Key);
             panel.SetSearch(""); panel.SetCategory(All); panel.SetFilter(false); panel.SetFavoritesOnly(false); panel.SelectRecipe(bridge);
