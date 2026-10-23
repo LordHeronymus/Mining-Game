@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -9,30 +10,40 @@ using Object = UnityEngine.Object;
 
 // Carrying overload: up to the capacity full speed, up to twice the capacity the speed falls linearly to a third,
 // more than twice the capacity cannot be picked up, and even fully loaded the player jumps onto a one-cell step.
-// Play Mode (SampleScene, menu may be open): the jump runs on a copy of the player in a separate physics scene;
-// the inventory gets a temporary item that is removed again. Result in Temp/CarryOverloadChecks.txt.
+// Requires a fresh Play start from MainMenu: starts a test game in an isolated save/meta profile; the jump runs on a
+// copy of the player in a separate physics scene. Result in Temp/CarryOverloadChecks.txt.
 public static class CarryOverloadChecks
 {
-    const string Report = "Temp/CarryOverloadChecks.txt";
+    public const string Report = "Temp/CarryOverloadChecks.txt";
     const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.NonPublic;
     static readonly List<string> checks = new();
     static void Check(bool condition, string label) { if (!condition) throw new Exception(label); checks.Add("PASS " + label); }
 
     public static object Main()
     {
-        if (!Application.isPlaying) return "Requires Play Mode.";
+        if (!Application.isPlaying || !MainMenuController.IsVisible || GameplayInputBlocker.IsBlocked)
+            return "Requires fresh Play from MainMenu.";
+        var go = new GameObject("Carry Overload Probe");
+        Object.DontDestroyOnLoad(go);
+        go.AddComponent<CarryOverloadProbe>();
+        return "Running carry overload checks in a new test game; result in " + Report + ".";
+    }
+
+    // Called by the probe once the test game is loaded.
+    public static void Run()
+    {
         checks.Clear(); Directory.CreateDirectory("Temp");
         try
         {
             Logic();
             Inventory();
             Jumps();
-            File.WriteAllText(Report, string.Join("\n", checks)); return "PASS (" + checks.Count + ")";
+            File.WriteAllText(Report, string.Join("\n", checks) + "\nPASS (" + checks.Count + ")");
         }
         catch (Exception ex)
         {
             var inner = ex is TargetInvocationException tie && tie.InnerException != null ? tie.InnerException : ex;
-            File.WriteAllText(Report, "FAIL " + inner + "\n" + string.Join("\n", checks)); throw;
+            File.WriteAllText(Report, "FAIL " + inner + "\n" + string.Join("\n", checks));
         }
     }
 
@@ -118,8 +129,8 @@ public static class CarryOverloadChecks
                 " Blöcke, mit Untergrenze " + PlayerMovement.LoadedJumpHeightBlocks(stats.JumpHeightBlocks, factor, GpsSettings.Preferences.carryMinJumpBlocks).ToString("0.00"));
 
             Box(root, "Floor", new Vector2(0f, -1f), new Vector2(40f, 2f));
-            Box(root, "Step", new Vector2(10f + cellWidth * 2f, cell * .5f), new Vector2(20f + cellWidth * 4f, cell));
             float stepLeft = cellWidth * 2f;
+            Box(root, "Step", new Vector2(stepLeft + 10f, cell * .5f), new Vector2(20f, cell));
 
             var actor = new GameObject("Player copy") { layer = 31 };
             actor.SetActive(false);
@@ -180,4 +191,44 @@ public static class CarryOverloadChecks
         go.transform.position = center;
         go.AddComponent<BoxCollider2D>().size = size;
     }
+}
+
+public sealed class CarryOverloadProbe : MonoBehaviour
+{
+    string save, meta, gps;
+    bool clean;
+
+    IEnumerator Start()
+    {
+        save = GameSaveSystem.TestDirectory; meta = MetaProgression.TestDirectory; gps = JsonUtility.ToJson(GpsSettings.Tests);
+        GameSaveSystem.TestDirectory = Path.GetFullPath("Temp/CarryOverload-" + DateTime.UtcNow.Ticks);
+        MetaProgression.TestDirectory = Path.Combine(GameSaveSystem.TestDirectory, "Profile");
+        GpsSettings.Document.tests.testModeDisabled = true;
+        File.WriteAllText(CarryOverloadChecks.Report, "running\n");
+        RunNavigation.NewGame("Traglast-Test");
+        yield return Wait();
+        yield return null; yield return null;
+        CarryOverloadChecks.Run();
+        if (!MainMenuController.IsVisible && !RunNavigation.IsTransitioning) RunNavigation.MainMenu();
+        yield return Wait();
+        Cleanup();
+    }
+
+    static IEnumerator Wait()
+    {
+        float end = Time.realtimeSinceStartup + 120;
+        while ((LoadingProgress.Active || RunNavigation.IsTransitioning) && Time.realtimeSinceStartup < end) yield return null;
+    }
+
+    void Cleanup()
+    {
+        if (clean) return;
+        clean = true;
+        MetaProgression.EndRun();
+        MetaProgression.TestDirectory = meta; GameSaveSystem.TestDirectory = save;
+        JsonUtility.FromJsonOverwrite(gps, GpsSettings.Document.tests);
+        Object.Destroy(gameObject);
+    }
+
+    void OnDestroy() { if (!clean) Cleanup(); }
 }
