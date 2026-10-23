@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Striche im Hintergrund von Layer 2 entfernen (bereinigte Bildvariante `LowerSandstone_Clean.png`) | `claude/l2-hintergrund-striche` | Cloud | `Assets/GameObjects/Background/Underground/`, `GpsProfile.asset` (Layer 2 Hintergrund), `FixedUnderground.mat` | ja (Sichtprüfung Testbank) | 23.10.2026 17:30 |
 
 ## Zuletzt abgeschlossen
 
