@@ -25,7 +25,7 @@ MonoBehaviour:
     flipY: 0
   output: {fileID: 11400000, guid: d5aa54ded394ecc4a9ed9cc06414c941, type: 2}
   outputAmount: 1
-  shopPrice: 2500
+  shopPrice: 5000
   pluralName: Wolframspitzhacken
   ingredients:
   - item: {fileID: 11400000, guid: 54906269f3db5e14ba6ae9e4d8c339f4, type: 2}
