@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Fortschrittsbalken Challenge-Karten: Füllung links bis in die Spitze, rundes Ende mit Leuchten | `claude/fortschrittsbalken` | Cloud | `ChallengeArt.cs` (`ChallengeGoldFill`), `ChallengePanel.Track` | Testbank (lokal) | 23.10.2026 17:40 |
 
 ## Zuletzt abgeschlossen
 
