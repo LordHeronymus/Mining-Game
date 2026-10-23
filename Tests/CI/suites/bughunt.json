@@ -1,0 +1,67 @@
+{
+  "checks": [
+    {
+      "name": "BughuntCracksChecks"
+    },
+    {
+      "name": "BughuntDragClickChecks"
+    },
+    {
+      "name": "BughuntEditorLeakChecks"
+    },
+    {
+      "name": "BughuntEntrySignChecks"
+    },
+    {
+      "name": "BughuntLadderEscapeChecks"
+    },
+    {
+      "name": "BughuntLightingChecks"
+    },
+    {
+      "name": "BughuntMapPanelChecks"
+    },
+    {
+      "name": "BughuntPlayerCompileChecks"
+    },
+    {
+      "name": "BughuntRecipeChecks"
+    },
+    {
+      "name": "BughuntShopFormatChecks"
+    },
+    {
+      "name": "BughuntWorkbenchRecipeRefreshChecks"
+    },
+    {
+      "name": "MiningCrackChecks"
+    },
+    {
+      "name": "WorkbenchChecks"
+    },
+    {
+      "name": "CaveGenerationChecks"
+    },
+    {
+      "name": "OreDistributionChecks"
+    },
+    {
+      "name": "TorchLightFieldChecks"
+    },
+    {
+      "name": "LightingChecks"
+    },
+    {
+      "name": "SurfaceHarvestIdentityChecks"
+    },
+    {
+      "name": "MetaProgressionCoreChecks"
+    },
+    {
+      "name": "ChallengeMigrationChecks"
+    },
+    {
+      "name": "VoiceLineChecks"
+    }
+  ]
+}
