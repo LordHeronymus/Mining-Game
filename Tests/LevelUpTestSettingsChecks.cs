@@ -29,7 +29,8 @@ public sealed class LevelUpSettingsProbe:MonoBehaviour {
  IEnumerator Run(){
   GpsRuntimePanel.Open();var panel=Object.FindFirstObjectByType<GpsRuntimePanel>();panel.SelectTab(GpsSchema.TestTab);Button("+ Overlays").onClick.Invoke();yield return null;
   var button=Button("Level-up-Animation testen");Check(button&&button.IsInteractable(),"Testsettings expose usable preview button");
-  button.onClick.Invoke();yield return new WaitForSecondsRealtime(.4f);
+  float s=GameplayLevelUpPresentation.Instance?GameplayLevelUpPresentation.Instance.SoundSyncSeconds:0;
+  button.onClick.Invoke();yield return new WaitForSecondsRealtime(.4f+s);
   var view=GameplayLevelUpPresentation.Instance;var audio=view.GetComponent<AudioSource>();var group=view.GetComponent<CanvasGroup>();
   Check(!GpsRuntimePanel.IsOpen&&!GameplayInputBlocker.IsBlocked,"Click closes GPS and releases its input blocker");
   Check(view.IsShowing&&view.FromLevel==13&&view.ToLevel==14&&group.alpha>.99f,"Same animation displays next level without active run");
@@ -39,7 +40,7 @@ public sealed class LevelUpSettingsProbe:MonoBehaviour {
   panel.SelectTab(GpsSchema.TestTab);Button("Level-up-Animation testen").onClick.Invoke();yield return new WaitForSecondsRealtime(.4f);
   Check(view.IsShowing&&view.Elapsed<.8f&&view.AudioPlayCount==2&&view.GetComponents<AudioSource>().Length==1,"Repeated test restarts one animation and one audio source");
   Check(Time.timeScale==previousScale&&JsonUtility.ToJson(MetaProgression.Profile)==profile,"Repeat preserves time and profile");
-  yield return new WaitForSecondsRealtime(3f);Check(!view.IsShowing&&group.alpha==0,"Preview finishes normally outside gameplay");
+  yield return new WaitForSecondsRealtime(2.6f+s);Check(!view.IsShowing&&group.alpha==0,"Preview finishes normally outside gameplay");
   Check(audio.isPlaying,"Preview audio tail survives visual fade");
   File.AppendAllText(Report,"COMPLETE "+checks+" checks\n");
  }

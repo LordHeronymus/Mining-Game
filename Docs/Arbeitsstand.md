@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud, Projekt-Thread „Level-Up-Sound“) | Neuer Level-Up-Ton (N3) und Medaille auf den Ton-Höhepunkt abstimmen | claude/level-up-sound | Cloud | GameplayLevelUpPresentation, LevelUpPresentationAssets, Resources/Progression/LevelUpPresentation.asset, AC Audio/UI/LevelUp-ChargeTreasure.wav, Level-Up-Prüfskripte | ja (Testbank, lokal) | 23.10.2026 15:00 |
 | Claude Code (Cloud, Projekt-Thread „Cloud Play-, Optik- und Performance-Tests“) | Performance: Szenenstart (UI-Panels im Awake), danach weitere Punkte aus Docs/Performance-Uebergabe.md | claude/ui-panel-startup | Cloud | GameplayAssetPreload, MainMenuController, UI-Panels (WorkbenchPanel, BuyPage, SettingsPanel, CompactHud), Docs/Performance-Uebergabe.md | nein | 23.10.2026 14:00 |
 
 ## Zuletzt abgeschlossen
