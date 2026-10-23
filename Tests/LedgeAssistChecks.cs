@@ -160,12 +160,14 @@ public static class LedgeAssistChecks
             typeof(PlayerMovement).GetField("jumpBufferRemaining", Flags).SetValue(movement, .12f);
             float highest = body.position.y;
             bool assisted = false;
+            float fastestPush = 0f;
             for (int frame = 0; frame < 150; frame++)
             {
                 if (frame == lateInput) typeof(PlayerMovement).GetField("inputX", Flags).SetValue(movement, (float)sign);
                 tick.Invoke(movement, null);
                 physics.Simulate(Time.fixedDeltaTime);
                 assisted |= movement.IsLedgeAssisting;
+                if (movement.IsLedgeAssisting) fastestPush = Mathf.Max(fastestPush, Mathf.Abs(body.linearVelocity.x));
                 highest = Mathf.Max(highest, body.position.y);
             }
             var box = body.GetComponent<Collider2D>().bounds;
@@ -173,6 +175,10 @@ public static class LedgeAssistChecks
             bool inside = (body.position.x - edge) * sign > .3f;
             bool onFloor = movement.IsOnGround && Mathf.Abs(box.min.y - nicheFloor) < .08f;
             detail = $"x={body.position.x:0.00} feet={box.min.y:0.00} floor={nicheFloor:0.00} highest={highest:0.00} grounded={movement.IsOnGround} assisted={assisted}";
+            // The push-in follows the GPS share of the run speed (default half), not a full-speed shove.
+            var stats = (StatsManager)typeof(PlayerMovement).GetField("stats", Flags).GetValue(movement);
+            float pushLimit = Mathf.Max(.5f, movement.ledgeAssistSpeedFactor * stats.EffectiveMoveSpeed) + .01f;
+            if (fastestPush > pushLimit) { detail += $" push={fastestPush:0.00} > {pushLimit:0.00}"; return false; }
             return inside && onFloor;
         }
         finally { movement.ledgeAssist = true; }

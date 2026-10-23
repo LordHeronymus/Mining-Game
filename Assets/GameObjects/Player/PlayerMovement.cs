@@ -27,6 +27,7 @@ public class PlayerMovement : MonoBehaviour
     public bool ledgeAssist = true;
     public float ledgeAssistUpCells = .35f;   // feet may be this far below the ledge top
     public float ledgeAssistDownCells = .15f; // or this far above it
+    public float ledgeAssistSpeedFactor = .5f; // push-in speed as a share of the run speed
 
     Rigidbody2D rb;
     Collider2D col;
@@ -234,8 +235,7 @@ public class PlayerMovement : MonoBehaviour
         ledgeAssistDir = dir;
         ledgeAssistStartX = rb.position.x;
         ledgeAssistDistance = distance;
-        float speed = Mathf.Max(.5f, stats ? stats.EffectiveMoveSpeed : 1f);
-        ledgeAssistRemaining = Mathf.Min(.5f, distance / speed + .1f);
+        ledgeAssistRemaining = Mathf.Min(1f, distance / LedgeAssistSpeed + .1f);
         HoldLedgeAssistVelocity();
         return true;
     }
@@ -258,9 +258,10 @@ public class PlayerMovement : MonoBehaviour
     // The next step adds gravity before it moves, so this upward speed keeps the height exactly.
     void HoldLedgeAssistVelocity()
     {
-        float speed = Mathf.Max(Mathf.Abs(rb.linearVelocity.x), stats ? stats.EffectiveMoveSpeed : 1f, .5f);
-        rb.linearVelocity = new Vector2(ledgeAssistDir * speed, -Physics2D.gravity.y * rb.gravityScale * Time.fixedDeltaTime);
+        rb.linearVelocity = new Vector2(ledgeAssistDir * LedgeAssistSpeed, -Physics2D.gravity.y * rb.gravityScale * Time.fixedDeltaTime);
     }
+
+    float LedgeAssistSpeed => Mathf.Max(.5f, Mathf.Clamp(ledgeAssistSpeedFactor, 0f, 2f) * (stats ? stats.EffectiveMoveSpeed : 1f));
 
     bool OverlapsGround(Vector2 center, Vector2 size)
     {

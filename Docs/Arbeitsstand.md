@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Kantenhilfe: Hineinschiebe-Tempo einstellbar (Standard halbe Laufgeschwindigkeit) | `claude/kantenhilfe-tempo` | Cloud-Klon | `PlayerMovement` (Kantenhilfe), `GpsSchema.Catalog.cs`/`GpsProfile.asset` (Bewegung), `Tests/LedgeAssistChecks.cs` | ja (Testbank, kurz) | 23.10.2026 18:20 |
 
 ## Zuletzt abgeschlossen
 
