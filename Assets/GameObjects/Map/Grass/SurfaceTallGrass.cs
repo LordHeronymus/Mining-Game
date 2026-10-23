@@ -183,6 +183,30 @@ public sealed class SurfaceTallGrass : MonoBehaviour
                 RemovePatch(position.x);
     }
 
+    // GPS sets clusterSize by reflection, past OnValidate: a minimum of 0 never left the loop and a maximum below the
+    // minimum divided by zero. Valid sizes split exactly as before, so the grassland stays seed-stable.
+    internal static int SplitClusters(List<int> groupSizes, int clusteredCount, Vector2Int clusterSize, int seed)
+    {
+        int minimumSize = Mathf.Max(2, clusterSize.x), maximumSize = Mathf.Max(minimumSize, clusterSize.y);
+        int remainingClustered = clusteredCount;
+        int groupIndex = 0;
+        while (remainingClustered >= minimumSize)
+        {
+            int maximum = Mathf.Min(maximumSize, remainingClustered);
+            int size = minimumSize + (int)(OreVeins.Hash(seed, groupIndex++, 0, 0xC1A57u) %
+                (uint)(maximum - minimumSize + 1));
+            if (remainingClustered - size > 0 && remainingClustered - size < minimumSize)
+            {
+                if (remainingClustered <= maximumSize) size = remainingClustered;
+                else if (remainingClustered - minimumSize >= minimumSize)
+                    size = remainingClustered - minimumSize;
+            }
+            groupSizes.Add(size);
+            remainingClustered -= size;
+        }
+        return remainingClustered;
+    }
+
     public void Rebuild()
     {
         rebuildPending = false;
@@ -206,22 +230,7 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         float spawnX = map.Terrain.GetCellCenterWorld(new Vector3Int(0, 0)).x;
         int clusteredCount = Mathf.RoundToInt(maximumPatches * clusterPercent / 100f);
         var groupSizes = new List<int>();
-        int remainingClustered = clusteredCount;
-        int groupIndex = 0;
-        while (remainingClustered >= clusterSize.x)
-        {
-            int maximum = Mathf.Min(clusterSize.y, remainingClustered);
-            int size = clusterSize.x + (int)(OreVeins.Hash(map.ActiveSeed, groupIndex++, 0, 0xC1A57u) %
-                (uint)(maximum - clusterSize.x + 1));
-            if (remainingClustered - size > 0 && remainingClustered - size < clusterSize.x)
-            {
-                if (remainingClustered <= clusterSize.y) size = remainingClustered;
-                else if (remainingClustered - clusterSize.x >= clusterSize.x)
-                    size = remainingClustered - clusterSize.x;
-            }
-            groupSizes.Add(size);
-            remainingClustered -= size;
-        }
+        int remainingClustered = SplitClusters(groupSizes, clusteredCount, clusterSize, map.ActiveSeed);
         int singles = maximumPatches - clusteredCount + remainingClustered;
         for (int i = 0; i < singles; i++) groupSizes.Add(1);
         var layoutRandom = new System.Random(map.ActiveSeed ^ 0x31C057A);

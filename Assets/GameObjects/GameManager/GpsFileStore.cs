@@ -43,6 +43,7 @@ public static class GpsFileStore
                     legacyFormat=true;
                 }
                 ItemIconLayout.Migrate(data,GpsSettings.Profile);
+                GpsSettings.ClampBounds(data);
                 if(!GpsSettings.ValidateDocument(data,out string error)) throw new InvalidDataException(error);
                 if(candidate!=path) warning="GPS-Sicherung geladen.";
                 return data;

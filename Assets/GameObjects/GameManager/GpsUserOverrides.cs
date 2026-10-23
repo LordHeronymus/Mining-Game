@@ -109,6 +109,8 @@ public static class GpsUserOverrides
             foreach (var entry in group)
                 if (Replace(root, entry)) count++; else stale?.Add(entry);
             if (count == 0) continue;
+            // Später enger gefasste Grenzen klemmen den eigenen Wert, statt ihn zu verwerfen.
+            GpsSettings.ClampBounds(root, GpsSchema.Spec(owner, root.name));
             if (!GpsSettings.IsValidOverride(owner, root) && !(DropUnresolved(group.ToList(), root, profile) && GpsSettings.IsValidOverride(owner, root)))
             {
                 stale?.AddRange(group.Where(entry => !stale.Contains(entry)));

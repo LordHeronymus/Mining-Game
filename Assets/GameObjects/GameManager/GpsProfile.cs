@@ -26,6 +26,8 @@ public sealed class GpsProfile : ScriptableObject
     public MetaProgressionSettings metaProgression = new();
     public ChallengeSettings challenges = new();
     public float panelBackdropAlpha = .55f, panelElementAlpha = 1f;
+    // The element alpha fades the whole F1 card, its own field included; at 0 the menu could no longer be used.
+    public const float MinPanelElementAlpha = .2f;
     public float loadingTwinkleFrequency = 1f;
     public float levelUpAnimationOffsetSeconds;
     public float hotbarVerticalOffset, hotbarHoldDuration = .5f, masterVolume = 1f, musicVolume = 1f;

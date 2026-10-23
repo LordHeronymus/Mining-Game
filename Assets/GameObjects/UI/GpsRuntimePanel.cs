@@ -164,7 +164,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         backdrop.color = new Color(0, 0, 0, GpsSettings.Preferences.panelBackdropAlpha);
         title.text = "Debug Settings" + (GpsSettings.HasUnsavedChanges ? " *" : "");
         var group = card.GetComponent<CanvasGroup>(); if (!group) group=card.gameObject.AddComponent<CanvasGroup>();
-        group.alpha = GpsSettings.Preferences.panelElementAlpha;
+        group.alpha = Mathf.Clamp(GpsSettings.Preferences.panelElementAlpha, GpsPreferences.MinPanelElementAlpha, 1f);
 #if UNITY_EDITOR
         if (overridesLabel)
         {

@@ -355,6 +355,38 @@ public static class GpsSettings
         }
         return true;
     }
+    // A bound raised in a later version would otherwise refuse stored values (own value dropped, whole player file
+    // rejected); such values move into the range instead. Mirrors ValidateBounds; true when something changed.
+    public static bool ClampBounds(GpsValue node, GpsFieldSpec spec)
+    {
+        if (node?.children == null || spec == null) return false;
+        bool changed = false;
+        // Non-finite values stay as they are; GpsCodec.Validate still refuses them.
+        if ((node.kind == GpsValueKind.Number || node.kind == GpsValueKind.Integer) && !double.IsInfinity(node.number) && (node.number < spec.min || node.number > spec.max))
+        { node.number = Math.Clamp(node.number, spec.min, spec.max); changed = true; }
+        if (node.kind==GpsValueKind.Vector)
+            for (int i=0;i<GpsSchema.VectorDimension(node);i++)
+                if (!float.IsInfinity(node.vector[i]) && (node.vector[i]<spec.min || node.vector[i]>spec.max)) { node.vector[i]=Mathf.Clamp(node.vector[i],spec.min,spec.max); changed=true; }
+        Type type=GpsCodec.ResolveType(node.type);
+        for (int i=0;i<node.children.Count;i++)
+        {
+            var child=node.children[i];
+            changed|=ClampBounds(child,node.kind==GpsValueKind.Array ? GpsSchema.ArraySpec(child,spec,i) : GpsSchema.ChildSpec(child,type));
+        }
+        return changed;
+    }
+    public static void ClampBounds(GpsDocument data)
+    {
+        if (data?.records == null) return;
+        foreach (var record in data.records)
+            if (record?.fields != null) foreach (var field in record.fields) ClampBounds(field, GpsSchema.Spec(record, field.name));
+        if (data.preferences == null) return;
+        foreach (var pref in GpsSchema.Fields(typeof(GpsPreferences)))
+        {
+            var node=GpsCodec.Read(pref.name,GpsCodec.MemberType(typeof(GpsPreferences),pref.name),GpsCodec.Get(data.preferences,pref.name),Profile.Key);
+            if (ClampBounds(node,pref)) GpsCodec.Set(data.preferences,pref.name,GpsCodec.Write(node,Profile.Resolve));
+        }
+    }
     public static bool Save(out string error)
     {
         pendingCommits.Clear();
