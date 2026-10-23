@@ -39,6 +39,7 @@ public sealed class TallGrassPatch : MonoBehaviour
         frequencyVariation = Mathf.Lerp(.85f, 1.15f,
             ((swaySeed >> 16) & 0xffffu) / 65535f);
         properties.SetFloat(ReachGlow, 0f);
+        reachGlowLevel = 0;
         visual.SetPropertyBlock(properties);
         source.ApplySwaySettings(this);
     }

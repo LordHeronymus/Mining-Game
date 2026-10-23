@@ -37,6 +37,7 @@ public sealed class MapLighting : MonoBehaviour
     const int MaximumUltroniumLights = 32;
     readonly List<TorchLightField.Source> torchSources = new List<TorchLightField.Source>();
     readonly HashSet<int> changedTorchCells = new HashSet<int>();
+    readonly HashSet<Vector2Int> torchFlameCells = new HashSet<Vector2Int>();
     readonly Vector4[] ultroniumSources = new Vector4[MaximumUltroniumLights];
     readonly List<Light2D> ultroniumLights = new List<Light2D>();
     readonly List<Vector3Int> visibleUltronium = new List<Vector3Int>();
@@ -73,6 +74,8 @@ public sealed class MapLighting : MonoBehaviour
     public bool IsReady => field != null;
     public bool IsCalculating => field != null && field.HasPendingWork;
     LightingSettingsData sceneDefaults;
+    // Values the current daylight field was built with; F1 writes the component fields directly.
+    LightingSettingsData builtSettings;
 
     void Start()
     {
@@ -92,16 +95,24 @@ public sealed class MapLighting : MonoBehaviour
     void ApplyDebugSettings()
     {
         var settings = GameplaySettings.Lighting;
-        if (JsonUtility.ToJson(settings) == JsonUtility.ToJson(CaptureSettings())) return;
-        lightingEnabled = settings.enabled;
-        daylightStrength = settings.daylight;
-        ambientBrightness = settings.ambient;
-        downwardLoss = settings.downLoss;
-        sidewaysLoss = settings.sideLoss;
-        blockLoss = settings.blockLoss;
-        exponentialStrength = settings.strength;
-        rebuild = true;
+        if (JsonUtility.ToJson(settings) != JsonUtility.ToJson(CaptureSettings()))
+        {
+            lightingEnabled = settings.enabled;
+            daylightStrength = settings.daylight;
+            ambientBrightness = settings.ambient;
+            downwardLoss = settings.downLoss;
+            sidewaysLoss = settings.sideLoss;
+            blockLoss = settings.blockLoss;
+            exponentialStrength = settings.strength;
+        }
+        // GpsSettings sets the fields before notifying, so compare against the built field instead.
+        if (builtSettings != null && FieldSettingsDiffer(builtSettings, CaptureSettings())) rebuild = true;
     }
+
+    // Switching the overlay on or off keeps the field; every other value changes the computed light.
+    static bool FieldSettingsDiffer(LightingSettingsData a, LightingSettingsData b)
+        => a.daylight != b.daylight || a.ambient != b.ambient || a.downLoss != b.downLoss ||
+           a.sideLoss != b.sideLoss || a.blockLoss != b.blockLoss || a.strength != b.strength;
 
     void OnDestroy() => GameplaySettings.Changed -= ApplyDebugSettings;
 
@@ -196,9 +207,14 @@ public sealed class MapLighting : MonoBehaviour
         }
         overlay.SetActive(true);
         UpdateHeadlamp();
-        preparedForStreamingGeneration = true;
+        ExpectStreamedGenerationCompleted();
         progress?.Invoke(1f);
     }
+
+    // Only a streamed new map reports GenerationCompleted after this preparation; a restored
+    // save reported it earlier, so a kept flag would swallow the next "Map generieren".
+    void ExpectStreamedGenerationCompleted()
+        => preparedForStreamingGeneration = map && map.IsGenerationStreaming;
 
     public void NotifyTileChanged(Vector3Int cell)
     {
@@ -237,10 +253,13 @@ public sealed class MapLighting : MonoBehaviour
         foreach (var cell in changed)
         {
             bool solid = tiles.HasTile(cell);
-            field.SetSolid(cell.x + width / 2, -cell.y, solid);
-            if (torchField.SetSolid(cell.x + width / 2, -cell.y, solid))
+            int x = cell.x + width / 2, y = -cell.y;
+            field.SetSolid(x, y, solid);
+            // Torch light only changes if the last rebuild read this cell or it moves a torch light.
+            if (torchField.SetSolid(x, y, solid) &&
+                (torchField.CanChangeLight(x, y) || torchFlameCells.Contains(new Vector2Int(x, y))))
                 torchFieldDirty = true;
-            if (headlampField.SetSolid(cell.x + width / 2, -cell.y, solid))
+            if (headlampField.SetSolid(x, y, solid))
                 headlampFieldDirty = true;
             UpdateSolidityPixel(cell, solid);
         }
@@ -384,12 +403,15 @@ public sealed class MapLighting : MonoBehaviour
         {
             torchFieldDirty = false;
             torchSources.Clear();
+            torchFlameCells.Clear();
             foreach (var torch in PlacedTorch.Active)
             {
                 if (!torch || torch.OwnerMap != map) continue;
                 Vector3Int cell = tiles.WorldToCell(torch.LightPosition);
                 torchSources.Add(new TorchLightField.Source(
                     cell.x + width / 2, -cell.y, torch.Intensity));
+                Vector3Int flame = torch.FlameCell;
+                torchFlameCells.Add(new Vector2Int(flame.x + width / 2, -flame.y));
             }
             foreach (int index in torchField.Rebuild(torchSources))
                 changedTorchCells.Add(index);
@@ -599,6 +621,7 @@ public sealed class MapLighting : MonoBehaviour
     System.Collections.IEnumerator InitializeSteps(int mapWidth, int mapHeight, TileBase[] allTiles, Action<float> progress = null)
     {
         ReleaseResources();
+        builtSettings = CaptureSettings();
         width = mapWidth;
         height = mapHeight;
         if (width <= 0 || height <= 0 || width > SystemInfo.maxTextureSize || height > SystemInfo.maxTextureSize)
@@ -857,6 +880,7 @@ public sealed class MapLighting : MonoBehaviour
         torchUploadPatch = null;
         torchUploadPatchPixels = null;
         torchSources.Clear();
+        torchFlameCells.Clear();
         changedTorchCells.Clear();
         torchFieldDirty = true;
         headlampFieldDirty = true;

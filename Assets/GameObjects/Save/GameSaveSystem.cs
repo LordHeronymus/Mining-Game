@@ -15,10 +15,12 @@ using UnityEngine.Tilemaps;
 public static class GameSaveSystem
 {
     const int Magic = 0x54484631;
-    const int MaxCells = 2000000;
+    internal const int MaxCells = 2000000;
     const int MaxFileBytes = 64 * 1024 * 1024;
     const int MaxExpandedBytes = 256 * 1024 * 1024;
     public const int MaxSlots = 10;
+    // Reported when a save was attempted and failed (not when it could not start or an autosave gave up).
+    public const string SaveFailedMessage = "Spielstand konnte nicht gespeichert werden.";
     public static bool IsBusy { get; private set; }
     public static int ActiveSlot { get; private set; } = -1;
     public static string ActiveRunName { get; private set; }
@@ -34,6 +36,10 @@ public static class GameSaveSystem
     sealed class AutosaveJob { public MonoBehaviour owner; public RunSnapshot snapshot; public Task write; public bool cancelled; }
     static AutosaveJob autosave;
     const double AutosaveFrameMilliseconds = 1;
+    // The normal save in progress (pause menu "Hauptmenü", slot panel): its coroutine stops with play mode or the
+    // application, so SaveActiveRunNow finishes it instead; its callback is skipped then (no navigation while exiting).
+    static IEnumerator normalSave;
+    static bool finishingOnExit, normalSaved;
     // Until its coroutine has finished; once its owner is gone, until its file write has finished.
     public static bool IsAutoSaving => autosave != null &&
         (autosave.owner && autosave.owner.isActiveAndEnabled || autosave.write is { IsCompleted: false });
@@ -68,13 +74,15 @@ public static class GameSaveSystem
         public TileFlags[] flags;
         public readonly Dictionary<int, (Color color, Matrix4x4 matrix)> custom = new();
     }
-    sealed class LoadedRun { public RunSaveState state; public Layer[] layers; }
+    // source: the file that was loaded (the recovery copy after a fallback). main: after a fallback, the valid header of
+    // the rejected main file; it keeps the run's latest name and creation date (renaming rewrites only the main file).
+    sealed class LoadedRun { public RunSaveState state; public Layer[] layers; public string source; public Summary main; }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void Reset()
     {
         IsBusy = false; pending = null; PlayedSeconds = 0; SlotsChanged = null;
-        autosave?.snapshot?.Dispose(); autosave = null;
+        autosave?.snapshot?.Dispose(); autosave = null; normalSave = null;
         ActiveSlot = -1; activeDirectory = null; ActiveRunName = null; HasPendingNewRun = false; InitialSaveError = null;
 #if UNITY_EDITOR
         TestDirectory = null;
@@ -123,6 +131,7 @@ public static class GameSaveSystem
         SettleAutosave();
         int slot = NextFreeSlot();
         if (slot < 1 || IsBusy) return false;
+        GpsSettings.ApplyNewRunAssets();
         CancelPendingLoad(); PlayedSeconds = 0;
         ActiveSlot = slot; activeDirectory = DirectoryPath; HasPendingNewRun = true; InitialSaveError = null;
         ActiveRunName = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
@@ -205,17 +214,27 @@ public static class GameSaveSystem
         if (slot == ActiveSlot) ActiveRunName = name.Trim();
         return true;
     }
-    static bool UpdateMetadata(int slot, Action<Summary> change, out string error)
+    // Without a source, the first file with a valid envelope is rewritten and the recovery copy is kept, since that file's
+    // payload may not load. A loaded run passes its own file instead: after a fallback to the recovery copy, its payload
+    // becomes the main file and the rejected one the recovery copy.
+    static bool UpdateMetadata(int slot, Action<Summary> change, out string error, string source = null)
     {
         error = "Spielstand konnte nicht aktualisiert werden.";
         if (slot < 1 || slot > MaxSlots) return false;
         SettleAutosave();
+        bool loaded = source != null;
         try
         {
-            var summary = GetSummary(slot); if (summary == null) return false;
-            ReadEnvelope(SlotPath(slot) + (summary.recovered ? ".bak" : ""), out var header, out var payload);
+            if (source == null)
+            {
+                var summary = GetSummary(slot); if (summary == null) return false;
+                source = SlotPath(slot) + (summary.recovered ? ".bak" : "");
+            }
+            ReadEnvelope(source, out var header, out var payload);
+            if (header.slot != slot) return false;
             NormalizeDates(header); change(header); header.recovered = false;
-            WriteEnvelopeAtomic(SlotPath(slot), JsonUtility.ToJson(header), payload, false);
+            string path = source.EndsWith(".bak", StringComparison.Ordinal) ? source.Substring(0, source.Length - 4) : source;
+            WriteEnvelope(path, JsonUtility.ToJson(header), payload, false, loaded);
             error = null; SlotsChanged?.Invoke(); return true;
         }
         catch (Exception ex) { Debug.LogWarning("Tiefenhall: Metadatenänderung fehlgeschlagen: " + ex.Message); return false; }
@@ -261,12 +280,14 @@ public static class GameSaveSystem
         error = "Spielstand konnte nicht geladen werden.";
         if (IsBusy || slot < 1 || slot > MaxSlots) return false;
         SettleAutosave();
+        Summary main = null; // The first valid header of this slot, also when that file's payload does not load.
         foreach (string path in new[] { SlotPath(slot), SlotPath(slot) + ".bak" })
             try
             {
                 if (!File.Exists(path)) continue;
                 ReadEnvelope(path, out var summary, out byte[] compressed);
                 if (summary.slot != slot) throw new InvalidDataException();
+                if (main == null) main = summary;
                 var catalog = Resources.Load<SaveAssetCatalog>("SaveAssetCatalog");
                 if (!catalog) throw new InvalidDataException("Spielstand-Katalog fehlt.");
                 using var packed = new MemoryStream(compressed);
@@ -283,18 +304,18 @@ public static class GameSaveSystem
                 var state = ParseRunState(reader.ReadString());
                 Validate(state);
                 // A legacy run keeps its identity across slot copies and receives neutral bonuses.
-                NormalizeDates(summary);
+                NormalizeDates(main);
                 if (state.progression == null)
-                    state.progression = new MetaRunState { runId = "legacy-" + summary.createdUtc + "-" + state.seed + "-" + state.width + "-" + state.height,
+                    state.progression = new MetaRunState { runId = "legacy-" + main.createdUtc + "-" + state.seed + "-" + state.width + "-" + state.height,
                         loadout = new MetaLoadout() };
                 var layers = new Layer[4];
-                for (int i = 0; i < layers.Length; i++) layers[i] = ReadLayer(reader, catalog, state);
+                for (int i = 0; i < layers.Length; i++) layers[i] = ReadLayer(reader, catalog, state, i == LadderLayer);
                 if (expanded.Position != expanded.Length) throw new InvalidDataException();
                 var ores = layers[1];
                 PaintedOreMigration.Apply(ores.tiles, ores.flags, ores.custom, ores.bounds, state.seed, state.width);
-                pending =new LoadedRun { state = state, layers = layers };
+                pending =new LoadedRun { state = state, layers = layers, source = path, main = main == summary ? null : main };
                 ActiveSlot = slot; activeDirectory = DirectoryPath; HasPendingNewRun = false; InitialSaveError = null;
-                ActiveRunName = summary.name;
+                ActiveRunName = main.name;
                 error = null; return true;
             }
             catch (Exception ex) { Debug.LogWarning("Tiefenhall: Spielstandprüfung fehlgeschlagen: " + ex.Message); }
@@ -343,7 +364,11 @@ public static class GameSaveSystem
     }
 
     public static IEnumerator Save(int slot, MonoBehaviour owner, Action<bool, string> complete)
-        => SaveRun(slot, owner, complete, false, false);
+    {
+        var routine = SaveRun(slot, owner, complete, false, false);
+        if (!IsBusy) normalSave = routine;
+        return routine;
+    }
     // Saves the active run while the game keeps running: no pause, no input block, nothing waits for it.
     public static IEnumerator Autosave(MonoBehaviour owner, Action<bool, string> complete)
         => SaveRun(ActiveSlot, owner, complete, false, false, true);
@@ -359,12 +384,22 @@ public static class GameSaveSystem
     // The autosave's owner goes away (scene change): drop an unfinished capture; a running file write completes on its own.
     public static void StopAutosave() { if (autosave != null && autosave.write == null) SettleAutosave(); }
 
+    // The active run belongs to the current save directory (an editor test may have switched TestDirectory since).
+    public static bool IsActiveDirectory => activeDirectory == DirectoryPath;
     // True while the running game has a slot of its own in the current save directory and can be captured.
-    public static bool CanAutoSave => ActiveSlot >= 1 && !HasPendingNewRun && activeDirectory == DirectoryPath && CanSave;
+    public static bool CanAutoSave => ActiveSlot >= 1 && !HasPendingNewRun && IsActiveDirectory && CanSave;
 
     // Saves the active run without returning to the frame loop, for play-mode stop and application quit.
+    // A normal save still running is finished here (into its own target) instead of being lost.
     public static bool SaveActiveRunNow(MonoBehaviour owner)
     {
+        if (IsBusy && normalSave != null)
+        {
+            var running = normalSave; normalSave = null; normalSaved = false; finishingOnExit = true;
+            try { while (running.MoveNext()) { } }
+            finally { finishingOnExit = false; }
+            return normalSaved;
+        }
         if (!CanAutoSave) return false;
         bool saved = false;
         var routine = SaveRun(ActiveSlot, owner, (ok, _) => saved = ok, false, false);
@@ -424,7 +459,7 @@ public static class GameSaveSystem
             try
             {
                 var state = Capture();
-                snapshot.Finish(catalog);
+                snapshot.Finish(catalog, state.width, state.height);
                 var summary = new Summary { slot = slot, name = ActiveRunName, savedUtc = state.savedUtc, money = state.stats.money,
                     points = state.stats.points, playedSeconds = state.playedSeconds,
                     depth = UnityEngine.Object.FindFirstObjectByType<CompactHud>()?.DepthMeters ?? 0,
@@ -444,7 +479,7 @@ public static class GameSaveSystem
         if (job != null) { if (autosave == job) autosave = null; }
         else
         {
-            IsBusy = false; Time.timeScale = previousScale;
+            IsBusy = false; Time.timeScale = previousScale; normalSave = null; normalSaved = saved;
             // An open pause/slot panel owns its own input gate; do not release it here.
             if (!(owner is RunPauseMenu) && !(owner is SaveSlotPanel)) GameplayInputBlocker.SetBlocked(owner, false);
             if (saved) { ActiveSlot = slot; activeDirectory = directory; }
@@ -452,7 +487,7 @@ public static class GameSaveSystem
         // A save that superseded this autosave reports its own change.
         if (saved && job?.cancelled != true) SlotsChanged?.Invoke();
         if (error != null) Debug.LogError("Tiefenhall: Speichern fehlgeschlagen: " + error);
-        complete?.Invoke(saved, saved ? "Gespeichert" : error == null ? "Speichern ist gerade nicht möglich." : "Spielstand konnte nicht gespeichert werden.");
+        if (!finishingOnExit) complete?.Invoke(saved, saved ? "Gespeichert" : error == null ? "Speichern ist gerade nicht möglich." : SaveFailedMessage);
     }
 
     static RunSaveState Capture()
@@ -460,13 +495,14 @@ public static class GameSaveSystem
         var map = UnityEngine.Object.FindFirstObjectByType<MapGenerator>();
         var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement>();
         var hud = UnityEngine.Object.FindFirstObjectByType<CompactHud>();
+        var visual = player.GetComponent<MinerPlayerVisual>();
         var state = new RunSaveState { seed = map.ActiveSeed, width = map.GeneratedWidth, height = map.GeneratedHeight,
             progression = MetaProgression.CaptureRunState(background: true),
             exotics = ExoticWorldContent.Ensure(map).CaptureState(),
             placedLights = PlacedTorch.Capture(map),
             generationSettings = GpsSettings.CaptureGeneration(map),
             savedUtc = DateTime.UtcNow.Ticks, playedSeconds = PlayedSeconds, playerPosition = player.transform.position,
-            playerVelocity = player.GetComponent<Rigidbody2D>().linearVelocity, facingLeft = player.transform.localScale.x < 0,
+            playerVelocity = player.GetComponent<Rigidbody2D>().linearVelocity, facingLeft = visual && visual.FacingLeft,
             inventory = InventoryManager.Instance.CaptureRunState(), stats = StatsManager.Instance.CaptureRunState(),
             energy = UnityEngine.Object.FindFirstObjectByType<EnergyManager>().energy, recipes = RecipeUnlocks.CaptureRunState(),
             altar = map.AltarChamber.CaptureState(), discovery = map.GetComponent<PlayerMapDiscovery>()?.CaptureState(),
@@ -499,8 +535,8 @@ public static class GameSaveSystem
         {
             Rows.SetLength(0);
             var ladders = map.GetComponent<LadderMap>();
-            layers = new[] { map.Terrain, map.EnsureOreOverlay(), map.EnsureArtifactOverlay(), ladders ? ladders.EnsureTiles() : null }
-                .Select(tiles => new LayerSnapshot(tiles)).ToArray();
+            layers = new[] { map.Terrain, map.EnsureOreOverlay(), map.EnsureArtifactOverlay() }.Select(tiles => new LayerSnapshot(tiles))
+                .Append(LayerSnapshot.Compacted(ladders ? ladders.EnsureTiles() : null)).ToArray();
             Tilemap.tilemapPositionsChanged += Changed; tracking = true;
         }
         void Changed(Tilemap source, NativeArray<Vector3Int> positions)
@@ -520,9 +556,9 @@ public static class GameSaveSystem
                 if (expired()) return true;
             }
         }
-        public void Finish(SaveAssetCatalog catalog)
+        public void Finish(SaveAssetCatalog catalog, int width, int height)
         {
-            foreach (var layer in layers) layer.Finish(catalog);
+            for (int i = 0; i < layers.Length; i++) layers[i].Finish(catalog, width, height, i == LadderLayer);
             Dispose();
         }
         // Worker thread: writes captured data only.
@@ -547,6 +583,9 @@ public static class GameSaveSystem
         string[] keys = Array.Empty<string>();
         public int ChangedRows { get; private set; }
         public LayerSnapshot(Tilemap tiles) { this.tiles = tiles; if (tiles) Restart(); }
+        // Removed ladders never shrink the tilemap bounds, so only the standing ones may count toward the saved block. Only
+        // before the capture starts: a later change of the bounds restarts the layer.
+        public static LayerSnapshot Compacted(Tilemap tiles) { if (tiles) tiles.CompressBounds(); return new LayerSnapshot(tiles); }
         // Bounds grow when a tile is placed outside them; the layer is then captured again.
         bool Moved => tiles && tiles.cellBounds != bounds;
         public bool Incomplete => next < offsets.Length || Moved;
@@ -578,10 +617,12 @@ public static class GameSaveSystem
             while (!changed[scan]) scan = (scan + 1) % changed.Length;
             Capture(scan); changed[scan] = false; ChangedRows--;
         }
-        public void Finish(SaveAssetCatalog catalog)
+        public void Finish(SaveAssetCatalog catalog, int width, int height, bool ladders)
         {
             while (Incomplete) Advance();
             while (ChangedRows > 0) Recapture();
+            // A file that loading would reject is never written: the previous save stays intact.
+            if (!ValidLayerBounds(bounds, width, height, ladders)) throw new InvalidDataException("Ungültige Weltgrenzen.");
             keys = palette.Select(catalog.Key).ToArray();
         }
         void Capture(int index)
@@ -628,11 +669,19 @@ public static class GameSaveSystem
         summary.lastOpenedUtc = previous?.lastOpenedUtc ?? state.savedUtc;
         WriteEnvelopeAtomic(path, JsonUtility.ToJson(summary), compressed, createOnly);
     }
-    static Layer ReadLayer(BinaryReader reader, SaveAssetCatalog catalog, RunSaveState state)
+    const int LadderLayer = 3;
+    // Saving and loading share these limits. Ladders may stand free in the sky up to LadderMap.SkyRows above the surface;
+    // the other layers stay within the map.
+    static bool ValidLayerBounds(BoundsInt bounds, int width, int height, bool ladders)
+    {
+        int x = bounds.xMin, y = bounds.yMin, w = bounds.size.x, h = bounds.size.y, sky = ladders ? LadderMap.SkyRows : 0;
+        return w >= 0 && h >= 0 && (long)w * h <= MaxCells && w <= width + 8 && h <= height + 8 + sky &&
+            x >= -width / 2 - 4 && x <= width / 2 + 4 && y >= -height - 4 && y <= 4 + sky;
+    }
+    static Layer ReadLayer(BinaryReader reader, SaveAssetCatalog catalog, RunSaveState state, bool ladders)
     {
         int x = reader.ReadInt32(), y = reader.ReadInt32(), w = reader.ReadInt32(), h = reader.ReadInt32();
-        if (w < 0 || h < 0 || (long)w * h > MaxCells || w > state.width + 8 || h > state.height + 8 ||
-            x < -state.width / 2 - 4 || x > state.width / 2 + 4 || y < -state.height - 4 || y > 4)
+        if (!ValidLayerBounds(new BoundsInt(x, y, 0, w, h, 1), state.width, state.height, ladders))
             throw new InvalidDataException("Ungültige Weltgrenzen.");
         var layer = new Layer { bounds = new BoundsInt(x, y, 0, w, h, 1), tiles = new TileBase[w * h], flags = new TileFlags[w * h] };
         int paletteCount = reader.ReadInt32(); if (paletteCount < 0 || paletteCount > 65536) throw new InvalidDataException();
@@ -714,7 +763,7 @@ public static class GameSaveSystem
             storage.RestoreRunState(run.state.storage?.FirstOrDefault(x => x.key == StorageKey(storage.transform))?.items);
         var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement>();
         player.transform.position = run.state.playerPosition;
-        var scale = player.transform.localScale; scale.x = Mathf.Abs(scale.x) * (run.state.facingLeft ? -1 : 1); player.transform.localScale = scale;
+        var visual = player.GetComponent<MinerPlayerVisual>(); if (visual) visual.FacingLeft = run.state.facingLeft;
         var body = player.GetComponent<Rigidbody2D>(); body.position = run.state.playerPosition; body.linearVelocity = run.state.playerVelocity;
         player.GetComponent<TileMiner>()?.RestoreRunState(run.state.mining);
         UnityEngine.Object.FindFirstObjectByType<EnergyManager>().energy = Mathf.Clamp(run.state.energy, 0, StatsManager.Instance.MaxEnergy);
@@ -728,6 +777,9 @@ public static class GameSaveSystem
         PlayedSeconds = run.state.playedSeconds;
         RunNavigation.EnsurePlayerCamera(player.transform);
         Physics2D.SyncTransforms();
+        // Climb and fall are not saved: hang on again at a touched ladder, and count a running fall from the loaded height.
+        var climber = player.GetComponent<PlayerLadder>(); if (climber) climber.AttachIfContact();
+        player.RestartFallTracking();
         LoadingProgress.SetStage(6);
         var lighting = map.GetComponent<MapLighting>();
         if (lighting)
@@ -735,9 +787,14 @@ public static class GameSaveSystem
             yield return lighting.PrepareForLoading(data, LoadingProgress.Report);
         }
         LoadingProgress.SetStage(7); yield return null; yield return new WaitForEndOfFrame();
-        UpdateMetadata(ActiveSlot, s => s.lastOpenedUtc = DateTime.UtcNow.Ticks, out _);
+        MarkOpened(run);
         LoadingProgress.Complete();
     }
+
+    static void MarkOpened(LoadedRun run) => UpdateMetadata(ActiveSlot, s => {
+        s.lastOpenedUtc = DateTime.UtcNow.Ticks;
+        if (run.main != null) { s.name = run.main.name; s.createdUtc = run.main.createdUtc; }
+    }, out _, run.source);
 
     static IEnumerator ExpandSavedLayer(Layer layer, BoundsInt bounds, Action<TileBase[]> complete)
     {
@@ -791,7 +848,9 @@ public static class GameSaveSystem
         using var hash = SHA256.Create(); byte[] prefix = Encoding.UTF8.GetBytes(header);
         hash.TransformBlock(prefix, 0, prefix.Length, null, 0); hash.TransformFinalBlock(payload, 0, payload.Length); return hash.Hash;
     }
-    static void WriteEnvelopeAtomic(string path, string header, byte[] compressed, bool createOnly)
+    static void WriteEnvelopeAtomic(string path, string header, byte[] compressed, bool createOnly) =>
+        WriteEnvelope(path, header, compressed, createOnly, true);
+    static void WriteEnvelope(string path, string header, byte[] compressed, bool createOnly, bool rotateBackup)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path));
         if (createOnly && (File.Exists(path) || File.Exists(path + ".bak") || File.Exists(path + ".tmp")))
@@ -800,9 +859,9 @@ public static class GameSaveSystem
         using (var file = new FileStream(temporary, createOnly ? FileMode.CreateNew : FileMode.Create, FileAccess.Write, FileShare.None))
         using (var writer = new BinaryWriter(file, Encoding.UTF8, true))
         { writer.Write(Magic); writer.Write(header); writer.Write(compressed.Length); writer.Write(Digest(header, compressed)); writer.Write(compressed); writer.Flush(); file.Flush(true); }
-        // Replacement is atomic; retain the previous completed write as a recovery copy.
+        // Replacement is atomic; retain the previous completed write as a recovery copy unless the existing one is kept.
         if (createOnly) File.Move(temporary, path);
-        else if (File.Exists(path)) File.Replace(temporary, path, path + ".bak");
+        else if (File.Exists(path)) File.Replace(temporary, path, rotateBackup ? path + ".bak" : null);
         else File.Move(temporary, path);
     }
     static void ReadEnvelope(string path, out Summary summary, out byte[] compressed)

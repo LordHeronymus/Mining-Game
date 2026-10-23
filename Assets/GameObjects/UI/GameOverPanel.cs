@@ -10,6 +10,9 @@ using UnityEngine.UI;
 public sealed class GameOverPanel : MonoBehaviour
 {
     public static bool IsOpen { get; private set; }
+    // One end screen per run end: never reopen over the victory or result screen (energy stays 0 behind them).
+    internal static bool CanShow => !IsOpen && !GameVictoryPanel.IsOpen && !ExpeditionResultPanel.IsOpen &&
+        !LoadingProgress.Active && !RunNavigation.IsTransitioning;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStaticState() => IsOpen = false;
@@ -69,12 +72,12 @@ public sealed class GameOverPanel : MonoBehaviour
 
     void OnHealthChanged(float health, float maximum)
     {
-        if (health <= 0f && !IsOpen && !GameVictoryPanel.IsOpen && !ExpeditionResultPanel.IsOpen) Show();
+        if (health <= 0f && CanShow) Show();
     }
 
     public void Show()
     {
-        if (LoadingProgress.Active || RunNavigation.IsTransitioning) return;
+        if (!CanShow) return;
         MetaProgression.RecordRunFinished(false);
         MetaProgression.Save();
         RefreshValues();
@@ -137,17 +140,8 @@ public sealed class GameOverPanel : MonoBehaviour
     void ContinueToResults()
     {
         if (!IsOpen || ExpeditionResultPanel.IsOpen || RunNavigation.IsTransitioning) return;
-        var result = ExpeditionResultPanel.Show(transform.parent);
-        if (!result)
-        {
-            // Without a run there is nothing to summarise: leave instead of keeping the only button dead.
-            if (MetaProgression.CurrentRun == null && !LoadingProgress.Active && !GameSaveSystem.IsBusy)
-            {
-                AudioManager.Instance?.StopGameOverMusic();
-                RunNavigation.MainMenu();
-            }
-            return;
-        }
+        var result = ExpeditionResultPanel.ShowOrLeave(transform.parent);
+        if (!result) return;
         StopAllCoroutines();
         IsOpen = false;
         group.alpha = 0;

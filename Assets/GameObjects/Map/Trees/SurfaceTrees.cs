@@ -41,9 +41,15 @@ public sealed class SurfaceTrees : MonoBehaviour
     public SavedForest CaptureRunState()
     {
         var saved = new List<SavedTree>();
+        bool skippedFalling = false;
         foreach (var tree in trees)
             if (tree && !tree.IsFalling) saved.Add(tree.CaptureRunState(System.Array.FindIndex(variants, x => x && x.name == tree.SourceSpriteName)));
-        return new SavedForest { trees = saved.ToArray(), regrowth = Mathf.Max(0, nextGrowth - Time.time) };
+            else if (tree) skippedFalling = true;
+        float regrowth = Mathf.Max(0, nextGrowth - Time.time);
+        // A falling tree is already harvested but restarts the regrowth timer only when it lands. Keep at least
+        // the shortest regrowth so a save mid-fall cannot plant a sapling right after loading; draws no random value.
+        if (skippedFalling) regrowth = Mathf.Max(regrowth, Mathf.Max(1, regrowthSeconds.x));
+        return new SavedForest { trees = saved.ToArray(), regrowth = regrowth };
     }
     public void RestoreRunState(SavedForest state)
     {
@@ -114,11 +120,25 @@ public sealed class SurfaceTrees : MonoBehaviour
         foreach (var tree in trees) if (tree) Destroy(tree.gameObject);
         trees.Clear();
         random = new System.Random(map.ActiveSeed ^ 0x19A23C5);
-        float width = map.GeneratedWidth * map.Terrain.layoutGrid.cellSize.x;
-        targetPopulation = Mathf.Clamp(Mathf.FloorToInt(width / Mathf.Max(16f, minimumTreeSpacing * 2f)),
-            0, maximumTrees);
+        targetPopulation = TargetPopulation();
         for (int i = 0; i < targetPopulation; i++) TryPlant(true);
         ScheduleGrowth();
+    }
+
+    int TargetPopulation()
+    {
+        float width = map.GeneratedWidth * map.Terrain.layoutGrid.cellSize.x;
+        return Mathf.Clamp(Mathf.FloorToInt(width / Mathf.Max(16f, minimumTreeSpacing * 2f)), 0, maximumTrees);
+    }
+
+    // F1/GPS changes reach standing trees and the forest size without replanting or drawing random values.
+    public void ApplySettings()
+    {
+        foreach (var tree in trees)
+            if (tree) tree.ApplySettings(Mathf.Max(1, woodYieldMin), Mathf.Max(woodYieldMin, woodYieldMax),
+                Mathf.Max(0, maximumBonusWood), Mathf.Max(0f, maximumSizeBonusPercent),
+                Mathf.Max(0f, growthSpeedPercentPerMinute));
+        if (random != null && map && map.IsGenerated && map.Terrain) targetPopulation = TargetPopulation();
     }
 
     void Update()

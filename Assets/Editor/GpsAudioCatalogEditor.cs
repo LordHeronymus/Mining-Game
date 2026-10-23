@@ -13,6 +13,10 @@ public static class GpsAudioCatalogEditor
         var version=record.fields.Find(v=>v.name=="catalogVersion");
         bool migrate=version==null || version.number<1;
         var home=data.records.Find(r=>r.type==typeof(LoadingAudioSettingsAsset).AssemblyQualifiedName)?.fields.Find(v=>v.name=="homeClips");
+        // Benutzerordner: nur Clips aufnehmen, die das Profil kennt. Ein lokaler, nicht versionierter Clip machte die ganze
+        // Liste sonst zum eigenen Wert, der nach dem Neustart samt allen eigenen Clipwerten als veraltet wegfiel.
+        var shipped=GpsUserOverrides.Active ? GpsSettings.ShippedDocument().records.Find(r=>r.type==record.type)?.fields.Find(v=>v.name=="clips")?.children
+            .Select(e=>e.children.Find(v=>v.name=="clip")?.text).ToHashSet() : null;
         foreach(string guid in AssetDatabase.FindAssets("t:AudioClip",new[]{"Assets"}))
         {
             string path=AssetDatabase.GUIDToAssetPath(guid);
@@ -20,6 +24,7 @@ public static class GpsAudioCatalogEditor
             {
                 string key=GpsProfileEditor.Register(clip,profile);
                 var old=root.children.Find(e=>e.children.Find(v=>v.name=="clip")?.text==key);
+                if(old==null && shipped!=null && !shipped.Contains(key))continue;
                 var tune=old==null ? new AudioClipTuningEntry{clip=clip} : (AudioClipTuningEntry)GpsCodec.Write(old,profile.Resolve);
                 tune.category=Category(path);tune.displayName=Display(clip.name);
                 if(migrate)

@@ -37,6 +37,17 @@ public sealed class ExpeditionResultPanel : MonoBehaviour
         panel.StartXp=Math.Max(0,panel.FinalXp-panel.EarnedXp);
         panel.Build(); return panel;
     }
+    /// <summary>"Weiter" of the end screens. A run that could not be committed (test modes, read-only profile)
+    /// has no result to present; leave directly instead of trapping the player on the end screen.</summary>
+    public static ExpeditionResultPanel ShowOrLeave(Transform parent)
+    {
+        var result=Show(parent);
+        if(!result && Application.isPlaying && LeavesWithoutResult(MetaProgression.CurrentRun))
+        { AudioManager.Instance?.StopGameOverMusic(); RunNavigation.MainMenu(); }
+        return result;
+    }
+    internal static bool LeavesWithoutResult(MetaRunState run)=>
+        !LoadingProgress.Active && !RunNavigation.IsTransitioning && !GameSaveSystem.IsBusy && (run==null || !run.ended);
     void Build()
     {
         IsOpen=true; previousScale=Time.timeScale; Time.timeScale=0;

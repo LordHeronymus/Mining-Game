@@ -43,6 +43,7 @@ public static class GpsFileStore
                     legacyFormat=true;
                 }
                 ItemIconLayout.Migrate(data,GpsSettings.Profile);
+                GpsSettings.ClampBounds(data);
                 if(!GpsSettings.ValidateDocument(data,out string error)) throw new InvalidDataException(error);
                 if(candidate!=path) warning="GPS-Sicherung geladen.";
                 return data;
@@ -136,8 +137,11 @@ public static class GpsFileStore
             foreach(var node in record.fields)
             {
                 int index=destination.fields.FindIndex(field=>field.name==node.name);
-                if(index<0 || !GpsSettings.IsValidOverride(destination,node)) continue;
-                destination.fields[index]=node.Copy();
+                if(index<0) continue;
+                // A bound raised in a later build clamps the stored value instead of dropping it, as in the editor.
+                var value=node.Copy(); GpsSettings.ClampBounds(value,GpsSchema.Spec(destination,value.name));
+                if(!GpsSettings.IsValidOverride(destination,value)) continue;
+                destination.fields[index]=value;
             }
         }
     }

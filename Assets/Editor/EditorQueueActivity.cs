@@ -107,23 +107,47 @@ public static class EditorQueueActivity
         }
     }
 
+    // Gleiche Liste wie "-Install" in Tools/editor-queue-server.ps1 (der Dienst laedt auch den Fokus-Waechter aus bin).
+    internal static readonly string[] InstalledScripts = { "editor-queue.ps1", "editor-queue-server.ps1", "editor-dialog.ps1", "editor-focus.ps1" };
+
     // Der Dienst ruft bei jeder Abfrage die Kopien in EditorQueue/bin auf. Im Ordner des Benutzers (main,
     // MainAutoUpdate) werden sie nach einem Update aufgefrischt, damit PrivOrg neue Felder ohne erneutes
     // "-Install" sieht. Die Testbank und Worktrees kopieren nie: sie koennen aeltere Branch-Staende haben.
     static void RefreshInstalledScripts()
     {
         if (!MainAutoUpdate.Tracked || MainAutoUpdate.State != "aktuell") return;   // nur auf aktuellem main
-        string bin = Path.Combine(queueDir, "bin");
-        if (!Directory.Exists(bin)) return;
-        foreach (string name in new[] { "editor-queue.ps1", "editor-dialog.ps1", "editor-queue-server.ps1" })
+        RefreshScripts(Path.Combine(projectRoot, "Tools"), Path.Combine(queueDir, "bin"));
+    }
+
+    // Ersetzt nur vorhandene, abweichende Kopien. Ueber eine Zwischendatei, damit der laufende Dienst nie eine halb
+    // geschriebene Datei liest; eine gerade gesperrte Kopie folgt bei der naechsten Pruefung und haelt den Dienststart nicht auf.
+    internal static int RefreshScripts(string tools, string bin)
+    {
+        if (!Directory.Exists(bin)) return 0;
+        int updated = 0;
+        foreach (string name in InstalledScripts)
         {
-            string source = Path.Combine(projectRoot, "Tools", name), target = Path.Combine(bin, name);
-            if (!File.Exists(source) || !File.Exists(target)) continue;
-            byte[] next = File.ReadAllBytes(source);
-            if (next.AsSpan().SequenceEqual(File.ReadAllBytes(target))) continue;
-            File.WriteAllBytes(target, next);
-            Debug.Log("Editor-Warteschlange: " + name + " in " + bin + " aktualisiert.");
+            string source = Path.Combine(tools, name), target = Path.Combine(bin, name), temp = target + ".new";
+            try
+            {
+                if (!File.Exists(source) || !File.Exists(target)) continue;
+                byte[] next = File.ReadAllBytes(source);
+                if (next.AsSpan().SequenceEqual(File.ReadAllBytes(target))) continue;
+                File.WriteAllBytes(temp, next);
+                File.Replace(temp, target, null);
+                updated++;
+                Debug.Log("Editor-Warteschlange: " + name + " in " + bin + " aktualisiert.");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("Editor-Warteschlange: " + name + " in " + bin + " nicht aktualisiert: " + e.Message);
+            }
+            finally
+            {
+                try { if (File.Exists(temp)) File.Delete(temp); } catch { }
+            }
         }
+        return updated;
     }
 
     static bool QueueServiceRunning()

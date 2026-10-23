@@ -9,6 +9,7 @@ public class Number : MonoBehaviour
     [SerializeField] float fadeDuration = .45f;
 
     Vector3 origin, baseScale;
+    Material material;
     float age, idleAge, pulseAge, lifetime;
     bool initialized;
     public long Total { get; private set; }
@@ -36,7 +37,8 @@ public class Number : MonoBehaviour
         tmp.colorGradient = new VertexGradient(top, top, bottom, bottom);
         tmp.outlineColor = new Color(.19f, .075f, .025f, 1f);
         tmp.outlineWidth = .12f;
-        var material = tmp.fontMaterial;
+        // fontMaterial is this popup's own TMP copy; TMP never destroys it, so OnDestroy releases it.
+        material = tmp.fontMaterial;
         material.EnableKeyword("OUTLINE_ON");
         material.SetFloat(ShaderUtilities.ID_FaceDilate, .18f);
         material.EnableKeyword("UNDERLAY_ON");
@@ -60,6 +62,13 @@ public class Number : MonoBehaviour
 
     void RefreshText() => tmp.text = $"+{Total}";
     void Update() { if (initialized) Advance(Time.deltaTime); }
+
+    void OnDestroy()
+    {
+        if (!material) return;
+        if (Application.isPlaying) Destroy(material); else DestroyImmediate(material);
+        material = null;
+    }
 
     void Advance(float delta)
     {

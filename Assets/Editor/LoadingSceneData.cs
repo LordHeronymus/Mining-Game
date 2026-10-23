@@ -10,7 +10,7 @@ using UnityEngine.Tilemaps;
 [InitializeOnLoad]
 public sealed class LoadingSceneData : IProcessSceneWithReport
 {
-    const string GameplayScene = "Assets/Scenes/SampleScene.unity";
+    internal const string GameplayScene = "Assets/Scenes/SampleScene.unity";
     public int callbackOrder => 1000;
 
     static LoadingSceneData() => EditorSceneManager.sceneSaving += BeforeSave;

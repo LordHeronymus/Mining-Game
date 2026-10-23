@@ -3,10 +3,13 @@ using UnityEngine.Tilemaps;
 using System.Collections.Generic;
 
 // Each damaged cell keeps its overlay, driven by normalized mining progress.
+// Hidden overlays return to a pool, so only currently damaged cells own a renderer.
 public sealed class MiningCrackVisual : System.IDisposable
 {
     readonly Sprite[] stages = new Sprite[5];
     readonly Dictionary<Vector3Int, SpriteRenderer> renderers = new();
+    readonly List<SpriteRenderer> pool = new();
+    readonly List<Vector3Int> stale = new();
     readonly Tilemap terrain;
     readonly MaterialPropertyBlock properties = new();
     static readonly int GrowthId = Shader.PropertyToID("_CrackGrowth");
@@ -55,6 +58,15 @@ public sealed class MiningCrackVisual : System.IDisposable
     SpriteRenderer GetRenderer(Vector3Int cell)
     {
         if (renderers.TryGetValue(cell, out var current) && current) return current;
+        while (pool.Count > 0)
+        {
+            current = pool[pool.Count - 1];
+            pool.RemoveAt(pool.Count - 1);
+            if (!current) continue;
+            current.gameObject.name = "Mining cracks " + cell;
+            renderers[cell] = current;
+            return current;
+        }
         var material = Resources.Load<Material>("Mining/MiningCracksLit");
         if (!material) return null;
         var go = new GameObject("Mining cracks " + cell);
@@ -75,26 +87,29 @@ public sealed class MiningCrackVisual : System.IDisposable
 
     public void Refresh(Dictionary<Vector3Int, float> progress)
     {
+        if (progress.Count == 0 && renderers.Count == 0) return;
         foreach (var pair in progress) Show(pair.Key, pair.Value);
-        var stale = new List<Vector3Int>();
+        stale.Clear();
         foreach (var pair in renderers)
             if (!terrain || !terrain.HasTile(pair.Key) || !progress.ContainsKey(pair.Key)) stale.Add(pair.Key);
         foreach (var cell in stale) Hide(cell);
+        stale.Clear();
     }
 
     public void Hide(Vector3Int cell)
     {
-        if (renderers.TryGetValue(cell, out var renderer) && renderer)
-        {
-            renderer.enabled = false;
-            Renderer = renderer;
-        }
+        if (!renderers.Remove(cell, out var renderer) || !renderer) return;
+        renderer.enabled = false;
+        Renderer = renderer;
+        pool.Add(renderer);
     }
 
     public void Dispose()
     {
         foreach (var renderer in renderers.Values) if (renderer) Release(renderer.gameObject);
         renderers.Clear();
+        foreach (var renderer in pool) if (renderer) Release(renderer.gameObject);
+        pool.Clear();
         foreach (var sprite in stages) if (sprite) Release(sprite);
     }
 

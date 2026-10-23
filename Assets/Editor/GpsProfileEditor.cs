@@ -29,8 +29,7 @@ public static class GpsProfileEditor
                 if (GpsUserOverrides.Active && GpsSettings.HasUnsavedChanges) GpsSettings.Save(out _);
                 if (!Resources.Load<GpsProfile>(GpsSettings.ResourceName) || GpsSettings.Document.records.Count==0) Install();
                 GpsSettings.ApplyLoadedComponents();
-                var source=Resources.Load<GpsProfile>(GpsSettings.ResourceName);
-                if (source) SessionState.SetString("GPS.Committed",GpsSettings.CommittedJson);
+                GpsSettings.RememberCommitted();
             }
             if (state == PlayModeStateChange.EnteredEditMode) { GpsSettings.ReloadCommitted(); if (GpsSettings.Document.records.Count==0) Install(); }
         };

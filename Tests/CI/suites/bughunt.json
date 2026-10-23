@@ -1,0 +1,173 @@
+{
+  "checks": [
+    {
+      "name": "BughuntAltarChecks"
+    },
+    {
+      "name": "BughuntAutosaveRaceChecks"
+    },
+    {
+      "name": "BughuntBlueprintPrefsChecks"
+    },
+    {
+      "name": "BughuntClimbFallChecks"
+    },
+    {
+      "name": "BughuntCracksChecks"
+    },
+    {
+      "name": "BughuntDragClickChecks"
+    },
+    {
+      "name": "BughuntEditorHooksChecks"
+    },
+    {
+      "name": "BughuntEditorLeakChecks"
+    },
+    {
+      "name": "BughuntEditorToolsChecks"
+    },
+    {
+      "name": "BughuntEndScreenChecks"
+    },
+    {
+      "name": "BughuntEntrySignChecks"
+    },
+    {
+      "name": "BughuntExoticSaveChecks"
+    },
+    {
+      "name": "BughuntExoticsChecks"
+    },
+    {
+      "name": "BughuntFallTunnelChecks"
+    },
+    {
+      "name": "BughuntFocusPauseChecks",
+      "mode": "edit"
+    },
+    {
+      "name": "BughuntGpsBoundsChecks"
+    },
+    {
+      "name": "BughuntGpsFieldChecks"
+    },
+    {
+      "name": "BughuntGpsPersistenceChecks"
+    },
+    {
+      "name": "BughuntGrassConversionChecks"
+    },
+    {
+      "name": "BughuntGravityHoldChecks"
+    },
+    {
+      "name": "BughuntHotbarChecks"
+    },
+    {
+      "name": "BughuntItemDataChecks"
+    },
+    {
+      "name": "BughuntKeyBindingChecks"
+    },
+    {
+      "name": "BughuntLadderEscapeChecks"
+    },
+    {
+      "name": "BughuntLayerStoneChecks"
+    },
+    {
+      "name": "BughuntLightGpsChecks"
+    },
+    {
+      "name": "BughuntLightingChecks"
+    },
+    {
+      "name": "BughuntMapPanelChecks"
+    },
+    {
+      "name": "BughuntPauseSaveChecks"
+    },
+    {
+      "name": "BughuntPlayerCompileChecks"
+    },
+    {
+      "name": "BughuntRecipeChecks"
+    },
+    {
+      "name": "BughuntReleaseChecks"
+    },
+    {
+      "name": "BughuntSaveLoadChecks"
+    },
+    {
+      "name": "BughuntSaveWriteChecks"
+    },
+    {
+      "name": "BughuntSettingsUiChecks"
+    },
+    {
+      "name": "BughuntShopFormatChecks"
+    },
+    {
+      "name": "BughuntStatsLiveChecks"
+    },
+    {
+      "name": "BughuntSurfaceChecks"
+    },
+    {
+      "name": "BughuntTileMinerChecks"
+    },
+    {
+      "name": "BughuntUiMaterialsChecks"
+    },
+    {
+      "name": "BughuntVoicePauseChecks"
+    },
+    {
+      "name": "BughuntWorkbenchRecipeRefreshChecks"
+    },
+    {
+      "name": "BughuntWorldLiveChecks"
+    },
+    {
+      "name": "MiningCrackChecks"
+    },
+    {
+      "name": "WorldBorderChecks"
+    },
+    {
+      "name": "RobustnessFixChecks"
+    },
+    {
+      "name": "GpsSettingsChecks"
+    },
+    {
+      "name": "GpsUserOverridesChecks"
+    },
+    {
+      "name": "CaveGenerationChecks"
+    },
+    {
+      "name": "OreDistributionChecks"
+    },
+    {
+      "name": "TorchLightFieldChecks"
+    },
+    {
+      "name": "LightingChecks"
+    },
+    {
+      "name": "SurfaceHarvestIdentityChecks"
+    },
+    {
+      "name": "MetaProgressionCoreChecks"
+    },
+    {
+      "name": "ChallengeMigrationChecks"
+    },
+    {
+      "name": "VoiceLineChecks"
+    }
+  ]
+}

@@ -31,6 +31,8 @@ public sealed class MinerPlayerVisual : MonoBehaviour
     float climbPhase, climbing;
     float gaitStride = .34f, gaitDuty = .62f, running;
     int facing = 1;
+    // Saved with the run (GameSaveSystem); input, a mining target or movement turn the figure again.
+    public bool FacingLeft { get => facing < 0; set => facing = value ? -1 : 1; }
     Vector2 footPosition, lampPosition;
     float EffectiveMiningSwingsPerSecond => Mathf.Max(.1f, miningSwingsPerSecond) * GameplayTestSettings.DiggingMultiplier;
 
