@@ -111,13 +111,14 @@ public static class BughuntEditorToolsChecks
             var picked = (Scene[])toSave.Invoke(null, pickArgs);
             Check(!picked.Contains(scene) && picked.All(s => s.isDirty && !string.IsNullOrEmpty(s.path)),
                 "AutoSave wählt nur geänderte Szenen mit Pfad (temporäre Szene ohne Pfad bleibt aussen vor)");
+            var gameplayScene = typeof(LoadingSceneData).GetField("GameplayScene", StaticAny)?.GetRawConstantValue() as string;
             bool gameplayHeld = false;
             for (int i = 0; i < EditorSceneManager.sceneCount; i++)
             {
                 var open = EditorSceneManager.GetSceneAt(i);
-                if (open.isLoaded && open.isDirty && open.path == LoadingSceneData.GameplayScene && (bool)holds.Invoke(null, new object[] { open })) gameplayHeld = true;
+                if (open.isLoaded && open.isDirty && open.path == gameplayScene && (bool)holds.Invoke(null, new object[] { open })) gameplayHeld = true;
             }
-            Check((bool)pickArgs[0] == gameplayHeld && !(gameplayHeld && picked.Any(s => s.path == LoadingSceneData.GameplayScene)),
+            Check((bool)pickArgs[0] == gameplayHeld && !(gameplayHeld && picked.Any(s => s.path == gameplayScene)),
                 "Eine SampleScene mit Map wird übersprungen und als pausiert gemeldet");
         }
         finally
