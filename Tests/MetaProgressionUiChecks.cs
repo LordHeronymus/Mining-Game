@@ -33,6 +33,9 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
     bool finished, isolatedSet;
     string previousMeta, isolated;
 
+    // A preselected button shows the orange fill until hovered, which reads inverted.
+    static bool NothingSelected() => !EventSystem.current || !EventSystem.current.currentSelectedGameObject;
+
     void Check(bool value, string description)
     {
         if (!value) throw new Exception(description);
@@ -70,7 +73,9 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
         panel = Object.FindFirstObjectByType<MetaProgressionPanel>();
         Check(panel && MetaProgressionPanel.IsOpen && !panel.IsReadOnly, "Home opens editable progression");
         Check(panel.ShowingOverview, "Home first displays progression timeline");
+        Check(NothingSelected(), "Timeline opens without a preselected button");
         Button("Open Upgrades").onClick.Invoke(); yield return null;
+        Check(NothingSelected(), "Upgrades open without a preselected button");
         Check(Time.timeScale == 0 && GameplayInputBlocker.IsBlocked, "Profile modal pauses and blocks gameplay");
         Check(MetaProgressionPanel.Show(panel.transform.parent) == panel, "Repeated open reuses one modal");
         var group = panel.GetComponent<CanvasGroup>();
@@ -114,6 +119,7 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
             "Timeline entry opens a separate challenge panel");
         var challengeScroll = challengesPanel.GetComponentInChildren<ScrollRect>();
         Check(challengeScroll.verticalNormalizedPosition > .999f, "Challenges open at the top");
+        Check(NothingSelected(), "Challenges open without a preselected button");
         var challengeRoot=(RectTransform)panel.transform;
         challengeRoot.anchorMin=challengeRoot.anchorMax=new Vector2(.5f,.5f);
         foreach (var size in new[]{new Vector2(1920,1080),new Vector2(1280,1024),new Vector2(2560,1080)}) {
@@ -144,18 +150,22 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
         Check(challengeScroll.viewport.rect.Contains(challengeScroll.viewport.InverseTransformPoint(lastChallenge.TransformPoint(lastChallenge.rect.center))), "Last lifetime tile reachable by scrolling");
         Button("Challenges Back").onClick.Invoke(); yield return null;
         Check(panel.ShowingOverview && !Object.FindFirstObjectByType<ChallengePanel>(), "Challenge Back returns directly to the timeline");
+        Check(NothingSelected(), "Timeline after challenges has no preselected button");
         Button("Open Baupläne").onClick.Invoke(); yield return null;
         var blueprintsPanel=Object.FindFirstObjectByType<BlueprintCollectionPanel>();
         Check(blueprintsPanel && !panel.ShowingOverview && !panel.transform.Find("Upgrades Layout").gameObject.activeSelf, "Blueprints open in their own panel from timeline");
         var blueprintScroll=blueprintsPanel.GetComponentInChildren<ScrollRect>();
         Check(blueprintScroll.verticalNormalizedPosition>.999f, "Blueprint collection opens at top");
+        Check(NothingSelected(), "Blueprints open without a preselected button");
         foreach (var recipe in ExoticCatalog.Recipes)
         {
             var row = blueprintScroll.content.Find("Blueprint " + recipe.exoticId);
             Check(row && row.GetComponentInChildren<ExoticSealGraphic>(), recipe.exoticId + " has a crystalline exotic seal");
             Check(row.Find("Unlock Level").GetComponent<TMP_Text>().text == "Level " + recipe.metaUnlockLevel, recipe.exoticId + " shows exact level gate");
         }
-        int essentials = ExoticCatalog.AllRecipes.Count(r => r && r.output && !r.exotic);
+        // The collection leaves out the building components (nails, fabric, rope, steel) on purpose.
+        var components = new[] { Item.Nails, Item.Fabric, Item.Rope, Item.Steel };
+        int essentials = ExoticCatalog.AllRecipes.Where(r => r && r.output && !r.exotic && !components.Contains(r.output.item)).Distinct().Count();
         Check(essentials > 0 && blueprintScroll.content.Cast<Transform>().Count(t => t.name.StartsWith("Essential ")) == essentials, "All essential recipes are listed from the build catalog");
         foreach(var tile in blueprintScroll.content.Cast<Transform>().Where(t=>t.name.StartsWith("Essential ") || t.name.StartsWith("Blueprint "))) {
             Check(tile.Find("Icon").GetComponent<Image>().sprite && !tile.GetComponentsInChildren<TMP_Text>().Any(t=>t.isTextOverflowing), "Blueprint icon and text fit: "+tile.name);
@@ -173,6 +183,7 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
         Check(blueprintScroll.viewport.rect.Contains(blueprintScroll.viewport.InverseTransformPoint(finalTile.TransformPoint(finalTile.rect.center))), "Last essential blueprint is reachable");
         Button("Blueprints Back").onClick.Invoke();yield return null;
         Check(panel.ShowingOverview && !Object.FindFirstObjectByType<BlueprintCollectionPanel>() && GameplayInputBlocker.IsBlocked, "Blueprints Back returns to paused timeline");
+        Check(NothingSelected(), "Timeline after blueprints has no preselected button");
         Button("Open Upgrades").onClick.Invoke(); yield return null;
         scroll.verticalNormalizedPosition = 0; yield return null;
         var last = Button("Buy " + MetaProgressionCatalog.Upgrades.Last().id).GetComponent<RectTransform>();
