@@ -60519,7 +60519,7 @@ MonoBehaviour:
     \"name\": \"growthSpeedPercentPerMinute\",\n                    \"type\": \"System.Single,
     mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
-    3.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
+    0.375,\n                    \"flag\": false,\n                    \"vector\": {\n                       
     \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
     0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -60542,7 +60542,7 @@ MonoBehaviour:
     UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null\",\n                   
     \"text\": \"\",\n                    \"kind\": 6,\n                    \"number\":
     0.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
-    \"x\": 100.0,\n                        \"y\": 240.0,\n                       
+    \"x\": 200.0,\n                        \"y\": 480.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
     0.0,\n                        \"b\": 0.0,\n                        \"a\": 0.0\n                   
@@ -64187,7 +64187,7 @@ MonoBehaviour:
     0.550000011920929,\n        \"panelElementAlpha\": 1.0,\n        \"loadingTwinkleFrequency\":
     1.0,\n        \"levelUpAnimationOffsetSeconds\": 0.0,\n        \"hotbarVerticalOffset\":
     0.0,\n        \"hotbarHoldDuration\": 0.10000000149011612,\n        \"masterVolume\":
-    1.0,\n        \"musicVolume\": 1.0,\n        \"autosaveIntervalMinutes\": 3.0,\n       
+    1.0,\n        \"musicVolume\": 1.0,\n        \"musicCeiling\": 0.20000000298023224,\n        \"autosaveIntervalMinutes\": 3.0,\n       
     \"dragPopScale\": 1.2799999713897706,\n        \"dragCarryScale\": 1.1200000047683716,\n       
     \"dragPopDuration\": 0.23999999463558198,\n        \"workbenchUsesStorage\":
     true,\n        \"workbenchStorageFirst\": false,\n        \"workbenchComponentsToStorage\": true,\n        \"shopSellsFromStorage\": true,\n        \"shopNextStepOnly\": true,\n        \"buttonTextOffset\":

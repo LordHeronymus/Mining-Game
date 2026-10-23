@@ -90,6 +90,7 @@ public sealed class SaveSlotPanel : MonoBehaviour
         slots.Add(slot);
         var button = HomeUi.Button("Slot " + slot, slotList, "Spielstand " + slot, Vector2.zero, new Vector2(TileWidth, TileHeight), () => Choose(slot));
         var image = button.GetComponent<Image>(); image.sprite = HomeUi.Sprite("SelectionCardNormal"); image.pixelsPerUnitMultiplier = 5.5f; image.material = null;
+        if (!saving) button.gameObject.AddComponent<SaveSlotDoubleClick>().onDoubleClick = () => StartSlot(slot);
         var feedback = button.GetComponent<HomeButtonFeedback>();
         feedback.normalPart = "SelectionCardNormal"; feedback.activePart = "SelectionCardHover"; feedback.animateScale = false;
         var name = button.GetComponentInChildren<TextMeshProUGUI>();
@@ -195,6 +196,11 @@ public sealed class SaveSlotPanel : MonoBehaviour
         if (GameSaveSystem.IsBusy || RunNavigation.IsTransitioning) return;
         if (!saving) { selectedSlot = slot; RefreshSelection(); return; }
         if (GameSaveSystem.HasSlotData(slot)) Confirm("Spielstand " + slot + " überschreiben?", () => Save(slot)); else Save(slot);
+    }
+    void StartSlot(int slot)
+    {
+        if (GameSaveSystem.IsBusy || RunNavigation.IsTransitioning || confirmation || editing) return;
+        selectedSlot = slot; RefreshSelection(); StartSelected();
     }
     void StartSelected()
     {

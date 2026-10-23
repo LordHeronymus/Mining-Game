@@ -339,7 +339,9 @@ public class AudioManager : MonoBehaviour
     }
 
     public static float TunedMusicVolume(AudioClip clip, float volume, AudioSource source = null) =>
-        GameAudioLifecycle.IsStopping ? 0f : GpsAudio.Volume(clip, volume, source) * PlayerSettings.Music;
+        GameAudioLifecycle.IsStopping ? 0f : GpsAudio.Volume(clip, volume, source) * MusicGain;
+
+    public static float MusicGain => PlayerSettings.Music * Mathf.Clamp01(GpsSettings.Preferences.musicCeiling);
 
     public static float TunedPitch(AudioClip clip, float pitch, AudioSource source = null) => GpsAudio.Pitch(clip, pitch, source);
 

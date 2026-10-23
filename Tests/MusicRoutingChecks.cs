@@ -30,7 +30,16 @@ public static class MusicRoutingChecks
             GpsSettings.Preferences.musicVolume = .25f;
             update.Invoke(loading, null);
             Check(Mathf.Abs(sources.Sum(s => s.volume) / fullHome - .25f) < .01f, "Live homescreen sources follow music gain");
-            Check(Mathf.Approximately(AudioManager.TunedMusicVolume(clip, .6f), .15f), "Music category scales independently");
+            float ceiling = GpsSettings.Preferences.musicCeiling;
+            Check(Mathf.Approximately(new GpsPreferences().musicCeiling, .2f) && ceiling > 0f && ceiling <= 1f, "Music at 100 % plays as loud as 20 % did before");
+            Check(Mathf.Approximately(AudioManager.TunedMusicVolume(clip, .6f), .15f * ceiling), "Music category scales independently");
+            GpsSettings.Preferences.musicVolume = 1f;
+            Check(Mathf.Approximately(AudioManager.MusicGain, ceiling), "Slider 100 % gives the music ceiling");
+            Check(Mathf.Approximately(GpsSettings.ScaledLegacyMusicVolume(.2f), 1f) && Mathf.Approximately(GpsSettings.ScaledLegacyMusicVolume(.1f), .5f)
+                && GpsSettings.ScaledLegacyMusicVolume(1f) == 1f && GpsSettings.ScaledLegacyMusicVolume(0f) == 0f, "Stored old slider values keep their loudness");
+#if UNITY_EDITOR
+            Check(UnityEditor.EditorPrefs.GetBool(GpsSettings.PersonalPreferenceKey("musicVolumeScaled")), "Stored slider was converted once");
+#endif
             GpsSettings.Preferences.musicVolume = 0f;
             update.Invoke(loading, null);
             Check(sources.All(s => s.volume == 0), "Music zero mutes actual soundtrack sources");
