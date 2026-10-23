@@ -74,7 +74,7 @@ public sealed class ChallengePanel : MonoBehaviour
         var bar = track.gameObject.AddComponent<Scrollbar>(); bar.handleRect = handle.rectTransform; bar.targetGraphic = handle;
         bar.direction = Scrollbar.Direction.BottomToTop; bar.navigation = new Navigation { mode = Navigation.Mode.None };
         scroll.verticalScrollbar = bar; scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
-        var back = HomeUi.Button("Challenges Back", layout, "Zurück", new Vector2(-483, -370), new Vector2(340, 70), Close);
+        HomeUi.Button("Challenges Back", layout, "Zurück", new Vector2(-483, -370), new Vector2(340, 70), Close);
         Text("Track Hint", layout, "Mit dem Stern verfolgst du Herausforderungen im Spiel.",
             new Vector2(200, -370), new Vector2(900, 30), 20, TextAlignmentOptions.Right).color = Muted;
         MetaProgression.Changed += OnProgressChanged;
@@ -82,7 +82,7 @@ public sealed class ChallengePanel : MonoBehaviour
         scroll.verticalNormalizedPosition = 1;
         HomeUi.Fit(layout, new Vector2(1600, 980));
         ProgressionArt.Navigation(transform);
-        UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(back.gameObject);
+        UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
     }
 
     void SetPeriod(ChallengePeriod value)
