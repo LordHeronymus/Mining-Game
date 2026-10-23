@@ -551,19 +551,55 @@ public class TileMiner : MonoBehaviour
         highlightRenderer.sortingOrder = order + 1;
     }
 
+    // The two cursor textures (512² pixels each) took most of TileMiner.Awake (~130 ms at every scene start).
+    // They do not depend on the scene, so they are built once per session and kept (HideAndDontSave).
+    static Texture2D normalCursorTexture, cornerCursorTexture;
+
     static Tile CreateHighlightTile(string name, bool cornersOnly, float frameScale)
     {
-        const int resolution = 512;
-        const float halfFrame = .425f;
-        const float armLength = .85f * .22f;
-        var texture = new Texture2D(resolution, resolution, TextureFormat.RGBA32, true)
+        ref var cached = ref cornersOnly ? ref cornerCursorTexture : ref normalCursorTexture;
+        if (!cached) cached = CreateHighlightTexture(name, cornersOnly);
+        var texture = cached;
+        // The gold outline spans 85% of the texture; the remaining space holds its soft halo.
+        float pixelsPerUnit = texture.width * .85f * frameScale;
+        var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
+            new Vector2(.5f, .5f), pixelsPerUnit, 0, SpriteMeshType.FullRect);
+        sprite.name = name;
+        sprite.hideFlags = HideFlags.HideAndDontSave;
+        var tile = ScriptableObject.CreateInstance<Tile>();
+        tile.name = name;
+        tile.sprite = sprite;
+        tile.colliderType = Tile.ColliderType.None;
+        tile.flags = TileFlags.None;
+        tile.hideFlags = HideFlags.HideAndDontSave;
+        return tile;
+    }
+
+    const int HighlightResolution = 512;
+
+    static Texture2D CreateHighlightTexture(string name, bool cornersOnly)
+    {
+        var texture = new Texture2D(HighlightResolution, HighlightResolution, TextureFormat.RGBA32, true)
         {
             name = name + " Texture",
             hideFlags = HideFlags.HideAndDontSave
         };
+        texture.SetPixels(HighlightPixels(cornersOnly));
+        texture.Apply(true, true);
+        texture.filterMode = FilterMode.Trilinear;
+        texture.wrapMode = TextureWrapMode.Clamp;
+        return texture;
+    }
+
+    static Color[] HighlightPixels(bool cornersOnly)
+    {
+        const int resolution = HighlightResolution, half = resolution / 2;
+        const float halfFrame = .425f;
+        const float armLength = .85f * .22f;
         var pixels = new Color[resolution * resolution];
-        for (int y = 0; y < resolution; y++)
-        for (int x = 0; x < resolution; x++)
+        // Each pixel depends only on its mirrored distance to the centre: compute one quadrant, mirror it exactly.
+        for (int y = 0; y < half; y++)
+        for (int x = 0; x < half; x++)
         {
             var p = new Vector2(Mathf.Abs((x + .5f) / resolution - .5f),
                 Mathf.Abs((y + .5f) / resolution - .5f));
@@ -583,35 +619,19 @@ public class TileMiner : MonoBehaviour
             float alpha = Mathf.Max(core * .98f, halo) * (cornersOnly ? taper : 1f);
             var color = Color.Lerp(new Color(1f, .57f, .12f), new Color(1f, .86f, .4f), core);
             color.a = alpha;
+            int mirrorX = resolution - 1 - x, mirrorY = resolution - 1 - y;
             pixels[y * resolution + x] = color;
+            pixels[y * resolution + mirrorX] = color;
+            pixels[mirrorY * resolution + x] = color;
+            pixels[mirrorY * resolution + mirrorX] = color;
         }
-        texture.SetPixels(pixels);
-        texture.Apply(true, true);
-        texture.filterMode = FilterMode.Trilinear;
-        texture.wrapMode = TextureWrapMode.Clamp;
-        // The gold outline spans 85% of the texture; the remaining space holds its soft halo.
-        float pixelsPerUnit = texture.width * .85f * frameScale;
-        var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
-            new Vector2(.5f, .5f), pixelsPerUnit, 0, SpriteMeshType.FullRect);
-        sprite.name = name;
-        sprite.hideFlags = HideFlags.HideAndDontSave;
-        var tile = ScriptableObject.CreateInstance<Tile>();
-        tile.name = name;
-        tile.sprite = sprite;
-        tile.colliderType = Tile.ColliderType.None;
-        tile.flags = TileFlags.None;
-        tile.hideFlags = HideFlags.HideAndDontSave;
-        return tile;
+        return pixels;
     }
 
     static void DestroyHighlightTile(Tile tile)
     {
         if (!tile) return;
-        if (tile.sprite)
-        {
-            Destroy(tile.sprite.texture);
-            Destroy(tile.sprite);
-        }
+        if (tile.sprite) Destroy(tile.sprite); // the cursor textures stay cached for the next scene start
         Destroy(tile);
     }
 
