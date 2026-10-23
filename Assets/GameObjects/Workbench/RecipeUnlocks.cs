@@ -73,6 +73,27 @@ public static class RecipeUnlocks
     }
 
     static bool IsShopUnlocked(Item item) => shopUnlocked.Contains((int)item);
+
+    // Upgrade lines in the shop, lowest step first. With GPS Shop → Baupläne → "Nur nächste Stufe" only the first
+    // step and the step after a bought blueprint are offered. Unlock itself stays unrestricted, so saves that
+    // already hold higher steps keep them; a gap simply offers the missing lower step again.
+    static readonly Item[][] ShopLines = {
+        new[] { Item.Backpack, Item.LoadBelt, Item.HeavyDutyBoots, Item.ReinforcedBackpack, Item.SpringGreaves, Item.LoadFrame, Item.Exoskeleton },
+        new[] { Item.CrystalPendant, Item.CopperEnergyBracelet, Item.EnergyStorageVial, Item.RuneBelt, Item.CrystalHeart, Item.CrystalHarness, Item.TravelMonolith },
+        new[] { Item.IronPickaxe, Item.SteelPickaxe, Item.TitaniumPickaxe, Item.TungstenPickaxe, Item.ObsidianPickaxe, Item.MythrilPickaxe, Item.DiamondPickaxe },
+    };
+
+    public static bool IsShopAvailable(CraftingRecipe recipe)
+    {
+        if (!IsShopRecipe(recipe)) return false;
+        if (IsUnlocked(recipe) || !GpsSettings.Preferences.shopNextStepOnly) return true;
+        foreach (var line in ShopLines)
+        {
+            int index = System.Array.IndexOf(line, recipe.output.item);
+            if (index >= 0) return index == 0 || IsShopUnlocked(line[index - 1]);
+        }
+        return true;
+    }
     public static bool IsMedkitUnlocked => IsShopUnlocked(Item.Medkit);
     public static bool IsBackpackUnlocked => IsShopUnlocked(Item.Backpack);
     public static bool IsLoadBeltUnlocked => IsShopUnlocked(Item.LoadBelt);

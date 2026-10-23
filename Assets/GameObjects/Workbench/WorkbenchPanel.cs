@@ -340,7 +340,9 @@ public sealed class WorkbenchPanel : MonoBehaviour
             row.count.text = $"<color=#{color}>{owned}</color>{storage} / {needed}";
         }
         long output = (long)SelectedRecipe.outputAmount * Quantity;
-        resultText.text = $"Ergebnis: {output} {SelectedRecipe.ResultName(output)}";
+        // Building components skip the backpack; the player should know where to find them.
+        string destination = CraftingService.OutputStorage(SelectedRecipe) ? " (ins Lager)" : "";
+        resultText.text = $"Ergebnis: {output} {SelectedRecipe.ResultName(output)}{destination}";
         quantityText.text = Quantity.ToString();
         craftText.text = $"{output} {SelectedRecipe.ResultName(output)} herstellen";
         minus.interactable = Quantity > 1;
