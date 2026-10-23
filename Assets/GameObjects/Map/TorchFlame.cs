@@ -1,6 +1,8 @@
 using UnityEngine;
 
 // Flame of a placed torch (variant "C2", 23.10.2026): painted tongues, blue base, sparks and a thin smoke trail.
+// Draw order back to front: smoke, holder, outer flame, blue base, core, embers; the blue base stays a glow behind the core
+// instead of a pale dot in front of it.
 // GPS values scale the layers relative to the profile values the variant was tuned with (size 1.7, 30/s, brightness 2).
 [DisallowMultipleComponent]
 public sealed class TorchFlame : MonoBehaviour
@@ -34,17 +36,17 @@ public sealed class TorchFlame : MonoBehaviour
                 new[] { (0f, 0f), (.85f, .13f), (.7f, .55f), (0f, 1f) }) },
         new() { name = "Flame Core", rate = 18f, minLife = .32f, maxLife = .5f, minWidth = .11f, maxWidth = .16f,
             minHeight = .299f, maxHeight = .414f, minRise = .07f, maxRise = .13f, spawnWidth = .02f,
-            sway = .015f, noise = .03f, noiseFrequency = 1.4f, order = 0, tongue = true, tongueCurve = true,
+            sway = .015f, noise = .03f, noiseFrequency = 1.4f, order = 1, tongue = true, tongueCurve = true,
             colors = MakeGradient(new[] { (new Color(1f, 1f, .75f), 0f), (new Color(1f, .91f, .25f), .65f), (new Color(1f, .55f, .06f), 1f) },
                 new[] { (0f, 0f), (.95f, .12f), (.75f, .65f), (0f, 1f) }) },
         new() { name = "Blue Base", rate = 16f, minLife = .16f, maxLife = .26f, minWidth = .104f, maxWidth = .143f,
             minHeight = .078f, maxHeight = .117f, minRise = 0f, maxRise = .02f, spawnWidth = .03f,
-            sway = .01f, noise = .01f, noiseFrequency = 1.4f, order = 1, tongue = true,
+            sway = .01f, noise = .01f, noiseFrequency = 1.4f, order = 0, tongue = true,
             colors = MakeGradient(new[] { (new Color(.3f, .5f, 1f), 0f), (new Color(.35f, .55f, 1f), 1f) },
                 new[] { (0f, 0f), (.75f, .25f), (0f, 1f) }) },
         new() { name = "Embers", rate = 16f, minLife = .5f, maxLife = 1f, minWidth = .024f, maxWidth = .04f,
             minHeight = .024f, maxHeight = .04f, minRise = .35f, maxRise = .75f, spawnWidth = .12f,
-            sway = .22f, noise = .16f, noiseFrequency = 1.4f, order = 1,
+            sway = .22f, noise = .16f, noiseFrequency = 1.4f, order = 2,
             colors = MakeGradient(new[] { (new Color(1f, .87f, .28f), 0f), (new Color(1f, .33f, .04f), 1f) },
                 new[] { (0f, 0f), (1f, .15f), (0f, 1f) }) },
     };

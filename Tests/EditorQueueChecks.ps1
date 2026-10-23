@@ -328,6 +328,60 @@ $busyOff = -not @((Get-Content $queueFile -Raw | ConvertFrom-Json).entries)[0].b
 Check 'PostToolUseFailure hebt den Schutz auf' ($busyOn -and $busyOff)
 Remove-Item (Join-Path $dir '.notice-*') -Force -ErrorAction SilentlyContinue
 
+# 17) Warteschlange "Testbank": verteilt Wartende auf die naechste freie Testbank ("<Projekt> 2", "<Projekt> 3").
+# Eigener Ordner mit Attrappen: PoolGame (Benutzer), PoolGame 2/3 (Testbaenke, leere Git-Ordner), EditorQueue.
+$poolRoot = Join-Path $root 'Temp\EditorQueuePool'
+if (Test-Path $poolRoot) { Remove-Item $poolRoot -Recurse -Force }
+foreach ($n in 'PoolGame', 'PoolGame 2', 'PoolGame 3', 'PoolGame 4') {
+    New-Item -ItemType Directory (Join-Path $poolRoot $n) -Force | Out-Null
+    & git init -q (Join-Path $poolRoot $n)
+}
+$poolDir = Join-Path $poolRoot 'EditorQueue'
+New-Item -ItemType Directory $poolDir -Force | Out-Null
+function P([string]$proj, [string[]]$argv) {
+    $out = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script @argv -Project $proj -QueueDir $poolDir
+    return @{ code = $LASTEXITCODE; out = ($out -join "`n") }
+}
+function PoolIds([string]$proj) {
+    $f = Join-Path $poolDir "$proj.json"
+    if (-not (Test-Path $f)) { return '' }
+    (@((Get-Content $f -Raw | ConvertFrom-Json).entries | Where-Object { $_ } | ForEach-Object { $_.id })) -join ','
+}
+$r = P 'Testbank' @('join', '-Id', 'a', '-Who', 'Chat A', '-Purpose', 'Tests A')
+Check 'Testbank: erster bekommt sofort Testbank 2' (($r.code -eq 0) -and $r.out -match 'TESTBANK=PoolGame 2' -and (PoolIds 'PoolGame 2') -eq 'a') $r.out
+$r = P 'Testbank' @('join', '-Id', 'b', '-Who', 'Chat B')
+Check 'Testbank: zweiter bekommt Testbank 3 (nicht "PoolGame 4")' ($r.out -match 'TESTBANK=PoolGame 3' -and (PoolIds 'PoolGame 3') -eq 'b') $r.out
+$r = P 'Testbank' @('join', '-Id', 'c', '-Who', 'Chat C')
+Check 'Testbank: dritter wartet' (($r.out -match 'Position 1') -and (PoolIds 'Testbank') -eq 'c') $r.out
+$r = P 'Testbank' @('join', '-Id', 'a', '-Who', 'Chat A')
+Check 'Testbank: erneutes join nennt die zugeteilte Testbank' (($r.out -match 'TESTBANK=PoolGame 2') -and (PoolIds 'Testbank') -eq 'c') $r.out
+$r = P 'Testbank' @('wait', '-Id', 'c', '-PollSeconds', '1', '-TimeoutMinutes', '0.03')
+Check 'Testbank: wait bei voller Belegung -> 2' ($r.code -eq 2) "code=$($r.code) $($r.out)"
+$r = P 'Testbank' @('heartbeat', '-Id', 'b', '-Busy')
+$busyB = @((Get-Content (Join-Path $poolDir 'PoolGame 3.json') -Raw | ConvertFrom-Json).entries)[0].busySince
+Check 'Testbank: heartbeat findet den Eintrag auf seiner Testbank' (($r.code -eq 0) -and $busyB) $r.out
+$w = Start-Process powershell.exe -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$script`"", 'wait', '-Id', 'c', '-PollSeconds', '1', '-TimeoutMinutes', '1', '-Project', 'Testbank', '-QueueDir', "`"$poolDir`"") -PassThru -NoNewWindow -RedirectStandardOutput (Join-Path $poolRoot 'waitC.out') -RedirectStandardError (Join-Path $poolRoot 'waitC.err')
+$null = $w.Handle
+Start-Sleep -Seconds 3
+$r = P 'Testbank' @('leave', '-Id', 'a')
+Check 'Testbank: leave findet den Eintrag auf seiner Testbank' (($r.code -eq 0) -and $r.out -match 'Abgemeldet') $r.out
+$w.WaitForExit(20000) | Out-Null
+$wout = Get-Content (Join-Path $poolRoot 'waitC.out') -Raw
+Check 'Testbank: Wartender rueckt auf frei gewordene Testbank 2 nach' ($w.HasExited -and $w.ExitCode -eq 0 -and $wout -match 'TESTBANK=PoolGame 2' -and (PoolIds 'PoolGame 2') -eq 'c' -and (PoolIds 'Testbank') -eq '') "exit=$($w.ExitCode) $wout"
+Check 'Testbank: Zuteilung im Protokoll' ((Get-Content (Join-Path $poolDir 'Testbank.log') -Raw) -match 'ZUGETEILT \[c\] Chat C -> Testbank ''PoolGame 2''')
+foreach ($x in 'd', 'e', 'f') { P 'Testbank' @('join', '-Id', $x, '-Who', "Chat $x") | Out-Null }
+$r = P 'Testbank' @('move', '-Id', 'f', '-Position', '1')
+Check 'Testbank: Wartende frei umsortierbar, auch auf Platz 1' (($r.code -eq 0) -and (PoolIds 'Testbank') -eq 'f,d,e') "ids=$(PoolIds 'Testbank') $($r.out)"
+$j = (P 'Testbank' @('status', '-Json')).out | ConvertFrom-Json
+Check 'Testbank: status -Json zeigt Belegung der Testbaenke' (($j.entries.Count -eq 3) -and $j.editor.busy -and $j.editor.text -match 'PoolGame 2: belegt \(Chat C\)' -and $j.editor.text -match 'PoolGame 3: belegt \(Chat B\)') ($j | ConvertTo-Json -Depth 5 -Compress)
+Start-Sleep -Seconds 4
+P 'Testbank' @('heartbeat', '-Id', 'd') | Out-Null
+P 'Testbank' @('status', '-StaleMinutes', '0.05') | Out-Null
+Check 'Testbank: Wartende ohne Lebenszeichen fallen weg' ((PoolIds 'Testbank') -eq 'd') "ids=$(PoolIds 'Testbank')"
+$bench = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'Tools\editor-bench.ps1') status -Id c -QueueDir $poolDir
+Check 'editor-bench findet die zugeteilte Testbank ueber -Id' (($bench -join "`n") -match 'Testbank: .*PoolGame 2') ($bench -join ' ')
+Remove-Item $poolRoot -Recurse -Force -ErrorAction SilentlyContinue
+
 Write-Output ''
 if ($failures -eq 0) { Write-Output 'Alle Editor-Warteschlangen-Checks bestanden.'; exit 0 }
 Write-Output "$failures Check(s) fehlgeschlagen."

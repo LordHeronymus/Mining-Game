@@ -74,6 +74,11 @@ public sealed class ProgressionTimelineRunner:MonoBehaviour
         Check(timeline.transform.Find("Rewards/Milestone 15/Blueprint lava-lamp") || timeline.GetComponentsInChildren<TMP_Text>().Any(t=>t.text=="Lavalampe"),"Lava blueprint uses actual catalog name");
         var badge=(RectTransform)timeline.transform.Find("Level Badge"); var track=(RectTransform)timeline.transform.Find("XP Track");
         Check(Mathf.Abs(badge.anchoredPosition.y-track.anchoredPosition.y)<.1f && badge.anchoredPosition.x+badge.rect.width/2>=track.anchoredPosition.x-track.rect.width/2,"Level badge joins the aligned XP gauge");
+        // The gauge docks onto the badge point instead of tucking under it, and the gold stays inside the groove.
+        float trackLeft=track.anchoredPosition.x-track.rect.width/2, badgeRight=badge.anchoredPosition.x+badge.rect.width/2;
+        Check(badgeRight>=trackLeft && badgeRight-trackLeft<=2,"XP gauge point docks onto the badge point");
+        var interior=(RectTransform)track.Find("XP Interior"); var gold=interior ? interior.GetComponentInChildren<ChallengeGoldFill>() : null;
+        Check(gold && gold.Pointed && interior.rect.xMin+track.rect.width/2>=15 && interior.rect.xMax<=track.rect.width/2-15,"XP gold fill sits inside the groove with the challenge shape");
         Check(Time.timeScale==0 && GameplayInputBlocker.IsBlocked,"Overview pauses and owns input");
         Canvas.ForceUpdateCanvases();
         foreach(var symbol in timeline.GetComponentsInChildren<ProgressionSymbol>()) {

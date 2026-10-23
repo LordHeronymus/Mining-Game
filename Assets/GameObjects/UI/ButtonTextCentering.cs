@@ -238,14 +238,17 @@ public sealed class ButtonTextCentering : MonoBehaviour
 
     // TMP centres a line by its advance widths, which include the side bearings of the first and last glyph
     // (the space right of "n" is wider than left of "W"). Each centred line moves so that its visible ink sits
-    // where TMP put the middle of its advances.
+    // on the middle of the label box between its margins. (The middle of the advances is not that point for bold
+    // captions: the last xAdvance includes the bold spacing, which TMP leaves out when it centres the line.)
     void CentreInk(TMP_TextInfo info)
     {
         if (text.horizontalAlignment != HorizontalAlignmentOptions.Center) return;
+        var box = text.rectTransform.rect; var margin = text.margin;
+        float centre = (box.xMin + margin.x + box.xMax - margin.z) / 2;
         for (int l = 0; l < info.lineCount; l++)
         {
             var line = info.lineInfo[l];
-            float inkLeft = float.MaxValue, inkRight = float.MinValue, advanceLeft = float.MaxValue, advanceRight = float.MinValue;
+            float inkLeft = float.MaxValue, inkRight = float.MinValue;
             for (int i = line.firstVisibleCharacterIndex; i >= 0 && i <= line.lastVisibleCharacterIndex && i < info.characterCount; i++)
             {
                 var c = info.characterInfo[i];
@@ -253,11 +256,9 @@ public sealed class ButtonTextCentering : MonoBehaviour
                 var m = c.textElement.glyph.metrics;
                 inkLeft = Mathf.Min(inkLeft, c.origin + m.horizontalBearingX * c.scale);
                 inkRight = Mathf.Max(inkRight, c.origin + (m.horizontalBearingX + m.width) * c.scale);
-                advanceLeft = Mathf.Min(advanceLeft, c.origin);
-                advanceRight = Mathf.Max(advanceRight, c.xAdvance);
             }
             if (inkLeft > inkRight) continue;
-            float shift = (advanceLeft + advanceRight) / 2 - (inkLeft + inkRight) / 2;
+            float shift = centre - (inkLeft + inkRight) / 2;
             if (Mathf.Abs(shift) < .001f) continue;
             if (l == 0) AppliedShiftX = shift;
             var offset = new Vector3(shift, 0, 0);
