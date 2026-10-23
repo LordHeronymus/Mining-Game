@@ -303,6 +303,7 @@ public sealed class CompactHud : MonoBehaviour
                 (inventoryPanel && inventoryPanel.IsOpen && !GameplayInputBlocker.IsBlockedExcept(inventoryPanel));
         }
     }
+    public bool IsDraggingItem => draggedSlot > 0;
     public bool CanReorderSlot(int index) => CanReorderHotbar && index >= 1 && index <= 8 &&
         IsKnownHotbarItem(slots[index - 1]);
     public static bool IsHotbarItem(ItemSO item) => item &&
