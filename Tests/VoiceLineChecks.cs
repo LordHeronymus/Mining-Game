@@ -231,7 +231,7 @@ public static class VoiceLineChecks
         w.Rebaseline(.1, low, critical); Check(w.Step(.1, low, critical, margin) == null, "Energy rebaseline below critical does not fire");
 
         var c = new VoiceCarryWatcher();
-        Check(VoiceCarryWatcher.Stage1Ratio == 1.0 && VoiceCarryWatcher.Stage2Ratio == 2.0, "Carry stages match inventory stages");
+        Check(VoiceCarryWatcher.Stage1Ratio == 1.0 && Math.Abs(VoiceCarryWatcher.Stage2Ratio - InventoryManager.RedStageRatio) < 1e-9 && Math.Abs(VoiceCarryWatcher.Stage2Ratio - 1.8) < 1e-6, "Carry stages match inventory stages (red from 90 % of twice the capacity)");
         Check(!c.HasBaseline && c.Step(.5, .1) == null && c.HasBaseline, "Carry watcher rebaselines on first step without firing");
         Check(c.Step(1.2, .1) == VoiceLineEvent.CarryStage1 && c.Step(2.5, .1) == VoiceLineEvent.CarryStage2, "Carry stage 1 opens and is replaced by stage 2");
         c.Acknowledge(VoiceLineEvent.CarryStage1); Check(c.Open == VoiceLineEvent.CarryStage2, "Acknowledge of another stage keeps Open");

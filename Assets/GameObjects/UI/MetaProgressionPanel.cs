@@ -140,7 +140,8 @@ public sealed class MetaProgressionPanel : MonoBehaviour
         showingOverview=true; layout.gameObject.SetActive(false); overview.gameObject.SetActive(true);
         timeline.SetExperience(MetaProgression.TotalXp, true); RefreshOverview();
         ProgressionArt.Navigation(transform);
-        EventSystem.current?.SetSelectedGameObject(overview.Find("Open Upgrades").gameObject);
+        // No preselected button: a focused button shows the orange fill until the pointer hovers it, which reads inverted.
+        EventSystem.current?.SetSelectedGameObject(null);
     }
     void RefreshOverview()
     {
@@ -154,7 +155,7 @@ public sealed class MetaProgressionPanel : MonoBehaviour
         if (!showingOverview || closing) return;
         showingOverview=false; overview.gameObject.SetActive(false); layout.gameObject.SetActive(true);
         RefreshValues(); scroll.verticalNormalizedPosition=1;
-        EventSystem.current?.SetSelectedGameObject(upgradesBack.gameObject);
+        EventSystem.current?.SetSelectedGameObject(null);
     }
 
     void OpenBlueprints()
@@ -163,10 +164,7 @@ public sealed class MetaProgressionPanel : MonoBehaviour
         showingOverview=false; overview.gameObject.SetActive(false);
         blueprintsPanel=BlueprintCollectionPanel.Create(transform, readOnly, () => {
             blueprintsPanel=null;
-            if (!closing) {
-                ShowOverview();
-                EventSystem.current?.SetSelectedGameObject(overview.Find("Open Baupläne").gameObject);
-            }
+            if (!closing) ShowOverview();
         });
     }
 
@@ -177,10 +175,7 @@ public sealed class MetaProgressionPanel : MonoBehaviour
         overview.gameObject.SetActive(false);
         challengesPanel=ChallengePanel.Create(transform, () => {
             challengesPanel=null;
-            if (!closing) {
-                ShowOverview();
-                EventSystem.current?.SetSelectedGameObject(overview.Find("Open Herausforderungen").gameObject);
-            }
+            if (!closing) ShowOverview();
         });
     }
 
