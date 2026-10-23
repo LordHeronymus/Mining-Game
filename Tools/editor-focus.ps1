@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Fokus-Waechter fuer den Unity Editor der Testbank ("Mining Game 2"): Holt Unity das Testbank-Fenster von selbst nach
+  Fokus-Waechter fuer die Unity Editoren der Testbaenke ("Mining Game 2", "Mining Game 3"): Holt Unity ein Testbank-Fenster von selbst nach
   vorne (Stand laden, Play-Mode, Neu laden), aktiviert er sofort wieder das Fenster, in dem der Benutzer war. Liegt die
   Testbank auf einem anderen virtuellen Desktop, wechselt Windows damit auch auf den Desktop des Benutzers zurueck.
   Wechselt der Benutzer selbst zur Testbank (Klick auf das Fenster, Taskleiste, Task-Ansicht, Win+Strg+Pfeil, Alt+Tab),
@@ -9,7 +9,7 @@
 
 .EXAMPLE
   Tools/editor-focus.ps1 status          # laeuft der Waechter, ein/aus, letzte Eingriffe aus dem Protokoll
-  Tools/editor-focus.ps1 off             # abschalten (Datei <Git Repos>/EditorQueue/<Testbank>.focus-guard-off)
+  Tools/editor-focus.ps1 off             # abschalten (Datei <Git Repos>/EditorQueue/<Testbank>.focus-guard-off; -Project fuer eine)
   Tools/editor-focus.ps1 on              # wieder einschalten
   Tools/editor-focus.ps1 watch -Trace    # Waechter im Vordergrund (nur wenn der Dienst ihn nicht schon betreibt), zeigt jeden Fensterwechsel
   Tools/editor-focus.ps1 watch -DryRun   # nur beobachten und protokollieren, nichts zurueckholen
@@ -22,7 +22,8 @@ param(
     [Parameter(Position = 0)]
     [ValidateSet('start', 'watch', 'status', 'on', 'off', 'help')]
     [string]$Command = 'help',
-    [string]$Project,
+    # Testbaenke (Ordnernamen); ohne Angabe alle.
+    [string[]]$Project,
     [string]$ProjectRoot,
     [string]$QueueDir,
     # So lange vor dem Fensterwechsel zaehlt ein Klick des Benutzers auf die Testbank bzw. auf Taskleiste/Task-Ansicht als Absicht.
@@ -45,18 +46,25 @@ $ownerMatch = [regex]::Match($repoRoot, '^(.*?)[\\/]\.claude[\\/]worktrees[\\/]'
 $ownerRoot = if ($ownerMatch.Success) { $ownerMatch.Groups[1].Value } else { $repoRoot }
 $baseName = (Split-Path $ownerRoot -Leaf) -replace ' \d+$', ''
 $reposDir = Split-Path $ownerRoot -Parent
-if (-not $Project) { $Project = "$baseName 2" }
-if ($Project -eq $baseName) {
-    Write-Output "'$Project' ist der Editor des Benutzers. editor-focus arbeitet nur mit der Testbank."
+# Ohne -Project alle Testbaenke "<Projekt> 2" und "<Projekt> 3" (gleiche Regel wie Assets/Editor/TestBenchNames.cs).
+if (-not $Project) {
+    $Project = @(Get-ChildItem -LiteralPath $reposDir -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match ('^' + [regex]::Escape($baseName) + ' [23]$') -and (Test-Path -LiteralPath (Join-Path $_.FullName '.git')) } |
+        Sort-Object Name | ForEach-Object { $_.Name })
+    if (-not $Project) { $Project = @("$baseName 2") }
+}
+if ($Project -contains $baseName) {
+    Write-Output "'$baseName' ist der Editor des Benutzers. editor-focus arbeitet nur mit Testbaenken."
     exit 1
 }
-$projectPath = [IO.Path]::GetFullPath((Join-Path $reposDir $Project)).TrimEnd('\')
 if (-not $QueueDir) { $QueueDir = $env:EDITOR_QUEUE_DIR }
 if (-not $QueueDir) { $QueueDir = Join-Path $reposDir 'EditorQueue' }
-$logFile = Join-Path $QueueDir "$Project.log"
-$activityFile = Join-Path $QueueDir "$Project.activity.json"
-$offFile = Join-Path $QueueDir "$Project.focus-guard-off"
-$mutexName = 'Local\EditorQueueFocusGuard-' + ($projectPath.ToLowerInvariant() -replace '[^a-z0-9]', '_')
+$projectPaths = @($Project | ForEach-Object { [IO.Path]::GetFullPath((Join-Path $reposDir $_)).TrimEnd('\') })
+$logFiles = @($Project | ForEach-Object { Join-Path $QueueDir "$_.log" })
+$activityFiles = @($Project | ForEach-Object { Join-Path $QueueDir "$_.activity.json" })
+$offFiles = @($Project | ForEach-Object { Join-Path $QueueDir "$_.focus-guard-off" })
+# Ein Waechter fuer alle Testbaenke dieses Ordners: er muss alle kennen, sonst holt er beim Zurueckholen eine andere Testbank nach vorne.
+$mutexName = 'Local\EditorQueueFocusGuard-' + ($reposDir.ToLowerInvariant() -replace '[^a-z0-9]', '_')
 
 # --- Waechter (eigener Thread mit Nachrichtenschleife) --------------------------
 
@@ -121,16 +129,17 @@ public static class BenchFocusGuard {
     const byte VK_MENU = 0x12, VK_NOMENU = 0xE8;   // 0xE8: nicht belegt, verhindert, dass Alt allein das Menue oeffnet
 
     // --- Einstellungen (vor Start setzen) ---
-    public static string BenchPath, ActivityFile, OffFile, LogFile;
+    // Je Testbank (gleicher Index): Ordner, Aktivitaetssignal, Abschalt-Datei, Protokoll.
+    public static string[] BenchPaths, ActivityFiles, OffFiles, LogFiles;
     public static int ClickMs = 1500, KeyMs = 2500;
     public static bool DryRun, Trace, Echo;
     public static int MaxRestores = 6, RestoreWindowMs = 20000, PauseMs = 60000;
 
     // --- Zustand ---
-    public static volatile int BenchPid;
+    public static int[] BenchPids;   // Prozess je Testbank, 0 = laeuft nicht (vom Timer gesetzt, im Hook-Thread gelesen)
     public static int Restored, Allowed, Failed;
     public static readonly ConcurrentQueue<string> Messages = new ConcurrentQueue<string>();
-    static readonly BlockingCollection<string> logQueue = new BlockingCollection<string>();
+    static readonly BlockingCollection<KeyValuePair<string, string>> logQueue = new BlockingCollection<KeyValuePair<string, string>>();
     static Thread thread, logger;
     static Timer pidTimer;
     static Mutex mutex;
@@ -144,7 +153,8 @@ public static class BenchFocusGuard {
     static long clickTick = long.MinValue / 4; static IntPtr clickWnd; static uint clickPid;
     static long keyTick = long.MinValue / 4; static string keyName; static bool winDown;
     static readonly Queue<long> restoreTicks = new Queue<long>();
-    static long pausedUntil; static bool offLogged;
+    static long pausedUntil; static bool[] offLogged;
+    static DateTime[] pidStarts;
     static readonly Dictionary<uint, string> procNames = new Dictionary<uint, string>();
 
     static long Now() { return (long)GetTickCount64(); }
@@ -152,6 +162,9 @@ public static class BenchFocusGuard {
     // Startet den Waechter-Thread. false = laeuft schon (in diesem oder einem anderen Prozess).
     public static bool Start() {
         if (thread != null) return false;
+        BenchPids = new int[BenchPaths.Length];
+        pidStarts = new DateTime[BenchPaths.Length];
+        offLogged = new bool[BenchPaths.Length];
         var ready = new ManualResetEvent(false);
         bool ok = false;
         thread = new Thread(() => {
@@ -233,40 +246,49 @@ public static class BenchFocusGuard {
 
     // --- Fensterwechsel ---
     static void OnForeground(IntPtr hook, uint ev, IntPtr hwnd, int idObject, int idChild, uint thr, uint time) {
-        try { Handle(hwnd); } catch (Exception e) { Log("FOKUS Fehler im Waechter: " + e.Message); }
+        try { Handle(hwnd); } catch (Exception e) { Log(0, "FOKUS Fehler im Waechter: " + e.Message); }
+    }
+
+    // Index der Testbank, zu der der Prozess gehoert, sonst -1.
+    static int BenchOf(uint pid) {
+        int[] pids = BenchPids;
+        for (int i = 0; i < pids.Length; i++) if (pids[i] != 0 && (uint)pids[i] == pid) return i;
+        return -1;
     }
 
     static void Handle(IntPtr hwnd) {
         if (hwnd == IntPtr.Zero) return;
         uint pid; GetWindowThreadProcessId(hwnd, out pid);
-        int bench = BenchPid;
+        int k = BenchOf(pid);
         IntPtr prev = lastFg; uint prevPid = lastFgPid;
         lastFg = hwnd; lastFgPid = pid;
-        if (Trace) Show(string.Format("Vordergrund: {0}{1}", Describe(hwnd, pid), pid == bench && bench != 0 ? "  [Testbank]" : ""));
-        if (bench == 0 || pid != (uint)bench) { Remember(hwnd, pid); return; }
-        if (prevPid == (uint)bench) return;   // innerhalb der Testbank (Dialog, Fortschrittsfenster)
+        if (Trace) Show(string.Format("Vordergrund: {0}{1}", Describe(hwnd, pid), k >= 0 ? "  [Testbank " + Path.GetFileName(BenchPaths[k]) + "]" : ""));
+        if (k < 0) { Remember(hwnd, pid); return; }
+        // Innerhalb der Testbank (Dialog, Fortschrittsfenster) oder von einer Testbank zur anderen: der Benutzer war schon dort.
+        if (BenchOf(prevPid) >= 0) return;
+        uint bench = pid;
 
-        if (File.Exists(OffFile)) {
-            if (!offLogged) { Log("FOKUS Waechter abgeschaltet (" + Path.GetFileName(OffFile) + "): Testbank-Fenster bleibt vorne."); offLogged = true; }
+        if (File.Exists(OffFiles[k])) {
+            if (!offLogged[k]) { Log(k, "FOKUS Waechter abgeschaltet (" + Path.GetFileName(OffFiles[k]) + "): Testbank-Fenster bleibt vorne."); offLogged[k] = true; }
             return;
         }
-        offLogged = false;
+        offLogged[k] = false;
 
         long now = Now();
         string intent = null;
-        if (now - clickTick <= ClickMs && (clickPid == (uint)bench || IsShell(clickPid)))
-            intent = string.Format("Klick auf {0} vor {1} ms", clickPid == (uint)bench ? "die Testbank" : ProcName(clickPid), now - clickTick);
+        if (now - clickTick <= ClickMs && (clickPid == bench || IsShell(clickPid)))
+            intent = string.Format("Klick auf {0} vor {1} ms", clickPid == bench ? "die Testbank" : ProcName(clickPid), now - clickTick);
         else if (now - keyTick <= KeyMs)
             intent = string.Format("Taste {0} vor {1} ms", keyName, now - keyTick);
         string from = prev != IntPtr.Zero ? Describe(prev, prevPid) : "(kein Fenster)";
         if (intent != null) {
             Allowed++;
-            Log(string.Format("FOKUS Testbank bewusst geoeffnet ({0}), bleibt vorne. Vorher: {1}", intent, from));
+            Log(k, string.Format("FOKUS Testbank bewusst geoeffnet ({0}), bleibt vorne. Vorher: {1}", intent, from));
             return;
         }
 
-        IntPtr target = PickTarget((uint)bench);
-        if (target == IntPtr.Zero) { Log("FOKUS Testbank kam von selbst nach vorne, aber kein Fenster zum Zurueckholen. Vorher: " + from); return; }
+        IntPtr target = PickTarget();
+        if (target == IntPtr.Zero) { Log(k, "FOKUS Testbank kam von selbst nach vorne, aber kein Fenster zum Zurueckholen. Vorher: " + from); return; }
         uint tpid; GetWindowThreadProcessId(target, out tpid);
         string to = Describe(target, tpid);
 
@@ -274,10 +296,10 @@ public static class BenchFocusGuard {
         while (restoreTicks.Count > 0 && now - restoreTicks.Peek() > RestoreWindowMs) restoreTicks.Dequeue();
         if (restoreTicks.Count >= MaxRestores) {
             pausedUntil = now + PauseMs;
-            Log(string.Format("FOKUS Testbank holt sich laufend den Fokus ({0}x in {1} s): Waechter pausiert {2} s.", restoreTicks.Count, RestoreWindowMs / 1000, PauseMs / 1000));
+            Log(k, string.Format("FOKUS Testbank holt sich laufend den Fokus ({0}x in {1} s): Waechter pausiert {2} s.", restoreTicks.Count, RestoreWindowMs / 1000, PauseMs / 1000));
             return;
         }
-        if (DryRun) { Log("FOKUS (Probelauf) Testbank kam von selbst nach vorne, wuerde zurueckholen: " + to); return; }
+        if (DryRun) { Log(k, "FOKUS (Probelauf) Testbank kam von selbst nach vorne, wuerde zurueckholen: " + to); return; }
 
         restoreTicks.Enqueue(now);
         var sw = Stopwatch.StartNew();
@@ -285,12 +307,12 @@ public static class BenchFocusGuard {
         sw.Stop();
         if (how != null) {
             Restored++;
-            Log(string.Format("FOKUS Testbank kam von selbst nach vorne ({0}), zurueck zu {1} ({2}, {3} ms{4}).",
+            Log(k, string.Format("FOKUS Testbank kam von selbst nach vorne ({0}), zurueck zu {1} ({2}, {3} ms{4}).",
                 Describe(hwnd, pid), to, how, sw.ElapsedMilliseconds, DesktopNote(target)));
         }
         else {
             Failed++;
-            Log(string.Format("FOKUS Zurueckholen von {0} hat nicht geklappt (Windows hat es verweigert); Testbank bleibt vorne.", to));
+            Log(k, string.Format("FOKUS Zurueckholen von {0} hat nicht geklappt (Windows hat es verweigert); Testbank bleibt vorne.", to));
         }
     }
 
@@ -319,11 +341,12 @@ public static class BenchFocusGuard {
         return null;
     }
 
-    static IntPtr PickTarget(uint bench) {
+    // Zuletzt benutztes Fenster ausserhalb aller Testbaenke.
+    static IntPtr PickTarget() {
         foreach (IntPtr h in history) {
             if (!IsWindow(h) || !IsWindowVisible(h) || IsIconic(h)) continue;
             uint pid; GetWindowThreadProcessId(h, out pid);
-            if (pid != bench) return h;
+            if (BenchOf(pid) < 0) return h;
         }
         return IntPtr.Zero;
     }
@@ -371,39 +394,43 @@ public static class BenchFocusGuard {
         return on != 0 ? ", Desktop des Benutzers aktiv" : ", Desktop noch nicht zurueck";
     }
 
-    // --- Prozess der Testbank (Unity.exe mit -projectpath auf den Testbank-Ordner); nicht im Hook-Thread ---
-    static DateTime pidStart;
+    // --- Prozesse der Testbaenke (Unity.exe mit -projectpath auf den Testbank-Ordner); nicht im Hook-Thread ---
     static void RefreshPid() {
-        try {
-            int pid = BenchPid;
-            if (pid != 0) {
-                try {
-                    var p = Process.GetProcessById(pid);
-                    if (!p.HasExited && p.StartTime == pidStart) {
-                        int hint = ActivityPid();
-                        if (hint == 0 || hint == pid) return;
-                    }
-                } catch { }
-            }
-            int found = FindBench();
-            if (found != BenchPid) {
-                if (found != 0) { try { pidStart = Process.GetProcessById(found).StartTime; } catch { } }
-                BenchPid = found;
-                if (Trace) Show(found != 0 ? "Testbank-Editor: Prozess " + found : "Testbank-Editor laeuft nicht.");
-            }
-        } catch { }
+        for (int k = 0; k < BenchPaths.Length; k++) {
+            try { RefreshPid(k); } catch { }
+        }
     }
 
-    static int ActivityPid() {
+    static void RefreshPid(int k) {
+        int pid = BenchPids[k];
+        if (pid != 0) {
+            try {
+                var p = Process.GetProcessById(pid);
+                if (!p.HasExited && p.StartTime == pidStarts[k]) {
+                    int hint = ActivityPid(k);
+                    if (hint == 0 || hint == pid) return;
+                }
+            } catch { }
+        }
+        int found = FindBench(k);
+        if (found != BenchPids[k]) {
+            if (found != 0) { try { pidStarts[k] = Process.GetProcessById(found).StartTime; } catch { } }
+            BenchPids[k] = found;
+            string name = Path.GetFileName(BenchPaths[k]);
+            if (Trace) Show(found != 0 ? "Testbank-Editor " + name + ": Prozess " + found : "Testbank-Editor " + name + " laeuft nicht.");
+        }
+    }
+
+    static int ActivityPid(int k) {
         try {
-            if (ActivityFile == null || !File.Exists(ActivityFile)) return 0;
-            var m = Regex.Match(File.ReadAllText(ActivityFile), "\"processId\"\\s*:\\s*(\\d+)");
+            if (ActivityFiles[k] == null || !File.Exists(ActivityFiles[k])) return 0;
+            var m = Regex.Match(File.ReadAllText(ActivityFiles[k]), "\"processId\"\\s*:\\s*(\\d+)");
             return m.Success ? int.Parse(m.Groups[1].Value) : 0;
         } catch { return 0; }
     }
 
-    static int FindBench() {
-        int hint = ActivityPid(), first = 0;
+    static int FindBench(int k) {
+        int hint = ActivityPid(k), first = 0;
         using (var s = new ManagementObjectSearcher("SELECT ProcessId, ExecutablePath, CommandLine FROM Win32_Process WHERE Name='Unity.exe'")) {
             foreach (ManagementObject o in s.Get()) {
                 string exe = (o["ExecutablePath"] as string) ?? "", cmd = (o["CommandLine"] as string) ?? "";
@@ -412,7 +439,7 @@ public static class BenchFocusGuard {
                 if (!m.Success) continue;
                 string path = m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value;
                 try { path = Path.GetFullPath(path).TrimEnd('\\', '/'); } catch { continue; }
-                if (!string.Equals(path, BenchPath, StringComparison.OrdinalIgnoreCase)) continue;
+                if (!string.Equals(path, BenchPaths[k], StringComparison.OrdinalIgnoreCase)) continue;
                 int id = Convert.ToInt32(o["ProcessId"]);
                 if (id == hint) return id;
                 if (first == 0) first = id;
@@ -424,17 +451,20 @@ public static class BenchFocusGuard {
     // --- Protokoll (eigener Thread: die Protokolldatei kann kurz gesperrt sein) ---
     static void Show(string text) { if (Echo) Messages.Enqueue(DateTime.Now.ToString("HH:mm:ss.fff") + "  " + text); }
 
-    static void Log(string text) {
+    // Ins Protokoll der Testbank k (<Testbank>.log).
+    static void Log(int k, string text) {
         Show(text);
-        logQueue.Add(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + "  " + text + "\r\n");
+        logQueue.Add(new KeyValuePair<string, string>(LogFiles[k],
+            DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + "  " + text + "\r\n"));
     }
 
     static void LogLoop() {
         var utf8 = new UTF8Encoding(false);
-        foreach (string line in logQueue.GetConsumingEnumerable()) {
-            if (LogFile == null || !Directory.Exists(Path.GetDirectoryName(LogFile))) continue;
+        foreach (var item in logQueue.GetConsumingEnumerable()) {
+            string file = item.Key;
+            if (file == null || !Directory.Exists(Path.GetDirectoryName(file))) continue;
             for (int i = 0; i < 20; i++) {
-                try { File.AppendAllText(LogFile, line, utf8); break; } catch { Thread.Sleep(50); }
+                try { File.AppendAllText(file, item.Value, utf8); break; } catch { Thread.Sleep(50); }
             }
         }
     }
@@ -450,10 +480,10 @@ function Test-GuardElsewhere {
 
 function Start-Guard([bool]$echo) {
     if ([BenchFocusGuard]::Running) { return $true }
-    [BenchFocusGuard]::BenchPath = $projectPath
-    [BenchFocusGuard]::ActivityFile = $activityFile
-    [BenchFocusGuard]::OffFile = $offFile
-    [BenchFocusGuard]::LogFile = $logFile
+    [BenchFocusGuard]::BenchPaths = [string[]]$projectPaths
+    [BenchFocusGuard]::ActivityFiles = [string[]]$activityFiles
+    [BenchFocusGuard]::OffFiles = [string[]]$offFiles
+    [BenchFocusGuard]::LogFiles = [string[]]$logFiles
     [BenchFocusGuard]::MutexName = $mutexName
     [BenchFocusGuard]::ClickMs = $ClickMs
     [BenchFocusGuard]::KeyMs = $KeyMs
@@ -463,16 +493,19 @@ function Start-Guard([bool]$echo) {
     return [BenchFocusGuard]::Start()
 }
 
+$names = "'" + ($Project -join "', '") + "'"
 switch ($Command) {
     'start' {
-        if (-not (Start-Guard $false)) { Write-Output "Fokus-Waechter fuer '$Project' laeuft schon in einem anderen Prozess."; exit 4 }
-        $state = if (Test-Path -LiteralPath $offFile) { 'abgeschaltet (Datei ' + (Split-Path $offFile -Leaf) + ')' } else { 'ein' }
-        Write-Output "Fokus-Waechter fuer '$Project': $state$(if ($DryRun) { ', Probelauf' })."
+        if (-not (Start-Guard $false)) { Write-Output "Fokus-Waechter fuer $names laeuft schon in einem anderen Prozess."; exit 4 }
+        $states = for ($i = 0; $i -lt $Project.Count; $i++) {
+            "$($Project[$i]): " + $(if (Test-Path -LiteralPath $offFiles[$i]) { 'abgeschaltet (Datei ' + (Split-Path $offFiles[$i] -Leaf) + ')' } else { 'ein' })
+        }
+        Write-Output "Fokus-Waechter: $($states -join ', ')$(if ($DryRun) { ', Probelauf' })."
         exit 0
     }
     'watch' {
-        if (-not (Start-Guard $true)) { Write-Output "Fokus-Waechter fuer '$Project' laeuft schon (Dienst der Editor-Warteschlange). Zum Beobachten: Protokoll $logFile"; exit 4 }
-        Write-Output "Fokus-Waechter fuer '$Project' laeuft im Vordergrund$(if ($DryRun) { ' (Probelauf)' }). Beenden mit Strg+C."
+        if (-not (Start-Guard $true)) { Write-Output "Fokus-Waechter fuer $names laeuft schon (Dienst der Editor-Warteschlange). Zum Beobachten: Protokolle $($logFiles -join ', ')"; exit 4 }
+        Write-Output "Fokus-Waechter fuer $names laeuft im Vordergrund$(if ($DryRun) { ' (Probelauf)' }). Beenden mit Strg+C."
         while ($true) {
             $line = $null
             while ([BenchFocusGuard]::Messages.TryDequeue([ref]$line)) { Write-Output $line }
@@ -481,23 +514,25 @@ switch ($Command) {
     }
     'status' {
         $running = Test-GuardElsewhere
-        Write-Output ("Fokus-Waechter '{0}': {1}, {2}." -f $Project, $(if ($running) { 'laeuft' } else { 'laeuft nicht (Dienst der Editor-Warteschlange starten)' }),
-            $(if (Test-Path -LiteralPath $offFile) { "abgeschaltet ($offFile)" } else { 'eingeschaltet' }))
-        if (Test-Path -LiteralPath $logFile) {
-            $lines = @(Get-Content -LiteralPath $logFile -Encoding UTF8 -Tail 400 | Where-Object { $_ -match '  FOKUS ' } | Select-Object -Last 10)
-            if ($lines.Count) { Write-Output 'Letzte Eintraege:'; $lines | ForEach-Object { Write-Output "  $_" } }
+        Write-Output ("Fokus-Waechter: {0}." -f $(if ($running) { 'laeuft' } else { 'laeuft nicht (Dienst der Editor-Warteschlange starten)' }))
+        for ($i = 0; $i -lt $Project.Count; $i++) {
+            Write-Output ("'{0}': {1}." -f $Project[$i], $(if (Test-Path -LiteralPath $offFiles[$i]) { "abgeschaltet ($($offFiles[$i]))" } else { 'eingeschaltet' }))
+            if (Test-Path -LiteralPath $logFiles[$i]) {
+                $lines = @(Get-Content -LiteralPath $logFiles[$i] -Encoding UTF8 -Tail 400 | Where-Object { $_ -match '  FOKUS ' } | Select-Object -Last 10)
+                if ($lines.Count) { Write-Output 'Letzte Eintraege:'; $lines | ForEach-Object { Write-Output "  $_" } }
+            }
         }
         exit 0
     }
     'off' {
         New-Item -ItemType Directory -Path $QueueDir -Force | Out-Null
-        [IO.File]::WriteAllText($offFile, [DateTime]::UtcNow.ToString('o', $inv))
-        Write-Output "Fokus-Waechter abgeschaltet: Die Testbank darf nach vorne kommen. Wieder ein: Tools/editor-focus.ps1 on"
+        foreach ($f in $offFiles) { [IO.File]::WriteAllText($f, [DateTime]::UtcNow.ToString('o', $inv)) }
+        Write-Output "Fokus-Waechter fuer $names abgeschaltet: Die Testbank darf nach vorne kommen. Wieder ein: Tools/editor-focus.ps1 on"
         exit 0
     }
     'on' {
-        if (Test-Path -LiteralPath $offFile) { Remove-Item -LiteralPath $offFile -Force }
-        Write-Output "Fokus-Waechter eingeschaltet$(if (-not (Test-GuardElsewhere)) { ' (laeuft aber nicht: Dienst der Editor-Warteschlange starten)' })."
+        foreach ($f in $offFiles) { if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force } }
+        Write-Output "Fokus-Waechter fuer $names eingeschaltet$(if (-not (Test-GuardElsewhere)) { ' (laeuft aber nicht: Dienst der Editor-Warteschlange starten)' })."
         exit 0
     }
 }

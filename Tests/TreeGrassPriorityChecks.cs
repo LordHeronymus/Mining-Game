@@ -76,10 +76,12 @@ public static class TreeGrassPriorityChecks
             Check(patches.ContainsKey(planted - 2) && patches.ContainsKey(planted + 2), "Distant grass removed");
             Check(InventoryManager.Instance.GetCount(fiber) == fibers, "Tree displacement must not award fibers");
 
-            var sites = (List<int>)Get(grass, "sites");
-            sites.Clear(); sites.AddRange(new[] { planted - 1, planted, planted + 1 });
-            Call(grass, "Clear"); Set(grass, "nextRespawn", 0f); Call(grass, "Update");
-            Check(grass.PatchCount == 0, "Grass regrew inside tree neighborhood");
+            // Regrowth picks any free grass cell, never one inside the tree neighborhood.
+            Call(grass, "Clear");
+            for (int i = 0; i < 30; i++) { Set(grass, "nextRespawn", 0f); Call(grass, "Update"); }
+            Check(grass.PatchCount > 0, "Grass must regrow on free cells");
+            for (int x = planted - 1; x <= planted + 1; x++)
+                Check(!patches.ContainsKey(x), "Grass regrew inside tree neighborhood");
             return "PASS: deferred grass, both handler orders, seed-stable trees, regrowth through dense grass, removal x-1/x/x+1, immediate hiding, no fiber reward, no grass regrowth under trees.";
         }
         finally

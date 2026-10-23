@@ -46,6 +46,7 @@ using UnityEngine;
     public GpsValue[] generationSettings;
     public long savedUtc;
     public float playedSeconds, energy;
+    public int maxDepthMeters; // Deepest point in metres; 0 in older saves (restored from progression and position).
     public Vector3 playerPosition;
     public Vector2 playerVelocity;
     public bool facingLeft;

@@ -69,9 +69,11 @@ public sealed class ChallengeGoldFill : MaskableGraphic
 {
     // Pointed: the start (and a full bar's end) follows the chevron of the card track groove; the HUD groove is square.
     // A partial bar ends in a round cap; the gradient is built per row so it stays vertical across the cap.
-    const int Rows=16; const float Chevron=3.3f, Feather=.8f;
-    bool pointed;
+    // Chevron: horizontal depth of the point at the top and bottom edge; deeper grooves (level gauge) set their own.
+    const int Rows=16; const float Feather=.8f;
+    bool pointed; float chevronDepth=3.3f;
     public bool Pointed { get => pointed; set { if (pointed == value) return; pointed = value; SetVerticesDirty(); } }
+    public float Chevron { get => chevronDepth; set { if (Mathf.Approximately(chevronDepth, value)) return; chevronDepth = value; SetVerticesDirty(); } }
     static readonly Color32[] Tones={new Color32(155,65,0,255),new Color32(255,178,12,255),new Color32(255,228,107,255)};
     static Color32 Tone(float t) => t<.5f ? Color32.Lerp(Tones[0],Tones[1],t*2) : Color32.Lerp(Tones[1],Tones[2],t*2-1);
     protected override void OnPopulateMesh(VertexHelper vh) {
@@ -80,11 +82,11 @@ public sealed class ChallengeGoldFill : MaskableGraphic
         float w=r.width,h=r.height,half=h*.5f,mid=r.center.y;
         if(w<=.01f||h<=.01f)return;
         bool full=rectTransform.anchorMax.x>=.999f;
-        float cap=Mathf.Min(half,w*.5f),chevron=pointed?Mathf.Min(Chevron,w-cap):0;
+        float cap=Mathf.Min(half,w*.5f),chevron=pointed?Mathf.Min(chevronDepth,w-cap):0;
         for(int row=0;row<=Rows;row++) {
             float y=r.yMin+h*row/Rows,dy=Mathf.Abs(y-mid)/half;
             float left=r.xMin+chevron*dy;
-            float right=full ? r.xMax-(pointed?Chevron*dy:0) : r.xMax-cap+cap*Mathf.Sqrt(Mathf.Max(0,1-dy*dy));
+            float right=full ? r.xMax-(pointed?chevronDepth*dy:0) : r.xMax-cap+cap*Mathf.Sqrt(Mathf.Max(0,1-dy*dy));
             right=Mathf.Max(left,right);
             Color32 c=Tone((float)row/Rows),clear=c; clear.a=0;
             vh.AddVert(new Vector3(left-Feather,y),clear,Vector2.zero);

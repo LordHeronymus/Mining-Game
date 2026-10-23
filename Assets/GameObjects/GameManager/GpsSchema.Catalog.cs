@@ -313,6 +313,8 @@ public static partial class GpsSchema
             new GpsFieldSpec("spawnQuietRadius", "Spawnradius (m)", min: 0f, max: 1000f),
             new GpsFieldSpec("nearSpawnDensity", "Menge am Spawn (%)", factor: 100f),
             new GpsFieldSpec("respawnSeconds", "Respawnzeit (s)", min: .1f, max: 3600f),
+            new GpsFieldSpec("maximumRegrowthSpeed", "Höchstes Nachwachs-Tempo (ohne Gras)", min: 1f, max: 20f),
+            new GpsFieldSpec("neighborRegrowthWeight", "Vorzug neben Gras", min: 1f, max: 20f),
             new GpsFieldSpec("fiberYield", "Fasern min./max."),
             new GpsFieldSpec("fiberSwayStrength", "Schwankstärke (%)", factor: 100f),
             new GpsFieldSpec("fiberSwayFrequency", "Frequenz (%)", factor: 100f)),
