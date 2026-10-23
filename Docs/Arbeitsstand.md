@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Erz-Abbauklang ab Schicht 3: Gesteinsschlag + Erzklang von Schicht 1/2 gleichzeitig | `claude/erz-klang-layer3` | Cloud | `TileMiner.cs` (Trefferklang), `Tests/BughuntTileMinerChecks.cs` | Testbank (Warteschlange) | 23.10.2026 |
 
 ## Zuletzt abgeschlossen
 
