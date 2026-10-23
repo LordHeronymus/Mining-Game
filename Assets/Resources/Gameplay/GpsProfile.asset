@@ -1329,7 +1329,7 @@ MonoBehaviour:
     \"name\": \"weight\",\n                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
-    3.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
+    1.5,\n                    \"flag\": false,\n                    \"vector\": {\n                       
     \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
     0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -1340,7 +1340,7 @@ MonoBehaviour:
     \"name\": \"worth\",\n                    \"type\": \"System.Int32, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    10.0,\n                    \"flag\": false,\n                    \"vector\":
+    15.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -1829,7 +1829,7 @@ MonoBehaviour:
     \"name\": \"weight\",\n                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
-    1.5,\n                    \"flag\": false,\n                    \"vector\": {\n                       
+    1.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
     \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
     0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -1840,7 +1840,7 @@ MonoBehaviour:
     \"name\": \"worth\",\n                    \"type\": \"System.Int32, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    5.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
+    10.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
     \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
     0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -2090,7 +2090,7 @@ MonoBehaviour:
     \"name\": \"worth\",\n                    \"type\": \"System.Int32, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    175.0,\n                    \"flag\": false,\n                    \"vector\":
+    30.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -7573,7 +7573,7 @@ MonoBehaviour:
     \"name\": \"hardnessIndex\",\n                    \"type\": \"System.Single,
     mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
-    3.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
+    2.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
     \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
     0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -7925,7 +7925,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"amount\",\n                                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 1,\n                                   
-    \"number\": 6.0,\n                                    \"flag\": false,\n                                   
+    \"number\": 15.0,\n                                    \"flag\": false,\n                                   
     \"vector\": {\n                                        \"x\": 0.0,\n                                       
     \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
     \"w\": 0.0\n                                    },\n                                   
@@ -11225,7 +11225,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"amount\",\n                                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 1,\n                                   
-    \"number\": 1.0,\n                                    \"flag\": false,\n                                   
+    \"number\": 4.0,\n                                    \"flag\": false,\n                                   
     \"vector\": {\n                                        \"x\": 0.0,\n                                       
     \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
     \"w\": 0.0\n                                    },\n                                   
@@ -11681,7 +11681,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"amount\",\n                                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 1,\n                                   
-    \"number\": 6.0,\n                                    \"flag\": false,\n                                   
+    \"number\": 10.0,\n                                    \"flag\": false,\n                                   
     \"vector\": {\n                                        \"x\": 0.0,\n                                       
     \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
     \"w\": 0.0\n                                    },\n                                   
@@ -11723,7 +11723,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"amount\",\n                                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 1,\n                                   
-    \"number\": 3.0,\n                                    \"flag\": false,\n                                   
+    \"number\": 5.0,\n                                    \"flag\": false,\n                                   
     \"vector\": {\n                                        \"x\": 0.0,\n                                       
     \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
     \"w\": 0.0\n                                    },\n                                   
@@ -11765,7 +11765,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"amount\",\n                                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 1,\n                                   
-    \"number\": 4.0,\n                                    \"flag\": false,\n                                   
+    \"number\": 5.0,\n                                    \"flag\": false,\n                                   
     \"vector\": {\n                                        \"x\": 0.0,\n                                       
     \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
     \"w\": 0.0\n                                    },\n                                   
@@ -12929,7 +12929,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"amount\",\n                                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 1,\n                                   
-    \"number\": 2.0,\n                                    \"flag\": false,\n                                   
+    \"number\": 7.0,\n                                    \"flag\": false,\n                                   
     \"vector\": {\n                                        \"x\": 0.0,\n                                       
     \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
     \"w\": 0.0\n                                    },\n                                   
@@ -12971,7 +12971,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"amount\",\n                                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 1,\n                                   
-    \"number\": 1.0,\n                                    \"flag\": false,\n                                   
+    \"number\": 2.0,\n                                    \"flag\": false,\n                                   
     \"vector\": {\n                                        \"x\": 0.0,\n                                       
     \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
     \"w\": 0.0\n                                    },\n                                   
@@ -13013,7 +13013,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"amount\",\n                                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 1,\n                                   
-    \"number\": 4.0,\n                                    \"flag\": false,\n                                   
+    \"number\": 10.0,\n                                    \"flag\": false,\n                                   
     \"vector\": {\n                                        \"x\": 0.0,\n                                       
     \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
     \"w\": 0.0\n                                    },\n                                   
@@ -13907,7 +13907,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"amount\",\n                                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 1,\n                                   
-    \"number\": 2.0,\n                                    \"flag\": false,\n                                   
+    \"number\": 10.0,\n                                    \"flag\": false,\n                                   
     \"vector\": {\n                                        \"x\": 0.0,\n                                       
     \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
     \"w\": 0.0\n                                    },\n                                   
@@ -26318,7 +26318,7 @@ MonoBehaviour:
     \"volume\",\n                                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.2633637487888336,\n                                    \"flag\":
+    \"number\": 0.6499999761581421,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -53321,7 +53321,7 @@ MonoBehaviour:
     },\n                {\n                    \"name\": \"cursorGlowStrength\",\n                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
-    1.309999942779541,\n                    \"flag\": false,\n                   
+    0.8999999761581421,\n                    \"flag\": false,\n                   
     \"vector\": {\n                        \"x\": 0.0,\n                        \"y\":
     0.0,\n                        \"z\": 0.0,\n                        \"w\": 0.0\n                   
     },\n                    \"color\": {\n                        \"r\": 0.0,\n                       
@@ -53453,7 +53453,7 @@ MonoBehaviour:
     0.0\n                    },\n                    \"curve\": {\n                       
     \"preWrap\": 0,\n                        \"postWrap\": 0,\n                       
     \"keys\": []\n                    },\n                    \"children\": []\n               
-    }, {\"name\": \"ledgeAssist\", \"type\": \"System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 2, \"number\": 0.0, \"flag\": true, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"ledgeAssistUpCells\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.3499999940395355, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"ledgeAssistDownCells\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.15000000596046448, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}\n            ]\n        },\n        {\n            \"key\": \"component:PlayerLadder\",\n           
+    }, {\"name\": \"ledgeAssist\", \"type\": \"System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 2, \"number\": 0.0, \"flag\": true, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"ledgeAssistUpCells\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.3499999940395355, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"ledgeAssistDownCells\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.15000000596046448, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"ledgeAssistSpeedFactor\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.5, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}\n            ]\n        },\n        {\n            \"key\": \"component:PlayerLadder\",\n           
     \"type\": \"PlayerLadder, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
     PublicKeyToken=null\",\n            \"assetKey\": \"\",\n            \"name\":
     \"\",\n            \"fields\": [\n                {\n                    \"name\":
@@ -53486,7 +53486,7 @@ MonoBehaviour:
     \"name\": \"gravityScale\",\n                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
-    2.400000095367432,\n                    \"flag\": false,\n                   
+    2.5999999046325685,\n                    \"flag\": false,\n                   
     \"vector\": {\n                        \"x\": 0.0,\n                        \"y\":
     0.0,\n                        \"z\": 0.0,\n                        \"w\": 0.0\n                   
     },\n                    \"color\": {\n                        \"r\": 0.0,\n                       
@@ -60486,7 +60486,7 @@ MonoBehaviour:
     \"name\": \"woodYieldMin\",\n                    \"type\": \"System.Int32, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    10.0,\n                    \"flag\": false,\n                    \"vector\":
+    8.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -60497,7 +60497,7 @@ MonoBehaviour:
     \"name\": \"woodYieldMax\",\n                    \"type\": \"System.Int32, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    20.0,\n                    \"flag\": false,\n                    \"vector\":
+    15.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
