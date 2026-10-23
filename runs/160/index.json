@@ -1,0 +1,18 @@
+{
+ "run": 160,
+ "ref": "claude/compassionate-brahmagupta-32gx9j",
+ "sha": "6e12fac6d829eafa5a23a263df225b06373311e8",
+ "suite": "visual",
+ "files": [
+  "Design/OreOverlaySheets/Embedded-Before.png",
+  "Design/OreOverlaySheets/Embedded-Bright.png",
+  "Design/OreOverlaySheets/Embedded-Dark.png",
+  "Design/OreOverlaySheets/Embedded-Dim.png",
+  "Temp/VeinRichness/Vein_01.png",
+  "Temp/VeinRichness/Vein_02.png",
+  "Temp/VeinRichness/Vein_03.png",
+  "Temp/VeinRichness/Vein_04.png",
+  "Temp/VeinRichness/Vein_05.png",
+  "Temp/VeinRichness/Vein_06.png"
+ ]
+}

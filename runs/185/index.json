@@ -1,0 +1,24 @@
+{
+ "run": 185,
+ "ref": "claude/challenge-tracker-style",
+ "sha": "a23d6cf9a76862deb57c10ad9d7fd2640c3f13af",
+ "suite": "ChallengePanelPreviewChecks",
+ "files": [
+  "Temp/ChallengePanel-Daily-End.png",
+  "Temp/ChallengePanel-Daily-Tracked.png",
+  "Temp/ChallengePanel-Daily.png",
+  "Temp/ChallengePanel-Lifetime-End.png",
+  "Temp/ChallengePanel-Lifetime-NoRun-End.png",
+  "Temp/ChallengePanel-Lifetime-NoRun.png",
+  "Temp/ChallengePanel-Lifetime.png",
+  "Temp/ChallengePanel-Monthly-End.png",
+  "Temp/ChallengePanel-Monthly.png",
+  "Temp/ChallengePanel-Weekly-End.png",
+  "Temp/ChallengePanel-Weekly.png",
+  "Temp/ChallengeTracker-HUD.png",
+  "Temp/ChallengeTracker-Variant-1.png",
+  "Temp/ChallengeTracker-Variant-2.png",
+  "Temp/ChallengeTracker-Variant-3.png",
+  "Temp/ChallengeTracker-Variant-4.png"
+ ]
+}

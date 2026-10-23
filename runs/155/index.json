@@ -1,0 +1,12 @@
+{
+ "run": 155,
+ "ref": "claude/compassionate-brahmagupta-32gx9j",
+ "sha": "2264117e898808923999480f43064467cb7a7abe",
+ "suite": "DirtSurfaceChecks,VeinRichnessPreviewChecks,EmbeddedOreRenderChecks,CursorHighlightEquivalenceChecks",
+ "files": [
+  "Design/OreOverlaySheets/Embedded-Before.png",
+  "Design/OreOverlaySheets/Embedded-Bright.png",
+  "Design/OreOverlaySheets/Embedded-Dark.png",
+  "Design/OreOverlaySheets/Embedded-Dim.png"
+ ]
+}

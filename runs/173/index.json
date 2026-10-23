@@ -1,0 +1,20 @@
+{
+ "run": 173,
+ "ref": "claude/challenge-tracking",
+ "sha": "e04fef6f17d69b4e68d3f5cff21cf307c952d99f",
+ "suite": "ChallengePanelPreviewChecks",
+ "files": [
+  "Temp/ChallengePanel-Daily-End.png",
+  "Temp/ChallengePanel-Daily-Tracked.png",
+  "Temp/ChallengePanel-Daily.png",
+  "Temp/ChallengePanel-Lifetime-End.png",
+  "Temp/ChallengePanel-Lifetime-NoRun-End.png",
+  "Temp/ChallengePanel-Lifetime-NoRun.png",
+  "Temp/ChallengePanel-Lifetime.png",
+  "Temp/ChallengePanel-Monthly-End.png",
+  "Temp/ChallengePanel-Monthly.png",
+  "Temp/ChallengePanel-Weekly-End.png",
+  "Temp/ChallengePanel-Weekly.png",
+  "Temp/ChallengeTracker-HUD.png"
+ ]
+}
