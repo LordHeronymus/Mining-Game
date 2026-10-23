@@ -82,11 +82,21 @@ public static class GoldCursorChecks
                 pixels.ReadPixels(new Rect(0,0,600,600),0,0); pixels.Apply();
                 File.WriteAllBytes("Design/Cursor/" + (smart ? "Smart" : "Normal") + "-implemented.png", pixels.EncodeToPNG());
             }
+            // Separate strength per frame: smart at 0 is invisible while the normal frame stays visible.
+            miner.cursorGlowStrength = 1; miner.smartCursorGlowStrength = 0;
+            foreach (bool smart in new[] { true, false })
+            {
+                type.GetMethod("ClearHighlight", flags).Invoke(miner, null);
+                type.GetField("smartCursor", flags).SetValue(miner, smart);
+                type.GetMethod("ShowHighlight", flags).Invoke(miner, new object[] { Vector3Int.zero, Vector3Int.zero });
+                float a = highlight.GetColor(Vector3Int.zero).a;
+                if (smart ? a > .001f : a < .99f) throw new Exception((smart ? "Smart" : "Normal") + " strength not applied: alpha " + a);
+            }
             type.GetMethod("ClearHighlight", flags).Invoke(miner,null);
             if (highlight.HasTile(Vector3Int.zero)) throw new Exception("Highlight did not clear");
             UnityEngine.Object.DestroyImmediate(tile.sprite);
             UnityEngine.Object.DestroyImmediate(tile);
-            return "PASS: normal/full frame, smart/open corners; both 1.1 cell width, transparent centers, above the darkness, unlit and no light source, mode switch and clear. Two Unity renders saved in Design/Cursor.";
+            return "PASS: normal/full frame, smart/open corners; both 1.1 cell width, transparent centers, above the darkness, unlit and no light source, separate strength normal/smart, mode switch and clear. Two Unity renders saved in Design/Cursor.";
         }
         finally
         {
