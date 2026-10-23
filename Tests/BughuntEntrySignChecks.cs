@@ -11,7 +11,7 @@ using Object = UnityEngine.Object;
 public static class BughuntEntrySignChecks
 {
     const string Report = "Temp/BughuntEntrySignChecks.txt";
-    const float Gap = .45f + 92 * .01f / 2, WorldScale = .01f;
+    const float Gap = .27f + 92 * .01f / 2, WorldScale = .01f;
     static readonly List<string> checks = new();
     static void Check(bool condition, string label) { if (!condition) throw new Exception(label); checks.Add("PASS " + label); }
 

@@ -21,7 +21,7 @@ param(
     [string]$QueueDir,
     # Projektordner, dessen Editoren gemeint sind (Standard: der Ordner, aus dem dieses Skript stammt).
     [string]$ProjectRoot,
-    # Dialog-Waechter fuer den Editor der Testbank ("<Projekt> 2"): Pruefintervall in Sekunden, 0 = aus (Tools/editor-dialog.ps1).
+    # Dialog-Waechter fuer die Editoren der Testbaenke ("<Projekt> 2", "<Projekt> 3"): Pruefintervall in Sekunden, 0 = aus (Tools/editor-dialog.ps1).
     [int]$DialogWatchSeconds = 3,
     # Ohne Fokus-Waechter (Tools/editor-focus.ps1): die Testbank darf sich nach vorne holen. Zur Laufzeit: editor-focus.ps1 off/on.
     [switch]$NoFocusGuard,
@@ -89,10 +89,20 @@ function Test-Origin([string]$origin) {
     return $origins -contains $origin.TrimEnd('/')
 }
 
-# Arbeitsordner: Projektordner und Geschwister "<Projekt> <n>", dazu alles, was schon eine Warteschlange hat.
+# Testbaenke der Chats: "<Projekt> 2" und "<Projekt> 3" (gleiche Regel wie Tools/editor-queue.ps1, TestBenchNames.cs).
+$PoolName = 'Testbank'
+function Test-Bench([string]$name) { $name -match ('^' + [regex]::Escape($ownerName) + ' [23]$') }
+function Get-Benches {
+    @(Get-ChildItem -LiteralPath $reposDir -Directory -ErrorAction SilentlyContinue |
+        Where-Object { (Test-Bench $_.Name) -and (Test-Path -LiteralPath (Join-Path $_.FullName '.git')) } | Sort-Object Name | ForEach-Object { $_.Name })
+}
+
+# Arbeitsordner: Projektordner, die gemeinsame Warteschlange "Testbank" (sobald es Testbaenke gibt) und Geschwister
+# "<Projekt> <n>", dazu alles, was schon eine Warteschlange hat.
 function Get-Projects {
     $names = New-Object System.Collections.Generic.List[string]
     $names.Add($ownerName)
+    if ((Get-Benches).Count) { $names.Add($PoolName) }
     Get-ChildItem -LiteralPath $reposDir -Directory -ErrorAction SilentlyContinue |
         Where-Object { $_.Name -like "$ownerName *" -and (Test-Path -LiteralPath (Join-Path $_.FullName 'ProjectSettings')) } |
         Sort-Object Name | ForEach-Object { if (-not $names.Contains($_.Name)) { $names.Add($_.Name) } }
@@ -116,8 +126,9 @@ function Get-QueueJson {
     $parts = foreach ($p in (Get-Projects)) {
         $r = Invoke-Queue 'status' @{ Json = $true; Project = $p }
         $line = ($r.out -split "`n" | Where-Object { $_.StartsWith('{') } | Select-Object -Last 1)
-        # Rolle: der Projektordner gehoert dem Benutzer, "<Projekt> 2" ist die Testbank der Chats (Tools/editor-bench.ps1).
-        $role = if ($p -eq $ownerName) { 'user' } elseif ($p -eq "$ownerName 2") { 'bench' } else { 'other' }
+        # Rolle: der Projektordner gehoert dem Benutzer, "<Projekt> 2"/"<Projekt> 3" sind Testbaenke der Chats
+        # (Tools/editor-bench.ps1), "Testbank" ist die gemeinsame Warteschlange, die auf freie Testbaenke verteilt.
+        $role = if ($p -eq $ownerName) { 'user' } elseif ($p -eq $PoolName) { 'pool' } elseif (Test-Bench $p) { 'bench' } else { 'other' }
         if ($line) { $line.Substring(0, $line.Length - 1) + ',"role":"' + $role + '"}' }
         else { (ConvertTo-Json -Compress -InputObject ([ordered]@{ project = $p; role = $role; error = $r.out })) }
     }
@@ -158,18 +169,19 @@ Write-Output "Editor-Warteschlange: Dienst laeuft auf http://localhost:$Port (Qu
 
 # Dialog-Waechter: beantwortet bekannte modale Dialoge der Testbank, meldet unbekannte (Protokoll, status, wait).
 # Nur fuer eine Testbank, die in diesen Queue-Ordner meldet (Aktivitaetssignal vorhanden), nie fuer den Editor des Benutzers.
-$benchName = "$ownerName 2"
 function Watch-Dialogs {
     if ($DialogWatchSeconds -le 0 -or -not (Test-Path -LiteralPath $dialogScript)) { return }
-    if (-not (Test-Path -LiteralPath (Join-Path $QueueDir "$benchName.activity.json"))) { return }
-    try { & $dialogScript watch -Once -Quiet -Project $benchName -ProjectRoot $ownerRoot -QueueDir $QueueDir | Out-Null } catch { }
+    foreach ($b in Get-Benches) {
+        if (-not (Test-Path -LiteralPath (Join-Path $QueueDir "$b.activity.json"))) { continue }
+        try { & $dialogScript watch -Once -Quiet -Project $b -ProjectRoot $ownerRoot -QueueDir $QueueDir | Out-Null } catch { }
+    }
 }
-if ($DialogWatchSeconds -gt 0) { Write-Output "Dialog-Waechter fuer '$benchName' alle $DialogWatchSeconds s." }
+if ($DialogWatchSeconds -gt 0) { Write-Output "Dialog-Waechter fuer $((Get-Benches) -join ', ') alle $DialogWatchSeconds s." }
 
-# Fokus-Waechter: holt das Fenster des Benutzers zurueck, wenn sich die Testbank von selbst nach vorne holt (eigener Thread
-# in diesem Prozess, reagiert sofort auf Fensterwechsel). Protokoll mit "FOKUS" in <Testbank>.log.
+# Fokus-Waechter: holt das Fenster des Benutzers zurueck, wenn sich eine Testbank von selbst nach vorne holt (eigener Thread
+# in diesem Prozess fuer alle Testbaenke, reagiert sofort auf Fensterwechsel). Protokoll mit "FOKUS" in <Testbank>.log.
 if (-not $NoFocusGuard -and (Test-Path -LiteralPath $focusScript)) {
-    try { & $focusScript start -Project $benchName -ProjectRoot $ownerRoot -QueueDir $QueueDir | ForEach-Object { Write-Output $_ } }
+    try { & $focusScript start -Project (Get-Benches) -ProjectRoot $ownerRoot -QueueDir $QueueDir | ForEach-Object { Write-Output $_ } }
     catch { Write-Output "Fokus-Waechter nicht gestartet: $($_.Exception.Message)" }
 }
 

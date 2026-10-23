@@ -39,6 +39,8 @@ public class StatsManager : MonoBehaviour
     [Min(0f)] public float healthRegenPerSecond = 2f;
     [Min(0f)] public float healthRegenDelay = 3f;
     [Range(0f, 1f)] public float healthRegenLimitFraction = 0.5f;
+    // Above the limit health keeps healing slowly: one HP every this many seconds (0 = stop at the limit).
+    [Min(0f)] public float healthRegenAboveLimitInterval = 10f;
     [Range(0f, 1f)] public float bloodEdgeIntensity = 1f;
     [Min(.1f)] public float heartbeatFlashIntervalSeconds = 1.2f;
     [Range(-1f, 1f)] public float heartbeatFlashOffsetSeconds = .12f;
@@ -149,15 +151,25 @@ public class StatsManager : MonoBehaviour
 
 
         bool medkitActive = IsMedkitActive;
-        float regenerationLimit = medkitActive ? MaxHealth : MaxHealth * Mathf.Clamp01(healthRegenLimitFraction);
-        if (healthRegenPerSecond <= 0f || Health >= regenerationLimit ||
-            (!medkitActive && Time.time - lastHealthDamageTime < Mathf.Max(0f, healthRegenDelay))) return;
+        float speed = HealthRegenSpeed(Health, medkitActive);
+        if (speed <= 0f || (!medkitActive && Time.time - lastHealthDamageTime < Mathf.Max(0f, healthRegenDelay))) return;
 
-        float speed = healthRegenPerSecond * (medkitActive ? MedkitRegenMultiplier : 1f);
-        float nextHealth = Mathf.Min(regenerationLimit, Health + speed * Time.deltaTime);
+        float limit = Health < HealthRegenLimit && !medkitActive ? HealthRegenLimit : MaxHealth;
+        float nextHealth = Mathf.Min(limit, Health + speed * Time.deltaTime);
         if (Mathf.Approximately(nextHealth, Health)) return;
         Health = nextHealth;
         OnHealthChanged?.Invoke(Health, MaxHealth);
+    }
+
+    float HealthRegenLimit => MaxHealth * Mathf.Clamp01(healthRegenLimitFraction);
+
+    // HP per second: normal speed up to the limit, then one HP per healthRegenAboveLimitInterval; the medkit triples the normal speed up to full.
+    internal float HealthRegenSpeed(float health, bool medkitActive)
+    {
+        if (healthRegenPerSecond <= 0f || health >= MaxHealth) return 0f;
+        if (medkitActive) return healthRegenPerSecond * MedkitRegenMultiplier;
+        if (health < HealthRegenLimit) return healthRegenPerSecond;
+        return healthRegenAboveLimitInterval > 0f ? 1f / healthRegenAboveLimitInterval : 0f;
     }
 
     // No warning heartbeat once the run has ended: climax, end screens and the expedition result.
@@ -196,6 +208,7 @@ public class StatsManager : MonoBehaviour
                 if (entry != null && entry.tile && entry.tile.name == name) collectedArtifactTypes.Add(entry.tile);
         HUDPoints.Instance?.UpdatePoints(Money, PointType.Money);
         HUDPoints.Instance?.UpdatePoints(Points, PointType.Points);
+        MoneyDisplay.Snap(this);
         OnMoneyChanged?.Invoke(Money); OnHealthChanged?.Invoke(Health, MaxHealth);
     }
 
@@ -289,7 +302,7 @@ public class StatsManager : MonoBehaviour
         if (!artifactCollectedSound)
             artifactCollectedSound = Resources.Load<AudioClip>("Audio/ArtifactCollected");
         AudioManager.Instance.PlayClip(artifactCollectedSound,
-            AudioManager.Instance.GetVolume(AudioVolumeSetting.DingLight), 0f);
+            AudioManager.Instance.GetVolume(AudioVolumeSetting.ArtifactFound), 0f);
     }
 
     // Not named Reset: Unity calls Reset() on components in the editor, before baseStats exists.
@@ -301,6 +314,7 @@ public class StatsManager : MonoBehaviour
         collectedArtifactTypes.Clear();
         Money = (int)Math.Min(int.MaxValue, (long)StartingResourcesSettings.Load().money + MetaProgression.CurrentLoadout.startMoney);
         HUDPoints.Instance?.UpdatePoints(Money, PointType.Money);
+        MoneyDisplay.Snap(this);
         OnMoneyChanged?.Invoke(Money);
 
         MoveSpeed = baseStats.moveSpeed;

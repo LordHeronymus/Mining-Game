@@ -25,7 +25,7 @@ MonoBehaviour:
     flipY: 0
   output: {fileID: 11400000, guid: 5b87da1e006a0804c91e132d48768d5c, type: 2}
   outputAmount: 1
-  shopPrice: 1250
+  shopPrice: 2000
   pluralName: Titanspitzhacken
   ingredients:
   - item: {fileID: 11400000, guid: 75e7eb8e62b50c64eb4dd8132de34314, type: 2}

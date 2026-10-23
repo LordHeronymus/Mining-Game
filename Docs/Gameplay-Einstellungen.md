@@ -19,6 +19,7 @@ Im Play-Modus sind Standardwerte schreibgeschützt; dort dient F1 zum Ausprobier
 | Map | Breite, Tiefe, Seed | MapGenerator. X wird zentriert, Y wächst ab 0 nach unten; neue Werte gelten bei nächstem Spielstart. |
 | Erzverteilung | Priorität im Katalog, Noise an/aus, Skalierung, Seed-Versatz, Tiefenkurve | Aktive BlockRegistry und ihre Block-Assets. |
 | Erz-Anteile | Medium und Rich nach Aderdicke: an/aus, Mindestgrösse, Medium-/Rich-Anteil für dünn/mittel/dick, Schwankung je Ader, Streuung entlang dünner Adern, dicke Stellen bevorzugen, Faktor je Erz | GPS/F1 → Erzverteilung → Erz-Anteile (`GpsPreferences.veinRichness`, `VeinRichnessSettings`). Gilt ab der nächsten neuen Welt; siehe `Docs/Erz-Reichhaltigkeit.md`. |
+| Artefakte | Fundchance je Artefakt: eine Zeile „Chance <Name> (%)“ pro Artefakt, „Faktor für alle Artefakte (×)“; darunter aufklappbar Layer, Geld und Punkte je Artefakt | GPS/F1 → Artefakte → Fundchance je Artefakt (`MapGenerator.artifactSettings`, `artifactDropChanceMultiplier`, `GpsRuntimePanel.Artifacts`). Wirksame Chance pro Höhlenzelle = Chance × Faktor; gilt ab der nächsten neuen Karte. |
 | Abbau & Belohnung | Härte, Punkte, Beute-Gegenstand | Je Block-Asset; pro abgebautem Block wird ein Beute-Exemplar vergeben. |
 | Wirtschaft | Verkaufspreis je Stück, Kategorie der zugeordneten Beute | ItemSO; 0 ist nicht verkaufbar, im Verkaufsfenster werden nur Ore-Items angezeigt. |
 | Debug | JSON-Status, Speicherort, Override zurücksetzen | gameplay-settings.json in Application.persistentDataPath. Zurücksetzen bewahrt eine .bak-Datei. |

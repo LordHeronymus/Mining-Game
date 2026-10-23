@@ -8,7 +8,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(CanvasGroup))]
-public class InventoryUI : MonoBehaviour
+public partial class InventoryUI : MonoBehaviour
 {
     public Sprite frameSprite, slotSprite, selectionSprite, rowSprite, actionSprite, badgeSprite;
     public TMP_FontAsset font;
@@ -56,7 +56,7 @@ public class InventoryUI : MonoBehaviour
     {
         bool keys = !RunPauseMenu.OwnsInput; // a focus pause (RunFocusPause) can lie over the open inventory and owns the keys
         if (keys && GameBindings.Down(GameAction.Inventory)) { if (IsOpen) HidePanel(); else if (!GameplayInputBlocker.IsBlocked) ShowPanel(); }
-        else if (keys && IsOpen && GameBindings.Down(GameAction.Settings)) HidePanel();
+        else if (keys && IsOpen && GameBindings.Down(GameAction.Settings)) { if (DeleteDialogOpen) CloseDeleteDialog(); else HidePanel(); }
         if (IsOpen && inventory != InventoryManager.Instance) Subscribe();
         if (draggedItem) MoveDraggedIcon(Input.mousePosition);
         if (hotbarWarning)
@@ -72,7 +72,7 @@ public class InventoryUI : MonoBehaviour
         FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include)?.SetInventoryHotbarVisible(false);
         if (inventory) inventory.OnInventoryChanged -= Refresh;
         inventory = null; GameplayInputBlocker.SetBlocked(this, false);
-        CancelItemDrag();
+        CancelItemDrag(); CloseDeleteDialog();
         if (IsOpen) InfoPanel.Instance?.ShowPanel(true);
         IsOpen = false;
         if (group) { group.alpha = 0; group.blocksRaycasts = group.interactable = false; }
@@ -95,7 +95,7 @@ public class InventoryUI : MonoBehaviour
     }
     public void HidePanel()
     {
-        CancelItemDrag();
+        CancelItemDrag(); CloseDeleteDialog();
         warningUntil = 0f;
         if (fade != null) StopCoroutine(fade);
         fade = StartCoroutine(FadePanel(false));
@@ -127,7 +127,7 @@ public class InventoryUI : MonoBehaviour
         }
         fade = null;
     }
-    public void SetFilter(int filter) { Filter = Mathf.Clamp(filter, 0, 3); scroll.verticalNormalizedPosition = 1; Refresh(); }
+    public void SetFilter(int filter) { Filter = Mathf.Clamp(filter, 0, EquipmentFilter); scroll.verticalNormalizedPosition = 1; Refresh(); }
     public void SortItems() { alphabetical = !alphabetical; Refresh(); }
     public void SelectItem(ItemSO item) { SelectedItem = item; Refresh(); }
     public void RefreshIconLayouts() { if (IsOpen) Refresh(); }
@@ -231,6 +231,11 @@ public class InventoryUI : MonoBehaviour
             cargoWeight.color = stage == 2 ? OverweightRed : stage == 1 ? OverweightYellow : Cream;
         }
         if (!IsOpen || !content) return;
+        bool equipment = Filter == EquipmentFilter;
+        scroll.gameObject.SetActive(!equipment); footerIcon.transform.parent.gameObject.SetActive(!equipment);
+        if (equipmentRoot) equipmentRoot.gameObject.SetActive(equipment);
+        for (int i = 0; i < tabs.Count; i++) GoldButtonFeedback.Select(tabs[i], Filter == i);
+        if (equipment) { RefreshEquipment(); return; }
         if (!workbench) workbench = FindFirstObjectByType<WorkbenchPanel>(FindObjectsInactive.Include);
         var items = inventory ? inventory.GetSnapshot().Where(p => p.Key && p.Key.category != ItemCategory.Powerup &&
             p.Value > 0 && (Filter == 0 || Category(p.Key) == Filter)).ToList()
@@ -261,7 +266,6 @@ public class InventoryUI : MonoBehaviour
             }
         }
         content.sizeDelta = new Vector2(1230, Mathf.Max(492, capacity / 7 * 168 - 12));
-        for (int i = 0; i < tabs.Count; i++) GoldButtonFeedback.Select(tabs[i], Filter == i);
         footerIcon.enabled = SelectedItem; footerIcon.sprite = SelectedItem ? SelectedItem.icon : null;
         if (SelectedItem)
             ShopVisualTheme.ApplyOreIconLayout(footerIcon, SelectedItem, new Vector2(58f, -48f));
@@ -270,6 +274,7 @@ public class InventoryUI : MonoBehaviour
                 footerIcon.rectTransform, new Vector2(58f, -48f));
         footerName.text = SelectedItem ? SelectedItem.displayName : "";
         footerCount.text = SelectedItem ? "Bestand <color=#FFBC4F>" + Count(inventory.GetCount(SelectedItem)) + "</color>" : "";
+        SyncDeleteDialog();
     }
     void OnRectTransformDimensionsChange() => Fit();
     void Fit()
@@ -331,11 +336,14 @@ public class InventoryUI : MonoBehaviour
         cargoWeight = Label(layout, "", 1130, 55, 300, 50, 26, TextAlignmentOptions.MidlineRight);
         var close = Button("Close", layout, "×", 1430, 85, 72, 72, HidePanel);
         close.GetComponent<Image>().sprite = actionSprite; close.GetComponentInChildren<TextMeshProUGUI>().fontSize = 60;
-        string[] names = { "Alle", "Erze", "Materialien", "Werkzeuge" };
-        for (int i = 0; i < 4; i++)
+        string[] names = { "Alle", "Erze", "Materialien", "Werkzeuge", "Ausrüstung" };
+        for (int i = 0; i < names.Length; i++)
         {
             int filter = i;
-            tabs.Add(Button("Filter " + names[i], layout, names[i], 258 + i * 296, 162, 270, 60, () => SetFilter(filter)).GetComponent<Image>());
+            // Five tabs share the item width; a lower button keeps the gold end caps small, one size keeps the labels even.
+            var tab = Button("Filter " + names[i], layout, names[i], 222 + i * 248, 166, 238, 52, () => SetFilter(filter));
+            tab.GetComponentInChildren<TextMeshProUGUI>().fontSize = 23;
+            tabs.Add(tab.GetComponent<Image>());
         }
         var viewport = Rect("Items Viewport", layout, 222, 237, 1230, 496);
         viewport.gameObject.AddComponent<RectMask2D>(); content = Rect("Items", viewport, 0, 0, 1230, 496);
@@ -347,12 +355,14 @@ public class InventoryUI : MonoBehaviour
         footerName = Label(footer.transform, "", 110, 0, 440, 96, 36);
         footerCount = Label(footer.transform, "", 590, 0, 300, 96, 30);
         var sort = Button("Sort", footer.transform, "Sortieren", 910, 14, 300, 68, SortItems); sort.GetComponent<Image>().sprite = actionSprite;
+        BuildEquipmentView();
         hotbarWarning = Label(transform, "", 0, 0, 1000, 48, 29, TextAlignmentOptions.Midline);
         hotbarWarning.name = "Hotbar Warning";
         hotbarWarning.rectTransform.anchorMin = hotbarWarning.rectTransform.anchorMax = new Vector2(.5f, 0f);
         hotbarWarning.rectTransform.pivot = new Vector2(.5f, .5f);
         hotbarWarning.color = new Color32(255, 104, 99, 255);
         hotbarWarning.alpha = 0f;
+        BuildDeleteDialog();
         Fit();
     }
     Cell CreateCell(int index)

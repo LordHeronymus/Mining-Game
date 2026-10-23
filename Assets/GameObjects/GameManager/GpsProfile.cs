@@ -36,6 +36,8 @@ public sealed class GpsProfile : ScriptableObject
     public float musicCeiling = .2f;
     public float autosaveIntervalMinutes = 3f;
     public float dragPopScale = 1.28f, dragCarryScale = 1.12f, dragPopDuration = .24f;
+    // Money labels (HUD, shop) count to a new amount over this many seconds instead of jumping (MoneyDisplay); 0 = jump.
+    public float moneyCountSeconds = .6f;
     public bool workbenchUsesStorage = true, workbenchStorageFirst;
     // Crafted building components (category Misc, e.g. nails, rope) go straight into the storage hut;
     // the shop also lists and sells ores from the storage huts.
@@ -46,6 +48,8 @@ public sealed class GpsProfile : ScriptableObject
     // horizontal centring by the visible ink instead of the advance widths.
     public float buttonTextOffset, buttonTextPadding = 1f;
     public bool buttonTextInkCenterX = true;
+    // Tick in the gold challenge seal (ChallengeSealCheck): offset in seal image pixels, + = right / up.
+    public float sealCheckOffsetX, sealCheckOffsetY;
     // Carrying (InventoryManager, PlayerMovement): maximum load as a multiple of the capacity, speed factor at that
     // maximum (linear from 1 at the capacity), and the jump height in blocks a load can never push below.
     public float carryOverloadMaxMultiplier = 2f, carryOverloadMinSpeed = 1f / 3f, carryMinJumpBlocks = 1.2f;

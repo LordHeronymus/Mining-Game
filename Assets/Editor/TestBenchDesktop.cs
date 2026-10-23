@@ -3,16 +3,16 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 using Microsoft.Win32;
 using UnityEditor;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-// Die Testbank der Chats ("<Projekt> 2", Docs/Editor-Warteschlange.md) legt ihr Editor-Fenster beim Start auf einen
-// eigenen virtuellen Windows-Desktop (Standard: Desktop 2), damit sie den Editor des Benutzers nicht ueberdeckt.
+// Die Testbaenke der Chats ("<Projekt> 2" und "<Projekt> 3", TestBenchNames, Docs/Editor-Warteschlange.md) legen ihr
+// Editor-Fenster beim Start auf einen eigenen virtuellen Windows-Desktop (Standard: Desktop mit der Nummer der Testbank,
+// also 2 bzw. 3), damit sie den Editor des Benutzers nicht ueberdecken.
 // Windows erlaubt das Verschieben nur fuer eigene Fenster, deshalb erledigt es der Testbank-Prozess selbst.
-// Ziel-Desktop: Zahl in <Git Repos>/EditorQueue/<Testbank>.desktop (fehlt die Datei: 2; 0 schaltet es ab).
+// Ziel-Desktop: Zahl in <Git Repos>/EditorQueue/<Testbank>.desktop (fehlt die Datei: Nummer der Testbank; 0 schaltet es ab).
 // Nur einmal pro Editor-Sitzung, damit ein spaeteres Verschieben von Hand nicht rueckgaengig gemacht wird.
 [InitializeOnLoad]
 public static class TestBenchDesktop
@@ -37,16 +37,10 @@ public static class TestBenchDesktop
     static TestBenchDesktop()
     {
         if (Application.isBatchMode) return;
-        string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, "..")).TrimEnd('\\', '/');
-        var owner = Regex.Match(projectRoot, @"^(.*?)[\\/]\.claude[\\/]worktrees[\\/]");
-        string ownerRoot = owner.Success ? owner.Groups[1].Value : projectRoot;
-        projectName = Path.GetFileName(ownerRoot);
-        // Gleiche Regel wie Tools/editor-bench.ps1 und TestBenchAudioMute: die Testbank ist der Ordner "<Projekt> 2".
-        isBench = !owner.Success && projectName.EndsWith(" 2", StringComparison.Ordinal);
+        projectName = TestBenchNames.FolderName;
+        isBench = TestBenchNames.IsBench;
         if (!isBench) return;
-        string env = Environment.GetEnvironmentVariable("EDITOR_QUEUE_DIR");
-        string queueDir = !string.IsNullOrEmpty(env) ? env : Path.Combine(Path.GetDirectoryName(ownerRoot) ?? ownerRoot, "EditorQueue");
-        settingPath = Path.Combine(queueDir, projectName + ".desktop");
+        settingPath = Path.Combine(TestBenchNames.QueueDir, projectName + ".desktop");
         if (SessionState.GetBool(PlacedKey, false)) return;
         giveUpAt = EditorApplication.timeSinceStartup + GiveUpSeconds;
         EditorApplication.update += TryPlaceOnStart;
@@ -99,7 +93,7 @@ public static class TestBenchDesktop
             if (settingPath != null && File.Exists(settingPath) && int.TryParse(File.ReadAllText(settingPath).Trim(), out int value)) return value;
         }
         catch (IOException) { }
-        return 2;
+        return TestBenchNames.Number;
     }
 
     static Guid[] DesktopIds()

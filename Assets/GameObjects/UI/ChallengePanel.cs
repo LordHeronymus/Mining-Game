@@ -277,7 +277,7 @@ public sealed class ChallengePanel : MonoBehaviour
     static void Completed(Transform parent, Vector2 position)
     {
         var mark=HomeUi.Image("Completed",parent,position,new Vector2(51,51));
-        mark.sprite=ChallengeArt.Sprite(7);mark.preserveAspect=true;
+        mark.sprite=ChallengeArt.Sprite(7);mark.preserveAspect=true;ChallengeSealCheck.Attach(mark);
     }
 
     static Sprite Icon(MetaChallengeProgress challenge)

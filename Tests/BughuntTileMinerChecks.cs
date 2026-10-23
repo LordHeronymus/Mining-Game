@@ -69,8 +69,12 @@ public static class BughuntTileMinerChecks
                 var args = new object[] { layers, block, isOre, substrate, 0 };
                 var sound = (SoundType)soundMethod.Invoke(null, args); layer = (int)args[4]; return sound;
             }
-            Check(Sound(oreBlock, true, layers[2].stone, out int layer) == SoundType.DigDeepOreHit && layer == 2, "Erz in Schicht 3 spielt PickaxeHitL3Plus mit Schichtabmischung");
-            Check(Sound(oreBlock, true, layers[3].stone, out layer) == SoundType.DigDeepOreHit && layer == 3, "Erz in Schicht 4 spielt PickaxeHitL3Plus");
+            var overlayMethod = typeof(TileMiner).GetMethod("PlaysOreHitOverStone", HiddenStatic);
+            Check(overlayMethod != null, "Erzklang-Ueberlagerung als testbare Hilfsmethode vorhanden");
+            bool Overlay(bool isOre, int layer) => (bool)overlayMethod.Invoke(null, new object[] { isOre, layer });
+            Check(Sound(oreBlock, true, layers[2].stone, out int layer) == SoundType.DigDeepStone && layer == 2 && Overlay(true, layer), "Erz in Schicht 3 spielt Gesteinsschlag mit Erzklang darueber");
+            Check(Sound(oreBlock, true, layers[3].stone, out layer) == SoundType.DigDeepStone && layer == 3 && Overlay(true, layer), "Erz in Schicht 4 spielt Gesteinsschlag mit Erzklang darueber");
+            Check(!Overlay(true, -1) && !Overlay(false, 2), "Flache Erze und tiefer Stein bekommen keinen zweiten Klang");
             Check(Sound(oreBlock, true, layers[1].stone, out layer) == SoundType.DigOre && layer == -1, "Erz in Schicht 2 behaelt seinen bisherigen Klang");
             Check(Sound(oreBlock, true, layers[0].stone, out layer) == SoundType.DigOre && layer == -1, "Erz in Schicht 1 behaelt seinen bisherigen Klang");
             Check(Sound(oreBlock, true, null, out layer) == SoundType.DigOre && layer == -1, "Erz ohne bekanntes Gestein behaelt seinen bisherigen Klang");

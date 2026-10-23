@@ -492,7 +492,7 @@ MonoBehaviour:
   - clip: {fileID: 8300000, guid: 4383923a40a6a6e40b5ed30d3a1984a9, type: 3}
     category: Shop und UI
     displayName: ArtifactCollected
-    volume: 0.16992117
+    volume: 1
     pitch: 1
     pitchSpread: 0
     volumeSpread: 0
