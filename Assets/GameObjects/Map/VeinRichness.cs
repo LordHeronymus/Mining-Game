@@ -47,8 +47,8 @@ public sealed class VeinRichnessOre
 
 // One rule for every vein: its thickness (deepest distance to the vein boundary) picks a share of Medium and Rich,
 // varied per vein and scaled per ore. Rich goes to the deepest cells and Medium around them. Veins at most two
-// blocks thick have no inner cells; there both spread along the middle of the vein, preferring thicker spots and
-// never the tips. Everything derives from OreVeins.Hash, so it is seed-stable and leaves UnityEngine.Random untouched.
+// blocks thick have no inner cells; there both spread along the middle of the vein, preferring thicker spots; tips
+// only when no other cell is left. Everything derives from OreVeins.Hash, so it is seed-stable and leaves UnityEngine.Random untouched.
 public sealed class VeinRichness
 {
     const uint VariationStream = 0x7A1D0005u, MediumStream = 0x7A1D0006u, RichStream = 0x7A1D0007u,
@@ -158,7 +158,7 @@ public sealed class VeinRichness
             {
                 if (chosen.Contains(candidate.cell)) continue;
                 float score = -Mathf.Abs(candidate.position - goal) * pathLength + preference * 2f * candidate.thickness +
-                    .5f * candidate.noise - (candidate.tip ? 3f : 0f);
+                    .5f * candidate.noise - (candidate.tip ? 1000f : 0f);
                 if (level == OreRichness.Medium && Next(candidate.cell, width, height, OreRichness.Rich, richness)) score += preference;
                 if (Next(candidate.cell, width, height, level, richness)) score -= 1.5f;
                 if (score < bestScore || (score == bestScore && candidate.cell > best)) continue;

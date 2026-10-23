@@ -363,18 +363,22 @@ public static class VeinRichnessChecks
                 if (cells.Length < defaults.minimumSize) Check(ma + ra == 0, "Seed " + seed + ": Ader unter Mindestgrösse mit Medium/Rich.");
                 if (cls == 0)
                 {
+                    // A tip (at most one neighbour in the vein) may only be used once every other cell is taken.
                     var set = new HashSet<int>(cells);
+                    int tipsHere = 0, freeInner = 0;
                     foreach (int i in cells)
                     {
-                        if (after[i] == OreRichness.Small) continue;
                         int x = i % width, y = i / width, sides = 0;
                         if (x > 0 && set.Contains(i - 1)) sides++;
                         if (x + 1 < width && set.Contains(i + 1)) sides++;
                         if (y > 0 && set.Contains(i - width)) sides++;
                         if (y + 1 < height && set.Contains(i + width)) sides++;
-                        if (sides <= 1) tips++;
+                        if (after[i] == OreRichness.Small) { if (sides > 1) freeInner++; continue; }
+                        if (sides <= 1) tipsHere++;
                         thinPlaced++;
                     }
+                    tips += tipsHere;
+                    if (tipsHere > 0) Check(freeInner == 0, "Seed " + seed + ": Spitze belegt, obwohl andere Blöcke frei waren.");
                 }
                 if (seedsDone == 0 && sampled[cls] < 3 && cells.Length >= 10 && cells.Length <= 40 && ma + ra > 0)
                 {
@@ -405,7 +409,6 @@ public static class VeinRichnessChecks
             Check(value > previousValue, Classes[c] + ": nicht wertvoller als die dünnere Stufe.");
             previousValue = value;
         }
-        Check(tips * 100 <= thinPlaced, "Zu viele Medium/Rich an Spitzen dünner Adern: " + tips + " von " + thinPlaced);
 
         Line("Welten: " + seedsDone + " Seeds, " + width + "x" + height + ", GPS-Werte, Höhlen und Altarkammer wie im Spiel. Standard: dünn " +
              defaults.thin.mediumPercent + "/" + defaults.thin.richPercent + ", mittel " + defaults.medium.mediumPercent + "/" + defaults.medium.richPercent +
@@ -426,7 +429,7 @@ public static class VeinRichnessChecks
         foreach (var key in tallies.Keys.Where(key => key.ore == -1 && key.cls == -1 && key.layer >= 0).OrderBy(key => key.layer))
             Row("Ebene " + (key.layer + 1), tallies[key]);
         Row("Gesamt", total);
-        Line("An Spitzen dünner Adern: " + tips + " von " + thinPlaced + " Medium/Rich.");
+        Line("An Spitzen dünner Adern (nur wenn sonst nichts frei war): " + tips + " von " + thinPlaced + " Medium/Rich.");
         Line(string.Format(System.Globalization.CultureInfo.InvariantCulture, "Zeit je Welt: Adern wachsen {0:0} ms, Reichhaltigkeit vorher {1:0} ms, nachher {2:0} ms.",
             veinMs / (double)seedsDone, legacyMs / (double)seedsDone, newMs / (double)seedsDone));
         report.Append(samples);
