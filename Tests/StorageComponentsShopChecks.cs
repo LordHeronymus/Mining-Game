@@ -157,6 +157,38 @@ public static class StorageComponentsShopChecks
             Check(inventory.GetCount(copper) == 0 && hut.GetStoredCount(copper) == 0 && hut.GetStoredCount(nails.output) == 7,
                 "Kupfer weg, Nägel bleiben im Lager");
 
+            // Shop blueprints: only the next step of an upgrade line is offered; saves with higher steps keep them.
+            bool nextStepOnly = prefs.shopNextStepOnly;
+            var savedRecipes = RecipeUnlocks.CaptureRunState();
+            try
+            {
+                prefs.shopNextStepOnly = true;
+                var shopRecipes = Resources.LoadAll<CraftingRecipe>("WorkbenchRecipes").Concat(recipes).Where(RecipeUnlocks.IsShopRecipe)
+                    .GroupBy(r => r.output.item).ToDictionary(g => g.Key, g => g.First());
+                CraftingRecipe R(Item item) => shopRecipes[item];
+                RecipeUnlocks.ResetRun();
+                Check(RecipeUnlocks.IsShopAvailable(R(Item.Backpack)) && !RecipeUnlocks.IsShopAvailable(R(Item.LoadBelt)),
+                    "Lastengürtel erst nach dem Rucksack");
+                Check(RecipeUnlocks.IsShopAvailable(R(Item.IronPickaxe)) && !RecipeUnlocks.IsShopAvailable(R(Item.SteelPickaxe)),
+                    "Stahlspitzhacke erst nach der Eisenspitzhacke");
+                Check(RecipeUnlocks.IsShopAvailable(R(Item.CrystalPendant)) && !RecipeUnlocks.IsShopAvailable(R(Item.CopperEnergyBracelet)),
+                    "Energie-Reihe beginnt beim Kristallanhänger");
+                Check(RecipeUnlocks.IsShopAvailable(R(Item.Medkit)), "Medkit ist immer im Angebot");
+                stats.AddMoney(R(Item.SteelPickaxe).ShopPrice + R(Item.IronPickaxe).ShopPrice);
+                Check(!shop.TryBuyRecipe(R(Item.SteelPickaxe)) && !RecipeUnlocks.IsUnlocked(R(Item.SteelPickaxe)), "Übersprungene Stufe kann nicht gekauft werden");
+                Check(shop.TryBuyRecipe(R(Item.IronPickaxe)) && RecipeUnlocks.IsShopAvailable(R(Item.SteelPickaxe)) &&
+                    !RecipeUnlocks.IsShopAvailable(R(Item.TitaniumPickaxe)), "Nach der Eisenspitzhacke ist die Stahlspitzhacke im Angebot");
+                Check(shop.TryBuyRecipe(R(Item.SteelPickaxe)), "Stahlspitzhacke gekauft");
+                // An older save holding a skipped step keeps it and offers the gap and the step above.
+                RecipeUnlocks.RestoreRunState(new[] { (int)Item.Backpack, (int)Item.ReinforcedBackpack });
+                Check(RecipeUnlocks.IsUnlocked(R(Item.ReinforcedBackpack)) && RecipeUnlocks.IsShopAvailable(R(Item.LoadBelt)) &&
+                    RecipeUnlocks.IsShopAvailable(R(Item.SpringGreaves)) && !RecipeUnlocks.IsShopAvailable(R(Item.HeavyDutyBoots)),
+                    "Alter Spielstand behält höhere Stufen");
+                prefs.shopNextStepOnly = false;
+                Check(RecipeUnlocks.IsShopAvailable(R(Item.Exoskeleton)), "GPS-Schalter aus: alle Stufen im Angebot");
+            }
+            finally { prefs.shopNextStepOnly = nextStepOnly; RecipeUnlocks.RestoreRunState(savedRecipes); }
+
             // Energy: 0.25 coins per unit, i.e. 100 energy for 25 coins.
             var monolithObject = new GameObject("StorageComponentsShopChecks Monolith") { hideFlags = HideFlags.HideAndDontSave };
             try

@@ -18,7 +18,7 @@ public class ShopManager : MonoBehaviour
     public bool TryBuyRecipe(CraftingRecipe recipe)
     {
         var stats = StatsManager.Instance;
-        if (!stats || !RecipeUnlocks.IsShopRecipe(recipe) || RecipeUnlocks.IsUnlocked(recipe) ||
+        if (!stats || !RecipeUnlocks.IsShopAvailable(recipe) || RecipeUnlocks.IsUnlocked(recipe) ||
             !stats.CanAffordMoney(recipe.ShopPrice)) return false;
         if (!RecipeUnlocks.Unlock(recipe)) return false;
         stats.AddMoney(-recipe.ShopPrice);

@@ -187,6 +187,8 @@ public static partial class GpsSchema
             new GpsFieldSpec("hotbarVerticalOffset", "Iconversatz vertikal", min: -48f, max: 48f)),
         new GpsSectionSpec("Shop", "Lager", typeof(GpsPreferences), "",
             new GpsFieldSpec("shopSellsFromStorage", "Erze aus dem Lager verkaufen")),
+        new GpsSectionSpec("Shop", "Baupläne", typeof(GpsPreferences), "",
+            new GpsFieldSpec("shopNextStepOnly", "Nur nächste Stufe einer Upgrade-Reihe")),
         new GpsSectionSpec("Shop", "Erzverkaufspreise", typeof(ItemSO), "",
             new GpsFieldSpec("worth", "Verkaufswert ($)")),
         new GpsSectionSpec("UI", "Legacy-Iconlayouts", typeof(ItemSO), "",

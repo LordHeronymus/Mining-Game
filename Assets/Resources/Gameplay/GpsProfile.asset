@@ -64190,7 +64190,7 @@ MonoBehaviour:
     1.0,\n        \"musicVolume\": 1.0,\n        \"autosaveIntervalMinutes\": 3.0,\n       
     \"dragPopScale\": 1.2799999713897706,\n        \"dragCarryScale\": 1.1200000047683716,\n       
     \"dragPopDuration\": 0.23999999463558198,\n        \"workbenchUsesStorage\":
-    true,\n        \"workbenchStorageFirst\": false,\n        \"workbenchComponentsToStorage\": true,\n        \"shopSellsFromStorage\": true,\n        \"buttonTextOffset\":
+    true,\n        \"workbenchStorageFirst\": false,\n        \"workbenchComponentsToStorage\": true,\n        \"shopSellsFromStorage\": true,\n        \"shopNextStepOnly\": true,\n        \"buttonTextOffset\":
     0.0,\n        \"buttonTextPadding\": 1.0\n    },\n    \"tests\": {\n        \"version\":
     9,\n        \"diggingMultiplier\": 1.0,\n        \"movementMultiplier\": 5.0,\n       
     \"diggingMultiplierEnabled\": true,\n        \"movementMultiplierEnabled\": true,\n       
