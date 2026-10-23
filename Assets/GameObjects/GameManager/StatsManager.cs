@@ -118,15 +118,17 @@ public class StatsManager : MonoBehaviour
         if (inventory)
         {
             inventory.ResetAll();
+            // A saved run replaces these items a few frames later; announcing them played the pickup bling on load.
+            bool announce = !GameSaveSystem.HasPendingLoad;
             var resources = StartingResourcesSettings.Load();
             foreach (var resource in resources.items)
             {
                 var item = StartingResourcesSettings.Resolve(resource.itemId);
-                if (item && resource.amount > 0) inventory.AddStartingItem(item, resource.amount);
+                if (item && resource.amount > 0) inventory.AddStartingItem(item, resource.amount, announce);
             }
             var loadout = MetaProgression.CurrentLoadout;
-            if (loadout.startingTorches > 0) inventory.AddStartingItem(StartingResourcesSettings.Resolve((int)Item.Torche), loadout.startingTorches);
-            if (loadout.startingLadders > 0) inventory.AddStartingItem(StartingResourcesSettings.Resolve((int)Item.Ladder), loadout.startingLadders);
+            if (loadout.startingTorches > 0) inventory.AddStartingItem(StartingResourcesSettings.Resolve((int)Item.Torche), loadout.startingTorches, announce);
+            if (loadout.startingLadders > 0) inventory.AddStartingItem(StartingResourcesSettings.Resolve((int)Item.Ladder), loadout.startingLadders, announce);
         }
         var hud = FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include);
         if (hud)
