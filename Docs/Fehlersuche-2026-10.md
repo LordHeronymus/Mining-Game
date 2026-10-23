@@ -66,7 +66,7 @@ Diese Punkte brauchen einen Entscheid des Benutzers oder gehören in eine parall
 
 ## Hinweise zum Zusammenführen
 
-- `origin/main` ist eingemischt (Merges 35a5f2a und b0c1397, zuletzt mit „Erz-Anteile nach Aderdicke“), ohne Konflikte. Die bughunt-Suite lief danach grün (#125).
+- `origin/main` ist eingemischt (Merges 35a5f2a, b0c1397 und 96cc798, zuletzt mit „Knopftexte waagrecht“); Konflikte gab es nur in Changelog und Arbeitsstand. Die bughunt-Suite lief danach grün (#136).
 - `claude/level-system-check` ändert `GameOverPanel.cs`, `GameVictoryPanel.cs`, `RunPauseMenu.cs` und `ExpeditionResultPanel.cs` ebenfalls. Mit diesem Branch gibt es Textkonflikte in den ersten drei Dateien. Wer zuletzt nach `main` zusammenführt, muss sie lösen. Beide Branches beheben dabei teils dasselbe auf unterschiedliche Weise, etwa „Weiter“ ohne verbuchten Run.
 - `Tests/CI/suites/bughunt.json` enthält alle Prüfskripte dieses Branches plus die Smoke-Checks (alphabetisch). `BughuntFocusPauseChecks` steht ausdrücklich auf `"mode": "edit"`, weil `Tests/CI/prepare.py` ihn sonst an einem Marker als Play-Check erkennt.
 - Bewegung, Klang und Spielgefühl sind nicht in der Cloud geprüft. Die lokalen Abnahmepunkte stehen im PR.
@@ -103,6 +103,8 @@ Diese Punkte brauchen einen Entscheid des Benutzers oder gehören in eine parall
 | #121 | bughunt | `af7a005` | grün (51/51) | nach Merge von main (35a5f2a) |
 | #122 | bughunt | `8abe8af` | grün (55/55) | Runde 3 (Teil) |
 | #125 | bughunt | `b0c1397` | grün (56/56) | Runde 3 vollständig, nach Merge des neuen main (Erz-Anteile nach Aderdicke) |
+| #132 | bughunt | `2a2182d` | grün (56/56) | Runde 4: Korrekturen Hotbar-Tastennamen und Editor-AutoSave |
+| #136 | bughunt | `96cc798` | grün (56/56) | Endstand nach Review-Nachbesserung und Merge des neuen main (Knopftexte waagrecht) |
 
 Live-Status und Ergebnisse je Lauf stehen in den Kommentaren von Issue #2 („Cloud-Tests Live-Status“).
 
