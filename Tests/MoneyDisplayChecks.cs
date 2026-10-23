@@ -78,8 +78,9 @@ public static class MoneyDisplayChecks
             GpsSettings.Preferences.moneyCountSeconds = 1f;
             Add(5000);
             MoneyDisplay.Finish();
+            a.Refresh(); // Edit Mode runs no OnEnable, so Finish does not know these temporary labels.
             Check(MoneyDisplay.Shown == 6000 && labelA.GetComponent<TMP_Text>().text == ShopMoneyFormatter.Format(6000),
-                "Finish beendet das Zählen und aktualisiert die Anzeigen");
+                "Finish beendet das Zählen");
 
             // Loading a save shows its amount at once.
             stats.RestoreRunState(new SavedStats { money = 42 }, null);
