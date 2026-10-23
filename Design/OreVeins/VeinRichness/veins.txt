@@ -1,0 +1,12 @@
+# Aus Tests/VeinRichnessChecks.cs, Cloud-Lauf „Unity Checks“ #115 (23.10.2026), Seed -717317, Standardwerte
+# (dünn 33/4, mittel 34/8, dick 36/12 % Medium/Rich, Mindestgrösse 4, Schwankung ±25 %).
+# Format: Dicke Seed Erz Ebene x,y(Generierungszelle oben links) Raster-vorher Raster-nachher (s/m/r, '.' = keine Zelle der Ader, '/' = neue Zeile)
+THIN -717317 IronOre E1 236,10 sss../sss../..sss/..sss ssm../sms../..mss/..sss
+THIN -717317 Coal E1 427,19 ....ss/....ss/.....s/sss..s/ssssss ....ss/....ss/.....m/sss..s/smsmsm
+THIN -717317 IronOre E1 263,21 ...ssss./.sssssss/..s...../sss...../sss..... ...smss./.ssmsmss/..m...../smr...../sss.....
+MID -717317 Coal E1 416,3 .sss./srs../srs../.ss../..sss/..ss./..ss./..ss./.sss./...s. .sms./srs../sms../.ss../..msm/..ss./..ss./..ms./.mms./...s.
+MID -717317 Coal E1 303,5 .sss/.srs/ssss .mms/.srs/ssmm
+MID -717317 IronOre E1 295,10 .ss.../.ss.../.ss.../sss.../..sss./...srs/....ss .ms.../.sm.../.ss.../mss.../..sss./...srm/....sm
+THICK -717317 CopperOre E1 163,26 s.ss...../ssmmss.../smrrmmss./ssmrrrms./..smmmmms/...ssssss s.ss...../ssmmms.../smrrmmss./mmmrrrms./..smmmmms/...msssss
+THICK -717317 Coal E2 51,35 ...s../sssms./smmrms/.ssmss/...s.. ...s../sssmm./mmmrms/.ssrss/...s..
+THICK -717317 IronOre E2 489,35 ssss.../smmmsss/smrrmms/.smrrms/..smmss/..sms../..ss.../..ss... ssss.../mmmmmss/smrrmms/.mmrrrs/..smmss/..sms../..ms.../..ss...
