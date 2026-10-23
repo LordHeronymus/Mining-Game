@@ -9,6 +9,8 @@ public partial class SellPage
 {
     const float OreCardWidth = 608, OreCardHeight = 232, ListHeight = 1002;
     readonly Dictionary<ItemSO, ShopSlot> oreCards = new();
+    readonly Dictionary<ItemSO, TextMeshProUGUI> storedLabels = new();
+    TextMeshProUGUI oreKindText;
     static readonly CompareInfo OreNameComparison = CultureInfo.GetCultureInfo("de-DE").CompareInfo;
     ShopVisualTheme theme;
     ScrollRect oreScroll;
@@ -73,7 +75,8 @@ public partial class SellPage
         selectedIconCenter = selectedOreIcon.rectTransform.anchoredPosition;
         oreNameText = SellLabel(details, "", 27, 443, 590, 69, 50);
         oreNameText.alignment = TextAlignmentOptions.Midline;
-        SellLabel(details, "Erz", 27, 510, 590, 44, 31).alignment = TextAlignmentOptions.Midline;
+        oreKindText = SellLabel(details, "Erz", 27, 510, 590, 44, 31);
+        oreKindText.alignment = TextAlignmentOptions.Midline;
         SellFrame("Divider", details, 65, 573, 514, 2, null).color = new Color32(255, 198, 86, 255);
         countText = BuildStat(details, "Stock", "Bestand", 24, false, out _);
         oreWorthText = BuildStat(details, "Unit Price", "Stückpreis", 227, true, out unitPriceCoin);
@@ -126,6 +129,9 @@ public partial class SellPage
                 var count = SellLabel(frame.transform, "", 0, 0, 100, 56, 41);
                 count.alignment = TextAlignmentOptions.Midline;
                 count.rectTransform.pivot = new Vector2(1, 1); count.rectTransform.anchoredPosition = badge.rectTransform.anchoredPosition;
+                var stored = SellLabel(frame.transform, "", 300, 98, 282, 44, 29);
+                stored.color = new Color32(214, 190, 150, 255);
+                storedLabels[entry.item] = stored;
                 slot = frame.gameObject.AddComponent<ShopSlot>();
                 slot.ConfigureWideCard(icon, name, count, badge, frame, button, theme.CardFrame, theme.SelectedFrame);
                 oreCards[entry.item] = slot;
@@ -133,6 +139,9 @@ public partial class SellPage
             slot.gameObject.SetActive(true);
             ShopVisualTheme.Place((RectTransform)slot.transform, i % 2 * 642, i / 2 * 256, OreCardWidth, OreCardHeight);
             slot.Bind(entry.item, entry.count, this);
+            int inStorage = ShopManager.StoredCount(entry.item);
+            if (storedLabels.TryGetValue(entry.item, out var storedLabel) && storedLabel)
+                storedLabel.text = inStorage > 0 ? $"davon {ShopMoneyFormatter.Format(inStorage)} im Lager" : "";
         }
         ((RectTransform)content).sizeDelta = new Vector2(1250, Mathf.Max(ListHeight, Mathf.Ceil(_buffer.Count / 2f) * 256 - 24));
     }

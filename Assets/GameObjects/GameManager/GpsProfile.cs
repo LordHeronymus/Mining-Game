@@ -37,6 +37,11 @@ public sealed class GpsProfile : ScriptableObject
     public float autosaveIntervalMinutes = 3f;
     public float dragPopScale = 1.28f, dragCarryScale = 1.12f, dragPopDuration = .24f;
     public bool workbenchUsesStorage = true, workbenchStorageFirst;
+    // Crafted building components (category Misc, e.g. nails, rope) go straight into the storage hut;
+    // the shop also lists and sells ores from the storage huts.
+    public bool workbenchComponentsToStorage = true, shopSellsFromStorage = true;
+    // Shop blueprints of an upgrade line (carrying, energy, pickaxes) are offered one step at a time.
+    public bool shopNextStepOnly = true;
     // Button captions (ButtonTextCentering): offset as a fraction of the font size (+ = up), minimum gap to the gold rim,
     // horizontal centring by the visible ink instead of the advance widths.
     public float buttonTextOffset, buttonTextPadding = 1f;

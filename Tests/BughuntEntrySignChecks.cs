@@ -48,7 +48,8 @@ public static class BughuntEntrySignChecks
                 Check(Mathf.Abs(scale - WorldScale) < 1e-5f, state + ": Schild behält seine Weltgrösse (" + scale.ToString("0.#####") + ")");
                 float gap = sign.transform.position.y - roof.max.y;
                 Check(Mathf.Abs(gap - Gap) < .002f, state + ": Abstand Dach–Schild bleibt " + Gap.ToString("0.00") + " (" + gap.ToString("0.000") + ")");
-                Check(Mathf.Abs(sign.transform.position.x - roof.center.x) < .002f, state + ": Schild bleibt über der Dachmitte");
+                float centre = sign.Axis < 0 ? roof.center.x : Mathf.Lerp(renderer.bounds.min.x, renderer.bounds.max.x, sign.Axis);
+                Check(Mathf.Abs(sign.transform.position.x - centre) < .002f, state + ": Schild bleibt über der Dachmitte");
             }
 
             void Resize(float ratio)
@@ -66,6 +67,17 @@ public static class BughuntEntrySignChecks
             Expect("Gebäude halb so gross wie zu Beginn");
             building.transform.position += new Vector3(1.5f, .75f, 0);
             Expect("Gebäude verschoben");
+
+            // A building may name its roof peak (WorkbenchBuilding): the sign follows that axis through resizes too.
+            var material = (Material)typeof(EntrySign).GetField("fontMaterial", hidden).GetValue(sign);
+            if (material) Object.DestroyImmediate(material);
+            Object.DestroyImmediate(sign.gameObject);
+            sign = EntrySign.Create(building.transform, renderer, "Test öffnen", null, building.layer, .6f);
+            foreach (var child in sign.GetComponentsInChildren<Transform>(true)) child.gameObject.hideFlags = HideFlags.HideAndDontSave;
+            Check(Mathf.Abs(sign.transform.position.x - EntrySign.VisibleBounds(renderer).center.x) > .05f, "Dachspitze: Schild weicht von der Bildmitte ab");
+            Expect("Dachspitze nach dem Aufbau");
+            Resize(1.6f);
+            Expect("Dachspitze, Gebäude vergrössert");
 
             File.WriteAllText(Report, string.Join("\n", checks));
             return "PASS (" + checks.Count + ")";
