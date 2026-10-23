@@ -461,7 +461,7 @@ public static class GameSaveSystem
         var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement>();
         var hud = UnityEngine.Object.FindFirstObjectByType<CompactHud>();
         var state = new RunSaveState { seed = map.ActiveSeed, width = map.GeneratedWidth, height = map.GeneratedHeight,
-            progression = MetaProgression.CaptureRunState(),
+            progression = MetaProgression.CaptureRunState(background: true),
             exotics = ExoticWorldContent.Ensure(map).CaptureState(),
             placedLights = PlacedTorch.Capture(map),
             generationSettings = GpsSettings.CaptureGeneration(map),

@@ -82,7 +82,7 @@ public static class ChallengeReworkChecks
         lines.Clear(); passed = failed = 0; seq = 0; placed.Clear(); upgradeLevels.Clear(); gearUsed.Clear();
         Directory.CreateDirectory("Temp");
         if (Application.isPlaying) return Finish("FAIL Edit Mode only: stop Play Mode before running ChallengeReworkChecks");
-        if (MetaProgression.CurrentRun != null) return Finish("FAIL a run is active; run ChallengeReworkChecks without a loaded world");
+        if (MetaProgression.RunActive) return Finish("FAIL a run is active; run ChallengeReworkChecks without a loaded world");
         string previousDirectory = MetaProgression.TestDirectory;
         var previousClock = MetaProgression.ChallengeTestUtc;
         var previousSettings = MetaProgression.ChallengeSettingsOverride;
@@ -798,16 +798,34 @@ public static class ChallengeReworkChecks
         Check(dil >= 0 && Diligence() == 1 && (Mask(Stored(1), "diligence") & (1 << 1)) != 0, "clock: diligence credited for Tuesday (bit 1)");
         var ledger = Snap();
 
-        MetaProgression.ChallengeTestUtc = Utc(2026, 10, 5, 10);
+        // Within the tolerance (1 h) a clock that goes back keeps the round and never lengthens the countdown.
+        MetaProgression.ChallengeTestUtc = Utc(2026, 10, 6, 9, 30);
         var back = R(0);
         Check(back.startUtc == dStart && back.tasks[k].done && back.tasks[k].paid == paid.xp && P.periodRewardXp == ledger.period && P.challengeRounds.Count(r => r.period == 0) == 1,
-            "clock: moving the clock back keeps the round and its paid task");
+            "clock: moving the clock back half an hour keeps the round and its paid task");
         var remaining = MetaProgression.ChallengeRemaining(ChallengePeriod.Daily);
         Check(remaining > TimeSpan.Zero && remaining <= TimeSpan.FromHours(14), "clock: the countdown never grows when the clock goes back (" + remaining + ")");
         var before = Snap();
         Emit(0, k, 1, Stored(0).tasks[k].target);
         Check(Stored(0).tasks[k].paid == paid.xp && Diligence() == 1, "clock: recording more of a paid task's metric pays nothing twice and diligence stays at 1");
         Consistent(before, "clock: backwards");
+
+        // A clock that ran a day ahead and was corrected must not freeze the rounds: the stored clock is forgotten, today's
+        // round is drawn, and the corrected day's round comes back from its markers with its task still paid.
+        MetaProgression.ChallengeTestUtc = Utc(2026, 10, 5, 10);
+        var monday = R(0);
+        Check(monday.startUtc == Utc(2026, 10, 5).Ticks && monday.endUtc == dStart && P.challengeRounds.Count(r => r.period == 0) == 1 &&
+            P.challengeClockUtc <= Utc(2026, 10, 5, 10).Ticks && P.periodRewardXp == ledger.period,
+            "clock: a stored clock a day ahead is forgotten, today's round is drawn and no XP is taken back (" + Show(monday.startUtc) + ")");
+        Check(R(1).startUtc == wStart && R(3).startUtc == mStart, "clock: weekly and monthly rounds that already began stay");
+        MetaProgression.ChallengeTestUtc = T0;
+        var again = R(0);
+        Check(again.startUtc == dStart && again.tasks.Count == back.tasks.Count && again.tasks[k].id == back.tasks[k].id && again.tasks[k].done && again.tasks[k].paid == paid.xp,
+            "clock: back on the corrected day its round is rebuilt with the paid task");
+        before = Snap();
+        Emit(0, k, 1, again.tasks[k].target);
+        Check(Stored(0).tasks[k].paid == paid.xp && Diligence() == 1, "clock: the rebuilt round pays nothing twice");
+        Consistent(before, "clock: rebuilt round");
 
         MetaProgression.ChallengeTestUtc = Utc(2026, 10, 7, 10);
         var d1 = R(0);
@@ -849,8 +867,12 @@ public static class ChallengeReworkChecks
         Check(m1.startUtc == Utc(2026, 11, 1).Ticks && m1.endUtc == Utc(2026, 12, 1).Ticks && P.challengeRounds.Count(r => r.period == 3) == 1, "clock: new monthly round on the 1st");
         string project1 = m1.tasks.Find(t => t.tier == (int)ChallengeTier.Project)?.id;
         Check(project1 != null && project1 != project0, "clock: the new month avoids last month's project (" + project0 + " -> " + project1 + ")");
+        // A clock that jumps far back (a wrong PC clock was corrected) does not freeze the rounds until November: October's
+        // rounds come back (paid ones rebuilt from their markers), and no XP is taken back or paid twice.
+        long periodXp = P.periodRewardXp;
         MetaProgression.ChallengeTestUtc = Utc(2026, 10, 20);
-        Check(R(3).startUtc == m1.startUtc && R(0).startUtc >= Utc(2026, 11, 1).Ticks && R(1).startUtc >= Utc(2026, 10, 26).Ticks, "clock: going back to October reopens nothing");
+        Check(R(3).startUtc == mStart && R(0).startUtc == Utc(2026, 10, 20).Ticks && R(1).startUtc == Utc(2026, 10, 19).Ticks && P.periodRewardXp == periodXp,
+            "clock: going back to October draws October's rounds again and keeps the XP (" + Show(R(0).startUtc) + ", " + Show(R(1).startUtc) + ", " + Show(R(3).startUtc) + ")");
         Check(P.challengePeriods.Count == 0, "clock: challengePeriods stays empty");
     }
 
