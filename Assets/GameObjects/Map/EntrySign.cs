@@ -16,7 +16,9 @@ public sealed class EntrySign : MonoBehaviour
     public TextMeshProUGUI Label { get; private set; }
     RectTransform rect;
     Material fontMaterial;
+    SpriteRenderer source;
     float baseY, parentScale = 1;
+    Vector3 fittedScale, fittedPosition;
 
     // The building artwork is the largest sprite; smaller ones are signboards, lanterns or crystals.
     public static SpriteRenderer MainSprite(Transform building)
@@ -140,13 +142,8 @@ public sealed class EntrySign : MonoBehaviour
 
         float textWidth = Label.GetPreferredValues(caption, 10000, Height).x;
         rect.sizeDelta = new Vector2(Mathf.Ceil(textWidth) + 2 * CapMargin, Height);
-        // World-space placement and size: buildings may be scaled (the shop is), the sign must not be.
-        parentScale = Mathf.Max(.0001f, Mathf.Abs(building.lossyScale.x));
-        // Centred over the visible artwork, with a fixed gap between the roof (or chimney) and the plaque.
-        var visible = VisibleBounds(sprite);
-        baseY = visible.max.y + RoofGap + Height * WorldScale / 2;
-        rect.position = new Vector3(visible.center.x, baseY, building.position.z);
-        rect.localScale = Vector3.one * (WorldScale / parentScale);
+        source = sprite;
+        Fit();
         // Apply after sizing: GoldButtonFeedback picks the wide button artwork from the final aspect ratio.
         GoldButtonFeedback.Apply(Button, null, null);
         ButtonTextCentering.Apply(Label, Button.GetComponent<Image>());
@@ -156,8 +153,23 @@ public sealed class EntrySign : MonoBehaviour
         Group.interactable = Group.blocksRaycasts = false;
     }
 
+    // World-space placement and size: buildings may be scaled (the shop is), the sign must not be.
+    // Re-run whenever the building is resized or moved (F1 map object sizes), so roof gap and size stay.
+    void Fit()
+    {
+        var building = rect.parent;
+        parentScale = Mathf.Max(.0001f, Mathf.Abs(building.lossyScale.x));
+        // Centred over the visible artwork, with a fixed gap between the roof (or chimney) and the plaque.
+        var visible = VisibleBounds(source);
+        baseY = visible.max.y + RoofGap + Height * WorldScale / 2;
+        rect.position = new Vector3(visible.center.x, baseY, building.position.z);
+        rect.localScale = Vector3.one * (WorldScale / parentScale);
+        fittedScale = building.lossyScale; fittedPosition = building.position;
+    }
+
     void LateUpdate()
     {
+        if (source && (rect.parent.lossyScale != fittedScale || rect.parent.position != fittedPosition)) Fit();
         Group.alpha = Mathf.MoveTowards(Group.alpha, Visible ? 1 : 0, Time.unscaledDeltaTime / FadeDuration);
         // Stay interactable while fading out so GoldButtonFeedback does not grey the sign; only clicks stop.
         Group.blocksRaycasts = Visible;

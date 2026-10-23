@@ -111,7 +111,7 @@ public static class RobustnessFixChecks
             Check((float)effect.Invoke(null, new object[] { "jump", 7 }) == 7 * .008f && (float)effect.Invoke(null, new object[] { "health", 13 }) == 13 * .025f, "Upgrade-Effekte rechnen identisch");
 
             // Personal volume stays out of the shipped profile.
-            Check(EditorPrefs.HasKey("MiningGame.GPS.masterVolume") && EditorPrefs.HasKey("MiningGame.GPS.musicVolume"), "Persönliche Lautstärke liegt in den EditorPrefs");
+            Check(EditorPrefs.HasKey(GpsSettings.PersonalPreferenceKey("masterVolume")) && EditorPrefs.HasKey(GpsSettings.PersonalPreferenceKey("musicVolume")), "Persönliche Lautstärke liegt in den EditorPrefs");
             var assetDocument = JsonUtility.FromJson<GpsDocument>(GpsSettings.AssetJson(GpsSettings.Document));
             Check(assetDocument.preferences.masterVolume == 1f && assetDocument.preferences.musicVolume == 1f, "Profil-Asset erhält Standardlautstärke");
 

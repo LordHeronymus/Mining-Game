@@ -45,12 +45,23 @@ public sealed class LadderMap : MonoBehaviour
         return placed;
     }
 
+    // Highest ladder row above the surface (row 0); saves accept ladder layers up to it (GameSaveSystem.ValidLayerBounds).
+    public const int SkyRows = 1024;
+
     public bool CanPlace(Vector3Int cell)
     {
         int width = Map.GeneratedWidth;
         return segment && cell.z == 0 && cell.x >= -width / 2 && cell.x < -width / 2 + width &&
-            cell.y >= 1 - Map.GeneratedHeight && !Map.IsGenerationStreaming &&
-            !Map.Terrain.HasTile(cell) && !Has(cell);
+            cell.y >= 1 - Map.GeneratedHeight && cell.y <= SkyRows && !Map.IsGenerationStreaming &&
+            !Map.Terrain.HasTile(cell) && !Has(cell) && FitsSave(tiles ? tiles.cellBounds : default, cell);
+    }
+    // A save holds the ladder layer as one block of at most GameSaveSystem.MaxCells cells around all standing ladders.
+    static bool FitsSave(BoundsInt bounds, Vector3Int cell)
+    {
+        if (bounds.size.x <= 0 || bounds.size.y <= 0) return true;
+        long width = Mathf.Max(bounds.xMax, cell.x + 1) - Mathf.Min(bounds.xMin, cell.x);
+        long height = Mathf.Max(bounds.yMax, cell.y + 1) - Mathf.Min(bounds.yMin, cell.y);
+        return width * height <= GameSaveSystem.MaxCells;
     }
 
     public bool InReach(Vector3Int cell, Vector2 player, float reach) =>
@@ -81,6 +92,7 @@ public sealed class LadderMap : MonoBehaviour
         if (GameplayInputBlocker.IsBlocked || !inventory || !returnedItem || !Has(cell) || !InReach(cell, player, reach) ||
             !inventory.CanAdd(returnedItem)) return false;
         tiles.SetTile(cell, null);
+        tiles.CompressBounds(); // The bounds then cover the standing ladders only (FitsSave).
         if (placed > 0) placed--;
         inventory.Add(returnedItem);
         AudioManager.Instance?.Play(SoundType.LadderRemove, true);

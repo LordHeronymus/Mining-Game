@@ -90,7 +90,9 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
     {
         if (!pausing) return;
         pausing = false;
-        if (!RunNavigation.IsTransitioning && !LoadingProgress.Active) Time.timeScale = previousScale;
+        // A test action may have ended the run meanwhile (lethal damage, energy): the end screens own the time then.
+        if (!RunNavigation.IsTransitioning && !LoadingProgress.Active && !GameOverPanel.IsOpen && !GameVictoryPanel.IsOpen &&
+            !ExpeditionResultPanel.IsOpen) Time.timeScale = previousScale;
         GamePause.Set(this, false);
     }
     void OnDestroy()
@@ -162,7 +164,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         backdrop.color = new Color(0, 0, 0, GpsSettings.Preferences.panelBackdropAlpha);
         title.text = "Debug Settings" + (GpsSettings.HasUnsavedChanges ? " *" : "");
         var group = card.GetComponent<CanvasGroup>(); if (!group) group=card.gameObject.AddComponent<CanvasGroup>();
-        group.alpha = GpsSettings.Preferences.panelElementAlpha;
+        group.alpha = Mathf.Clamp(GpsSettings.Preferences.panelElementAlpha, GpsPreferences.MinPanelElementAlpha, 1f);
 #if UNITY_EDITOR
         if (overridesLabel)
         {
@@ -373,9 +375,9 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
                 var toggleButton = Button(content, (node.flag ^ spec.invertBoolean) ? "An" : "Aus", new Vector2(inputX, -rowY), new Vector2(140, 30), () => { node.flag = !node.flag; commit(); BuildPage(); });
                 break;
             case GpsValueKind.Reference:
-                var choices = GpsSchema.Choices(GpsCodec.ResolveType(node.type));
-                Dropdown(new Vector2(inputX, -rowY), choices.Select(entry => GpsSchema.DisplayName(entry.asset)).Prepend("—").ToArray(),
-                    choices.FindIndex(entry => entry.key == node.text) + 1, selected => { node.text = selected == 0 ? null : choices[selected - 1].key; commit(); });
+                var choices = GpsSchema.Choices(GpsCodec.ResolveType(node.type), parent, node.name); int none = GpsSchema.IsLayerStone(parent, node.name) ? 0 : 1;
+                Dropdown(new Vector2(inputX, -rowY), choices.Select(entry => GpsSchema.DisplayName(entry.asset)).Prepend("—").Skip(1 - none).ToArray(),
+                    choices.FindIndex(entry => entry.key == node.text) + none, selected => { node.text = selected < none ? null : choices[selected - none].key; commit(); });
                 if (GpsSettings.Profile.Resolve(node.text) is AudioClip clip)
                     Button(content, "Play", new Vector2(1588, -rowY), new Vector2(90, 30), () => GpsTestActions.PreviewClip(clip));
                 break;
@@ -390,12 +392,12 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
                 {
                     int index = i;
                     Input(content, new Vector2(inputX + i * 240, -rowY), new Vector2(225, 30), node.vector[i].ToString("0.###", Culture), text =>
-                    { if (TryNumber(text, out float value)) { node.vector[index] = Mathf.Clamp(value, spec.min, spec.max); commit(); } });
+                    { if (text != node.vector[index].ToString("0.###", Culture) && TryNumber(text, out float value)) { node.vector[index] = Mathf.Clamp(value, spec.min, spec.max); commit(); } });
                 }
                 break;
             case GpsValueKind.Color:
                 Input(content, new Vector2(inputX, -rowY), new Vector2(320, 30), "#" + ColorUtility.ToHtmlStringRGBA(node.color), text =>
-                { if (ColorUtility.TryParseHtmlString(text.StartsWith("#") ? text : "#" + text, out var color)) { node.color = color; commit(); } });
+                { if (text != "#" + ColorUtility.ToHtmlStringRGBA(node.color) && ColorUtility.TryParseHtmlString(text.StartsWith("#") ? text : "#" + text, out var color)) { node.color = color; commit(); } });
                 var swatch = Rect("Color", content, new Vector2(990, -rowY), new Vector2(80, 30)).gameObject.AddComponent<Image>(); swatch.color = node.color;
                 break;
             case GpsValueKind.Curve:
@@ -416,9 +418,11 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
                 { if(node.curve.keys.Count>1 && selectedKey<node.curve.keys.Count){node.curve.keys.RemoveAt(selectedKey);commit();BuildPage();} });
                 rowY+=38;
                 Label(content,depth ? "Tiefe" : "X",new Vector2(x,-rowY),new Vector2(120,30),20);
+                Func<string> shownX=()=>(depth ? start+node.curve.keys[selectedKey].time*Mathf.Max(1,end-start-1) : node.curve.keys[selectedKey].time).ToString("0.###",Culture);
+                Func<string> shownY=()=>node.curve.keys[selectedKey].value.ToString("0.###",Culture);
                 var xInput=Input(content,new Vector2(x+140,-rowY),new Vector2(280,30),"",text=>
                 {
-                    if(selectedKey>=node.curve.keys.Count || !TryNumber(text,out float value))return;
+                    if(selectedKey>=node.curve.keys.Count || text==shownX() || !TryNumber(text,out float value))return;
                     var key=node.curve.keys[selectedKey];float time=depth ? (value-start)/Mathf.Max(1,end-start-1) : value;
                     float lower=selectedKey>0 ? node.curve.keys[selectedKey-1].time+.0001f : 0;
                     float upper=selectedKey+1<node.curve.keys.Count ? node.curve.keys[selectedKey+1].time-.0001f : 1;
@@ -426,12 +430,12 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
                 });
                 Label(content,"Y",new Vector2(x+460,-rowY),new Vector2(70,30),20);
                 var yInput=Input(content,new Vector2(x+540,-rowY),new Vector2(280,30),"",text=>
-                { if(selectedKey<node.curve.keys.Count && TryNumber(text,out float value)){var key=node.curve.keys[selectedKey];key.value=Mathf.Max(0,value);node.curve.keys[selectedKey]=key;commit();graphic.Bind(node,start,end,curveCommit);} });
+                { if(selectedKey<node.curve.keys.Count && text!=shownY() && TryNumber(text,out float value)){var key=node.curve.keys[selectedKey];key.value=Mathf.Max(0,value);node.curve.keys[selectedKey]=key;commit();graphic.Bind(node,start,end,curveCommit);} });
                 Action refreshCurve=()=>
                 {
-                    if(selectedKey>=node.curve.keys.Count)return;var key=node.curve.keys[selectedKey];
-                    if(!xInput.isFocused)xInput.SetTextWithoutNotify((depth ? start+key.time*Mathf.Max(1,end-start-1) : key.time).ToString("0.###",Culture));
-                    if(!yInput.isFocused)yInput.SetTextWithoutNotify(key.value.ToString("0.###",Culture));
+                    if(selectedKey>=node.curve.keys.Count)return;
+                    if(!xInput.isFocused)xInput.SetTextWithoutNotify(shownX());
+                    if(!yInput.isFocused)yInput.SetTextWithoutNotify(shownY());
                 };
                 refreshValues.Add(refreshCurve);refreshCurve();rowY+=38;
                 return;
@@ -447,8 +451,13 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
                     (node.number * spec.factor).ToString("0.###", Culture), text =>
                 {
                     if (node.kind == GpsValueKind.Text) { node.text = text; commit(); }
-                    else if (TryNumber(text, out float value))
-                    { node.number = Mathf.Clamp(value / spec.factor, spec.min, spec.max); if (node.kind == GpsValueKind.Integer) node.number = Math.Round(node.number); commit(); }
+                    // Leaving a field fires onEndEdit too; reading the rounded display back would store it in place of the exact value.
+                    else if (text != (node.number * spec.factor).ToString("0.###", Culture) && TryNumber(text, out float value))
+                    {
+                        node.number = Mathf.Clamp(value / spec.factor, spec.min, spec.max);
+                        if (node.kind == GpsValueKind.Integer) node.number = GpsCodec.ClampInteger(Math.Round(node.number), GpsCodec.ResolveType(node.type));
+                        commit();
+                    }
                 });
                 refreshValues.Add(() =>
                 {
@@ -513,6 +522,9 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         if (!GpsSettings.ValidateDocument(GpsSettings.Document,out var error)) { status.text=error; return; }
         GpsSettings.ApplyGeneration(map);
         map.GenerateMap();
+        ExoticWorldContent.Ensure(map).Regenerate();
+        // The old player spot lies in the new rock: start at the spawn like on a fresh map, with a new fall measurement.
+        GpsTestActions.TeleportSpawn(map, Object.FindFirstObjectByType<PlayerMovement>());
     }
     static bool TryNumber(string text, out float value) => float.TryParse(text.Replace(',', '.'), NumberStyles.Float, Culture, out value) && GpsCodec.Finite(value);
     static RectTransform Rect(string name, Transform parent, Vector2 position, Vector2 size)

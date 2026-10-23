@@ -9,6 +9,8 @@ public sealed class MoonlightController : MonoBehaviour
     public Light2D moonlight;
     public Vector2 moonPosition = new Vector2(0.842f, 0.585f);
     [Min(0f)] public float dayIntensity = 1f;
+    // Authored here, not read from the light: after a night preview the light itself holds the moon colour.
+    public Color dayColor = Color.white;
     [Range(0f, 1f)] public float nightAmbient = 0.12f;
     [Min(0f)] public float moonIntensity = 0.9f;
     [Min(1f)] public float moonRadius = 65f;
@@ -28,13 +30,11 @@ public sealed class MoonlightController : MonoBehaviour
     SkyController sky;
     ParallaxLayer skyLayer;
     SurfaceBackgroundController background;
-    Color daylightColor;
 
     void OnEnable()
     {
         sky = GetComponent<SkyController>(); skyLayer = GetComponent<ParallaxLayer>();
         background = GetComponentInParent<SurfaceBackgroundController>();
-        if (daylight) daylightColor = daylight.color;
     }
     void LateUpdate() => Refresh();
 
@@ -45,7 +45,7 @@ public sealed class MoonlightController : MonoBehaviour
         float blend = fullGlobalLighting ? 0f : sky.isActiveAndEnabled ? sky.NightBlend : 0f;
         daylight.enabled = true;
         daylight.intensity = fullGlobalLighting ? 1f : Mathf.Lerp(dayIntensity, nightAmbient, blend);
-        daylight.color = fullGlobalLighting ? Color.white : Color.Lerp(daylightColor, moonColor, blend);
+        daylight.color = fullGlobalLighting ? Color.white : Color.Lerp(dayColor, moonColor, blend);
         moonlight.intensity = 0f;
         staleHalos.Clear();
         foreach (var pair in halos)
@@ -133,7 +133,7 @@ public sealed class MoonlightController : MonoBehaviour
         halos.Clear();
         if (haloMesh) ReleaseHalo(haloMesh);
         haloMesh = null;
-        if (daylight) { daylight.enabled = true; daylight.intensity = dayIntensity; daylight.color = daylightColor; }
+        if (daylight) { daylight.enabled = true; daylight.intensity = dayIntensity; daylight.color = dayColor; }
         if (moonlight) moonlight.intensity = 0f;
         if (background)
             foreach (var entry in background.layers)

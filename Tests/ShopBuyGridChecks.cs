@@ -34,14 +34,13 @@ if(details.gameObject.activeSelf || cards.Cast<UnityEngine.Transform>().Any(t=>t
 page.SetSearch("");
 var titanium=cards.Find("Blueprint TitaniumPickaxe");
 var recipe=recipes.First(r=>r.output.item==Item.TitaniumPickaxe);
-const string key="workbench.recipe.titanium-pickaxe.unlocked";
-bool existed=UnityEngine.PlayerPrefs.HasKey(key);
-int oldUnlock=UnityEngine.PlayerPrefs.GetInt(key),oldMoney=stats.Money;
+var oldRecipes=RecipeUnlocks.CaptureRunState();
+int oldMoney=stats.Money;
 var infiniteField=typeof(GameplayTestSettings).GetField("infiniteMoney",System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic);
 bool infinite=(bool)infiniteField.GetValue(null);
 try {
     infiniteField.SetValue(null,false);
-    UnityEngine.PlayerPrefs.DeleteKey(key);
+    RecipeUnlocks.ResetRun();
     stats.AddMoney(-stats.Money);
     titanium.GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
     if(purchase.interactable) throw new System.Exception("Unaffordable purchase enabled");
@@ -64,8 +63,7 @@ try {
     if(!page.GetComponentsInChildren<TMPro.TextMeshProUGUI>().All(t=>t.font.name=="TitleFont")) throw new System.Exception("Font mismatch");
     return "PASS: 13 plans / 12 visible, scrolling, 2x2 actual ingredients, search and empty state, red unaffordable prices, purchase and duplicate protection, owned sorting, tab selection and live money.";
 } finally {
-    if(existed) UnityEngine.PlayerPrefs.SetInt(key,oldUnlock); else UnityEngine.PlayerPrefs.DeleteKey(key);
-    UnityEngine.PlayerPrefs.Save();
+    RecipeUnlocks.RestoreRunState(oldRecipes);
     stats.AddMoney(oldMoney-stats.Money);
     infiniteField.SetValue(null,infinite);
     page.SetSearch("");

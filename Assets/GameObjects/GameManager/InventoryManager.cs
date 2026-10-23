@@ -188,8 +188,10 @@ public class InventoryManager : MonoBehaviour
 
     // Explicitly configured starting resources are granted even when their weight exceeds
     // the normal carrying limit. The player can still be overweight after the run begins.
+    // A powerup is unlocked once; a starting entry copied in F1 keeps the amount of the entry it came from.
     public bool AddStartingItem(ItemSO item, int amount = 1)
     {
+        if (item && item.category == ItemCategory.Powerup) amount = Mathf.Min(1, amount);
         return AddInternal(item, amount, enforceWeightLimit: false);
     }
 

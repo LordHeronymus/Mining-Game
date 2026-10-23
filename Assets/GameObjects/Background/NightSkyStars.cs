@@ -47,11 +47,14 @@ public sealed class NightSkyStars : MonoBehaviour
 #if UNITY_EDITOR
     void UpdatePreview()
     {
-        if (Application.isPlaying || UnityEditor.EditorApplication.timeSinceStartup < nextPreviewFrame) return;
+        if (Application.isPlaying || !PreviewAnimates || UnityEditor.EditorApplication.timeSinceStartup < nextPreviewFrame) return;
         nextPreviewFrame = UnityEditor.EditorApplication.timeSinceStartup + 1.0 / 30.0;
         UnityEditor.EditorApplication.QueuePlayerLoopUpdate();
         UnityEditor.SceneView.RepaintAll();
     }
+    // By day the stars are fully transparent; forcing the Edit Mode player loop would only keep the editor busy.
+    internal bool PreviewAnimates => isActiveAndEnabled && material && sky && sky.isActiveAndEnabled &&
+        layer && layer.isActiveAndEnabled && (sky.IsNight || sky.NightBlend > 0f);
 #endif
 
     public void Refresh(float time)

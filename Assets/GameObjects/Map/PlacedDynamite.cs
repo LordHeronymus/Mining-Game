@@ -62,7 +62,8 @@ public sealed class PlacedDynamite : MonoBehaviour
     public static SavedDynamite[] Capture(MapGenerator map)
     {
         var result = new List<SavedDynamite>();
-        foreach (var charge in active) if (charge && charge.map == map)
+        // A spent fuse means the charge exploded this frame and only waits for Destroy at frame end.
+        foreach (var charge in active) if (charge && charge.map == map && charge.fuse > 0)
             result.Add(new SavedDynamite { position = charge.transform.position, fuse = charge.fuse });
         return result.ToArray();
     }

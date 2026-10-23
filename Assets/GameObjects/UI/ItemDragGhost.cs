@@ -122,6 +122,10 @@ public sealed class ItemDragHold
     public bool Dragging;
     public Vector2 PressPosition, Pointer;
 
+    // Every press starts a new click: a drag released over another object never gets its click, so the swallow must
+    // not wait for a later click. Called for any button, also where the press does not pick anything up.
+    public void Press() => suppressClick = false;
+
     public void Down(Vector2 position)
     {
         pressed = true; Dragging = suppressClick = false;

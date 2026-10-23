@@ -61,6 +61,7 @@ if ($Install) {
     # Kopie in einen festen Ordner ausserhalb von Git: Arbeitsordner und Testbank wechseln ihren Stand.
     if (Test-Path -LiteralPath $legacyShortcut) { Remove-Item -LiteralPath $legacyShortcut; Write-Output "Windows-Autostart entfernt: $legacyShortcut" }
     New-Item -ItemType Directory -Path $bin -Force | Out-Null
+    # Gleiche Liste wie InstalledScripts in Assets/Editor/EditorQueueActivity.cs (frischt die Kopien auf main auf).
     foreach ($name in 'editor-queue.ps1', 'editor-queue-server.ps1', 'editor-dialog.ps1', 'editor-focus.ps1') { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination (Join-Path $bin $name) -Force }
     $target = Join-Path $bin 'editor-queue-server.ps1'
     $shell = New-Object -ComObject WScript.Shell

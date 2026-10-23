@@ -57,6 +57,8 @@ public class PlayerMovement : MonoBehaviour
     {
         GpsSettings.ApplyComponent(this);
         rb = GetComponent<Rigidbody2D>();
+        // Terrain chunks are hollow outlines: a discrete step of a long fall can pass the floor edge and sink into the rock.
+        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         col = GetComponent<Collider2D>();
         colliderWasEnabled = col && col.enabled;
         colliderWasTrigger = col && col.isTrigger;
@@ -281,10 +283,21 @@ public class PlayerMovement : MonoBehaviour
         trackingFall = false;
         hasGroundedForFall = true;
     }
+    // Teleports and save restores: a fall counts from the current height on, never from a peak before the jump.
+    public void RestartFallTracking() => PauseFallTrackingForLadder();
     void ResetFallTracking()
     {
         trackingFall = false;
         hasGroundedForFall = false;
+    }
+    // GPS gravity changes while climbing or flying only replace the restored value, so the player neither sinks nor loses it.
+    internal bool HoldGravity(float value)
+    {
+        var climb = ladder ? ladder : GetComponent<PlayerLadder>();
+        if (climb && climb.HoldGravity(value)) return true;
+        if (!flying) return false;
+        previousGravity = value;
+        return true;
     }
     void SyncFlyMode()
     {

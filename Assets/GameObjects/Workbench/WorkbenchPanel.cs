@@ -86,7 +86,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
         if (IsOpen)
         {
             if (glowMaterial) glowMaterial.SetFloat("_AnimationTime", Time.unscaledTime);
-            if (GameBindings.Down(GameAction.Settings) || (GameBindings.Down(GameAction.Workbench) && !searchField.isFocused)) ShowPanel(false);
+            if (GameBindings.CloseDown() || (GameBindings.Down(GameAction.Workbench) && !searchField.isFocused && !RunPauseMenu.OwnsInput)) ShowPanel(false);
             else if (SubscribeInventory()) Refresh();
         }
         else if (allowKeyboardOpen && GameBindings.Down(GameAction.Workbench) && !GameplayInputBlocker.IsBlocked)
@@ -144,6 +144,8 @@ public sealed class WorkbenchPanel : MonoBehaviour
         {
             transform.SetAsLastSibling();
             SubscribeInventory();
+            // Recipe costs may have changed while closed (F1/GPS), so rebuild the ingredient rows.
+            renderedRecipe = null;
             Refresh();
         }
         else if (EventSystem.current && EventSystem.current.currentSelectedGameObject &&

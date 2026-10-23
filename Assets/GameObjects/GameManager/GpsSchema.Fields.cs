@@ -86,6 +86,10 @@ public static partial class GpsSchema
     }
     public static List<GpsAssetReference> Choices(Type type) => GpsSettings.Profile.assets
         .Where(entry => entry.asset && type.IsInstanceOfType(entry.asset)).OrderBy(entry => DisplayName(entry.asset), StringComparer.CurrentCultureIgnoreCase).ToList();
+    // Layer stones offer only stone blocks (dirt only for the top layer) and no empty entry: MapGenerationSampler rejects anything else.
+    public static bool IsLayerStone(GpsValue parent, string name) => name == "stone" && GpsCodec.ResolveType(parent?.type) == typeof(MapLayer);
+    public static List<GpsAssetReference> Choices(Type type, GpsValue parent, string name) => !IsLayerStone(parent, name) ? Choices(type) :
+        Choices(type).Where(entry => entry.asset is Block block && (block.IsStone || (parent.name == "0" && block.id == BlockType.Dirt))).ToList();
     public static int VectorDimension(GpsValue value)
     {
         Type type = GpsCodec.ResolveType(value.type);
