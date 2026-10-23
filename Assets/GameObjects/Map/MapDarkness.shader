@@ -29,7 +29,7 @@ Shader "Mining Game/Map Darkness"
             #pragma vertex Vert
             #pragma fragment Frag
             #pragma target 3.0
-            // Surface glow: brightens the unlit surface background with the torch/headlamp field.
+            // Surface glow: additive warm haze of the torch/headlamp field over the unlit surface background.
             #pragma multi_compile_local _ _SURFACE_GLOW
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "MapLightVisibility.hlsl"

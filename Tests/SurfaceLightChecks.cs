@@ -58,8 +58,7 @@ public static class SurfaceLightChecks
             var glow = glowObject ? glowObject.GetComponent<MeshRenderer>() : null;
             Check(glow && glow.sortingLayerName == "Background", "Surface glow must draw on the background layer.");
             Color glowColor = glow.sharedMaterial.GetColor("_GlowColor");
-            Check(glowColor.r > torchLight.color.r * torchLight.intensity,
-                $"At night the glow must make up for the darkened background: {glowColor}");
+            Check(glowColor.r > .3f && glowColor.r > glowColor.b, $"At night the surface glow must be a warm haze: {glowColor}");
 
             float top = Light(0), above = Light(1), higher = Light(4), far = Light(MapLighting.SurfaceLightRows + 2);
             Check(top > .05f, $"Top shaft cell must be lit: {top}");
@@ -78,6 +77,8 @@ public static class SurfaceLightChecks
             Check(dayAbove < above && dayAbove > .2f * dayTop,
                 $"By day the surface light must be weaker but still fade softly: day {dayAbove}, night {above}, top {dayTop}");
             Check(dayHigher < .02f, $"By day the surface light must stay close to the shaft: {dayHigher}");
+            Color dayGlow = glow.sharedMaterial.GetColor("_GlowColor");
+            Check(dayGlow.r < .5f * glowColor.r, $"By day the surface glow must be weaker: day {dayGlow}, night {glowColor}");
             return new { top, above, higher, dayAbove, dayHigher };
         }
         finally

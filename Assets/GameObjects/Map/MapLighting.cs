@@ -36,9 +36,11 @@ public sealed class MapLighting : MonoBehaviour
     public const int SurfaceLightRows = 12;
     // By day the surface rows fade out over this many cells above the terrain (no hard edge).
     const float SurfaceLightDayFade = 1.5f;
-    // The surface background is not lit by Light2D (it is tinted by MoonlightController), so a glow
-    // overlay brightens it with the same field: above the near hills and the underground background.
+    // The surface background is not lit by Light2D (it is only tinted by MoonlightController) and is
+    // nearly black at night, so a warm additive haze shows the same field there: above the near hills
+    // and the underground background. Strength at full field light, by night and by day.
     const int SurfaceGlowSortingOrder = 32;
+    const float SurfaceGlowNightStrength = .6f, SurfaceGlowDayStrength = .15f;
 
     static readonly int TerrainOcclusionTexId = Shader.PropertyToID("_TerrainOcclusionTex");
     static readonly int TerrainOcclusionRectId = Shader.PropertyToID("_TerrainOcclusionRect");
@@ -70,7 +72,6 @@ public sealed class MapLighting : MonoBehaviour
     GameObject surfaceGlow;
     Material surfaceGlowMaterial;
     Mesh surfaceGlowMesh;
-    MoonlightController moonlight;
     Material material;
     Mesh mesh;
     GameObject overlay;
@@ -146,7 +147,6 @@ public sealed class MapLighting : MonoBehaviour
             if (miner) headlamp = miner.headlamp;
         }
         sky = FindFirstObjectByType<SkyController>();
-        moonlight = FindFirstObjectByType<MoonlightController>();
         map.GenerationCompleted += RequestRebuild;
         Tilemap.tilemapPositionsChanged += TilesChanged;
         PlacedTorch.Changed += OnTorchChanged;
@@ -499,12 +499,10 @@ public sealed class MapLighting : MonoBehaviour
         bool active = torchLight.enabled;
         if (surfaceGlow.activeSelf != active) surfaceGlow.SetActive(active);
         if (!active) return;
-        // Light2D multiplies the albedo; the background shows albedo × tint, so divide the tint out.
         float night = sky && sky.isActiveAndEnabled ? sky.NightBlend : 0f;
-        Color tint = moonlight ? Color.Lerp(Color.white, moonlight.backgroundNightTint, night) : Color.white;
-        Color light = torchLight.color * torchLight.intensity;
-        surfaceGlowMaterial.SetColor("_GlowColor", new Color(light.r / Mathf.Max(.05f, tint.r),
-            light.g / Mathf.Max(.05f, tint.g), light.b / Mathf.Max(.05f, tint.b), 1f));
+        Color glow = torchLight.color * Mathf.Lerp(SurfaceGlowDayStrength, SurfaceGlowNightStrength, night);
+        glow.a = 1f;
+        surfaceGlowMaterial.SetColor("_GlowColor", glow);
     }
 
     public bool SurfaceGlowActive => surfaceGlow && surfaceGlow.activeInHierarchy;
@@ -882,7 +880,7 @@ public sealed class MapLighting : MonoBehaviour
     {
         surfaceGlowMaterial = new Material(darknessShader) { name = "Surface light glow", hideFlags = HideFlags.DontSave };
         surfaceGlowMaterial.EnableKeyword("_SURFACE_GLOW");
-        surfaceGlowMaterial.SetFloat("_SrcBlend", (float)BlendMode.DstColor);
+        surfaceGlowMaterial.SetFloat("_SrcBlend", (float)BlendMode.One);
         surfaceGlowMaterial.SetFloat("_DstBlend", (float)BlendMode.One);
         surfaceGlowMaterial.mainTexture = torchLightTexture;
         // From the bottom of the top terrain row to the top of the surface rows. The glow fades in
@@ -896,7 +894,7 @@ public sealed class MapLighting : MonoBehaviour
             tiles.CellToLocal(new Vector3Int(left, 1 + SurfaceLightRows, 0)),
             tiles.CellToLocal(new Vector3Int(left + width, 1 + SurfaceLightRows, 0)) };
         surfaceGlowMesh.uv = new[] { new Vector2(0f, bottomV), new Vector2(1f, bottomV), Vector2.up, Vector2.one };
-        surfaceGlowMesh.uv2 = new[] { Vector2.zero, Vector2.zero,
+        surfaceGlowMesh.uv2 = new[] { Vector2.zero, Vector2.right,
             new Vector2(0f, SurfaceLightRows + 1f), new Vector2(1f, SurfaceLightRows + 1f) };
         surfaceGlowMesh.triangles = new[] { 0, 2, 1, 2, 3, 1 };
         surfaceGlowMesh.RecalculateBounds();
