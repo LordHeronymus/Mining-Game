@@ -192,7 +192,8 @@ return_licence
 
 # Check reports and previews the scripts write to Temp/.
 find Temp -maxdepth 1 -type f \( -name '*.txt' -o -name '*.json' -o -name '*.csv' -o -name '*.png' \) -exec cp {} "$ARTIFACTS/temp/" \; 2>/dev/null || true
-find Temp Design -type f -name '*.png' -newer "$ARTIFACTS/.started" 2>/dev/null | head -n 60 | while read -r image; do
+# CiCheckRunner already collects them before Unity quits (it deletes Temp/); this is the fallback if it did not.
+[ -d "$ARTIFACTS/previews" ] || find Temp Design -type f -name '*.png' -newer "$ARTIFACTS/.started" 2>/dev/null | head -n 60 | while read -r image; do
   mkdir -p "$ARTIFACTS/previews/$(dirname "$image")" && cp "$image" "$ARTIFACTS/previews/$image"
 done
 exit $code

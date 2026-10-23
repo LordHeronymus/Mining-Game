@@ -56,6 +56,7 @@ namespace MiningGame.CI
         static Result result;
         static Task pendingTask;
         static readonly List<Result> results = new();
+        static DateTime runStarted;
 
         public static void Run()
         {
@@ -63,6 +64,7 @@ namespace MiningGame.CI
             {
                 string planPath = Argument("-ciPlan") ?? "Artifacts/plan.json";
                 outputDirectory = Argument("-ciOutput") ?? "Artifacts";
+                runStarted = DateTime.UtcNow;
                 Directory.CreateDirectory(outputDirectory);
                 Directory.CreateDirectory("Temp");
                 plan = JsonUtility.FromJson<Plan>(File.ReadAllText(planPath));
@@ -176,7 +178,8 @@ namespace MiningGame.CI
         static bool StopPlay()
         {
             if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
-            return !EditorApplication.isPlayingOrWillChangePlaymode;
+            // isPlayingOrWillChangePlaymode drops as soon as the exit is requested; isPlaying only once it is done (run #154).
+            return !EditorApplication.isPlaying && !EditorApplication.isPlayingOrWillChangePlaymode;
         }
 
         static object Call(string methodName)
@@ -257,8 +260,26 @@ namespace MiningGame.CI
             Application.logMessageReceived -= OnLog;
             try { WriteReports(); }
             catch (Exception error) { Debug.LogException(error); }
+            try { CollectPreviews(); }
+            catch (Exception error) { Debug.LogException(error); }
             Debug.Log($"[CI] Finished: {results.Count(r => r.status == "PASS")}/{results.Count} passed, exit code {code}.");
             EditorApplication.Exit(code);
+        }
+
+        // Images the checks wrote during the run become previews (Docs/Cloud-Tests.md). Collected here because
+        // Unity deletes the Temp folder when the editor quits (run #155 lost Temp/VeinRichness/*.png).
+        static void CollectPreviews()
+        {
+            var images = new[] { "Temp", "Design" }.Where(Directory.Exists)
+                .SelectMany(root => Directory.GetFiles(root, "*.png", SearchOption.AllDirectories))
+                .Where(path => File.GetLastWriteTimeUtc(path) >= runStarted.AddSeconds(-2))
+                .OrderBy(path => path, StringComparer.Ordinal).Take(60);
+            foreach (string image in images)
+            {
+                string target = Path.Combine(outputDirectory, "previews", image);
+                Directory.CreateDirectory(Path.GetDirectoryName(target));
+                File.Copy(image, target, true);
+            }
         }
 
         static void WriteReports()

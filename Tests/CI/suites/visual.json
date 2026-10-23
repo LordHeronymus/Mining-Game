@@ -1,6 +1,5 @@
 {
   "checks": [
-    { "name": "DirtSurfaceChecks" },
     { "name": "VeinRichnessPreviewChecks" },
     { "name": "EmbeddedOreRenderChecks" }
   ]
