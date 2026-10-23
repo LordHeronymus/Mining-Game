@@ -46,9 +46,6 @@ public static class GrassRegrowthChecks
         {
             EditorJsonUtility.FromJsonOverwrite(EditorJsonUtility.ToJson(originalGrass), grass);
             Set(grass, "map", map); Set(map, "grassOverlay", overlay);
-            Set(grass, "spawnQuietRadius", 0f); Set(grass, "maximumPatches", 40);
-            Set(grass, "maximumRegrowthSpeed", 4f); Set(grass, "neighborRegrowthWeight", 3f);
-            Set(grass, "healingHerbRarityPercent", 0f); Set(grass, "healingHerbConversionLimitPercent", 0f);
             map.mapWidth = 160; map.mapHeight = 2; map.enabled = false;
             const int hole = 20, bare = -30;
             for (int x = -80; x < 80; x++)
@@ -58,6 +55,10 @@ public static class GrassRegrowthChecks
                 if (x != bare) overlay.SetTile(new Vector3Int(x, 0), tile);
             }
             root.SetActive(true);
+            // Awake applies GPS on activation, so the fixture values come after it.
+            Set(grass, "spawnQuietRadius", 0f); Set(grass, "maximumPatches", 40);
+            Set(grass, "maximumRegrowthSpeed", 4f); Set(grass, "neighborRegrowthWeight", 3f);
+            Set(grass, "healingHerbRarityPercent", 0f); Set(grass, "healingHerbConversionLimitPercent", 0f);
             Set(map, "isGenerated", true); Set(map, "generatedWidth", 160); Set(map, "generatedHeight", 2); Set(map, "generatedSeed", 4242);
             grass.Rebuild();
             Call(grass, "SpawnPending", int.MaxValue);
