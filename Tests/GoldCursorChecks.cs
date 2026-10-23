@@ -74,29 +74,19 @@ public static class GoldCursorChecks
                 var renderer = highlight.GetComponent<TilemapRenderer>();
                 if (renderer.sortingLayerID != SortingLayer.layers[SortingLayer.layers.Length - 1].id || renderer.sortingOrder <= 32761)
                     throw new Exception("Cursor is not drawn above the darkness: order " + renderer.sortingOrder);
-                var glintRoot = (GameObject)type.GetField("glintRoot", flags).GetValue(miner);
-                if (!glintRoot || !glintRoot.activeSelf) throw new Exception("Corner glints missing");
-                if (grid.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>(true).Length > 0 ||
-                    glintRoot.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>(true).Length > 0)
+                if (grid.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>(true).Length > 0)
                     throw new Exception("Cursor created a light source");
-                foreach (var glint in glintRoot.GetComponentsInChildren<SpriteRenderer>())
-                {
-                    if (glint.sortingOrder <= renderer.sortingOrder) throw new Exception("Glint below the frame");
-                    float dx = Mathf.Abs(glint.transform.position.x - .55f), dy = Mathf.Abs(glint.transform.position.y - .55f);
-                    if (Mathf.Abs(dx - .55f) > .01f || Mathf.Abs(dy - .55f) > .01f) throw new Exception("Glint off the frame corner: " + glint.transform.position);
-                }
+                if (renderer.sharedMaterial.shader.name != "Universal Render Pipeline/2D/Sprite-Unlit-Default")
+                    throw new Exception("Cursor material is lit: " + renderer.sharedMaterial.shader.name);
                 camera.Render(); RenderTexture.active = target;
                 pixels.ReadPixels(new Rect(0,0,600,600),0,0); pixels.Apply();
                 File.WriteAllBytes("Design/Cursor/" + (smart ? "Smart" : "Normal") + "-implemented.png", pixels.EncodeToPNG());
             }
             type.GetMethod("ClearHighlight", flags).Invoke(miner,null);
             if (highlight.HasTile(Vector3Int.zero)) throw new Exception("Highlight did not clear");
-            var glints = (GameObject)type.GetField("glintRoot", flags).GetValue(miner);
-            if (glints.activeSelf) throw new Exception("Glints did not clear");
-            UnityEngine.Object.DestroyImmediate(glints);
             UnityEngine.Object.DestroyImmediate(tile.sprite);
             UnityEngine.Object.DestroyImmediate(tile);
-            return "PASS: normal/full frame, smart/open corners; both 1.1 cell width, transparent centers, above the darkness, no light source, four corner glints, mode switch and clear. Two Unity renders saved in Design/Cursor.";
+            return "PASS: normal/full frame, smart/open corners; both 1.1 cell width, transparent centers, above the darkness, unlit and no light source, mode switch and clear. Two Unity renders saved in Design/Cursor.";
         }
         finally
         {

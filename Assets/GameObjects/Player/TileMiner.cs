@@ -22,9 +22,6 @@ public class TileMiner : MonoBehaviour
     public Vector2 cursorPulseAlphaRange = new(.76f, 1f);
     [Min(1f)] public float cursorPulseSize = 1.05f;
     [FormerlySerializedAs("cursorBrightness"), Range(0f, 3f)] public float cursorGlowStrength = 1f;
-    [Min(.1f)] public float cursorGlintInterval = 1.6f;
-    [Range(0f, 1f)] public float cursorGlintSize = .32f;
-    [Range(0f, 3f)] public float cursorGlintStrength = 1f;
 
     private Dictionary<Vector3Int, float> progress = new();
     private readonly Dictionary<Vector3Int, float> lastMiningHitTime = new();
@@ -56,9 +53,6 @@ public class TileMiner : MonoBehaviour
     private Material highlightMaterial, originalHighlightMaterial;
     private TilemapRenderer highlightRenderer;
     private int originalHighlightLayer, originalHighlightOrder;
-    private GameObject glintRoot;
-    private readonly SpriteRenderer[] glints = new SpriteRenderer[4];
-    private Sprite glintSprite;
     private Texture2D scytheCursorTexture;
     private ToolCursor activeCursor;
     static readonly List<UnityEngine.EventSystems.RaycastResult> uiRaycasts = new();
@@ -161,8 +155,6 @@ public class TileMiner : MonoBehaviour
         }
         DestroyHighlightTile(normalHighlightTile);
         DestroyHighlightTile(smartHighlightTile);
-        if (glintRoot) Destroy(glintRoot);
-        if (glintSprite) { Destroy(glintSprite.texture); Destroy(glintSprite); }
     }
 
     void Update()
@@ -524,58 +516,6 @@ public class TileMiner : MonoBehaviour
         highlightMap.SetColor(highlightedCell.Value,
             new Color(1f, 1f, 1f, alpha * Mathf.Lerp(.3f, 1f, Mathf.Clamp01(glowStrength))));
         highlightMap.SetTransformMatrix(highlightedCell.Value, Matrix4x4.Scale(new Vector3(size, size, 1f)));
-        UpdateGlints(highlightedCell.Value, size, glowStrength);
-    }
-
-    // Small stars twinkle one after another on the four frame corners (anticlockwise from top right).
-    void UpdateGlints(Vector3Int cell, float frameSize, float glowStrength)
-    {
-        if (!EnsureGlints()) return;
-        Vector3 min = highlightMap.CellToWorld(cell), max = highlightMap.CellToWorld(cell + new Vector3Int(1, 1, 0));
-        Vector3 centre = (min + max) * .5f, half = (max - min) * .5f * frameSize;
-        float cellSize = Mathf.Abs(max.x - min.x);
-        float strength = Mathf.Clamp(cursorGlintStrength, 0f, 3f) * Mathf.Clamp01(glowStrength);
-        float phase = Time.unscaledTime / Mathf.Max(.1f, cursorGlintInterval);
-        glintRoot.SetActive(strength > 0f && cursorGlintSize > 0f);
-        for (int i = 0; i < glints.Length; i++)
-        {
-            float sx = i == 0 || i == 3 ? 1f : -1f, sy = i < 2 ? 1f : -1f;
-            float twinkle = Mathf.Pow(Mathf.Max(0f, Mathf.Sin((phase - i * .25f) * Mathf.PI * 2f)), 3f);
-            float scale = cellSize * Mathf.Clamp01(cursorGlintSize) * Mathf.Lerp(.45f, 1f, twinkle);
-            var glint = glints[i];
-            glint.transform.position = new Vector3(centre.x + sx * half.x, centre.y + sy * half.y, centre.z);
-            glint.transform.localScale = new Vector3(scale, scale, 1f);
-            glint.color = new Color(1f, 1f, 1f, Mathf.Clamp01(strength * Mathf.Lerp(.3f, 1f, twinkle)));
-        }
-    }
-
-    bool EnsureGlints()
-    {
-        if (!highlightRenderer || !highlightMaterial) return false;
-        if (!glintRoot)
-        {
-            if (!glintSprite) glintSprite = CreateGlintSprite();
-            glintRoot = new GameObject("Cursor Glints") { hideFlags = HideFlags.DontSave, layer = highlightMap.gameObject.layer };
-            for (int i = 0; i < glints.Length; i++)
-            {
-                var go = new GameObject("Glint " + i) { hideFlags = HideFlags.DontSave, layer = glintRoot.layer };
-                go.transform.SetParent(glintRoot.transform, false);
-                glints[i] = go.AddComponent<SpriteRenderer>();
-                glints[i].sprite = glintSprite;
-                glints[i].sharedMaterial = highlightMaterial;
-            }
-        }
-        foreach (var glint in glints)
-        {
-            glint.sortingLayerID = highlightRenderer.sortingLayerID;
-            glint.sortingOrder = highlightRenderer.sortingOrder + 1;
-        }
-        return true;
-    }
-
-    void HideGlints()
-    {
-        if (glintRoot) glintRoot.SetActive(false);
     }
 
     void ClearHighlight()
@@ -590,7 +530,6 @@ public class TileMiner : MonoBehaviour
         highlightedCells.Clear();
         highlightedCell = null;
         highlightedPointerCell = null;
-        HideGlints();
     }
 
     void CreateHighlightTiles()
@@ -620,9 +559,7 @@ public class TileMiner : MonoBehaviour
 
     void EnsureHighlightSorting()
     {
-        if (!highlightRenderer || !tilemap) return;
-        var terrainRenderer = tilemap.GetComponent<TilemapRenderer>();
-        if (!terrainRenderer) return;
+        if (!highlightRenderer) return;
         // The frame glows on its own: it is drawn above the darkness overlay (MapLighting, order 32760) and the
         // ore glints (32761), so it stays visible in total darkness. It is unlit and no Light2D: it lights nothing.
         highlightRenderer.sortingLayerID = SortingLayer.layers[SortingLayer.layers.Length - 1].id;
@@ -714,39 +651,6 @@ public class TileMiner : MonoBehaviour
         var color = Color.Lerp(new Color(1f, .55f, .1f), new Color(1f, .95f, .78f), heat);
         color.a = alpha;
         return color;
-    }
-
-    // Four-pointed star with a soft core, white so the renderer colour controls its strength.
-    static Sprite CreateGlintSprite()
-    {
-        const int size = 128;
-        var texture = new Texture2D(size, size, TextureFormat.RGBA32, true)
-        {
-            name = "Cursor Glint Texture",
-            hideFlags = HideFlags.HideAndDontSave,
-            wrapMode = TextureWrapMode.Clamp,
-            filterMode = FilterMode.Trilinear
-        };
-        var pixels = new Color[size * size];
-        for (int y = 0; y < size; y++)
-        for (int x = 0; x < size; x++)
-        {
-            float dx = Mathf.Abs((x + .5f) / size - .5f) * 2f, dy = Mathf.Abs((y + .5f) / size - .5f) * 2f;
-            float rays = Mathf.Exp(-dy * dy / (.035f * .035f)) * Mathf.Exp(-dx / .3f)
-                + Mathf.Exp(-dx * dx / (.035f * .035f)) * Mathf.Exp(-dy / .3f);
-            float dot = Mathf.Exp(-(dx * dx + dy * dy) / (.14f * .14f));
-            float edge = Mathf.Clamp01((1f - Mathf.Max(dx, dy)) * 8f);
-            float a = Mathf.Clamp01(rays + dot) * edge;
-            var c = Color.Lerp(new Color(1f, .78f, .35f), Color.white, Mathf.Clamp01(dot * 1.5f + rays * .4f));
-            c.a = a;
-            pixels[y * size + x] = c;
-        }
-        texture.SetPixels(pixels);
-        texture.Apply(true, true);
-        var sprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(.5f, .5f), size, 0, SpriteMeshType.FullRect);
-        sprite.name = "Cursor Glint";
-        sprite.hideFlags = HideFlags.HideAndDontSave;
-        return sprite;
     }
 
     static void DestroyHighlightTile(Tile tile)
