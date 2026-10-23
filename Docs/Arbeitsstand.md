@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Inventar-Reiter „Ausrüstung“ (Werkzeuge und Upgrades im Shop-Stil) | `claude/ausruestung-tab` | Cloud + Testbank | `InventoryUI.cs`, neu `InventoryUI.Equipment.cs`, `Tests/InventoryEquipmentChecks.cs` | ja (Testbank) | 23.10.2026 18:10 |
 
 ## Zuletzt abgeschlossen
 
