@@ -192,7 +192,7 @@ public sealed class ProgressionTimeline : MonoBehaviour, IScrollHandler, IBeginD
                     ProgressionArt.Text("Kind",card.transform,"Bauplan",new Vector2(0,-94),new Vector2(164,27),21);
                     if(resultMode && reached && level>newlyFromLevel) {
                         ProgressionArt.Text("New",card.transform,"NEU",new Vector2(61,65),new Vector2(61,25),20).color=ProgressionArt.Gold;
-                        ProgressionArt.Text("Pool Unlock",root,recipe.Preview?"Vorschau":"Im Fundpool",new Vector2(0,-103),new Vector2(200,24),20).color=ExoticDesign.Cyan;
+                        ProgressionArt.Text("Pool Unlock",root,recipe.Preview?"Vorschau":"Freigeschaltet",new Vector2(0,-103),new Vector2(200,24),20).color=ExoticDesign.Cyan;
                     }
                 }
                 if(PowerAt(level)>0 || ComfortAt(level)>0)

@@ -8,8 +8,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
-// Edit Mode. Carry weight in the HUD: text "12,5 / 40 kg" with the inventory's carry colours, a plaque below the
-// vitals that follows the setting "Traglast im HUD" (saved, on by default), and the switch on the display page.
+// Edit Mode. Carry weight in the HUD: text "12,5 / 40 kg" (orange above the capacity, red in the top
+// carry stage of InventoryManager.CarryStage), a frameless
+// row with the backpack below the vitals that follows the setting "Traglast im HUD" (saved, on by default), and the
+// switch on the display page.
 // Uses temporary objects only; the PlayerPrefs key is restored. Result in Temp/CarryWeightHudChecks.txt.
 public static class CarryWeightHudChecks
 {
@@ -39,11 +41,20 @@ public static class CarryWeightHudChecks
             Check(CompactHud.CarryWeightText(1234.25, 270f, false) == "1.234,25 / 270 kg", "Tausendertrennzeichen und zwei Nachkommastellen");
             Check(CompactHud.CarryWeightText(12.5, 40f, true) == "12,5 kg", "Testmodus ohne Gewicht zeigt nur das Gewicht");
             Check(CompactHud.CarryWeightText(-.001, 40f, false) == "0 / 40 kg", "Rundungsreste unter 0 werden als 0 gezeigt");
-            Color cream = CompactHud.CarryWeightColor(40, 40f, false), yellow = CompactHud.CarryWeightColor(40.5, 40f, false),
-                red = CompactHud.CarryWeightColor(80.5, 40f, false);
-            Check(cream != yellow && yellow != red && cream != red, "Drei Farben: normal, überladen, stark überladen");
-            Check(CompactHud.CarryWeightColor(80, 40f, false) == yellow && CompactHud.CarryWeightColor(200, 40f, true) == cream,
-                "Stufen wie im Inventar (bis doppelte Traglast gelb), Testmodus bleibt normal");
+            Color cream = CompactHud.CarryWeightColor(40, 40f, false), orange = CompactHud.CarryWeightColor(40.5, 40f, false),
+                red = CompactHud.CarryWeightColor(120, 40f, false);
+            Check(cream != orange && orange != red && cream != red, "Drei Farben: normal, überladen, stark überladen");
+            Check(orange.r > .95f && orange.g > .5f && orange.g < .7f && orange.b < .25f, "Über der Traglast orange");
+            // Stage limits come from InventoryManager.CarryStage; the HUD only maps stage to colour.
+            bool stagesMatch = true;
+            for (double w = 0; w <= 120; w += .5)
+            {
+                int stage = InventoryManager.CarryStage(w, 40f);
+                var expected = stage == 2 ? red : stage == 1 ? orange : cream;
+                stagesMatch &= CompactHud.CarryWeightColor(w, 40f, false) == expected;
+            }
+            Check(stagesMatch && CompactHud.CarryWeightColor(200, 40f, true) == cream,
+                "Stufen wie im Inventar (InventoryManager.CarryStage), Testmodus bleibt normal");
 
             // Setting: saved, on by default.
             PlayerPrefs.DeleteKey(Key);
@@ -53,24 +64,35 @@ public static class CarryWeightHudChecks
             PlayerSettings.ShowCarryWeight = true;
             Check(PlayerSettings.ShowCarryWeight && PlayerPrefs.GetInt(Key, 0) == 1, "Ein wird gespeichert");
 
-            // HUD plaque below the vitals, follows the setting, never catches clicks.
+            // HUD row below the vitals, follows the setting, never catches clicks.
             var hudObject = new GameObject("CompactHud", typeof(RectTransform)) { hideFlags = HideFlags.HideAndDontSave };
             hudObject.transform.SetParent(canvas.transform, false);
             var hud = hudObject.AddComponent<CompactHud>();
             Invoke(hud, "Build");
             var plaque = (RectTransform)hud.transform.Find("Status Strip/Carry Weight");
-            Check(plaque, "Plakette \"Carry Weight\" im Status-Streifen links oben");
+            Check(plaque, "Zeile \"Carry Weight\" im Status-Streifen links oben");
             var energy = (RectTransform)hud.transform.Find("Status Strip/Energy Fill");
-            Check(-plaque.anchoredPosition.y >= -energy.anchoredPosition.y + energy.sizeDelta.y, "Plakette liegt unter dem Energiebalken");
-            Check(plaque.Find("Carry Frame").GetComponent<Image>() && plaque.Find("Carry Value").GetComponent<TMP_Text>(), "Holzrahmen und Wert vorhanden");
+            Check(-plaque.anchoredPosition.y >= -energy.anchoredPosition.y + energy.sizeDelta.y, "Zeile liegt unter dem Energiebalken");
+            Check(!plaque.Find("Carry Frame") && !plaque.Find("Carry Label"), "Ohne Holzrahmen und ohne Wort \"Last\"");
+            var icon = plaque.Find("Carry Icon")?.GetComponent<Image>();
+            Check(icon && icon.sprite && icon.preserveAspect, "Rucksack-Symbol vorhanden");
+            var iconRect = icon.rectTransform; var heart = (RectTransform)hud.transform.Find("Status Strip/Health Icon");
+            float iconCenter = plaque.anchoredPosition.x + iconRect.anchoredPosition.x + iconRect.sizeDelta.x / 2f;
+            Check(Mathf.Abs(iconCenter - heart.anchoredPosition.x) < 2f, "Rucksack steht in der Spalte von Herz und Blitz");
+            var value = plaque.Find("Carry Value").GetComponent<TMP_Text>();
+            Check(value && value.alignment == TextAlignmentOptions.MidlineLeft && value.fontSize >= 30f, "Wert links ausgerichtet, eine Grösse");
+            var material = value.fontSharedMaterial;
+            Check(material.GetFloat(ShaderUtilities.ID_OutlineWidth) >= .15f && material.IsKeywordEnabled("UNDERLAY_ON") &&
+                material.GetColor(ShaderUtilities.ID_UnderlayColor).a >= .6f, "Dunkle Kontur und Schatten für hellen Himmel");
+            Check(!value.enableAutoSizing && value.fontSize >= 30f, "Schrift wird nicht automatisch verkleinert");
             Check(plaque.Find("Carry Value").GetComponent<TMP_Text>().text.EndsWith(" kg"), "Wert wird beim Aufbau gesetzt");
             foreach (var graphic in plaque.GetComponentsInChildren<Graphic>(true))
                 Check(!graphic.raycastTarget, "Kein Klickfänger: " + graphic.name);
-            Check(plaque.gameObject.activeSelf, "Eingeschaltet: Plakette sichtbar");
+            Check(plaque.gameObject.activeSelf, "Eingeschaltet: Zeile sichtbar");
             PlayerPrefs.SetInt(Key, 0); hud.RefreshCarryWeightVisibility();
-            Check(!plaque.gameObject.activeSelf, "Ausgeschaltet: Plakette verborgen");
+            Check(!plaque.gameObject.activeSelf, "Ausgeschaltet: Zeile verborgen");
             PlayerPrefs.SetInt(Key, 1); hud.RefreshCarryWeightVisibility();
-            Check(plaque.gameObject.activeSelf, "Wieder eingeschaltet: Plakette sichtbar");
+            Check(plaque.gameObject.activeSelf, "Wieder eingeschaltet: Zeile sichtbar");
 
             // Switch on the display page of the settings.
             var settingsObject = new GameObject("SettingsPanel", typeof(RectTransform)) { hideFlags = HideFlags.HideAndDontSave };
