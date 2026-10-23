@@ -695,6 +695,11 @@ public sealed class CompactHud : MonoBehaviour
         {
             KeyCode.Space => "Lt", KeyCode.LeftShift or KeyCode.RightShift => "Sh",
             KeyCode.LeftControl or KeyCode.RightControl => "Str", KeyCode.LeftAlt or KeyCode.RightAlt => "Alt",
+            KeyCode.KeypadPlus => "N+", KeyCode.KeypadMinus => "N-", KeyCode.KeypadMultiply => "N*", KeyCode.KeypadDivide => "N/",
+            KeyCode.KeypadPeriod => "N.", KeyCode.KeypadEnter => "NE", KeyCode.KeypadEquals => "N=", KeyCode.Numlock => "NL",
+            KeyCode.LeftWindows or KeyCode.RightWindows => "Win", KeyCode.LeftCommand or KeyCode.RightCommand => "Cmd",
+            KeyCode.LeftBracket => "[", KeyCode.RightBracket => "]", KeyCode.BackQuote => "`", KeyCode.Backslash => "\\",
+            KeyCode.PageUp => "PgU", KeyCode.PageDown => "PgD", KeyCode.Return => "Ent",
             _ => GameBindings.Display(key)
         };
         return text.Length <= 3 ? text : text.Substring(0, 3);

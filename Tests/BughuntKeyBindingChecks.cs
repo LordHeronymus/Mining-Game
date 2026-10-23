@@ -125,6 +125,10 @@ public static class BughuntKeyBindingChecks
             Check(Short(KeyCode.Alpha1) == "1" && Short(KeyCode.Keypad3) == "N3" && Short(KeyCode.LeftShift) == "Sh" &&
                   Short(KeyCode.LeftControl) == "Str" && Short(KeyCode.Mouse3) == "M4" && Short(KeyCode.F12) == "F12" && Short(KeyCode.Z) == "Z",
                 "Kurzformen für Ziffern, Num, Shift, Strg, Maus und F-Tasten");
+            var distinct = new[] { KeyCode.KeypadPlus, KeyCode.KeypadMinus, KeyCode.KeypadMultiply, KeyCode.KeypadDivide, KeyCode.KeypadPeriod,
+                KeyCode.KeypadEnter, KeyCode.KeypadEquals, KeyCode.Numlock, KeyCode.LeftWindows, KeyCode.LeftCommand, KeyCode.LeftBracket,
+                KeyCode.RightBracket, KeyCode.BackQuote, KeyCode.Backslash, KeyCode.PageUp, KeyCode.PageDown, KeyCode.Keypad1 };
+            Check(distinct.Select(Short).Distinct().Count() == distinct.Length, "Num-Block, Klammern, Bild-Tasten und Systemtasten bleiben unterscheidbar");
             GameBindings.Set(GameAction.Slot5, 0, KeyCode.LeftShift);
             Check(Label(GameAction.Slot5) == "Sh", "Hotbar-Beschriftung nutzt die Kurzform");
             var minSize = typeof(CompactHud).GetField("KeyLabelMinSize", StaticMembers);

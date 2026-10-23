@@ -107,9 +107,18 @@ public static class BughuntEditorToolsChecks
             artifacts.ClearAllTiles();
             Check(!Holds(), "Nach dem Leeren (manuelles Speichern) speichert AutoSave wieder");
             EditorSceneManager.MarkSceneDirty(scene);
-            var picked = (Scene[])toSave.Invoke(null, new object[] { false });
-            Check(!picked.Contains(scene) && picked.All(s => s.isDirty && !string.IsNullOrEmpty(s.path) && s.path != scene.path),
+            var pickArgs = new object[] { false };
+            var picked = (Scene[])toSave.Invoke(null, pickArgs);
+            Check(!picked.Contains(scene) && picked.All(s => s.isDirty && !string.IsNullOrEmpty(s.path)),
                 "AutoSave wählt nur geänderte Szenen mit Pfad (temporäre Szene ohne Pfad bleibt aussen vor)");
+            bool gameplayHeld = false;
+            for (int i = 0; i < EditorSceneManager.sceneCount; i++)
+            {
+                var open = EditorSceneManager.GetSceneAt(i);
+                if (open.isLoaded && open.isDirty && open.path == LoadingSceneData.GameplayScene && (bool)holds.Invoke(null, new object[] { open })) gameplayHeld = true;
+            }
+            Check((bool)pickArgs[0] == gameplayHeld && !(gameplayHeld && picked.Any(s => s.path == LoadingSceneData.GameplayScene)),
+                "Eine SampleScene mit Map wird übersprungen und als pausiert gemeldet");
         }
         finally
         {
