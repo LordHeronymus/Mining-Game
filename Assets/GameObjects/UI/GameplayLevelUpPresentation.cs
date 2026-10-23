@@ -116,7 +116,8 @@ public sealed class GameplayLevelUpPresentation : MonoBehaviour
         }
         if(soundPaused){sound.UnPause();soundPaused=false;}
         if(sound.clip)sound.volume=AudioManager.TunedVolume(sound.clip,1f,sound);
-        if(!IsShowing && pendingTo>0)
+        // A challenge banner that is showing or queued goes first (its XP is often what caused this level).
+        if(!IsShowing && pendingTo>0 && (previewing || !ChallengeCompletePresentation.HoldsLevelUp))
         {
             // Fade a previous long tail before replaying on the same source; never stack booms.
             if(sound.isPlaying && replayFade<.12f)

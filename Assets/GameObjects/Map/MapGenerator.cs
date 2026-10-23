@@ -67,10 +67,14 @@ public class MapGenerator : MonoBehaviour
     [SerializeField, HideInInspector] public Color mapOverviewPlayerColor = Color.cyan;
     [Header("Torch Visuals")]
     [Range(-2f, 2f)] public float torchFlameOffsetX;
-    [Range(-2f, 2f)] public float torchFlameOffsetY = .29f;
+    // Since 23.10.2026 measured from the holder centre (holder sits torchHolderOffsetY below the cell centre).
+    [Range(-2f, 2f)] public float torchFlameOffsetY = .47f;
+    [Range(-.55f, .55f)] public float torchHolderOffsetY = -.22f;
     [Range(.1f, 3f)] public float torchFlameSize = 1f;
     [Range(0f, 120f)] public float torchFlameFrequency = 49f;
     [Range(0f, 2f)] public float torchBrightness = 1f;
+    [Range(0f, 1f)] public float torchSoundVolume = .5f;
+    [Range(.5f, 12f)] public float torchSoundRangeTiles = 4f;
     [Header("Ultronium Altar")]
     [Range(0f, .15f)] public float altarButtonPulseAmplitude = .035f;
     [Range(0f, 3f)] public float altarButtonPulseFrequency = .65f;
