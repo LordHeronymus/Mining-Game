@@ -112,7 +112,8 @@ public static class BughuntSaveLoadChecks
             Check(finish != null, "Erfassung prüft die Ebenengrenzen beim Abschluss");
             string Finish(bool ladders)
             {
-                try { finish.Invoke(Activator.CreateInstance(layerType, tilemap), new object[] { catalog, width, height, ladders }); return null; }
+                // As an array: Tilemap converts implicitly to bool and would pick CreateInstance(Type, bool nonPublic).
+                try { finish.Invoke(Activator.CreateInstance(layerType, new object[] { tilemap }), new object[] { catalog, width, height, ladders }); return null; }
                 catch (TargetInvocationException error) { return error.InnerException.Message; }
             }
             var ladderTile = Object.FindFirstObjectByType<LadderMap>(FindObjectsInactive.Include)?.segment;
