@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Level-Fortschrittsbalken neu (Variante A) | `claude/level-balken` | Cloud-Klon | `ProgressionTimeline.cs`, `ChallengeArt.cs` (ChallengeGoldFill), `Tests/ProgressionTimelineChecks.cs` | ja (Testbank) | 23.10.2026 19:40 |
 
 ## Zuletzt abgeschlossen
 
