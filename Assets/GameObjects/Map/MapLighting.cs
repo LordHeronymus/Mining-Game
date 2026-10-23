@@ -523,7 +523,7 @@ public sealed class MapLighting : MonoBehaviour
     {
         bool active = headlamp && headlamp.gameObject.activeInHierarchy &&
             headlamp.intensity > 0f && tiles && headlampField != null;
-        float sourceX = -1f, sourceY = -1f;
+        float sourceX = -1f, sourceY = -1f, fieldWeight = 1f;
         headlampHeightAboveMap = float.NegativeInfinity;
         if (active)
         {
@@ -537,7 +537,16 @@ public sealed class MapLighting : MonoBehaviour
             // Row 0 is the top terrain row; its upper edge is where the light field ends.
             if (cellX >= 0 && cellX < width && cellY < 0)
                 headlampHeightAboveMap = Vector3.Dot(worldPosition - tiles.CellToWorld(new Vector3Int(0, 1, 0)), up) / upSize;
-            active = cellX >= 0 && cellX < width && cellY >= 0 && cellY < height;
+            // Just above the terrain the field already starts in the top row and blends with the surface lamp,
+            // so climbing into a shaft has no hard switch (quantised to limit cache rebuilds).
+            if (cellY == -1 && headlampHeightAboveMap < SurfaceHeadlampFade)
+            {
+                fieldWeight = Mathf.Round((1f - Mathf.Clamp01(headlampHeightAboveMap / SurfaceHeadlampFade)) * 16f) / 16f;
+                worldPosition -= up * (headlampHeightAboveMap + .001f);
+                cell = tiles.WorldToCell(worldPosition);
+                cellY = -cell.y;
+            }
+            active = fieldWeight > 0f && cellX >= 0 && cellX < width && cellY >= 0 && cellY < height;
             if (active)
             {
                 if (tiles.HasTile(cell))
@@ -584,7 +593,7 @@ public sealed class MapLighting : MonoBehaviour
             }
         }
 
-        float intensity = active ? headlamp.intensity : 0f;
+        float intensity = active ? headlamp.intensity * fieldWeight : 0f;
         if (!headlampSourceStateKnown || active != headlampSourceActive ||
             (active && (Mathf.Abs(sourceX - headlampSourceX) > .00001f ||
                 Mathf.Abs(sourceY - headlampSourceY) > .00001f ||
