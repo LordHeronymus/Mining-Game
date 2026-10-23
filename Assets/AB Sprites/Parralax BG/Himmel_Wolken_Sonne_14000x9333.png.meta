@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Himmel_Wolken_Sonne_14000x9333_0: 5168848723057113558
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

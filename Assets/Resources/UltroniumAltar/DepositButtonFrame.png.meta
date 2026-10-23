@@ -297,7 +297,14 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      DepositButtonFrame_0: -7943770894964120920
+      DepositButtonFrame_1: 1066710343614557348
+      DepositButtonFrame_2: -7237381725792712031
+      DepositButtonFrame_3: -6511454352565242942
+      DepositButtonFrame_4: 2679466831796366552
+      DepositButtonFrame_5: -2623265319246556552
+      DepositButtonFrame_6: -6974875189207915094
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -247,7 +247,12 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      ExoticCrystal_0: -1426117994524699308
+      ExoticCrystal_1: -1418691815420493828
+      ExoticCrystal_2: 4645197441516132586
+      ExoticCrystal_3: -3942341055680184501
+      ExoticCrystal_4: 5601406152821762312
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
