@@ -50,9 +50,9 @@ public static class ScenePreviewDirtyChecks
         Check(map, "MapGenerator in the open scene");
         var scene = map.gameObject.scene;
         var terrain = map.GetComponent<Tilemap>();
-        int restored = terrain.GetUsedTilesCount();
-        File.AppendAllText(Report, "Edit Mode after Play: dirty=" + scene.isDirty + ", terrain tiles=" + restored + "\n");
-        Check(restored > 0, "Last played world restored as preview (" + restored + " tiles)");
+        int restored = terrain.GetUsedTilesCount(); // distinct tile assets, 0 = empty
+        File.AppendAllText(Report, "Edit Mode after Play: dirty=" + scene.isDirty + ", terrain " + terrain.cellBounds.size + " with " + restored + " tile types\n");
+        Check(restored > 0, "Last played world restored as preview (" + terrain.cellBounds.size + ")");
         Check(!scene.isDirty, "Restoring the preview after Play leaves the scene clean");
 
         var strip = typeof(LastPlayedMap).GetMethod("StripPreviewForPlay", Private);
