@@ -102,13 +102,13 @@ public partial class InventoryUI
         card.icon = Panel("Icon", button.transform, 0, 0, iconSize.x, iconSize.y, null);
         card.icon.preserveAspect = true;
         // Names end well inside the gold rim (card frame inset about 26 units).
-        card.name = Serif(button.transform, "", 156, 30, 160, 42, 26);
+        card.name = Serif(button.transform, "", 152, 30, 150, 42, 26);
         card.name.enableAutoSizing = true; card.name.fontSizeMin = 16; card.name.fontSizeMax = 26;
-        card.area = Serif(button.transform, "", 156, 70, 160, 32, 20);
+        card.area = Serif(button.transform, "", 152, 70, 150, 32, 20);
         card.badge = Frame("Badge", button.transform, EquipmentCardWidth - 106, EquipmentCardHeight - 52, 92, 38, 10);
         card.badgeText = Serif(card.badge.transform, "", 0, 0, 92, 38, 21, TextAlignmentOptions.Midline);
         card.check = Rect("Check", card.badge.transform, 31, 5, 30, 28).gameObject.AddComponent<WorkbenchGlyph>();
-        card.check.shape = WorkbenchGlyph.Shape.Check; card.check.color = Gold; card.check.raycastTarget = false;
+        card.check.shape = WorkbenchGlyph.Shape.Check; card.check.filled = true; card.check.color = Gold; card.check.raycastTarget = false;
         return card;
     }
 

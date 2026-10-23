@@ -59,7 +59,8 @@ public static class InventoryEquipmentChecks
             Check(e[0].name == "Eisenspitzhacke" && e[0].badge == "Stufe 2" && e[0].note == "Nächste: Stahlspitzhacke", "Iron pickaxe level 2");
             Check(e[0].stats[1].value == "bis 2" && e[0].stats[2].value == "×1,3", $"Pickaxe stats: {e[0].stats[1].value} {e[0].stats[2].value}");
             Check(e[1].owned && e[1].badge == EquipmentOverview.Check, "Scythe owned");
-            Check(card1.Find("Badge/Check").gameObject.activeSelf, "Check mark on owned tool");
+            var mark = card1.Find("Badge/Check").GetComponent<WorkbenchGlyph>();
+            Check(mark.gameObject.activeSelf && mark.filled && mark.color.a > .9f, "Check mark drawn on owned tool");
             Check(e[4].owned && e[4].name == "Rucksack" && e[4].badge == "Stufe 2", "Backpack is carrying level 2");
             Check(e[4].stats[1].value == inv.CarryingCapacity.ToString("0.##", System.Globalization.CultureInfo.GetCultureInfo("de-DE")) + " kg",
                 "Carrying value matches capacity");
