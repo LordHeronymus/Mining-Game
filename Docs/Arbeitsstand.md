@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code | Werkbank-Filterknopf „Herstellbar“ ohne Kästchen, Text zentriert, aktiv = orange | `claude/herstellbar-knopf` | `Mining Game-herstellbar-knopf` | `WorkbenchPanel.cs`, `Tests/WorkbenchCraftableButtonChecks.cs` | ja (Testbank) | 23.10.2026 17:30 |
 
 ## Zuletzt abgeschlossen
 
