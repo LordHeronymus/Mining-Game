@@ -68,7 +68,7 @@ public static class ChallengeArt
 public sealed class ChallengeGoldFill : MaskableGraphic
 {
     // Pointed: the start (and a full bar's end) follows the chevron of the card track groove; the HUD groove is square.
-    // A partial bar ends in a round cap with a soft warm glow; the gradient is built per row so it stays vertical across the cap.
+    // A partial bar ends in a round cap; the gradient is built per row so it stays vertical across the cap.
     const int Rows=16; const float Chevron=3.3f, Feather=.8f;
     bool pointed;
     public bool Pointed { get => pointed; set { if (pointed == value) return; pointed = value; SetVerticesDirty(); } }
@@ -94,16 +94,6 @@ public sealed class ChallengeGoldFill : MaskableGraphic
         }
         for(int row=0;row<Rows;row++) for(int k=0;k<3;k++) {
             int a=row*4+k,b=a+4; vh.AddTriangle(a,b,a+1); vh.AddTriangle(a+1,b,b+1);
-        }
-        if(full)return;
-        // Glow around the leading edge, kept inside the groove height.
-        int centre=vh.currentVertCount; const int Segments=24;
-        float radius=h*.56f; var glowCentre=new Vector3(r.xMax-cap*.5f,mid);
-        vh.AddVert(glowCentre,new Color32(255,240,160,150),Vector2.zero);
-        for(int i=0;i<=Segments;i++) {
-            float angle=i*Mathf.PI*2/Segments;
-            vh.AddVert(glowCentre+new Vector3(Mathf.Cos(angle),Mathf.Sin(angle))*radius,new Color32(255,236,150,0),Vector2.zero);
-            if(i>0)vh.AddTriangle(centre,centre+i,centre+i+1);
         }
     }
 }
