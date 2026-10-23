@@ -761,6 +761,7 @@ public static partial class MetaProgression
             challengeRounds = source.challengeRounds.Where(round => round != null).Select(round => Clone(round)).ToList(),
             milestoneAwards = source.milestoneAwards.Where(award => award != null).Select(award => new MetaMilestoneAward { id = award.id, xp = award.xp }).ToList(),
             lifetimeCounters = source.lifetimeCounters.Where(counter => counter != null).Select(counter => new MetaLifetimeCounter { id = counter.id, value = counter.value }).ToList(),
+            trackedChallenges = new List<string>(source.trackedChallenges ?? new List<string>()),
             runs = new List<MetaRunState>(source.runs.Count) };
         foreach (var state in source.runs) copy.runs.Add(CopyRun(state));
         return copy;
