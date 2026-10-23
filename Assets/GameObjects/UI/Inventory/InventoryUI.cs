@@ -339,8 +339,9 @@ public partial class InventoryUI : MonoBehaviour
         for (int i = 0; i < names.Length; i++)
         {
             int filter = i;
-            var tab = Button("Filter " + names[i], layout, names[i], 222 + i * 252, 162, 222, 60, () => SetFilter(filter));
-            tab.GetComponentInChildren<TextMeshProUGUI>().fontSize = 27;
+            // Five tabs share the item width; a lower button keeps the gold end caps small, one size keeps the labels even.
+            var tab = Button("Filter " + names[i], layout, names[i], 222 + i * 248, 166, 238, 52, () => SetFilter(filter));
+            tab.GetComponentInChildren<TextMeshProUGUI>().fontSize = 23;
             tabs.Add(tab.GetComponent<Image>());
         }
         var viewport = Rect("Items Viewport", layout, 222, 237, 1230, 496);

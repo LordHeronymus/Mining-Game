@@ -29,6 +29,8 @@ public static class InventoryEquipmentChecks
             var first = (RectTransform)tabs[0]; var last = (RectTransform)tabs[4];
             Check(Mathf.Approximately(first.anchoredPosition.x, 222) && Mathf.Approximately(last.anchoredPosition.x + last.sizeDelta.x, 1452),
                 "Tabs span the item area (222..1452)");
+            var sizes = tabs.Select(t => { var l = t.GetComponentInChildren<TextMeshProUGUI>(); l.ForceMeshUpdate(); return l.fontSize; }).ToArray();
+            Check(sizes.Max() - sizes.Min() < 1.5f && sizes.Min() >= 20f, "Tab labels share one size: " + string.Join(", ", sizes.Select(x => x.ToString("0.#"))));
 
             tabs[4].GetComponent<Button>().onClick.Invoke();
             Check(ui.Filter == InventoryUI.EquipmentFilter, "Tab click selects equipment filter");
@@ -63,6 +65,14 @@ public static class InventoryEquipmentChecks
                 "Carrying value matches capacity");
             Check(e[4].note.StartsWith("Nächste: Lastengürtel"), "Next carrying item");
             Check(e[5].owned && e[5].name == "Kristallanhänger" && e[5].stats[1].value == "×1,5", "Pendant energy ×1,5");
+
+            Canvas.ForceUpdateCanvases();
+            for (int i = 0; i < 6; i++)
+            {
+                var name = root.Find("Equipment " + i).Find("Text").GetComponent<TextMeshProUGUI>();
+                name.ForceMeshUpdate();
+                Check(!name.isTextTruncated && name.textBounds.size.x <= name.rectTransform.rect.width + .5f, "Card name fits: " + name.text);
+            }
 
             // Detail: blueprint for the pickaxe, plain icon for the scythe.
             ui.SelectEquipment(0);
