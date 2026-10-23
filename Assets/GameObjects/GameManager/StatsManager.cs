@@ -196,6 +196,7 @@ public class StatsManager : MonoBehaviour
                 if (entry != null && entry.tile && entry.tile.name == name) collectedArtifactTypes.Add(entry.tile);
         HUDPoints.Instance?.UpdatePoints(Money, PointType.Money);
         HUDPoints.Instance?.UpdatePoints(Points, PointType.Points);
+        MoneyDisplay.Snap(this);
         OnMoneyChanged?.Invoke(Money); OnHealthChanged?.Invoke(Health, MaxHealth);
     }
 
@@ -301,6 +302,7 @@ public class StatsManager : MonoBehaviour
         collectedArtifactTypes.Clear();
         Money = (int)Math.Min(int.MaxValue, (long)StartingResourcesSettings.Load().money + MetaProgression.CurrentLoadout.startMoney);
         HUDPoints.Instance?.UpdatePoints(Money, PointType.Money);
+        MoneyDisplay.Snap(this);
         OnMoneyChanged?.Invoke(Money);
 
         MoveSpeed = baseStats.moveSpeed;
