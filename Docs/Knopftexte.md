@@ -40,3 +40,7 @@ unity command --project-path "<Git Repos>/Mining Game 2" run_script --file Tests
 ```
 
 Misst alle Knopftexte der Hauptansichten: Abstand über der Versalhöhe gleich Abstand unter der Grundlinie, links und rechts gleicher Abstand der sichtbaren Buchstaben zur Textbox (Toleranz 1 px), Ä/g innerhalb des Rahmens. Bericht `Temp/ButtonTextCenterChecks.txt`, Screenshots `Temp/ButtonText/`.
+
+## Eingabefelder
+
+`HomeUi.StyleInputField` hängt `ButtonTextCentering` ohne Rahmen an Eingabetext und Platzhalter: gleiche feste Grundlinie wie bei Knöpfen, Schriftgrösse bleibt. So springt der Text nicht, wenn g, y oder Ä dazukommen, und die Schreibmarke im leeren Feld liegt schon auf der richtigen Höhe. Prüfskript: `Tests/InputTextBaselineChecks.cs` (Edit Mode).
