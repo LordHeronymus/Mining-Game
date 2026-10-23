@@ -222,7 +222,11 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      MonolithCore-approved_0: 488849121804205726
+      MonolithCore-approved_1: 854787019052370163
+      MonolithCore-approved_2: 6942367323237482640
+      MonolithCore-approved_3: 1705529047155746672
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
