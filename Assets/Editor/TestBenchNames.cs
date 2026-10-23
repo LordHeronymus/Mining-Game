@@ -6,8 +6,8 @@ using UnityEngine;
 
 // Welche Arbeitsordner Testbaenke der Chats sind (Docs/Editor-Warteschlange.md): "<Projekt> 2" und "<Projekt> 3",
 // nie ein Worktree unter .claude/worktrees. Gleiche Regel wie $BenchPattern in Tools/editor-queue.ps1 und
-// Tools/editor-bench.ps1. editor-bench prueft beim Holen eines Stands auf Testbank 3, ob es diese Datei gibt:
-// aeltere Branches kennen nur "<Projekt> 2" und liefen dort mit Ton und auf dem falschen Desktop.
+// Tools/editor-bench.ps1. editor-bench weist beim Holen eines Stands auf Testbank 3 darauf hin, wenn diese Datei fehlt:
+// aeltere Branches kennen nur "<Projekt> 2" (Ton an/aus wirkt dann auf Testbank 3 nicht).
 public static class TestBenchNames
 {
     static readonly Regex BenchName = new Regex(@" ([23])$");

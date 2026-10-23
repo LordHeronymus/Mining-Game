@@ -17,8 +17,7 @@
   Assets/Scenes/SampleScene.unity neu (kein Dialog "modified externally"). -NoEditor laesst den Editor in Ruhe.
 
   Exit-Codes: 0 ok, 1 Fehler, 4 nicht oben in der Warteschlange, 5 Testbank hat Aenderungen,
-              6 Editor durch einen unbekannten Dialog blockiert (Tools/editor-dialog.sh list / press),
-              7 Stand kennt Testbank 3 noch nicht (origin/main in den Branch holen).
+              6 Editor durch einen unbekannten Dialog blockiert (Tools/editor-dialog.sh list / press).
 #>
 [CmdletBinding()]
 param(
@@ -296,12 +295,9 @@ switch ($Command) {
         }
         $sha = Git @('rev-parse', '--verify', "$Ref^{commit}")
         if ($sha.code -ne 0) { Write-Output "Unbekannter Branch/Commit: $Ref"; exit 1 }
-        # Aeltere Staende kennen nur die Testbank "<Projekt> 2": auf Testbank 3 liefe ihr Editor mit Ton und auf dem falschen Desktop.
-        if ($benchName -notmatch ' 2$' -and (Git @('cat-file', '-e', "$($sha.out):Assets/Editor/TestBenchNames.cs")).code -ne 0) {
-            Write-Output "Der Stand $Ref kennt die Testbank '$benchName' noch nicht (Assets/Editor/TestBenchNames.cs fehlt: Ton waere an)."
-            Write-Output "Zuerst origin/main in den eigenen Branch holen (git fetch, git merge origin/main), committen und checkout erneut aufrufen. Die Testbank bleibt reserviert."
-            exit 7
-        }
+        # Aeltere Staende kennen nur die Testbank "<Projekt> 2". Der laufende Editor bleibt trotzdem stumm und auf seinem Desktop
+        # (beides gilt fuer die ganze Editor-Sitzung), nur Ton an/aus und ein Neustart des Editors wirken dann nicht.
+        $oldStand = ($benchName -notmatch ' 2$' -and (Git @('cat-file', '-e', "$($sha.out):Assets/Editor/TestBenchNames.cs")).code -ne 0)
         # Szene vor jeder Dateiaenderung schliessen (auch vor dem Verwerfen), sonst meldet Unity "modified externally".
         $closed = Close-BenchScene
         if ($closed -eq 'blocked') { exit 6 }
@@ -327,6 +323,7 @@ switch ($Command) {
         [IO.File]::WriteAllText($stateFile, (ConvertTo-Json -InputObject $state), $utf8)
         Set-Muted
         Write-Output "Testbank steht auf $Ref ($($sha.out.Substring(0, 9))), Ton stumm (fuer Audio-Tests: audio-on)."
+        if ($oldStand) { Write-Output "Hinweis: Der Stand kennt Testbank '$benchName' noch nicht (aelter als main mit TestBenchNames.cs). Fuer Audio-Tests origin/main in den Branch holen oder Testbank 2 verwenden." }
         Open-BenchScene $closed
         if ($closed -ne 'ok') { Write-Output "Unity: Assets neu laden lassen (Fenster anklicken oder AssetDatabase.Refresh)." }
         Write-Output "Testen mit:"

@@ -2,7 +2,7 @@
 
 Koordination zwischen den Agenten (Claude Code, Codex, Claude Cowork). Regeln siehe `CLAUDE.md` / `AGENTS.md` → „Zusammenarbeit mehrerer Agenten“.
 
-Arbeitsordner: `Git Repos/Mining Game` gehört dem Benutzer (sein Unity Editor), `Git Repos/Mining Game 2` ist die Testbank der Chats ohne festen Branch (`Tools/editor-bench.sh`); Chats arbeiten in eigenen Worktrees, siehe `AGENTS.md`.
+Arbeitsordner: `Git Repos/Mining Game` gehört dem Benutzer (sein Unity Editor), `Git Repos/Mining Game 2` und `Git Repos/Mining Game 3` sind die Testbänke der Chats ohne festen Branch (Anmeldung über die gemeinsame Warteschlange `Testbank`, `Tools/editor-bench.sh`); Chats arbeiten in eigenen Worktrees, siehe `AGENTS.md`.
 
 ## Unity Editor
 
@@ -15,6 +15,8 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
+- 23.10.2026, Claude Code: Zweite Testbank `Mining Game 3` (Desktop 3, stumm) und gemeinsame Warteschlange `Testbank`, die wartende Chats automatisch auf die freie Testbank verteilt; Fokus-/Dialog-Wächter und PrivOrg-Dienst kennen beide; `Tests/EditorQueueChecks.ps1` grün; Branch `claude/zweite-testbank`, PR bereit für `main` (Freigabe Benutzer).
+
 - 23.10.2026, Claude Code (Cloud): Shop-Verkauf mit Mengenregler: Regler von 1 bis Max (ganzer Bestand des gewählten Erzes), Zahl im Schieber (Variante 2 von 4, Wahl Benutzer), Verkaufsknopf verkauft die gewählte Menge, „Alles verkaufen“ entfällt; `Tests/ShopSellStyleChecks.cs` lokal auf der Testbank grün; Branch `claude/verkaufsregler`, mit Freigabe des Benutzers per PR #97 in `main` (Optik-Abnahme lokal).
 - 23.10.2026, Claude Code (Cloud): Knopftexte im Inventar („×“, Filter, „Sortieren“) sitzen waagrecht genau mittig: `ButtonTextCentering` zentriert die sichtbaren Buchstaben auf die Mitte des Textkastens statt auf die Mitte der Schrittweiten (fette Schrift verschob sie um den Fett-Abstand); lokal auf der Testbank `ButtonTextCenterChecks` 108/108 und `StorageUiChecks` 57/57 grün; Branch `claude/inventar-knopftexte`, mit Freigabe des Benutzers in `main`.
 - 23.10.2026, Claude Code (Cloud): Kantenhilfe schiebt sanfter: neuer GPS-Wert Bewegung → „Kantenhilfe: Hineinschiebe-Tempo“ (Anteil Laufgeschwindigkeit, Standard 0,5 statt bisher volle Geschwindigkeit); `Tests/LedgeAssistChecks.cs` (prüft jetzt auch das Tempo, parkt offene Spiel-Panels) und `GpsSettingsChecks` auf der Testbank grün; Branch `claude/kantenhilfe-tempo`, mit Freigabe des Benutzers per PR #94 in `main` (Spielgefühl-Abnahme lokal).
@@ -24,4 +26,3 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 - 23.10.2026, Claude Code (Cloud): Alte Spielstände (z. B. „The One“) laden wieder: ein Bild, das im gespeicherten Kartenstand steht, es im Spiel aber nicht mehr gibt (altes Layer-2-Hintergrundbild nach PR #82), wird beim Laden durch das aktuelle ersetzt statt den Spielstand abzulehnen (`GpsSettings.NormalizeGeneration`); `Tests/SaveMissingAssetChecks.cs` (inkl. Kopie eines echten Spielstands) und die Spielstand-/GPS-Checks lokal auf der Testbank grün; Branch `claude/spielstand-fehlendes-bild`, PR bereit für `main` (Freigabe Benutzer).
 - 23.10.2026, Claude Code (Cloud): Leuchtstärke des Auswahlrahmens getrennt einstellbar: F1 → Spieler → Cursor → „Leuchtstärke normal“ und „Leuchtstärke Smart“ (0 = unsichtbar, 1 = voll, darüber heller); `GoldCursorChecks`, `CursorHighlightEquivalenceChecks`, `GpsSettingsChecks` (1242) lokal auf der Testbank grün; Branch `claude/leuchtstaerke-rahmen`, mit Freigabe des Benutzers per PR #89 in `main`.
 - 23.10.2026, Claude Code (Cloud): Traglast höchstens doppelt (vorher dreifach), Tempo sinkt ab der Traglast gleichmässig bis auf ein Drittel, Sprung voll beladen nie unter 1,2 Blöcke (eine Zelle hoch geht immer), rote Stufe ab 90 % der maximalen Last; vier neue GPS-Werte unter Bewegung → Traglast; `Tests/CarryOverloadChecks.cs` auf der Testbank grün (30); Branch `claude/traglast-ueberladung`, mit Freigabe des Benutzers per PR #80 in `main` (Abnahme im Spiel Benutzer).
-- 23.10.2026, Claude Code (Cloud): Eingangsschilder (`EntrySign`) setzen die Rahmendichte vor der Textzentrierung, sonst blieben zu breite Seitenränder am Text hängen und `Tests/StorageUiChecks.cs` brach bei „Lager öffnen“ ab; Prüfung zeigt jetzt die Masse; lokal auf der Testbank `StorageUiChecks` 57/57 und `BughuntEntrySignChecks` grün; Branch `claude/lager-schildbreite`, PR bereit für `main` (Freigabe Benutzer).
