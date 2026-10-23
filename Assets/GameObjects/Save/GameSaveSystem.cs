@@ -34,6 +34,10 @@ public static class GameSaveSystem
     sealed class AutosaveJob { public MonoBehaviour owner; public RunSnapshot snapshot; public Task write; public bool cancelled; }
     static AutosaveJob autosave;
     const double AutosaveFrameMilliseconds = 1;
+    // The normal save in progress (pause menu "Hauptmenü", slot panel): its coroutine stops with play mode or the
+    // application, so SaveActiveRunNow finishes it instead; its callback is skipped then (no navigation while exiting).
+    static IEnumerator normalSave;
+    static bool finishingOnExit, normalSaved;
     // Until its coroutine has finished; once its owner is gone, until its file write has finished.
     public static bool IsAutoSaving => autosave != null &&
         (autosave.owner && autosave.owner.isActiveAndEnabled || autosave.write is { IsCompleted: false });
@@ -74,7 +78,7 @@ public static class GameSaveSystem
     static void Reset()
     {
         IsBusy = false; pending = null; PlayedSeconds = 0; SlotsChanged = null;
-        autosave?.snapshot?.Dispose(); autosave = null;
+        autosave?.snapshot?.Dispose(); autosave = null; normalSave = null;
         ActiveSlot = -1; activeDirectory = null; ActiveRunName = null; HasPendingNewRun = false; InitialSaveError = null;
 #if UNITY_EDITOR
         TestDirectory = null;
@@ -343,7 +347,11 @@ public static class GameSaveSystem
     }
 
     public static IEnumerator Save(int slot, MonoBehaviour owner, Action<bool, string> complete)
-        => SaveRun(slot, owner, complete, false, false);
+    {
+        var routine = SaveRun(slot, owner, complete, false, false);
+        if (!IsBusy) normalSave = routine;
+        return routine;
+    }
     // Saves the active run while the game keeps running: no pause, no input block, nothing waits for it.
     public static IEnumerator Autosave(MonoBehaviour owner, Action<bool, string> complete)
         => SaveRun(ActiveSlot, owner, complete, false, false, true);
@@ -359,12 +367,22 @@ public static class GameSaveSystem
     // The autosave's owner goes away (scene change): drop an unfinished capture; a running file write completes on its own.
     public static void StopAutosave() { if (autosave != null && autosave.write == null) SettleAutosave(); }
 
+    // The active run belongs to the current save directory (an editor test may have switched TestDirectory since).
+    public static bool IsActiveDirectory => activeDirectory == DirectoryPath;
     // True while the running game has a slot of its own in the current save directory and can be captured.
-    public static bool CanAutoSave => ActiveSlot >= 1 && !HasPendingNewRun && activeDirectory == DirectoryPath && CanSave;
+    public static bool CanAutoSave => ActiveSlot >= 1 && !HasPendingNewRun && IsActiveDirectory && CanSave;
 
     // Saves the active run without returning to the frame loop, for play-mode stop and application quit.
+    // A normal save still running is finished here (into its own target) instead of being lost.
     public static bool SaveActiveRunNow(MonoBehaviour owner)
     {
+        if (IsBusy && normalSave != null)
+        {
+            var running = normalSave; normalSave = null; normalSaved = false; finishingOnExit = true;
+            try { while (running.MoveNext()) { } }
+            finally { finishingOnExit = false; }
+            return normalSaved;
+        }
         if (!CanAutoSave) return false;
         bool saved = false;
         var routine = SaveRun(ActiveSlot, owner, (ok, _) => saved = ok, false, false);
@@ -444,7 +462,7 @@ public static class GameSaveSystem
         if (job != null) { if (autosave == job) autosave = null; }
         else
         {
-            IsBusy = false; Time.timeScale = previousScale;
+            IsBusy = false; Time.timeScale = previousScale; normalSave = null; normalSaved = saved;
             // An open pause/slot panel owns its own input gate; do not release it here.
             if (!(owner is RunPauseMenu) && !(owner is SaveSlotPanel)) GameplayInputBlocker.SetBlocked(owner, false);
             if (saved) { ActiveSlot = slot; activeDirectory = directory; }
@@ -452,7 +470,7 @@ public static class GameSaveSystem
         // A save that superseded this autosave reports its own change.
         if (saved && job?.cancelled != true) SlotsChanged?.Invoke();
         if (error != null) Debug.LogError("Tiefenhall: Speichern fehlgeschlagen: " + error);
-        complete?.Invoke(saved, saved ? "Gespeichert" : error == null ? "Speichern ist gerade nicht möglich." : "Spielstand konnte nicht gespeichert werden.");
+        if (!finishingOnExit) complete?.Invoke(saved, saved ? "Gespeichert" : error == null ? "Speichern ist gerade nicht möglich." : "Spielstand konnte nicht gespeichert werden.");
     }
 
     static RunSaveState Capture()
