@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Shop: Regler für die Verkaufsmenge (1 bis Max) statt „Alles verkaufen“ | `claude/verkaufsregler` | Cloud-Container | `Assets/GameObjects/Shop/SellPage*.cs`, `Tests/ShopSellStyleChecks.cs`, `Tests/ButtonTextCenterChecks.cs` | ja (Testbank) | 23.10.2026 17:45 |
 
 ## Zuletzt abgeschlossen
 
