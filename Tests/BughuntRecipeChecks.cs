@@ -9,10 +9,9 @@ using Object = UnityEngine.Object;
 
 // Edit Mode checks for the iron pickaxe recipe: no recipe (asset file, loaded asset or shipped GPS profile)
 // asks for a powerup, and the iron pickaxe can be crafted from wood, nails and iron.
-// Only a temporary inventory is used; the iron pickaxe blueprint PlayerPrefs key is restored afterwards.
+// Only a temporary inventory is used; the run blueprint state is restored afterwards.
 public static class BughuntRecipeChecks
 {
-    const string IronPickaxeKey = "workbench.recipe.iron-pickaxe.unlocked";
     static readonly List<string> checks = new();
     static void Check(bool condition, string label) { if (!condition) throw new Exception(label); checks.Add(label); }
     static bool IsPowerup(ItemSO item) => item && item.category == ItemCategory.Powerup;
@@ -21,7 +20,7 @@ public static class BughuntRecipeChecks
     {
         if (EditorApplication.isPlaying) throw new InvalidOperationException("Edit Mode erwartet.");
         checks.Clear();
-        bool hadUnlock = PlayerPrefs.HasKey(IronPickaxeKey); int previousUnlock = PlayerPrefs.GetInt(IronPickaxeKey, 0);
+        int[] recipeState = RecipeUnlocks.CaptureRunState();
         GameObject host = null;
         try
         {
@@ -80,7 +79,7 @@ public static class BughuntRecipeChecks
 
             host = new GameObject("BughuntRecipeChecks") { hideFlags = HideFlags.HideAndDontSave };
             var inventory = host.AddComponent<InventoryManager>();
-            PlayerPrefs.SetInt(IronPickaxeKey, 1);
+            RecipeUnlocks.Unlock(pickaxe);
             Check(RecipeUnlocks.IsUnlocked(pickaxe), "Bauplan der Eisenspitzhacke gekauft");
             foreach (var cost in costs) inventory.AddStartingItem(cost.Key, cost.Value);
             Check(CraftingService.GetMaxCraftable(pickaxe, inventory) >= 1, "Eisenspitzhacke mit Holz, Nägeln und Eisen herstellbar");
@@ -98,8 +97,7 @@ public static class BughuntRecipeChecks
         finally
         {
             if (host) Object.DestroyImmediate(host);
-            if (hadUnlock) PlayerPrefs.SetInt(IronPickaxeKey, previousUnlock); else PlayerPrefs.DeleteKey(IronPickaxeKey);
-            PlayerPrefs.Save();
+            RecipeUnlocks.RestoreRunState(recipeState);
         }
     }
 }
