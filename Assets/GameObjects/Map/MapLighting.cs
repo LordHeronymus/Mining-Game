@@ -74,6 +74,8 @@ public sealed class MapLighting : MonoBehaviour
     public bool IsReady => field != null;
     public bool IsCalculating => field != null && field.HasPendingWork;
     LightingSettingsData sceneDefaults;
+    // Values the current daylight field was built with; F1 writes the component fields directly.
+    LightingSettingsData builtSettings;
 
     void Start()
     {
@@ -93,16 +95,24 @@ public sealed class MapLighting : MonoBehaviour
     void ApplyDebugSettings()
     {
         var settings = GameplaySettings.Lighting;
-        if (JsonUtility.ToJson(settings) == JsonUtility.ToJson(CaptureSettings())) return;
-        lightingEnabled = settings.enabled;
-        daylightStrength = settings.daylight;
-        ambientBrightness = settings.ambient;
-        downwardLoss = settings.downLoss;
-        sidewaysLoss = settings.sideLoss;
-        blockLoss = settings.blockLoss;
-        exponentialStrength = settings.strength;
-        rebuild = true;
+        if (JsonUtility.ToJson(settings) != JsonUtility.ToJson(CaptureSettings()))
+        {
+            lightingEnabled = settings.enabled;
+            daylightStrength = settings.daylight;
+            ambientBrightness = settings.ambient;
+            downwardLoss = settings.downLoss;
+            sidewaysLoss = settings.sideLoss;
+            blockLoss = settings.blockLoss;
+            exponentialStrength = settings.strength;
+        }
+        // GpsSettings sets the fields before notifying, so compare against the built field instead.
+        if (builtSettings != null && FieldSettingsDiffer(builtSettings, CaptureSettings())) rebuild = true;
     }
+
+    // Switching the overlay on or off keeps the field; every other value changes the computed light.
+    static bool FieldSettingsDiffer(LightingSettingsData a, LightingSettingsData b)
+        => a.daylight != b.daylight || a.ambient != b.ambient || a.downLoss != b.downLoss ||
+           a.sideLoss != b.sideLoss || a.blockLoss != b.blockLoss || a.strength != b.strength;
 
     void OnDestroy() => GameplaySettings.Changed -= ApplyDebugSettings;
 
@@ -611,6 +621,7 @@ public sealed class MapLighting : MonoBehaviour
     System.Collections.IEnumerator InitializeSteps(int mapWidth, int mapHeight, TileBase[] allTiles, Action<float> progress = null)
     {
         ReleaseResources();
+        builtSettings = CaptureSettings();
         width = mapWidth;
         height = mapHeight;
         if (width <= 0 || height <= 0 || width > SystemInfo.maxTextureSize || height > SystemInfo.maxTextureSize)
