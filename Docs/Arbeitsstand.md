@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code | Nacharbeiten gemalte Erze: Prüfskripte OreOverlay/OreSparkle/OreVeinRuntime reparieren oder archivieren | `claude/painted-ore-followups` | `Mining Game/.claude/worktrees/painted-ore-followups` | `Tests/OreOverlayChecks.cs`, `Tests/OreSparkleChecks.cs`, `Tests/OreVeinRuntimeChecks.cs` (nur Prüfskripte) | ja (Testbank) | 23.10.2026 14:30 |
 
 ## Zuletzt abgeschlossen
 
