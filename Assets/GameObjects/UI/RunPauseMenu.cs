@@ -76,7 +76,7 @@ public sealed class RunPauseMenu : MonoBehaviour
         if (IsOpen) return;
         IsOpen = true; previousScale = Time.timeScale; Time.timeScale = 0;
         GameplayInputBlocker.SetBlocked(this, true); GamePause.Set(this, true); transform.SetAsLastSibling(); Visible(true);
-        status.text = ""; saveFailed = false;
+        status.text = MetaProgression.ProfileWarning ?? ""; saveFailed = false;
         // A clicked shop card or buy button stays selected otherwise, and arrows/Enter would buy behind the pause.
         UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
     }

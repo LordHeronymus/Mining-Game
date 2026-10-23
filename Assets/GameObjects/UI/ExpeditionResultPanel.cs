@@ -28,7 +28,9 @@ public sealed class ExpeditionResultPanel : MonoBehaviour
     {
         if (!Application.isPlaying || !parent || LoadingProgress.Active || RunNavigation.IsTransitioning) return null;
         var existing=FindFirstObjectByType<ExpeditionResultPanel>(); if(existing) return existing;
-        var run=MetaProgression.CurrentRun; if(run==null || !run.ended) return null;
+        var run=MetaProgression.CurrentRun; if(run==null) return null;
+        // The panels only open after the run ended; a run still open here ends without reward.
+        if(!run.ended) MetaProgression.MarkRunEnded();
         var root=HomeUi.Panel("Expedition Result",parent);
         var panel=root.gameObject.AddComponent<ExpeditionResultPanel>();
         panel.FinalXp=MetaProgression.TotalXp; panel.EarnedXp=Math.Max(0,run.earnedXp);

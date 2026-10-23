@@ -98,7 +98,7 @@ public static class BughuntPauseSaveChecks
             Check((bool)saveFailed.GetValue(menu) && status.text.Contains("ohne Speichern"),
                 "Schreibfehler: Statuszeile bietet den zweiten Klick ohne Speichern an");
             menu.Open();
-            Check(!(bool)saveFailed.GetValue(menu) && status.text == "" && RunPauseMenu.IsOpen && GameplayInputBlocker.IsBlocked,
+            Check(!(bool)saveFailed.GetValue(menu) && status.text == (MetaProgression.ProfileWarning ?? "") && RunPauseMenu.IsOpen && GameplayInputBlocker.IsBlocked,
                 "Neues Öffnen des Pausemenüs speichert beim ersten Klick wieder");
             MenuMethod("Resume").Invoke(menu, null);
             Check(!RunPauseMenu.IsOpen && Time.timeScale == previousScale && GameplayInputBlocker.IsBlocked,
