@@ -11,6 +11,17 @@ public static class InventoryEquipmentChecks
     static int passed;
     static void Check(bool condition, string message) { if (!condition) throw new Exception(message); passed++; }
 
+    // Drawn sprite (preserveAspect) has the same margin left and right inside the detail frame.
+    static void CheckCentered(Image image, RectTransform frame, string what)
+    {
+        var rt = image.rectTransform; var rect = rt.rect; var size = image.sprite.rect.size;
+        float width = Mathf.Min(rect.width, rect.height * size.x / size.y);
+        float x0 = rect.xMin + (rect.width - width) * rt.pivot.x;
+        float left = frame.InverseTransformPoint(rt.TransformPoint(new Vector3(x0, 0))).x - frame.rect.xMin;
+        float right = frame.rect.xMax - frame.InverseTransformPoint(rt.TransformPoint(new Vector3(x0 + width, 0))).x;
+        Check(Mathf.Abs(left - right) < 1f, $"{what} centred: left {left:0.#}, right {right:0.#}");
+    }
+
     public static string Main()
     {
         passed = 0;
@@ -81,9 +92,13 @@ public static class InventoryEquipmentChecks
             var blueprint = detail.Find("Blueprint").GetComponent<Image>();
             Check(blueprint.enabled && blueprint.sprite && blueprint.sprite.name.Contains("IronPickaxe"), "Pickaxe detail shows blueprint");
             Check(detail.Find("Text").GetComponent<TextMeshProUGUI>().text == "Eisenspitzhacke", "Detail name");
+            Canvas.ForceUpdateCanvases();
+            CheckCentered(blueprint, (RectTransform)detail, "Blueprint");
             root.Find("Equipment 1").GetComponent<Button>().onClick.Invoke();
             Check(ui.SelectedEquipment == 1, "Card click selects");
-            Check(!blueprint.enabled && detail.Find("Item Icon").GetComponent<Image>().enabled, "Scythe detail shows icon");
+            var detailIcon = detail.Find("Item Icon").GetComponent<Image>();
+            Check(!blueprint.enabled && detailIcon.enabled, "Scythe detail shows icon");
+            CheckCentered(detailIcon, (RectTransform)detail, "Detail icon");
             Check(detail.Find("Next/Text").GetComponent<TextMeshProUGUI>().text == "Mäht hohes Gras", "Scythe note");
             Canvas.ForceUpdateCanvases();
             foreach (var label in root.GetComponentsInChildren<TextMeshProUGUI>())

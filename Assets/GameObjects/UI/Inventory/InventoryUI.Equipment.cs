@@ -70,8 +70,10 @@ public partial class InventoryUI
         var detail = Frame("Equipment Detail", equipmentRoot, 738, 1, 492, 612, 5);
         detailBlueprint = Panel("Blueprint", detail.transform, 96, 16, 300, 248, null);
         detailBlueprint.preserveAspect = true;
+        CenterPivot(detailBlueprint.rectTransform);
         detailIcon = Panel("Item Icon", detail.transform, 126, 50, 240, 180, null);
         detailIcon.preserveAspect = true;
+        CenterPivot(detailIcon.rectTransform);
         detailName = Serif(detail.transform, "", 0, 270, 492, 52, 38, TextAlignmentOptions.Midline);
         detailArea = Serif(detail.transform, "", 0, 316, 492, 30, 22, TextAlignmentOptions.Midline);
         detailArea.color = Muted;
@@ -162,6 +164,13 @@ public partial class InventoryUI
             detailStatValues[i].text = has ? selected.stats[i].value : "";
         }
         detailNote.text = selected?.note ?? "";
+    }
+
+    // preserveAspect aligns the sprite by the pivot; a centred pivot keeps it in the middle of its box.
+    static void CenterPivot(RectTransform rect)
+    {
+        rect.anchoredPosition += new Vector2(rect.sizeDelta.x * .5f, -rect.sizeDelta.y * .5f);
+        rect.pivot = new Vector2(.5f, .5f);
     }
 
     Image Frame(string name, Transform parent, float x, float y, float w, float h, float pixelsPerUnit)
