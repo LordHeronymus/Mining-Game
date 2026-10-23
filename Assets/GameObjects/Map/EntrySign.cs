@@ -158,7 +158,11 @@ public sealed class EntrySign : MonoBehaviour
         Fit();
         // Apply after sizing: GoldButtonFeedback picks the wide button artwork from the final aspect ratio.
         GoldButtonFeedback.Apply(Button, null, null);
-        ButtonTextCentering.Apply(Label, Button.GetComponent<Image>());
+        // GoldButtonFeedback sets the slice density only in its first LateUpdate. Set it now, or the caption
+        // centring measures the end caps at full artwork size and keeps that too wide side margin for good.
+        var plaque = Button.GetComponent<Image>();
+        GoldButtonFeedback.SetPixelsPerUnit(plaque, plaque.sprite.rect.height / Height);
+        ButtonTextCentering.Apply(Label, plaque);
 
         Group = GetComponent<CanvasGroup>();
         Group.alpha = 0;

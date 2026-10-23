@@ -74,7 +74,7 @@ public sealed class ChallengePanel : MonoBehaviour
         var bar = track.gameObject.AddComponent<Scrollbar>(); bar.handleRect = handle.rectTransform; bar.targetGraphic = handle;
         bar.direction = Scrollbar.Direction.BottomToTop; bar.navigation = new Navigation { mode = Navigation.Mode.None };
         scroll.verticalScrollbar = bar; scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
-        var back = HomeUi.Button("Challenges Back", layout, "Zurück", new Vector2(-483, -370), new Vector2(340, 70), Close);
+        HomeUi.Button("Challenges Back", layout, "Zurück", new Vector2(-483, -370), new Vector2(340, 70), Close);
         Text("Track Hint", layout, "Mit dem Stern verfolgst du Herausforderungen im Spiel.",
             new Vector2(200, -370), new Vector2(900, 30), 20, TextAlignmentOptions.Right).color = Muted;
         MetaProgression.Changed += OnProgressChanged;
@@ -82,7 +82,7 @@ public sealed class ChallengePanel : MonoBehaviour
         scroll.verticalNormalizedPosition = 1;
         HomeUi.Fit(layout, new Vector2(1600, 980));
         ProgressionArt.Navigation(transform);
-        UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(back.gameObject);
+        UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
     }
 
     void SetPeriod(ChallengePeriod value)
@@ -251,11 +251,12 @@ public sealed class ChallengePanel : MonoBehaviour
     {
         var track = HomeUi.Image("Progress Track", parent, position, new Vector2(width, 39));
         track.sprite=ChallengeArt.Sprite(6);track.type=Image.Type.Sliced;track.pixelsPerUnitMultiplier=2.5f;
-        var interior=HomeUi.Rect("Interior",track.transform,Vector2.zero,new Vector2(width-68,16));
+        // The interior spans the groove up to its chevron tips (26.5 units in from each end at the 2.5 slice scale).
+        var interior=HomeUi.Rect("Interior",track.transform,Vector2.zero,new Vector2(width-53,16));
         var fill=HomeUi.Rect("Progress Fill",interior,Vector2.zero,Vector2.zero);
         fill.anchorMin=Vector2.zero;fill.anchorMax=new Vector2(Mathf.Clamp01(progress),1);
         fill.offsetMin=fill.offsetMax=Vector2.zero;
-        fill.gameObject.AddComponent<ChallengeGoldFill>().raycastTarget=false;
+        var gold=fill.gameObject.AddComponent<ChallengeGoldFill>();gold.raycastTarget=false;gold.Pointed=true;
     }
 
     // Star toggle: a marked challenge is followed in the HUD (ChallengeTrackerHud). The panel rebuilds on MetaProgression.Changed.
