@@ -8,7 +8,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
-// Edit Mode. Carry weight in the HUD: text "12,5 / 40 kg" (orange above the capacity, red from double), a frameless
+// Edit Mode. Carry weight in the HUD: text "12,5 / 40 kg" (orange above the capacity, red in the top
+// carry stage of InventoryManager.CarryStage), a frameless
 // row with the backpack below the vitals that follows the setting "Traglast im HUD" (saved, on by default), and the
 // switch on the display page.
 // Uses temporary objects only; the PlayerPrefs key is restored. Result in Temp/CarryWeightHudChecks.txt.
@@ -41,11 +42,19 @@ public static class CarryWeightHudChecks
             Check(CompactHud.CarryWeightText(12.5, 40f, true) == "12,5 kg", "Testmodus ohne Gewicht zeigt nur das Gewicht");
             Check(CompactHud.CarryWeightText(-.001, 40f, false) == "0 / 40 kg", "Rundungsreste unter 0 werden als 0 gezeigt");
             Color cream = CompactHud.CarryWeightColor(40, 40f, false), orange = CompactHud.CarryWeightColor(40.5, 40f, false),
-                red = CompactHud.CarryWeightColor(80.5, 40f, false);
+                red = CompactHud.CarryWeightColor(120, 40f, false);
             Check(cream != orange && orange != red && cream != red, "Drei Farben: normal, überladen, stark überladen");
             Check(orange.r > .95f && orange.g > .5f && orange.g < .7f && orange.b < .25f, "Über der Traglast orange");
-            Check(CompactHud.CarryWeightColor(80, 40f, false) == orange && CompactHud.CarryWeightColor(200, 40f, true) == cream,
-                "Stufen wie im Inventar (bis doppelte Traglast orange), Testmodus bleibt normal");
+            // Stage limits come from InventoryManager.CarryStage; the HUD only maps stage to colour.
+            bool stagesMatch = true;
+            for (double w = 0; w <= 120; w += .5)
+            {
+                int stage = InventoryManager.CarryStage(w, 40f);
+                var expected = stage == 2 ? red : stage == 1 ? orange : cream;
+                stagesMatch &= CompactHud.CarryWeightColor(w, 40f, false) == expected;
+            }
+            Check(stagesMatch && CompactHud.CarryWeightColor(200, 40f, true) == cream,
+                "Stufen wie im Inventar (InventoryManager.CarryStage), Testmodus bleibt normal");
 
             // Setting: saved, on by default.
             PlayerPrefs.DeleteKey(Key);

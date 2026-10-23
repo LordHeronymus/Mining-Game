@@ -72,7 +72,8 @@ public sealed class CompactHud : MonoBehaviour
         lastHealth = int.MinValue, lastMaxHealth = int.MinValue, lastEnergy = int.MinValue, lastMax = int.MinValue;
     static readonly Color Cream = new Color32(255,245,229,255);
     // Same carry stages and colours as the inventory's cargo line.
-    // Above the carrying capacity the HUD turns orange (the inventory keeps its yellow), red from double the capacity.
+    // Above the carrying capacity the HUD turns orange (the inventory keeps its yellow), red in the inventory's
+    // top stage (InventoryManager.CarryStage decides where the stages start).
     static readonly Color OverweightOrange = new Color32(255,150,40,255), OverweightRed = new Color32(255,91,75,255);
     static readonly CultureInfo German = CultureInfo.GetCultureInfo("de-DE");
 
