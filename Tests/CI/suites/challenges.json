@@ -5,6 +5,7 @@
     { "name": "ChallengeSettingsChecks" },
     { "name": "ChallengeMigrationChecks" },
     { "name": "ChallengePanelPreviewChecks" },
-    { "name": "MetaProgressionCoreChecks" }
+    { "name": "MetaProgressionCoreChecks" },
+    { "name": "ProgressionChecks" }
   ]
 }
