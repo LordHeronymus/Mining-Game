@@ -15,6 +15,10 @@
   editor-queue.ps1 request-release -Cancel            # Bitte zuruecknehmen
   editor-queue.ps1 notice -Session <id>               # Hinweis fuer einen Chat (Bitte / Verdraengung), sonst leer
 
+  Testbaenke (Chats): -Project Testbank verteilt auf die naechste freie Testbank ("<Projekt> 2", "<Projekt> 3").
+  join/wait melden dann "Du bist oben: Testbank '<Ordner>' ..." und "TESTBANK=<Ordner>"; heartbeat/leave/notice
+  mit -Project Testbank finden den Eintrag auch nach der Zuteilung.
+
   Exit-Codes: 0 = ok / du bist oben, 1 = Fehler, 2 = wait-Zeitlimit erreicht (noch nicht oben),
               3 = Eintrag nicht (mehr) in der Warteschlange.
 #>
@@ -86,16 +90,41 @@ if ($FinalMinutes -le 0) { $FinalMinutes = 2 }
 if ($PollSeconds -lt 1) { $PollSeconds = 1 }
 
 if (-not (Test-Path -LiteralPath $QueueDir)) { New-Item -ItemType Directory -Path $QueueDir -Force | Out-Null }
-$queueFile = Join-Path $QueueDir "$Project.json"
-$lockFile = Join-Path $QueueDir "$Project.lock"
-$logFile = Join-Path $QueueDir "$Project.log"
-$activityFile = Join-Path $QueueDir "$Project.activity.json"
-# Offene modale Dialoge des Editors (schreibt Tools/editor-dialog.ps1: Waechter im Dienst, wait, list/press).
-$dialogFile = Join-Path $QueueDir "$Project.dialogs.json"
 $dialogScript = Join-Path $PSScriptRoot 'editor-dialog.ps1'
-# Verdraengte Eintraege der letzten Stunde, damit der Hook dem betroffenen Chat Bescheid geben kann.
-$evictedFile = Join-Path $QueueDir "$Project.evicted.json"
 $EntryFields = 'id', 'who', 'session', 'purpose', 'kind', 'joined', 'heartbeat', 'topSince', 'busySince', 'releaseRequestedAt', 'releaseDeadline', 'finalDeadline'
+
+# Testbaenke der Chats: Geschwister "<Projekt> 2" und "<Projekt> 3" (gleiche Regel wie Assets/Editor/TestBenchNames.cs).
+# Die gemeinsame Warteschlange "Testbank" verteilt Wartende automatisch auf die naechste freie Testbank.
+$BenchPattern = '^(.+) [23]$'
+$PoolName = 'Testbank'
+
+# Dateien eines Arbeitsordners; die Warteschlange "Testbank" schaltet damit kurz auf eine Testbank um.
+function Use-Project([string]$name) {
+    $script:Project = $name
+    $script:IsPool = ($name -eq $PoolName)
+    $script:queueFile = Join-Path $QueueDir "$name.json"
+    $script:lockFile = Join-Path $QueueDir "$name.lock"
+    $script:logFile = Join-Path $QueueDir "$name.log"
+    $script:activityFile = Join-Path $QueueDir "$name.activity.json"
+    # Offene modale Dialoge des Editors (schreibt Tools/editor-dialog.ps1: Waechter im Dienst, wait, list/press).
+    $script:dialogFile = Join-Path $QueueDir "$name.dialogs.json"
+    # Verdraengte Eintraege der letzten Stunde, damit der Hook dem betroffenen Chat Bescheid geben kann.
+    $script:evictedFile = Join-Path $QueueDir "$name.evicted.json"
+    $script:codeFile = Join-Path $QueueDir "$name.code.json"
+}
+
+# Vorhandene Testbaenke (Git-Arbeitsordner neben dem Ordner des Benutzers), z. B. "Mining Game 2", "Mining Game 3".
+function Get-Benches {
+    $repos = Split-Path $QueueDir -Parent
+    @(Get-ChildItem -LiteralPath $repos -Directory -ErrorAction SilentlyContinue | Where-Object {
+            $m = [regex]::Match($_.Name, $BenchPattern)
+            $m.Success -and (Test-Path -LiteralPath (Join-Path $_.FullName '.git')) -and (Test-Path -LiteralPath (Join-Path $repos $m.Groups[1].Value))
+        } | Sort-Object Name | ForEach-Object { $_.Name })
+}
+
+function Test-Bench([string]$name) { [regex]::IsMatch($name, $BenchPattern) -and $name -ne $PoolName }
+
+Use-Project $Project
 
 # --- Hilfsfunktionen ----------------------------------------------------------
 
@@ -169,8 +198,11 @@ function Get-DialogText {
 # Ein Durchgang des Dialog-Waechters fuer die Testbank (wartende Chats helfen mit, falls der Dienst nicht laeuft).
 function Invoke-DialogWatch {
     if (-not (Test-Path -LiteralPath $dialogScript)) { return }
-    if ($Project -ne (((Split-Path $ownerRoot -Leaf) -replace ' \d+$', '') + ' 2')) { return }   # nur die Testbank, nie der Editor des Benutzers
-    try { & $dialogScript watch -Once -Quiet -Project $Project -ProjectRoot $ownerRoot -QueueDir $QueueDir | Out-Null } catch { }
+    # Nur Testbaenke, nie der Editor des Benutzers; die Warteschlange "Testbank" hilft bei allen.
+    $targets = if ($IsPool) { Get-Benches } elseif (Test-Bench $Project) { @($Project) } else { @() }
+    foreach ($t in $targets) {
+        try { & $dialogScript watch -Once -Quiet -Project $t -ProjectRoot $ownerRoot -QueueDir $QueueDir | Out-Null } catch { }
+    }
 }
 
 # Exklusive Sperre ueber den Freigabemodus: wird beim Prozessende vom System freigegeben, nie verwaist.
@@ -329,7 +361,6 @@ function Get-MainState {
 # --- Code-Stand je Arbeitsordner (fuer PrivOrg: ist der Editor auf dem neuesten Stand?) -------------
 # Ordner Mining Game: gegen origin/main; Testbank: gegen den geholten Branch (<Ordner>.bench.json);
 # andere Ordner: gegen origin/<Branch>. Zwischengespeichert in <Ordner>.code.json (30 s), git fetch hoechstens alle 3 min.
-$codeFile = Join-Path $QueueDir "$Project.code.json"
 $CodeRefreshSeconds = 30
 $FetchMinutes = 3
 
@@ -417,14 +448,17 @@ function Get-CodeState {
 }
 
 # Raeumt verwaiste Eintraege ab und setzt den Startzeitpunkt des obersten Eintrags.
+# In der Warteschlange "Testbank" warten alle (niemand nutzt dort einen Editor): nur Wartende ohne Lebenszeichen fallen weg.
 function Update-Queue($list) {
     $now = Now
-    for ($i = $list.Count - 1; $i -ge 1; $i--) {
+    $first = if ($IsPool) { 0 } else { 1 }
+    for ($i = $list.Count - 1; $i -ge $first; $i--) {
         $e = $list[$i]
         if ($e.kind -eq 'user') { continue }
         $age = AgeMinutes $e.heartbeat
         if ($age -gt $StaleMinutes) { Remove-Entry $list $i 'wartend' "kein Lebenszeichen seit $(FormatAge $age)" }
     }
+    if ($IsPool) { return }
     if ($list.Count -gt 0) {
         $top = $list[0]
         # Ein laufender Unity-Aufruf (heartbeat -Busy, z. B. langes run_script) schuetzt den Inhaber.
@@ -483,17 +517,24 @@ function Find-Index($list) {
 }
 
 function Show-Queue($list) {
-    $ed = Get-EditorState
-    Write-Output "Editor-Warteschlange '$Project' ($queueFile)"
-    Write-Output "Editor: $($ed.text)$(if ($ed.busy) { ' [in Benutzung]' })"
-    $main = Get-MainState
-    $code = Get-CodeState
-    if ($code) { Write-Output "Code:  $($code.text)" }
-    if ($main) { Write-Output "Stand: $($main.text) (geprueft $(FormatAge (AgeMinutes $main.checked)))" }
-    if ($list.Count -eq 0) { Write-Output '  (leer - Editor frei)'; return }
+    if ($IsPool) {
+        Write-Output "Warteschlange '$PoolName' fuer alle Testbaenke ($queueFile)"
+        Write-Output "Testbaenke: $((Get-BenchSummary).text)"
+        if ($list.Count -eq 0) { Write-Output '  (niemand wartet)'; return }
+    }
+    else {
+        $ed = Get-EditorState
+        Write-Output "Editor-Warteschlange '$Project' ($queueFile)"
+        Write-Output "Editor: $($ed.text)$(if ($ed.busy) { ' [in Benutzung]' })"
+        $main = Get-MainState
+        $code = Get-CodeState
+        if ($code) { Write-Output "Code:  $($code.text)" }
+        if ($main) { Write-Output "Stand: $($main.text) (geprueft $(FormatAge (AgeMinutes $main.checked)))" }
+        if ($list.Count -eq 0) { Write-Output '  (leer - Editor frei)'; return }
+    }
     for ($i = 0; $i -lt $list.Count; $i++) {
         $e = $list[$i]
-        $mark = if ($i -eq 0) { '  <- nutzt den Editor' } else { '' }
+        $mark = if ($i -eq 0 -and -not $IsPool) { '  <- nutzt den Editor' } else { '' }
         if ($i -eq 0 -and $e.finalDeadline) { $mark += " (letzte Frist bis $(LocalTime $e.finalDeadline))" }
         elseif ($i -eq 0 -and $e.releaseDeadline) { $mark += " (soll freigeben bis $(LocalTime $e.releaseDeadline))" }
         $p = if ($e.purpose) { " - $($e.purpose)" } else { '' }
@@ -517,11 +558,107 @@ function Invoke-Locked([scriptblock]$body, [bool]$touch = $true) {
     finally { $lock.Dispose() }
 }
 
+# --- Warteschlange "Testbank": Wartende auf freie Testbaenke verteilen ---------
+
+# Testbank, deren oberster Eintrag (mit -Any: irgendein Eintrag) zu -Id bzw. -Session passt, sonst $null.
+function Find-BenchOf([switch]$Any) {
+    foreach ($b in Get-Benches) {
+        $f = Join-Path $QueueDir "$b.json"
+        if (-not (Test-Path -LiteralPath $f)) { continue }
+        try { $entries = @(([IO.File]::ReadAllText($f, $utf8) | ConvertFrom-Json).entries | Where-Object { $null -ne $_ }) } catch { continue }
+        $n = if ($Any) { $entries.Count } else { [Math]::Min(1, $entries.Count) }
+        for ($i = 0; $i -lt $n; $i++) {
+            $e = $entries[$i]
+            if (($Id -and $e.id -eq $Id) -or (-not $Id -and $Session -and $e.session -eq $Session)) { return $b }
+        }
+    }
+    return $null
+}
+
+# Setzt den Eintrag als Inhaber auf eine Testbank, wenn deren Warteschlange (nach dem Aufraeumen) leer ist.
+function Grant-Bench([string]$bench, $entry) {
+    Use-Project $bench
+    $lock = Enter-Lock
+    try {
+        $q = Read-Queue
+        Update-Queue $q
+        $ok = ($q.Count -eq 0)
+        if ($ok) {
+            $now = Iso (Now)
+            $copy = [pscustomobject][ordered]@{
+                id = $entry.id; who = $entry.who; session = $entry.session; purpose = $entry.purpose; kind = $entry.kind
+                joined = $entry.joined; heartbeat = $now; topSince = $now; busySince = $null
+                releaseRequestedAt = $null; releaseDeadline = $null; finalDeadline = $null
+            }
+            [void]$q.Add($copy)
+            Write-Log "JOIN $(Describe $copy) - $($copy.purpose) (aus Warteschlange '$PoolName')"
+            Write-Log "OBEN $(Describe $copy) darf den Editor nutzen"
+        }
+        Write-Queue $q
+        return $ok
+    }
+    finally { $lock.Dispose(); Use-Project $PoolName }
+}
+
+# Teilt den Wartenden der Reihe nach freie Testbaenke zu (unter der Sperre der Warteschlange "Testbank").
+# Testbaenke mit offenem Editor zuerst; ist keiner offen, jede freie. Rueckgabe: Id -> Testbank.
+function Grant-Benches($list) {
+    $granted = @{}
+    if ($list.Count -eq 0) { return $granted }
+    $benches = @(Get-Benches)
+    $open = @(foreach ($b in $benches) { Use-Project $b; if (Test-UnityRunning) { $b } })
+    Use-Project $PoolName
+    $candidates = if ($open.Count) { $open } else { $benches }
+    foreach ($b in $candidates) {
+        if ($list.Count -eq 0) { break }
+        $e = $list[0]
+        if (-not (Grant-Bench $b $e)) { continue }
+        $list.RemoveAt(0)
+        $granted[$e.id] = $b
+        Write-Log "ZUGETEILT $(Describe $e) -> Testbank '$b'"
+    }
+    return $granted
+}
+
+function Write-Granted([string]$bench, [string]$entryId) {
+    $path = Join-Path (Split-Path $QueueDir -Parent) $bench
+    Write-Output "Du bist oben: Testbank '$bench' gehoert dir (Id '$entryId')."
+    Write-Output "TESTBANK=$bench"
+    Write-Output "Ordner: $path"
+    Write-Output "Weiter: Tools/editor-bench.sh checkout <branch> -Id $entryId -Discard, dann unity command --project-path `"$path`" run_script --file Tests/<Name>Checks.cs"
+    Write-Output "Danach sofort: Tools/editor-bench.sh release -Id $entryId und Tools/editor-queue.sh leave -Project `"$bench`" -Id $entryId"
+}
+
+# Belegung aller Testbaenke als eine Zeile (Status der Warteschlange "Testbank", PrivOrg).
+function Get-BenchSummary {
+    $free = 0
+    $parts = foreach ($b in Get-Benches) {
+        Use-Project $b
+        $q = Read-Queue
+        if ($q.Count -eq 0) { $free++ }
+        $who = if ($q.Count) { "belegt ($($q[0].who))" } else { 'frei' }
+        $closed = if (Test-UnityRunning) { '' } else { ', Editor zu' }
+        "$b`: $who$closed"
+    }
+    Use-Project $PoolName
+    $text = if ($parts) { 'Verteilt auf ' + (@($parts) -join ' | ') } else { 'keine Testbank gefunden' }
+    return @{ busy = ($free -eq 0); text = $text }
+}
+
 if ($User) {
     if (-not $Id) { $Id = 'benutzer' }
     if (-not $Who) { $Who = 'Benutzer' }
 }
 if (-not $Id -and $env:EDITOR_QUEUE_ID) { $Id = $env:EDITOR_QUEUE_ID }
+
+# Nach der Zuteilung steht der Eintrag in der Warteschlange seiner Testbank: Lebenszeichen, Abmeldung und Hinweise dorthin.
+if ($IsPool -and $Command -in 'heartbeat', 'leave', 'notice' -and ($Id -or $Session)) {
+    $inPool = Invoke-Locked { param($list) (Find-Index $list) -ge 0 } $false
+    if (-not $inPool) {
+        $bench = Find-BenchOf -Any
+        if ($bench) { Use-Project $bench }
+    }
+}
 
 # --- Befehle ------------------------------------------------------------------
 
@@ -531,6 +668,11 @@ switch ($Command) {
         if (-not $Id) { $Id = 'q' + ([guid]::NewGuid().ToString('N').Substring(0, 6)) }
         # Claude-Code-Sitzung merken: der Hook (Tools/editor-queue-hook.sh) setzt damit automatisch Lebenszeichen.
         if (-not $Session -and -not $User -and $env:CLAUDE_CODE_SESSION_ID) { $Session = $env:CLAUDE_CODE_SESSION_ID }
+        if ($IsPool) {
+            # Schon zugeteilt (erneutes join mit derselben Id): Testbank nennen statt doppelt anzumelden.
+            $bench = Find-BenchOf -Any
+            if ($bench) { Write-Granted $bench $Id; exit 0 }
+        }
         $pos = Invoke-Locked {
             param($list)
             $i = Find-Index $list
@@ -552,10 +694,21 @@ switch ($Command) {
                 # Der Benutzer reiht sich direkt hinter dem aktuellen Inhaber ein, ohne ihn zu verdraengen.
                 if ($User -and $list.Count -ge 1) { $list.Insert(1, $e); $i = 1 }
                 else { [void]$list.Add($e); $i = $list.Count - 1 }
-                if ($list.Count -eq 1) { $e.topSince = $now; Write-Log "OBEN $(Describe $e) darf den Editor nutzen" }
+                if ($list.Count -eq 1 -and -not $IsPool) { $e.topSince = $now; Write-Log "OBEN $(Describe $e) darf den Editor nutzen" }
                 Write-Log "JOIN $(Describe $e) - $Purpose (Position $($i + 1))"
             }
+            if ($IsPool) {
+                $granted = Grant-Benches $list
+                if ($granted.ContainsKey($Id)) { return "bench:$($granted[$Id])" }
+                $i = Find-Index $list
+            }
             $i + 1
+        }
+        if ("$pos" -like 'bench:*') { Write-Output "Angemeldet als Id '$Id'."; Write-Granted "$pos".Substring(6) $Id; exit 0 }
+        if ($IsPool) {
+            Write-Output "Angemeldet als Id '$Id', Position $pos in der Warteschlange '$PoolName' (alle Testbaenke belegt)."
+            Write-Output "Warten mit: wait -Project $PoolName -Id $Id   (zeigt dann, welche Testbank frei ist)"
+            exit 0
         }
         Write-Output "Angemeldet als Id '$Id', Position $pos."
         if ($pos -eq 1) { Write-Output "Du bist oben: Der Editor gehoert dir. Danach sofort: leave -Id $Id" }
@@ -578,10 +731,22 @@ switch ($Command) {
                 param($list)
                 $i = Find-Index $list
                 if ($i -ge 0) { $list[$i].heartbeat = Iso (Now) }
+                if ($IsPool -and $i -ge 0) {
+                    $own = $list[$i].id
+                    $granted = Grant-Benches $list
+                    if ($granted.ContainsKey($own)) { return "bench:$($granted[$own])|$own" }
+                    $i = Find-Index $list
+                }
                 $i + 1
             }
+            if ("$pos" -like 'bench:*') { $parts = "$pos".Substring(6).Split('|'); Write-Granted $parts[0] $parts[1]; exit 0 }
+            if ($IsPool -and $pos -le 0) {
+                # Schon zugeteilt (z. B. waehrend eines frueheren wait): Testbank nennen.
+                $bench = Find-BenchOf
+                if ($bench) { Write-Granted $bench $(if ($Id) { $Id } else { $Session }); exit 0 }
+            }
             if ($pos -le 0) { Write-Output "Eintrag '$Id' ist nicht (mehr) in der Warteschlange. Neu anmelden mit join."; exit 3 }
-            if ($pos -eq 1) { Write-Output "Du bist oben: Der Editor gehoert dir (Id '$Id'). Danach sofort: leave -Id $Id"; exit 0 }
+            if ($pos -eq 1 -and -not $IsPool) { Write-Output "Du bist oben: Der Editor gehoert dir (Id '$Id'). Danach sofort: leave -Id $Id"; exit 0 }
             if ($pos -ne $lastPos) {
                 Write-Output ("{0}  Position {1}, warte ..." -f (Get-Date).ToString('HH:mm:ss', $inv), $pos)
                 $lastPos = $pos
@@ -618,9 +783,10 @@ switch ($Command) {
             param($list)
             $i = Find-Index $list
             if ($i -lt 0) { return 'missing' }
-            if ($i -eq 0) { return 'holder' }
-            # Platz 1 gehoert dem aktuellen Inhaber und ist gesperrt.
-            $target = [Math]::Min([Math]::Max($Position, 2), $list.Count) - 1
+            if ($i -eq 0 -and -not $IsPool) { return 'holder' }
+            # Platz 1 gehoert dem aktuellen Inhaber und ist gesperrt (in der Warteschlange "Testbank" warten alle).
+            $min = if ($IsPool) { 1 } else { 2 }
+            $target = [Math]::Min([Math]::Max($Position, $min), $list.Count) - 1
             $e = $list[$i]
             if ($target -ne $i) {
                 $list.RemoveAt($i)
@@ -635,6 +801,7 @@ switch ($Command) {
         exit 0
     }
     'request-release' {
+        if ($IsPool) { Write-Output "In der Warteschlange '$PoolName' nutzt niemand einen Editor. Bitte an die Testbank selbst richten (-Project `"<Testbank>`")."; exit 0 }
         $result = Invoke-Locked {
             param($list)
             if ($list.Count -eq 0) { return 'empty' }
@@ -721,11 +888,12 @@ switch ($Command) {
         finally { $lock.Dispose() }
         if ($Json) {
             # Maschinenlesbar fuer den lokalen Dienst (Tools/editor-queue-server.ps1) und PrivOrg.
-            $ed = Get-EditorState
+            # Warteschlange "Testbank": statt eines Editors die Belegung aller Testbaenke.
+            $ed = if ($IsPool) { Get-BenchSummary } else { Get-EditorState }
             # Code-Stand auch im Editortext, damit das PrivOrg-Modul ihn ohne eigene Anpassung zeigt.
             # Im Ordner des Benutzers sagt MainAutoUpdate genauer, wann geholt wird (z. B. nach dem Play-Stopp).
-            $main = Get-MainState
-            $code = Get-CodeState
+            $main = if ($IsPool) { $null } else { Get-MainState }
+            $code = if ($IsPool) { $null } else { Get-CodeState }
             $standText = if ($main -and -not $main.current) { $main.text } elseif ($code) { $code.text } elseif ($main) { $main.text } else { $null }
             $edText = if ($standText) { "$($ed.text) | Stand: $standText" } else { $ed.text }
             $pos = 0
