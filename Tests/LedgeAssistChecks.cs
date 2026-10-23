@@ -195,6 +195,9 @@ public static class LedgeAssistChecks
             {
                 movement.ledgeAssist = pass == 0;
                 paths[pass] = new List<Vector2>();
+                // Same start for both passes: one step far from any ground clears the contacts of the previous landing.
+                Reset(movement, body, new Vector2(0f, 50f));
+                physics.Simulate(Time.fixedDeltaTime);
                 Reset(movement, body, new Vector2(0f, 3f));
                 typeof(PlayerMovement).GetField("inputX", Flags).SetValue(movement, 1f);
                 for (int frame = 0; frame < 90; frame++)
