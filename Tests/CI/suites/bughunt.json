@@ -13,6 +13,9 @@
       "name": "BughuntEntrySignChecks"
     },
     {
+      "name": "BughuntExoticsChecks"
+    },
+    {
       "name": "BughuntLadderEscapeChecks"
     },
     {
@@ -29,6 +32,9 @@
     },
     {
       "name": "BughuntShopFormatChecks"
+    },
+    {
+      "name": "BughuntTileMinerChecks"
     },
     {
       "name": "BughuntWorkbenchRecipeRefreshChecks"
