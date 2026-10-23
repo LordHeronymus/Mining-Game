@@ -11,6 +11,8 @@ public class BuyPage : MonoBehaviour
     const int Columns = 4;
     const float CardWidth = 296, CardHeight = 322, GapX = 22, GapY = 18;
     const float ListWidth = 1250, ListHeight = 1002;
+    // Visible parchment on a card: same absolute size for every plan, clear of the frame's top bar.
+    const float BlueprintSize = 160, BlueprintCenterY = 113;
     static readonly Color Cream = new Color32(255, 245, 229, 255);
     static readonly Color Gold = new Color32(255, 198, 86, 255);
     static readonly Color Muted = new Color32(189, 164, 134, 255);
@@ -123,7 +125,7 @@ public class BuyPage : MonoBehaviour
         var colors = button.colors; colors.highlightedColor = new Color(1f, .94f, .8f);
         colors.pressedColor = new Color(.8f, .7f, .52f); button.colors = colors;
         card.icon = Panel("Blueprint", card.rect, 18, 22, 260, 176, card.sprite);
-        ShopVisualTheme.CenterImage(card.icon);
+        FitBlueprint(card.icon);
         card.name = Label(card.rect, recipe.output.displayName, 30, 202, 236, 38, 31);
         card.name.alignment = TextAlignmentOptions.Midline;
         card.name.textWrappingMode = TextWrappingModes.NoWrap;
@@ -159,7 +161,6 @@ public class BuyPage : MonoBehaviour
         for (int i = 0; i < ordered.Length; i++)
         {
             var card = ordered[i]; bool unlocked = card.isUnlocked();
-            ItemIconLayout.Apply(card.recipe.output, card.icon.rectTransform, new Vector2(148, -110));
             Place(card.rect, i % Columns * (CardWidth + GapX), i / Columns * (CardHeight + GapY), CardWidth, CardHeight);
             GoldButtonFeedback.Select(card.background, card == selected);
             card.icon.color = unlocked ? new Color(.72f, .66f, .57f, 1f) : Color.white;
@@ -289,6 +290,27 @@ public class BuyPage : MonoBehaviour
         var bar = track.gameObject.AddComponent<Scrollbar>(); bar.direction = Scrollbar.Direction.BottomToTop;
         bar.handleRect = handle.rectTransform; bar.targetGraphic = handle;
         target.verticalScrollbar = bar; target.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+    }
+    // The plan textures have different transparent margins. Size the image by its visible (tight mesh)
+    // area instead of the texture, so every parchment shows at BlueprintSize regardless of the art.
+    static void FitBlueprint(Image icon)
+    {
+        var sprite = icon.sprite; var rect = icon.rectTransform;
+        icon.type = Image.Type.Simple; icon.preserveAspect = false;
+        Vector2 size = sprite ? sprite.rect.size : Vector2.one, lo = Vector2.zero, hi = Vector2.one;
+        if (sprite && sprite.vertices.Length > 0)
+        {
+            lo = hi = sprite.vertices[0];
+            foreach (var v in sprite.vertices) { lo = Vector2.Min(lo, v); hi = Vector2.Max(hi, v); }
+            // Mesh vertices are local units around the pivot; convert to fractions of the sprite rect.
+            lo = (lo * sprite.pixelsPerUnit + sprite.pivot) / size;
+            hi = (hi * sprite.pixelsPerUnit + sprite.pivot) / size;
+        }
+        var visible = Vector2.Scale(hi - lo, size);
+        float scale = BlueprintSize / Mathf.Max(1f, Mathf.Max(visible.x, visible.y));
+        var full = size * scale;
+        rect.pivot = new Vector2(.5f, .5f); rect.sizeDelta = full; rect.localScale = Vector3.one;
+        rect.anchoredPosition = new Vector2(CardWidth / 2, -BlueprintCenterY) - Vector2.Scale((lo + hi) / 2 - new Vector2(.5f, .5f), full);
     }
     Image Panel(string name, Transform parent, float x, float y, float w, float h, Sprite sprite)
     {
