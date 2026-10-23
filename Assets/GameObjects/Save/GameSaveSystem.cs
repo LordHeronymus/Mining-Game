@@ -766,6 +766,9 @@ public static class GameSaveSystem
         PlayedSeconds = run.state.playedSeconds;
         RunNavigation.EnsurePlayerCamera(player.transform);
         Physics2D.SyncTransforms();
+        // Climb and fall are not saved: hang on again at a touched ladder, and count a running fall from the loaded height.
+        var climber = player.GetComponent<PlayerLadder>(); if (climber) climber.AttachIfContact();
+        player.RestartFallTracking();
         LoadingProgress.SetStage(6);
         var lighting = map.GetComponent<MapLighting>();
         if (lighting)

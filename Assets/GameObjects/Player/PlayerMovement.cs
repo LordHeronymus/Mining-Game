@@ -281,6 +281,8 @@ public class PlayerMovement : MonoBehaviour
         trackingFall = false;
         hasGroundedForFall = true;
     }
+    // Teleports and save restores: a fall counts from the current height on, never from a peak before the jump.
+    public void RestartFallTracking() => PauseFallTrackingForLadder();
     void ResetFallTracking()
     {
         trackingFall = false;

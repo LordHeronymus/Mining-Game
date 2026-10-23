@@ -36,7 +36,10 @@ public static class GpsTestActions
     {
         var player = Object.FindFirstObjectByType<PlayerMovement>(); if (!player) return;
         player.GetComponent<PlayerLadder>()?.Detach();
-        var body = player.GetComponent<Rigidbody2D>(); if (body) body.linearVelocity = Vector2.zero;
+        var body = player.GetComponent<Rigidbody2D>(); if (body) { body.position = position; body.linearVelocity = Vector2.zero; }
         player.transform.position = position;
+        // Auto sync is off: sync the collider first, or the next fall would start from the bounds before the teleport.
+        Physics2D.SyncTransforms();
+        player.RestartFallTracking();
     }
 }

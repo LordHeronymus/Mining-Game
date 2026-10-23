@@ -105,9 +105,7 @@ public sealed class PlayerLadder : MonoBehaviour
         if (!IsClimbing)
         {
             if (Time.time < reattachAt || Mathf.Abs(vertical) < .1f || Mathf.Abs(horizontal) > .1f || jump) return false;
-            gravity = body.gravityScale;
-            body.gravityScale = 0;
-            IsClimbing = true;
+            Attach();
         }
         var tiles = ladders.Tiles;
         float effectiveClimbSpeed = climbSpeed * GameplayTestSettings.MovementMultiplier * stats.MovementWeightFactor;
@@ -122,6 +120,24 @@ public sealed class PlayerLadder : MonoBehaviour
         }
         body.linearVelocity = new Vector2(vx, vy);
         return true;
+    }
+
+    // Save restores: the climb itself is not saved, so a player loaded at a ladder hangs on instead of sliding down until Up/Down.
+    public bool AttachIfContact()
+    {
+        var movement = GetComponent<PlayerMovement>();
+        if (IsClimbing || !enabled || (movement && movement.IsFlying) || !ladders || !body || !bodyCollider ||
+            !ladders.FindContact(bodyCollider.bounds, out _)) return false;
+        Attach();
+        body.linearVelocity = Vector2.zero;
+        return true;
+    }
+
+    void Attach()
+    {
+        gravity = body.gravityScale;
+        body.gravityScale = 0;
+        IsClimbing = true;
     }
 
     public void Detach()
