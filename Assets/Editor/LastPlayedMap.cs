@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 // Only the terrain is carried back into Edit mode. Generation settings stay intact.
@@ -16,6 +18,10 @@ public static class LastPlayedMap
     const string Preview = "MiningGame.PreviewBeforePlay";
     static readonly HashSet<MapGenerator> scheduledInitialCaptures = new();
     static readonly Dictionary<MapGenerator, MapGenerator.MapGenerationSnapshot> initialSnapshots = new();
+    // The preview is never saved (LoadingSceneData strips it), so inserting or removing it must not
+    // mark a clean scene as modified. Otherwise every Play start via MainMenu asks to save SampleScene.
+    static readonly MethodInfo clearSceneDirtiness = typeof(EditorSceneManager).GetMethod(
+        "ClearSceneDirtiness", BindingFlags.Static | BindingFlags.NonPublic, null, new[] { typeof(Scene) }, null);
     static LastPlayedMap()
     {
         MapGenerator.InitialMapPrepared += StoreInitialSnapshot;
@@ -90,7 +96,10 @@ public static class LastPlayedMap
                     Write(map, path);
                     files.Add(path);
                 }
-                if (files.Count > 0) LoadingSceneData.Strip(scene);
+                if (files.Count == 0) continue;
+                bool wasDirty = scene.isDirty;
+                LoadingSceneData.Strip(scene);
+                if (!wasDirty) KeepClean(scene);
             }
             if (files.Count > 0) SessionState.SetString(Preview, string.Join("\n", files));
         }
@@ -257,12 +266,19 @@ public static class LastPlayedMap
         if (EditorApplication.isPlayingOrWillChangePlaymode) return;
         string pending = SessionState.GetString(Pending, "");
         if (string.IsNullOrEmpty(pending)) return;
+        var clean = new List<Scene>();
+        for (int i = 0; i < EditorSceneManager.sceneCount; i++)
+        {
+            var scene = EditorSceneManager.GetSceneAt(i);
+            if (scene.isLoaded && !scene.isDirty) clean.Add(scene);
+        }
         var failed = new List<string>();
         foreach (string path in pending.Split('\n'))
         {
             try { Read(path); }
             catch (Exception ex) { failed.Add(path); Debug.LogError("Letzte Map konnte nicht wiederhergestellt werden: " + ex.Message); }
         }
+        foreach (var scene in clean) KeepClean(scene);
         SessionState.SetString(Pending, string.Join("\n", failed));
         SceneView.RepaintAll();
     }
@@ -298,8 +314,13 @@ public static class LastPlayedMap
             else altar.RestoreState(default);
             map.RestorePreviewMetadata(seed,width,height);
             EditorUtility.SetDirty(map);
-            if (!Application.isPlaying) EditorSceneManager.MarkSceneDirty(map.gameObject.scene);
         }
+    }
+
+    static void KeepClean(Scene scene)
+    {
+        if (clearSceneDirtiness == null || !scene.IsValid() || !scene.isLoaded) return;
+        clearSceneDirtiness.Invoke(null, new object[] { scene });
     }
 
     static void ReadLayer(BinaryReader reader, Tilemap tilemap)

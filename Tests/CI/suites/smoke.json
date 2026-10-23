@@ -6,7 +6,12 @@
     { "name": "LightingChecks" },
     { "name": "SurfaceHarvestIdentityChecks" },
     { "name": "MetaProgressionCoreChecks" },
+    { "name": "ProgressionChecks" },
+    { "name": "MetaCellLedgerChecks" },
     { "name": "ChallengeMigrationChecks" },
+    { "name": "ChallengeReworkChecks" },
+    { "name": "ChallengeSettingsChecks" },
+    { "name": "ChallengeCoreChecks" },
     { "name": "VoiceLineChecks" }
   ]
 }

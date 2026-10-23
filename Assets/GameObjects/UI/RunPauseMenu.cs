@@ -40,7 +40,7 @@ public sealed class RunPauseMenu : MonoBehaviour
         HomeUi.Button("Settings", layout, "Einstellungen", new Vector2(0, -83.5f), new Vector2(500, 76), () =>
             FindFirstObjectByType<SettingsPanel>(FindObjectsInactive.Include)?.Open());
         HomeUi.Button("Home", layout, "Hauptmenü", new Vector2(0, -174.5f), new Vector2(500, 76), SaveAndHome);
-        status = HomeUi.Label("Status", layout, "", new Vector2(0, -243), new Vector2(440, 40), 24);
+        status = HomeUi.Label("Status", layout, "", new Vector2(0, -230), new Vector2(440, 40), 24); // centred in the strip between "Hauptmenü" and the frame
         status.enableAutoSizing = true; status.fontSizeMin = 14; status.fontSizeMax = 24; // longer error messages shrink to fit the strip
         Visible(false); HomeUi.Fit(layout, new Vector2(780, 1070));
     }
@@ -59,7 +59,7 @@ public sealed class RunPauseMenu : MonoBehaviour
         if (IsOpen) return;
         IsOpen = true; previousScale = Time.timeScale; Time.timeScale = 0;
         GameplayInputBlocker.SetBlocked(this, true); GamePause.Set(this, true); transform.SetAsLastSibling(); Visible(true);
-        status.text = "";
+        status.text = MetaProgression.ProfileWarning ?? "";
     }
     public void Close()
     {
