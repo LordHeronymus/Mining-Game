@@ -86,7 +86,8 @@ public sealed class ChallengeGoldFill : MaskableGraphic
 [RequireComponent(typeof(CanvasRenderer))]
 public sealed class ChallengeTierRim : MaskableGraphic
 {
-    const float Glow=26, TopAlpha=.42f, SideAlpha=.3f, BottomAlpha=.18f, Gem=11;
+    // Kept faint on purpose: at the former line width a tier colour reads as a painted bar, a wide soft fade as light.
+    const float Glow=34, TopAlpha=.2f, SideAlpha=.11f, BottomAlpha=.05f, Gem=11;
     protected override void OnPopulateMesh(VertexHelper vh) {
         vh.Clear();
         var r=rectTransform.rect;
@@ -95,17 +96,23 @@ public sealed class ChallengeTierRim : MaskableGraphic
         // Mitred bands fading inwards; the light falls from the top like the lamp glow on the panel.
         Band(vh,new Vector2(r.xMin,r.yMax),new Vector2(r.xMax,r.yMax),new Vector2(r.xMax-Glow,r.yMax-Glow),new Vector2(r.xMin+Glow,r.yMax-Glow),c,TopAlpha,TopAlpha);
         Band(vh,new Vector2(r.xMax,r.yMin),new Vector2(r.xMin,r.yMin),new Vector2(r.xMin+Glow,r.yMin+Glow),new Vector2(r.xMax-Glow,r.yMin+Glow),c,BottomAlpha,BottomAlpha);
-        Band(vh,new Vector2(r.xMin,r.yMin),new Vector2(r.xMin,r.yMax),new Vector2(r.xMin+Glow,r.yMax-Glow),new Vector2(r.xMin+Glow,r.yMin+Glow),c,BottomAlpha,TopAlpha);
-        Band(vh,new Vector2(r.xMax,r.yMax),new Vector2(r.xMax,r.yMin),new Vector2(r.xMax-Glow,r.yMin+Glow),new Vector2(r.xMax-Glow,r.yMax-Glow),c,TopAlpha,BottomAlpha);
+        Band(vh,new Vector2(r.xMin,r.yMin),new Vector2(r.xMin,r.yMax),new Vector2(r.xMin+Glow,r.yMax-Glow),new Vector2(r.xMin+Glow,r.yMin+Glow),c,BottomAlpha,SideAlpha);
+        Band(vh,new Vector2(r.xMax,r.yMax),new Vector2(r.xMax,r.yMin),new Vector2(r.xMax-Glow,r.yMin+Glow),new Vector2(r.xMax-Glow,r.yMax-Glow),c,SideAlpha,BottomAlpha);
         ChallengeGem.Draw(vh,new Vector2(r.xMin+2,r.yMax-2),Gem,color);
         ChallengeGem.Draw(vh,new Vector2(r.xMax-2,r.yMax-2),Gem,color);
     }
-    // a→b is the outer edge, c→d the inner one (c below b, d below a); the outer edge carries alpha, the inner none.
+    // a→b is the outer edge, c→d the inner one (c below b, d below a). Alpha falls off in two steps (full, a quarter at
+    // 40 % of the width, none), which reads softer than one linear ramp.
     static void Band(VertexHelper vh,Vector2 a,Vector2 b,Vector2 c,Vector2 d,Color32 tone,float alphaA,float alphaB) {
-        int n=vh.currentVertCount;
+        Vector2 e=Vector2.Lerp(b,c,.4f), f=Vector2.Lerp(a,d,.4f);
         Color32 clear=tone;clear.a=0;
-        Color32 ta=tone;ta.a=(byte)(255*alphaA);Color32 tb=tone;tb.a=(byte)(255*alphaB);
-        vh.AddVert(a,ta,Vector2.zero);vh.AddVert(b,tb,Vector2.zero);vh.AddVert(c,clear,Vector2.zero);vh.AddVert(d,clear,Vector2.zero);
+        Quad(vh,a,b,e,f,Alpha(tone,alphaA),Alpha(tone,alphaB),Alpha(tone,alphaB*.25f),Alpha(tone,alphaA*.25f));
+        Quad(vh,f,e,c,d,Alpha(tone,alphaA*.25f),Alpha(tone,alphaB*.25f),clear,clear);
+    }
+    static Color32 Alpha(Color32 tone,float alpha) { tone.a=(byte)Mathf.RoundToInt(255*Mathf.Clamp01(alpha)); return tone; }
+    static void Quad(VertexHelper vh,Vector2 a,Vector2 b,Vector2 c,Vector2 d,Color32 ca,Color32 cb,Color32 cc,Color32 cd) {
+        int n=vh.currentVertCount;
+        vh.AddVert(a,ca,Vector2.zero);vh.AddVert(b,cb,Vector2.zero);vh.AddVert(c,cc,Vector2.zero);vh.AddVert(d,cd,Vector2.zero);
         vh.AddTriangle(n,n+1,n+2);vh.AddTriangle(n+2,n+3,n);
     }
 }
@@ -152,7 +159,7 @@ public sealed class ChallengeStar : MaskableGraphic
 {
     bool filled;
     public bool Filled { get => filled; set { if (filled == value) return; filled = value; SetVerticesDirty(); } }
-    static readonly Color32 Rim=new Color32(214,160,62,255), Hollow=new Color32(28,16,9,235);
+    static readonly Color32 Rim=new Color32(214,160,62,255), DimRim=new Color32(150,112,52,230), Hollow=new Color32(24,13,7,200);
     static readonly Color32 Deep=new Color32(196,110,12,255), Bright=new Color32(255,226,120,255);
     protected override void OnPopulateMesh(VertexHelper vh) {
         vh.Clear();
@@ -160,9 +167,15 @@ public sealed class ChallengeStar : MaskableGraphic
         float outer=Mathf.Min(r.width,r.height)*.5f;
         Vector2 c=r.center+new Vector2(0,-outer*.06f);
         Color tint=color;
-        Star(vh,c,outer,Multiply(Rim,tint),Multiply(Rim,tint));
-        if(filled) Star(vh,c,outer-2.4f,Multiply(Deep,tint),Multiply(Bright,tint));
-        else Star(vh,c,outer-2.4f,Multiply(Hollow,tint),Multiply(Hollow,tint));
+        if(filled) {
+            // Warm halo behind the marked star, then a bright rim and a polished gold body.
+            Star(vh,c,outer+3,Multiply(new Color32(255,190,60,90),tint),Multiply(new Color32(255,190,60,0),tint));
+            Star(vh,c,outer,Multiply(Bright,tint),Multiply(Bright,tint));
+            Star(vh,c,outer-2.2f,Multiply(Deep,tint),Multiply(Bright,tint));
+        } else {
+            Star(vh,c,outer,Multiply(DimRim,tint),Multiply(DimRim,tint));
+            Star(vh,c,outer-2.2f,Multiply(Hollow,tint),Multiply(Hollow,tint));
+        }
     }
     static Color Multiply(Color32 value,Color tint) { Color c=value; return new Color(c.r*tint.r,c.g*tint.g,c.b*tint.b,c.a*tint.a); }
     // Centre colour inside, tip colour at the points: a bright rim with a deeper heart reads as polished metal.

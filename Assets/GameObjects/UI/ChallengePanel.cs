@@ -268,9 +268,8 @@ public sealed class ChallengePanel : MonoBehaviour
         var star = HomeUi.Rect("Star", hit.transform, Vector2.zero, new Vector2(38, 38)).gameObject.AddComponent<ChallengeStar>();
         star.Filled = tracked; star.raycastTarget = false;
         var button = hit.gameObject.AddComponent<Button>();
-        button.targetGraphic = star; button.navigation = new Navigation { mode = Navigation.Mode.None };
-        var colors = button.colors; colors.normalColor = Color.white; colors.highlightedColor = colors.selectedColor = new Color(1, .93f, .78f);
-        colors.pressedColor = new Color(.78f, .74f, .68f); colors.fadeDuration = .08f; button.colors = colors;
+        // No colour tint: the selectable tint would dim the star whenever the button counts as not interactable (edit mode).
+        button.targetGraphic = star; button.transition = Selectable.Transition.None; button.navigation = new Navigation { mode = Navigation.Mode.None };
         button.onClick.AddListener(() => MetaProgression.SetTracked(key, !MetaProgression.IsTracked(key)));
     }
 

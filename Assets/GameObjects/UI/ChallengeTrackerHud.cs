@@ -78,8 +78,11 @@ public sealed class ChallengeTrackerHud : MonoBehaviour
         row.name = Label("Name", row.rect, "", 54, 6, textWidth - 104, 26, 21, TextAlignmentOptions.Left);
         row.counter = Label("Counter", row.rect, "", 54 + textWidth - 102, 8, 102, 24, 18, TextAlignmentOptions.Right);
         row.counter.color = Muted;
+        // Brass hairline around a dark groove, so an empty bar still reads as a bar on the dark wood.
         var track = Place("Progress Track", row.rect, 54, 38, textWidth, 10).gameObject.AddComponent<Image>();
-        track.color = new Color(0, 0, 0, .55f); track.raycastTarget = false;
+        track.color = new Color(ProgressionArt.Gold.r, ProgressionArt.Gold.g, ProgressionArt.Gold.b, .45f); track.raycastTarget = false;
+        var groove = Place("Groove", track.transform, 1, 1, textWidth - 2, 8).gameObject.AddComponent<Image>();
+        groove.color = new Color(.05f, .03f, .02f, .92f); groove.raycastTarget = false;
         var inner = Place("Interior", track.transform, 1.5f, 1.5f, textWidth - 3, 7);
         row.fill = HomeUi.Rect("Progress Fill", inner, Vector2.zero, Vector2.zero);
         row.fill.anchorMin = Vector2.zero; row.fill.anchorMax = new Vector2(0, 1); row.fill.offsetMin = row.fill.offsetMax = Vector2.zero;
