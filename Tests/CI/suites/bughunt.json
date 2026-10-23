@@ -19,13 +19,13 @@
       "name": "BughuntDragClickChecks"
     },
     {
+      "name": "BughuntEditorHooksChecks"
+    },
+    {
       "name": "BughuntEditorLeakChecks"
     },
     {
       "name": "BughuntEditorToolsChecks"
-    },
-    {
-      "name": "BughuntEditorHooksChecks"
     },
     {
       "name": "BughuntEndScreenChecks"
