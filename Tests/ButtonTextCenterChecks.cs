@@ -12,7 +12,8 @@ using Object = UnityEngine.Object;
 
 // Requires a fresh Play start from MainMenu. Runs in an isolated save/meta profile.
 // Measures every button caption in the main views: glyph ink stays inside the visible gold rim (also for the worst
-// case Ä/g at the label's font size), and the gap above the cap line equals the gap below the baseline.
+// case Ä/g at the label's font size), the gap above the cap line equals the gap below the baseline, and centred captions
+// have equal gaps left and right of their visible ink inside the label box (margins included).
 // Screenshots: Temp/ButtonText/Nachher-<View>.png (+ -Zoom crops); report: Temp/ButtonTextCenterChecks.txt.
 // (The "Vorher" images of 22.10.2026 came from the first commit of this script, before ButtonTextCentering existed.)
 public static class ButtonTextCenterChecks
@@ -33,7 +34,7 @@ public static class ButtonTextCenterChecks
 public sealed class ButtonTextCenterProbe : MonoBehaviour
 {
     const string Report = "Temp/ButtonTextCenterChecks.txt";
-    const float BalanceTolerance = 1.5f, InkTolerance = .5f;
+    const float BalanceTolerance = 1.5f, InkTolerance = .5f, SideTolerance = 1f;
     static readonly string[] Ascenders = { "Ä", "Ö", "Ü", "É", "f", "l" }, Descenders = { "g", "j", "p", "q", "y" };
     string save, meta, gps, phase;
     bool clean;
@@ -279,9 +280,17 @@ public sealed class ButtonTextCenterProbe : MonoBehaviour
         bool sidesInside = inkLeft >= inner.xMin - InkTolerance && inkRight <= inner.xMax + InkTolerance;
         bool worstInside = worstTop <= inner.yMax + InkTolerance && worstBottom >= inner.yMin - InkTolerance;
         bool centred = Mathf.Abs(balance) <= BalanceTolerance;
+        // Horizontal: ink gaps to the label box minus margins (where TMP centres the line), measured in frame units.
+        var box = label.rectTransform.rect; var margin = label.margin;
+        float boxLeft = ToFrame(label, frameRect, new Vector2(box.xMin + margin.x, box.center.y)).x;
+        float boxRight = ToFrame(label, frameRect, new Vector2(box.xMax - margin.z, box.center.y)).x;
+        bool centreAligned = label.horizontalAlignment == HorizontalAlignmentOptions.Center;
+        float sideBalance = (inkLeft - boxLeft) - (boxRight - inkRight);
+        bool sideCentred = !centreAligned || phase == "Vorher" || Mathf.Abs(sideBalance) <= SideTolerance;
         bool component = label.GetComponent<ButtonTextCentering>();
-        bool ok = !visibleFrame || (inkInside && sidesInside && worstInside && centred && (phase == "Vorher" || component));
+        bool ok = !visibleFrame || (inkInside && sidesInside && worstInside && centred && sideCentred && (phase == "Vorher" || component));
         string metrics = $"{label.fontSize:0.#}pt | Rahmen innen {inner.height:0.#} | oben {topGap:0.0} unten {bottomGap:0.0} Differenz {balance:+0.0;-0.0;0.0}"
+            + (centreAligned ? $" | links/rechts {sideBalance:+0.0;-0.0;0.0}" : "")
             + $" | Tinte {(inkInside ? "innen" : "RAGT HERAUS")}{(sidesInside ? "" : " (seitlich)")} | Ä/g {(worstInside ? "passt" : "RAGT HERAUS")}"
             + (visibleFrame ? "" : " | Rahmen unsichtbar") + (phase == "Nachher" ? component ? " | zentriert" : " | OHNE Zentrierung" : "");
         entries.Add((view, $"{button.name} \"{label.text}\"", metrics, ok));
