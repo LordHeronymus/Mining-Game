@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code | Neue Kaufpreise Spitzhacken-Baupläne | `claude/preise-traglast` | `wt-preise-traglast` | `Workbench/Recipes` (Spitzhacken), `GpsProfile.asset` | ja (Testbank) | 23.10.2026 21:45 |
 
 ## Zuletzt abgeschlossen
 
