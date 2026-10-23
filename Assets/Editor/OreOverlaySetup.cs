@@ -280,7 +280,7 @@ public static class OreOverlaySetup
                 if (generated[i] == newOre && blocks[i] &&
                     (blocks[i].IsStone || blocks[i].id == BlockType.Dirt)) blocks[i] = newOre;
         }
-        var richness = OreVeins.Build(blocks, width, height, map.ActiveSeed);
+        var richness = OreVeins.Build(blocks, width, height, map.ActiveSeed, ThinVeinMediumSettings.Current);
         int changed = 0;
         for (int y = 0; y < height; y++)
             for (int x = 0; x < width; x++)

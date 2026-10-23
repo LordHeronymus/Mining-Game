@@ -128,6 +128,8 @@ public static partial class GpsSchema
         new GpsSectionSpec("Erzverteilung", "Erze", typeof(MapGenerator), "",
             new GpsFieldSpec("useOreSettings", "Erzkonfiguration aktiv", applyTime: GpsApplyTime.NewMap),
             new GpsFieldSpec("oreSettings", "Erze", applyTime: GpsApplyTime.NewMap)),
+        new GpsSectionSpec("Erzverteilung", "Dünne Adern", typeof(GpsPreferences), "",
+            new GpsFieldSpec("thinVeinMedium", "Medium-Erze in dünnen Adern", applyTime: GpsApplyTime.NewMap)),
         new GpsSectionSpec("Partikel", "Ultronium", typeof(MapLighting), "",
             new GpsFieldSpec("ultroniumLightIntensity", "Lichtintensität", min: 0f, max: 1f),
             new GpsFieldSpec("ultroniumPulsesPerMinute", "Pulse pro Minute", min: 0, max: 120),

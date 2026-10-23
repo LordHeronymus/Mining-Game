@@ -25,6 +25,7 @@ public sealed class GpsProfile : ScriptableObject
     public StartingResourcesData startingResources = new();
     public MetaProgressionSettings metaProgression = new();
     public ChallengeSettings challenges = new();
+    public ThinVeinMediumSettings thinVeinMedium = new();
     public float panelBackdropAlpha = .55f, panelElementAlpha = 1f;
     public float loadingTwinkleFrequency = 1f;
     public float levelUpAnimationOffsetSeconds;
