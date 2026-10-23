@@ -172,9 +172,10 @@ public static class TreeChopSpikes
         if (!ambience) ambience = Object.FindFirstObjectByType<SurfaceAmbience>();
         if (!ambience) return "keine";
         const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
-        var clip = typeof(SurfaceAmbience).GetField("clip", flags).GetValue(ambience) as AudioClip;
-        var sources = (AudioSource[])typeof(SurfaceAmbience).GetField("sources", flags).GetValue(ambience);
-        return $"{(clip ? clip.name + " " + clip.loadState : "-")}, running {typeof(SurfaceAmbience).GetField("running", flags).GetValue(ambience)}, " +
+        var loop = typeof(SurfaceAmbience).GetField("day", flags).GetValue(ambience);
+        var clip = loop.GetType().GetField("clip").GetValue(loop) as AudioClip;
+        var sources = (AudioSource[])loop.GetType().GetField("sources").GetValue(loop);
+        return $"{(clip ? clip.name + " " + clip.loadState : "-")}, running {loop.GetType().GetField("running").GetValue(loop)}, " +
             string.Join("/", sources.Select(s => s && s.isPlaying ? "spielt" : "still"));
     }
 
