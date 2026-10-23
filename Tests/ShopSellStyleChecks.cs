@@ -26,13 +26,12 @@ public sealed class ShopSellStyleProbe : MonoBehaviour
         var sell=Object.FindFirstObjectByType<SellPage>(FindObjectsInactive.Include);
         var inventory=InventoryManager.Instance; var stats=StatsManager.Instance;
         var snapshot=inventory.GetSnapshot().ToDictionary(x=>x.Key,x=>x.Value); int money=stats.Money;
-        var noWeight=typeof(GameplayTestSettings).GetField("noWeight",BindingFlags.NonPublic|BindingFlags.Static);
-        var infinite=typeof(GameplayTestSettings).GetField("infiniteMoney",BindingFlags.NonPublic|BindingFlags.Static);
-        bool previousWeight=(bool)noWeight.GetValue(null),previousInfinite=(bool)infinite.GetValue(null);
+        var tests=GpsSettings.Tests;
+        bool previousWeight=tests.noWeight,previousInfinite=tests.infiniteMoney;
         string result="FAILED: incomplete";
         try
         {
-            noWeight.SetValue(null,true); infinite.SetValue(null,false); inventory.ResetAll();
+            tests.noWeight=true; tests.infiniteMoney=false; inventory.ResetAll();
             var catalog=Resources.Load<ItemCatalog>("ItemCatalog").items;
             var ores=catalog.Where(x=>x && x.category==ItemCategory.Ore && x.worth>0).Take(10).ToArray();
             Check(ores.Length==10,"Need ten actual ores for overflow test.");
@@ -77,7 +76,8 @@ public sealed class ShopSellStyleProbe : MonoBehaviour
             int beforeMoney=stats.Money; action.onClick.Invoke();
             Check(inventory.GetCount(iron)==count-1 && stats.Money==beforeMoney+iron.worth,"One-item button sells exact amount/value.");
             Check(slider.maxValue==count-1,"Slider maximum follows the remaining stock.");
-            slider.value=6; yield return null;
+            slider.value=6; yield return new WaitForSecondsRealtime(.3f);
+            ScreenCapture.CaptureScreenshot("Temp/verkaufsregler-shop.png"); yield return null; yield return null;
             Check(sell.SaleAmount==6 && slider.handleRect.GetComponentInChildren<TextMeshProUGUI>().text=="6","Handle shows the chosen amount.");
             Check(action.GetComponentInChildren<TextMeshProUGUI>().text=="6 "+iron.displayName+" verkaufen","Button names the chosen amount.");
             Check(details.Find("Proceeds").GetComponentsInChildren<TextMeshProUGUI>()[1].text==ShopMoneyFormatter.Format(iron.worth*6),"Revenue follows the slider.");
@@ -104,7 +104,7 @@ public sealed class ShopSellStyleProbe : MonoBehaviour
         {
             sell.SetSearch(""); shop.ShowPanel(false); inventory.ResetAll();
             foreach(var entry in snapshot) inventory.AddStartingItem(entry.Key,entry.Value);
-            stats.AddMoney(money-stats.Money); noWeight.SetValue(null,previousWeight); infinite.SetValue(null,previousInfinite);
+            stats.AddMoney(money-stats.Money); tests.noWeight=previousWeight; tests.infiniteMoney=previousInfinite;
             File.WriteAllText("Temp/ShopSellStyleChecks-result.txt",result); Destroy(gameObject);
         }
     }
