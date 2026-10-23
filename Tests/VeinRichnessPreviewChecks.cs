@@ -9,15 +9,15 @@ using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
-// Still-image comparison for Medium ores in thin veins (ThinVeinMedium): generates a world like the game
-// (GPS values, caves, altar chamber) and renders a few real veins with their actual stone and ore tiles, each as
-// a pair "before | after" (left: previous richness, right: with ThinVeinMedium; last two rows: veins with a Rich
-// spine and the optional switch). Temporary additive scene, nothing in SampleScene changes.
-// Output: Temp/ThinVeinMedium/Vein_01.png … and Temp/ThinVeinMediumPreviewChecks.txt.
-public static class ThinVeinMediumPreviewChecks
+// Still-image comparison for the ore shares per vein thickness (VeinRichness): generates a world like the game
+// (GPS values, caves, altar chamber) and renders real veins with their actual stone and ore tiles, each as a pair
+// "before | after" (left: previous fixed thresholds, right: VeinRichness defaults), two each thin, medium, thick.
+// Temporary additive scene, nothing in SampleScene changes.
+// Output: Temp/VeinRichness/Vein_01.png … and Temp/VeinRichnessPreviewChecks.txt.
+public static class VeinRichnessPreviewChecks
 {
-    const string Folder = "Temp/ThinVeinMedium";
-    const string ReportPath = "Temp/ThinVeinMediumPreviewChecks.txt";
+    const string Folder = "Temp/VeinRichness";
+    const string ReportPath = "Temp/VeinRichnessPreviewChecks.txt";
     const int Seed = -717317, Layer = 31, PixelsPerCell = 32, Columns = 14, Rows = 14;
     const float Cell = .5f;
 
@@ -63,25 +63,43 @@ public static class ThinVeinMediumPreviewChecks
         ConnectedOreVeins.Generate(blocks, width, height, Seed, sampler, Minimum,
             (x, y) => caves[y * width + x] || chamber.IsReserved(new Vector3Int(x + offsetX, -y, 0)));
         var before = OreVeins.Build(blocks, width, height, Seed);
-        var after = OreVeins.Build(blocks, width, height, Seed, new ThinVeinMediumSettings());
-        var cores = OreVeins.Build(blocks, width, height, Seed, new ThinVeinMediumSettings { includeRichCores = true });
+        var after = OreVeins.Build(blocks, width, height, Seed, new VeinRichnessSettings());
+        var depth = new int[blocks.Length];
+        {
+            // Distance to the vein boundary, as in OreVeins.BuildSteps.
+            var queue = new int[blocks.Length];
+            int head = 0, tail = 0;
+            for (int i = 0; i < blocks.Length; i++)
+            {
+                var block = blocks[i];
+                if (!block || !block.HasOreOverlays) continue;
+                int x = i % width, y = i / width;
+                if (x == 0 || y == 0 || x == width - 1 || y == height - 1 || blocks[i - 1] != block || blocks[i + 1] != block ||
+                    blocks[i - width] != block || blocks[i + width] != block) { depth[i] = 1; queue[tail++] = i; }
+            }
+            while (head < tail)
+            {
+                int i = queue[head++], x = i % width, y = i / width;
+                foreach (int to in new[] { x > 0 ? i - 1 : -1, x + 1 < width ? i + 1 : -1, y > 0 ? i - width : -1, y + 1 < height ? i + width : -1 })
+                    if (to >= 0 && depth[to] == 0 && blocks[to] == blocks[i]) { depth[to] = depth[i] + 1; queue[tail++] = to; }
+            }
+        }
 
-        // Six thin veins of different ores (between 10 and 24 blocks), then two veins with a Rich spine.
+        // Two veins per thickness (thin, medium, thick), different ores where possible.
+        string[] kinds = { "dünn", "mittel", "dick" };
         var rows = new List<(int[] cells, OreRichness[] right, string kind)>();
-        var seen = new HashSet<BlockType>();
+        var perKind = new int[3];
+        var seen = new HashSet<(BlockType, int)>();
         foreach (var cells in Veins(blocks, width, height))
         {
             var ore = blocks[cells[0]];
-            bool changed = cells.Any(i => after[i] != before[i]);
-            if (rows.Count < 6 && changed && cells.Length >= 10 && cells.Length <= 24 && Span(cells, width) <= Columns - 2 && seen.Add(ore.id))
-                rows.Add((cells, after, "dünn"));
+            int kind = Mathf.Min(2, cells.Max(i => depth[i]) - 1);
+            if (perKind[kind] >= 2 || cells.Length < 10 || cells.Length > 40 || Span(cells, width) > Columns - 2 || !seen.Add((ore.id, kind))) continue;
+            if (!cells.Any(i => after[i] != before[i])) continue;
+            perKind[kind]++;
+            rows.Add((cells, after, kinds[kind]));
         }
-        foreach (var cells in Veins(blocks, width, height))
-        {
-            if (rows.Count >= 8) break;
-            bool core = cells.Any(i => cores[i] != before[i]) && !cells.Any(i => before[i] == OreRichness.Medium);
-            if (core && cells.Length >= 12 && cells.Length <= 26 && Span(cells, width) <= Columns - 2) rows.Add((cells, cores, "Rich-Kern"));
-        }
+        rows.Sort((a, b) => Array.IndexOf(kinds, a.kind).CompareTo(Array.IndexOf(kinds, b.kind)));
         if (rows.Count < 4) return "FAIL: zu wenige Beispieladern (" + rows.Count + ").";
 
         var previous = SceneManager.GetActiveScene();
