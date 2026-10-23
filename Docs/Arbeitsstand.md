@@ -12,7 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
-| Claude Code (Cloud, Projekt-Thread „Cloud Play-, Optik- und Performance-Tests“) | Performance: Szenenstart (UI-Panels im Awake), danach weitere Punkte aus Docs/Performance-Uebergabe.md | claude/ui-panel-startup | Cloud | GameplayAssetPreload, MainMenuController, UI-Panels (WorkbenchPanel, BuyPage, SettingsPanel, CompactHud), Docs/Performance-Uebergabe.md | nein | 23.10.2026 14:00 |
+| Claude Code (Cloud, Projekt-Thread „Cloud Play-, Optik- und Performance-Tests“) | Bauplan-Bilder im Shop: 512 px, BC7 (Freigabe Benutzer 23.10.) | claude/blueprint-compression | Cloud (Test lokal auf Testbank) | Assets/Resources/Shop/*Recipe.png.meta, Tests/BlueprintTextureChecks.cs | ja (Testbank) | 23.10.2026 15:00 |
 
 ## Zuletzt abgeschlossen
 
