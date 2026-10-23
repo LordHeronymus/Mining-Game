@@ -7,7 +7,7 @@ using UnityEngine.UI;
 // The width follows the caption so the text never runs into the brass end caps.
 public sealed class EntrySign : MonoBehaviour
 {
-    const float FadeDuration = .12f, Height = 92, FontSize = 40, CapMargin = 86, WorldScale = .01f, RoofGap = .45f;
+    const float FadeDuration = .12f, Height = 92, FontSize = 40, CapMargin = 86, WorldScale = .01f, RoofGap = .27f;
     static readonly Color Cream = new Color32(255, 245, 229, 255);
 
     public bool Visible { get; set; }
