@@ -27,7 +27,10 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float randomness = .75f;
     [SerializeField, Min(0f)] float spawnQuietRadius = 18f;
     [SerializeField, Range(0f, 1f)] float nearSpawnDensity = .15f;
-    [SerializeField] Vector2 respawnSeconds = new Vector2(90f, 180f);
+    [SerializeField] Vector2 respawnSeconds = new Vector2(69f, 138f);
+    // Regrowth picks any free grass-covered surface cell; the emptier the meadow, the faster it comes back.
+    [SerializeField, Min(1f)] float maximumRegrowthSpeed = 4f;
+    [SerializeField, Min(1f)] float neighborRegrowthWeight = 3f;
     [SerializeField] Vector2Int fiberYield = new Vector2Int(2, 5);
     [SerializeField] Vector2Int healingHerbYield = new Vector2Int(1, 3);
     [SerializeField] Vector2Int healingHerbFiberYield = new Vector2Int(1, 3);
@@ -58,7 +61,10 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     float appliedHealingHerbSwayFrequency = float.NaN;
 
     public int PatchCount => patches.Count;
-    public int Capacity => sites.Count;
+    public int Capacity => maximumPatches;
+    // 1 with a full meadow, up to maximumRegrowthSpeed with no grass left.
+    public float RegrowthSpeed => maximumPatches <= 0 ? 1f :
+        1f + (Mathf.Max(1f, maximumRegrowthSpeed) - 1f) * Mathf.Clamp01(1f - patches.Count / (float)maximumPatches);
     public IEnumerable<TallGrassPatch> ActivePatches => patches.Values;
     public SavedGrassland CaptureRunState()
     {
@@ -335,28 +341,66 @@ public sealed class SurfaceTallGrass : MonoBehaviour
             ConvertOneGrass();
             ScheduleConversion();
         }
-        if (patches.Count >= sites.Count || Time.time < nextRespawn) return;
-        int start = respawnRandom.Next(sites.Count);
-        var trees = FindTrees();
-        for (int i = 0; i < sites.Count; i++)
+        if (patches.Count >= maximumPatches) return;
+        // The countdown runs faster while grass is missing; the saved remaining time stays in seconds.
+        nextRespawn -= Time.deltaTime * (RegrowthSpeed - 1f);
+        if (Time.time < nextRespawn) return;
+        int site = PickRegrowthSite();
+        if (site != int.MinValue)
         {
-            int x = sites[(start + i) % sites.Count];
+            float worldX = map.Terrain.GetCellCenterWorld(new Vector3Int(site, 0)).x;
+            if (Mathf.Abs(worldX - map.Terrain.GetCellCenterWorld(new Vector3Int(0, 0)).x) >= healingHerbSpawnAreaSize &&
+                medicinalHerbVariants != null && medicinalHerbVariants.Length > 0 &&
+                respawnRandom.NextDouble() < Mathf.Clamp01(healingHerbRarityPercent / 100f))
+                healingHerbSites.Add(site);
+            else healingHerbSites.Remove(site);
+            Spawn(site, worldX);
+        }
+        ScheduleRespawn();
+    }
+
+    // Any free grass-covered surface cell can grow grass: ground below and on both sides, no tree, no building.
+    // Cells next to standing grass weigh more, so meadows spread; the spawn area stays sparse like the first layout.
+    int PickRegrowthSite()
+    {
+        int width = map.GeneratedWidth;
+        if (width <= 0) return int.MinValue;
+        var trees = FindTrees();
+        var buildingBounds = new List<Vector2>();
+        foreach (var building in FindObjectsByType<ShopBuilding>(FindObjectsSortMode.None)) CacheBounds(building, buildingBounds);
+        foreach (var building in FindObjectsByType<WorkbenchBuilding>(FindObjectsSortMode.None)) CacheBounds(building, buildingBounds);
+        foreach (var building in FindObjectsByType<EnergyMonolyth>(FindObjectsSortMode.None)) CacheBounds(building, buildingBounds);
+        foreach (var building in FindObjectsByType<SurfaceStorageBuilding>(FindObjectsSortMode.None)) CacheBounds(building, buildingBounds);
+        var overlay = map.GrassOverlay;
+        float spawnX = map.Terrain.GetCellCenterWorld(new Vector3Int(0, 0)).x;
+        int left = -width / 2;
+        double total = 0d;
+        var candidates = new List<(int x, double weight)>();
+        for (int x = left + 1; x < left + width - 1; x++)
+        {
             if (patches.ContainsKey(x)) continue;
             var cell = new Vector3Int(x, 0);
             if (!map.Terrain.HasTile(cell) || !map.Terrain.HasTile(cell + Vector3Int.left) ||
                 !map.Terrain.HasTile(cell + Vector3Int.right)) continue;
+            if (overlay && !overlay.HasTile(cell)) continue;
             if (trees && trees.Protects(cell)) continue;
             float worldX = map.Terrain.GetCellCenterWorld(cell).x;
-            if (NearBuilding(worldX)) continue;
-            if (Mathf.Abs(worldX - map.Terrain.GetCellCenterWorld(new Vector3Int(0, 0)).x) >= healingHerbSpawnAreaSize &&
-                medicinalHerbVariants != null && medicinalHerbVariants.Length > 0 &&
-                respawnRandom.NextDouble() < Mathf.Clamp01(healingHerbRarityPercent / 100f))
-                healingHerbSites.Add(x);
-            else healingHerbSites.Remove(x);
-            Spawn(x, worldX);
-            break;
+            if (NearBuilding(worldX, buildingBounds)) continue;
+            double weight = spawnQuietRadius > 0f ? Mathf.Lerp(nearSpawnDensity, 1f,
+                Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(Mathf.Abs(worldX - spawnX) / spawnQuietRadius))) : 1d;
+            if (patches.ContainsKey(x - 1) || patches.ContainsKey(x + 1)) weight *= Mathf.Max(1f, neighborRegrowthWeight);
+            if (weight <= 0d) continue;
+            candidates.Add((x, weight));
+            total += weight;
         }
-        ScheduleRespawn();
+        if (candidates.Count == 0) return int.MinValue;
+        double roll = respawnRandom.NextDouble() * total;
+        foreach (var candidate in candidates)
+        {
+            roll -= candidate.weight;
+            if (roll < 0d) return candidate.x;
+        }
+        return candidates[candidates.Count - 1].x;
     }
 
     void RefreshSwaySettings()
@@ -540,7 +584,8 @@ public sealed class SurfaceTallGrass : MonoBehaviour
             if (Application.isPlaying) Destroy(patch.gameObject);
             else DestroyImmediate(patch.gameObject);
         }
-        if (Application.isPlaying && patches.Count < sites.Count) ScheduleRespawn();
+        // A running countdown keeps going, so cutting more grass never delays the next regrowth.
+        if (Application.isPlaying && patches.Count < maximumPatches && nextRespawn <= Time.time) ScheduleRespawn();
     }
 
     void Clear()
@@ -557,19 +602,6 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     float Hash01(int x, uint stream) =>
         (OreVeins.Hash(map.ActiveSeed, x, 0, stream) & 0xFFFFFFu) / 16777216f;
 
-    static bool NearBuilding(float x)
-    {
-        foreach (var building in FindObjectsByType<ShopBuilding>(FindObjectsSortMode.None))
-            if (Overlaps(x, building.GetComponent<Collider2D>())) return true;
-        foreach (var building in FindObjectsByType<WorkbenchBuilding>(FindObjectsSortMode.None))
-            if (Overlaps(x, building.GetComponent<Collider2D>())) return true;
-        foreach (var building in FindObjectsByType<EnergyMonolyth>(FindObjectsSortMode.None))
-            if (Overlaps(x, building.GetComponent<Collider2D>())) return true;
-        foreach (var building in FindObjectsByType<SurfaceStorageBuilding>(FindObjectsSortMode.None))
-            if (Overlaps(x, building.GetComponent<Collider2D>())) return true;
-        return false;
-    }
-
     static void CacheBounds(Component building, List<Vector2> bounds)
     {
         var collider = building.GetComponent<Collider2D>();
@@ -581,7 +613,4 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         foreach (var range in bounds) if (Mathf.Abs(x - range.x) < range.y) return true;
         return false;
     }
-
-    static bool Overlaps(float x, Collider2D collider) => collider &&
-        Mathf.Abs(x - collider.bounds.center.x) < collider.bounds.extents.x + 1.5f;
 }
