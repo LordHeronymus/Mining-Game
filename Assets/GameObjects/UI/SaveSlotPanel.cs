@@ -119,6 +119,8 @@ public sealed class SaveSlotPanel : MonoBehaviour
     {
         HomeUi.StyleSaveButton(button);
     }
+    // Deepest point of the run; headers of older saves only know the position at saving.
+    internal static int ShownDepth(GameSaveSystem.Summary summary) => summary.hasMaxDepth ? Math.Max(summary.maxDepth, summary.depth) : summary.depth;
     static string Date(long ticks) => new DateTime(ticks, DateTimeKind.Utc).ToLocalTime().ToString("dd.MM.yyyy  HH:mm");
     void Refresh()
     {
@@ -133,7 +135,7 @@ public sealed class SaveSlotPanel : MonoBehaviour
             buttons[i].GetComponentInChildren<TextMeshProUGUI>().text = string.IsNullOrWhiteSpace(summary?.name) ? "Spielstand " + slot : summary.name;
             descriptions[i].text = summary == null ? (GameSaveSystem.HasSlotData(slot) ? "Nicht lesbar" : "Leer") : Date(summary.lastOpenedUtc);
             statistics[i].SetActive(summary != null);
-            depths[i].text = summary == null ? "" : summary.depth.ToString("N0", German) + " m";
+            depths[i].text = summary == null ? "" : ShownDepth(summary).ToString("N0", German) + " m";
             balances[i].text = summary == null ? "" : summary.money.ToString("N0", German) + " $";
             if (summary != null)
             {
