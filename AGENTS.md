@@ -11,6 +11,7 @@ Die vollständige Änderungshistorie steht in `Docs/Changelog.md`. Dort nur bei 
 - Kompakt antworten, auf das Wesentliche konzentrieren. Details nur, wenn nötig oder ausdrücklich erfragt.
 - Stellt der Benutzer eine Frage, zuerst nur die Frage beantworten. Auch wenn sie eine mögliche Änderung betrifft: nichts programmieren oder verändern, bis eine ausdrückliche Freigabe in einer folgenden Nachricht kommt. Eine ausdrückliche Arbeitsanweisung ohne Frage direkt ausführen.
 - Nach jeder abgeschlossenen Aufgabe ein kurzes Resümee in einfacher Sprache ohne technische Details: was geändert wurde, wie es im Prinzip funktioniert und was der nächste Schritt ist.
+- Bei Zwischenständen (Aufgabe noch nicht fertig, z. B. während auf Tests gewartet wird) ein sehr kompaktes Zwischenresümee in einfacher Sprache: 2–3 Sätze zu Stand, Hindernis (falls vorhanden) und nächstem Schritt.
 
 ## Arbeitsregeln
 
