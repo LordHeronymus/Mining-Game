@@ -64,22 +64,39 @@ public static class GoldCursorChecks
                 var actual = highlight.GetTile<Tile>(Vector3Int.zero);
                 var expected = (Tile)type.GetField(smart ? "smartHighlightTile" : "normalHighlightTile", flags).GetValue(miner);
                 if (actual != expected) throw new Exception("Incorrect cursor mode mapping");
-                float width = actual.sprite.bounds.size.x * 2.2f * .85f;
+                float width = actual.sprite.bounds.size.x * 2.2f * .62f;
                 if (Mathf.Abs(width - 1.1f) > .005f) throw new Exception("Outline does not match the cell: " + width);
                 var raw = new Texture2D(2,2);
                 raw.LoadImage(File.ReadAllBytes("Assets/Resources/Cursor/" + (smart ? "Smart" : "Normal") + "CursorFrame.png"));
                 if (raw.GetPixel(raw.width/2, raw.height/2).a > .01f) throw new Exception("Opaque cursor center");
                 if (smart && raw.GetPixel(raw.width/2, Mathf.RoundToInt(raw.height*.07f)).a > .01f) throw new Exception("Smart cursor has connecting edge");
                 UnityEngine.Object.DestroyImmediate(raw);
+                var renderer = highlight.GetComponent<TilemapRenderer>();
+                if (renderer.sortingLayerID != SortingLayer.layers[SortingLayer.layers.Length - 1].id || renderer.sortingOrder <= 32761)
+                    throw new Exception("Cursor is not drawn above the darkness: order " + renderer.sortingOrder);
+                var glintRoot = (GameObject)type.GetField("glintRoot", flags).GetValue(miner);
+                if (!glintRoot || !glintRoot.activeSelf) throw new Exception("Corner glints missing");
+                if (grid.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>(true).Length > 0 ||
+                    glintRoot.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>(true).Length > 0)
+                    throw new Exception("Cursor created a light source");
+                foreach (var glint in glintRoot.GetComponentsInChildren<SpriteRenderer>())
+                {
+                    if (glint.sortingOrder <= renderer.sortingOrder) throw new Exception("Glint below the frame");
+                    float dx = Mathf.Abs(glint.transform.position.x - .55f), dy = Mathf.Abs(glint.transform.position.y - .55f);
+                    if (Mathf.Abs(dx - .55f) > .01f || Mathf.Abs(dy - .55f) > .01f) throw new Exception("Glint off the frame corner: " + glint.transform.position);
+                }
                 camera.Render(); RenderTexture.active = target;
                 pixels.ReadPixels(new Rect(0,0,600,600),0,0); pixels.Apply();
                 File.WriteAllBytes("Design/Cursor/" + (smart ? "Smart" : "Normal") + "-implemented.png", pixels.EncodeToPNG());
             }
             type.GetMethod("ClearHighlight", flags).Invoke(miner,null);
             if (highlight.HasTile(Vector3Int.zero)) throw new Exception("Highlight did not clear");
+            var glints = (GameObject)type.GetField("glintRoot", flags).GetValue(miner);
+            if (glints.activeSelf) throw new Exception("Glints did not clear");
+            UnityEngine.Object.DestroyImmediate(glints);
             UnityEngine.Object.DestroyImmediate(tile.sprite);
             UnityEngine.Object.DestroyImmediate(tile);
-            return "PASS: normal/full frame, smart/open corners; both 1.1 cell width, transparent centers, mode switch and clear. Two Unity renders saved in Design/Cursor.";
+            return "PASS: normal/full frame, smart/open corners; both 1.1 cell width, transparent centers, above the darkness, no light source, four corner glints, mode switch and clear. Two Unity renders saved in Design/Cursor.";
         }
         finally
         {

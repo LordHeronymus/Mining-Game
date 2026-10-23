@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Leuchtende Auswahlrahmen (normal und smart), über der Dunkelheit, keine Lichtquelle | `claude/leuchtende-auswahlrahmen` | Cloud-Klon | `TileMiner.cs` (Cursor-Rahmen), `GpsSchema.Catalog.cs` (Cursor), `Tests/GoldCursorChecks.cs`, `Tests/CursorHighlightEquivalenceChecks.cs` | ja (Testbank) | 23.10.2026 17:40 |
 
 ## Zuletzt abgeschlossen
 
