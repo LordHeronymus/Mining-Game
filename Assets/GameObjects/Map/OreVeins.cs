@@ -133,18 +133,19 @@ public static class OreVeins
 
     // Distance from the actual boundary includes holes and competing ore types.
     // Normalize each connected vein separately to make its core richer than its rim.
-    // Thin veins (all cells on the boundary) get their Medium cells from ThinVeinMedium; null keeps them Small.
+    // With VeinRichnessSettings one share rule per vein thickness decides instead (VeinRichness); null keeps
+    // the previous fixed thresholds.
     public static OreRichness[] Build(Block[] blocks, int width, int height, int seed,
-        ThinVeinMediumSettings thinVeins = null)
+        VeinRichnessSettings rule = null)
     {
         OreRichness[] result = null;
-        var steps = BuildSteps(blocks, width, height, seed, value => result = value, thinVeins);
+        var steps = BuildSteps(blocks, width, height, seed, value => result = value, rule);
         while (steps.MoveNext()) { }
         return result;
     }
 
     public static System.Collections.IEnumerator BuildSteps(Block[] blocks, int width, int height, int seed,
-        Action<OreRichness[]> complete, ThinVeinMediumSettings thinVeins = null)
+        Action<OreRichness[]> complete, VeinRichnessSettings rule = null)
     {
         if (width <= 0 || height <= 0 || blocks.Length != checked(width * height))
             throw new ArgumentException("Invalid vein grid dimensions.");
@@ -179,7 +180,7 @@ public static class OreVeins
         }
 
         var visited = new bool[count];
-        var thin = thinVeins != null && thinVeins.enabled ? new ThinVeinMedium(thinVeins) : null;
+        var shares = rule != null && rule.enabled ? new VeinRichness(rule) : null;
         float offset = (Hash(seed, 0, 0, 0x314159u) & 0xffff) * .01f;
         for (int start = 0; start < count; start++)
         {
@@ -198,6 +199,12 @@ public static class OreVeins
                 if (y > 0) Connect(i, i - width);
                 if (y + 1 < height) Connect(i, i + width);
             }
+            if (shares != null)
+            {
+                // queue[0] is start, the vein's lowest index.
+                shares.Apply(queue, tail, maxDistance, distance, blocks, result, width, height, seed);
+                continue;
+            }
             for (int n = 0; n < tail; n++)
             {
                 if ((n & 1023) == 1023 && budget.Expired) { yield return null; budget.Restart(); }
@@ -210,8 +217,6 @@ public static class OreVeins
                 result[i] = depth < .32f ? OreRichness.Small :
                     depth < .72f ? OreRichness.Medium : OreRichness.Rich;
             }
-            // queue[0] is start, the vein's lowest index.
-            thin?.Apply(queue, tail, blocks, result, width, height, seed);
         }
         complete(result);
 
