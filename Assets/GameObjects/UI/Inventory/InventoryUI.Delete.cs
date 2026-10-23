@@ -78,11 +78,11 @@ public partial class InventoryUI
         var window = Panel("Delete Window", deleteRoot, 516, 236, 640, 512, frame ? frame : rowSprite);
         window.raycastTarget = true; if (frame) window.pixelsPerUnitMultiplier = 2.2f;
         var w = window.transform;
-        deleteIcon = Panel("Item Icon", w, 240, 34, 160, 110, null); deleteIcon.preserveAspect = true;
-        deleteName = Label(w, "", 40, 146, 560, 50, 40, TextAlignmentOptions.Midline);
-        deleteInfo = Label(w, "", 40, 194, 560, 34, 24, TextAlignmentOptions.Midline); deleteInfo.color = Muted;
-        var line = Panel("Line", w, 90, 236, 460, 3, null); line.color = Gold;
-        Label(w, "Wie viel löschen?", 40, 248, 560, 40, 28, TextAlignmentOptions.Midline);
+        deleteIcon = Panel("Item Icon", w, 245, 28, 150, 100, null); deleteIcon.preserveAspect = true;
+        deleteName = Label(w, "", 40, 132, 560, 48, 40, TextAlignmentOptions.Midline);
+        deleteInfo = Label(w, "", 40, 178, 560, 32, 24, TextAlignmentOptions.Midline); deleteInfo.color = Muted;
+        var line = Panel("Line", w, 90, 228, 460, 3, null); line.color = Gold;
+        Label(w, "Wie viel löschen?", 40, 244, 560, 40, 28, TextAlignmentOptions.Midline);
         BuildDeleteSlider(w);
         var cancel = Button("Cancel", w, "Abbrechen", 56, 392, 250, 72, CloseDeleteDialog);
         cancel.GetComponent<Image>().sprite = actionSprite;
