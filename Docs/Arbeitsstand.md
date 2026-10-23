@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Gras wächst frei und schneller nach | `claude/weniger-fasern` | Cloud-Klon, Test auf Testbank | `SurfaceTallGrass.cs`, `GpsSchema.Catalog.cs`, `GpsProfile.asset` (Fasergras), `Tests/GrassRegrowthChecks.cs`, `Tests/TreeGrassPriorityChecks.cs` | ja (Testbank) | 23.10.2026 20:05 |
 
 ## Zuletzt abgeschlossen
 
