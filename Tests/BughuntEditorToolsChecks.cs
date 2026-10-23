@@ -48,7 +48,14 @@ public static class BughuntEditorToolsChecks
         var playMode = typeof(AutoSave).GetMethod("OnPlayModeChanged", StaticAny);
         var nextField = typeof(AutoSave).GetField("next", StaticAny);
         Check(holds != null && hasTiles != null, "AutoSave erkennt eine im Editor behaltene Map");
-        Check(Calls(tick, holds) && Calls(holds, hasTiles), "AutoSave prüft vor dem Speichern, ob die Gameplay-Szene eine Map hält");
+        var toSave = typeof(AutoSave).GetMethod("ScenesToSave", StaticAny);
+        Check(toSave != null && Calls(tick, toSave) && Calls(toSave, holds) && Calls(holds, hasTiles), "AutoSave prüft vor dem Speichern, ob die Gameplay-Szene eine Map hält");
+        // R4-editor-tests-0: a held map pauses only the gameplay scene; other scenes and changed assets are still saved.
+        var saveScenes = typeof(EditorSceneManager).GetMethod("SaveScenes", new[] { typeof(Scene[]) });
+        var saveOpen = typeof(EditorSceneManager).GetMethod("SaveOpenScenes", Type.EmptyTypes);
+        var saveAssets = typeof(AssetDatabase).GetMethod("SaveAssets", Type.EmptyTypes);
+        Check(saveScenes != null && Calls(tick, saveScenes) && saveOpen != null && !Calls(tick, saveOpen) && saveAssets != null && Calls(tick, saveAssets),
+            "AutoSave speichert die übrigen Szenen einzeln und die Assets auch bei pausierter SampleScene");
         Check(typeof(LoadingSceneData).GetField("GameplayScene", StaticAny)?.GetRawConstantValue() as string == "Assets/Scenes/SampleScene.unity",
             "Übersprungen wird dieselbe Szene, die LoadingSceneData beim Speichern leert");
 
@@ -99,6 +106,10 @@ public static class BughuntEditorToolsChecks
             Check(Holds(), "Artefakt-Kacheln allein halten AutoSave zurück");
             artifacts.ClearAllTiles();
             Check(!Holds(), "Nach dem Leeren (manuelles Speichern) speichert AutoSave wieder");
+            EditorSceneManager.MarkSceneDirty(scene);
+            var picked = (Scene[])toSave.Invoke(null, new object[] { false });
+            Check(!picked.Contains(scene) && picked.All(s => s.isDirty && !string.IsNullOrEmpty(s.path) && s.path != scene.path),
+                "AutoSave wählt nur geänderte Szenen mit Pfad (temporäre Szene ohne Pfad bleibt aussen vor)");
         }
         finally
         {

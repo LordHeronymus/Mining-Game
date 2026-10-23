@@ -104,6 +104,8 @@ Bedeutung der Felder, Auswahlregeln und Zählweise: `Docs/Challenges.md`, Abschn
   leert Terrain-, Erz- und Artefakt-Kacheln (`LoadingSceneData`). AutoSave speichert
   die Gameplay-Szene deshalb nicht, solange eine solche Karte geladen ist (auch nach
   „Map im Editor generieren“); erst manuelles Speichern sichert die Szene und leert die Karte.
+  Andere geöffnete Szenen und geänderte Assets speichert AutoSave in dieser Zeit weiter
+  (ohne Szenen-Backup der SampleScene).
 - Jeder Play-Start leert diese Vorschau und generiert eine frische Map.
   Ein fester Seed erzeugt weiterhin dieselbe Ausgangskarte; Seed 0 wählt zufällig.
   Die Übergabe beim Play-Stopp liegt komprimiert unter `Library/LastPlayedMaps`.

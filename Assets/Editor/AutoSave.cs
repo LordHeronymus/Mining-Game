@@ -39,22 +39,20 @@ public static class AutoSave
 
         var scene = EditorSceneManager.GetActiveScene();
         if (!scene.IsValid() || !scene.isDirty || string.IsNullOrEmpty(scene.path)) return;
-        // Saving the gameplay scene strips the map kept in the editor (LoadingSceneData): leave that to the user.
-        for (int i = 0; i < EditorSceneManager.sceneCount; i++)
+        // Saving the gameplay scene strips the map kept in the editor (LoadingSceneData): leave that scene to the user,
+        // other open scenes and changed assets are still saved.
+        var save = ScenesToSave(out bool held);
+        if (held)
         {
-            var open = EditorSceneManager.GetSceneAt(i);
-            if (open.isLoaded && open.path == LoadingSceneData.GameplayScene && HoldsMapPreview(open))
-            {
-                // Once per pause, so a session without scene backups does not go unnoticed.
-                if (!pauseReported) Debug.Log("[AutoSave] Pausiert: In der SampleScene ist eine Map geladen (Map behalten / im Editor generiert). Speichern würde sie leeren; Ctrl+S speichert und leert sie.");
-                pauseReported = true;
-                return;
-            }
+            // Once per pause, so a session without scene backups does not go unnoticed.
+            if (!pauseReported) Debug.Log("[AutoSave] SampleScene pausiert: Dort ist eine Map geladen (nach Play oder «Map im Editor generieren»). Speichern würde sie leeren; Ctrl+S speichert und leert sie. Andere Szenen und Assets speichert AutoSave weiter.");
+            pauseReported = true;
         }
-        pauseReported = false;
+        else pauseReported = false;
 
-        if (!EditorSceneManager.SaveOpenScenes()) return;
+        if (save.Length > 0 && !EditorSceneManager.SaveScenes(save)) return;
         AssetDatabase.SaveAssets();
+        if (!save.Contains(scene)) return;
 
         Directory.CreateDirectory(BackupFolder);
         var name = Path.GetFileNameWithoutExtension(scene.path);
@@ -68,6 +66,21 @@ public static class AutoSave
         foreach (var old in files.Skip(MaxBackupsPerScene)) { try { old.Delete(); } catch { } }
 
         Debug.Log($"[AutoSave] Saved + backup: {backupPath}");
+    }
+
+    // Dirty open scenes with a path, without the gameplay scene while it holds a map (held = true then).
+    internal static Scene[] ScenesToSave(out bool held)
+    {
+        held = false;
+        var save = new System.Collections.Generic.List<Scene>();
+        for (int i = 0; i < EditorSceneManager.sceneCount; i++)
+        {
+            var open = EditorSceneManager.GetSceneAt(i);
+            if (!open.isLoaded || !open.isDirty || string.IsNullOrEmpty(open.path)) continue;
+            if (open.path == LoadingSceneData.GameplayScene && HoldsMapPreview(open)) { held = true; continue; }
+            save.Add(open);
+        }
+        return save.ToArray();
     }
 
     // Same layers as LoadingSceneData.Strip: kept after Play stop or generated via "Map im Editor generieren".
