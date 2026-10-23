@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code | Unity-Importspuren: `nameFileIdTable` in 11 Sprite-.meta übernehmen | `claude/sprite-meta-ids` | `Mining Game/.claude/worktrees/sprite-meta-ids` | 11 `.png.meta` (Parallax, HeavyDutyBoots, Exotics, Settings, Shop, UltroniumAltar, ZZZ New Assets) | ja (Testbank, Warteschlange) | 23.10.2026 14:45 |
 
 ## Zuletzt abgeschlossen
 

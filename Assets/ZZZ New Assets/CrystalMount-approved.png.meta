@@ -172,7 +172,9 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      CrystalMount-approved_0: -481911307800522119
+      CrystalMount-approved_1: -1555352765813103101
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
