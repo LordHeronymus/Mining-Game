@@ -419,6 +419,8 @@ public static partial class GpsSchema
             new GpsFieldSpec("dragPopScale", "Pop-Stärke (%)", min: 1f, max: 2f, factor: 100f),
             new GpsFieldSpec("dragCarryScale", "Grösse beim Tragen (%)", min: .5f, max: 2f, factor: 100f),
             new GpsFieldSpec("dragPopDuration", "Pop-Dauer (s)", min: 0f, max: 1.5f)),
+        new GpsSectionSpec("UI", "Geldanzeige", typeof(GpsPreferences), "",
+            new GpsFieldSpec("moneyCountSeconds", "Zähldauer bei Geldänderung (s)", min: 0f, max: MoneyDisplay.MaxCountSeconds)),
         new GpsSectionSpec("UI", "Knopftexte", typeof(GpsPreferences), "",
             new GpsFieldSpec("buttonTextOffset", "Vertikaler Versatz (% der Schriftgrösse, + = hoch)", min: -.2f, max: .2f, factor: 100f),
             new GpsFieldSpec("buttonTextPadding", "Mindestabstand zum Goldrahmen (px)", min: 0f, max: 10f),

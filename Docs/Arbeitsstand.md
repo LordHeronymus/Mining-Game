@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Geldanzeige zählt weich (HUD, Shop), Dauer in F1 | `claude/geld-weich-zaehlen` | Cloud + Testbank | `MoneyDisplay.cs` (neu), `CompactHud.cs`, `BuyPage.cs`, `SellPage*.cs`, `StatsManager.cs`, GPS-Schema/Profil, Tests `MoneyDisplayChecks`, `CompactHudChecks`, `ShopBuyGridChecks` | ja (Testbank) | 23.10.2026 19:10 |
 
 ## Zuletzt abgeschlossen
 

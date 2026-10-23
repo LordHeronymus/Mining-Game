@@ -28,9 +28,6 @@ public partial class SellPage : MonoBehaviour
     [SerializeField] private Button sellMaxButton;
     [SerializeField] private Button sellAllButton;
 
-    [Header("Settings")]
-    [SerializeField] float lerpCounterTime = 0.5f;
-
     private ItemSO _selected;
 
     void Awake()
@@ -42,21 +39,17 @@ public partial class SellPage : MonoBehaviour
         if (sellAllButton) sellAllButton.onClick.AddListener(SellAll);
 
         gameObject.SetActive(true);
-        HandleMoney(StatsManager.Instance ? StatsManager.Instance.Money : 0);
     }
 
     void OnEnable()
     {
         if (InventoryManager.Instance) InventoryManager.Instance.OnInventoryChanged += OnInvChanged;
-        if (StatsManager.Instance) StatsManager.Instance.OnMoneyChanged += HandleMoney;
-        HandleMoney(StatsManager.Instance ? StatsManager.Instance.Money : 0);
         Rebuild();
     }
     void OnDisable()
     {
         _pendingRebuild = false;
         if (InventoryManager.Instance) InventoryManager.Instance.OnInventoryChanged -= OnInvChanged;
-        if (StatsManager.Instance) StatsManager.Instance.OnMoneyChanged -= HandleMoney;
     }
 
     void Update()
@@ -69,30 +62,6 @@ public partial class SellPage : MonoBehaviour
     {
         if (!isActiveAndEnabled || !panel || panel.alpha <= 0f) return;
         RequestRebuild();
-    }
-
-    void HandleMoney(int newMoney)
-    {
-        if (moneyCo != null) StopCoroutine(moneyCo);
-        moneyCo = StartCoroutine(LerpCounter(newMoney));
-    }
-
-    double currentMoneyShow = 0;
-    Coroutine moneyCo;
-
-    IEnumerator LerpCounter(int amount)
-    {
-        double start = currentMoneyShow;
-        float elapsed = 0f;
-        while (elapsed < lerpCounterTime && start != amount)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            currentMoneyShow = start + (amount - start) * Mathf.Clamp01(elapsed / lerpCounterTime);
-            moneyText.text = ShopMoneyFormatter.Format((long)System.Math.Floor(currentMoneyShow));
-            yield return null;
-        }
-        currentMoneyShow = amount;
-        moneyText.text = ShopMoneyFormatter.Format(amount);
     }
 
     public void ShowPanel(bool show)

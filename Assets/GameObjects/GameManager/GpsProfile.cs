@@ -36,6 +36,8 @@ public sealed class GpsProfile : ScriptableObject
     public float musicCeiling = .2f;
     public float autosaveIntervalMinutes = 3f;
     public float dragPopScale = 1.28f, dragCarryScale = 1.12f, dragPopDuration = .24f;
+    // Money labels (HUD, shop) count to a new amount over this many seconds instead of jumping (MoneyDisplay); 0 = jump.
+    public float moneyCountSeconds = .6f;
     public bool workbenchUsesStorage = true, workbenchStorageFirst;
     // Crafted building components (category Misc, e.g. nails, rope) go straight into the storage hut;
     // the shop also lists and sells ores from the storage huts.
