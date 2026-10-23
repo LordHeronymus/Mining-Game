@@ -67,10 +67,13 @@ public partial class InventoryUI
     {
         deleteRoot = Rect("Delete Dialog", layout, 0, 0, 1672, 941);
         var dim = Panel("Delete Dim", deleteRoot, 0, 0, 1672, 941, null);
-        dim.color = new Color(0, 0, 0, .55f); dim.raycastTarget = true;
+        dim.color = new Color(0, 0, 0, .68f); dim.raycastTarget = true;
         var dimButton = dim.gameObject.AddComponent<Button>(); dimButton.transition = Selectable.Transition.None;
         dimButton.navigation = new Navigation { mode = Navigation.Mode.None }; dimButton.onClick.AddListener(CloseDeleteDialog);
-        var window = Panel("Delete Window", deleteRoot, 516, 160, 640, 620, rowSprite); window.raycastTarget = true;
+        // Opaque shop card frame (gold border, corner rivets), so nothing of the grid shows through.
+        var frame = DeleteFrame(Resources.Load<Texture2D>("Shop/BuyFrames-v2"), "Delete Window", 40, 110, 1175, 325);
+        var window = Panel("Delete Window", deleteRoot, 516, 160, 640, 620, frame ? frame : rowSprite);
+        window.raycastTarget = true; if (frame) window.pixelsPerUnitMultiplier = 2.2f;
         var w = window.transform;
         deleteIcon = Panel("Item Icon", w, 220, 40, 200, 150, null); deleteIcon.preserveAspect = true;
         deleteName = Label(w, "", 40, 200, 560, 60, 44, TextAlignmentOptions.Midline);
@@ -111,6 +114,7 @@ public partial class InventoryUI
         deleteAmountText = Label(handle.transform, "1", 0, 0, 76, 56, 32, TextAlignmentOptions.Midline);
         deleteAmountText.rectTransform.anchorMin = Vector2.zero; deleteAmountText.rectTransform.anchorMax = Vector2.one;
         deleteAmountText.rectTransform.offsetMin = deleteAmountText.rectTransform.offsetMax = Vector2.zero;
+        slide.SetAsLastSibling(); // the handle and its number stay above the fill
         deleteSlider = area.gameObject.AddComponent<Slider>();
         deleteSlider.wholeNumbers = true; deleteSlider.minValue = 1; deleteSlider.maxValue = 1;
         deleteSlider.fillRect = fill.rectTransform; deleteSlider.handleRect = handle.rectTransform;

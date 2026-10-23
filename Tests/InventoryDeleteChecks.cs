@@ -54,6 +54,9 @@ public sealed class InventoryDeleteProbe : MonoBehaviour
             var slider = ui.DeleteSlider; var confirm = ui.DeleteConfirmButton;
             Check(slider.wholeNumbers && slider.minValue == 1 && slider.maxValue == 15 && slider.value == 1, "Slider spans 1 to the whole stock.");
             Check(Text(confirm) == "1 löschen", "Button starts at one.");
+            Check(slider.handleRect.parent.GetSiblingIndex() > slider.fillRect.parent.GetSiblingIndex(), "Handle number is drawn above the fill.");
+            var frame = window.GetComponent<Image>();
+            Check(frame.sprite && frame.sprite.texture.name == "BuyFrames-v2", "Window uses the opaque shop card frame.");
             var red = confirm.GetComponent<Image>().sprite;
             Check(red && red.name == "DeleteButton" && red.texture.name == "SelectionButtons-Red", "Delete button uses the red filled artwork.");
             slider.value = 6; yield return new WaitForSecondsRealtime(.4f);
@@ -78,7 +81,7 @@ public sealed class InventoryDeleteProbe : MonoBehaviour
             Check(!slider.interactable && Text(confirm) == "1 löschen", "A single item needs no slider.");
             ui.HidePanel(); yield return new WaitForSecondsRealtime(.3f);
             Check(!ui.IsOpen && !ui.DeleteDialogOpen, "Closing the inventory closes the window.");
-            result = "PASS: right click opens, left click does not, name/stock, slider 1..Max with number in handle, red filled button, cancel, exact delete, live Max, click beside, delete all, single item, close with inventory.";
+            result = "PASS: right click opens, left click does not, name/stock, opaque frame, handle above fill, slider 1..Max with number in handle, red filled button, cancel, exact delete, live Max, click beside, delete all, single item, close with inventory.";
         }
         finally
         {
