@@ -56,7 +56,7 @@ public partial class InventoryUI : MonoBehaviour
     {
         bool keys = !RunPauseMenu.OwnsInput; // a focus pause (RunFocusPause) can lie over the open inventory and owns the keys
         if (keys && GameBindings.Down(GameAction.Inventory)) { if (IsOpen) HidePanel(); else if (!GameplayInputBlocker.IsBlocked) ShowPanel(); }
-        else if (keys && IsOpen && GameBindings.Down(GameAction.Settings)) HidePanel();
+        else if (keys && IsOpen && GameBindings.Down(GameAction.Settings)) { if (DeleteDialogOpen) CloseDeleteDialog(); else HidePanel(); }
         if (IsOpen && inventory != InventoryManager.Instance) Subscribe();
         if (draggedItem) MoveDraggedIcon(Input.mousePosition);
         if (hotbarWarning)
@@ -72,7 +72,7 @@ public partial class InventoryUI : MonoBehaviour
         FindFirstObjectByType<CompactHud>(FindObjectsInactive.Include)?.SetInventoryHotbarVisible(false);
         if (inventory) inventory.OnInventoryChanged -= Refresh;
         inventory = null; GameplayInputBlocker.SetBlocked(this, false);
-        CancelItemDrag();
+        CancelItemDrag(); CloseDeleteDialog();
         if (IsOpen) InfoPanel.Instance?.ShowPanel(true);
         IsOpen = false;
         if (group) { group.alpha = 0; group.blocksRaycasts = group.interactable = false; }
@@ -95,7 +95,7 @@ public partial class InventoryUI : MonoBehaviour
     }
     public void HidePanel()
     {
-        CancelItemDrag();
+        CancelItemDrag(); CloseDeleteDialog();
         warningUntil = 0f;
         if (fade != null) StopCoroutine(fade);
         fade = StartCoroutine(FadePanel(false));
@@ -274,6 +274,7 @@ public partial class InventoryUI : MonoBehaviour
                 footerIcon.rectTransform, new Vector2(58f, -48f));
         footerName.text = SelectedItem ? SelectedItem.displayName : "";
         footerCount.text = SelectedItem ? "Bestand <color=#FFBC4F>" + Count(inventory.GetCount(SelectedItem)) + "</color>" : "";
+        SyncDeleteDialog();
     }
     void OnRectTransformDimensionsChange() => Fit();
     void Fit()
@@ -361,6 +362,7 @@ public partial class InventoryUI : MonoBehaviour
         hotbarWarning.rectTransform.pivot = new Vector2(.5f, .5f);
         hotbarWarning.color = new Color32(255, 104, 99, 255);
         hotbarWarning.alpha = 0f;
+        BuildDeleteDialog();
         Fit();
     }
     Cell CreateCell(int index)

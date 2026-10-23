@@ -31,14 +31,16 @@ public static class HomeUi
                 new Vector4(90 * inputScaleX, 75 * inputScaleY, 90 * inputScaleX, 75 * inputScaleY));
             found.name = "Tiefenhall Input Field"; sprites[part] = found; return found;
         }
-        if (part == "SaveButton" || part == "SaveActive" || part == "SaveSelected" || part.StartsWith("SelectionCard"))
+        // Delete* is the same button sheet with a red filled plate (Design/ItemsLoeschen/rot-knopf.py).
+        if (part == "SaveButton" || part == "SaveActive" || part == "SaveSelected" || part.StartsWith("SelectionCard") || part.StartsWith("Delete"))
         {
             bool card = part.StartsWith("SelectionCard");
-            var texture = Resources.Load<Texture2D>(card ? "Homescreen/SelectionCards-v2" : "Homescreen/SelectionButtons-v2");
+            var texture = Resources.Load<Texture2D>(card ? "Homescreen/SelectionCards-v2" :
+                part.StartsWith("Delete") ? "Homescreen/SelectionButtons-Red" : "Homescreen/SelectionButtons-v2");
             if (texture)
             {
-                int state = part == "SaveSelected" || part == "SelectionCardSelected" ? 2 :
-                    part == "SaveActive" || part == "SelectionCardHover" ? 1 : 0;
+                int state = part == "SaveSelected" || part == "SelectionCardSelected" || part == "DeleteSelected" ? 2 :
+                    part == "SaveActive" || part == "SelectionCardHover" || part == "DeleteActive" ? 1 : 0;
                 float selectionScaleX = texture.width / 2048f, selectionScaleY = texture.height / 768f;
                 var selectionBox = card ? new Rect(12 + 674 * state, 20, 670, 668) : new Rect(45, 25 + 235 * state, 1958, 240);
                 var region = new Rect(selectionBox.x * selectionScaleX, texture.height - (selectionBox.y + selectionBox.height) * selectionScaleY, selectionBox.width * selectionScaleX, selectionBox.height * selectionScaleY);

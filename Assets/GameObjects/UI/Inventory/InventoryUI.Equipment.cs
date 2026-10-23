@@ -10,8 +10,8 @@ public partial class InventoryUI
 {
     public const int EquipmentFilter = 4;
     const float EquipmentCardWidth = 344, EquipmentCardHeight = 176;
-    static readonly Color Muted = new Color32(224, 207, 187, 255);
-    static readonly Color Gold = new Color32(255, 199, 70, 255);
+    static readonly Color EquipmentMuted = new Color32(224, 207, 187, 255);
+    static readonly Color EquipmentGold = new Color32(255, 199, 70, 255);
     static readonly Color Missing = new Color32(150, 132, 112, 255);
     static readonly Color MissingIcon = new Color(.38f, .38f, .38f, .55f);
 
@@ -40,7 +40,8 @@ public partial class InventoryUI
         RefreshEquipment();
     }
 
-    void OnDestroy()
+    // Called from OnDestroy (InventoryUI.Delete.cs).
+    void DestroyEquipmentAssets()
     {
         if (titleMaterial) Destroy(titleMaterial);
         if (shopFrame) Destroy(shopFrame);
@@ -76,14 +77,14 @@ public partial class InventoryUI
         CenterPivot(detailIcon.rectTransform);
         detailName = Serif(detail.transform, "", 0, 270, 492, 52, 38, TextAlignmentOptions.Midline);
         detailArea = Serif(detail.transform, "", 0, 316, 492, 30, 22, TextAlignmentOptions.Midline);
-        detailArea.color = Muted;
+        detailArea.color = EquipmentMuted;
         var line = Panel("Divider", detail.transform, 40, 353, 412, 2, null);
-        line.color = new Color(Gold.r, Gold.g, Gold.b, .65f);
+        line.color = new Color(EquipmentGold.r, EquipmentGold.g, EquipmentGold.b, .65f);
         for (int i = 0; i < 3; i++)
         {
             var box = Frame("Stat " + i, detail.transform, 26 + i * 150, 374, 140, 96, 5);
             detailStatLabels[i] = Serif(box.transform, "", 0, 10, 140, 32, 22, TextAlignmentOptions.Midline);
-            detailStatLabels[i].color = Muted;
+            detailStatLabels[i].color = EquipmentMuted;
             detailStatValues[i] = Serif(box.transform, "", 0, 44, 140, 42, 28, TextAlignmentOptions.Midline);
         }
         var plate = Panel("Next", detail.transform, 32, 498, 428, 66, HomeUi.Sprite("SaveButton"));
@@ -110,7 +111,7 @@ public partial class InventoryUI
         card.badge = Frame("Badge", button.transform, EquipmentCardWidth - 106, EquipmentCardHeight - 52, 92, 38, 10);
         card.badgeText = Serif(card.badge.transform, "", 0, 0, 92, 38, 21, TextAlignmentOptions.Midline);
         card.check = Rect("Check", card.badge.transform, 31, 5, 30, 28).gameObject.AddComponent<WorkbenchGlyph>();
-        card.check.shape = WorkbenchGlyph.Shape.Check; card.check.filled = true; card.check.color = Gold; card.check.raycastTarget = false;
+        card.check.shape = WorkbenchGlyph.Shape.Check; card.check.filled = true; card.check.color = EquipmentGold; card.check.raycastTarget = false;
         return card;
     }
 
@@ -134,11 +135,11 @@ public partial class InventoryUI
             card.name.text = entry.name;
             card.name.color = entry.owned ? Cream : Missing;
             card.area.text = entry.area;
-            card.area.color = entry.owned ? Muted : Missing;
+            card.area.color = entry.owned ? EquipmentMuted : Missing;
             bool check = entry.badge == EquipmentOverview.Check;
             card.check.gameObject.SetActive(check);
             card.badgeText.text = check ? "" : entry.badge;
-            card.badgeText.color = entry.owned ? Gold : Missing;
+            card.badgeText.color = entry.owned ? EquipmentGold : Missing;
             float width = check || entry.badge.Length <= 2 ? 50 : 92;
             card.badge.rectTransform.sizeDelta = new Vector2(width, 38);
             card.badge.rectTransform.anchoredPosition = new Vector2(EquipmentCardWidth - 14 - width, -(EquipmentCardHeight - 52));

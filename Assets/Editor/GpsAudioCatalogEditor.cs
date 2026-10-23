@@ -68,7 +68,7 @@ public static class GpsAudioCatalogEditor
         return name switch
         {
             "HomescreenAmbience"=>"Homescreen-Musik", "LoadingYogaAmbience"=>"Lade-Ambiente", "LoadingPickaxeHit"=>"Lade-Spitzhacke",
-            "HomeClick"=>"Menüklick", "SingleHeartBeat"=>"Herzschlag", "LowEnergyBip"=>"Energiewarnung", "GameOverMusic"=>"Game-over-Musik",
+            "HomeClick"=>"Menüklick", "UiHoverClick"=>"Knopf-Hover-Klick", "SingleHeartBeat"=>"Herzschlag", "LowEnergyBip"=>"Energiewarnung", "GameOverMusic"=>"Game-over-Musik",
             "WorkshopFavorite"=>"Workshop-Favorit",
             "WorkshopUnfavorite"=>"Workshop-Favorit entfernen",
             "CaveAmbience"=>"Höhlen-Ambiente", "CaveTribalSong"=>"Höhlen-Tribal-Musik", "MeadowAmbience"=>"Wiesen-Ambiente", "UndergroundClay"=>"Untergrund-Ambiente", "WindAmbience"=>"Wind",
