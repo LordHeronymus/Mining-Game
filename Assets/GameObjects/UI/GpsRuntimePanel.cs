@@ -309,6 +309,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
             }
             return;
         }
+        if (DrawOreFactors(node, label, path, indent, commit)) return;
         if (node.name=="layerIndices" && node.kind==GpsValueKind.Array)
         {
             Label(content,label,new Vector2(20+Indent(indent),-rowY),new Vector2(600,32),21); rowY+=37;
@@ -381,6 +382,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
                     Button(content, "Play", new Vector2(1588, -rowY), new Vector2(90, 30), () => GpsTestActions.PreviewClip(clip));
                 break;
             case GpsValueKind.Enum:
+                if (IsOreOnly(parent, node.name)) { OreDropdown(new Vector2(inputX, -rowY), node, commit, 975); break; }
                 Type enumType = GpsCodec.ResolveType(node.type); var names = Enum.GetNames(enumType); var values = Enum.GetValues(enumType).Cast<object>().Select(Convert.ToInt32).ToArray();
                 Dropdown(new Vector2(inputX, -rowY), names, Array.IndexOf(values, (int)node.number), selected => { node.number = values[selected]; commit(); });
                 break;
