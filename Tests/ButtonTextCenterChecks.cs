@@ -189,7 +189,7 @@ public sealed class ButtonTextCenterProbe : MonoBehaviour
         if (shop)
         {
             shop.ShowPanel(true); yield return Settle();
-            yield return View("Shop", shop.transform, "Sell All");
+            yield return View("Shop", shop.transform, "Sell Selected");
             shop.ShowPanel(false); yield return Unblocked();
         }
 
