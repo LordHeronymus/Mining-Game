@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Spielstand lädt nicht: fehlendes Bild im gespeicherten Kartenstand (L2-Hintergrund) ersetzen statt Laden abbrechen | `claude/spielstand-fehlendes-bild` | Cloud-Klon | `GpsSettings` (Karteneinstellungen aus Spielstand), Speichern/Laden, neues Prüfskript | ja (Testbank) | 23.10.2026 18:25 |
 
 ## Zuletzt abgeschlossen
 
