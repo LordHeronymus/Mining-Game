@@ -48,7 +48,7 @@ try {
     if(price.color.r<=price.color.g || price.color.g>=.8f) throw new System.Exception("Missing unaffordable red tint");
     purchase.onClick.Invoke();
     if(RecipeUnlocks.IsTitaniumPickaxeUnlocked || stats.Money!=0) throw new System.Exception("Unaffordable purchase succeeded");
-    stats.AddMoney(recipe.ShopPrice+777);
+    stats.AddMoney(recipe.ShopPrice+777); MoneyDisplay.Finish();
     if(!purchase.interactable || money.text!=ShopMoneyFormatter.Format(recipe.ShopPrice+777)) throw new System.Exception("Money or affordability stale");
     purchase.onClick.Invoke();
     if(!RecipeUnlocks.IsTitaniumPickaxeUnlocked || stats.Money!=777 || purchase.interactable) throw new System.Exception("Purchase state");
@@ -59,6 +59,7 @@ try {
     if(!shop.transform.Find("SellPage").gameObject.activeSelf || shop.transform.Find("BuyPage").gameObject.activeSelf) throw new System.Exception("Sell tab broken");
     shop.ShowBuyPage();
     if(!details.Find("Selected Blueprint").GetComponent<UnityEngine.UI.Image>().sprite.name.Contains("Titanium")) throw new System.Exception("Selection lost");
+    MoneyDisplay.Finish();
     if(money.text!=ShopMoneyFormatter.Format(777)) throw new System.Exception("Money stale after tabs");
     if(!page.GetComponentsInChildren<TMPro.TextMeshProUGUI>().All(t=>t.font.name=="TitleFont")) throw new System.Exception("Font mismatch");
     return "PASS: 13 plans / 12 visible, scrolling, 2x2 actual ingredients, search and empty state, red unaffordable prices, purchase and duplicate protection, owned sorting, tab selection and live money.";
