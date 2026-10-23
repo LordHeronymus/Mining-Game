@@ -75,6 +75,8 @@ public sealed class ChallengePanel : MonoBehaviour
         bar.direction = Scrollbar.Direction.BottomToTop; bar.navigation = new Navigation { mode = Navigation.Mode.None };
         scroll.verticalScrollbar = bar; scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
         var back = HomeUi.Button("Challenges Back", layout, "Zurück", new Vector2(-483, -370), new Vector2(340, 70), Close);
+        Text("Track Hint", layout, "Mit dem Stern verfolgst du Herausforderungen im Spiel.",
+            new Vector2(200, -370), new Vector2(900, 30), 20, TextAlignmentOptions.Right).color = Muted;
         MetaProgression.Changed += OnProgressChanged;
         SetPeriod(ChallengePeriod.Daily);
         scroll.verticalNormalizedPosition = 1;
@@ -187,11 +189,13 @@ public sealed class ChallengePanel : MonoBehaviour
         Text("Progress", tile, Counter(challenge.current, challenge.target, Unit(challenge)), new Vector2(0, -80), new Vector2(370, 29), 21, TextAlignmentOptions.Center);
         Track(tile, new Vector2(0, -109), 376, challenge.target > 0 ? (float)challenge.current / challenge.target : 0);
         if (challenge.completed) Completed(tile, new Vector2(175, -104));
+        else TrackStar(tile, new Vector2(-170, 64), challenge.track);
     }
 
     static void BuildProject(RectTransform tile, MetaChallengeProgress project)
     {
         Frame(tile); Rim(tile, TierColors[(int)ChallengeTier.Project]);
+        if (!project.completed) TrackStar(tile, new Vector2(-616, 96), project.track);
         var icon = HomeUi.Image("Icon", tile, new Vector2(-540, 8), new Vector2(190, 146));
         icon.sprite = Icon(project); icon.preserveAspect = true;
         Text("Kicker", tile, "Monatsprojekt", new Vector2(-540, -98), new Vector2(200, 30), 22, TextAlignmentOptions.Center).color = ProgressionArt.Gold;
@@ -252,6 +256,22 @@ public sealed class ChallengePanel : MonoBehaviour
         fill.anchorMin=Vector2.zero;fill.anchorMax=new Vector2(Mathf.Clamp01(progress),1);
         fill.offsetMin=fill.offsetMax=Vector2.zero;
         fill.gameObject.AddComponent<ChallengeGoldFill>().raycastTarget=false;
+    }
+
+    // Star toggle: a marked challenge is followed in the HUD (ChallengeTrackerHud). The panel rebuilds on MetaProgression.Changed.
+    static void TrackStar(Transform parent, Vector2 position, string key)
+    {
+        if (string.IsNullOrEmpty(key)) return;
+        bool tracked = MetaProgression.IsTracked(key);
+        var hit = HomeUi.Image("Track Star", parent, position, new Vector2(52, 52));
+        hit.color = Color.clear; hit.raycastTarget = true;
+        var star = HomeUi.Rect("Star", hit.transform, Vector2.zero, new Vector2(38, 38)).gameObject.AddComponent<ChallengeStar>();
+        star.Filled = tracked; star.raycastTarget = false;
+        var button = hit.gameObject.AddComponent<Button>();
+        button.targetGraphic = star; button.navigation = new Navigation { mode = Navigation.Mode.None };
+        var colors = button.colors; colors.normalColor = Color.white; colors.highlightedColor = colors.selectedColor = new Color(1, .93f, .78f);
+        colors.pressedColor = new Color(.78f, .74f, .68f); colors.fadeDuration = .08f; button.colors = colors;
+        button.onClick.AddListener(() => MetaProgression.SetTracked(key, !MetaProgression.IsTracked(key)));
     }
 
     static void Completed(Transform parent, Vector2 position)

@@ -81,37 +81,100 @@ public sealed class ChallengeGoldFill : MaskableGraphic
     }
 }
 
-// Tier colour line on the inner wood lip of a challenge card. Only the four straight edges are drawn, so the
-// bolted corner plates of the frame stay untouched; tinting the frame itself would recolour the whole card.
+// Tier colour of a challenge card: a soft light along the inner wood lip and a faceted gem on each upper corner plate.
+// It replaces the former flat colour lines; the frame itself stays untinted, so the brass and wood keep their colours.
 [RequireComponent(typeof(CanvasRenderer))]
 public sealed class ChallengeTierRim : MaskableGraphic
 {
-    const float Width=3, Feather=1.5f, Corner=20;
+    const float Glow=26, TopAlpha=.42f, SideAlpha=.3f, BottomAlpha=.18f, Gem=11;
     protected override void OnPopulateMesh(VertexHelper vh) {
         vh.Clear();
         var r=rectTransform.rect;
-        if(r.width<=2*Corner||r.height<=2*Corner)return;
-        Edge(vh,r.xMin+Corner,r.yMax-Width,r.xMax-Corner,r.yMax,true);
-        Edge(vh,r.xMin+Corner,r.yMin,r.xMax-Corner,r.yMin+Width,true);
-        Edge(vh,r.xMin,r.yMin+Corner,r.xMin+Width,r.yMax-Corner,false);
-        Edge(vh,r.xMax-Width,r.yMin+Corner,r.xMax,r.yMax-Corner,false);
+        if(r.width<=4*Glow||r.height<=4*Glow)return;
+        Color32 c=color;
+        // Mitred bands fading inwards; the light falls from the top like the lamp glow on the panel.
+        Band(vh,new Vector2(r.xMin,r.yMax),new Vector2(r.xMax,r.yMax),new Vector2(r.xMax-Glow,r.yMax-Glow),new Vector2(r.xMin+Glow,r.yMax-Glow),c,TopAlpha,TopAlpha);
+        Band(vh,new Vector2(r.xMax,r.yMin),new Vector2(r.xMin,r.yMin),new Vector2(r.xMin+Glow,r.yMin+Glow),new Vector2(r.xMax-Glow,r.yMin+Glow),c,BottomAlpha,BottomAlpha);
+        Band(vh,new Vector2(r.xMin,r.yMin),new Vector2(r.xMin,r.yMax),new Vector2(r.xMin+Glow,r.yMax-Glow),new Vector2(r.xMin+Glow,r.yMin+Glow),c,BottomAlpha,TopAlpha);
+        Band(vh,new Vector2(r.xMax,r.yMax),new Vector2(r.xMax,r.yMin),new Vector2(r.xMax-Glow,r.yMin+Glow),new Vector2(r.xMax-Glow,r.yMax-Glow),c,TopAlpha,BottomAlpha);
+        ChallengeGem.Draw(vh,new Vector2(r.xMin+2,r.yMax-2),Gem,color);
+        ChallengeGem.Draw(vh,new Vector2(r.xMax-2,r.yMax-2),Gem,color);
     }
-    // Solid core plus a short alpha fade on both long sides, so the thin line does not alias when the layout is scaled down.
-    void Edge(VertexHelper vh,float x0,float y0,float x1,float y1,bool horizontal) {
-        Color32 solid=color,clear=color;clear.a=0;
-        if(horizontal){
-            Quad(vh,x0,y0-Feather,x1,y0,clear,solid,true);Quad(vh,x0,y0,x1,y1,solid,solid,true);Quad(vh,x0,y1,x1,y1+Feather,solid,clear,true);
-        } else {
-            Quad(vh,x0-Feather,y0,x0,y1,clear,solid,false);Quad(vh,x0,y0,x1,y1,solid,solid,false);Quad(vh,x1,y0,x1+Feather,y1,solid,clear,false);
-        }
-    }
-    // from/to run bottom→top for horizontal edges and left→right for vertical ones.
-    static void Quad(VertexHelper vh,float x0,float y0,float x1,float y1,Color32 from,Color32 to,bool horizontal) {
+    // a→b is the outer edge, c→d the inner one (c below b, d below a); the outer edge carries alpha, the inner none.
+    static void Band(VertexHelper vh,Vector2 a,Vector2 b,Vector2 c,Vector2 d,Color32 tone,float alphaA,float alphaB) {
         int n=vh.currentVertCount;
-        vh.AddVert(new Vector3(x0,y0),from,Vector2.zero);
-        vh.AddVert(new Vector3(x0,y1),horizontal?to:from,Vector2.zero);
-        vh.AddVert(new Vector3(x1,y1),to,Vector2.zero);
-        vh.AddVert(new Vector3(x1,y0),horizontal?from:to,Vector2.zero);
+        Color32 clear=tone;clear.a=0;
+        Color32 ta=tone;ta.a=(byte)(255*alphaA);Color32 tb=tone;tb.a=(byte)(255*alphaB);
+        vh.AddVert(a,ta,Vector2.zero);vh.AddVert(b,tb,Vector2.zero);vh.AddVert(c,clear,Vector2.zero);vh.AddVert(d,clear,Vector2.zero);
         vh.AddTriangle(n,n+1,n+2);vh.AddTriangle(n+2,n+3,n);
+    }
+}
+
+// Faceted gem in a thin brass setting: the tier marker on cards, in the HUD tracker and wherever a colour dot is needed.
+[RequireComponent(typeof(CanvasRenderer))]
+public sealed class ChallengeGem : MaskableGraphic
+{
+    protected override void OnPopulateMesh(VertexHelper vh) {
+        vh.Clear();
+        var r=rectTransform.rect;
+        Draw(vh,r.center,Mathf.Min(r.width,r.height)*.5f-1,color);
+    }
+    static readonly Color32 Setting=new Color32(214,160,62,255), SettingDark=new Color32(92,56,20,255);
+    public static void Draw(VertexHelper vh,Vector2 center,float half,Color tone) {
+        // Setting: dark rim behind a brass diamond, then the stone with four shaded facets around an off-centre table.
+        Diamond(vh,center,half+2.2f,SettingDark,SettingDark,SettingDark,SettingDark);
+        Diamond(vh,center,half+.9f,Setting,Setting,Setting,Setting);
+        Color light=Color.Lerp(tone,Color.white,.55f), mid=Color.Lerp(tone,Color.white,.12f);
+        Color shade=Color.Lerp(tone,Color.black,.25f), dark=Color.Lerp(tone,Color.black,.5f);
+        Vector2 top=center+new Vector2(0,half),right=center+new Vector2(half,0),bottom=center-new Vector2(0,half),left=center-new Vector2(half,0);
+        Vector2 table=center+new Vector2(-half*.12f,half*.14f);
+        Facet(vh,left,top,table,light);Facet(vh,top,right,table,mid);
+        Facet(vh,right,bottom,table,dark);Facet(vh,bottom,left,table,shade);
+        // Small sparkle on the lit facet.
+        Diamond(vh,center+new Vector2(-half*.38f,half*.36f),Mathf.Max(1,half*.16f),Color.white,Color.white,Color.white,Color.white);
+    }
+    static void Facet(VertexHelper vh,Vector2 a,Vector2 b,Vector2 c,Color tone) {
+        int n=vh.currentVertCount;
+        vh.AddVert(a,tone,Vector2.zero);vh.AddVert(b,tone,Vector2.zero);vh.AddVert(c,Color.Lerp(tone,Color.white,.1f),Vector2.zero);
+        vh.AddTriangle(n,n+1,n+2);
+    }
+    static void Diamond(VertexHelper vh,Vector2 c,float h,Color top,Color right,Color bottom,Color left) {
+        int n=vh.currentVertCount;
+        vh.AddVert(c+new Vector2(0,h),top,Vector2.zero);vh.AddVert(c+new Vector2(h,0),right,Vector2.zero);
+        vh.AddVert(c-new Vector2(0,h),bottom,Vector2.zero);vh.AddVert(c-new Vector2(h,0),left,Vector2.zero);
+        vh.AddTriangle(n,n+1,n+2);vh.AddTriangle(n+2,n+3,n);
+    }
+}
+
+// Five-pointed star of the "verfolgen" toggle: gold when the challenge is followed in the HUD, an empty brass outline otherwise.
+[RequireComponent(typeof(CanvasRenderer))]
+public sealed class ChallengeStar : MaskableGraphic
+{
+    bool filled;
+    public bool Filled { get => filled; set { if (filled == value) return; filled = value; SetVerticesDirty(); } }
+    static readonly Color32 Rim=new Color32(214,160,62,255), Hollow=new Color32(28,16,9,235);
+    static readonly Color32 Deep=new Color32(196,110,12,255), Bright=new Color32(255,226,120,255);
+    protected override void OnPopulateMesh(VertexHelper vh) {
+        vh.Clear();
+        var r=rectTransform.rect;
+        float outer=Mathf.Min(r.width,r.height)*.5f;
+        Vector2 c=r.center+new Vector2(0,-outer*.06f);
+        Color tint=color;
+        Star(vh,c,outer,Multiply(Rim,tint),Multiply(Rim,tint));
+        if(filled) Star(vh,c,outer-2.4f,Multiply(Deep,tint),Multiply(Bright,tint));
+        else Star(vh,c,outer-2.4f,Multiply(Hollow,tint),Multiply(Hollow,tint));
+    }
+    static Color Multiply(Color32 value,Color tint) { Color c=value; return new Color(c.r*tint.r,c.g*tint.g,c.b*tint.b,c.a*tint.a); }
+    // Centre colour inside, tip colour at the points: a bright rim with a deeper heart reads as polished metal.
+    static void Star(VertexHelper vh,Vector2 c,float outer,Color centre,Color tips) {
+        if(outer<=0)return;
+        float inner=outer*.47f;
+        int n=vh.currentVertCount;
+        vh.AddVert(c,centre,Vector2.zero);
+        for(int i=0;i<10;i++) {
+            float angle=Mathf.PI*.5f+i*Mathf.PI/5f, radius=i%2==0?outer:inner;
+            vh.AddVert(c+new Vector2(Mathf.Cos(angle),Mathf.Sin(angle))*radius,i%2==0?tips:Color.Lerp(centre,tips,.4f),Vector2.zero);
+        }
+        for(int i=0;i<10;i++) vh.AddTriangle(n,n+1+i,n+1+(i+1)%10);
     }
 }

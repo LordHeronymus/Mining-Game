@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Challenges im HUD verfolgen (Stern, HUD-Liste rechts) und neue Kartenrahmen | `claude/challenge-tracking` | Cloud | `ChallengePanel.cs`, `ChallengeArt.cs`, neu `ChallengeTrackerHud.cs`/`MetaChallengeTracking.cs`, Profilfeld `trackedChallenges`, `CompactHud.cs` (eine Zeile in Awake) | nein | 23.10.2026 15:45 |
 
 ## Zuletzt abgeschlossen
 
