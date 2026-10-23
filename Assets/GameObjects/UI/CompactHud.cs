@@ -110,10 +110,10 @@ public sealed class CompactHud : MonoBehaviour
             RefreshItems();
         }
         if (!inventoryPanel) inventoryPanel = UnityEngine.Object.FindFirstObjectByType<InventoryUI>(FindObjectsInactive.Include);
-        bool inventoryOpen = inventoryPanel && inventoryPanel.IsOpen && !GameOverPanel.IsOpen;
+        bool inventoryOpen = ShowsInventoryHotbar(inventoryPanel);
         bool blocked = GameplayInputBlocker.IsBlocked;
         SetInventoryHotbarVisible(inventoryOpen);
-        visibility.alpha = blocked && !GameplayDebugPanel.IsOpen && !GameOverPanel.IsOpen && !inventoryOpen ? 0 : 1;
+        visibility.alpha = HidesHud(inventoryPanel, inventoryOpen) ? 0 : 1;
         visibility.blocksRaycasts = visibility.interactable = !blocked || inventoryOpen;
         var selected = EventSystem.current ? EventSystem.current.currentSelectedGameObject : null;
         bool typing = selected && selected.GetComponent<TMP_InputField>();
@@ -122,14 +122,32 @@ public sealed class CompactHud : MonoBehaviour
         if (blocked || typing) return;
         for (int i = 0; i < 8; i++)
             if (GameBindings.Down((GameAction)((int)GameAction.Slot1 + i))) SelectSlot(i + 1);
-        if (GameBindings.Down(GameAction.PreviousSlot)) SelectSlot((SelectedSlot + 8) % 9);
-        if (GameBindings.Down(GameAction.NextSlot)) SelectSlot((SelectedSlot + 1) % 9);
+        if (GameBindings.Down(GameAction.PreviousSlot)) SelectSlot(AdjacentSlot(SelectedSlot, -1, i => IsKnownHotbarItem(slots[i - 1])));
+        if (GameBindings.Down(GameAction.NextSlot)) SelectSlot(AdjacentSlot(SelectedSlot, 1, i => IsKnownHotbarItem(slots[i - 1])));
         if (ladder && ladder.BuildMode != wasBuilding)
         {
             wasBuilding = ladder.BuildMode;
             if (wasBuilding)
                 for (int i = 0; i < 8; i++) if (IsKnownHotbarItem(slots[i]) && (slots[i].item == Item.Ladder || slots[i].item == Item.IronLadder)) { SelectedSlot = i + 1; RefreshItems(); break; }
         }
+    }
+    // The inventory's tool tray overlay stays off while an end-of-run screen is up, so it never covers its buttons.
+    static bool ShowsInventoryHotbar(InventoryUI panel) => panel && panel.IsOpen &&
+        !GameOverPanel.IsOpen && !GameVictoryPanel.IsOpen && !ExpeditionResultPanel.IsOpen;
+    // Only other panels hide the HUD; the inventory still blocks input during its fade-out after IsOpen turned false.
+    static bool HidesHud(Behaviour inventoryPanel, bool inventoryOpen) =>
+        (inventoryPanel ? GameplayInputBlocker.IsBlockedExcept(inventoryPanel) : GameplayInputBlocker.IsBlocked) &&
+        !GameplayDebugPanel.IsOpen && !GameOverPanel.IsOpen && !inventoryOpen;
+    // Q/E step over empty slots; slot 0 (pickaxe) is always selectable, so the search always ends.
+    static int AdjacentSlot(int selected, int direction, Func<int, bool> selectable)
+    {
+        int index = selected;
+        for (int step = 0; step < 9; step++)
+        {
+            index = (index + direction + 9) % 9;
+            if (index == 0 || selectable(index)) return index;
+        }
+        return 0;
     }
     void LateUpdate()
     {
@@ -249,7 +267,7 @@ public sealed class CompactHud : MonoBehaviour
         var item = slots[index - 1];
         if (item && item.item == Item.Medkit)
         {
-            bool inventoryOpen = inventoryPanel && inventoryPanel.IsOpen && !GameOverPanel.IsOpen;
+            bool inventoryOpen = ShowsInventoryHotbar(inventoryPanel);
             if (GameplayInputBlocker.IsBlocked && !inventoryOpen) return;
             if (!GameplayInputBlocker.IsBlocked) SelectSlot(index);
             StatsManager.Instance?.TryUseMedkit(item);
@@ -289,6 +307,13 @@ public sealed class CompactHud : MonoBehaviour
     {
         if (index < 1 || index > 8) throw new ArgumentOutOfRangeException(nameof(index));
         if (item && !IsHotbarItem(item)) throw new ArgumentException("Item cannot be used from the hotbar.", nameof(item));
+        // Each item occupies one slot: assigning an item that is already on the hotbar moves it, with its selection.
+        for (int i = 0; item && i < slots.Length; i++)
+            if (i != index - 1 && slots[i] && slots[i].item == item.item)
+            {
+                slots[i] = null;
+                if (SelectedSlot == i + 1) SelectedSlot = index;
+            }
         slots[index - 1] = item;
         if (SelectedSlot == index && ladder) ladder.SetBuildMode(IsKnownHotbarItem(item) && (item.item == Item.Ladder || item.item == Item.IronLadder));
         if (persist) SaveSlotLayout();
