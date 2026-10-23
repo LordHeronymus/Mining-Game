@@ -9,11 +9,7 @@ using UnityEngine.UI;
 // Child of CompactHud, so it shares the HUD's fade (CanvasGroup) and scales like the counters. Never takes clicks.
 public sealed class ChallengeTrackerHud : MonoBehaviour
 {
-    // Layout variants for the design choice (23.10.2026): 0 title plaque on the top edge, 1 centred title between gold rules,
-    // 2 no title but a star badge, 3 one small card per challenge. Set before Attach; the chosen one stays, the rest goes.
-    public static int Variant = 0;
-    public const int VariantCount = 4;
-    const float Width = 384, RowHeight = 58, Padding = 14, PaddingRight = 26, Top = 134, Margin = 18, CardGap = 6;
+    const float Width = 384, RowHeight = 58, Padding = 14, PaddingRight = 26, Top = 134, Margin = 18, Header = 40;
     const float RefreshDelay = .5f, IdleRefresh = 5;
     static readonly CultureInfo German = CultureInfo.GetCultureInfo("de-DE");
     static readonly Color Cream = new Color32(255, 245, 229, 255), Muted = new Color32(193, 178, 152, 255);
@@ -34,8 +30,6 @@ public sealed class ChallengeTrackerHud : MonoBehaviour
     float nextRefresh, idleRefresh;
     Vector2 fittedSize;
     float fittedHudScale = -1;
-    int variant;
-    float header;
     public int ShownCount { get; private set; }
 
     public static ChallengeTrackerHud Attach(Component hud)
@@ -53,49 +47,24 @@ public sealed class ChallengeTrackerHud : MonoBehaviour
 
     void Build()
     {
-        variant = Mathf.Clamp(Variant, 0, VariantCount - 1);
-        header = variant switch { 0 => 30, 1 => 40, 2 => 14, _ => 34 };
-        panel = Place("Tracker Panel", transform, 0, 0, Width, header);
+        panel = Place("Tracker Panel", transform, 0, 0, Width, Header);
         panel.anchorMin = panel.anchorMax = panel.pivot = Vector2.one;
-        if (variant != 3) Frame(panel.gameObject, 70);
-        switch (variant) {
-            case 0: {
-                // Small dark-wood plaque riding on the top edge, like the XP plaques on the cards.
-                var plaque = Place("Title Plaque", panel, Width * .5f - 112, -15, 224, 32).gameObject.AddComponent<Image>();
-                plaque.sprite = HomeUi.Sprite("SelectionCardNormal"); plaque.type = Image.Type.Sliced;
-                plaque.pixelsPerUnitMultiplier = 14; ChallengeArt.DarkWood(plaque); plaque.raycastTarget = false;
-                Label("Title", plaque.transform, "Herausforderungen", 10, 4, 204, 24, 18, TextAlignmentOptions.Center).color = ProgressionArt.Gold;
-                break;
-            }
-            case 1: {
-                Label("Title", panel, "Herausforderungen", Width * .5f - 100, 9, 200, 26, 20, TextAlignmentOptions.Center).color = ProgressionArt.Gold;
-                float length = Width * .5f - 134;
-                foreach (float x in new[] { 30f, Width * .5f + 104 }) {
-                    var rule = Place("Title Rule", panel, x, 22, length, 1.5f).gameObject.AddComponent<Image>();
-                    rule.color = new Color(ProgressionArt.Gold.r, ProgressionArt.Gold.g, ProgressionArt.Gold.b, .65f); rule.raycastTarget = false;
-                    var gem = Place("Title Gem", panel, x < Width * .5f ? x - 7 : x + length - 5, 17, 12, 12).gameObject.AddComponent<ChallengeGem>();
-                    gem.color = ProgressionArt.Gold; gem.raycastTarget = false;
-                }
-                break;
-            }
-            case 2: {
-                var star = Place("Star Badge", panel, -10, -12, 34, 34).gameObject.AddComponent<ChallengeStar>();
-                star.Filled = true; star.raycastTarget = false;
-                break;
-            }
-            default: {
-                var star = Place("Title Star", panel, Width - 228, 6, 22, 22).gameObject.AddComponent<ChallengeStar>();
-                star.Filled = true; star.raycastTarget = false;
-                Label("Title", panel, "Herausforderungen", Width - 200, 4, 192, 26, 20, TextAlignmentOptions.Right).color = ProgressionArt.Gold;
-                break;
-            }
+        Frame(panel.gameObject, 70);
+        // Title centred between two fine gold rules, each ending in a small gold gem.
+        Label("Title", panel, "Herausforderungen", Width * .5f - 100, 9, 200, 26, 20, TextAlignmentOptions.Center).color = ProgressionArt.Gold;
+        float length = Width * .5f - 134;
+        foreach (float x in new[] { 30f, Width * .5f + 104 }) {
+            var rule = Place("Title Rule", panel, x, 22, length, 1.5f).gameObject.AddComponent<Image>();
+            rule.color = new Color(ProgressionArt.Gold.r, ProgressionArt.Gold.g, ProgressionArt.Gold.b, .65f); rule.raycastTarget = false;
+            var gem = Place("Title Gem", panel, x < Width * .5f ? x - 7 : x + length - 5, 17, 12, 12).gameObject.AddComponent<ChallengeGem>();
+            gem.color = ProgressionArt.Gold; gem.raycastTarget = false;
         }
         for (int i = 0; i < MetaProgression.TrackedShown; i++) rows.Add(BuildRow(i));
         panel.gameObject.SetActive(false);
     }
 
     // HUD wood frame; cornerUnits sets how large the brass corners are drawn (the counter frame uses 85 at 106 high).
-    static Image Frame(GameObject target, float cornerUnits)
+    static void Frame(GameObject target, float cornerUnits)
     {
         var sprite = Resources.Load<Sprite>("HUDv1/Vitals");
         var image = target.AddComponent<Image>();
@@ -103,28 +72,21 @@ public sealed class ChallengeTrackerHud : MonoBehaviour
         image.type = Image.Type.Sliced; image.raycastTarget = false;
         image.pixelsPerUnitMultiplier = image.sprite.rect.height / cornerUnits;
         image.material = HudV1Art.DarkWood(image.sprite);
-        return image;
     }
-
-    float RowTop(int index) => header + index * (variant == 3 ? RowHeight + CardGap : RowHeight);
 
     Row BuildRow(int index)
     {
-        bool card = variant == 3;
-        float left = card ? 0 : Padding, width = Width - (card ? 0 : Padding + PaddingRight);
-        var row = new Row { rect = Place("Tracked " + index, panel, left, RowTop(index), width, RowHeight) };
-        // Inside a card the content keeps clear of the frame on both sides.
-        float inset = card ? 14 : 0, right = card ? 18 : 0;
-        if (card) Frame(row.rect.gameObject, 48);
-        else if (index > 0) {
+        float width = Width - Padding - PaddingRight;
+        var row = new Row { rect = Place("Tracked " + index, panel, Padding, Header + index * RowHeight, width, RowHeight) };
+        if (index > 0) {
             var rule = Place("Rule", row.rect, 46, 0, width - 46, 1).gameObject.AddComponent<Image>();
             rule.color = new Color(ProgressionArt.Gold.r, ProgressionArt.Gold.g, ProgressionArt.Gold.b, .22f); rule.raycastTarget = false;
         }
-        row.icon = Place("Icon", row.rect, inset + 2, 7, 42, 42).gameObject.AddComponent<Image>();
+        row.icon = Place("Icon", row.rect, 2, 7, 42, 42).gameObject.AddComponent<Image>();
         row.icon.preserveAspect = true; row.icon.raycastTarget = false;
-        row.gem = Place("Tier Gem", row.rect, inset + 31, 35, 16, 16).gameObject.AddComponent<ChallengeGem>();
+        row.gem = Place("Tier Gem", row.rect, 31, 35, 16, 16).gameObject.AddComponent<ChallengeGem>();
         row.gem.raycastTarget = false;
-        float textLeft = inset + 54, textWidth = width - textLeft - right;
+        float textLeft = 54, textWidth = width - textLeft;
         row.name = Label("Name", row.rect, "", textLeft, 6, textWidth - 96, 26, 21, TextAlignmentOptions.Left);
         row.counter = Label("Counter", row.rect, "", textLeft + textWidth - 94, 8, 94, 24, 18, TextAlignmentOptions.Right);
         row.counter.color = Muted;
@@ -169,7 +131,7 @@ public sealed class ChallengeTrackerHud : MonoBehaviour
             row.rect.gameObject.SetActive(active);
             if (active) Show(row, shown[i]);
         }
-        panel.sizeDelta = new Vector2(Width, variant == 3 ? RowTop(shown.Count) - CardGap : RowTop(shown.Count) + Padding - 4);
+        panel.sizeDelta = new Vector2(Width, Header + shown.Count * RowHeight + Padding - 4);
     }
 
     static void Show(Row row, MetaChallengeProgress challenge)
@@ -206,8 +168,7 @@ public sealed class ChallengeTrackerHud : MonoBehaviour
         fittedSize = size; fittedHudScale = hudScale;
         float scale = Mathf.Min(size.x / 1920f, size.y / 1080f) * (hudScale / PlayerSettings.DefaultHudScale);
         panel.localScale = Vector3.one * scale;
-        // The plaque of variant 0 rides on the top edge; drop the panel by its overhang.
-        panel.anchoredPosition = new Vector2(-Margin * scale, -(Top + (variant == 0 ? 16 : 0)) * scale);
+        panel.anchoredPosition = new Vector2(-Margin * scale, -Top * scale);
     }
 
     static string Number(int value) => value.ToString("N0", German);

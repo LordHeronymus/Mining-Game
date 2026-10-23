@@ -794,7 +794,7 @@ public static class ChallengePanelPreviewChecks
         panel.gameObject.SetActive(false);
         Render(hud, "ChallengeTracker-HUD");
         hud.gameObject.SetActive(false);
-        Section("Tracker variants", () => TrackerVariants(canvas));
+        Section("Tracker in game layout", () => TrackerInGame(canvas));
         hud.gameObject.SetActive(true);
         panel.gameObject.SetActive(true);
 
@@ -824,11 +824,10 @@ public static class ChallengePanelPreviewChecks
         MetaProgression.ChallengeTestUtc = Now;
         Object.DestroyImmediate(hud.gameObject);
     }
-    // One image per ChallengeTrackerHud.Variant, over a landscape with the counter frame above it as in the game.
-    static void TrackerVariants(Canvas canvas)
+    // The tracker over a landscape with the counter frame above it, as in the game.
+    static void TrackerInGame(Canvas canvas)
     {
-        int previous = ChallengeTrackerHud.Variant;
-        var stage = new GameObject("Tracker Variant Stage", typeof(RectTransform)).GetComponent<RectTransform>();
+        var stage = new GameObject("Tracker Stage", typeof(RectTransform)).GetComponent<RectTransform>();
         stage.SetParent(canvas.transform, false); HomeUi.Stretch(stage);
         try
         {
@@ -841,25 +840,22 @@ public static class ChallengePanelPreviewChecks
             rect.sizeDelta = new Vector2(596, 106); rect.anchoredPosition = new Vector2(-18, -14);
             counters.sprite = Resources.Load<Sprite>("HUDv1/Vitals"); counters.type = Image.Type.Sliced;
             if (counters.sprite) { counters.pixelsPerUnitMultiplier = counters.sprite.rect.height / 85f; counters.material = HudV1Art.DarkWood(counters.sprite); }
-            for (int v = 0; v < ChallengeTrackerHud.VariantCount; v++)
-            {
-                var holder = new GameObject("Variant " + v, typeof(RectTransform)).GetComponent<RectTransform>();
-                holder.SetParent(stage, false); HomeUi.Stretch(holder);
-                ChallengeTrackerHud.Variant = v;
-                var tracker = ChallengeTrackerHud.Attach(holder);
-                tracker.Refresh(); Refresh(tracker);
-                Check(tracker.ShownCount == MetaProgression.TrackedShown, "Variant " + v + " shows " + tracker.ShownCount + " rows");
-                var frame = tracker.transform.Find("Tracker Panel") as RectTransform;
-                var corners = new Vector3[4]; frame.GetWorldCorners(corners);
-                var screen = new Vector3[4]; stage.GetWorldCorners(screen);
-                Check(corners[2].x < screen[2].x && corners[1].y <= screen[1].y, "Variant " + v + " stays on screen");
-                Render(stage, "ChallengeTracker-Variant-" + (v + 1));
-                Object.DestroyImmediate(holder.gameObject);
-            }
+            var holder = new GameObject("Tracker HUD", typeof(RectTransform)).GetComponent<RectTransform>();
+            holder.SetParent(stage, false); HomeUi.Stretch(holder);
+            var tracker = ChallengeTrackerHud.Attach(holder);
+            tracker.Refresh(); Refresh(tracker);
+            var frame = tracker.transform.Find("Tracker Panel") as RectTransform;
+            var corners = new Vector3[4]; frame.GetWorldCorners(corners);
+            var top = new Vector3[4]; rect.GetWorldCorners(top);
+            var screen = new Vector3[4]; stage.GetWorldCorners(screen);
+            Check(corners[2].x < screen[2].x && Mathf.Abs(corners[2].x - top[2].x) < .01f && corners[1].y < top[0].y,
+                "Tracker sits on screen, right-aligned below the counter frame");
+            var title = frame.Find("Title");
+            Check(title && frame.GetComponentsInChildren<ChallengeGem>().Count(g => g.name == "Title Gem") == 2, "Title between two gold rules with gems");
+            Render(stage, "ChallengeTracker-Game");
         }
         finally
         {
-            ChallengeTrackerHud.Variant = previous;
             Object.DestroyImmediate(stage.gameObject);
         }
     }
