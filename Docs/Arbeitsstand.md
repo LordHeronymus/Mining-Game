@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Inventar: Rechtsklick → Löschen mit Mengenregler (Variante C1) | `claude/items-loeschen` | Cloud | `InventoryUI` (+ `InventoryUI.Delete.cs`), `InventoryCellDrag`, `HomeUi.Sprite` (Delete*), neue Grafik `Resources/Homescreen/SelectionButtons-Red.png`, `Tests/InventoryDeleteChecks.cs` | ja (Testbank) | 23.10.2026 16:55 UTC |
 
 ## Zuletzt abgeschlossen
 
