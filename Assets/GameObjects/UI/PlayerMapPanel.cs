@@ -457,5 +457,6 @@ public sealed class PlayerMapPanel : MonoBehaviour
         var label = Label(image.transform, value, 0, 0, width, height,
             value == "×" ? 44 : 24, TextAlignmentOptions.Center);
         label.color = Gold;
+        ButtonTextCentering.Apply(label, image);
     }
 }

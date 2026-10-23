@@ -25,6 +25,7 @@ public sealed class GpsProfile : ScriptableObject
     public StartingResourcesData startingResources = new();
     public MetaProgressionSettings metaProgression = new();
     public ChallengeSettings challenges = new();
+    public ThinVeinMediumSettings thinVeinMedium = new();
     public float panelBackdropAlpha = .55f, panelElementAlpha = 1f;
     // The element alpha fades the whole F1 card, its own field included; at 0 the menu could no longer be used.
     public const float MinPanelElementAlpha = .2f;
@@ -34,6 +35,8 @@ public sealed class GpsProfile : ScriptableObject
     public float autosaveIntervalMinutes = 3f;
     public float dragPopScale = 1.28f, dragCarryScale = 1.12f, dragPopDuration = .24f;
     public bool workbenchUsesStorage = true, workbenchStorageFirst;
+    // Button captions (ButtonTextCentering): offset as a fraction of the font size (+ = up), minimum gap to the gold rim.
+    public float buttonTextOffset, buttonTextPadding = 1f;
 }
 [Serializable] public sealed class GpsRecord
 {

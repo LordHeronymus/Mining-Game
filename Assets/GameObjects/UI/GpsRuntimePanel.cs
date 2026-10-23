@@ -542,6 +542,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         var image = Rect(label, parent, position, size).gameObject.AddComponent<Image>(); image.color = Control;
         var button = image.gameObject.AddComponent<Button>(); button.targetGraphic = image;
         var text = Label(image.transform, label, new Vector2(12, 0), size - new Vector2(24, 0), 20);
+        ButtonTextCentering.Apply(text, image);
         button.onClick.AddListener(() => action?.Invoke()); return button;
     }
     TMP_InputField Input(Transform parent, Vector2 position, Vector2 size, string value, Action<string> submit)

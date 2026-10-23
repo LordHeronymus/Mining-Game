@@ -400,10 +400,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
         {
             var category = (CraftingRecipe.RecipeCategory)i;
             var tab = Button("Category_" + category, layout, categories[i], 524 + i * 158, 137, 148, 49, () => SetCategory(category));
-            var label = tab.GetComponentInChildren<TextMeshProUGUI>();
-            label.fontSizeMax = 25;
-            if (category == CraftingRecipe.RecipeCategory.Tools)
-                label.rectTransform.anchoredPosition += Vector2.down * 3f;
+            tab.GetComponentInChildren<TextMeshProUGUI>().fontSizeMax = 25;
             categoryTabs.Add(tab.GetComponent<Image>());
         }
         favoriteFilter = Button("Favorites", layout, "", 1166, 137, 49, 49, () => SetFavoritesOnly(!OnlyFavorites)).GetComponent<Image>();
@@ -451,14 +448,14 @@ public sealed class WorkbenchPanel : MonoBehaviour
         ingredientScroll = ingredientContent.parent.GetComponent<ScrollRect>();
         AddScrollbar(ingredientScroll, details, 1475, 592, 10, IngredientHeight);
         quantityControls = Rect("QuantityControls", details, 0, 0, LayoutWidth, LayoutHeight);
-        Label(quantityControls, "Menge", 1030, 739, 105, 38, 27);
-        minus = Button("Minus", quantityControls, "−", 1140, 739, 38, 38, () => SetQuantity(Quantity - 1));
-        Panel("QuantityField", quantityControls, 1185, 739, 82, 38, rowSprite);
-        quantityText = Label(quantityControls, "1", 1185, 739, 82, 38, 27, TextAlignmentOptions.Midline);
-        plus = Button("Plus", quantityControls, "+", 1274, 739, 38, 38, () => SetQuantity(Quantity + (Quantity < int.MaxValue ? 1 : 0)));
-        maximum = Button("Max", quantityControls, "Max", 1330, 739, 130, 38,
+        Label(quantityControls, "Menge", 1030, 735, 105, 38, 27);
+        minus = Button("Minus", quantityControls, "−", 1140, 735, 38, 38, () => SetQuantity(Quantity - 1));
+        Panel("QuantityField", quantityControls, 1185, 735, 82, 38, rowSprite);
+        quantityText = Label(quantityControls, "1", 1185, 735, 82, 38, 27, TextAlignmentOptions.Midline);
+        plus = Button("Plus", quantityControls, "+", 1274, 735, 38, 38, () => SetQuantity(Quantity + (Quantity < int.MaxValue ? 1 : 0)));
+        maximum = Button("Max", quantityControls, "Max", 1342, 735, 118, 38,
             () => SetQuantity(CraftingService.GetMaxCraftable(SelectedRecipe, inventory)));
-        craft = Button("Craft", details, "Herstellen", 1020, 787, 450, 49, () => CraftSelected());
+        craft = Button("Craft", details, "Herstellen", 1020, 781, 450, 56, () => CraftSelected());
         craft.GetComponent<Image>().sprite = actionSprite;
         craftText = craft.GetComponentInChildren<TextMeshProUGUI>();
         craftText.fontSizeMax = 27;

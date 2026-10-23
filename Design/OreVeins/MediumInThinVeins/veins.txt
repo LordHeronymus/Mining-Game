@@ -1,0 +1,15 @@
+# Aus Tests/ThinVeinMediumChecks.cs, Cloud-Lauf „Unity Checks“ #96 (22.10.2026), Seed -717317, Standardwerte.
+# VEIN = dünne Ader (vorher nur Small), CORE = Ader mit Rich-Kern ohne Medium (Schalter „Auch Adern mit Rich-Kern“).
+# Format: Art Seed Erz Ebene x,y(Generierungszelle oben links) Raster-vorher Raster-nachher (s/m/r, '.' = keine Zelle der Ader, '/' = neue Zeile)
+VEIN -717317 Coal E1 245,6 ss../.s../.sss/.sss ss../.s../.mss/.sss
+VEIN -717317 IronOre E1 525,9 sss./.ss./.sss sss./.ms./.sss
+VEIN -717317 CopperOre E1 542,20 ssss/ssss/...s ssms/ssss/...s
+VEIN -717317 SilverOre E2 416,50 ss./ss./ss./sss ss./ss./sm./sss
+VEIN -717317 TitaniumOre E3 280,194 .s./.ss/.ss/sss .s./.ss/.ms/sss
+VEIN -717317 OrangeGarnetOre E3 26,199 .s/ss/ss/ss/ss .s/ss/sm/ss/ss
+VEIN -717317 GoldOre E3 191,222 ssss/ssss ssss/smss
+VEIN -717317 PlatinumOre E4 439,567 ssss/ssss ssms/ssss
+VEIN -717317 TungstenOre E4 484,616 .sssssss/ssssssss .ssmssss/ssssmsss
+VEIN -717317 RubyOre E4 152,702 ssss/ssss ssss/smss
+CORE -717317 Coal E1 416,3 .sss./srs../srs../.ss../..sss/..ss./..ss./..ss./.sss./...s. .sss./srs../srs../.ms../..sms/..ss./..ms./..ss./.sss./...s.
+CORE -717317 IronOre E1 295,10 .ss.../.ss.../.ss.../sss.../..sss./...srs/....ss .ss.../.ss.../.sm.../sss.../..mss./...mrs/....ss
