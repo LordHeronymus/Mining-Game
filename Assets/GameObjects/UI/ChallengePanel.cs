@@ -251,11 +251,12 @@ public sealed class ChallengePanel : MonoBehaviour
     {
         var track = HomeUi.Image("Progress Track", parent, position, new Vector2(width, 39));
         track.sprite=ChallengeArt.Sprite(6);track.type=Image.Type.Sliced;track.pixelsPerUnitMultiplier=2.5f;
-        var interior=HomeUi.Rect("Interior",track.transform,Vector2.zero,new Vector2(width-68,16));
+        // The interior spans the groove up to its chevron tips (26.5 units in from each end at the 2.5 slice scale).
+        var interior=HomeUi.Rect("Interior",track.transform,Vector2.zero,new Vector2(width-53,16));
         var fill=HomeUi.Rect("Progress Fill",interior,Vector2.zero,Vector2.zero);
         fill.anchorMin=Vector2.zero;fill.anchorMax=new Vector2(Mathf.Clamp01(progress),1);
         fill.offsetMin=fill.offsetMax=Vector2.zero;
-        fill.gameObject.AddComponent<ChallengeGoldFill>().raycastTarget=false;
+        var gold=fill.gameObject.AddComponent<ChallengeGoldFill>();gold.raycastTarget=false;gold.Pointed=true;
     }
 
     // Star toggle: a marked challenge is followed in the HUD (ChallengeTrackerHud). The panel rebuilds on MetaProgression.Changed.

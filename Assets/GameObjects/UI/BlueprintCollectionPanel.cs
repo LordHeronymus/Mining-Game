@@ -143,7 +143,7 @@ public sealed class BlueprintCollectionPanel : MonoBehaviour
         }
         var name=Text("Name",tile,recipe.output.displayName,new Vector2(0,-30),new Vector2(350,54),29,TextAlignmentOptions.Center);
         name.textWrappingMode=TextWrappingModes.Normal;name.fontSizeMin=22;
-        string state=recipe.exotic ? learned?"Im Run gelernt":available?"Im Fundpool":"Gesperrt" : "Ohne Levelbindung";
+        string state=recipe.exotic ? learned?"Im Run gelernt":available?"Freigeschaltet":"Gesperrt" : "Ohne Levelbindung";
         Text("State",tile,state,new Vector2(0,-79),new Vector2(350,29),22,TextAlignmentOptions.Center).color=recipe.exotic && (available || learned)?ExoticDesign.Cyan:Muted;
     }
 
