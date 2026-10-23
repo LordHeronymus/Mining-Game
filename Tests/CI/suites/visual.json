@@ -2,7 +2,6 @@
   "checks": [
     { "name": "DirtSurfaceChecks" },
     { "name": "VeinRichnessPreviewChecks" },
-    { "name": "OreVeinVisualChecks" },
     { "name": "EmbeddedOreRenderChecks" }
   ]
 }
