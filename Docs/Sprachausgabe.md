@@ -12,7 +12,7 @@ Clips: `Assets/AC Audio/Voice/<Anlass>/NN_<Satz>_V<k>.(mp3|wav)`. `NN` ist die S
 | EnergyCritical | `Energie_15` | 4 / 8 | Energie fällt unter 15 % |
 | EnergyRefilled | `Energie_Aufgefuellt` | 6 / 11 | Aufladen am Monolithen: mindestens 10 % dazu und danach mindestens 80 % |
 | CarryStage1 | `Traglast_Stufe1` | 5 / 10 | Gewicht über der Tragkraft (gelbe Anzeige) |
-| CarryStage2 | `Traglast_Stufe2` | 6 / 12 | Gewicht über der doppelten Tragkraft (rote Anzeige) |
+| CarryStage2 | `Traglast_Stufe2` | 6 / 12 | Gewicht ab 90 % der maximalen Last, also 1,8 × Tragkraft (rote Anzeige, GPS Bewegung → Traglast) |
 | FallSmall | `Sturz_Klein` | 5 / 9 | Fallschaden ab 5, aber nicht gross |
 | FallBig | `Sturz_Gross` | 6 / 12 | Fallschaden über `bigFallDamageThreshold` (30, wie der Knochenbruch-Sound) |
 | OreSold | `Shop_Verkauf` | 4 / 9 | „Alles verkaufen“ oder ein Verkauf, der mindestens 30 % der Tragkraft leert |
