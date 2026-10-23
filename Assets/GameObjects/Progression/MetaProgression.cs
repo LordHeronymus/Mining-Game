@@ -194,8 +194,9 @@ public static partial class MetaProgression
         result.startingLadders = Mathf.RoundToInt(UpgradeEffect("ladders", GetRank("ladders")));
         return result;
     }
-    // Effects and their validation bounds both come from the catalog, so retuning a step or rank
-    // count cannot make existing loadouts invalid.
+    // Effects and their validation bounds both come from the catalog. Raising a step or rank count is safe; lowering
+    // one (or changing XP, costs, ids or the level curve) rejects existing profiles and world saves, so the catalog is
+    // frozen (Tests/ProgressionChecks.cs, Docs/Progression.md) and changes need a migration first.
     static float UpgradeEffect(string id, int rank) => MetaProgressionCatalog.Upgrade(id) is MetaUpgradeDefinition definition ? rank * definition.step : 0f;
     static float MaxUpgradeEffect(string id) => MetaProgressionCatalog.Upgrade(id) is MetaUpgradeDefinition definition ? UpgradeEffect(id, definition.maxRank) : 0f;
 
