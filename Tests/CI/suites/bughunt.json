@@ -34,10 +34,19 @@
       "name": "BughuntMapPanelChecks"
     },
     {
+      "name": "BughuntPauseSaveChecks"
+    },
+    {
       "name": "BughuntPlayerCompileChecks"
     },
     {
       "name": "BughuntRecipeChecks"
+    },
+    {
+      "name": "BughuntSaveLoadChecks"
+    },
+    {
+      "name": "BughuntSettingsUiChecks"
     },
     {
       "name": "BughuntShopFormatChecks"
@@ -47,6 +56,9 @@
     },
     {
       "name": "BughuntTileMinerChecks"
+    },
+    {
+      "name": "BughuntVoicePauseChecks"
     },
     {
       "name": "BughuntWorkbenchRecipeRefreshChecks"

@@ -1,67 +1,78 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using UnityEditor;
-using UnityEditor.Compilation;
+using System.Text.RegularExpressions;
 
-// Edit Mode. Compiles the runtime scripts (Assembly-CSharp sources) once more as a player assembly, i.e. without
-// UNITY_EDITOR, so editor-only members used by runtime code (e.g. GameSaveSystem.TestDirectory) break this check
-// instead of a build. A one-line probe first proves that the build really runs without editor references.
+// Edit Mode. Runtime scripts (Assembly-CSharp, compiled into builds without UNITY_EDITOR) must use editor-only members
+// only inside #if UNITY_EDITOR: GameSaveSystem.TestDirectory and the UnityEditor namespace. Otherwise the player build
+// fails to compile, as it did with VoiceLinePlayer/GpsSettings. Tracks #if/#elif/#else/#endif per file.
 public static class BughuntPlayerCompileChecks
 {
     const string Report = "Temp/BughuntPlayerCompileChecks.txt";
-    static string directory;
+    static readonly Regex EditorOnly = new(@"GameSaveSystem\.TestDirectory|\bUnityEditor\.|^\s*using\s+UnityEditor\b");
 
     public static object Main()
     {
-        if (EditorApplication.isPlaying) throw new InvalidOperationException("Edit Mode erwartet.");
         Directory.CreateDirectory("Temp"); File.WriteAllText(Report, "");
-        directory = Path.GetFullPath("Temp/BughuntPlayerCompile-" + DateTime.UtcNow.Ticks);
-        Directory.CreateDirectory(directory);
-        string probe = Path.Combine(directory, "EditorOnlyProbe.cs");
-        File.WriteAllText(probe, "public static class BughuntEditorOnlyProbe { public static bool Playing => UnityEditor.EditorApplication.isPlaying; }\n");
-        string[] scripts = Directory.GetFiles("Assets", "*.cs", SearchOption.AllDirectories).Select(path => path.Replace('\\', '/'))
+        var scripts = Directory.GetFiles("Assets", "*.cs", SearchOption.AllDirectories).Select(path => path.Replace('\\', '/'))
             .Where(path => !path.Split('/').Contains("Editor")).ToArray();
-        var done = new TaskCompletionSource<object>();
-        Build("Probe.dll", new[] { probe }, probeErrors =>
+        var violations = new List<string>();
+        foreach (string path in scripts)
         {
-            if (probeErrors.Length == 0) { Finish(done, "FAIL Spieler-Kompilierung nutzt Editor-Referenzen (Probe mit UnityEditor kompiliert)"); return; }
-            Line("PASS Probe: UnityEditor ist im Spieler-Kontext nicht verfügbar");
-            Build("Assembly-CSharp.dll", scripts, errors =>
+            var stack = new Stack<(bool editor, bool notEditor)>();
+            string[] lines = File.ReadAllLines(path);
+            for (int i = 0; i < lines.Length; i++)
             {
-                foreach (var error in errors.Take(20)) Line("FAIL " + error);
-                Finish(done, errors.Length == 0 ? "PASS " + scripts.Length + " Laufzeit-Skripte kompilieren ohne UNITY_EDITOR" : "FAIL " + errors.Length + " Compilerfehler ohne UNITY_EDITOR");
-            }, done);
-        }, done);
-        return done.Task;
+                string line = lines[i].Trim();
+                if (line.StartsWith("#if")) { stack.Push(Condition(line.Substring(3))); continue; }
+                if (line.StartsWith("#elif") && stack.Count > 0) { stack.Pop(); stack.Push(Condition(line.Substring(5))); continue; }
+                if (line.StartsWith("#else") && stack.Count > 0) { var top = stack.Pop(); stack.Push((top.notEditor, top.editor)); continue; }
+                if (line.StartsWith("#endif") && stack.Count > 0) { stack.Pop(); continue; }
+                if (!EditorOnly.IsMatch(Code(lines[i]))) continue;
+                if (!stack.Any(scope => scope.editor)) violations.Add(path + ":" + (i + 1) + ": " + line);
+            }
+        }
+        // Self-test of the scanner: a guarded use passes, an unguarded one is found.
+        bool guarded = Scan("#if UNITY_EDITOR\nx = GameSaveSystem.TestDirectory;\n#endif") == 0;
+        bool unguarded = Scan("x = GameSaveSystem.TestDirectory;") == 1 && Scan("#if !UNITY_EDITOR\nusing UnityEditor;\n#endif") == 1 &&
+            Scan("x = 1; // GameSaveSystem.TestDirectory") == 0;
+        if (!guarded || !unguarded) violations.Insert(0, "Scanner-Selbsttest fehlgeschlagen");
+        foreach (string violation in violations) File.AppendAllText(Report, "FAIL " + violation + "\n");
+        string result = violations.Count == 0
+            ? "PASS " + scripts.Length + " Laufzeit-Skripte nutzen Editor-Only-Member nur unter #if UNITY_EDITOR"
+            : "FAIL " + violations.Count + " Editor-Only-Zugriffe ausserhalb von #if UNITY_EDITOR";
+        File.AppendAllText(Report, result + "\n");
+        return result;
     }
 
-    static void Build(string name, string[] scripts, Action<string[]> finished, TaskCompletionSource<object> done)
+    // (inside an editor-only branch, inside a branch that excludes the editor)
+    static (bool editor, bool notEditor) Condition(string expression)
     {
-        var builder = new AssemblyBuilder(Path.Combine(directory, name), scripts)
-            { flags = AssemblyBuilderFlags.None, buildTargetGroup = BuildTargetGroup.Standalone, buildTarget = EditorUserBuildSettings.activeBuildTarget };
-        // The project's own assemblies would duplicate the compiled types (and the editor ones reference UnityEditor).
-        builder.excludeReferences = builder.defaultReferences.Where(path =>
-        {
-            string file = Path.GetFileName(path);
-            return file.StartsWith("Assembly-CSharp", StringComparison.OrdinalIgnoreCase) || file.StartsWith("MiningGame.", StringComparison.OrdinalIgnoreCase);
-        }).ToArray();
-        if (builder.defaultDefines.Contains("UNITY_EDITOR")) { Finish(done, "FAIL Spieler-Kompilierung setzt UNITY_EDITOR"); return; }
-        builder.buildFinished += (path, messages) =>
-        {
-            try { finished(messages.Where(m => m.type == CompilerMessageType.Error).Select(m => m.file + "(" + m.line + "): " + m.message).ToArray()); }
-            catch (Exception error) { done.TrySetException(error); }
-        };
-        if (!builder.Build()) Finish(done, "FAIL AssemblyBuilder konnte " + name + " nicht starten");
+        string text = expression.Replace(" ", "");
+        bool negated = text.Contains("!UNITY_EDITOR");
+        bool mentions = text.Contains("UNITY_EDITOR");
+        bool editorOnly = mentions && !negated && !text.Contains("||");
+        return (editorOnly, mentions && negated && !text.Contains("||"));
     }
 
-    static void Line(string text) => File.AppendAllText(Report, text + "\n");
+    // Code before a line comment; mentions in comments are fine.
+    static string Code(string line) { int comment = line.IndexOf("//", StringComparison.Ordinal); return comment < 0 ? line : line.Substring(0, comment); }
 
-    static void Finish(TaskCompletionSource<object> done, string result)
+    static int Scan(string source)
     {
-        Line(result);
-        try { if (Directory.Exists(directory)) Directory.Delete(directory, true); } catch (Exception) { }
-        done.TrySetResult(result);
+        string file = Path.Combine("Temp", "BughuntPlayerCompileProbe.cs.txt");
+        File.WriteAllText(file, source);
+        var stack = new Stack<(bool editor, bool notEditor)>(); int found = 0;
+        foreach (string raw in File.ReadAllLines(file))
+        {
+            string line = raw.Trim();
+            if (line.StartsWith("#if")) { stack.Push(Condition(line.Substring(3))); continue; }
+            if (line.StartsWith("#else") && stack.Count > 0) { var top = stack.Pop(); stack.Push((top.notEditor, top.editor)); continue; }
+            if (line.StartsWith("#endif") && stack.Count > 0) { stack.Pop(); continue; }
+            if (EditorOnly.IsMatch(Code(raw)) && !stack.Any(scope => scope.editor)) found++;
+        }
+        File.Delete(file);
+        return found;
     }
 }
