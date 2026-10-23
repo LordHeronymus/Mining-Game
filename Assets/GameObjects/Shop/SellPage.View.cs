@@ -16,6 +16,10 @@ public partial class SellPage
     ScrollRect oreScroll;
     TMP_InputField searchField;
     Image unitPriceCoin, proceedsCoin;
+    Slider amountSlider;
+    TextMeshProUGUI amountText;
+    int saleAmount = 1;
+    ItemSO amountItem;
     Material itemGlowMaterial;
     Sprite coin;
     public string SearchQuery { get; private set; } = "";
@@ -30,8 +34,24 @@ public partial class SellPage
     }
     bool MatchesSearch(ItemSO item) => SearchQuery.Trim().Length == 0 || OreNameComparison.IndexOf(
         item.displayName, SearchQuery.Trim(), CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) >= 0;
-    int CurrentSaleCount(int count) => GameBindings.Held(GameAction.SellAll) ? count :
-        GameBindings.Held(GameAction.SellTen) ? Mathf.Min(10, count) : Mathf.Min(1, count);
+    public int SaleAmount => _selected ? CurrentSaleCount(ShopManager.StockCount(_selected)) : 0;
+    public Slider AmountSlider => amountSlider;
+    int CurrentSaleCount(int count) => count <= 0 ? 0 : Mathf.Clamp(saleAmount, 1, count);
+
+    // A newly selected ore starts at 1; after a sale the amount stays, limited to the remaining stock.
+    void SyncAmountSlider()
+    {
+        int count = _selected ? ShopManager.StockCount(_selected) : 0;
+        int amount = _selected != amountItem ? 1 : Mathf.Clamp(saleAmount, 1, Mathf.Max(1, count));
+        amountItem = _selected;
+        // Setting maxValue can notify with the old value, so the amount is applied afterwards.
+        if (amountSlider) amountSlider.maxValue = Mathf.Max(1, count);
+        saleAmount = amount;
+        if (!amountSlider) return;
+        amountSlider.SetValueWithoutNotify(saleAmount);
+        amountSlider.interactable = count > 1;
+        if (amountText) amountText.text = saleAmount.ToString();
+    }
 
     void BuildSellView()
     {
@@ -83,8 +103,43 @@ public partial class SellPage
         oreWorthText = BuildStat(details, "Unit Price", "Stückpreis", 227, true, out unitPriceCoin);
         totalWorthText = BuildStat(details, "Proceeds", "Erlös", 430, true, out proceedsCoin);
         sell1Button = sell10Button = null;
-        sellMaxButton = SellButton("Sell Selected", details, "Erz verkaufen", 32, 752, 580, 98, theme.ActionFrame);
-        sellAllButton = SellButton("Sell All", details, "Alles verkaufen", 32, 870, 580, 98, theme.CardFrame);
+        BuildAmountSlider(details);
+        sellMaxButton = SellButton("Sell Selected", details, "Erz verkaufen", 32, 870, 580, 98, theme.ActionFrame);
+    }
+
+    // Sale amount: 1 on the left, whole stock (Max) on the right; the handle shows the chosen amount.
+    void BuildAmountSlider(Transform details)
+    {
+        var row = SellRect("Sell Amount", details, 32, 760, 580, 76);
+        var min = SellLabel(row, "1", 8, 0, 40, 76, 34); min.color = new Color32(214, 190, 150, 255);
+        var max = SellLabel(row, "Max", 504, 0, 76, 76, 34); max.color = min.color;
+        max.alignment = TextAlignmentOptions.MidlineRight;
+        var area = SellRect("Amount Slider", row, 56, 0, 444, 76);
+        var hit = area.gameObject.AddComponent<Image>(); hit.color = Color.clear;
+        var rail = SellFrame("Rail", area, 0, 26, 444, 24, theme.CardFrame);
+        rail.pixelsPerUnitMultiplier = 12; rail.raycastTarget = true;
+        var fill = SellFrame("Fill", SellRect("Fill Area", area, 40, 30, 364, 16), 0, 0, 364, 16, theme.ActionFrame);
+        var slide = SellRect("Handle Slide Area", area, 40, 0, 364, 76); // after the fill, so the handle covers it
+        fill.pixelsPerUnitMultiplier = 14;
+        fill.rectTransform.anchorMin = Vector2.zero; fill.rectTransform.anchorMax = new Vector2(0, 1);
+        fill.rectTransform.offsetMin = new Vector2(-36, 0); fill.rectTransform.offsetMax = Vector2.zero;
+        var handle = SellFrame("Handle", slide, 0, 0, 76, 56, theme.SelectedFrame);
+        handle.pixelsPerUnitMultiplier = 10; handle.raycastTarget = true;
+        handle.rectTransform.pivot = Vector2.one * .5f; handle.rectTransform.sizeDelta = new Vector2(76, -20);
+        amountText = SellLabel(handle.transform, "1", 0, 0, 76, 56, 36);
+        amountText.alignment = TextAlignmentOptions.Midline;
+        amountText.rectTransform.anchorMin = Vector2.zero; amountText.rectTransform.anchorMax = Vector2.one;
+        amountText.rectTransform.offsetMin = amountText.rectTransform.offsetMax = Vector2.zero;
+        amountSlider = area.gameObject.AddComponent<Slider>();
+        amountSlider.wholeNumbers = true; amountSlider.minValue = 1; amountSlider.maxValue = 1;
+        amountSlider.fillRect = fill.rectTransform; amountSlider.handleRect = handle.rectTransform;
+        amountSlider.targetGraphic = handle; amountSlider.navigation = new Navigation { mode = Navigation.Mode.None };
+        amountSlider.onValueChanged.AddListener(value =>
+        {
+            saleAmount = Mathf.RoundToInt(value);
+            amountText.text = saleAmount.ToString();
+            UpdateSellActionButton();
+        });
     }
 
     TextMeshProUGUI BuildStat(Transform parent, string name, string caption, float x, bool currency, out Image moneyIcon)

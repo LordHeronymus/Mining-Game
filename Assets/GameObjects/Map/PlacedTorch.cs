@@ -29,8 +29,11 @@ public sealed class PlacedTorch : MonoBehaviour
     public Vector3Int Cell => cell;
     public ItemSO Item => item;
     public bool IsLavaLamp => item && item.item == global::Item.LavaLamp;
-    Vector3 FlameLocalPosition => new Vector3(map ? map.torchFlameOffsetX : 0f,
-        map ? map.torchFlameOffsetY + LightAboveFlameEmitter : .42f, 0f);
+    Vector3 FlameLocalPosition => FlameEmitterLocal(map) + Vector3.up * LightAboveFlameEmitter;
+    // Holder sits below the cell centre so the flame stays inside the cell; the flame is placed relative to the holder.
+    public static float HolderOffsetY(MapGenerator owner) => owner ? owner.torchHolderOffsetY : -.22f;
+    public static Vector3 FlameEmitterLocal(MapGenerator owner) => new(owner ? owner.torchFlameOffsetX : 0f,
+        HolderOffsetY(owner) + (owner ? owner.torchFlameOffsetY : .47f), 0f);
     // The only terrain cell the light position depends on: a tile here moves it into the holder cell.
     public Vector3Int FlameCell => !IsLavaLamp && map && map.Terrain
         ? map.Terrain.WorldToCell(transform.TransformPoint(FlameLocalPosition)) : cell;
@@ -64,6 +67,7 @@ public sealed class PlacedTorch : MonoBehaviour
         foreach (var torch in active)
         {
             if (!torch || torch.map != ownerMap) continue;
+            torch.PlaceHolder();
             torch.GetComponent<TorchFlame>()?.ApplySettings();
         }
         Changed?.Invoke(ownerMap);
@@ -72,6 +76,7 @@ public sealed class PlacedTorch : MonoBehaviour
     void OnEnable()
     {
         active.Add(this);
+        if (!IsLavaLamp) TorchCrackleAudio.Ensure();
         if (map) map.Generated += OnMapGenerated;
         Changed?.Invoke(map);
     }
@@ -84,6 +89,13 @@ public sealed class PlacedTorch : MonoBehaviour
     }
 
     void OnMapGenerated() => Destroy(gameObject);
+
+    void PlaceHolder()
+    {
+        if (IsLavaLamp) return;
+        var holder = transform.Find("Torch Holder");
+        if (holder) holder.localPosition = new Vector3(0f, HolderOffsetY(map), 0f);
+    }
 
     public static bool TryRemoveAt(Vector2 worldPoint, Vector2 playerPosition, float reach)
     {
@@ -161,6 +173,7 @@ public sealed class PlacedTorch : MonoBehaviour
         var holder = new GameObject("Torch Holder");
         holder.transform.SetParent(instance.transform, false);
         holder.transform.localScale = Vector3.one * (lava ? .5f : HolderScale);
+        if (!lava) holder.transform.localPosition = new Vector3(0f, HolderOffsetY(map), 0f);
         var renderer = holder.AddComponent<SpriteRenderer>();
         renderer.sprite = sprite;
         renderer.sortingLayerName = "Default";

@@ -1,11 +1,13 @@
 <#
 .SYNOPSIS
-  Testbank fuer Chats: holt einen Branch/Commit in den Arbeitsordner "Mining Game 2", dessen Unity Editor
-  den Chats gehoert (der Editor von "Mining Game" bleibt fuer den Benutzer frei).
+  Testbank fuer Chats: holt einen Branch/Commit in eine Testbank ("Mining Game 2" oder "Mining Game 3"), deren
+  Unity Editor den Chats gehoert (der Editor von "Mining Game" bleibt fuer den Benutzer frei).
+  Welche Testbank: -Bench "<Ordner>", sonst die, in deren Warteschlange -Id (bzw. die Claude-Code-Sitzung) oben steht
+  (Zuteilung ueber editor-queue -Project Testbank), sonst "<Projekt> 2".
   Doku: Docs/Editor-Warteschlange.md
 
 .EXAMPLE
-  Tools/editor-bench.sh status
+  Tools/editor-bench.sh status                                     # alle Testbaenke (mit -Id: die eigene)
   Tools/editor-bench.sh checkout claude/mein-thema -Id q1a2b3     # nur als oberster Eintrag; -Discard verwirft Reste
   Tools/editor-bench.sh release -Id q1a2b3                         # danach; -Discard verwirft Testspuren
   Tools/editor-bench.sh audio-on -Id q1a2b3                        # Ton nur fuer Audio-Tests (sonst stumm)
@@ -40,16 +42,52 @@ if ($Command -eq 'help') { Get-Help $PSCommandPath -Detailed | Out-String | Writ
 $repoRoot = [IO.Path]::GetFullPath((Split-Path $PSScriptRoot -Parent)).TrimEnd('\', '/')
 $ownerMatch = [regex]::Match($repoRoot, '^(.*?)[\\/]\.claude[\\/]worktrees[\\/]')
 $ownerRoot = if ($ownerMatch.Success) { $ownerMatch.Groups[1].Value } else { $repoRoot }
+$reposDir = Split-Path $ownerRoot -Parent
+$baseName = (Split-Path $ownerRoot -Leaf) -replace ' \d+$', ''
+if (-not $QueueDir) { $QueueDir = $env:EDITOR_QUEUE_DIR }
+if (-not $QueueDir) { $QueueDir = Join-Path $reposDir 'EditorQueue' }
+if (-not $Session -and $env:CLAUDE_CODE_SESSION_ID) { $Session = $env:CLAUDE_CODE_SESSION_ID }
+
+# Testbaenke: "<Projekt> 2" und "<Projekt> 3" (gleiche Regel wie Assets/Editor/TestBenchNames.cs und Tools/editor-queue.ps1).
+$BenchPattern = '^(.+) [23]$'
+function Get-Benches {
+    $repos = Split-Path $QueueDir -Parent
+    @(Get-ChildItem -LiteralPath $repos -Directory -ErrorAction SilentlyContinue | Where-Object {
+            $m = [regex]::Match($_.Name, $BenchPattern)
+            $m.Success -and (Test-Path -LiteralPath (Join-Path $_.FullName '.git')) -and (Test-Path -LiteralPath (Join-Path $repos $m.Groups[1].Value))
+        } | Sort-Object Name | ForEach-Object { $_.Name })
+}
+
+# Welche Testbank gehoert diesem Aufrufer? Die, in deren Warteschlange -Id (bzw. die Sitzung) oben steht.
+function Find-OwnBench {
+    foreach ($b in Get-Benches) {
+        $f = Join-Path $QueueDir "$b.json"
+        if (-not (Test-Path -LiteralPath $f)) { continue }
+        try { $top = @(([IO.File]::ReadAllText($f, $utf8) | ConvertFrom-Json).entries | Where-Object { $null -ne $_ })[0] } catch { continue }
+        if ($null -eq $top) { continue }
+        if (($Id -and $top.id -eq $Id) -or (-not $Id -and $Session -and $top.session -eq $Session)) { return $b }
+    }
+    return $null
+}
+
 if (-not $Bench) { $Bench = $env:EDITOR_BENCH_DIR }
-if (-not $Bench) { $Bench = Join-Path (Split-Path $ownerRoot -Parent) ((Split-Path $ownerRoot -Leaf) + ' 2') }
+if (-not $Bench -and $Command -eq 'status' -and -not $Id) {
+    # Ohne Angabe: alle Testbaenke zeigen.
+    foreach ($b in Get-Benches) {
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $PSCommandPath status -Bench $b -QueueDir $QueueDir
+        Write-Output ''
+    }
+    exit 0
+}
+if (-not $Bench) { $Bench = Find-OwnBench }
+# Ohne Zuteilung wie frueher die erste Testbank (checkout verweigert dann mit Exit 4, wenn man dort nicht oben steht).
+if (-not $Bench) { $Bench = "$baseName 2" }
+if (-not [IO.Path]::IsPathRooted($Bench)) { $Bench = Join-Path (Split-Path $QueueDir -Parent) $Bench }
 $Bench = [IO.Path]::GetFullPath($Bench).TrimEnd('\', '/')
 $benchName = Split-Path $Bench -Leaf
-if (-not $QueueDir) { $QueueDir = $env:EDITOR_QUEUE_DIR }
-if (-not $QueueDir) { $QueueDir = Join-Path (Split-Path $ownerRoot -Parent) 'EditorQueue' }
 $stateFile = Join-Path $QueueDir "$benchName.bench.json"
 # Solange diese Datei fehlt, haelt Assets/Editor/TestBenchAudioMute.cs den Editor der Testbank stumm.
 $audioFile = Join-Path $QueueDir "$benchName.audio-on"
-if (-not $Session -and $env:CLAUDE_CODE_SESSION_ID) { $Session = $env:CLAUDE_CODE_SESSION_ID }
 
 if (-not (Test-Path -LiteralPath (Join-Path $Bench '.git'))) { Write-Output "Testbank $Bench ist kein Git-Arbeitsordner."; exit 1 }
 
@@ -257,6 +295,9 @@ switch ($Command) {
         }
         $sha = Git @('rev-parse', '--verify', "$Ref^{commit}")
         if ($sha.code -ne 0) { Write-Output "Unbekannter Branch/Commit: $Ref"; exit 1 }
+        # Aeltere Staende kennen nur die Testbank "<Projekt> 2". Der laufende Editor bleibt trotzdem stumm und auf seinem Desktop
+        # (beides gilt fuer die ganze Editor-Sitzung), nur Ton an/aus und ein Neustart des Editors wirken dann nicht.
+        $oldStand = ($benchName -notmatch ' 2$' -and (Git @('cat-file', '-e', "$($sha.out):Assets/Editor/TestBenchNames.cs")).code -ne 0)
         # Szene vor jeder Dateiaenderung schliessen (auch vor dem Verwerfen), sonst meldet Unity "modified externally".
         $closed = Close-BenchScene
         if ($closed -eq 'blocked') { exit 6 }
@@ -282,6 +323,7 @@ switch ($Command) {
         [IO.File]::WriteAllText($stateFile, (ConvertTo-Json -InputObject $state), $utf8)
         Set-Muted
         Write-Output "Testbank steht auf $Ref ($($sha.out.Substring(0, 9))), Ton stumm (fuer Audio-Tests: audio-on)."
+        if ($oldStand) { Write-Output "Hinweis: Der Stand kennt Testbank '$benchName' noch nicht (aelter als main mit TestBenchNames.cs). Fuer Audio-Tests origin/main in den Branch holen oder Testbank 2 verwenden." }
         Open-BenchScene $closed
         if ($closed -ne 'ok') { Write-Output "Unity: Assets neu laden lassen (Fenster anklicken oder AssetDatabase.Refresh)." }
         Write-Output "Testen mit:"

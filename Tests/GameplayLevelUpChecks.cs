@@ -23,6 +23,8 @@ public sealed class GameplayLevelUpProbe:MonoBehaviour {
   save=GameSaveSystem.TestDirectory;meta=MetaProgression.TestDirectory;gps=JsonUtility.ToJson(GpsSettings.Tests);oldScale=Time.timeScale;
   GameSaveSystem.TestDirectory=Path.GetFullPath("Temp/LevelUp-"+DateTime.UtcNow.Ticks);MetaProgression.TestDirectory=Path.Combine(GameSaveSystem.TestDirectory,"Profile");
   GpsSettings.Document.tests.testModeDisabled=true;File.WriteAllText(Report,"");
+  // Discoveries here can finish challenges; their banner would hold the level-up. This check covers the level-up alone.
+  if(ChallengeCompletePresentation.Instance)ChallengeCompletePresentation.Instance.enabled=false;
   var routine=Run();while(true){bool more=false;object next=null;Exception error=null;try{more=routine.MoveNext();if(more)next=routine.Current;}catch(Exception e){error=e;}
    if(error!=null){File.AppendAllText(Report,"FAILED "+error+"\n");break;}if(!more)break;yield return next;}
   GameplayInputBlocker.SetBlocked(this,false);Time.timeScale=1;
@@ -91,6 +93,6 @@ public sealed class GameplayLevelUpProbe:MonoBehaviour {
   view.enabled=false;view.enabled=true;
   File.AppendAllText(Report,"COMPLETE "+checks+" checks\n");
  }
- void Cleanup(){if(clean)return;clean=true;GameplayInputBlocker.SetBlocked(this,false);Time.timeScale=oldScale;MetaProgression.EndRun();MetaProgression.TestDirectory=meta;GameSaveSystem.TestDirectory=save;JsonUtility.FromJsonOverwrite(gps,GpsSettings.Document.tests);Object.Destroy(gameObject);}
+ void Cleanup(){if(clean)return;clean=true;if(ChallengeCompletePresentation.Instance)ChallengeCompletePresentation.Instance.enabled=true;GameplayInputBlocker.SetBlocked(this,false);Time.timeScale=oldScale;MetaProgression.EndRun();MetaProgression.TestDirectory=meta;GameSaveSystem.TestDirectory=save;JsonUtility.FromJsonOverwrite(gps,GpsSettings.Document.tests);Object.Destroy(gameObject);}
  void OnDestroy(){if(!clean)Cleanup();}
 }
