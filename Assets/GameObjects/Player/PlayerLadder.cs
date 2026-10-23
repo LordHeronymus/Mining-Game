@@ -17,6 +17,9 @@ public sealed class PlayerLadder : MonoBehaviour
     CompactHud hotbar;
     float gravity, reattachAt;
     static bool IsLadder(ItemSO item) => item && (item.item == Item.Ladder || item.item == Item.IronLadder);
+    // Esc (or the settings key) first only leaves ladder build mode. RunPauseMenu decides this because it updates before
+    // SettingsPanel, the other panels and this component: the press neither pauses nor counts when it closes a panel or menu.
+    internal static bool LeavesBuildModeOnEscape(bool menuOpen, bool blocked, ItemSO selected) => !menuOpen && !blocked && IsLadder(selected);
 
     void Awake()
     {
@@ -37,11 +40,6 @@ public sealed class PlayerLadder : MonoBehaviour
             int ladderSlot = System.Array.FindIndex(hotbar.slots, item => IsLadder(item) && InventoryManager.Instance && InventoryManager.Instance.GetCount(item) > 0) + 1;
             if (ladderSlot > 0) hotbar.SelectSlot(hotbar.SelectedSlot == ladderSlot ? 0 : ladderSlot);
             selected = hotbar.SelectedItem;
-        }
-        if (GameBindings.Down(GameAction.Settings) && hotbar && IsLadder(selected))
-        {
-            hotbar.SelectSlot(0);
-            selected = null;
         }
         if (!view || !stats || TileMiner.IsPointerOverUi(Input.mousePosition)) { HidePreview(); return; }
         Vector3 world = view.ScreenToWorldPoint(Input.mousePosition);

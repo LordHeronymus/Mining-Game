@@ -48,9 +48,13 @@ public sealed class RunPauseMenu : MonoBehaviour
     {
         if (!LoadingProgress.Active && Time.timeScale > 0 && !MainMenuController.IsVisible && !GameOverPanel.IsOpen && !GameVictoryPanel.IsOpen)
             GameSaveSystem.PlayedSeconds += Time.deltaTime;
-        if (!Input.GetKeyDown(KeyCode.Escape) || InputConsumedFrame == Time.frameCount || LoadingProgress.Active || RunNavigation.IsTransitioning) return;
+        bool escape = Input.GetKeyDown(KeyCode.Escape);
+        if ((!escape && !GameBindings.Down(GameAction.Settings)) || InputConsumedFrame == Time.frameCount || LoadingProgress.Active || RunNavigation.IsTransitioning) return;
         var settings = FindFirstObjectByType<SettingsPanel>(FindObjectsInactive.Include);
         if (challengesPanel || SaveSlotPanel.IsOpen || MetaProgressionPanel.IsOpen || (settings && settings.IsOpen)) return;
+        var hotbar = FindFirstObjectByType<CompactHud>();
+        if (hotbar && PlayerLadder.LeavesBuildModeOnEscape(IsOpen, GameplayInputBlocker.IsBlocked, hotbar.SelectedItem)) { ConsumeInput(); hotbar.SelectSlot(0); return; }
+        if (!escape) return;
         if (IsOpen && !GameSaveSystem.IsBusy) { ConsumeInput(); Close(); }
         else if (!GameplayInputBlocker.IsBlocked && !GameOverPanel.IsOpen && !GameVictoryPanel.IsOpen) { ConsumeInput(); Open(); }
     }
