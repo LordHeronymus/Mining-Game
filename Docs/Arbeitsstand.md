@@ -15,7 +15,11 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 ## Zuletzt abgeschlossen
 
-- 23.10.2026, Claude Code (Cloud): Shop-Verkauf mit Mengenregler: Regler von 1 bis Max (ganzer Bestand des gewählten Erzes), Zahl im Schieber (Variante 2 von 4, Wahl Benutzer), Verkaufsknopf verkauft die gewählte Menge, „Alles verkaufen“ entfällt; `Tests/ShopSellStyleChecks.cs` lokal auf der Testbank grün; Branch `claude/verkaufsregler`, PR bereit für `main` (Freigabe und Optik-Abnahme Benutzer).
+<<<<<<< HEAD
+- 23.10.2026, Claude Code (Cloud): Shop-Verkauf mit Mengenregler: Regler von 1 bis Max (ganzer Bestand des gewählten Erzes), Zahl im Schieber (Variante 2 von 4, Wahl Benutzer), Verkaufsknopf verkauft die gewählte Menge, „Alles verkaufen“ entfällt; `Tests/ShopSellStyleChecks.cs` lokal auf der Testbank grün; Branch `claude/verkaufsregler`, mit Freigabe des Benutzers per PR #97 in `main` (Optik-Abnahme lokal).
+=======
+- 23.10.2026, Claude Code (Cloud): Knopftexte im Inventar („×“, Filter, „Sortieren“) sitzen waagrecht genau mittig: `ButtonTextCentering` zentriert die sichtbaren Buchstaben auf die Mitte des Textkastens statt auf die Mitte der Schrittweiten (fette Schrift verschob sie um den Fett-Abstand); lokal auf der Testbank `ButtonTextCenterChecks` 108/108 und `StorageUiChecks` 57/57 grün; Branch `claude/inventar-knopftexte`, mit Freigabe des Benutzers in `main`.
+>>>>>>> origin/main
 - 23.10.2026, Claude Code (Cloud): Kantenhilfe schiebt sanfter: neuer GPS-Wert Bewegung → „Kantenhilfe: Hineinschiebe-Tempo“ (Anteil Laufgeschwindigkeit, Standard 0,5 statt bisher volle Geschwindigkeit); `Tests/LedgeAssistChecks.cs` (prüft jetzt auch das Tempo, parkt offene Spiel-Panels) und `GpsSettingsChecks` auf der Testbank grün; Branch `claude/kantenhilfe-tempo`, mit Freigabe des Benutzers per PR #94 in `main` (Spielgefühl-Abnahme lokal).
 - 23.10.2026, Claude Code (Cloud): Eigene F1-Werte des Benutzers (20 Stück: Erze, Rezeptmengen, Leuchtstärke, Schwerkraft, Holzertrag, ein Klang) als neue Standardwerte in `GpsProfile.asset`; Profil liest sich zurück, sonst unverändert; Branch `claude/f1-werte-main`, mit Freigabe des Benutzers per PR #93 in `main`.
 - 23.10.2026, Claude Code (Cloud): Fackeln tiefer in der Zelle (Flamme wird nicht mehr abgeschnitten), neue Flamme Variante C2 mit Funken und Rauch, Knistern mit ElevenLabs-Schleife, hörbar bis 4 Kacheln; Prüfskript `Tests/TorchFlameCrackleChecks.cs` und Klangtest lokal auf der Testbank grün; per PR #90 mit Freigabe des Benutzers in `main` (Optik- und Klang-Abnahme lokal offen).
