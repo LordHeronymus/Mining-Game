@@ -58,6 +58,7 @@ public partial class SellPage
         theme = ShopVisualTheme.Ensure(transform.parent);
         foreach (Transform child in transform) child.gameObject.SetActive(false);
         moneyText = transform.parent.Find("CurrentMoney/Amount")?.GetComponent<TextMeshProUGUI>();
+        MoneyDisplay.Bind(moneyText);
         coin = Resources.LoadAll<Sprite>("GameOverCoin").FirstOrDefault();
         var root = SellRect("Ore Shop", transform, 0, 0, 2560, 1440);
         root.anchorMin = root.anchorMax = root.pivot = Vector2.one * .5f; root.anchoredPosition = Vector2.zero;

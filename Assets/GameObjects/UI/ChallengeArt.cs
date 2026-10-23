@@ -14,13 +14,13 @@ public static class ChallengeArt
         new(77,805,575,94), new(703,715,262,253), new(1208,719,181,246)
     };
     static Material wood;
-    static Sprite artifact;
+    static Sprite artifact, sealCheck;
     static ItemCatalog catalog;
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void Reset() {
         foreach (var sprite in sprites.Values) if (sprite) UnityEngine.Object.Destroy(sprite);
         sprites.Clear(); if (wood) UnityEngine.Object.Destroy(wood);
-        artifact = null; catalog = null;
+        artifact = sealCheck = null; catalog = null;
     }
     public static Sprite Sprite(int index) {
         if (index < 0 || index >= rects.Length) return null;
@@ -32,6 +32,11 @@ public static class ChallengeArt
         cached = UnityEngine.Sprite.Create(texture, new Rect(r.x*sx, (1024-r.y-r.height)*sy, r.width*sx, r.height*sy),
             new Vector2(.5f,.5f), 100, 0, SpriteMeshType.FullRect, border);
         cached.name = "Challenge Art " + index; sprites[index] = cached; return cached;
+    }
+    // The tick of the seal (part 7) as its own layer with the seal ground around it, same size as the seal; see ChallengeSealCheck.
+    public static Sprite SealCheck() {
+        if (!sealCheck) sealCheck = Resources.Load<Sprite>("Progression/ChallengeSealCheck");
+        return sealCheck ? sealCheck : null;
     }
     // Catalog icon keys: "art:N" (this atlas), "item:<Item>" (ItemCatalog icon), "artifact" (sun medallion); null when unknown.
     public static Sprite Icon(string key) {

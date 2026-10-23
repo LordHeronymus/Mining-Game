@@ -30,7 +30,7 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     [SerializeField] Vector2 respawnSeconds = new Vector2(69f, 138f);
     // Regrowth picks any free grass-covered surface cell; the emptier the meadow, the faster it comes back.
     [SerializeField, Min(1f)] float maximumRegrowthSpeed = 4f;
-    [SerializeField, Min(1f)] float neighborRegrowthWeight = 3f;
+    [SerializeField, Min(1f)] float neighborRegrowthWeight = 1f;
     [SerializeField] Vector2Int fiberYield = new Vector2Int(2, 5);
     [SerializeField] Vector2Int healingHerbYield = new Vector2Int(1, 3);
     [SerializeField] Vector2Int healingHerbFiberYield = new Vector2Int(1, 3);
@@ -360,7 +360,7 @@ public sealed class SurfaceTallGrass : MonoBehaviour
     }
 
     // Any free grass-covered surface cell can grow grass: ground below and on both sides, no tree, no building.
-    // Cells next to standing grass weigh more, so meadows spread; the spawn area stays sparse like the first layout.
+    // Every such cell anywhere on the map is equally likely; neighborRegrowthWeight above 1 lets meadows spread.
     int PickRegrowthSite()
     {
         int width = map.GeneratedWidth;
@@ -372,7 +372,6 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         foreach (var building in FindObjectsByType<EnergyMonolyth>(FindObjectsSortMode.None)) CacheBounds(building, buildingBounds);
         foreach (var building in FindObjectsByType<SurfaceStorageBuilding>(FindObjectsSortMode.None)) CacheBounds(building, buildingBounds);
         var overlay = map.GrassOverlay;
-        float spawnX = map.Terrain.GetCellCenterWorld(new Vector3Int(0, 0)).x;
         int left = -width / 2;
         double total = 0d;
         var candidates = new List<(int x, double weight)>();
@@ -386,10 +385,7 @@ public sealed class SurfaceTallGrass : MonoBehaviour
             if (trees && trees.Protects(cell)) continue;
             float worldX = map.Terrain.GetCellCenterWorld(cell).x;
             if (NearBuilding(worldX, buildingBounds)) continue;
-            double weight = spawnQuietRadius > 0f ? Mathf.Lerp(nearSpawnDensity, 1f,
-                Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(Mathf.Abs(worldX - spawnX) / spawnQuietRadius))) : 1d;
-            if (patches.ContainsKey(x - 1) || patches.ContainsKey(x + 1)) weight *= Mathf.Max(1f, neighborRegrowthWeight);
-            if (weight <= 0d) continue;
+            double weight = patches.ContainsKey(x - 1) || patches.ContainsKey(x + 1) ? Mathf.Max(1f, neighborRegrowthWeight) : 1d;
             candidates.Add((x, weight));
             total += weight;
         }

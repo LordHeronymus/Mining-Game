@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public enum AmbienceType { Surface, Rain, Thunderstorm, Underground, Cave, Birds, Frogs }
-public enum AudioVolumeSetting { Ambience, Surface, Rain, Thunderstorm, Underground, Cave, DigSounds, DingLight }
+public enum AudioVolumeSetting { Ambience, Surface, Rain, Thunderstorm, Underground, Cave, DigSounds, DingLight, ArtifactFound }
 public enum AudioTimeOffsetSetting { DingLight }
 
 public enum SoundType
@@ -70,6 +70,7 @@ public class AudioManager : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float caveVolume = 1f;
     [SerializeField, Range(0f, 1f)] float digSoundVolume = 1f;
     [SerializeField, Range(0f, 1f)] float dingLightVolume = 1f;
+    [SerializeField, Range(0f, 1f)] float artifactFoundVolume = .6f;
     [SerializeField, Range(0f, 1f)] float lowHealthHeartbeatVolume = 0.65f;
     [SerializeField, Range(-10f, 10f)] float dingLightOffsetSeconds;
     [SerializeField] LayerMiningAudioSettingsAsset layerMiningSettings;
@@ -115,6 +116,7 @@ public class AudioManager : MonoBehaviour
         AudioVolumeSetting.Cave => caveVolume,
         AudioVolumeSetting.DigSounds => digSoundVolume,
         AudioVolumeSetting.DingLight => dingLightVolume,
+        AudioVolumeSetting.ArtifactFound => artifactFoundVolume,
         _ => 1f
     };
 
@@ -131,6 +133,7 @@ public class AudioManager : MonoBehaviour
             case AudioVolumeSetting.Cave: caveVolume = value; break;
             case AudioVolumeSetting.DigSounds: digSoundVolume = value; break;
             case AudioVolumeSetting.DingLight: dingLightVolume = value; break;
+            case AudioVolumeSetting.ArtifactFound: artifactFoundVolume = value; break;
         }
     }
 
