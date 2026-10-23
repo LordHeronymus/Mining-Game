@@ -140,6 +140,9 @@ public sealed class PlayerLadder : MonoBehaviour
         IsClimbing = true;
     }
 
+    // A live GPS gravity change while hanging only replaces the value Detach restores; the body stays weightless.
+    internal bool HoldGravity(float value) { if (!IsClimbing) return false; gravity = value; return true; }
+
     public void Detach()
     {
         if (!IsClimbing) return;

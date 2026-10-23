@@ -24,7 +24,13 @@ public static class GpsTestActions
     internal static void TeleportSpawn(MapGenerator map, PlayerMovement player)
     {
         if (!map || !player || !map.Terrain || !map.Terrain.layoutGrid) return;
-        var terrain = map.Terrain; var cell = Vector3Int.zero; if (!terrain.HasTile(cell)) return;
+        // A shaft dug at the start removes cell (0, 0): land on the nearest solid cell of surface row 0 instead.
+        var terrain = map.Terrain; var cell = Vector3Int.zero; int reach = Mathf.Max(-terrain.cellBounds.xMin, terrain.cellBounds.xMax);
+        for (int distance = 1; !terrain.HasTile(cell); distance++)
+        {
+            if (distance > reach) return;
+            cell.x = terrain.HasTile(new Vector3Int(-distance, 0, 0)) ? -distance : distance;
+        }
         var center = terrain.GetCellCenterWorld(cell);
         float cellHeight = terrain.layoutGrid.transform.TransformVector(Vector3.up * terrain.layoutGrid.cellSize.y).magnitude;
         var collider = player.GetComponent<Collider2D>();

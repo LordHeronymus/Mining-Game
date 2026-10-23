@@ -290,6 +290,15 @@ public class PlayerMovement : MonoBehaviour
         trackingFall = false;
         hasGroundedForFall = false;
     }
+    // GPS gravity changes while climbing or flying only replace the restored value, so the player neither sinks nor loses it.
+    internal bool HoldGravity(float value)
+    {
+        var climb = ladder ? ladder : GetComponent<PlayerLadder>();
+        if (climb && climb.HoldGravity(value)) return true;
+        if (!flying) return false;
+        previousGravity = value;
+        return true;
+    }
     void SyncFlyMode()
     {
         bool requestedNoClip = GameplayTestSettings.NoClipMode;

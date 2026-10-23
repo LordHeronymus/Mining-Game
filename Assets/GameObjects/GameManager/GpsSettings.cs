@@ -653,6 +653,8 @@ public static class GpsSettings
         try
         {
             if (effects && Application.isPlaying && target is SkyController liveSky && node.name == "isNight") liveSky.SetNight(node.flag);
+            else if (target is Rigidbody2D playerBody && node.name == "gravityScale" && playerBody.TryGetComponent(out PlayerMovement mover) &&
+                mover.HoldGravity((float)node.number)) return;
             else GpsCodec.Set(target, node.name, GpsCodec.Write(node, Profile.Resolve));
             if (!effects || !Application.isPlaying) return;
             if (target is MapGenerator map)
