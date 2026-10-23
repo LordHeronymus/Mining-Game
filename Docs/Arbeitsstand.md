@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Hover-Klick für alle Knöpfe (Ton beim Eintreten) | `claude/hover-klick` | Cloud-Klon, Tests auf Testbank | `Assets/AC Audio/UiHoverAudio.cs`, `Resources/Audio/UiHoverClick.wav`, GPS-Audiokatalog, `GpsProfile.asset` | ja (Testbank) | 23.10.2026 17:10 |
 
 ## Zuletzt abgeschlossen
 
