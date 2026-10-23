@@ -16,6 +16,9 @@
       "name": "BughuntExoticsChecks"
     },
     {
+      "name": "BughuntGrassConversionChecks"
+    },
+    {
       "name": "BughuntLadderEscapeChecks"
     },
     {
@@ -32,6 +35,9 @@
     },
     {
       "name": "BughuntShopFormatChecks"
+    },
+    {
+      "name": "BughuntSurfaceChecks"
     },
     {
       "name": "BughuntTileMinerChecks"
