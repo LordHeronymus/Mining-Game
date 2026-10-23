@@ -14,6 +14,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 | --- | --- | --- | --- | --- | --- | --- |
 | Claude Code | Performance abschliessen: Ladebildschirm ohne Ruckler, keine Lag-Spikes, ≥ 100 FPS – pausiert, Zwischenstand im Changelog | claude/performance | Mining Game | Map (MapGenerator, Tilemap-Abonnenten, Rubble, Collider, Erzadern, Bäume, Gras), Loading, GPS-Codec/Schema, GameSaveSystem, AudioManager, Tests/Performance* | nein | 17.10.2026 19:45 |
 | Claude Code | main-Sync robust: eigene F1/GPS-Anpassungen als nicht versionierte Überschreibungs-Schicht (UserSettings), Aktualisierung mit Sicherung lokaler Commits/Änderungen, Statusfenster, Protokoll – Testbank-Checks grün, PR offen, Abnahme im Editor des Benutzers nach dem Merge | claude/main-sync-2e953f | .claude/worktrees/settings-pause-288b53 | GpsSettings (Speichern), GpsUserOverrides, GpsProfileEditor, GpsRuntimePanel/GameplaySettingsWindow (Knöpfe), MainAutoUpdate/MainSync*, GpsDefaultsProposal, Docs/Main-Auto-Update.md, Docs/GPS-Eigene-Werte.md, AGENTS.md | nein (Testbank fertig) | 22.10.2026 |
+| Claude Code (Cloud) | F1/GPS „Faktor je Erz“ übersichtlich (eine Zeile je Erz, Name des Erzes) und Erz-Auswahl nur für Erze | claude/ore-factor-list | Cloud | GpsRuntimePanel (neue Datei GpsRuntimePanel.Ores.cs, Enum-Auswahl), Tests/OreFactorListChecks.cs, Docs/Erz-Reichhaltigkeit.md | nein | 23.10.2026 13:40 |
 
 ## Zuletzt abgeschlossen
 

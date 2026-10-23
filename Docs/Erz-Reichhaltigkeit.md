@@ -34,6 +34,8 @@ GPS-Fenster bzw. F1 → **Erzverteilung → Erz-Anteile → „Medium und Rich n
 | Dicke Stellen bevorzugen | 0–1 | 0,65 |
 | Faktor je Erz | Liste: Erz, Faktor 0–5 | leer (alle 1) |
 
+Im F1-Fenster zeigt „Faktor je Erz (N)“ eine Zeile je Eintrag: Erz (Anzeigename), × Faktor, ↑ ↓ −. Wählbar sind nur Blöcke mit Small/Medium/Rich-Overlays (Erze, Edelsteine, Kohle, Ultronium), keine Gesteinsschichten, und jedes Erz nur einmal; „+ Erz“ fügt das nächste noch fehlende Erz mit Faktor 1 hinzu. Ältere Einträge auf einem Nicht-Erz (z. B. Stein) bleiben erhalten, wirken nicht und zeigen „— Erz wählen —“. Dieselbe Erz-Auswahl gilt für „Erzverteilung → Erz“ (`[OreOnly]`, `GpsRuntimePanel.Ores.cs`).
+
 Herkunft der Startwerte: Dünn, Streuung und „Dicke Stellen“ übernehmen die Werte, die der Benutzer am 23.10.2026 für dünne Adern eingestellt hat (1 Medium je 3 Blöcke ≈ 33 %, gemessen 32,6 %), plus 4 % Rich-Chance. Mittel und dick steigen davon aus leicht an, damit dünnere Adern immer weniger Medium und Rich haben als dickere; der Wert der mittleren Adern bleibt nahe am bisherigen.
 
 Die frühere Einstellung „Erzverteilung → Dünne Adern“ (`thinVeinMedium`) gibt es nicht mehr; eigene Werte dafür in `UserSettings/GpsOverrides.json` fallen beim nächsten Start mit einer Konsolenmeldung weg.
@@ -63,6 +65,7 @@ Spielstände speichern die konkreten Erz-Tiles (`GameSaveSystem`, Erz-Ebene). Be
 ## Prüfung
 
 - `Tests/VeinRichnessChecks.cs` (Edit Mode, auch Cloud): synthetische Adern (Anteile je Stufe, Rich im Kern und Medium darum, dünne Adern ohne äusserste Spalten und Spitzen, Mindestgrösse, Faktor je Erz, Schwankung innerhalb ±25 %, „Aktiv“ aus = frühere Verteilung, Seed und `UnityEngine.Random`), danach bis zu 30 vollständige Welten: Anteile je Stufe innerhalb 3 bzw. 2 Prozentpunkten der Vorgabe, dünn < mittel < dick im Wert, Spitzen nur wenn nötig, Seed-Stabilität (zweimal generiert), Zufallszustand, Statistik je Erz und Ebene, Laufzeit. Bericht `Temp/VeinRichnessChecks.txt` mit `THIN`/`MID`/`THICK`-Zeilen (Aderraster vorher/nachher).
+- `Tests/OreFactorListChecks.cs` (Edit Mode, auch Cloud): Erz-Auswahl nur Erze (keine Gesteinsschichten/Erde), beide `[OreOnly]`-Felder erkannt, bestehende Einträge inkl. alter Stein-Einträge überstehen Laden/Speichern unverändert.
 - `Tests/VeinRichnessPreviewChecks.cs` (Edit Mode, mit Grafik): rendert je zwei echte dünne, mittlere und dicke Adern mit den Spiel-Tiles vorher | nachher nach `Temp/VeinRichness/Vein_*.png` (im Cloud-Artefakt) und prüft, dass sich jedes Paar sichtbar unterscheidet.
 - Cloud: Workflow „Unity Checks“, Eingabe `checks` = `VeinRichnessPreviewChecks, VeinRichnessChecks`. Lauf #113: zusätzlich `ConnectedOreVeinChecks`, `GpsSettingsChecks` (1238), `ChallengeSettingsChecks` (84) grün; Lauf #115: beide Checks grün.
 - Vorschauen im Repo: `Design/OreVeins/VeinRichness/` – `Uebersicht.png` und `Vergleich_01..09_*.png` (je links vorher, rechts nachher; je drei dünne, mittlere, dicke Adern). Zusammengesetzt mit `compose_previews.py` aus den echten Sprites und den Zeilen in `veins.txt` aus Lauf #115, ohne Licht und Terrain-Shader. Frühere Vergleiche der reinen Dünn-Regel: `Design/OreVeins/MediumInThinVeins/`.
