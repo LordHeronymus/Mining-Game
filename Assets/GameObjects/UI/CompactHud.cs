@@ -119,7 +119,7 @@ public sealed class CompactHud : MonoBehaviour
         visibility.blocksRaycasts = visibility.interactable = !blocked || inventoryOpen;
         var selected = EventSystem.current ? EventSystem.current.currentSelectedGameObject : null;
         bool typing = selected && selected.GetComponent<TMP_InputField>();
-        if (!typing && (!blocked || inventoryOpen) && GameBindings.Down(GameAction.UseMedkit))
+        if (!typing && (!blocked || inventoryOpen) && !RunPauseMenu.OwnsInput && GameBindings.Down(GameAction.UseMedkit))
             StatsManager.Instance?.TryUseMedkit();
         if (blocked || typing) return;
         for (int i = 0; i < 8; i++)

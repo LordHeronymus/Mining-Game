@@ -133,7 +133,8 @@ public static class GameBindings
     }
 
     // Closes an open window. While a text field is focused only Escape does, so a letter on "Einstellungen" stays typeable.
-    public static bool CloseDown() => Down(GameAction.Settings) && CloseAllowed(Input.GetKeyDown(KeyCode.Escape), EventSystem.current);
+    // Under a focus pause the press belongs to the pause menu (RunPauseMenu.OwnsInput).
+    public static bool CloseDown() => !RunPauseMenu.OwnsInput && Down(GameAction.Settings) && CloseAllowed(Input.GetKeyDown(KeyCode.Escape), EventSystem.current);
     internal static bool CloseAllowed(bool escape, EventSystem events) => escape || !TextFieldFocused(events);
 
     internal static bool TextFieldFocused(EventSystem events)

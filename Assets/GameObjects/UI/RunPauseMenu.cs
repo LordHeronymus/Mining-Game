@@ -27,6 +27,9 @@ public sealed class RunPauseMenu : MonoBehaviour
         HomeUi.Stretch(root); root.gameObject.AddComponent<RunPauseMenu>();
     }
     public static void ConsumeInput() => InputConsumedFrame = Time.frameCount;
+    // A focus pause (RunFocusPause) can lie over inventory, shop, storage or workbench: while the menu is open and in the frame
+    // its Esc closed it, the keys belong to the menu and must not act on the window behind it.
+    public static bool OwnsInput => IsOpen || InputConsumedFrame == Time.frameCount;
     void Awake()
     {
         group = gameObject.AddComponent<CanvasGroup>();
@@ -45,6 +48,11 @@ public sealed class RunPauseMenu : MonoBehaviour
         HomeUi.Button("Home", layout, "Hauptmenü", new Vector2(0, -174.5f), new Vector2(500, 76), SaveAndHome);
         status = HomeUi.Label("Status", layout, "", new Vector2(0, -243), new Vector2(440, 40), 24);
         status.enableAutoSizing = true; status.fontSizeMin = 14; status.fontSizeMax = 24; // longer error messages shrink to fit the strip
+        // Arrows/WASD move only between these buttons; automatic navigation would reach a shop button behind the scrim.
+        var buttons = layout.GetComponentsInChildren<Button>();
+        for (int i = 0; i < buttons.Length; i++)
+            buttons[i].navigation = new Navigation { mode = Navigation.Mode.Explicit,
+                selectOnUp = buttons[(i + buttons.Length - 1) % buttons.Length], selectOnDown = buttons[(i + 1) % buttons.Length] };
         Visible(false); HomeUi.Fit(layout, new Vector2(780, 1070));
     }
     void Update()
@@ -69,6 +77,8 @@ public sealed class RunPauseMenu : MonoBehaviour
         IsOpen = true; previousScale = Time.timeScale; Time.timeScale = 0;
         GameplayInputBlocker.SetBlocked(this, true); GamePause.Set(this, true); transform.SetAsLastSibling(); Visible(true);
         status.text = ""; saveFailed = false;
+        // A clicked shop card or buy button stays selected otherwise, and arrows/Enter would buy behind the pause.
+        UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
     }
     public void Close()
     {
