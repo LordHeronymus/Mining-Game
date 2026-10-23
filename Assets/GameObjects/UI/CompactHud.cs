@@ -52,6 +52,7 @@ public sealed class CompactHud : MonoBehaviour
     const float HeartbeatFadeSeconds = .32f;
     TextMeshProUGUI healthValue, energyValue, moneyValue, pointsValue, depthValue, carryValue;
     RectTransform carryPlaque;
+    Material carryMaterial;
     float lastCarryCapacity = float.NaN;
     bool lastCarryUnlimited, carryDirty = true;
     readonly Image[] icons = new Image[8], selections = new Image[9];
@@ -71,7 +72,8 @@ public sealed class CompactHud : MonoBehaviour
         lastHealth = int.MinValue, lastMaxHealth = int.MinValue, lastEnergy = int.MinValue, lastMax = int.MinValue;
     static readonly Color Cream = new Color32(255,245,229,255);
     // Same carry stages and colours as the inventory's cargo line.
-    static readonly Color OverweightYellow = new Color32(255,211,86,255), OverweightRed = new Color32(255,91,75,255);
+    // Above the carrying capacity the HUD turns orange (the inventory keeps its yellow), red from double the capacity.
+    static readonly Color OverweightOrange = new Color32(255,150,40,255), OverweightRed = new Color32(255,91,75,255);
     static readonly CultureInfo German = CultureInfo.GetCultureInfo("de-DE");
 
     void Awake()
@@ -245,7 +247,7 @@ public sealed class CompactHud : MonoBehaviour
     public static Color CarryWeightColor(double weight, float capacity, bool unlimited)
     {
         int stage = unlimited ? 0 : InventoryManager.CarryStage(weight, capacity);
-        return stage == 2 ? OverweightRed : stage == 1 ? OverweightYellow : Cream;
+        return stage == 2 ? OverweightRed : stage == 1 ? OverweightOrange : Cream;
     }
     public void RefreshCarryWeightVisibility()
     {
@@ -580,6 +582,16 @@ public sealed class CompactHud : MonoBehaviour
         counters.anchoredPosition = new Vector2(-18 * scale, -14 * scale);
         hotbar.anchoredPosition = new Vector2(0, 26 * scale);
     }
+    static Sprite CarryIcon()
+    {
+        var catalog = Resources.Load<ItemCatalog>("ItemCatalog");
+        var backpack = catalog ? Array.Find(catalog.items, item => item && item.item == Item.Backpack) : null;
+        return backpack ? backpack.icon : null;
+    }
+    void OnDestroy()
+    {
+        if (carryMaterial) Destroy(carryMaterial);
+    }
     RectTransform Rect(string name, Transform parent, float x, float y, float w, float h)
     {
         var r = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
@@ -661,11 +673,20 @@ public sealed class CompactHud : MonoBehaviour
         top.anchorMin=top.anchorMax=top.pivot=new Vector2(0,1);
         healthFill=Bar("Health",2,heartSprite,new Color(.92f,.055f,.075f),"100 / 100",out healthValue);
         energyFill=Bar("Energy",56,boltSprite,new Color(1,.68f,.035f),"",out energyValue);
-        // Carried weight / carrying capacity on a small plaque below the vitals (Einstellungen → Anzeige → Traglast im HUD).
-        carryPlaque=Rect("Carry Weight",top,49,114,250,46);
-        Frame("Carry Frame",carryPlaque,250,46,"Vitals",196).raycastTarget=false;
-        Text("Carry Label",carryPlaque,"Last",14,0,64,46,22,TextAlignmentOptions.MidlineLeft);
-        carryValue=Text("Carry Value",carryPlaque,"",74,0,162,46,26,TextAlignmentOptions.MidlineRight);
+        // Carried weight / carrying capacity as a third row below the vitals, without a frame: backpack in the icon
+        // column, "12,5 / 40 kg" next to it (Einstellungen → Anzeige → Traglast im HUD).
+        carryPlaque=Rect("Carry Weight",top,0,114,400,46);
+        var backpack=Image("Carry Icon",carryPlaque,2,0,44,46,CarryIcon(),Color.white); backpack.preserveAspect=true;
+        carryValue=Text("Carry Value",carryPlaque,"",58,0,330,46,32,TextAlignmentOptions.MidlineLeft);
+        // Own material copy for outline and shadow so the number stays readable on the bright sky (released in OnDestroy).
+        carryValue.outlineColor=new Color(.12f,.07f,.04f,1); carryValue.outlineWidth=.16f;
+        carryMaterial=carryValue.fontMaterial;
+        carryMaterial.EnableKeyword("UNDERLAY_ON");
+        carryMaterial.SetColor(ShaderUtilities.ID_UnderlayColor,new Color(0,0,0,.75f));
+        carryMaterial.SetFloat(ShaderUtilities.ID_UnderlayOffsetX,.5f);
+        carryMaterial.SetFloat(ShaderUtilities.ID_UnderlayOffsetY,-.6f);
+        carryMaterial.SetFloat(ShaderUtilities.ID_UnderlaySoftness,.5f);
+        carryValue.UpdateMeshPadding();
         RefreshCarryWeightVisibility();
         counters=Rect("Counters",transform,0,0,596,106);
         counters.anchorMin=counters.anchorMax=counters.pivot=new Vector2(1,1);

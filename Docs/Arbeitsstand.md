@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud, Projekt-Thread „Traglast-Anzeige Redesign“) | Traglast im HUD neu: Rucksack + Zahl ohne Rahmen (Variante B1), orange über der Traglast | claude/traglast-hud-b1 | Cloud (Test lokal Testbank) | CompactHud (Traglast-Zeile), Tests/CarryWeightHudChecks.cs | ja (Testbank) | 23.10.2026 17:20 |
 
 ## Zuletzt abgeschlossen
 
