@@ -178,7 +178,8 @@ namespace MiningGame.CI
         static bool StopPlay()
         {
             if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
-            // isPlayingOrWillChangePlaymode drops as soon as the exit is requested; isPlaying only once it is done (run #154).
+            // After the exit request isPlayingOrWillChangePlaymode is already false while Play Mode still runs for a frame;
+            // opening a scene then throws, so the next edit check after a play check failed.
             return !EditorApplication.isPlaying && !EditorApplication.isPlayingOrWillChangePlaymode;
         }
 

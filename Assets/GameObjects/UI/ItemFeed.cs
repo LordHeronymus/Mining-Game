@@ -30,6 +30,7 @@ public sealed class ItemFeed : MonoBehaviour
         public ItemFeedBackdrop backdrop;
         public CanvasGroup group;
         public TextMeshProUGUI label;
+        public Material labelMaterial;
         public RectTransform labelRect;
         public ItemFeedAccent accent;
         public float born;
@@ -192,7 +193,7 @@ public sealed class ItemFeed : MonoBehaviour
         {
             var oldest = entries[entries.Count - 1];
             entries.RemoveAt(entries.Count - 1);
-            Destroy(oldest.rect.gameObject);
+            Release(oldest);
         }
     }
 
@@ -219,7 +220,7 @@ public sealed class ItemFeed : MonoBehaviour
         {
             var oldest = entries[entries.Count - 1];
             entries.RemoveAt(entries.Count - 1);
-            Destroy(oldest.rect.gameObject);
+            Release(oldest);
         }
     }
 
@@ -255,7 +256,7 @@ public sealed class ItemFeed : MonoBehaviour
         {
             var oldest = entries[entries.Count - 1];
             entries.RemoveAt(entries.Count - 1);
-            Destroy(oldest.rect.gameObject);
+            Release(oldest);
         }
     }
 
@@ -315,9 +316,28 @@ public sealed class ItemFeed : MonoBehaviour
         accent.ConfigureSparks(sparkCount, sparkIntensity, sparkRiseHeight, sparkBrightness, lineBrightness);
 
         var entry = new Entry { item = item, customLabel = customLabel, money = money, artifactPoints = artifactPoints, amount = amount, rect = rect, iconRect = iconRect, backdrop = backdrop, group = group,
-            label = label, labelRect = textRect, accent = accent, effectBorn = Time.unscaledTime };
+            label = label, labelMaterial = label.fontMaterial, labelRect = textRect, accent = accent, effectBorn = Time.unscaledTime };
         SetContent(entry);
         return entry;
+    }
+
+    // The outline setters give every label its own TMP material copy, which TMP never destroys.
+    static void Release(Entry entry)
+    {
+        Release(entry.labelMaterial);
+        if (entry.rect) Release(entry.rect.gameObject);
+    }
+
+    static void Release(Object value)
+    {
+        if (!value) return;
+        if (Application.isPlaying) Destroy(value); else DestroyImmediate(value);
+    }
+
+    void OnDestroy()
+    {
+        foreach (var entry in entries) Release(entry.labelMaterial);
+        entries.Clear();
     }
 
     static void SetContent(Entry entry)
@@ -343,7 +363,7 @@ public sealed class ItemFeed : MonoBehaviour
             if (age >= Lifetime)
             {
                 entries.RemoveAt(i);
-                Destroy(entry.rect.gameObject);
+                Release(entry);
                 continue;
             }
             float fadeIn = Mathf.Clamp01((now - entry.effectBorn) / .24f);

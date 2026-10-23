@@ -6,7 +6,9 @@ using UnityEngine.SceneManagement;
 [DefaultExecutionOrder(-1050)]
 public sealed class RunAutosave : MonoBehaviour
 {
-    const float NoticeSeconds = 2.5f;
+    const float NoticeSeconds = 2.5f, FailedNoticeSeconds = 8f;
+    const string SavedNotice = "Automatisch gespeichert", FailedNotice = "Automatisches Speichern fehlgeschlagen";
+    static readonly Color FailedColor = new Color(1, .45f, .35f);
     public static RunAutosave Instance { get; private set; }
     public float SecondsSinceSave { get; private set; }
     TMPro.TextMeshProUGUI notice;
@@ -53,7 +55,7 @@ public sealed class RunAutosave : MonoBehaviour
     void Saved() => SecondsSinceSave = 0;
     void BuildNotice(Transform canvas)
     {
-        notice = HomeUi.Label("Autosave Notice", canvas, "Automatisch gespeichert", Vector2.zero, new Vector2(420, 40), 24);
+        notice = HomeUi.Label("Autosave Notice", canvas, SavedNotice, Vector2.zero, new Vector2(420, 40), 24);
         var rect = notice.rectTransform;
         rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(1, 0);
         rect.anchoredPosition = new Vector2(-28, 24);
@@ -72,6 +74,14 @@ public sealed class RunAutosave : MonoBehaviour
         if (interval <= 0 || SecondsSinceSave < interval || GameplayInputBlocker.IsBlocked || !GameSaveSystem.CanAutoSave ||
             GameSaveSystem.IsAutoSaving) return;
         SecondsSinceSave = 0;
-        StartCoroutine(GameSaveSystem.Autosave(this, (ok, _) => { if (ok) noticeUntil = Time.unscaledTime + NoticeSeconds; }));
+        StartCoroutine(GameSaveSystem.Autosave(this, Report));
+    }
+    // A save that really failed stays visible longer, since the last good save keeps getting older; an autosave that gave up
+    // because the run can no longer be saved stays quiet. The next attempt still waits a full interval (one notice each).
+    void Report(bool ok, string message)
+    {
+        if (!ok && message != GameSaveSystem.SaveFailedMessage) return;
+        if (notice) { notice.text = ok ? SavedNotice : FailedNotice; notice.color = ok ? HomeUi.Cream : FailedColor; }
+        noticeUntil = Time.unscaledTime + (ok ? NoticeSeconds : FailedNoticeSeconds);
     }
 }

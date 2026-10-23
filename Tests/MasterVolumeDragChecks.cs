@@ -19,9 +19,13 @@ public static class MasterVolumeDragChecks
         var passed = new List<string>();
         void Check(bool valid, string label) { if (!valid) throw new Exception(label); passed.Add(label); }
         var fields = typeof(GpsSettings).GetFields(BindingFlags.Static | BindingFlags.NonPublic)
-            .Where(f => new[] { "profile", "document", "savedJson", "dirty", "<Warning>k__BackingField" }.Contains(f.Name)).ToArray();
+            .Where(f => new[] { "profile", "document", "savedJson", "dirty", "profileText", "<Warning>k__BackingField" }.Contains(f.Name)).ToArray();
         var original = fields.ToDictionary(f => f, f => f.GetValue(null));
         string committedSession = SessionState.GetString("GPS.Committed", "");
+        string committedBase = SessionState.GetString("GPS.CommittedBase", "");
+        // Saving writes the personal volume to this project's EditorPrefs; the check puts the values back afterwards.
+        var volumeKeys = new[] { "masterVolume", "musicVolume" }.Select(GpsSettings.PersonalPreferenceKey).ToArray();
+        var volumePrefs = volumeKeys.ToDictionary(key => key, key => EditorPrefs.HasKey(key) ? (float?)EditorPrefs.GetFloat(key) : null);
         var profile = Object.Instantiate(GpsSettings.Profile);
         string path = "Assets/MasterVolumeTest-" + Guid.NewGuid().ToString("N") + ".asset";
         var panel = Object.FindFirstObjectByType<SettingsPanel>(FindObjectsInactive.Include);
@@ -91,6 +95,8 @@ public static class MasterVolumeDragChecks
             if (changedHandler != null) GpsSettings.Changed -= changedHandler;
             foreach (var entry in original) entry.Key.SetValue(null, entry.Value);
             SessionState.SetString("GPS.Committed", committedSession);
+            SessionState.SetString("GPS.CommittedBase", committedBase);
+            foreach (var pref in volumePrefs) if (pref.Value.HasValue) EditorPrefs.SetFloat(pref.Key, pref.Value.Value); else EditorPrefs.DeleteKey(pref.Key);
             AudioListener.volume = originalAudio;
             AssetDatabase.DeleteAsset(path);
         }

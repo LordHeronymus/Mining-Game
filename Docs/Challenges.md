@@ -155,7 +155,8 @@ Ist eine Stufe nach dem Runden nicht grösser als die nächstniedrigere angebote
 **Determinismus:**
 
 - Der Zufall hängt nur vom Start des Zeitraums und vom Zeitraum ab, mit je einem eigenen `System.Random` für XXL, Projekt und Aufgaben. Unitys Zufallszustand bleibt unberührt.
-- Die Uhr zurückzustellen bringt nichts, weil die Profiluhr nur vorwärts läuft.
+- Die Uhr zurückzustellen bringt nichts: Bezahlte Runden bleiben über ihre Marker bezahlt. Massgebend ist die Internetzeit (ohne Netz die PC-Uhr); eine falsch in die Zukunft gestellte Uhr friert die Runden nicht ein (Details in `Docs/Progression.md`, „Challenge-Uhr“).
+- Im GPS-Testmodus zählen und zahlen Challenges nicht.
 - Nach einem Zeitzonenwechsel beginnt die nächste Runde frühestens dort, wo die alte endete.
 
 ## 3. Zählweise
@@ -178,7 +179,7 @@ Jedes Ereignis zählt gleichzeitig für die Tages-, Wochen- und Monatsrunde. Pro
 | `layers` | Grenzgänger | … auf einer Tour ab der Oberfläche eine neue Schicht betreten wird. | Wie Tiefe. Bitmaske pro Runde. |
 | `altars` | Ruf des Altars | … man auf einer Tour ab der Oberfläche bis auf 8 Einheiten an den Altar herankommt. | Wie Tiefe. Höchstens 1 pro Runde, in jeder Runde neu erreichbar. |
 | `regions` | Unbetretene Pfade, Kartograf | … in einem 12×12-Gebiet 24 Felder aufgedeckt sind. | Bestehender Gebietsschlüssel pro Welt. |
-| `cells` | Verborgene Weiten | … ein Kartenfeld zum ersten Mal aufgedeckt wird. | Aufgedeckte Zelle im Zellen-Ledger der Welt (Blöcke `#1R:…`; alte Schlüssel `revealed:x:y` werden gefaltet und bis Schritt 2 weiter geschrieben). Felder, die beim Laden schon sichtbar sind, zählen nicht. |
+| `cells` | Verborgene Weiten | … ein Kartenfeld zum ersten Mal aufgedeckt wird. | Aufgedeckte Zelle im Zellen-Ledger der Welt (Blöcke `#1R:…`; alte Schlüssel `revealed:x:y` werden gefaltet). Felder, die beim Laden schon sichtbar sind, zählen nicht. |
 | `discoveries` | Geheimnisse im Stein | … eine Entdeckung gelingt: Artefakt abgebaut, Findling zerstört, Bauplan-Versteck gefunden oder Altar zum ersten Mal erreicht. | Bestehender Entdeckungsschlüssel pro Welt. |
 | `returns`, `round-trips`, `full-returns` | Sicher zurück, Hin und zurück, Volle Taschen, Expeditionsleiter, Heimkehrer, Schwer beladen | … man von einer Tour ab der Oberfläche an die Oberfläche zurückkehrt und unterwegs mindestens **10 neue Blöcke** gezählt wurden. Dann gilt: **Sicher zurück** ab einer Tiefe von 30. **Hin und zurück**, wenn die tiefste Schicht der Tour mindestens die Zielschicht ist (ab S2). **Volle Taschen**, wenn die Ladung mindestens 90 % und der Zuwachs auf der Tour mindestens 50 % der Bezugs-Tragkraft beträgt und die Tiefe mindestens 10 ist. Die Bezugs-Tragkraft ist die kleinere von Tragkraft und 150 kg. | Mindestzahl neuer Blöcke pro Tour, damit Pendeln an einer Leiter nichts bringt. Die Tour beginnt nur an der Oberfläche. Ein Debugmodus bricht sie ab. Pausenmenü, Karte, Werkbank und Artefakt-Popup unterbrechen sie nicht. |
 | `torches-placed`, `ladders-placed` | Lichtbringer, Kletterer, gleichnamige Linien | … die Zahl der gleichzeitig platzierten Fackeln (ohne Lavalampen) oder Leitern in der Welt über den bisherigen Höchststand steigt. | Hochwassermarke pro Welt. Umsetzen zählt nicht. Platzierungen, die beim Laden schon da sind oder in einem Debugmodus entstanden, heben nur die Marke. |

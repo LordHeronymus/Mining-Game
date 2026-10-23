@@ -91,7 +91,7 @@ public static class MetaProgressionCoreChecks
         double first = MetaProgression.CurrentRun.progressXp - prior;
         MetaProgression.RecordResource(Item.Copper, 100, "ore-b");
         double both = MetaProgression.CurrentRun.progressXp - prior;
-        Near(both / first, Math.Pow(2d, .8d), "double resource yield earns sublinearXP");
+        Near(both / first, Math.Pow(2d, MetaProgression.CurrentRun.settings.resourceXpExponent), "double resource yield earns XP by the configured exponent");
         before = MetaProgression.TotalXp;
         MetaProgression.RecordResource(Item.Copper, 100, "ore-a");
         Check(MetaProgression.TotalXp == before, "same mined cell cannot repay");
@@ -159,8 +159,8 @@ public static class MetaProgressionCoreChecks
         var save = MetaProgression.CaptureRunState(); MetaProgression.EndRun();
         Check(MetaProgression.RefundAll() && MetaProgression.AvailablePowerPoints == 199 && MetaProgression.AvailableComfortPoints == 1, "refund returns both currencies for free");
         MetaProgression.BeginRun("build", save);
-        Near(MetaProgression.CurrentLoadout.healthMultiplier, 1.025d, "saved build survives profile refund");
-        Check(MetaProgression.GetRunRank("health") == 1 && MetaProgression.GetRank("health") == 0, "active rank distinct from next-run rank");
+        Near(MetaProgression.CurrentLoadout.healthMultiplier, 1d, "a loaded world takes the current (refunded) build");
+        Check(MetaProgression.GetRunRank("health") == 0 && MetaProgression.GetRank("health") == 0, "active rank follows the profile in loaded worlds");
         MetaProgression.EndRun(); MetaProgression.BeginRun("next-build");
         Near(MetaProgression.CurrentLoadout.healthMultiplier, 1d, "next run gets refunded build");
         MetaProgression.EndRun(); MetaProgression.Reload();

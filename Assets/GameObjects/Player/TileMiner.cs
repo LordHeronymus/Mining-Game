@@ -38,6 +38,8 @@ public class TileMiner : MonoBehaviour
     private SurfaceTrees surfaceTrees;
     private float nextMiningHitTime = 0f;
     private bool miningTargetActive;
+    private bool miningStalled;
+    private Vector3Int? stalledMiningCell;
     private MinerPlayerVisual minerVisual;
     private float nextGrassCutTime;
     private float grassSwingUntil;
@@ -78,7 +80,8 @@ public class TileMiner : MonoBehaviour
     }
 
     private bool mining;
-    public bool IsMingin => mining;
+    // Energy drain: a block whose drop no longer fits the carry limit keeps the swing but costs nothing.
+    public bool IsMingin => mining && !miningStalled;
     public bool IsMining => mining;
     public bool IsChoppingTree { get; private set; }
     public bool HasAxe => surfaceTrees && surfaceTrees.HasAxe;
@@ -161,11 +164,12 @@ public class TileMiner : MonoBehaviour
         bool continuedMining = miningTargetActive;
         miningTargetActive = false;
         mining = false;
+        miningStalled = false;
         IsChoppingTree = false;
         IsCuttingGrass = Time.time < grassSwingUntil;
         if (!GameBindings.Held(GameAction.Mine)) grassClickConsumed = false;
         if (!hotbar) hotbar = FindFirstObjectByType<CompactHud>();
-        if (GameplayInputBlocker.IsBlocked || IsPointerOverUi(Input.mousePosition) || (hotbar && hotbar.SelectedSlot != 0))
+        if (GameplayInputBlocker.IsBlocked || IsPointerOverUi(Input.mousePosition) || HotbarBlocksMining(hotbar))
         {
             mining = false;
             ClearHighlight();
@@ -291,17 +295,26 @@ public class TileMiner : MonoBehaviour
         if (!t) return;
         mining = true;
         miningTargetActive = true;
+        miningStalled = stalledMiningCell == targetCell;
+        if (!miningStalled) stalledMiningCell = null;
         MiningTarget = tilemap.GetCellCenterWorld(targetCell);
         if (!TryBeginMiningHit(continuedMining)) return;
         ApplyMiningHit(targetCell, GetBaseMiningHitInterval());
     }
 
-    bool TryBeginMiningHit(bool continuedMining)
+    // Dragging a hotbar item holds the mine button; it must not dig into the world.
+    static bool HotbarBlocksMining(CompactHud hotbar) =>
+        hotbar && (hotbar.SelectedSlot != 0 || hotbar.IsDraggingItem);
+
+    bool TryBeginMiningHit(bool continuedMining) =>
+        TryBeginMiningHit(ref nextMiningHitTime, Time.time, GetMiningHitInterval(), continuedMining);
+
+    // A new press gets a quick first hit, but tapping never skips the cooldown of the previous hit.
+    static bool TryBeginMiningHit(ref float nextHitTime, float now, float hitInterval, bool continuedMining)
     {
-        float hitInterval = GetMiningHitInterval();
-        if (!continuedMining) nextMiningHitTime = Time.time + hitInterval * .5f;
-        if (Time.time < nextMiningHitTime) return false;
-        nextMiningHitTime = Time.time + hitInterval;
+        if (!continuedMining) nextHitTime = Mathf.Max(nextHitTime, now + hitInterval * .5f);
+        if (now < nextHitTime) return false;
+        nextHitTime = now + hitInterval;
         return true;
     }
 
@@ -331,28 +344,45 @@ public class TileMiner : MonoBehaviour
         p += damageInterval * pickaxeMultiplier / Mathf.Max(.0001f, GetTargetMineTime(cell));
         lastMiningHitTime[cell] = Time.time;
         lastMiningProgressUpdateTime[cell] = Time.time;
-        if (p >= 1f) { CompleteMining(cell); return; }
+        if (p >= 1f)
+        {
+            // Hardness and the target were checked above: a failed completion means the drop is too heavy.
+            if (CompleteMining(cell)) stalledMiningCell = null;
+            else
+            {
+                stalledMiningCell = cell;
+                miningStalled = true;
+                AudioManager.Instance?.PlayBlockedMiningHit();
+            }
+            return;
+        }
         progress[cell] = p;
         miningCracks ??= new MiningCrackVisual(tilemap);
         miningCracks.Show(cell, p);
 
-        PlayMiningHitSound(GetBlock(cell), map && map.GetOreAt(cell));
+        bool isOre = map && map.GetOreAt(cell);
+        PlayMiningHitSound(GetBlock(cell), isOre, isOre ? GetSubstrateBlock(cell) : null);
         OnBlockHit?.Invoke(tilemap.GetCellCenterWorld(cell));
     }
 
-    void PlayMiningHitSound(Block block, bool isOre)
+    void PlayMiningHitSound(Block block, bool isOre, Block substrate)
     {
-        SoundType hit = SoundType.DigMedium;
-        int hitLayer = -1;
-        if (block != null)
-        {
-            hitLayer = GetTerrainLayerIndex(block);
-            hit = hitLayer >= 2
-                ? (isOre ? SoundType.DigDeepOreHit : SoundType.DigDeepStone)
-                : block.digSound;
-        }
+        SoundType hit = GetMiningHitSound(map ? map.layers : null, block, isOre, substrate, out int hitLayer);
         if (hitLayer >= 0) AudioManager.Instance?.PlayLayerMiningSound(hitLayer, hit, false);
         else AudioManager.Instance?.Play(hit, true);
+    }
+
+    // Ore cells report the ore block, so deep ores take their layer from the host stone.
+    // Ores above layer three keep their own dig sound.
+    static SoundType GetMiningHitSound(MapLayer[] layers, Block block, bool isOre, Block substrate, out int hitLayer)
+    {
+        hitLayer = -1;
+        if (block == null) return SoundType.DigMedium;
+        hitLayer = GetTerrainLayerIndex(layers, isOre ? substrate : block);
+        if (isOre && hitLayer < 2) hitLayer = -1;
+        return hitLayer >= 2
+            ? (isOre ? SoundType.DigDeepOreHit : SoundType.DigDeepStone)
+            : block.digSound;
     }
 
     void ShowMiningCracks(Vector3Int cell, float amount)
@@ -369,6 +399,7 @@ public class TileMiner : MonoBehaviour
         pendingDropCounts.Clear();
         miningCracks?.Dispose();
         miningCracks = null;
+        stalledMiningCell = null;
     }
 
     void RegenerateMiningProgress(float now)
@@ -687,14 +718,19 @@ public class TileMiner : MonoBehaviour
         return !block || !inventory || block.hardnessIndex <= inventory.EquippedPickaxeMaximumHardness;
     }
 
-    int GetTerrainLayerIndex(Block block)
+    Block GetSubstrateBlock(Vector3Int cell) =>
+        map && map.registry ? map.registry.FromTile(tilemap.GetTile(cell)) : null;
+
+    int GetTerrainLayerIndex(Block block) => map ? GetTerrainLayerIndex(map.layers, block) : -1;
+
+    static int GetTerrainLayerIndex(MapLayer[] layers, Block block)
     {
-        if (!block || !map || map.layers == null) return -1;
+        if (!block || layers == null) return -1;
 
         // Transition bands can contain stones from an incoming layer before its start depth.
         // Identify the source layer from the actual block so sound and tuning follow its material.
-        for (int i = 0; i < map.layers.Length; i++)
-            if (map.layers[i] != null && map.layers[i].stone == block)
+        for (int i = 0; i < layers.Length; i++)
+            if (layers[i] != null && layers[i].stone == block)
                 return i;
 
         return -1;
@@ -709,6 +745,7 @@ public class TileMiner : MonoBehaviour
         var block = GetBlock(cell);
         var ore = map ? map.GetOreAt(cell) : null;
         var artifact = map ? map.GetArtifactAt(cell) : null;
+        var substrate = ore ? GetSubstrateBlock(cell) : null;
         if (!pendingDropCounts.TryGetValue(cell, out int amount))
         {
             amount = ore ? OreTile.DropCount(ore.richness, UnityEngine.Random.value) : 1;
@@ -742,7 +779,7 @@ public class TileMiner : MonoBehaviour
         SoundType breakSound = ore ? SoundType.BreakOre : block ? block.breakSound : SoundType.BreakRock;
         if (terrainLayer >= 2) breakSound = SoundType.StoneBreak;
         else if (terrainLayer >= 0) breakSound = SoundType.ClayBreak;
-        PlayMiningHitSound(block, ore != null);
+        PlayMiningHitSound(block, ore != null, substrate);
         if (terrainLayer >= 0) AudioManager.Instance?.PlayLayerMiningSound(terrainLayer, breakSound, true);
         else AudioManager.Instance?.Play(breakSound, ore != null);
         return true;

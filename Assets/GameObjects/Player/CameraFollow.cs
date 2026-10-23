@@ -11,7 +11,20 @@ public class CameraFollow : MonoBehaviour
     public float GetDepthYOffset(float targetY) =>
         surfaceYOffset * Mathf.InverseLerp(centeredAtY, 0f, targetY);
 
-    Vector3 DesiredPosition() => target.position + offset + Vector3.up * GetDepthYOffset(target.position.y);
+    Camera view;
+    // GPS edits all three offset components; a depth at or in front of the near plane (or past the far plane)
+    // cut the whole world at z = 0 out of the picture. X/Y stay as set.
+    public Vector3 EffectiveOffset
+    {
+        get
+        {
+            if (!view) view = GetComponent<Camera>();
+            if (!view) return offset;
+            return new Vector3(offset.x, offset.y, Mathf.Clamp(offset.z, -(view.farClipPlane - .01f), -(view.nearClipPlane + .01f)));
+        }
+    }
+
+    Vector3 DesiredPosition() => target.position + EffectiveOffset + Vector3.up * GetDepthYOffset(target.position.y);
 
     void Awake()
     {
@@ -25,7 +38,7 @@ public class CameraFollow : MonoBehaviour
 
         Vector3 desired = DesiredPosition();
         Vector3 smoothed = Vector3.Lerp(transform.position, desired, smoothSpeed * Time.deltaTime);
-        smoothed.z = offset.z; // sicherstellen, dass Kamera z-Abstand behält
+        smoothed.z = EffectiveOffset.z; // sicherstellen, dass Kamera z-Abstand behält
         transform.position = smoothed;
     }
 }

@@ -69,6 +69,7 @@ public sealed class MetaProgressionRuntime : MonoBehaviour
     void Update()
     {
         MetaProgression.PumpSaves();
+        NetworkClock.Update();
         if (LoadingProgress.Active || RunNavigation.IsTransitioning ||
             SceneManager.GetActiveScene().name != RunNavigation.GameScene) return;
         if (MetaProgression.CurrentRun == null) return;
@@ -114,6 +115,7 @@ public sealed class MetaProgressionRuntime : MonoBehaviour
         bool inside = cell.x >= -map.GeneratedWidth / 2 && cell.x < map.GeneratedWidth - map.GeneratedWidth / 2 &&
             -cell.y < map.GeneratedHeight;
         int miningLayer = cell.y <= 0 ? MiningLayerAt(cell, map.layers) : 0;
+        MetaProgression.CurrentDepth = inside ? Mathf.Max(0, -cell.y) : 0;
         if (inside && cell.y <= 0)
         {
             MetaProgression.RecordDepth(Mathf.Max(0, -cell.y));

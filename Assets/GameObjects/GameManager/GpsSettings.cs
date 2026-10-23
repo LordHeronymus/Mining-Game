@@ -18,7 +18,11 @@ public static class GpsSettings
     const double CommitDelaySeconds = .35;
     // Checks switch this off (or use a save test directory) so driving the menu never writes the real profile.
     public static bool AutoCommit = true;
+#if UNITY_EDITOR
     static bool CanAutoCommit => AutoCommit && string.IsNullOrEmpty(GameSaveSystem.TestDirectory) && string.IsNullOrEmpty(MetaProgression.TestDirectory);
+#else
+    static bool CanAutoCommit => AutoCommit && string.IsNullOrEmpty(MetaProgression.TestDirectory); // No save test directory in builds.
+#endif
     public static event Action Changed;
     public static event Action Saved;
     public static string Warning { get; private set; }
@@ -55,22 +59,18 @@ public static class GpsSettings
 #if !UNITY_EDITOR
         bool existing=File.Exists(FilePath) || File.Exists(FilePath+".bak");
         document=GpsFileStore.Load(FilePath,document,out var warning,out bool legacyFormat); Warning=warning;
-        if(!existing && profile)
-        {
-            GpsLegacyImport.Import(document,profile,Application.persistentDataPath);
-            try { GpsFileStore.Save(FilePath,document); } catch(Exception ex) { Warning="GPS speichern fehlgeschlagen: "+ex.Message; }
-        }
-        else if(legacyFormat && warning==null)
-        {
+        if(!existing && profile) GpsLegacyImport.Import(document,profile,Application.persistentDataPath);
+        // The first start stores the import; an old full copy is converted to overrides.
+        bool rewrite=(!existing && profile) || (legacyFormat && warning==null);
 #if !DEVELOPMENT_BUILD
-            // Release players can only change personal preferences; every other value in an old full
-            // copy is a stale shipped value and must not hide the current profile.
-            var shipped=ShippedDocument();
-            foreach(string field in PersonalPreferences) GpsCodec.Set(shipped.preferences,field,GpsCodec.Get(document.preferences,field));
-            document=shipped;
+        // Release players can only change personal preferences; every other value in the file (an old full copy,
+        // F1 values of a development build on the same PC, imported debug files) must not hide the current profile.
+        var personal=KeepPersonalPreferences(document,ShippedDocument());
+        rewrite|=profile && warning==null && JsonUtility.ToJson(personal)!=JsonUtility.ToJson(document);
+        document=personal;
 #endif
+        if(rewrite)
             try { GpsFileStore.Save(FilePath,document); } catch(Exception ex) { Warning="GPS speichern fehlgeschlagen: "+ex.Message; }
-        }
 #else
         LoadPersonalPreferences(document);
 #endif
@@ -80,14 +80,21 @@ public static class GpsSettings
 #endif
         savedJson = JsonUtility.ToJson(document);
 #if UNITY_EDITOR
+        profileText = shippedJson;
         // Mit eigener Überschreibungs-Schicht ist Profil + Datei immer der gespeicherte Stand.
-        var committed = GpsUserOverrides.Active ? "" : UnityEditor.SessionState.GetString("GPS.Committed", "");
+        var committed = GpsUserOverrides.Active ? "" : CommittedSession();
         if (!string.IsNullOrEmpty(committed)) savedJson = JsonUtility.ToJson(JsonUtility.FromJson<GpsDocument>(committed));
 #endif
         dirty = savedJson != JsonUtility.ToJson(document);
     }
     // Volume is chosen per player. In the editor it lives in EditorPrefs so it never ships in the profile asset.
     static readonly string[] PersonalPreferences = { nameof(GpsPreferences.masterVolume), nameof(GpsPreferences.musicVolume) };
+    // Takes only the personal values of a loaded player document over into the shipped one.
+    static GpsDocument KeepPersonalPreferences(GpsDocument loaded, GpsDocument shipped)
+    {
+        foreach (string field in PersonalPreferences) GpsCodec.Set(shipped.preferences, field, GpsCodec.Get(loaded.preferences, field));
+        return shipped;
+    }
     // The profile as loaded, before player overrides. Edit-mode changes write through to the asset, so the
     // live documentJson is not a stable baseline there.
     public static GpsDocument ShippedDocument()
@@ -112,14 +119,19 @@ public static class GpsSettings
         finally { for (int i = 0; i < PersonalPreferences.Length; i++) GpsCodec.Set(data.preferences, PersonalPreferences[i], personal[i]); }
     }
 #if UNITY_EDITOR
-    static string PersonalPreferenceKey(string field) => "MiningGame.GPS." + field;
+    // EditorPrefs are shared by every editor of the user, so the key names the project: the test bench and work folders
+    // never change the volume of the user's own editor.
+    static string personalPrefix;
+    public static string PersonalPreferenceKey(string field) => (personalPrefix ??= "MiningGame.GPS." +
+        Fnv(Path.GetFullPath(Path.Combine(Application.dataPath, "..")).TrimEnd('\\', '/')).ToString("x16") + ".") + field;
     static void LoadPersonalPreferences(GpsDocument data)
     {
         foreach (string field in PersonalPreferences)
         {
-            string key = PersonalPreferenceKey(field);
-            // First run after the move: keep the value that was stored in the profile until now.
-            if (!UnityEditor.EditorPrefs.HasKey(key)) UnityEditor.EditorPrefs.SetFloat(key, (float)GpsCodec.Get(data.preferences, field));
+            string key = PersonalPreferenceKey(field), shared = "MiningGame.GPS." + field;
+            // First run with the project key: take over the former shared value once, else keep the value from the profile.
+            if (!UnityEditor.EditorPrefs.HasKey(key)) UnityEditor.EditorPrefs.SetFloat(key,
+                UnityEditor.EditorPrefs.HasKey(shared) ? UnityEditor.EditorPrefs.GetFloat(shared) : (float)GpsCodec.Get(data.preferences, field));
             GpsCodec.Set(data.preferences, field, Mathf.Clamp01(UnityEditor.EditorPrefs.GetFloat(key)));
         }
     }
@@ -127,6 +139,36 @@ public static class GpsSettings
     {
         foreach (string field in PersonalPreferences)
             UnityEditor.EditorPrefs.SetFloat(PersonalPreferenceKey(field), (float)GpsCodec.Get(data.preferences, field));
+    }
+    static ulong Fnv(string text)
+    {
+        ulong hash = 14695981039346656037;
+        unchecked { foreach (char c in text) { hash ^= c; hash *= 1099511628211; } }
+        return hash;
+    }
+    // The committed state outlives domain reloads in SessionState, tied to the profile text it belongs to. A branch switch
+    // without editor restart (Tools/editor-bench checkout) replaces the profile; the old state then no longer applies.
+    static string profileText; // documentJson as last read or written here; another instance means the profile was replaced
+    static string ProfileStamp(string text) => (text ?? "").Length + ":" + Fnv(text ?? "").ToString("x16");
+    static string CommittedSession()
+    {
+        string json = UnityEditor.SessionState.GetString("GPS.Committed", "");
+        if (json.Length == 0 || profile && UnityEditor.SessionState.GetString("GPS.CommittedBase", "") == ProfileStamp(profile.documentJson)) return json;
+        UnityEditor.SessionState.EraseString("GPS.Committed"); UnityEditor.SessionState.EraseString("GPS.CommittedBase");
+        return "";
+    }
+    static void RememberCommitted(string json)
+    {
+        UnityEditor.SessionState.SetString("GPS.Committed", json);
+        UnityEditor.SessionState.SetString("GPS.CommittedBase", ProfileStamp(profile.documentJson));
+    }
+    // Play start: keep the committed state for the return to edit mode, unless the profile was replaced since it was loaded.
+    public static void RememberCommitted()
+    {
+        EnsureLoaded();
+        if (!profile) return;
+        if (ReferenceEquals(profile.documentJson, profileText)) RememberCommitted(savedJson);
+        else { UnityEditor.SessionState.EraseString("GPS.Committed"); UnityEditor.SessionState.EraseString("GPS.CommittedBase"); }
     }
     // Eigene Werte (UserSettings/GpsOverrides.json) über das geladene Profil legen. Was inzwischen dem Standard entspricht
     // oder dessen Stelle es nicht mehr gibt, fällt aus der Datei; Letzteres steht mit Wert in der Konsole.
@@ -140,7 +182,8 @@ public static class GpsSettings
             Debug.LogWarning("Eigener GPS-Wert passt nicht mehr zum Profil und wurde entfernt: " + entry.record + " / " + entry.path +
                 " = " + GpsUserOverrides.Describe(entry.value) + " (alte Datei: " + GpsUserOverrides.FilePath + ".bak)");
         var effective = GpsUserOverrides.Diff(document, ShippedDocument(), profile);
-        if (stale.Count > 0 || effective.Count != list.Count)
+        // Ältere Einträge ohne Clipschlüssel bekommen ihn gleich, bevor main den Clipkatalog erweitert.
+        if (stale.Count > 0 || effective.Count != list.Count || list.Any(entry => (entry.keys?.Count ?? 0) < entry.arrays.Count))
         {
             int same = list.Count - stale.Count - effective.Count;
             if (same > 0) Debug.Log(same + " eigene GPS-Werte entsprechen jetzt dem Standard und wurden aus der Überschreibung entfernt.");
@@ -161,16 +204,25 @@ public static class GpsSettings
     {
         error = null;
         var shipped = ShippedDocument(); var list = fields.ToList();
-        foreach (var (key, field) in list)
+        // Width and depth are checked against each other (MaxCells): a field refused next to an own value that is reset
+        // later in the list gets another pass, so 300 × 6000 resets to 600 × 1200 in any order.
+        var open = list;
+        while (open.Count > 0)
         {
-            GpsValue node;
-            if (key == "preferences" || key == "tests")
+            var refused = new List<(string key, string field)>();
+            foreach (var (key, field) in open)
             {
-                object target = key == "preferences" ? shipped.preferences : shipped.tests;
-                node = GpsCodec.Read(field, GpsCodec.MemberType(target.GetType(), field), GpsCodec.Get(target, field), Profile.Key);
+                GpsValue node;
+                if (key == "preferences" || key == "tests")
+                {
+                    object target = key == "preferences" ? shipped.preferences : shipped.tests;
+                    node = GpsCodec.Read(field, GpsCodec.MemberType(target.GetType(), field), GpsCodec.Get(target, field), Profile.Key);
+                }
+                else node = shipped.records.Find(record => record.key == key)?.fields.Find(value => value.name == field)?.Copy();
+                if (node != null && !SetValue(key, node, out error)) refused.Add((key, field));
             }
-            else node = shipped.records.Find(record => record.key == key)?.fields.Find(value => value.name == field)?.Copy();
-            if (node != null && !SetValue(key, node, out error)) return false;
+            if (refused.Count == open.Count) return false;
+            open = refused;
         }
         pendingCommits.RemoveAll(list.Contains);
         if (!CommitFields(list, out error)) return false;
@@ -183,11 +235,14 @@ public static class GpsSettings
         var spec = GpsSchema.Spec(record, node.name);
         var type = GpsCodec.MemberType(GpsCodec.ResolveType(record.type) ?? typeof(object), node.name);
         return spec != null && type != null && GpsCodec.Validate(node, out _) && GpsCodec.ValidateShape(node, type, out _) &&
-            ValidateBounds(node, spec, out _) && ValidateReferences(node, out _);
+            ValidateBounds(node, spec, out _) && ValidateReferences(node, out _) && ValidateLayerStones(GpsCodec.ResolveType(record.type), node, out _);
     }
     public static void UseProfile(GpsProfile source, GpsDocument data)
     {
         profile = source; document = data; shippedJson = source ? source.documentJson : null;
+#if UNITY_EDITOR
+        profileText = shippedJson;
+#endif
         savedJson = JsonUtility.ToJson(data); Warning = null; dirty=false; pendingCommits.Clear();
     }
     public static void ReloadCommitted()
@@ -196,8 +251,13 @@ public static class GpsSettings
         profile = Resources.Load<GpsProfile>(ResourceName);
         // Mit Überschreibungs-Schicht bleibt das Profil unverändert; der gespeicherte Stand kommt aus Profil + Datei.
         if (GpsUserOverrides.Active) { Reload(); return; }
-        string json = UnityEditor.SessionState.GetString("GPS.Committed", profile ? profile.documentJson : "");
-        if (profile && !string.IsNullOrEmpty(json)) profile.documentJson = AssetJson(JsonUtility.FromJson<GpsDocument>(json));
+        string json = CommittedSession(); bool remembered = json.Length > 0;
+        if (!remembered) json = profile ? profile.documentJson : "";
+        if (profile && !string.IsNullOrEmpty(json))
+        {
+            profile.documentJson = AssetJson(JsonUtility.FromJson<GpsDocument>(json)); profileText = profile.documentJson;
+            if (remembered) RememberCommitted(json);
+        }
 #endif
         Reload();
     }
@@ -228,19 +288,29 @@ public static class GpsSettings
         }
         return Document.records.Find(record => record.key == key)?.fields.Find(node => node.name == field)?.Copy();
     }
-    public static bool SetValue(string key, GpsValue node, out string error)
+    public static bool SetValue(string key, GpsValue node, out string error) => SetValue(key, node, out error, out _);
+    static bool SetValue(string key, GpsValue node, out string error, out bool changed)
     {
         EnsureLoaded();
+        changed = false;
         if (!GpsCodec.Validate(node, out error)) return false;
+        // List entries are named by position; removing and adding in the menus would otherwise leave duplicate names
+        // that make saved overrides hit the wrong entry.
+        Renumber(node);
         var record = Document.records.Find(item => item.key == key);
         Type type = key == "preferences" ? typeof(GpsPreferences) : key == "tests" ? typeof(GameplayTestSettingsData) : GpsCodec.ResolveType(record?.type);
         if (type == null) { error = "GPS-Bereich fehlt."; return false; }
         var spec = GpsSchema.Fields(type, key.Split(':').Last()).FirstOrDefault(field => field.name == node.name);
         if (spec == null) { error = "Unbekannte GPS-Einstellung."; return false; }
         if (!GpsCodec.ValidateShape(node,GpsCodec.MemberType(type,node.name),out error)) return false;
-        if (!ValidateBounds(node, spec, out error) || !ValidateReferences(node,out error)) return false;
+        if (!ValidateBounds(node, spec, out error) || !ValidateReferences(node,out error) || !ValidateLayerStones(type, node, out error)) return false;
+        // A larger world could be generated but never saved; checked here so stored override files stay loadable.
+        if (type == typeof(MapGenerator) && (node.name == "mapWidth" || node.name == "mapHeight") && node.number *
+            (record.fields.Find(field => field.name == (node.name == "mapWidth" ? "mapHeight" : "mapWidth"))?.number ?? 1) > GameSaveSystem.MaxCells)
+        { error = "Karte zu groß: Breite × Tiefe höchstens " + GameSaveSystem.MaxCells + " Zellen."; return false; }
         var previous=GetValue(key,node.name);
         if (previous!=null && JsonUtility.ToJson(previous)==JsonUtility.ToJson(node)) return true;
+        changed = true;
 #if UNITY_EDITOR
         bool writeThrough = !Application.isPlaying && profile && !GpsUserOverrides.Active;
         if (writeThrough) UnityEditor.Undo.RecordObject(profile, "GPS ändern");
@@ -262,12 +332,20 @@ public static class GpsSettings
         if (key == "tests") ApplyTestConfiguration();
 #if UNITY_EDITOR
         if (writeThrough)
-        { profile.documentJson = AssetJson(document); UnityEditor.EditorUtility.SetDirty(profile); }
+        { profile.documentJson = AssetJson(document); profileText = profile.documentJson; UnityEditor.EditorUtility.SetDirty(profile); }
 #endif
         dirty=true;
         Changed?.Invoke();
         if (type==typeof(PlayerBaseStats)) GameplaySettings.NotifyChanged();
         return true;
+    }
+    static void Renumber(GpsValue node)
+    {
+        for (int i = 0; i < node.children.Count; i++)
+        {
+            if (node.kind == GpsValueKind.Array) node.children[i].name = i.ToString();
+            Renumber(node.children[i]);
+        }
     }
     public static void NotifyConfigurationChanged() { Changed?.Invoke(); }
     static bool ValidateBounds(GpsValue node, GpsFieldSpec spec, out string error)
@@ -275,6 +353,8 @@ public static class GpsSettings
         error = null;
         if ((node.kind == GpsValueKind.Number || node.kind == GpsValueKind.Integer) &&
             (node.number < spec.min || node.number > spec.max)) { error = spec.label + ": Wert außerhalb des Bereichs."; return false; }
+        if (node.kind == GpsValueKind.Integer && !GpsCodec.FitsInteger(node.number, GpsCodec.ResolveType(node.type)))
+        { error = spec.label + ": Wert außerhalb des Bereichs."; return false; }
         if (node.kind==GpsValueKind.Vector)
             for (int i=0;i<GpsSchema.VectorDimension(node);i++)
                 if (node.vector[i]<spec.min || node.vector[i]>spec.max) { error=spec.label+": Wert außerhalb des Bereichs."; return false; }
@@ -286,6 +366,38 @@ public static class GpsSettings
             if (!ValidateBounds(child,childSpec,out error)) return false;
         }
         return true;
+    }
+    // A bound raised in a later version would otherwise refuse stored values (own value dropped, whole player file
+    // rejected); such values move into the range instead. Mirrors ValidateBounds; true when something changed.
+    public static bool ClampBounds(GpsValue node, GpsFieldSpec spec)
+    {
+        if (node?.children == null || spec == null) return false;
+        bool changed = false;
+        // Non-finite values stay as they are; GpsCodec.Validate still refuses them.
+        if ((node.kind == GpsValueKind.Number || node.kind == GpsValueKind.Integer) && !double.IsInfinity(node.number) && (node.number < spec.min || node.number > spec.max))
+        { node.number = Math.Clamp(node.number, spec.min, spec.max); changed = true; }
+        if (node.kind==GpsValueKind.Vector)
+            for (int i=0;i<GpsSchema.VectorDimension(node);i++)
+                if (!float.IsInfinity(node.vector[i]) && (node.vector[i]<spec.min || node.vector[i]>spec.max)) { node.vector[i]=Mathf.Clamp(node.vector[i],spec.min,spec.max); changed=true; }
+        Type type=GpsCodec.ResolveType(node.type);
+        for (int i=0;i<node.children.Count;i++)
+        {
+            var child=node.children[i];
+            changed|=ClampBounds(child,node.kind==GpsValueKind.Array ? GpsSchema.ArraySpec(child,spec,i) : GpsSchema.ChildSpec(child,type));
+        }
+        return changed;
+    }
+    public static void ClampBounds(GpsDocument data)
+    {
+        if (data?.records == null) return;
+        foreach (var record in data.records)
+            if (record?.fields != null) foreach (var field in record.fields) ClampBounds(field, GpsSchema.Spec(record, field.name));
+        if (data.preferences == null) return;
+        foreach (var pref in GpsSchema.Fields(typeof(GpsPreferences)))
+        {
+            var node=GpsCodec.Read(pref.name,GpsCodec.MemberType(typeof(GpsPreferences),pref.name),GpsCodec.Get(data.preferences,pref.name),Profile.Key);
+            if (ClampBounds(node,pref)) GpsCodec.Set(data.preferences,pref.name,GpsCodec.Write(node,Profile.Resolve));
+        }
     }
     public static bool Save(out string error)
     {
@@ -302,8 +414,10 @@ public static class GpsSettings
     // Debug-menu edit: applies like SetValue and is stored for good a moment later, so it survives play-mode and editor restarts.
     public static bool SetValueAndCommit(string key, GpsValue node, out string error)
     {
-        if (!SetValue(key, node, out error)) return false;
-        QueueCommit(key, node.name);
+        if (!SetValue(key, node, out error, out bool changed)) return false;
+        // An unchanged value (e.g. a foldout click inside a change check) has nothing to store, unless earlier
+        // uncommitted edits such as a slider preview wait for exactly this commit.
+        if (changed || dirty) QueueCommit(key, node.name);
         return true;
     }
     public static void QueueCommit(string key, string field)
@@ -380,11 +494,11 @@ public static class GpsSettings
                 return true;
             }
             UnityEditor.Undo.RecordObject(profile, "GPS speichern");
-            profile.documentJson = AssetJson(data);
+            profile.documentJson = AssetJson(data); profileText = profile.documentJson;
             SavePersonalPreferences(data);
             UnityEditor.EditorUtility.SetDirty(profile);
             UnityEditor.AssetDatabase.SaveAssetIfDirty(profile);
-            UnityEditor.SessionState.SetString("GPS.Committed", json);
+            RememberCommitted(json);
 #else
             GpsFileStore.Save(FilePath,data);
 #endif
@@ -453,11 +567,28 @@ public static class GpsSettings
                 var starts = layers?.children.Select(layer => (int)(layer.children.Find(field => field.name == "startDepth")?.number ?? 0)).ToArray();
                 if (starts == null || starts.Length == 0 || starts[0] != 0 || starts.Distinct().Count() != starts.Length || starts.Any(start => start < 0 || start >= height) || !starts.SequenceEqual(starts.OrderBy(start => start)))
                 { error = "Layerstarts müssen bei 0 beginnen und innerhalb der Karte aufsteigend sein."; return false; }
+                if (!ValidateLayerStones(typeof(MapGenerator), layers, out error)) return false;
             }
         }
         if (data.preferences.startingResources == null || data.preferences.startingResources.money < 0 || data.preferences.startingResources.items == null ||
             data.preferences.startingResources.items.Any(entry => entry.amount < 1 || !StartingResourcesSettings.Resolve(entry.itemId)))
         { error = "Ungültige Startressourcen."; return false; }
+        return true;
+    }
+    // Same rule as MapGenerationSampler: every layer needs a stone block, dirt only in the top layer. The sampler
+    // throws otherwise, so a new run would never leave the loading screen.
+    static bool ValidateLayerStones(Type owner, GpsValue node, out string error)
+    {
+        error = null;
+        if (owner != typeof(MapGenerator) || node == null || node.name != "layers") return true;
+        var ordered = node.children.OrderBy(layer => layer.children.Find(field => field.name == "startDepth")?.number ?? 0).ToList();
+        for (int i = 0; i < ordered.Count; i++)
+        {
+            string key = ordered[i].children.Find(field => field.name == "stone")?.text;
+            var stone = profile && !string.IsNullOrEmpty(key) ? profile.Resolve(key) as Block : null;
+            if (!stone || (!stone.IsStone && !(i == 0 && stone.id == BlockType.Dirt)))
+            { error = "Layer " + (i + 1) + ": Gesteinsart muss ein Stein sein (Erde nur im obersten Layer)."; return false; }
+        }
         return true;
     }
     public static IEnumerable<Object> Targets(GpsRecord record)
@@ -483,6 +614,17 @@ public static class GpsSettings
     {
         foreach (var record in Document.records.Where(record => !string.IsNullOrEmpty(record.assetKey)))
             foreach (var target in Targets(record)) foreach (var field in record.fields) ApplyField(target, field, false);
+    }
+    // Asset fields marked NewRun (exotic recipes, their level) change only between runs, so a run's offers stay stable.
+    public static void ApplyNewRunAssets()
+    {
+        var sections = GpsSchema.Sections.Where(section => section.fields.Any(field => field.applyTime == GpsApplyTime.NewRun)).ToArray();
+        foreach (var record in Document.records.Where(record => !string.IsNullOrEmpty(record.assetKey) && sections.Any(section => section.Matches(record))))
+            foreach (var field in record.fields.Where(field => GpsSchema.Spec(record, field.name)?.applyTime == GpsApplyTime.NewRun))
+                foreach (var target in Targets(record)) ApplyField(target, field, false);
+        ExoticCatalog.ResetCache();
+        // The blueprint collection caches the recipe levels; its reset belongs to the progression catalog.
+        typeof(ExoticBlueprintCatalog).GetMethod("Reset", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)?.Invoke(null, null);
     }
     public static void ApplyLoadedComponents()
     {
@@ -526,11 +668,17 @@ public static class GpsSettings
     static void ApplyField(Object target, GpsValue node, bool effects = true)
     {
         if (!target || GpsCodec.MemberType(target.GetType(), node.name) == null) return;
+        // Defensive: invalid layers (e.g. a hand-edited profile) keep the map's current ones instead of breaking generation.
+        if (target is MapGenerator && !ValidateLayerStones(typeof(MapGenerator), node, out string layerError)) { Debug.LogWarning(layerError); return; }
         applying = true;
         try
         {
             if (effects && Application.isPlaying && target is SkyController liveSky && node.name == "isNight") liveSky.SetNight(node.flag);
+            else if (target is Rigidbody2D playerBody && node.name == "gravityScale" && playerBody.TryGetComponent(out PlayerMovement mover) &&
+                mover.HoldGravity((float)node.number)) return;
             else GpsCodec.Set(target, node.name, GpsCodec.Write(node, Profile.Resolve));
+            // Only a running StatsManager exists, so this needs no Play Mode gate.
+            if (effects && target is PlayerBaseStats stats && (node.name == "moveSpeed" || node.name == "reach")) StatsManager.Instance?.ApplyBaseStats(stats);
             if (!effects || !Application.isPlaying) return;
             if (target is MapGenerator map)
             {
@@ -539,7 +687,8 @@ public static class GpsSettings
                 if (node.name == "artifactEmbeddingStrength" && map.ArtifactOverlay)
                     ArtifactOverlayAppearance.ApplyTo(map.ArtifactOverlay.GetComponent<UnityEngine.Tilemaps.TilemapRenderer>(), map.artifactEmbeddingStrength);
             }
-            if (target is SurfaceTallGrass grass && (node.name=="grassSizeMultiplier" || node.name=="healingHerbSizeMultiplier")) grass.ApplyPatchSizes();
+            if (target is SurfaceTallGrass grass) grass.ApplySetting(node.name);
+            if (target is SurfaceTrees forest) forest.ApplySettings();
             if (target is MinerPlayerVisual visual && node.name=="height") visual.Refresh();
             if (target is UniformStoneAppearance appearance) appearance.RefreshAppearance();
             if (target is MapWorldBorders borders) borders.RefreshBounds();

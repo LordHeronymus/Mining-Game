@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      DepositButtonFrameActive_0: 1913333018377613984
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

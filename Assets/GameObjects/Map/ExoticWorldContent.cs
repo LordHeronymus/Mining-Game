@@ -77,10 +77,28 @@ public sealed class ExoticWorldContent : MonoBehaviour
         }
         finally { generating = false; }
     }
+    // Debug map regeneration (F1): drop the previous map's finds, boulders and charges, then place new ones.
+    public void Regenerate()
+    {
+        PlacedDynamite.Clear(map);
+        ClearVisuals();
+        state = null;
+        Generate();
+    }
+    // Cells behind the side walls of MapWorldBorders are unreachable. Skipping them keeps the search order,
+    // so every find inside the walls stays the same for a seed.
+    internal static bool InsideBorders(int x, int size, int width, int padding)
+    {
+        padding = Mathf.Clamp(padding, 0, Mathf.Max(0, (width - 1) / 2));
+        int xMin = -width / 2;
+        return x >= xMin + padding && x + size <= xMin + width - padding;
+    }
     IEnumerator FindFloorSteps(int depth, int size, System.Random random, Action<Vector3Int> found)
     {
         var budget = new LoadingWorkBudget();
         int width = map.GeneratedWidth, start = random.Next(Math.Max(1, width - size));
+        var borders = map.GetComponent<MapWorldBorders>();
+        int padding = borders ? borders.sidePaddingCells : 0;
         for (int dy = 0; dy < 36; dy++)
         {
             int y = -depth - dy;
@@ -89,6 +107,7 @@ public sealed class ExoticWorldContent : MonoBehaviour
             {
                 if ((n & 127) == 0 && budget.Expired) { yield return null; budget.Restart(); }
                 int x = -width / 2 + 1 + (start + n) % Math.Max(1, width - size - 2);
+                if (!InsideBorders(x, size, width, padding)) continue;
                 var cell = new Vector3Int(x, y, 0);
                 if (!map.IsGeneratedCaveCell(cell) || !map.Terrain.HasTile(cell + Vector3Int.down)) continue;
                 bool valid = true;
@@ -164,11 +183,15 @@ public sealed class ExoticWorldContent : MonoBehaviour
         state.pendingCache = -1; state.pendingChoices = null;
         return true;
     }
-    void BuildVisuals()
+    void ClearVisuals()
     {
         foreach (var visual in cacheVisuals) if (visual) Destroy(visual.gameObject);
         foreach (var boulder in boulders) if (boulder) { boulder.gameObject.SetActive(false); Destroy(boulder.gameObject); }
         cacheVisuals.Clear(); boulders.Clear();
+    }
+    void BuildVisuals()
+    {
+        ClearVisuals();
         if (state.caches == null) state.caches = Array.Empty<SavedBlueprintCache>();
         if (state.boulders == null) state.boulders = Array.Empty<SavedBoulder>();
         for (int i = 0; i < state.caches.Length; i++)
@@ -198,9 +221,16 @@ public sealed class ExoticWorldContent : MonoBehaviour
         ValidateState(saved, map.GeneratedWidth, map.GeneratedHeight);
         PlacedDynamite.Clear(map);
         state = JsonUtility.FromJson<ExoticWorldState>(JsonUtility.ToJson(saved));
-        if (state.pendingCache >= (state.caches?.Length ?? 0)) { state.pendingCache = -1; state.pendingChoices = null; }
+        RepairPending(state);
         BuildVisuals();
         if (state.dynamite != null) foreach (var charge in state.dynamite) PlacedDynamite.Restore(map, charge);
+    }
+    // Recipes that are no longer exotic (GPS/F1) drop out of an open choice; an empty choice frees the find again.
+    static void RepairPending(ExoticWorldState state)
+    {
+        if (state.pendingChoices != null) state.pendingChoices = Array.FindAll(state.pendingChoices, id => ExoticCatalog.Find(id) != null);
+        if (state.pendingCache >= (state.caches?.Length ?? 0) || (state.pendingCache >= 0 && (state.pendingChoices?.Length ?? 0) == 0))
+        { state.pendingCache = -1; state.pendingChoices = null; }
     }
     public static void ValidateState(ExoticWorldState state, int width, int height)
     {
@@ -224,8 +254,9 @@ public sealed class ExoticWorldContent : MonoBehaviour
             if (state.caches[state.pendingCache].claimed || state.pendingChoices == null || state.pendingChoices.Length == 0)
                 throw new System.IO.InvalidDataException("Ungültige Bauplanauswahl.");
             var ids = new HashSet<string>();
-            foreach (string id in state.pendingChoices) if (string.IsNullOrEmpty(id) || !ids.Add(id) || !ExoticCatalog.Find(id))
-                throw new System.IO.InvalidDataException("Unbekannter exotischer Bauplan.");
+            // Unknown ids stay loadable: RestoreState drops them, like PendingChoices skips them.
+            foreach (string id in state.pendingChoices) if (string.IsNullOrEmpty(id) || !ids.Add(id))
+                throw new System.IO.InvalidDataException("Ungültige Bauplanauswahl.");
         }
     }
     static bool ValidCell(Vector3Int cell, int width, int height) => cell.z == 0 && cell.x >= -width / 2 &&

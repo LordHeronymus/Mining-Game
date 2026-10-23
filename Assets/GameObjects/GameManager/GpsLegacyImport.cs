@@ -57,7 +57,7 @@ public static class GpsLegacyImport
                 { start.items=start.items.Where(item=>item.amount>0 && StartingResourcesSettings.Resolve(item.itemId)).ToArray(); data.preferences.startingResources=start; }
             }
             data.preferences.panelBackdropAlpha=Mathf.Clamp01(PlayerPrefs.GetFloat("GameplayDebugPanel.BackdropAlpha",data.preferences.panelBackdropAlpha));
-            data.preferences.panelElementAlpha=Mathf.Clamp01(PlayerPrefs.GetFloat("GameplayDebugPanel.ElementAlpha",data.preferences.panelElementAlpha));
+            data.preferences.panelElementAlpha=Mathf.Clamp(PlayerPrefs.GetFloat("GameplayDebugPanel.ElementAlpha",data.preferences.panelElementAlpha),GpsPreferences.MinPanelElementAlpha,1);
             data.preferences.hotbarVerticalOffset=Mathf.Clamp(PlayerPrefs.GetFloat("workbench.hotbarIconVerticalOffset",data.preferences.hotbarVerticalOffset),-48,48);
             data.preferences.hotbarHoldDuration=Mathf.Clamp(PlayerPrefs.GetFloat("hotbar.dragHoldDuration",data.preferences.hotbarHoldDuration),0,2);
             data.preferences.masterVolume=Mathf.Clamp01(PlayerPrefs.GetFloat("settings.audio.master",data.preferences.masterVolume));
