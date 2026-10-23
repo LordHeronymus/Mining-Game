@@ -64183,11 +64183,7 @@ MonoBehaviour:
     8.0\n            },\n            \"thick\": {\n                \"mediumPercent\":
     38.0,\n                \"richPercent\": 13.0\n            },\n            \"variationPercent\":
     25.0,\n            \"spreadPercent\": 50.0,\n            \"thicknessPreference\":
-    0.6499999761581421,\n            \"ores\": [\n                {\n                   
-    \"ore\": 0,\n                    \"factor\": 1.0\n                },\n               
-    {\n                    \"ore\": 0,\n                    \"factor\": 1.0\n               
-    },\n                {\n                    \"ore\": 0,\n                    \"factor\":
-    1.0\n                }\n            ]\n        },\n        \"panelBackdropAlpha\":
+    0.6499999761581421,\n            \"ores\": []\n        },\n        \"panelBackdropAlpha\":
     0.550000011920929,\n        \"panelElementAlpha\": 1.0,\n        \"loadingTwinkleFrequency\":
     1.0,\n        \"levelUpAnimationOffsetSeconds\": 0.0,\n        \"hotbarVerticalOffset\":
     0.0,\n        \"hotbarHoldDuration\": 0.10000000149011612,\n        \"masterVolume\":
