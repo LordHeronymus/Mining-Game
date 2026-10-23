@@ -33,7 +33,7 @@ public sealed class MapLighting : MonoBehaviour
     // Air rows above the terrain that the torch and headlamp fields also cover, so light
     // leaving a shaft spreads softly over the surface instead of stopping at the top edge.
     // Light falls below the field threshold after about 11 cells (PlacedTorch.PropagationDistance 2).
-    internal const int SurfaceLightRows = 12;
+    public const int SurfaceLightRows = 12;
     // By day the surface rows fade out over this many cells above the terrain (no hard edge).
     const float SurfaceLightDayFade = 1.5f;
 
