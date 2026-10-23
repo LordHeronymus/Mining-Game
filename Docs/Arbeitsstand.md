@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Traglast: Überladung bis 2×, Tempo sinkt stetig bis 1/3, Sprung immer mind. 1 Zelle | `claude/traglast-ueberladung` | Cloud-Klon | `InventoryManager` (Gewichtsfaktor, Maximalgewicht), `PlayerMovement.LaunchJump`, `GpsProfile.cs`/`GpsSchema.Catalog.cs` (neue GPS-Werte), neues `Tests/CarryOverloadChecks.cs`; HUD-Anzeige nicht | ja (Testbank, kurz) | 23.10.2026 17:10 |
 
 ## Zuletzt abgeschlossen
 
