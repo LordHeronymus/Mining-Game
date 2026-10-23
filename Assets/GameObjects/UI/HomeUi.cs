@@ -229,7 +229,10 @@ public static class HomeUi
             placeholder.font = text.font; placeholder.alignment = text.alignment;
             placeholder.color = new Color32(189, 164, 134, 255);
             placeholder.margin = new Vector4(Mathf.Max(11, placeholder.margin.x), 0, 0, 0);
+            ButtonTextCentering.Apply(placeholder, null);
         }
+        // "Midline" centres the visible glyphs, so a typed g or y lifted the whole line. Fixed baseline instead.
+        ButtonTextCentering.Apply(text, null);
         LichtfadenCaret.Apply(input);
     }
     public static void Fit(RectTransform layout, Vector2 reference)
