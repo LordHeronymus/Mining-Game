@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Knopftexte im Inventar waagrecht zentrieren (fette Schrift) | `claude/inventar-knopftexte` | Cloud + Testbank | `ButtonTextCentering.cs`, `Docs/Knopftexte.md` | Testbank (Warteschlange) | 23.10.2026 |
 
 ## Zuletzt abgeschlossen
 
