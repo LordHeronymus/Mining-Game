@@ -8,6 +8,7 @@ using UnityEngine.UI;
 // optically centred either. This places the middle between baseline and cap height on the centre of the button's
 // visible inner frame and limits the font size so that Ä and g always stay inside the gold rim.
 // Horizontally, centred lines are placed by their visible ink instead of their advance widths.
+// Without a frame (input fields) the caption keeps its font size and centres on its own box.
 // Offset, minimum gap and ink centring: GPS → UI → Knopftexte. Captions without letters or digits (+, −, ×, arrows) centre their glyphs.
 [DisallowMultipleComponent]
 public sealed class ButtonTextCentering : MonoBehaviour
@@ -191,7 +192,12 @@ public sealed class ButtonTextCentering : MonoBehaviour
             inkTop = Mathf.Max(inkTop, c.baseLine + m.horizontalBearingY * c.scale);
             inkBottom = Mathf.Min(inkBottom, c.baseLine + (m.horizontalBearingY - m.height) * c.scale);
         }
-        if (first < 0) return;
+        if (first < 0)
+        {
+            // An empty input field renders a zero-width space; centring it keeps the caret on the typed baseline.
+            if (info.characterCount == 0 || !info.characterInfo[0].fontAsset) return;
+            first = last = 0; letters = true;
+        }
         var head = info.characterInfo[first];
         float top = letters ? head.baseLine + head.fontAsset.faceInfo.capLine * head.scale : inkTop;
         float bottom = letters ? info.characterInfo[last].baseLine : inkBottom;
