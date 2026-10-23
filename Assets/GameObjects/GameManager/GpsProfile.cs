@@ -25,7 +25,7 @@ public sealed class GpsProfile : ScriptableObject
     public StartingResourcesData startingResources = new();
     public MetaProgressionSettings metaProgression = new();
     public ChallengeSettings challenges = new();
-    public ThinVeinMediumSettings thinVeinMedium = new();
+    public VeinRichnessSettings veinRichness = new();
     public float panelBackdropAlpha = .55f, panelElementAlpha = 1f;
     // The element alpha fades the whole F1 card, its own field included; at 0 the menu could no longer be used.
     public const float MinPanelElementAlpha = .2f;
