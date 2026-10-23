@@ -40,6 +40,9 @@ public static class GameSaveSystem
     public static bool HasPendingLoad => pending != null;
 #if UNITY_EDITOR
     public static string TestDirectory;
+#else
+    // Players never redirect saves; runtime code may still ask (e.g. voice lines, GPS auto-commit).
+    public static string TestDirectory => null;
 #endif
     public static string DirectoryPath
     {
