@@ -104,11 +104,11 @@ public static partial class MetaProgression
             if (!File.Exists(candidate)) continue;
             // A damaged journal alone is an interrupted first write, nothing to protect: the next write replaces it.
             any |= !candidate.EndsWith(".tmp", StringComparison.Ordinal);
-            bool valid = TryRead(candidate, out var result, out bool newer, out bool unreadable);
+            bool valid = ReadCandidate(candidate, out var result, out bool newer, out bool unreadable);
             // A main file that is only briefly locked must not be replaced by the older backup.
             for (int attempt = 0; unreadable && candidate == path && attempt < 3; attempt++) {
                 System.Threading.Thread.Sleep(40);
-                valid = TryRead(candidate, out result, out newer, out unreadable);
+                valid = ReadCandidate(candidate, out result, out newer, out unreadable);
             }
             if (candidate == path) { mainValid = valid; RememberMainStamp(); }
             if (valid && (best == null || result.revision > best.revision)) { best = result; bestPath = candidate; }
@@ -703,9 +703,10 @@ public static partial class MetaProgression
         startMoney = loadout.startMoney, startingTorches = loadout.startingTorches, startingLadders = loadout.startingLadders,
         buildReachBonus = loadout.buildReachBonus, carryCapacityBonus = loadout.carryCapacityBonus
     };
-    static bool TryRead(string path, out MetaProfile result, out bool newer) => TryRead(path, out result, out newer, out _);
+    // A single TryRead overload: checks look it up by name.
+    static bool TryRead(string path, out MetaProfile result, out bool newer) => ReadCandidate(path, out result, out newer, out _);
     // unreadable: the file could not be opened (e.g. briefly locked by a scanner), which says nothing about its content.
-    static bool TryRead(string path, out MetaProfile result, out bool newer, out bool unreadable)
+    static bool ReadCandidate(string path, out MetaProfile result, out bool newer, out bool unreadable)
     {
         result = null; newer = false; unreadable = false;
         try {
