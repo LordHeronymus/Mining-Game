@@ -63,7 +63,8 @@ public class EnergyMonolyth : MonoBehaviour
 
         if (stats.HasInfiniteMoney || cost <= stats.Money)
         {
-            if (!stats.HasInfiniteMoney) stats.AddMoney(-Mathf.FloorToInt(cost));
+            // Rounded up so tiny top-ups are not free (0.25 per unit: 100 energy = 25 coins).
+            if (!stats.HasInfiniteMoney) stats.AddMoney(-Mathf.CeilToInt(cost - .0001f));
             energyManager.energy = stats.MaxEnergy;
         }
         else

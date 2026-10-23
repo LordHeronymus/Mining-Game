@@ -20,19 +20,22 @@ public static class CraftingService
     // backpack is used up first; "Lager zuerst" keeps the backpack and empties the storage first.
     public static bool UsesStorage => GpsSettings.Preferences.workbenchUsesStorage;
     public static bool StorageFirst => GpsSettings.Preferences.workbenchStorageFirst;
+    // GPS Werkbank → Lager: building components (category Misc, e.g. nails, rope) are only needed for further
+    // recipes, so they go straight into the storage hut. Placeable or usable items stay in the backpack.
+    public static bool ComponentsToStorage => GpsSettings.Preferences.workbenchComponentsToStorage;
+
+    public static bool IsComponent(ItemSO item) => item && item.category == ItemCategory.Misc;
+
+    // The hut that receives the output, or null when it goes into the backpack. Without storage use the
+    // components would be unreachable for recipes, and without a hut there is nowhere to put them.
+    public static SurfaceStorageBuilding OutputStorage(CraftingRecipe recipe) =>
+        recipe && IsComponent(recipe.output) && ComponentsToStorage && UsesStorage ? SurfaceStorageBuilding.First : null;
 
     public static bool IsOwnedPowerup(CraftingRecipe recipe, InventoryManager inventory) =>
         recipe && recipe.output && recipe.output.category == ItemCategory.Powerup &&
         inventory && inventory.IsPowerupUnlocked(recipe.output);
 
-    public static int GetStoredCount(ItemSO item)
-    {
-        if (!item || !UsesStorage) return 0;
-        long total = 0;
-        foreach (var storage in SurfaceStorageBuilding.Active)
-            if (storage) total += storage.GetStoredCount(item);
-        return (int)System.Math.Min(int.MaxValue, total);
-    }
+    public static int GetStoredCount(ItemSO item) => UsesStorage ? SurfaceStorageBuilding.TotalStored(item) : 0;
 
     public static int GetAvailableCount(ItemSO item, InventoryManager inventory) =>
         (int)System.Math.Min(int.MaxValue, (long)(inventory ? inventory.GetCount(item) : 0) + GetStoredCount(item));
@@ -41,7 +44,8 @@ public static class CraftingService
     {
         if (!recipe || !inventory || !RecipeUnlocks.IsUnlocked(recipe) || IsOwnedPowerup(recipe, inventory) ||
             !recipe.TryGetCosts(out var costs)) return 0;
-        int maximum = (int.MaxValue - inventory.GetCount(recipe.output)) / recipe.outputAmount;
+        var target = OutputStorage(recipe);
+        int maximum = (int.MaxValue - (target ? target.GetStoredCount(recipe.output) : inventory.GetCount(recipe.output))) / recipe.outputAmount;
         if (recipe.output.category == ItemCategory.Powerup) maximum = Mathf.Min(maximum, 1);
         foreach (var cost in costs)
             maximum = Mathf.Min(maximum, GetAvailableCount(cost.Key, inventory) / cost.Value);
@@ -73,7 +77,7 @@ public static class CraftingService
 
     static bool FitsWeight(CraftingRecipe recipe, Dictionary<ItemSO, int> costs, InventoryManager inventory, int batches)
     {
-        double change = recipe.output.category == ItemCategory.Powerup ? 0d
+        double change = recipe.output.category == ItemCategory.Powerup || OutputStorage(recipe) ? 0d
             : recipe.output.EffectiveWeight * (double)recipe.outputAmount * batches;
         foreach (var cost in costs)
         {
@@ -99,11 +103,16 @@ public static class CraftingService
         int previousPickaxe = inventory.EquippedPickaxeLevel;
         int previousEnergy = inventory.EnergyCapacityLevel;
         int previousCarrying = inventory.CarryingCapacityLevel;
-        // Storage materials go first so the inventory notification already sees the final storage contents.
+        int amount = checked(recipe.outputAmount * batches);
+        var target = OutputStorage(recipe);
+        if (target && !target.CanStore(recipe.output, amount)) return false;
+        // Storage changes go first so the inventory notification already sees the final storage contents.
         var taken = TakeFromStorage(storageCosts);
         if (taken == null) return false;
-        if (!inventory.TryExchange(inventoryCosts, recipe.output, checked(recipe.outputAmount * batches)))
+        if (target) target.ReturnFromCrafting(recipe.output, amount);
+        if (!inventory.TryExchange(inventoryCosts, recipe.output, amount, !target))
         {
+            if (target) target.TakeForCrafting(recipe.output, amount);
             foreach (var entry in taken) entry.storage.ReturnFromCrafting(entry.item, entry.amount);
             return false;
         }
