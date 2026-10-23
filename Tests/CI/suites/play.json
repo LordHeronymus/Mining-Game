@@ -1,5 +1,8 @@
 {
   "checks": [
-    { "name": "GpsRuntimeChecks", "mode": "play", "afterStop": "AfterStop", "timeoutSeconds": 300 }
+    { "name": "GpsRuntimeChecks", "mode": "play", "afterStop": "AfterStop", "timeoutSeconds": 300 },
+    { "name": "GpsUiChecks", "mode": "play" },
+    { "name": "LoadingTransitionChecks", "mode": "play" },
+    { "name": "SaveSlotAllocationChecks", "mode": "play", "timeoutSeconds": 420 }
   ]
 }

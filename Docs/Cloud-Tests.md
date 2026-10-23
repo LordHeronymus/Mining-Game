@@ -6,7 +6,7 @@ Die Prüfskripte aus `Tests/*Checks.cs` laufen auch ohne lokalen Editor: GitHub 
 
 - `.github/workflows/unity-checks.yml`: Workflow „Unity Checks“. Startet manuell (Actions → Unity Checks → Run workflow) und bei Pull Requests nach `main` (gedrosselt, siehe „Drosselung“).
 - `Tests/CI/prepare.py`: wählt die Checks (Suite oder Liste), kopiert sie nach `Assets/Editor/CIChecks/` (per `.gitignore` ausgeschlossen) und schreibt `Artifacts/plan.json`.
-- `Tests/CI/suites/*.json`: Suiten. `smoke` = schnelle Edit-Mode-Checks, `play` = Play-Mode ab MainMenu.
+- `Tests/CI/suites/*.json`: Suiten. `smoke` = schnelle Edit-Mode-Checks, `play` = Play-Mode ab MainMenu (GPS zur Laufzeit, GPS-Oberfläche, Ladeübergänge, Spielstand-Slots), `visual` = Standbilder (Erz-Vorschauen), `performance` = Benchmark-Player.
 - `Tests/CI/run-in-container.sh`: Lizenzaktivierung und Unity-Start im Container.
 - `Assets/Editor/CI/CiCheckRunner.cs` (eigene Editor-Assembly `MiningGame.CI.Editor`): führt die Checks aus wie `unity command run_script`. Edit-Checks laufen in der geöffneten SampleScene, Play-Checks mit frischem Play-Start ab MainMenu. `Main()`-Rückgaben mit „FAIL“/„Requires“, Ausnahmen, Timeouts und `FAIL`-Zeilen in `Temp/<Name>.txt` gelten als Fehler. Checks mit `EditorApplication.update` werden bis zu ihrer Ergebnisdatei abgewartet, optional folgt `afterStop` im Edit Mode.
 
@@ -17,7 +17,7 @@ Ergebnisse: Zusammenfassung im Workflow-Lauf, Artefakt `unity-checks-<Nr>` mit `
 `Tools/CloudDashboard/index.html` im Browser öffnen (Doppelklick genügt). Es zeigt die letzten Läufe, den Ablauf der Workflow-Schritte, die Unity-Phase (Lizenz, Import mit Fortschritt, Kompilieren, Checks), die Checks mit Status, die letzten Log-Zeilen und Notizen von Claude. Aktualisierung alle 5 s während eines Laufs, sonst alle 30 s. Läufe lassen sich dort auch starten, abbrechen und wiederholen.
 
 - Datenquelle: GitHub-API direkt aus dem Browser. Den Live-Status während „Run Unity“ schreibt `Tests/CI/progress.py` alle 15 s als Kommentar in das Issue mit Label `cloud-status` („Cloud-Tests Live-Status“). Kommentare dort ohne Status-Markierung sind Notizen von Claude (Lauf mit `#<Nummer>` referenziert).
-- Zugang: Fine-grained Token (github.com → Settings → Developer settings → Fine-grained tokens), nur dieses Repository, Rechte **Actions: Read and write** (Read reicht zum Zuschauen) und **Issues: Read**. Der Schlüssel bleibt im localStorage des Browsers.
+- Zugang: Fine-grained Token (github.com → Settings → Developer settings → Fine-grained tokens), nur dieses Repository, Rechte **Actions: Read and write** (Read reicht zum Zuschauen), **Issues: Read** und für die Vorschaubilder **Contents: Read**. Der Schlüssel bleibt im localStorage des Browsers.
 - Modul: `cloud-dashboard.js` + `cloud-dashboard.css` sind eigenständig (alles unter `.cd`). Einbinden mit `CloudDashboard.mount(element, { owner, repo, workflow, token })`; ohne `token` fragt das Dashboard selbst danach. `destroy()` auf dem Rückgabewert räumt auf.
 
 ## Einmalige Einrichtung (Benutzer)
@@ -56,7 +56,18 @@ Cloud-Sessions (Claude Code im Browser/App) und der Workflow „Unity Checks“ 
 
 ## Play-Mode in der Cloud
 
-Im `-batchmode` rendert der Editor kein Game-Fenster, daher kehren Coroutinen mit `WaitForEndOfFrame` (Blenden, Ladebildschirm) nie zurück und Play-Checks hängen (Lauf #7). Der Editor mit Oberfläche (ohne `-batchmode`, Xvfb + Mesa, `-automated`) beendet sich ohne Unity-Hub-Anmeldung direkt nach der Lizenzprüfung („Access token is unavailable“, Läufe #8–#12); diese Variante ist nur noch manuell mit `editorui = 1` aktivierbar. Play-Checks (`play:`) laufen deshalb in der Cloud derzeit nicht.
+Im `-batchmode` rendert der Editor kein Game-Fenster, daher kehrt `WaitForEndOfFrame` nie zurück (Lauf #7). Ladebildschirm, Spielstand und Kartengenerierung warten deshalb über `LoadingProgress.EndOfFrame`: im Batchmode auf den nächsten Frame, sonst wie bisher auf das Bildende (für Spieler unverändert). Seit Lauf #154 laufen Play-Checks (`play:`) in der Cloud, Suite `play` mit vier Checks in rund 2 Minuten. Der Runner startet jeden Play-Check frisch ab MainMenu und wartet, bis der vorherige Play-Mode wirklich beendet ist.
+
+- Geeignet: Abläufe und Logik im Play-Mode (Menüs, Laden, Speichern, GPS). Nicht geeignet: Bewegung, Animation, Partikel, Bildraten, Spielgefühl (`// CI: local-only`).
+- Der Editor mit Oberfläche (ohne `-batchmode`, `editorui = 1`) beendet sich ohne Unity-Hub-Anmeldung direkt nach der Lizenzprüfung (Läufe #8–#12) und wird nicht gebraucht.
+
+## Vorschaubilder (Suite `visual`)
+
+- PNGs, die Checks während des Laufs unter `Temp/` oder `Design/` schreiben, sammelt `CiCheckRunner` vor dem Beenden nach `Artifacts/previews` (höchstens 60; Unity löscht `Temp/` beim Beenden). Der Workflow-Schritt „Publish previews“ (`Tests/CI/publish-previews.sh`) legt sie auf den Branch `ci-previews` unter `runs/<Laufnummer>/` mit `index.json` (die letzten 15 Läufe, ein einziger Commit).
+- Abholen: `Tools/ci-previews.sh` listet die Läufe, `Tools/ci-previews.sh <Nr> [Ordner]` entpackt die Bilder (Standard `Temp/ci-previews/<Nr>`). Agenten sehen sich die Bilder danach selbst an (Read-Werkzeug).
+- Dashboard: Abschnitt „Vorschaubilder“ (Contents-API); der Token braucht zusätzlich **Contents: Read**. Das Modul in PrivOrg ist eine Kopie und braucht dieselbe Erweiterung.
+- Suite `visual`: `VeinRichnessPreviewChecks`, `EmbeddedOreRenderChecks`. Weitere Standbild-Checks nur aufnehmen, wenn sie aktuell kompilieren und bestehen (`OreVeinVisualChecks` und `DirtSurfaceChecks` sind veraltet).
+- Bilder kommen aus Software-Rendering (Mesa) und können sich leicht von der lokalen GPU unterscheiden. Für Vorher/Nachher-Vergleiche taugen sie, die endgültige Optik nimmt der Benutzer lokal ab.
 
 ## Drosselung (Actions-Minuten)
 

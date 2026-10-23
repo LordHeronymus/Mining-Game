@@ -27,12 +27,13 @@ on:
     types: [opened, synchronize, reopened, labeled]
 
 permissions:
-  contents: read
+  contents: write  # publishes preview images to the branch ci-previews
   actions: read
   issues: write
 
 concurrency:
-  group: unity-checks-${{ github.ref }}
+  # Runs of different suites on the same branch may run side by side; a new run of the same selection replaces the old one.
+  group: unity-checks-${{ github.ref }}-${{ inputs.suite }}-${{ inputs.checks }}
   cancel-in-progress: true
 
 jobs:
@@ -170,6 +171,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python3 Tests/CI/progress.py final --conclusion "${{ job.status }}"
+
+      - name: Publish previews
+        if: always() && env.CI_RUN == '1' && hashFiles('Artifacts/previews/**') != ''
+        continue-on-error: true
+        env:
+          RUN: ${{ github.run_number }}
+          REF: ${{ github.head_ref || github.ref_name }}
+        run: bash Tests/CI/publish-previews.sh
 
       - name: Upload artifacts
         if: always() && env.CI_RUN == '1'
