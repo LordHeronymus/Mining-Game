@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Schild-Knöpfe über Gebäuden 40 % näher ans Dach | claude/schild-abstand | Cloud, Test auf Testbank | `EntrySign.cs`, `Tests/BughuntEntrySignChecks.cs` | Testbank | 23.10.2026 |
 
 ## Zuletzt abgeschlossen
 
