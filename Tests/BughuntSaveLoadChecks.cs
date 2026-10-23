@@ -143,7 +143,8 @@ public static class BughuntSaveLoadChecks
             Check(opened != null, "Abschluss des Ladens schreibt die geladene Datei");
             opened.Invoke(null, new[] { run });
             var summary = GameSaveSystem.GetSummary(2);
-            Check(summary != null && !summary.recovered && summary.name == "Sicherung" && summary.lastOpenedUtc >= before, "Hauptdatei enthält danach den geladenen Stand mit neuer Öffnungszeit");
+            // R3-save-write-2: the name comes from the rejected main file's header, the payload (777) from the recovery copy.
+            Check(summary != null && !summary.recovered && summary.name == "Beschädigt" && summary.lastOpenedUtc >= before, "Hauptdatei enthält danach den geladenen Stand mit neuer Öffnungszeit");
             File.Delete(main + ".bak");
             Check(GameSaveSystem.PrepareLoad(2, out error) && Member<RunSaveState>(Pending, "state").stats.money == 777, "Hauptdatei allein ist ladbar: " + error);
             GameSaveSystem.CancelPendingLoad();

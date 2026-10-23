@@ -19,6 +19,8 @@ public static class GameSaveSystem
     const int MaxFileBytes = 64 * 1024 * 1024;
     const int MaxExpandedBytes = 256 * 1024 * 1024;
     public const int MaxSlots = 10;
+    // Reported when a save was attempted and failed (not when it could not start or an autosave gave up).
+    public const string SaveFailedMessage = "Spielstand konnte nicht gespeichert werden.";
     public static bool IsBusy { get; private set; }
     public static int ActiveSlot { get; private set; } = -1;
     public static string ActiveRunName { get; private set; }
@@ -72,8 +74,9 @@ public static class GameSaveSystem
         public TileFlags[] flags;
         public readonly Dictionary<int, (Color color, Matrix4x4 matrix)> custom = new();
     }
-    // source: the file that was loaded (the recovery copy after a fallback).
-    sealed class LoadedRun { public RunSaveState state; public Layer[] layers; public string source; }
+    // source: the file that was loaded (the recovery copy after a fallback). main: after a fallback, the valid header of
+    // the rejected main file; it keeps the run's latest name and creation date (renaming rewrites only the main file).
+    sealed class LoadedRun { public RunSaveState state; public Layer[] layers; public string source; public Summary main; }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void Reset()
@@ -277,12 +280,14 @@ public static class GameSaveSystem
         error = "Spielstand konnte nicht geladen werden.";
         if (IsBusy || slot < 1 || slot > MaxSlots) return false;
         SettleAutosave();
+        Summary main = null; // The first valid header of this slot, also when that file's payload does not load.
         foreach (string path in new[] { SlotPath(slot), SlotPath(slot) + ".bak" })
             try
             {
                 if (!File.Exists(path)) continue;
                 ReadEnvelope(path, out var summary, out byte[] compressed);
                 if (summary.slot != slot) throw new InvalidDataException();
+                if (main == null) main = summary;
                 var catalog = Resources.Load<SaveAssetCatalog>("SaveAssetCatalog");
                 if (!catalog) throw new InvalidDataException("Spielstand-Katalog fehlt.");
                 using var packed = new MemoryStream(compressed);
@@ -299,18 +304,18 @@ public static class GameSaveSystem
                 var state = ParseRunState(reader.ReadString());
                 Validate(state);
                 // A legacy run keeps its identity across slot copies and receives neutral bonuses.
-                NormalizeDates(summary);
+                NormalizeDates(main);
                 if (state.progression == null)
-                    state.progression = new MetaRunState { runId = "legacy-" + summary.createdUtc + "-" + state.seed + "-" + state.width + "-" + state.height,
+                    state.progression = new MetaRunState { runId = "legacy-" + main.createdUtc + "-" + state.seed + "-" + state.width + "-" + state.height,
                         loadout = new MetaLoadout() };
                 var layers = new Layer[4];
                 for (int i = 0; i < layers.Length; i++) layers[i] = ReadLayer(reader, catalog, state, i == LadderLayer);
                 if (expanded.Position != expanded.Length) throw new InvalidDataException();
                 var ores = layers[1];
                 PaintedOreMigration.Apply(ores.tiles, ores.flags, ores.custom, ores.bounds, state.seed, state.width);
-                pending =new LoadedRun { state = state, layers = layers, source = path };
+                pending =new LoadedRun { state = state, layers = layers, source = path, main = main == summary ? null : main };
                 ActiveSlot = slot; activeDirectory = DirectoryPath; HasPendingNewRun = false; InitialSaveError = null;
-                ActiveRunName = summary.name;
+                ActiveRunName = main.name;
                 error = null; return true;
             }
             catch (Exception ex) { Debug.LogWarning("Tiefenhall: Spielstandprüfung fehlgeschlagen: " + ex.Message); }
@@ -482,7 +487,7 @@ public static class GameSaveSystem
         // A save that superseded this autosave reports its own change.
         if (saved && job?.cancelled != true) SlotsChanged?.Invoke();
         if (error != null) Debug.LogError("Tiefenhall: Speichern fehlgeschlagen: " + error);
-        if (!finishingOnExit) complete?.Invoke(saved, saved ? "Gespeichert" : error == null ? "Speichern ist gerade nicht möglich." : "Spielstand konnte nicht gespeichert werden.");
+        if (!finishingOnExit) complete?.Invoke(saved, saved ? "Gespeichert" : error == null ? "Speichern ist gerade nicht möglich." : SaveFailedMessage);
     }
 
     static RunSaveState Capture()
@@ -530,8 +535,8 @@ public static class GameSaveSystem
         {
             Rows.SetLength(0);
             var ladders = map.GetComponent<LadderMap>();
-            layers = new[] { map.Terrain, map.EnsureOreOverlay(), map.EnsureArtifactOverlay(), ladders ? ladders.EnsureTiles() : null }
-                .Select(tiles => new LayerSnapshot(tiles)).ToArray();
+            layers = new[] { map.Terrain, map.EnsureOreOverlay(), map.EnsureArtifactOverlay() }.Select(tiles => new LayerSnapshot(tiles))
+                .Append(LayerSnapshot.Compacted(ladders ? ladders.EnsureTiles() : null)).ToArray();
             Tilemap.tilemapPositionsChanged += Changed; tracking = true;
         }
         void Changed(Tilemap source, NativeArray<Vector3Int> positions)
@@ -578,6 +583,9 @@ public static class GameSaveSystem
         string[] keys = Array.Empty<string>();
         public int ChangedRows { get; private set; }
         public LayerSnapshot(Tilemap tiles) { this.tiles = tiles; if (tiles) Restart(); }
+        // Removed ladders never shrink the tilemap bounds, so only the standing ones may count toward the saved block. Only
+        // before the capture starts: a later change of the bounds restarts the layer.
+        public static LayerSnapshot Compacted(Tilemap tiles) { if (tiles) tiles.CompressBounds(); return new LayerSnapshot(tiles); }
         // Bounds grow when a tile is placed outside them; the layer is then captured again.
         bool Moved => tiles && tiles.cellBounds != bounds;
         public bool Incomplete => next < offsets.Length || Moved;
@@ -783,7 +791,10 @@ public static class GameSaveSystem
         LoadingProgress.Complete();
     }
 
-    static void MarkOpened(LoadedRun run) => UpdateMetadata(ActiveSlot, s => s.lastOpenedUtc = DateTime.UtcNow.Ticks, out _, run.source);
+    static void MarkOpened(LoadedRun run) => UpdateMetadata(ActiveSlot, s => {
+        s.lastOpenedUtc = DateTime.UtcNow.Ticks;
+        if (run.main != null) { s.name = run.main.name; s.createdUtc = run.main.createdUtc; }
+    }, out _, run.source);
 
     static IEnumerator ExpandSavedLayer(Layer layer, BoundsInt bounds, Action<TileBase[]> complete)
     {

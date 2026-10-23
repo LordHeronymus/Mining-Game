@@ -98,6 +98,9 @@
       "name": "BughuntSaveLoadChecks"
     },
     {
+      "name": "BughuntSaveWriteChecks"
+    },
+    {
       "name": "BughuntSettingsUiChecks"
     },
     {
