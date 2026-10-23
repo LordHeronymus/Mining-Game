@@ -14,6 +14,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 | --- | --- | --- | --- | --- | --- | --- |
 | Claude Code | Performance abschliessen: Ladebildschirm ohne Ruckler, keine Lag-Spikes, ≥ 100 FPS – pausiert, Zwischenstand im Changelog | claude/performance | Mining Game | Map (MapGenerator, Tilemap-Abonnenten, Rubble, Collider, Erzadern, Bäume, Gras), Loading, GPS-Codec/Schema, GameSaveSystem, AudioManager, Tests/Performance* | nein | 17.10.2026 19:45 |
 | Claude Code | main-Sync robust: eigene F1/GPS-Anpassungen als nicht versionierte Überschreibungs-Schicht (UserSettings), Aktualisierung mit Sicherung lokaler Commits/Änderungen, Statusfenster, Protokoll – Testbank-Checks grün, PR offen, Abnahme im Editor des Benutzers nach dem Merge | claude/main-sync-2e953f | .claude/worktrees/settings-pause-288b53 | GpsSettings (Speichern), GpsUserOverrides, GpsProfileEditor, GpsRuntimePanel/GameplaySettingsWindow (Knöpfe), MainAutoUpdate/MainSync*, GpsDefaultsProposal, Docs/Main-Auto-Update.md, Docs/GPS-Eigene-Werte.md, AGENTS.md | nein (Testbank fertig) | 22.10.2026 |
+| Claude Code (Cloud) | Knopftexte auch waagrecht nach den sichtbaren Buchstaben zentrieren | claude/optimistic-edison-k1l9hj | Cloud | ButtonTextCentering, GPS UI → Knopftexte, Tests/ButtonTextCenter*, Docs/Knopftexte.md | nein | 23.10.2026 |
 
 ## Zuletzt abgeschlossen
 
