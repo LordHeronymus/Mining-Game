@@ -44,7 +44,7 @@ public static class HudV1Checks
                 if(i>0)Check(socket.Find("Key").GetComponent<TMP_Text>().text==i.ToString(),"Quickslot "+i+" key label");
             }
             Check(top.Find("Health Icon").GetComponent<Image>().sprite.name.Contains("Heart")&&top.Find("Energy Icon").GetComponent<Image>().sprite.name.Contains("Bolt"),"Reference-style glossy status symbols");
-            Check(top.Find("Health Value").gameObject.activeSelf==false&&top.Find("Energy Value").gameObject.activeSelf==false,"Compact vitals without extra labels");
+            Check(top.Find("Health Value").gameObject.activeSelf&&top.Find("Energy Value").gameObject.activeSelf,"Health and energy values shown right of the gem rows");
             var health=top.Find("Health Fill").GetComponent<HudGemBar>();var fill=top.Find("Energy Fill").GetComponent<HudGemBar>();
             var mesh=new VertexHelper();typeof(HudGemBar).GetMethod("OnPopulateMesh",BindingFlags.Instance|BindingFlags.NonPublic,null,new[]{typeof(VertexHelper)},null).Invoke(health,new object[]{mesh});
             Check(mesh.currentVertCount>100,"Eight live gemstone segments render real mesh");mesh.Dispose();
