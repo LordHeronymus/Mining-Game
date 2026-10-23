@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Fackel: blauer Kern hinter den Flammenkern (kein heller Punkt vor der Flamme) | `claude/fackel-blauer-kern` | Cloud + Testbank | `TorchFlame.cs`, `Tests/TorchFlameCrackleChecks.cs` | Testbank | 23.10.2026 |
 
 ## Zuletzt abgeschlossen
 
