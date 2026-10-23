@@ -103,10 +103,11 @@ public sealed class OreVeinRuntimeProbe : MonoBehaviour
         visual.PrepareVeins(camera);
         using(var field=new OreVeinField())
         {
-            Check(field.Prepare(map,camera) && field.TypeAt(cell)==(int)BlockType.CopperOre,"Live field detects added ore pair");
-            int before=field.Revision;
+            Check(field.Prepare(map,camera) && TypeAt(field,cell)==(int)BlockType.CopperOre,"Live field detects added ore pair");
+            // Every rebuild or patch uploads the texture once, so an unchanged upload count means no rebuild.
+            uint before=field.Texture.updateCount;
             for(int n=0;n<120;n++)field.Prepare(map,camera);
-            Check(field.Revision==before,"120 unchanged frames reuse metadata without rebuilding");
+            Check(field.Texture.updateCount==before,"120 unchanged frames reuse metadata without rebuilding");
         }
         var miner=Object.FindFirstObjectByType<TileMiner>();
         var hit=typeof(TileMiner).GetMethod("ApplyMiningHit",BindingFlags.Instance|BindingFlags.NonPublic);
@@ -128,6 +129,14 @@ public sealed class OreVeinRuntimeProbe : MonoBehaviour
         CameraCheck("After restore");
         RunNavigation.MainMenu();yield return Ready();
         Check(MainMenuController.IsVisible,"Returned to homescreen");
+    }
+
+    // OreVeinField encodes the block id + 1 in red (0 = no ore); -1 also outside the buffer.
+    static int TypeAt(OreVeinField field,Vector3Int cell)
+    {
+        var b=field.Bounds;
+        if(!field.Texture || !b.Contains(new Vector3Int(cell.x,cell.y,b.zMin)))return -1;
+        return field.Texture.GetPixelData<Color32>(0)[(cell.y-b.yMin)*b.size.x+cell.x-b.xMin].r-1;
     }
 
     void Cleanup()
