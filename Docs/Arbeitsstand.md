@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Performance abschliessen (Übergabe Docs/Performance-Uebergabe.md), Play-Mode-Checks und Vorschaubilder in der Cloud | claude/compassionate-brahmagupta-32gx9j | Cloud | Loading (LoadingScreen, LoadingProgress, MapGenerator-Ladeablauf), UI-Panels Awake, Audio-Vorwärmen, GameplayAssetPreload, Tests/CI, Workflow, Tools/CloudDashboard | nein | 23.10.2026 12:45 |
 
 ## Zuletzt abgeschlossen
 
