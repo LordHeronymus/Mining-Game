@@ -544,6 +544,7 @@ public static class GpsSettings
                     ArtifactOverlayAppearance.ApplyTo(map.ArtifactOverlay.GetComponent<UnityEngine.Tilemaps.TilemapRenderer>(), map.artifactEmbeddingStrength);
             }
             if (target is SurfaceTallGrass grass && (node.name=="grassSizeMultiplier" || node.name=="healingHerbSizeMultiplier")) grass.ApplyPatchSizes();
+            if (target is SurfaceTrees forest) forest.ApplySettings();
             if (target is MinerPlayerVisual visual && node.name=="height") visual.Refresh();
             if (target is UniformStoneAppearance appearance) appearance.RefreshAppearance();
             if (target is MapWorldBorders borders) borders.RefreshBounds();

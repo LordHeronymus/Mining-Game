@@ -99,12 +99,8 @@ public sealed class ChoppableTree : MonoBehaviour
         harvestId = System.Guid.NewGuid().ToString("N");
         wood = woodItem;
         health = Mathf.Max(1, hitPoints);
-        woodMin = Mathf.Clamp(minWood, 1, 9999);
         pendingWoodYield = 0;
-        woodMax = Mathf.Clamp(maxWood, woodMin, 9999);
-        maximumBonusWood = Mathf.Clamp(bonusWood, 0, 9999 - woodMax);
-        maximumSizeBonusRatio = Mathf.Max(0f, bonusSizePercent) / 100f;
-        growthRatioPerSecond = Mathf.Max(0f, growthPercentPerMinute) / 6000f;
+        ApplySettings(minWood, maxWood, bonusWood, bonusSizePercent, growthPercentPerMinute);
         sizeBonusRatio = 0f;
         birchWood = sprite.name.Contains("_Birke_");
         transform.position = position;
@@ -115,6 +111,18 @@ public sealed class ChoppableTree : MonoBehaviour
         trunk.offset = new Vector2(0, 1.15f / fullScale);
         trunk.size = new Vector2(1.15f / fullScale, 2.3f / fullScale);
         if (!grown) StartCoroutine(Grow());
+    }
+
+    // Yield and growth tuning also applies to standing trees; health, growth and a rolled yield stay run state.
+    public void ApplySettings(int minWood, int maxWood, int bonusWood, float bonusSizePercent,
+        float growthPercentPerMinute)
+    {
+        woodMin = Mathf.Clamp(minWood, 1, 9999);
+        woodMax = Mathf.Clamp(maxWood, woodMin, 9999);
+        maximumBonusWood = Mathf.Clamp(bonusWood, 0, 9999 - woodMax);
+        maximumSizeBonusRatio = Mathf.Max(0f, bonusSizePercent) / 100f;
+        growthRatioPerSecond = Mathf.Max(0f, growthPercentPerMinute) / 6000f;
+        sizeBonusRatio = Mathf.Min(sizeBonusRatio, maximumSizeBonusRatio);
     }
 
     void SetupSwaySprite(Sprite source)
@@ -330,11 +338,19 @@ public sealed class ChoppableTree : MonoBehaviour
         }
     }
 
+    static Collider2D[] pointHits = new Collider2D[8];
+
     public static ChoppableTree At(Vector2 point)
     {
-        foreach (var collider in Physics2D.OverlapPointAll(point))
+        // Same layers and trigger rule as OverlapPointAll, without a new array on every hover frame.
+        var filter = new ContactFilter2D { useLayerMask = true, layerMask = Physics2D.DefaultRaycastLayers,
+            useTriggers = Physics2D.queriesHitTriggers };
+        int count;
+        while ((count = Physics2D.OverlapPoint(point, filter, pointHits)) == pointHits.Length)
+            pointHits = new Collider2D[pointHits.Length * 2];
+        for (int i = 0; i < count; i++)
         {
-            var tree = collider.GetComponentInParent<ChoppableTree>();
+            var tree = pointHits[i].GetComponentInParent<ChoppableTree>();
             if (tree && tree.CanChop) return tree;
         }
         return null;
