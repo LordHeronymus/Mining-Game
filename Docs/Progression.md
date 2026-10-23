@@ -60,7 +60,7 @@ totalXp = periodRewardXp
 | --- | --- | --- |
 | Neue Maximaltiefe | je 25 Blöcke min(150, 30 + 5·Stufe) | nur Zuwachs über `maxDepth` |
 | Gebiet erkundet (12×12 Zellen, ab 24 aufgedeckten) | 16·(1 + 0,6·min(1, Tiefe/1000)) | `regions` |
-| Erz | Gewicht·(n_neu^0,8 − n_alt^0,8) pro Erzart | Erz-Zelle im Zellen-Ledger (früher Schlüssel `item:x:y`); andere Quellen-IDs als Schlüssel `item:quelle` |
+| Erz | Gewicht·(n_neu^0,8 − n_alt^0,8) pro Erzart | Erz-Zelle im Zellen-Ledger (bis Schritt 2 schreibt das Spiel neue Erz-Zellen weiter als `item:x:y`); andere Quellen-IDs als Schlüssel `item:quelle` |
 | Entdeckung (Altar, Artefakt, Findling, Exotic) | 180 | `discoveries` |
 | Run-Ziele (3 pro Welt, „run-exotic“ ab Level 5) | 180–500 | `completedObjectives` |
 | Alte permanente Meilensteine | 250–8000 | `completedMilestones` |
@@ -128,7 +128,7 @@ Fund F-01 der Prüfung vom 23.10.2026: Bisher stand für jede aufgedeckte, abgeb
 - Ein `#`-Text, der sich nicht lesen lässt (spätere Version, beschädigt), bleibt unverändert erhalten und führt nie zur Ablehnung.
 - Alle anderen Schlüssel (`vein:`, `harvest:`, `artifact-…`, `craft-upgrade:`, `gear-crafted:`, Marker) bleiben unveränderte Texte.
 
-**Grösse:** Eine voll erkundete Welt braucht noch höchstens etwa 7'500 Texte und 0,35–0,5 MB statt rund 1,4 Millionen Texte und 28 MB. Dasselbe gilt für die Kopie im Spielstand (`RunSaveState.progression`). Im Speicher sind es pro Welt etwa 1–2 MB statt 120–150 MB. Kopien des Runs für Spielstand und Hintergrund-Schreiben laufen über `CopyRun`, ohne JSON-Umweg.
+**Grösse:** Ab Schritt 2 (Schreiber an) braucht eine voll erkundete Welt noch höchstens etwa 7'500 Texte und 0,35–0,5 MB statt rund 1,4 Millionen Texte und 28 MB. Dasselbe gilt für die Kopie im Spielstand (`RunSaveState.progression`). Im Speicher sind es dann pro Welt etwa 1–2 MB statt 120–150 MB. Kopien des Runs für Spielstand und Hintergrund-Schreiben laufen über `CopyRun`, ohne JSON-Umweg.
 
 **Wiederholungsschutz:** Für jede Zelle im Bereich ±2^20 entscheidet das Ledger, ob sie neu ist. Ausserhalb (nur bei sehr grossen Welten oder Testaufrufen) gilt weiter der alte Textschlüssel. Ein alter Zellschlüssel, der sich nicht falten lässt (unbekannte Schreibweise des Minuszeichens, führende Nullen), schaltet für diese Welt zusätzlich die alte Textsuche ein. Der Schutz ist damit nie schwächer als bisher; verschiedene Schreibweisen derselben Zelle zählen nur noch einmal.
 
@@ -136,7 +136,7 @@ Fund F-01 der Prüfung vom 23.10.2026: Bisher stand für jede aufgedeckte, abgeb
 
 - Beim Anhängen eines Runs (`BeginRun`, auch mit Spielstand) faltet das Spiel alte Zellschlüssel in das Ledger: `revealed:`, `mined:`, `l2-block:`, `l3-block:`, `xxl-layer:4:`, `xxl-layer:5:`, `surface-block:` und `item:x:y`, auch mit den Minus-Schreibweisen anderer Sprachen. Mehrere Blöcke derselben Zellen werden vereinigt.
 - Mit eingeschaltetem Schreiber verdichtet `EnsureLoaded` ein beschreibbares Profil einmalig (`CompactLedgers`) und schreibt es sofort im Hintergrund. Die Hauptdatei ist danach klein, die `.bak` nach dem nächsten Schreiben. Gesperrte Profile werden nicht verdichtet.
-- **Rettung:** Die Lesegrenze eines Runs steigt von 2 auf 6 Millionen Einträge (`MaxLedgerEntries`). Ein Profil, das bisher wegen mehr als 2 Millionen Einträgen abgelehnt wurde, lädt wieder und wird verdichtet. Danach lesen es auch ältere Builds.
+- **Rettung:** Die Lesegrenze eines Runs steigt von 2 auf 6 Millionen Einträge (`MaxLedgerEntries`). Ein Profil, das bisher wegen mehr als 2 Millionen Einträgen abgelehnt wurde, lädt ab Schritt 1 wieder. Ab Schritt 2 wird es beim Laden verdichtet; erst danach lesen es auch ältere Builds.
 - Spielstand-Dateien werden beim Laden nicht umgeschrieben; erst ihr nächstes Speichern ist kompakt.
 
 **Rollout** (`MetaProgression.CellChunkWriter`):

@@ -986,7 +986,7 @@ public static class ChallengeReworkChecks
             }
             Check(cellBad.Count == 0, label + ": cells are stored as decodable chunk records, one per chunk, without legacy cell keys (" + string.Join(", ", cellBad.Take(5)) + ")");
         }
-        long expected =p.periodRewardXp + p.runs.Sum(r => (long)Math.Floor(r.progressXp + r.efficiencyXp) + r.challengeXp) +
+        long expected = p.periodRewardXp + p.runs.Sum(r => (long)Math.Floor(r.progressXp + r.efficiencyXp) + r.challengeXp) +
             p.completedMilestones.Sum(id => LegacyMilestones.TryGetValue(id, out int xp) ? xp : 0);
         Check(p.totalXp == expected, label + ": totalXp = periodRewardXp + run XP + legacy milestone XP (" + p.totalXp + " vs " + expected + ")");
         Check(p.challengeRounds.Sum(Paid) + AwardXp(p) <= p.periodRewardXp, label + ": round payouts and awards fit into periodRewardXp");
