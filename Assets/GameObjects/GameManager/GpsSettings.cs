@@ -59,9 +59,10 @@ public static class GpsSettings
 #if !UNITY_EDITOR
         bool existing=File.Exists(FilePath) || File.Exists(FilePath+".bak");
         document=GpsFileStore.Load(FilePath,document,out var warning,out bool legacyFormat); Warning=warning;
+        bool musicScaled=ScaleLegacyMusicVolume(document,existing,FilePath+".music-scaled");
         if(!existing && profile) GpsLegacyImport.Import(document,profile,Application.persistentDataPath);
         // The first start stores the import; an old full copy is converted to overrides.
-        bool rewrite=(!existing && profile) || (legacyFormat && warning==null);
+        bool rewrite=(!existing && profile) || (legacyFormat && warning==null) || musicScaled;
 #if !DEVELOPMENT_BUILD
         // Release players can only change personal preferences; every other value in the file (an old full copy,
         // F1 values of a development build on the same PC, imported debug files) must not hide the current profile.
@@ -87,6 +88,27 @@ public static class GpsSettings
 #endif
         dirty = savedJson != JsonUtility.ToJson(document);
     }
+    // Since musicCeiling (23.10.2026) the slider means something else: a stored value is converted once so the music
+    // stays as loud as before (old 20 % becomes 100 %). Editor: marker in the EditorPrefs, player: marker file next to the GPS file.
+    public const float LegacyMusicCeiling = 1f;
+    const string MusicScaledMarker = "musicVolumeScaled";
+    public static float ScaledLegacyMusicVolume(float volume) =>
+        Mathf.Clamp01(volume * LegacyMusicCeiling / Mathf.Max(.0001f, new GpsPreferences().musicCeiling));
+#if !UNITY_EDITOR
+    static bool ScaleLegacyMusicVolume(GpsDocument data,bool existing,string marker)
+    {
+        if(File.Exists(marker)) return false;
+        bool changed=false;
+        if(existing)
+        {
+            float scaled=ScaledLegacyMusicVolume(data.preferences.musicVolume);
+            changed=!Mathf.Approximately(scaled,data.preferences.musicVolume);
+            data.preferences.musicVolume=scaled;
+        }
+        try { File.WriteAllText(marker,"1"); } catch(Exception) { }
+        return changed;
+    }
+#endif
     // Volume is chosen per player. In the editor it lives in EditorPrefs so it never ships in the profile asset.
     static readonly string[] PersonalPreferences = { nameof(GpsPreferences.masterVolume), nameof(GpsPreferences.musicVolume) };
     // Takes only the personal values of a loaded player document over into the shipped one.
@@ -134,6 +156,11 @@ public static class GpsSettings
                 UnityEditor.EditorPrefs.HasKey(shared) ? UnityEditor.EditorPrefs.GetFloat(shared) : (float)GpsCodec.Get(data.preferences, field));
             GpsCodec.Set(data.preferences, field, Mathf.Clamp01(UnityEditor.EditorPrefs.GetFloat(key)));
         }
+        string marker = PersonalPreferenceKey(MusicScaledMarker), music = PersonalPreferenceKey(nameof(GpsPreferences.musicVolume));
+        if (UnityEditor.EditorPrefs.GetBool(marker)) return;
+        data.preferences.musicVolume = ScaledLegacyMusicVolume(data.preferences.musicVolume);
+        UnityEditor.EditorPrefs.SetFloat(music, data.preferences.musicVolume);
+        UnityEditor.EditorPrefs.SetBool(marker, true);
     }
     static void SavePersonalPreferences(GpsDocument data)
     {
