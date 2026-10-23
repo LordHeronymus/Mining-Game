@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: LevelUpPresentation
   m_EditorClassIdentifier: 
   medallion: {fileID: 21300000, guid: cc6070f9e45543e4aa2ab6837285ded8, type: 3}
-  sound: {fileID: 8300000, guid: a940b809abae09f48b30ae88ac9b74ac, type: 3}
+  sound: {fileID: 8300000, guid: aba6973268fc458eaee72c78b3115584, type: 3}
   impactSeconds: 0.06
+  soundPeakSeconds: 1.9

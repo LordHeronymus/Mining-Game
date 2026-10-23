@@ -6,4 +6,6 @@ public sealed class LevelUpPresentationAssets : ScriptableObject
     public Sprite medallion;
     public AudioClip sound;
     public float impactSeconds = .16f;
+    // Time of the audible hit in the clip; the medallion lands on it (0 = clip starts on the hit).
+    public float soundPeakSeconds;
 }
