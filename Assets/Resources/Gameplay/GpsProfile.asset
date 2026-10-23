@@ -12166,7 +12166,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    300.0,\n                    \"flag\": false,\n                    \"vector\":
+    500.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -12520,7 +12520,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    3000.0,\n                    \"flag\": false,\n                    \"vector\":
+    35000.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -12832,7 +12832,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    1800.0,\n                    \"flag\": false,\n                    \"vector\":
+    15000.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -13102,7 +13102,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    150.0,\n                    \"flag\": false,\n                    \"vector\":
+    200.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -13414,7 +13414,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    600.0,\n                    \"flag\": false,\n                    \"vector\":
+    1500.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -15826,7 +15826,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    1000.0,\n                    \"flag\": false,\n                    \"vector\":
+    5000.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -16804,7 +16804,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    5000.0,\n                    \"flag\": false,\n                    \"vector\":
+    85000.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":

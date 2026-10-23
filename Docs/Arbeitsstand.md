@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Neue Kaufpreise Energie-Upgrades (nur Coins) | `claude/energie-preise` | Cloud | `Resources/WorkbenchRecipes` (7 Energie-Rezepte, `shopPrice`), `GpsProfile.asset` (Kaufpreise) | Testbank | 23.10.2026 |
 
 ## Zuletzt abgeschlossen
 
