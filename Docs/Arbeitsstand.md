@@ -13,6 +13,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
 | Claude Code (Cloud, Projekt-Thread „Cloud Play-, Optik- und Performance-Tests“) | Performance abschliessen (Übergabe Docs/Performance-Uebergabe.md), Play-Mode-Checks und Vorschaubilder in der Cloud | claude/compassionate-brahmagupta-32gx9j | Cloud | Loading (LoadingScreen, LoadingProgress, MapGenerator-Ladeablauf), GameSaveSystem.TestDirectory (Player-Build), UI-Panels Awake, Audio-Vorwärmen, GameplayAssetPreload, Tests/CI, Workflow, Tools/CloudDashboard | nein | 23.10.2026 12:45 (übernommen 12:50) |
+| Claude Code (Cloud, Projekt-Thread „Einsammel-Klang beim Laden“) | Kein Einsammel-Bling beim Laden eines Spielstands (Startausrüstung still vergeben) | claude/load-bling | Cloud | StatsManager.ResetRun, InventoryManager.AddStartingItem, Tests/LoadPickupFeedChecks.cs | nein | 23.10.2026 14:50 |
 
 ## Zuletzt abgeschlossen
 
