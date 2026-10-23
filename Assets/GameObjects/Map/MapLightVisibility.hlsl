@@ -76,15 +76,20 @@ float MapTorchLight(float2 worldPos)
 {
     // The field texture continues above the surface, so the soil lip of the background
     // above a shaft is lit like the shaft below it (same values as the occlusion mask's g).
+    float light = 0;
     if (_MapTorchLightRect.z > 0)
     {
         float2 lightUv = (worldPos - _MapTorchLightRect.xy) * _MapTorchLightRect.zw;
-        if (any(lightUv < 0) || any(lightUv > 1)) return 0;
-        return saturate(SAMPLE_TEXTURE2D(_MapTorchLightTex, sampler_MapTorchLightTex, lightUv).a);
+        if (all(lightUv >= 0) && all(lightUv <= 1))
+            light = SAMPLE_TEXTURE2D(_MapTorchLightTex, sampler_MapTorchLightTex, lightUv).a;
     }
-    float2 uv = (worldPos - _TerrainOcclusionRect.xy) * _TerrainOcclusionRect.zw;
-    if (any(uv < 0) || any(uv > 1)) return 0;
-    return saturate(SAMPLE_TEXTURE2D(_TerrainOcclusionTex, sampler_TerrainOcclusionTex, uv).g);
+    else
+    {
+        float2 uv = (worldPos - _TerrainOcclusionRect.xy) * _TerrainOcclusionRect.zw;
+        if (all(uv >= 0) && all(uv <= 1))
+            light = SAMPLE_TEXTURE2D(_TerrainOcclusionTex, sampler_TerrainOcclusionTex, uv).g;
+    }
+    return saturate(light);
 }
 
 float MapOtherLocalLight(float2 worldPos)
