@@ -199,6 +199,7 @@ def build(final=None, conclusion=None):
         "conclusion": conclusion,
         "results": results,
         "budget": budget(),
+        "previews": sorted(str(path.relative_to(ART / "previews")) for path in (ART / "previews").rglob("*.png")) if final else [],
     }
 
 
@@ -234,7 +235,8 @@ def render_once(status):
     rows = "\n".join(f"| {ICONS.get(c['status'], '')} | {c['name']} | {c['mode']} |" for c in status["checks"])
     table = "| | Check | Modus |\n| --- | --- | --- |\n" + rows if rows else ""
     data = base64.b64encode(json.dumps(status, ensure_ascii=False).encode()).decode()
-    return f"{head}{title}\n\n{budget_line(status.get('budget'))}Aktualisiert {status['updated']}\n\n{table}\n\n<!-- cloud-status-data {data} -->"
+    shots = f"\n\nVorschaubilder: {len(status['previews'])} (Branch `ci-previews`, `runs/{status['run_number']}/`, abholen mit `Tools/ci-previews.sh {status['run_number']}`)" if status.get("previews") else ""
+    return f"{head}{title}\n\n{budget_line(status.get('budget'))}Aktualisiert {status['updated']}\n\n{table}{shots}\n\n<!-- cloud-status-data {data} -->"
 
 
 def save(status):
