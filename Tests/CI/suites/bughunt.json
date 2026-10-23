@@ -31,7 +31,8 @@
       "name": "BughuntFallTunnelChecks"
     },
     {
-      "name": "BughuntFocusPauseChecks"
+      "name": "BughuntFocusPauseChecks",
+      "mode": "edit"
     },
     {
       "name": "BughuntGpsBoundsChecks"
