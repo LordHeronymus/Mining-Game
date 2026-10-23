@@ -68,6 +68,7 @@ public sealed class MetaProgressionRuntime : MonoBehaviour
 
     void Update()
     {
+        MetaProgression.PumpSaves();
         if (LoadingProgress.Active || RunNavigation.IsTransitioning ||
             SceneManager.GetActiveScene().name != RunNavigation.GameScene) return;
         if (MetaProgression.CurrentRun == null) return;
@@ -237,11 +238,12 @@ public sealed class MetaProgressionRuntime : MonoBehaviour
         Block block = null, MapLayer[] layers = null, bool hasOre = false, bool explosive = false, MapGenerator map = null)
     {
         if (!RewardsAllowed) return;
-        string source = cell.x + ":" + cell.y;
         bool ore = item && item.category == ItemCategory.Ore && count > 0;
-        if (ore) MetaProgression.RecordResource(item.item, count, source);
+        // The cell is the ore's replay guard (cell ledger), the same identity as the old "x:y" source id.
+        if (ore) MetaProgression.RecordResource(item.item, count, cell);
         if (ore && hasOre && block && map) RecordVein(map, cell, block, item.item);
         if (artifact) {
+            string source = cell.x + ":" + cell.y;
             MetaProgression.RecordDiscovery("artifact:" + source);
             MetaProgression.RecordArtifact(cell, artifact.name);
         }
@@ -294,6 +296,7 @@ public sealed class MetaProgressionRuntime : MonoBehaviour
     public static void RecordVictory()
     {
         if (RewardsAllowed) MetaProgression.RecordVictory();
+        else MetaProgression.MarkRunEnded();
         MetaProgression.Save();
     }
 }

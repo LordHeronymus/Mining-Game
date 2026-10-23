@@ -69,7 +69,8 @@ public sealed class ProgressionTimelineRunner:MonoBehaviour
         var timeline=panel.GetComponentInChildren<ProgressionTimeline>();
         Check(panel.ShowingOverview && timeline.DisplayedLevel==12,"Home button opens overview at real profile level");
         Check(Mathf.Abs(timeline.XpFraction-.5f)<.001f,"XP gauge shows current-level fraction");
-        Check(timeline.VisibleLevels.Contains(15) && timeline.VisibleLevels.Contains(35),"Upcoming blueprints visible");
+        // Preview blueprints (10, 20, 25, 30 …) fill the window: at level 12 the next blueprint on the right is the rope pulley (20).
+        Check(timeline.VisibleLevels.Contains(15) && timeline.VisibleLevels.Contains(20),"Upcoming blueprints visible");
         Check(timeline.transform.Find("Rewards/Milestone 15/Blueprint lava-lamp") || timeline.GetComponentsInChildren<TMP_Text>().Any(t=>t.text=="Lavalampe"),"Lava blueprint uses actual catalog name");
         var badge=(RectTransform)timeline.transform.Find("Level Badge"); var track=(RectTransform)timeline.transform.Find("XP Track");
         Check(Mathf.Abs(badge.anchoredPosition.y-track.anchoredPosition.y)<.1f && badge.anchoredPosition.x+badge.rect.width/2>=track.anchoredPosition.x-track.rect.width/2,"Level badge joins the aligned XP gauge");

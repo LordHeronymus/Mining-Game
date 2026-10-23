@@ -649,8 +649,11 @@ public static class ChallengeReworkChecks
         Check(Pr("probe-blocks") == b0 + 1 && Pr("probe-layer-blocks-2") == l0 + 1 && MetaProgression.CreditedBlocks == credited + 1, "replay: a new mined cell counts for blocks, its layer and CreditedBlocks");
         MetaProgression.RecordMinedBlock(cell, 2, false); MetaProgression.RecordMinedBlock(cell, 2, true);
         Check(Pr("probe-blocks") == b0 + 1 && MetaProgression.CreditedBlocks == credited + 1, "replay: the same cell counts once (also when blasted later)");
-        Check(MetaProgression.CurrentRun.resourceSources.Contains("mined:90001:-40"), "replay: mined cells use the ledger key mined:x:y");
         var snapshot = MetaProgression.CaptureRunState();
+        Check(MetaProgression.HasMinedBlock(cell) && (MetaProgression.WritesCellChunks
+                ? !RunSources().Any(k => k.StartsWith("mined:")) && snapshot.resourceSources.Any(k => k.StartsWith("#1M:2812:-3:"))
+                : RunSources().Contains("mined:90001:-40")),
+            "replay: the mined cell is in the cell ledger (record #1M:2812:-3, or mined:x:y while the chunk writer is off)");
         snapshot.resourceSources.AddRange(new[] { "l2-block:90002:-40", "l3-block:90003:-200", "xxl-layer:4:90004:-500", "xxl-layer:5:90005:-950", "surface-block:90006:0" });
         MetaProgression.BeginRun(runId, snapshot);
         credited = MetaProgression.CreditedBlocks; b0 = Pr("probe-blocks");
@@ -734,19 +737,24 @@ public static class ChallengeReworkChecks
         var wrong = guarded.Where(id => !(PeakMarkers(id).Count == 1 && PeakMarkers(id)[0] == "tp:" + id + ":" + peaks[id])).ToList();
         Check(wrong.Count == 0 && peaks["sales"] > 0 && peaks["placed:torches-placed"] == 15, "replay: each tally keeps exactly one tp marker holding its peak (" + string.Join(", ", wrong) + ")");
         var mainWorld = Clone(world); mainWorld.tallies.Clear();
-        foreach (var snapshotWorld in new[] { world, mainWorld }) {
-            bool fromOlder = snapshotWorld == mainWorld;
-            string which = fromOlder ? "an older build's" : "this build's";
+        for (int pass = 0; pass < 3; pass++) {
+            // 0: this build's save from before the 4000 sale. 1: an older build's save (no tallies) from before it.
+            // 2: an older build's save written after it: older builds keep the ledger, so it carries the profile's tp markers.
+            MetaRunState snapshotWorld = pass == 0 ? world : pass == 1 ? mainWorld : MetaProgression.CaptureRunState();
+            if (pass == 2) snapshotWorld.tallies.Clear();
+            bool fromOlder = pass > 0, current = pass == 2;
+            string which = !fromOlder ? "this build's" : current ? "a current older build's" : "an older build's";
             long s1 = Pr("probe-sales"), c1 = Pr("probe-crafted"), t1 = Pr("probe-torches-placed"), l1 = Counter("sales");
             MetaProgression.CurrentRun.tallies.Clear(); // the older build rewrote the profile without them
             MetaProgression.BeginRun(runId, snapshotWorld);
             MetaProgression.RecordSale(4000); MetaProgression.RecordCraftedAmount(Item.BridgePart, 6); MetaProgression.RecordPlacedCount("torches-placed", 15);
-            // An older build's world save carries no tallies: it counts as being at the peak, so new sales and crafts count
-            // at once instead of stalling until the old total; placements stay guarded by the world's torch count.
-            long sale = fromOlder ? 4000 : 0, craft = fromOlder ? 6 : 0;
+            // A save without tallies stands where its own tp markers say: replaying the sale after an old save credits
+            // nothing, while a save that already holds the newest markers counts new sales and crafts at once.
+            // Placements stay guarded by the world's torch count.
+            long sale = current ? 4000 : 0, craft = current ? 6 : 0;
             Check(Pr("probe-sales") == s1 + sale && Pr("probe-crafted") == c1 + craft && Pr("probe-torches-placed") == t1 && Counter("sales") == l1 + sale,
-                fromOlder ? "replay: after an older build's world save new sales and crafts count at once, placements stay guarded"
-                      : "replay: after an older build dropped the tallies, replaying from this build's world save credits nothing (tp markers)");
+                current ? "replay: after a current older build's world save new sales and crafts count at once, placements stay guarded"
+                      : "replay: after " + which + " world save from before the sale, replaying it credits nothing (tp markers)");
             peaks["sales"] += sale; peaks["crafted"] += craft;
             wrong = guarded.Where(id => Peak(id) != peaks[id] || !(PeakMarkers(id).Count == 1 && PeakMarkers(id)[0] == "tp:" + id + ":" + peaks[id])).ToList();
             Check(wrong.Count == 0, "replay: " + which + " world save: peaks restored from the markers, one tp marker each (" + string.Join(", ", wrong) + ")");
@@ -963,6 +971,21 @@ public static class ChallengeReworkChecks
                 new HashSet<string>(run.resourceSources).Count != run.resourceSources.Count) bad.Add(run.runId + " resourceSources");
         }
         Check(bad.Count == 0, label + ": runs satisfy the legacy ValidateRun rules (" + string.Join(", ", bad.Take(5)) + ")");
+        if (MetaProgression.WritesCellChunks) {
+            // Chunk writer on: cells only as "#1" records that decode, one per (kind, cx, cy), and no in-domain legacy cell key.
+            var cellBad = new List<string>(); var rows = new uint[16];
+            foreach (var run in p.runs) {
+                var heads = new HashSet<(int, int, int)>();
+                foreach (string key in run.resourceSources) {
+                    if (string.IsNullOrEmpty(key)) continue;
+                    if (key.StartsWith("#1", StringComparison.Ordinal)) {
+                        if (!MetaCellLedger.TryDecode(key, rows, out int kind, out int cx, out int cy)) cellBad.Add(run.runId + " undecodable " + key);
+                        else if (!heads.Add((kind, cx, cy))) cellBad.Add(run.runId + " second record " + key);
+                    } else if (MetaCellLedger.TryParseLegacy(key, out int legacyKind, out int x, out int y) && MetaCellLedger.InDomain(legacyKind, x, y)) cellBad.Add(run.runId + " legacy " + key);
+                }
+            }
+            Check(cellBad.Count == 0, label + ": cells are stored as decodable chunk records, one per chunk, without legacy cell keys (" + string.Join(", ", cellBad.Take(5)) + ")");
+        }
         long expected = p.periodRewardXp + p.runs.Sum(r => (long)Math.Floor(r.progressXp + r.efficiencyXp) + r.challengeXp) +
             p.completedMilestones.Sum(id => LegacyMilestones.TryGetValue(id, out int xp) ? xp : 0);
         Check(p.totalXp == expected, label + ": totalXp = periodRewardXp + run XP + legacy milestone XP (" + p.totalXp + " vs " + expected + ")");
