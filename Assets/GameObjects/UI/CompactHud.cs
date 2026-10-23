@@ -590,7 +590,7 @@ public sealed class CompactHud : MonoBehaviour
     }
     void OnDestroy()
     {
-        if (carryMaterial) Destroy(carryMaterial);
+        if (carryMaterial) { if (Application.isPlaying) Destroy(carryMaterial); else DestroyImmediate(carryMaterial); }
     }
     RectTransform Rect(string name, Transform parent, float x, float y, float w, float h)
     {
@@ -678,14 +678,20 @@ public sealed class CompactHud : MonoBehaviour
         carryPlaque=Rect("Carry Weight",top,0,114,400,46);
         var backpack=Image("Carry Icon",carryPlaque,2,0,44,46,CarryIcon(),Color.white); backpack.preserveAspect=true;
         carryValue=Text("Carry Value",carryPlaque,"",58,0,330,46,32,TextAlignmentOptions.MidlineLeft);
-        // Own material copy for outline and shadow so the number stays readable on the bright sky (released in OnDestroy).
-        carryValue.outlineColor=new Color(.12f,.07f,.04f,1); carryValue.outlineWidth=.16f;
-        carryMaterial=carryValue.fontMaterial;
+        carryValue.enableAutoSizing=false;
+        // Own material with a dark outline and shadow so the number stays readable on the bright sky (released in OnDestroy).
+        carryMaterial=new Material(carryValue.fontSharedMaterial){name="HUD Carry Weight",hideFlags=HideFlags.DontSave};
+        carryMaterial.SetFloat(ShaderUtilities.ID_FaceDilate,.12f);
+        carryMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth,.22f);
+        carryMaterial.SetColor(ShaderUtilities.ID_OutlineColor,new Color(.10f,.055f,.025f,1));
+        carryMaterial.EnableKeyword("OUTLINE_ON");
         carryMaterial.EnableKeyword("UNDERLAY_ON");
-        carryMaterial.SetColor(ShaderUtilities.ID_UnderlayColor,new Color(0,0,0,.75f));
-        carryMaterial.SetFloat(ShaderUtilities.ID_UnderlayOffsetX,.5f);
-        carryMaterial.SetFloat(ShaderUtilities.ID_UnderlayOffsetY,-.6f);
-        carryMaterial.SetFloat(ShaderUtilities.ID_UnderlaySoftness,.5f);
+        carryMaterial.SetColor(ShaderUtilities.ID_UnderlayColor,new Color(0,0,0,.8f));
+        carryMaterial.SetFloat(ShaderUtilities.ID_UnderlayOffsetX,.7f);
+        carryMaterial.SetFloat(ShaderUtilities.ID_UnderlayOffsetY,-.8f);
+        carryMaterial.SetFloat(ShaderUtilities.ID_UnderlayDilate,.35f);
+        carryMaterial.SetFloat(ShaderUtilities.ID_UnderlaySoftness,.35f);
+        carryValue.fontSharedMaterial=carryMaterial;
         carryValue.UpdateMeshPadding();
         RefreshCarryWeightVisibility();
         counters=Rect("Counters",transform,0,0,596,106);

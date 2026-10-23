@@ -72,7 +72,10 @@ public static class CarryWeightHudChecks
             Check(Mathf.Abs(iconCenter - heart.anchoredPosition.x) < 2f, "Rucksack steht in der Spalte von Herz und Blitz");
             var value = plaque.Find("Carry Value").GetComponent<TMP_Text>();
             Check(value && value.alignment == TextAlignmentOptions.MidlineLeft && value.fontSize >= 30f, "Wert links ausgerichtet, eine Grösse");
-            Check(value.outlineWidth > 0f && value.fontSharedMaterial.IsKeywordEnabled("UNDERLAY_ON"), "Kontur und Schatten für hellen Himmel");
+            var material = value.fontSharedMaterial;
+            Check(material.GetFloat(ShaderUtilities.ID_OutlineWidth) >= .15f && material.IsKeywordEnabled("UNDERLAY_ON") &&
+                material.GetColor(ShaderUtilities.ID_UnderlayColor).a >= .6f, "Dunkle Kontur und Schatten für hellen Himmel");
+            Check(!value.enableAutoSizing && value.fontSize >= 30f, "Schrift wird nicht automatisch verkleinert");
             Check(plaque.Find("Carry Value").GetComponent<TMP_Text>().text.EndsWith(" kg"), "Wert wird beim Aufbau gesetzt");
             foreach (var graphic in plaque.GetComponentsInChildren<Graphic>(true))
                 Check(!graphic.raycastTarget, "Kein Klickfänger: " + graphic.name);
