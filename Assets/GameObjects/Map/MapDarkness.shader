@@ -51,6 +51,9 @@ Shader "Mining Game/Map Darkness"
             {
                 #if _SURFACE_GLOW
                 float light = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv).a * saturate(input.fade);
+                // Extra glow right at a shaft opening, so the dark earth rim of the hills there
+                // matches the lit shaft; a few cells up the cubic term is negligible.
+                light += light * light * light;
                 return half4(_GlowColor.rgb * light, 1);
                 #endif
                 float darkness = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv).a;
