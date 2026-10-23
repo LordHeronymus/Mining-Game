@@ -38,6 +38,9 @@ public sealed class WorkbenchStyleProbe : MonoBehaviour
         bool favoriteExisted=PlayerPrefs.HasKey(rope.FavoriteKey);
         int originalFavorite=PlayerPrefs.GetInt(rope.FavoriteKey);
         string result="FAILED: incomplete";
+        // The rope is checked in the backpack; with the switch on it would go into the storage hut.
+        bool componentsToStorage=GpsSettings.Preferences.workbenchComponentsToStorage;
+        GpsSettings.Preferences.workbenchComponentsToStorage=false;
         try
         {
             inventory.ResetAll();
@@ -108,6 +111,7 @@ public sealed class WorkbenchStyleProbe : MonoBehaviour
         }
         finally
         {
+            GpsSettings.Preferences.workbenchComponentsToStorage=componentsToStorage;
             panel.SetSearch(""); panel.SetFilter(false); panel.SetFavoritesOnly(false);
             panel.SetCategory(CraftingRecipe.RecipeCategory.Automatic); panel.ShowPanel(false);
             inventory.ResetAll(); foreach(var item in snapshot) inventory.Add(item.Key,item.Value);
