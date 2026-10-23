@@ -210,7 +210,16 @@ public sealed class WorkbenchStorageProbe : MonoBehaviour
             Check(panel.IsOpen && panel.SelectedRecipe == nails, "Workbench opens with the nails recipe under 'Herstellbar'");
             var details = panel.transform.Find("Layout/Details");
             var countLabel = details.GetComponentsInChildren<TextMeshProUGUI>(true).FirstOrDefault(t => t.text.Contains(" / " + cost));
-            Check(countLabel && countLabel.text.Contains("+" + 4 * cost + " Lager"), "Ingredient row shows the storage share: " + (countLabel ? countLabel.text : "missing"));
+            Check(countLabel && countLabel.text == "<color=#96E06D>" + 5 * cost + "</color> / " + cost && !countLabel.text.Contains("Lager"),
+                "Ingredient row shows backpack plus storage as one green total: " + (countLabel ? countLabel.text : "missing"));
+            Reset(inventory, storage, 0, material, cost - 1);
+            panel.SelectRecipe(nails);
+            yield return null;
+            countLabel = details.GetComponentsInChildren<TextMeshProUGUI>(true).FirstOrDefault(t => t.text.Contains(" / " + cost));
+            Check(countLabel && countLabel.text == "<color=#E88665>" + (cost - 1) + "</color> / " + cost,
+                "Ingredient row shows a missing total in red: " + (countLabel ? countLabel.text : "missing"));
+            Reset(inventory, storage, cost, material, 4 * cost);
+            yield return null;
             panel.SetQuantity(99);
             Check(panel.Quantity == 5, "Max quantity uses backpack plus storage");
             var craftButton = details.GetComponentsInChildren<Button>(true).First(b => b.name == "Craft");

@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Werkbank-Materialliste: Gesamtmenge (Rucksack + Lager) statt „+N Lager“, grün/rötlich | `claude/werkbank-gesamtmenge` | Cloud + Testbank | `WorkbenchPanel.cs`, `Tests/WorkbenchStorageChecks.cs` | Testbank | 23.10.2026 |
 
 ## Zuletzt abgeschlossen
 
