@@ -101,11 +101,16 @@ public sealed class PlacedTorch : MonoBehaviour
                 !inventory.CanAdd(torch.item)) continue;
             inventory.Add(torch.item);
             AudioManager.Instance?.PlayTorchSound(false);
+            Unregister(torch);
             Destroy(torch.gameObject);
             return true;
         }
         return false;
     }
+
+    // Destroy takes effect only at frame end: leave the active set right away, so a save capture in the same frame
+    // (the autosave captures after Update) does not keep the torch that was just refunded to the inventory.
+    static void Unregister(PlacedTorch torch) => active.Remove(torch);
 
     public static bool TryPlace(MapGenerator map, ItemSO item, Vector2 worldPoint, Vector2 playerPosition, float reach)
     {
