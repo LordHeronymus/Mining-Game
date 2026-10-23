@@ -12,7 +12,7 @@ Die Lagerhütte neben dem Shop funktioniert wie eine Kiste in Minecraft: Items a
 
 ## Gewicht
 
-- Bis zur **Traglast** (`InventoryManager.CarryingCapacity`) läuft der Spieler normal schnell. Darüber sinkt das Tempo gleichmässig bis zur maximalen Last, wo nur noch ein Drittel übrig bleibt (`CalculateMovementWeightFactor`). Die Sprunghöhe sinkt mit, aber nie unter 1,2 Blöcke: Eine Zelle hoch kommt man immer (`PlayerMovement.LoadedJumpHeightBlocks`). Alle drei Werte stehen in GPS → Bewegung → Traglast.
+- Bis zur **Traglast** (`InventoryManager.CarryingCapacity`) läuft der Spieler normal schnell. Darüber sinkt das Tempo gleichmässig bis zur maximalen Last, wo nur noch ein Drittel übrig bleibt (`CalculateMovementWeightFactor`). Die Sprunghöhe sinkt mit, aber nie unter 1,2 Blöcke: Eine Zelle hoch kommt man immer (`PlayerMovement.LoadedJumpHeightBlocks`). Die Anzeige wird gelb über der Traglast und rot ab 90 % der maximalen Last (GPS „Rote Stufe ab“). Alle Werte stehen in GPS → Bewegung → Traglast.
 - Das **Maximum** ist das Doppelte der Traglast (`MaximumWeight`, GPS „Maximale Last“). Bis dahin darf man aus dem Lager entnehmen (`SurfaceStorageBuilding.MaxWithdrawable`/`WithdrawUpTo`); was nicht mehr passt, bleibt im Lager, die Gewichtsanzeige blinkt kurz rot.
 - Der Gewichtsbalken zeigt den normalen Bereich gold, den langsameren Bereich korallenrot und markiert die Traglast mit einem Strich. Im Testmodus „Kein Gewicht“ entfällt das Limit.
 

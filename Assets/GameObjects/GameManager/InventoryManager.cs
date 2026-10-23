@@ -59,8 +59,10 @@ public class InventoryManager : MonoBehaviour
     public float MovementWeightFactor => GameplayTestSettings.NoWeight
         ? 1f : CalculateMovementWeightFactor(TotalWeight, CarryingCapacity);
 
+    // Yellow above the capacity, red from the GPS share of the maximum load (90 % of twice the capacity = 1.8×).
+    public static double RedStageRatio => Math.Max(1d, OverloadMaxMultiplier * (double)Sanitize(GpsSettings.Preferences.carryRedStageFraction, .9f, .5f, 1f));
     public static int CarryStage(double weight, float capacity) =>
-        capacity <= 0f ? 0 : weight > 2d * capacity ? 2 : weight > capacity ? 1 : 0;
+        capacity <= 0f ? 0 : weight >= RedStageRatio * capacity - 0.00001d ? 2 : weight > capacity ? 1 : 0;
 
     public static float CalculateMovementWeightFactor(double totalWeight, float carryingCapacity) =>
         CalculateMovementWeightFactor(totalWeight, carryingCapacity, OverloadMaxMultiplier, OverloadMinSpeed);

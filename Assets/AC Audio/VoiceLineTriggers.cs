@@ -71,7 +71,9 @@ public sealed class VoiceEnergyWatcher
 // Rising latches on ratio = weight / capacity.
 public sealed class VoiceCarryWatcher
 {
-    public const double Stage1Ratio = 1.0, Stage2Ratio = 2.0; // same stages as InventoryManager.CarryStage / inventory colours
+    // Same stages as InventoryManager.CarryStage / inventory colours; stage 2 follows GPS Bewegung → Traglast.
+    public const double Stage1Ratio = 1.0;
+    public static double Stage2Ratio => InventoryManager.RedStageRatio;
     readonly VoiceThresholdLatch stage1 = new(false), stage2 = new(false);
     bool hasBaseline;
     VoiceLineEvent? open;

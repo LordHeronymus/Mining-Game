@@ -64,6 +64,10 @@ public static class CarryOverloadChecks
         Check(falling, "Zwischen 1× und 2× sinkt das Tempo stetig");
         Check(Mathf.Approximately(InventoryManager.CalculateMovementWeightFactor(45d, 30f), F(1.5d)), "Ohne Parameter gelten die GPS-Werte");
 
+        Check(Math.Abs(InventoryManager.RedStageRatio - 1.8d) < 1e-6, "Rote Stufe ab 90 % der maximalen Last (" + InventoryManager.RedStageRatio + "× Traglast)");
+        Check(InventoryManager.CarryStage(30d, 30f) == 0 && InventoryManager.CarryStage(30.5d, 30f) == 1 && InventoryManager.CarryStage(53.9d, 30f) == 1,
+            "Gelb über der Traglast bis knapp unter 90 %");
+        Check(InventoryManager.CarryStage(54d, 30f) == 2 && InventoryManager.CarryStage(60d, 30f) == 2, "Rot ab 54 von 60 kg (90 %)");
         Check(Mathf.Approximately(PlayerMovement.LoadedJumpHeightBlocks(1.5f, 1f, 1.2f), 1.5f), "Ohne Last volle Sprunghöhe");
         Check(Mathf.Approximately(PlayerMovement.LoadedJumpHeightBlocks(1.5f, 1f / 3f, 1.2f), 1.2f), "Mit voller Last nie unter der Mindest-Sprunghöhe");
         Check(Mathf.Approximately(PlayerMovement.LoadedJumpHeightBlocks(.8f, 1f / 3f, 1.2f), .8f), "Eine tiefere Grund-Sprunghöhe wird nicht angehoben");
