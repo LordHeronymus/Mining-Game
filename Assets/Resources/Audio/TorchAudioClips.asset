@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   placeTorch: {fileID: 8300000, guid: 0d8a0d89d40ee6b4a88475b0d14c65ea, type: 3}
   removeTorch: {fileID: 8300000, guid: 281c17b147ba2f04bbd0646fc1354a0a, type: 3}
+  crackleLoop: {fileID: 8300000, guid: 04a5fde616b1466287659ec25b2b7e03, type: 3}

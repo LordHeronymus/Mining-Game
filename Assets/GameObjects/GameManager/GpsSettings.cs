@@ -676,8 +676,38 @@ public static class GpsSettings
     static GpsValue[] NormalizeGeneration(GpsValue[] fields)
     {
         var allowed = GpsSchema.Fields(typeof(MapGenerator)).Where(field => field.applyTime == GpsApplyTime.NewMap).Select(field => field.name).ToHashSet();
+        var current = Document.records.Find(record => record.type == typeof(MapGenerator).AssemblyQualifiedName);
         return fields.Where(field => field != null && allowed.Contains(field.name))
-            .Select(field => GpsCodec.Upgrade(field, GpsCodec.MemberType(typeof(MapGenerator), field.name), Profile.Key)).ToArray();
+            .Select(field => GpsCodec.Upgrade(field, GpsCodec.MemberType(typeof(MapGenerator), field.name), Profile.Key))
+            .Select(field => ReplaceMissingAssets(field, current?.fields.Find(node => node.name == field.name))).ToArray();
+    }
+    // Saves also outlive asset swaps (e.g. a replaced layer background): a reference the profile no longer knows
+    // takes the profile's current asset at the same place instead of rejecting the whole save.
+    static GpsValue ReplaceMissingAssets(GpsValue saved, GpsValue current)
+    {
+        if (saved == null) return null;
+        if (saved.kind == GpsValueKind.Reference)
+        {
+            if (string.IsNullOrEmpty(saved.text) || Profile.Resolve(saved.text)) return saved;
+            var replaced = saved.Copy();
+            replaced.text = current?.kind == GpsValueKind.Reference ? current.text : "";
+            Debug.LogWarning("Tiefenhall: Asset aus Spielstand fehlt (" + saved.name + ", " + saved.text + "), aktuelles wird verwendet.");
+            return replaced;
+        }
+        if (saved.children == null) return saved;
+        GpsValue result = null;
+        for (int i = 0; i < saved.children.Count; i++)
+        {
+            var child = saved.children[i];
+            var match = saved.kind == GpsValueKind.Array
+                ? (current?.children != null && i < current.children.Count ? current.children[i] : null)
+                : current?.children?.Find(node => node.name == child?.name);
+            var repaired = ReplaceMissingAssets(child, match);
+            if (repaired == child) continue;
+            result ??= saved.Copy();
+            result.children[i] = repaired;
+        }
+        return result ?? saved;
     }
     public static bool ValidateGeneration(GpsValue[] fields, int width, int height, out string error)
     {
