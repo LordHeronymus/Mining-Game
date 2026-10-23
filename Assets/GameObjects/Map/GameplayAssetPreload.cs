@@ -21,6 +21,12 @@ public static class GameplayAssetPreload
         // GameSaveSystem (first save of a new run), ExoticWorldContent, TerrainEdgeRubble
         ("SaveAssetCatalog", typeof(SaveAssetCatalog)), ("CraftingCatalog", typeof(CraftingCatalog)),
         ("Exotics/BlueprintCache", typeof(Sprite)), ("TerrainEdgeRubble", typeof(Material)),
+        // BoulderField, MapGenerator (storage hut): synchronous loads in loading stage 7 (15–21 ms, player build)
+        ("Exotics/Boulder-Painted", typeof(Sprite)), ("Exotics/Boulder", typeof(Sprite)), ("Exotics/WorldLit", typeof(Material)),
+        ("SurfaceStorage/StorageHut", typeof(Sprite)),
+        // MiningCrackVisual (first mining hit: 75 ms in the player build), PlacedTorch, PlacedDynamite
+        ("Mining/MiningCracksFiveStages", typeof(Texture2D)), ("Mining/MiningCracksLit", typeof(Material)),
+        ("Torches/TorchHolderSprite", typeof(Sprite)), ("Exotics/LavaGlow", typeof(Sprite)),
     };
     // The requests also keep the loaded assets referenced until their owners pick them up.
     static readonly List<ResourceRequest> requests = new();

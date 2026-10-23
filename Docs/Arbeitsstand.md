@@ -13,6 +13,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
 | Claude Code (Cloud) | Challenges im HUD verfolgen (Stern, HUD-Liste rechts) und neue Kartenrahmen | `claude/challenge-tracking` | Cloud | `ChallengePanel.cs`, `ChallengeArt.cs`, neu `ChallengeTrackerHud.cs`/`MetaChallengeTracking.cs`, Profilfeld `trackedChallenges`, `CompactHud.cs` (eine Zeile in Awake) | nein | 23.10.2026 15:45 |
+| Claude Code (Cloud, Projekt-Thread „Cloud Play-, Optik- und Performance-Tests“) | Performance abschliessen (Übergabe Docs/Performance-Uebergabe.md), Play-Mode-Checks und Vorschaubilder in der Cloud | claude/compassionate-brahmagupta-32gx9j | Cloud | Loading (LoadingScreen, LoadingProgress, MapGenerator-Ladeablauf), GameSaveSystem.TestDirectory (Player-Build), UI-Panels Awake, Audio-Vorwärmen, GameplayAssetPreload, Tests/CI, Workflow, Tools/CloudDashboard | nein | 23.10.2026 12:45 (übernommen 12:50) |
 
 ## Zuletzt abgeschlossen
 

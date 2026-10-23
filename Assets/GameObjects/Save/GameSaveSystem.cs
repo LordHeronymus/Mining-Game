@@ -786,7 +786,7 @@ public static class GameSaveSystem
         {
             yield return lighting.PrepareForLoading(data, LoadingProgress.Report);
         }
-        LoadingProgress.SetStage(7); yield return null; yield return new WaitForEndOfFrame();
+        LoadingProgress.SetStage(7); yield return null; yield return LoadingProgress.EndOfFrame;
         MarkOpened(run);
         LoadingProgress.Complete();
     }
