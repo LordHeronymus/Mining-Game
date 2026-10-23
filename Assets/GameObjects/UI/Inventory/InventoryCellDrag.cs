@@ -4,6 +4,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 // Holding an inventory cell picks its item up (see ItemDragHold); InventoryUI moves the ghost to the cursor.
+// Right click opens the delete window for the item.
 public sealed class InventoryCellDrag : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler, IDragHandler
 {
     public InventoryUI owner;
@@ -14,6 +15,11 @@ public sealed class InventoryCellDrag : MonoBehaviour, IPointerClickHandler, IPo
     public void OnPointerClick(PointerEventData eventData)
     {
         if (hold.ConsumeClick()) return;
+        if (eventData.button == PointerEventData.InputButton.Right && owner && item != null)
+        {
+            owner.OpenDeleteDialog(item());
+            return;
+        }
         if (eventData.button != PointerEventData.InputButton.Left || eventData.clickCount != 2 ||
             !owner || item == null) return;
         owner.TryUseMedkit(item());
