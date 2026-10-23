@@ -163,7 +163,9 @@ public sealed class MetaProgressionUiProbe : MonoBehaviour
             Check(row && row.GetComponentInChildren<ExoticSealGraphic>(), recipe.exoticId + " has a crystalline exotic seal");
             Check(row.Find("Unlock Level").GetComponent<TMP_Text>().text == "Level " + recipe.metaUnlockLevel, recipe.exoticId + " shows exact level gate");
         }
-        int essentials = ExoticCatalog.AllRecipes.Count(r => r && r.output && !r.exotic);
+        // The collection leaves out the building components (nails, fabric, rope, steel) on purpose.
+        var components = new[] { Item.Nails, Item.Fabric, Item.Rope, Item.Steel };
+        int essentials = ExoticCatalog.AllRecipes.Where(r => r && r.output && !r.exotic && !components.Contains(r.output.item)).Distinct().Count();
         Check(essentials > 0 && blueprintScroll.content.Cast<Transform>().Count(t => t.name.StartsWith("Essential ")) == essentials, "All essential recipes are listed from the build catalog");
         foreach(var tile in blueprintScroll.content.Cast<Transform>().Where(t=>t.name.StartsWith("Essential ") || t.name.StartsWith("Blueprint "))) {
             Check(tile.Find("Icon").GetComponent<Image>().sprite && !tile.GetComponentsInChildren<TMP_Text>().Any(t=>t.isTextOverflowing), "Blueprint icon and text fit: "+tile.name);
