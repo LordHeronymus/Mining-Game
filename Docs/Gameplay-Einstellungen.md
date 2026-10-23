@@ -18,6 +18,7 @@ Im Play-Modus sind Standardwerte schreibgeschützt; dort dient F1 zum Ausprobier
 | Aufladen | Kosten je Energieeinheit | EnergyMonolyth; Rundung auf ganze Münzen erfolgt in der bestehenden Spiellogik. |
 | Map | Breite, Tiefe, Seed | MapGenerator. X wird zentriert, Y wächst ab 0 nach unten; neue Werte gelten bei nächstem Spielstart. |
 | Erzverteilung | Priorität im Katalog, Noise an/aus, Skalierung, Seed-Versatz, Tiefenkurve | Aktive BlockRegistry und ihre Block-Assets. |
+| Dünne Adern | Medium-Erze in dünnen Adern: an/aus, Mindestlänge, Medium min./max., Erzblöcke pro Medium, Streuung entlang der Ader, dicke Stellen bevorzugen, Adern mit Rich-Kern, je Erz | GPS/F1 → Erzverteilung → Dünne Adern (`GpsPreferences.thinVeinMedium`, `ThinVeinMediumSettings`). Gilt ab der nächsten neuen Welt; siehe `Docs/Erz-Reichhaltigkeit.md`. |
 | Abbau & Belohnung | Härte, Punkte, Beute-Gegenstand | Je Block-Asset; pro abgebautem Block wird ein Beute-Exemplar vergeben. |
 | Wirtschaft | Verkaufspreis je Stück, Kategorie der zugeordneten Beute | ItemSO; 0 ist nicht verkaufbar, im Verkaufsfenster werden nur Ore-Items angezeigt. |
 | Debug | JSON-Status, Speicherort, Override zurücksetzen | gameplay-settings.json in Application.persistentDataPath. Zurücksetzen bewahrt eine .bak-Datei. |
