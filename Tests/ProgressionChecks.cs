@@ -376,14 +376,16 @@ public static class ProgressionChecks
         Check(P.milestoneAwards.Any(a => a.id == "ms-sales-1") && world.resourceSources.Contains("cm:ms-sales-1"), "markers: setup world save carries the cm marker of a paid stage");
         Fresh("markers-b");
         MetaProgression.BeginRun("marker-world", world);
-        Check(!Run.resourceSources.Contains("cm:ms-sales-1") && !Run.resourceSources.Any(k => k.StartsWith("cr:", StringComparison.Ordinal)) &&
-            !P.milestoneAwards.Any(a => a.id == "ms-sales-1"), "markers: payout markers only the world save has are dropped");
+        // The world's payout markers are not trusted (the profile never paid them), but its lifetime share restores the
+        // counter, so the stage is paid again in this profile: once, with its XP.
+        Check(!Run.resourceSources.Any(k => k.StartsWith("cr:", StringComparison.Ordinal)) && Counter("sales") == 50000 &&
+            P.milestoneAwards.Count(a => a.id == "ms-sales-1") == 1 && P.periodRewardXp == P.milestoneAwards.Sum(a => (long)a.xp) && Total == Formula(P),
+            "markers: foreign payout markers are dropped; the restored lifetime share pays the stage once, with XP (" + Counter("sales") + " sales, " + P.periodRewardXp + " XP)");
         MetaProgression.Save(); MetaProgression.Reload();
-        Check(!P.milestoneAwards.Any(a => a.id == "ms-sales-1") && P.periodRewardXp == 0 && Total == Formula(P), "markers: a new session does not rebuild the stage as paid without XP");
+        Check(P.milestoneAwards.Count(a => a.id == "ms-sales-1") == 1 && Counter("sales") == 50000 && Total == Formula(P), "markers: a new session keeps the stage paid exactly once");
         MetaProgression.BeginRun("marker-world", world);
-        long before = Total;
         MetaProgression.RecordSale(50000);
-        Check(P.milestoneAwards.Count(a => a.id == "ms-sales-1") == 1 && Total - before >= 1000, "markers: the stage is earned again in the new profile, exactly once");
+        Check(P.milestoneAwards.Count(a => a.id == "ms-sales-1") == 1 && Counter("sales") == 100000 && Total == Formula(P), "markers: further sales never pay the stage twice");
         MetaProgression.EndRun();
         Fresh("markers-c");
         MetaProgression.BeginRun("own-world"); MetaProgression.RecordSale(50000);
