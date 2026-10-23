@@ -25,7 +25,7 @@ MonoBehaviour:
     flipY: 0
   output: {fileID: 11400000, guid: 68e5c7637ca9b694a9d7ca13f7e94729, type: 2}
   outputAmount: 1
-  shopPrice: 600
+  shopPrice: 1500
   pluralName: 
   ingredients:
   - item: {fileID: 11400000, guid: 2db8d69ab3b281f4bb7db704f45308c0, type: 2}
