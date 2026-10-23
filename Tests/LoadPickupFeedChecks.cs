@@ -6,10 +6,12 @@ using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 // Play Mode from the homescreen (isolated save directory): a new game still announces its starting items in the
-// item feed, but loading a saved run does not, so the pickup bling no longer plays on load.
+// item feed, but loading a saved run does not, so the pickup bling no longer plays on load. The run is loaded by a
+// double click on its card under "Spielstände", which starts it directly; a single click only selects it.
 public static class LoadPickupFeedChecks
 {
     static readonly Stack<IEnumerator> routines = new Stack<IEnumerator>();
@@ -89,7 +91,16 @@ public static class LoadPickupFeedChecks
         Check(GameSaveSystem.ActiveSlot == 1 && GameSaveSystem.GetSummary(1) != null, "New game creates slot 1");
         Check(fed > 0, "New game announces its starting items in the feed");
         RunNavigation.MainMenu(); yield return WatchUntilSettled();
-        Check(RunNavigation.LoadGame(1, out _), "Saved run can be loaded");
+        RefreshHome();
+        Button(Home.transform, "Save Games").onClick.Invoke(); yield return null;
+        var card = Button(UnityEngine.Object.FindFirstObjectByType<SaveSlotPanel>().transform, "Slot 1").gameObject;
+        ExecuteEvents.Execute(card, new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left, clickCount = 1 },
+            ExecuteEvents.pointerClickHandler);
+        yield return null;
+        Check(!RunNavigation.IsTransitioning && SaveSlotPanel.IsOpen, "Single click on a save only selects it");
+        ExecuteEvents.Execute(card, new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left, clickCount = 2 },
+            ExecuteEvents.pointerClickHandler);
+        Check(RunNavigation.IsTransitioning, "Double click on a save starts it");
         yield return WatchUntilSettled();
         Check(GameSaveSystem.ActiveSlot == 1 && InventoryManager.Instance &&
             resources.items.All(x => InventoryManager.Instance.GetCount(StartingResourcesSettings.Resolve(x.itemId)) == x.amount),
