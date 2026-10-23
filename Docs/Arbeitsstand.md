@@ -2,7 +2,7 @@
 
 Koordination zwischen den Agenten (Claude Code, Codex, Claude Cowork). Regeln siehe `CLAUDE.md` / `AGENTS.md` → „Zusammenarbeit mehrerer Agenten“.
 
-Arbeitsordner: `Git Repos/Mining Game` gehört dem Benutzer (sein Unity Editor), `Git Repos/Mining Game 2` ist die Testbank der Chats ohne festen Branch (`Tools/editor-bench.sh`); Chats arbeiten in eigenen Worktrees, siehe `AGENTS.md`. `Git Repos/Mining Game 3` ist ein solcher Worktree (kein Unity Editor) für Branch `claude/challenges-rework`, angelegt am 20.10.2026 für die lokalen Tests und den Merge des Challenges-Rework; nach dem Merge in `main` wird er nicht mehr gebraucht und darf entfernt werden (`git worktree remove "../Mining Game 3"`).
+Arbeitsordner: `Git Repos/Mining Game` gehört dem Benutzer (sein Unity Editor), `Git Repos/Mining Game 2` ist die Testbank der Chats ohne festen Branch (`Tools/editor-bench.sh`); Chats arbeiten in eigenen Worktrees, siehe `AGENTS.md`.
 
 ## Unity Editor
 
