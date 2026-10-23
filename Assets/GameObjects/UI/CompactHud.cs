@@ -87,6 +87,7 @@ public sealed class CompactHud : MonoBehaviour
         Build(); BuildDamageOverlay(); RefreshItems();
         var canvas = GetComponentInParent<Canvas>();
         hotbarOverlayParent = canvas ? canvas.rootCanvas.transform : null;
+        ChallengeTrackerHud.Attach(this);
     }
     void OnDisable()
     {
