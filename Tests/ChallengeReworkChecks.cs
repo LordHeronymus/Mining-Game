@@ -649,8 +649,11 @@ public static class ChallengeReworkChecks
         Check(Pr("probe-blocks") == b0 + 1 && Pr("probe-layer-blocks-2") == l0 + 1 && MetaProgression.CreditedBlocks == credited + 1, "replay: a new mined cell counts for blocks, its layer and CreditedBlocks");
         MetaProgression.RecordMinedBlock(cell, 2, false); MetaProgression.RecordMinedBlock(cell, 2, true);
         Check(Pr("probe-blocks") == b0 + 1 && MetaProgression.CreditedBlocks == credited + 1, "replay: the same cell counts once (also when blasted later)");
-        Check(MetaProgression.CurrentRun.resourceSources.Contains("mined:90001:-40"), "replay: mined cells use the ledger key mined:x:y");
         var snapshot = MetaProgression.CaptureRunState();
+        Check(MetaProgression.HasMinedBlock(cell) && (MetaProgression.WritesCellChunks
+                ? !RunSources().Any(k => k.StartsWith("mined:")) && snapshot.resourceSources.Any(k => k.StartsWith("#1M:2812:-3:"))
+                : RunSources().Contains("mined:90001:-40")),
+            "replay: the mined cell is in the cell ledger (record #1M:2812:-3, or mined:x:y while the chunk writer is off)");
         snapshot.resourceSources.AddRange(new[] { "l2-block:90002:-40", "l3-block:90003:-200", "xxl-layer:4:90004:-500", "xxl-layer:5:90005:-950", "surface-block:90006:0" });
         MetaProgression.BeginRun(runId, snapshot);
         credited = MetaProgression.CreditedBlocks; b0 = Pr("probe-blocks");
@@ -968,7 +971,22 @@ public static class ChallengeReworkChecks
                 new HashSet<string>(run.resourceSources).Count != run.resourceSources.Count) bad.Add(run.runId + " resourceSources");
         }
         Check(bad.Count == 0, label + ": runs satisfy the legacy ValidateRun rules (" + string.Join(", ", bad.Take(5)) + ")");
-        long expected = p.periodRewardXp + p.runs.Sum(r => (long)Math.Floor(r.progressXp + r.efficiencyXp) + r.challengeXp) +
+        if (MetaProgression.WritesCellChunks) {
+            // Chunk writer on: cells only as "#1" records that decode, one per (kind, cx, cy), and no in-domain legacy cell key.
+            var cellBad = new List<string>(); var rows = new uint[16];
+            foreach (var run in p.runs) {
+                var heads = new HashSet<(int, int, int)>();
+                foreach (string key in run.resourceSources) {
+                    if (string.IsNullOrEmpty(key)) continue;
+                    if (key.StartsWith("#1", StringComparison.Ordinal)) {
+                        if (!MetaCellLedger.TryDecode(key, rows, out int kind, out int cx, out int cy)) cellBad.Add(run.runId + " undecodable " + key);
+                        else if (!heads.Add((kind, cx, cy))) cellBad.Add(run.runId + " second record " + key);
+                    } else if (MetaCellLedger.TryParseLegacy(key, out int legacyKind, out int x, out int y) && MetaCellLedger.InDomain(legacyKind, x, y)) cellBad.Add(run.runId + " legacy " + key);
+                }
+            }
+            Check(cellBad.Count == 0, label + ": cells are stored as decodable chunk records, one per chunk, without legacy cell keys (" + string.Join(", ", cellBad.Take(5)) + ")");
+        }
+        long expected =p.periodRewardXp + p.runs.Sum(r => (long)Math.Floor(r.progressXp + r.efficiencyXp) + r.challengeXp) +
             p.completedMilestones.Sum(id => LegacyMilestones.TryGetValue(id, out int xp) ? xp : 0);
         Check(p.totalXp == expected, label + ": totalXp = periodRewardXp + run XP + legacy milestone XP (" + p.totalXp + " vs " + expected + ")");
         Check(p.challengeRounds.Sum(Paid) + AwardXp(p) <= p.periodRewardXp, label + ": round payouts and awards fit into periodRewardXp");

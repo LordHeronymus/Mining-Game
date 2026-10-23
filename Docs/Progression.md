@@ -36,7 +36,7 @@ Geprüft wird das mit `Tests/ProgressionChecks.cs` (Edit Mode, läuft in der Clo
 | `challengeXp`, `milestoneXp` | Run-Ziele bzw. alte Meilensteine dieser Welt |
 | `rewardXp` | Challenge-XP, die in dieser Welt verdient wurde (nur Anzeige, steckt schon in `periodRewardXp`) |
 | `earnedXp` | Anzeige der Run-XP: Summe der vier Felder oben |
-| `maxDepth`, `regions`, `discoveries`, `resources`, `resourceSources`, `crafts`, `exoticCrafts` | Wiederholungsschutz (Replay-Listen); `resourceSources` enthält auch die Challenge-Marker |
+| `maxDepth`, `regions`, `discoveries`, `resources`, `resourceSources`, `crafts`, `exoticCrafts` | Wiederholungsschutz (Replay-Listen); `resourceSources` enthält auch die Challenge-Marker und die Zellen-Blöcke (`#1…`, siehe „Grösse des Profils“) |
 | `objectiveIds`, `completedObjectives`, `milestones` | Run-Ziele und Meilensteine |
 | `tallies` | Zähler mit Wert und Höchststand (Verkauf, Herstellen, Platzieren) |
 | `ended`, `won` | Run beendet bzw. gewonnen |
@@ -60,14 +60,14 @@ totalXp = periodRewardXp
 | --- | --- | --- |
 | Neue Maximaltiefe | je 25 Blöcke min(150, 30 + 5·Stufe) | nur Zuwachs über `maxDepth` |
 | Gebiet erkundet (12×12 Zellen, ab 24 aufgedeckten) | 16·(1 + 0,6·min(1, Tiefe/1000)) | `regions` |
-| Erz | Gewicht·(n_neu^0,8 − n_alt^0,8) pro Erzart | Zellschlüssel `item:x:y` |
+| Erz | Gewicht·(n_neu^0,8 − n_alt^0,8) pro Erzart | Erz-Zelle im Zellen-Ledger (früher Schlüssel `item:x:y`); andere Quellen-IDs als Schlüssel `item:quelle` |
 | Entdeckung (Altar, Artefakt, Findling, Exotic) | 180 | `discoveries` |
 | Run-Ziele (3 pro Welt, „run-exotic“ ab Level 5) | 180–500 | `completedObjectives` |
 | Alte permanente Meilensteine | 250–8000 | `completedMilestones` |
 | Runden, Projekt, Boni, neue Meilensteinstufen | siehe `Docs/Challenges.md` | Rundenstatus (`done`, `paid`, `stagesPaid`, `bonusPaid`), Marker |
 
 - **Mengen ohne Quellen-ID** (Verkauf, Herstellen, platzierte Fackeln und Leitern) schützt ein Tally: gutgeschrieben wird nur Wachstum über den Höchststand, der nie sinkt. Jeder Höchststand steht zusätzlich als `tp:`-Marker im Ledger.
-- **Zellen** (aufgedeckt, abgebaut, Erz): ein Eintrag pro Zelle und Welt, siehe „Grösse des Profils“.
+- **Zellen** (aufgedeckt, abgebaut, Erz) prüft das Zellen-Ledger der Welt (`MetaCellLedger`): ein Bit pro Zelle, ein Eintrag pro Block von 32×16 Zellen und Art. Bis Schritt 2 schreibt das Spiel neue Zellen zusätzlich als alte Schlüssel, siehe „Grösse des Profils“.
 
 ## Level und Punkte (`MetaProgressionCatalog.cs`)
 
@@ -118,7 +118,36 @@ Ein einziger Schreiber mit zwei Wegen: `RequestSave` schreibt eine Kopie des Pro
 
 ## Grösse des Profils
 
-Offener Punkt der Prüfung vom 23.10.2026 (Fund F-01): Bisher steht für jede aufgedeckte und abgebaute Zelle jeder Welt ein Text-Eintrag im Profil. Die Behebung wird hier beschrieben, sobald sie umgesetzt ist.
+Fund F-01 der Prüfung vom 23.10.2026: Bisher stand für jede aufgedeckte, abgebaute und Erz-Zelle jeder Welt ein eigener Text im Profil (`revealed:x:d`, `mined:x:y`, `item:x:y`). Eine voll erkundete Welt von 600×1200 Feldern ergab rund 1,4 Millionen Texte und etwa 28 MB. Bei mehr als 2 Millionen Einträgen lehnte das Spiel den Run und damit das ganze Profil ab.
+
+**Zellen-Ledger** (`MetaCellLedger.cs`): Die Zellen einer Welt liegen als Bits in Blöcken von 32×16 Zellen, getrennt nach Art: `R` aufgedeckt, `M` abgebaut, `O<Item>` Erz (numerische Item-ID, `O3` = Kohle). Jeder Block ist ein Text im bestehenden `resourceSources` mit dem Präfix `#1`:
+
+- Beispiel `#1M:2812:-3:sER`: Art, Block-x (`x >> 5`), Block-y (`y >> 4`), Inhalt. Diese Zeile steht für die abgebaute Zelle (90001, −40).
+- Inhalt `f` (alle 512 Zellen), `s` mit bis zu 42 Zellnummern, `i` (alle ausser bis zu 42 Zellnummern), sonst `b` mit dem Bitfeld in Base64url (86 Zeichen). Ein Block hat höchstens 110 Zeichen.
+- Kein neues Format und kein neues JSON-Feld: Ältere Builds behalten, prüfen, vereinigen und schreiben diese Texte wie jeden anderen Ledger-Eintrag. Vereinigte Texte ergeben für die Zellen ein bitweises Oder.
+- Ein `#`-Text, der sich nicht lesen lässt (spätere Version, beschädigt), bleibt unverändert erhalten und führt nie zur Ablehnung.
+- Alle anderen Schlüssel (`vein:`, `harvest:`, `artifact-…`, `craft-upgrade:`, `gear-crafted:`, Marker) bleiben unveränderte Texte.
+
+**Grösse:** Eine voll erkundete Welt braucht noch höchstens etwa 7'500 Texte und 0,35–0,5 MB statt rund 1,4 Millionen Texte und 28 MB. Dasselbe gilt für die Kopie im Spielstand (`RunSaveState.progression`). Im Speicher sind es pro Welt etwa 1–2 MB statt 120–150 MB. Kopien des Runs für Spielstand und Hintergrund-Schreiben laufen über `CopyRun`, ohne JSON-Umweg.
+
+**Wiederholungsschutz:** Für jede Zelle im Bereich ±2^20 entscheidet das Ledger, ob sie neu ist. Ausserhalb (nur bei sehr grossen Welten oder Testaufrufen) gilt weiter der alte Textschlüssel. Ein alter Zellschlüssel, der sich nicht falten lässt (unbekannte Schreibweise des Minuszeichens, führende Nullen), schaltet für diese Welt zusätzlich die alte Textsuche ein. Der Schutz ist damit nie schwächer als bisher; verschiedene Schreibweisen derselben Zelle zählen nur noch einmal.
+
+**Migration:**
+
+- Beim Anhängen eines Runs (`BeginRun`, auch mit Spielstand) faltet das Spiel alte Zellschlüssel in das Ledger: `revealed:`, `mined:`, `l2-block:`, `l3-block:`, `xxl-layer:4:`, `xxl-layer:5:`, `surface-block:` und `item:x:y`, auch mit den Minus-Schreibweisen anderer Sprachen. Mehrere Blöcke derselben Zellen werden vereinigt.
+- Mit eingeschaltetem Schreiber verdichtet `EnsureLoaded` ein beschreibbares Profil einmalig (`CompactLedgers`) und schreibt es sofort im Hintergrund. Die Hauptdatei ist danach klein, die `.bak` nach dem nächsten Schreiben. Gesperrte Profile werden nicht verdichtet.
+- **Rettung:** Die Lesegrenze eines Runs steigt von 2 auf 6 Millionen Einträge (`MaxLedgerEntries`). Ein Profil, das bisher wegen mehr als 2 Millionen Einträgen abgelehnt wurde, lädt wieder und wird verdichtet. Danach lesen es auch ältere Builds.
+- Spielstand-Dateien werden beim Laden nicht umgeschrieben; erst ihr nächstes Speichern ist kompakt.
+
+**Rollout** (`MetaProgression.CellChunkWriter`):
+
+1. **Schritt 1 (diese Version, `CellChunkWriter = false`):** Das Spiel liest Blöcke, behält sie unverändert und nutzt das Ledger für jede Abfrage. Neue Zellen schreibt es weiter als alte Schlüssel in der bisherigen Schreibweise, beim Laden wird nichts verdichtet. Format und Grösse der Dateien bleiben wie bisher.
+2. **Schritt 2 (geplant, eine Zeile):** `CellChunkWriter = true`, sobald Schritt 1 in `main` ist. Dann schreibt das Spiel nur noch Blöcke und verdichtet alte Profile beim Laden. Erst damit wird das Profil klein.
+3. **Schritt 3 (eigener PR, nur nach Freigabe):** Der Profil-Schreibvorgang beim Speichern der Welt läuft im Hintergrund.
+
+**Lücke beim Downgrade:** Ein Build ohne Leser (vor Schritt 1) sieht Zellen nicht, die nur in Blöcken stehen. Lädt man dort einen älteren Spielstand, können erneut abgebaute oder aufgedeckte Zellen nochmals zählen (Erz-XP, Blöcke, Zellen). Verloren geht nichts: Der neue Build vereinigt beim nächsten Laden alle Blöcke und Schlüssel wieder. Darum kommt der Leser vor dem Schreiber.
+
+**Tests:** `MetaCellLedgerChecks` prüft Kodierung, Ledger, Migration, Rettung, Downgrade und beide Schreibermodi. `CellChunkWriterOverride` wählt den Modus, wirkt aber nur in isolierten Testprofilen (`TestDirectory`).
 
 ## Testverzeichnisse und GPS
 
@@ -132,5 +161,6 @@ Offener Punkt der Prüfung vom 23.10.2026 (Fund F-01): Bisher steht für jede au
 | --- | --- | --- |
 | `ProgressionChecks` | Edit, Cloud | Soll-Punkte 1–3, Absturz ohne Speichern, älterer Weltstand, Run-Ziele, Tallies, Marker, gesperrtes Profil, Run-Ende, Journal, Warnung, Katalog |
 | `MetaProgressionCoreChecks` | Edit, Cloud | Kurve, Belohnungen, Replay, Ausbau, Speichern, Validierung |
+| `MetaCellLedgerChecks` | Edit, Cloud | Zellen-Ledger: Kodierung, Faltung alter Schlüssel, Verdichtung, Rettung, Downgrade, beide Schreibermodi, Grösse |
 | `ChallengeReworkChecks`, `ChallengeCoreChecks`, `ChallengeSettingsChecks`, `ChallengeMigrationChecks` | Edit, Cloud | Runden, Zählstellen, Uhr, Zeitzonen, Meilensteine, Downgrade, Migration |
 | `MetaProgressionIntegrationChecks`, `GameplayLevelUpChecks`, `ProgressionTimelineChecks`, `ChallengeGameplayChecks`, `ChallengePeriodsChecks`, `MetaVictoryRuntimeChecks`, `MetaProgressionUiChecks` | Play, nur lokal | Weltstand und Profil im Spiel, Level-Up-Anzeige, Ergebnisanzeige |

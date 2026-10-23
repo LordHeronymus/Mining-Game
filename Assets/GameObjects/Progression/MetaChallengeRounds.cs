@@ -9,11 +9,13 @@ using UnityEngine;
 // marker in the current run's ledger, which older builds keep: "cx:"/"ct:"/"cs:" describe the paid round so it is
 // rebuilt exactly after an older build dropped it, "cr:" restores its paid tasks, "cm:" restores milestone awards on
 // load (RebuildAwards) and "tp:" keeps each run tally's peak (MergeTallies). Neither pays a second time.
+// Revealed, mined and ore cells live in the cell ledger as "#1" chunk records (MetaCellLedger); older builds keep and union them.
 public static partial class MetaProgression
 {
     // Older builds reject a run (and the whole profile) for a ledger string that is blank, longer or duplicated.
     const int MaxLedgerKey = 160;
     static readonly ChallengePeriod[] RoundPeriods = { ChallengePeriod.Daily, ChallengePeriod.Weekly, ChallengePeriod.Monthly };
+    // String fallback; the ledger folds these via MetaCellLedger.MinedPrefixes.
     static readonly string[] LegacyMinedKeys = { "l2-block:", "l3-block:", "xxl-layer:4:", "xxl-layer:5:", "surface-block:" };
     // Rounds shown while the profile cannot be written; never persisted.
     static readonly Dictionary<(int, long), MetaChallengeRound> transientRounds = new();
@@ -423,11 +425,8 @@ public static partial class MetaProgression
     public static void RecordMinedBlock(Vector3Int cell, int layer, bool blasted)
     {
         if (!HasRun() || run.ended) return;
-        string id = cell.x + ":" + cell.y, key = "mined:" + id;
-        if (sources.Contains(key)) return;
-        // Cells counted by the old layer-block challenges stay counted.
-        foreach (string legacy in LegacyMinedKeys) if (sources.Contains(legacy + id)) return;
-        sources.Add(key); run.resourceSources.Add(key);
+        // Cells counted by the old layer-block challenges stay counted (folded into the ledger, or HasLegacyKey).
+        if (!MarkCell(MetaCellLedger.Mined, cell.x, cell.y)) return;
         CreditedBlocks++;
         var gain = RecordChallenge("blocks", 1);
         if (layer > 0) Merge(ref gain, RecordChallenge("layer-blocks", 1, layer));
@@ -444,7 +443,7 @@ public static partial class MetaProgression
         gain.changed |= AddLifetime("veins", 1);
         Finish(gain);
     }
-    public static bool HasMinedOre(Item item, Vector3Int cell) => HasRun() && sources.Contains((int)item + ":" + cell.x + ":" + cell.y);
+    public static bool HasMinedOre(Item item, Vector3Int cell) => HasRun() && HasCell(MetaCellLedger.OreKind((int)item), cell.x, cell.y, (int)item);
     static bool IsPlacedMetric(string metric) => metric == "torches-placed" || metric == "ladders-placed";
     public static void RecordPlacedCount(string metric, int count)
     {
@@ -613,9 +612,7 @@ public static partial class MetaProgression
     public static void RecordRevealedCell(int x, int depth, bool award = true)
     {
         if (!HasRun() || run.ended || depth <= 0 || depth > 100000 || x < 0 || x > 100000) return;
-        string key = "revealed:" + x + ":" + depth;
-        if (!sources.Add(key)) return;
-        run.resourceSources.Add(key);
+        if (!MarkCell(MetaCellLedger.Revealed, x, depth)) return;
         Finish(award ? RecordChallenge("cells", 1) : default);
     }
     // Layer visits and trips are recorded by RecordLayerVisited and RecordReturn; kept for existing callers.
