@@ -10,6 +10,9 @@
       "name": "BughuntEditorLeakChecks"
     },
     {
+      "name": "BughuntEndScreenChecks"
+    },
+    {
       "name": "BughuntEntrySignChecks"
     },
     {
@@ -17,6 +20,9 @@
     },
     {
       "name": "BughuntGrassConversionChecks"
+    },
+    {
+      "name": "BughuntHotbarChecks"
     },
     {
       "name": "BughuntLadderEscapeChecks"
@@ -49,7 +55,7 @@
       "name": "MiningCrackChecks"
     },
     {
-      "name": "WorkbenchChecks"
+      "name": "WorldBorderChecks"
     },
     {
       "name": "CaveGenerationChecks"

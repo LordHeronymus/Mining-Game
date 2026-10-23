@@ -62,7 +62,8 @@ public static class BughuntWorkbenchRecipeRefreshChecks
                 Field<TextMeshProUGUI>(row, "count").text.EndsWith(" / " + amount));
 
             Detach(); panel.ShowPanel(true);
-            Detach(); panel.SelectRecipe(recipe);
+            // Selecting the already rendered recipe does not rebuild the rows, so only detach before a real rebuild.
+            if (panel.SelectedRecipe != recipe) { Detach(); panel.SelectRecipe(recipe); }
             Check(panel.IsOpen && panel.SelectedRecipe == recipe, "Werkbank offen, Probe-Rezept gewählt");
             Check(rows.Count == 1 && Shows(coal, 2) && content.childCount == 1, "Zutaten vor der Änderung: 2 Kohle (" + Rows() + ")");
 
