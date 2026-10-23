@@ -43,6 +43,10 @@ public static class SurfaceHeadlampChecks
             Check(Mathf.Abs(lighting.SurfaceHeadlampIntensity - lamp.intensity) < .001f,
                 $"Surface lamp must use the helmet brightness: {lighting.SurfaceHeadlampIntensity} vs {lamp.intensity}");
             Check(!lighting.HeadlampFieldActive, "The underground light field cannot cover the sky.");
+            var surfaceLamp = lighting.SurfaceHeadlamp;
+            Check(surfaceLamp && surfaceLamp.pointLightOuterAngle >= 360f && surfaceLamp.pointLightInnerAngle >= 360f,
+                "Surface lamp must shine all around, not as the forward cone of the helmet light.");
+            Check(surfaceLamp.pointLightOuterRadius >= 1.9f, $"Surface lamp must reach as far as underground: {surfaceLamp.pointLightOuterRadius}");
 
             Place(top + up * .25f);
             float halfway = lighting.SurfaceHeadlampIntensity;

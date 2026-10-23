@@ -614,6 +614,12 @@ public sealed class MapLighting : MonoBehaviour
             copy.name = "Surface headlamp";
             copy.hideFlags = HideFlags.DontSave;
             surfaceHeadlamp = copy.GetComponent<Light2D>();
+            // The helmet light is a forward cone; above ground it shines all around like the
+            // underground field and reaches as far (PlacedTorch.PropagationDistance cells).
+            surfaceHeadlamp.pointLightInnerAngle = 360f;
+            surfaceHeadlamp.pointLightOuterAngle = 360f;
+            surfaceHeadlamp.pointLightOuterRadius = PlacedTorch.PropagationDistance *
+                tiles.transform.TransformVector(Vector3.up * tiles.layoutGrid.cellSize.y).magnitude;
         }
         surfaceHeadlamp.transform.position = headlamp.transform.position;
         surfaceHeadlamp.color = headlamp.color;
@@ -621,6 +627,7 @@ public sealed class MapLighting : MonoBehaviour
         surfaceHeadlamp.enabled = true;
     }
 
+    public Light2D SurfaceHeadlamp => surfaceHeadlamp;
     public bool SurfaceHeadlampActive => surfaceHeadlamp && surfaceHeadlamp.enabled;
     public float SurfaceHeadlampIntensity => SurfaceHeadlampActive ? surfaceHeadlamp.intensity : 0f;
     public bool HeadlampFieldActive => headlampSourceActive;
