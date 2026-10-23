@@ -656,6 +656,8 @@ public static class GpsSettings
             else if (target is Rigidbody2D playerBody && node.name == "gravityScale" && playerBody.TryGetComponent(out PlayerMovement mover) &&
                 mover.HoldGravity((float)node.number)) return;
             else GpsCodec.Set(target, node.name, GpsCodec.Write(node, Profile.Resolve));
+            // Only a running StatsManager exists, so this needs no Play Mode gate.
+            if (effects && target is PlayerBaseStats stats && (node.name == "moveSpeed" || node.name == "reach")) StatsManager.Instance?.ApplyBaseStats(stats);
             if (!effects || !Application.isPlaying) return;
             if (target is MapGenerator map)
             {

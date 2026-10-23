@@ -64,6 +64,14 @@ public class StatsManager : MonoBehaviour
             ? InventoryManager.Instance.EnergyCapacityMultiplier : 1f);
     }
 
+    // F1/GPS changes the base stats during a run; the copies follow without resetting the run.
+    public void ApplyBaseStats(PlayerBaseStats changed)
+    {
+        if (!baseStats || changed != baseStats) return;
+        MoveSpeed = baseStats.moveSpeed;
+        Reach = baseStats.reach;
+    }
+
     public Action<int> OnMoneyChanged;
 
     void OnEnable()
@@ -132,6 +140,8 @@ public class StatsManager : MonoBehaviour
     void Update()
     {
         RefreshEnergyCapacity();
+        // A lowered maximum (F1/GPS) caps the current health, like the energy.
+        if (Health > MaxHealth) { Health = MaxHealth; OnHealthChanged?.Invoke(Health, MaxHealth); }
         float healthFraction = Health / MaxHealth;
         AudioManager.Instance?.SetLowHealthHeartbeat(LowHealthHeartbeatActive(Health, healthFraction));
 
