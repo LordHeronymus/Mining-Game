@@ -95,8 +95,10 @@ public static class GpsRuntimeChecks
         Check(Mathf.Approximately(Object.FindFirstObjectByType<PlayerMapDiscovery>().panelAlpha,.62f),"Map-alpha input uses shared normal field");
         Panel.SelectTab("Testeinstellungen");Button("+ Testmodus").onClick.Invoke();yield return null;
         Check(Panel.GetComponentsInChildren<TextMeshProUGUI>().Any(text=>text.text=="God Mode"),"Test controls exist in runtime tab");
-        Panel.SelectTab("Audio");Button("+ Einzelclips").onClick.Invoke();yield return null;
-        Check(Panel.GetComponentsInChildren<Button>().Any(button=>Caption(button)?.Contains("1")!=true && Caption(button)?.StartsWith("+ ")==true),"Audio clips are available");
+        Panel.SelectTab("Audio");yield return null;
+        var clipCategory=Panel.GetComponentsInChildren<Button>().FirstOrDefault(button=>Caption(button)?.StartsWith("+ ")==true && Caption(button).EndsWith(")"));
+        Check(clipCategory,"Audio tab lists clip categories");clipCategory.onClick.Invoke();yield return null;
+        Check(Panel.GetComponentsInChildren<Button>().Any(button=>Caption(button)=="Test"),"Audio clips are available");
         GpsRuntimePanel.Close();
         var cell=new Vector3Int(3,-5,0); Check(map.RemoveBlock(cell),"Isolated terrain cell removed");
         bool saved=false;string saveError=null;var owner=Object.FindFirstObjectByType<RunPauseMenu>();

@@ -334,7 +334,9 @@
           ${checks(status)}
           ${notes(run)}
         </div>
+        ${previews(run, status)}
         ${logPanel(status)}`;
+      loadPreviews(main);
 
       const log = main.querySelector(".cd-log");
       if (log && state.logPinned) log.scrollTop = log.scrollHeight;
@@ -418,6 +420,35 @@
           </details>`).join("")}</div>` : "";
       return `<section class="cd-panel"><p class="cd-label">Checks · ${passed} bestanden${failed ? ` · ${failed} fehlgeschlagen` : ""} · ${rows.length} total</p>
         <div class="cd-table-wrap"><table class="cd-table"><thead><tr><th>Status</th><th>Check</th><th>Modus</th><th>Zeit</th></tr></thead><tbody>${table}</tbody></table></div>${results}</section>`;
+    }
+
+    // Preview images of the run (branch ci-previews, runs/<number>/). Needs Contents: Read on the token.
+    const previewUrls = new Map();
+    function previews(run, status) {
+      const files = status && status.previews;
+      if (!files || !files.length) return "";
+      const tiles = files.map(file => {
+        const key = `${run.run_number}/${file}`;
+        const src = previewUrls.get(key);
+        return `<figure class="cd-preview"><a ${src && src !== "error" ? `href="${src}" target="_blank" rel="noopener"` : ""}><img data-preview="${esc(key)}" ${src && src !== "error" ? `src="${src}"` : ""} alt="${esc(file)}"></a>
+          <figcaption>${esc(src === "error" ? file + " (nicht ladbar: Schlüssel braucht Contents: Read)" : file)}</figcaption></figure>`;
+      }).join("");
+      return `<section class="cd-panel"><p class="cd-label">Vorschaubilder · ${files.length}</p><div class="cd-previews">${tiles}</div></section>`;
+    }
+    function loadPreviews(root) {
+      root.querySelectorAll("img[data-preview]:not([src])").forEach(img => {
+        const key = img.dataset.preview;
+        if (previewUrls.has(key)) return;
+        previewUrls.set(key, "");
+        const path = key.split("/").map(encodeURIComponent).join("/");
+        fetch(`https://api.github.com${repoPath()}/contents/runs/${path}?ref=ci-previews`, {
+          headers: { Accept: "application/vnd.github.raw", Authorization: `Bearer ${config.token}` }
+        }).then(r => r.ok ? r.blob() : Promise.reject(r.status)).then(blob => {
+          const url = URL.createObjectURL(blob);
+          previewUrls.set(key, url);
+          root.querySelectorAll(`img[data-preview="${CSS.escape(key)}"]`).forEach(el => { el.src = url; el.parentElement.href = url; el.parentElement.target = "_blank"; });
+        }).catch(() => previewUrls.set(key, "error"));
+      });
     }
 
     function notes(run) {

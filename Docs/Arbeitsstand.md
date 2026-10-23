@@ -12,10 +12,11 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud, Projekt-Thread „Cloud Play-, Optik- und Performance-Tests“) | Performance abschliessen (Übergabe Docs/Performance-Uebergabe.md), Play-Mode-Checks und Vorschaubilder in der Cloud | claude/compassionate-brahmagupta-32gx9j | Cloud | Loading (LoadingScreen, LoadingProgress, MapGenerator-Ladeablauf), GameSaveSystem.TestDirectory (Player-Build), UI-Panels Awake, Audio-Vorwärmen, GameplayAssetPreload, Tests/CI, Workflow, Tools/CloudDashboard | nein | 23.10.2026 12:45 (übernommen 12:50) |
 
 ## Zuletzt abgeschlossen
 
-- 23.10.2026, Claude Code (Cloud): Eingabefelder (Namensfeld „Neues Spiel“, Umbenennen, Suchen, GPS) mit fester Grundlinie, Text springt bei g/y nicht mehr hoch (`HomeUi.StyleInputField` nutzt `ButtonTextCentering` ohne Rahmen), Prüfskript `Tests/InputTextBaselineChecks.cs`; Branch `claude/input-text-baseline`, PR bereit für `main` (Freigabe und Optik-Abnahme Benutzer).
+- 23.10.2026, Claude Code (Cloud): Eingabefelder (Namensfeld „Neues Spiel“, Umbenennen, Suchen, GPS) mit fester Grundlinie, Text springt bei g/y nicht mehr hoch (`HomeUi.StyleInputField` nutzt `ButtonTextCentering` ohne Rahmen), Prüfskript `Tests/InputTextBaselineChecks.cs`; Branch `claude/input-text-baseline`, mit Freigabe des Benutzers per PR #63 in `main`.
 - 23.10.2026, Claude Code: Nacharbeiten gemalte Erze: `OreOverlayChecks` (Testfehler bei Seed/Kartengrösse aus GPS, zwei veraltete Balancing-Werte) und `OreVeinRuntimeChecks` (entfernte `OreVeinField`-API) repariert, `OreSparkleChecks` besteht unverändert; auf der Testbank alle grün; Cloud-Suite `smoke` (CaveGeneration/MetaProgressionCore) war schon seit 22.10. grün; Branch `claude/painted-ore-followups`, mit Freigabe des Benutzers per PR #60 in `main`.
 - 23.10.2026, Claude Code (Cloud): Fehlersuche über das ganze Spiel in vier Runden (161 Funde, 104 behoben, 15 bewusst offen, je Behebung ein Prüfskript in der Suite `bughunt`, Cloud-Läufe grün), Bericht `Docs/Fehlersuche-2026-10.md`; Branch `claude/bughunt`, PR bereit für `main` (Freigabe und lokale Abnahme Benutzer).
 - 23.10.2026, Claude Code: Unity-Importspuren bereinigt: `nameFileIdTable` in 11 Sprite-.meta versioniert (alle IDs = vorhandene internalIDs, Referenzen unverändert), Testbank nach erzwungenem Neuimport sauber; Branch `claude/sprite-meta-ids`, mit Freigabe des Benutzers per PR #61 in `main`.
