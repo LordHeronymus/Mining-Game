@@ -34,7 +34,7 @@ public static class MetaCellLedgerChecks
         lines.Clear(); passed = failed = 0;
         Directory.CreateDirectory("Temp");
         if (Application.isPlaying) return Finish("FAIL Edit Mode only: stop Play Mode before running MetaCellLedgerChecks");
-        if (MetaProgression.CurrentRun != null) return Finish("FAIL a run is active; run MetaCellLedgerChecks without a loaded world");
+        if (MetaProgression.RunActive) return Finish("FAIL a run is active; run MetaCellLedgerChecks without a loaded world");
         string previousDirectory = MetaProgression.TestDirectory;
         var previousClock = MetaProgression.ChallengeTestUtc;
         var previousSettings = MetaProgression.ChallengeSettingsOverride;

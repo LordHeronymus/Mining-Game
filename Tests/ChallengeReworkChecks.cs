@@ -82,7 +82,7 @@ public static class ChallengeReworkChecks
         lines.Clear(); passed = failed = 0; seq = 0; placed.Clear(); upgradeLevels.Clear(); gearUsed.Clear();
         Directory.CreateDirectory("Temp");
         if (Application.isPlaying) return Finish("FAIL Edit Mode only: stop Play Mode before running ChallengeReworkChecks");
-        if (MetaProgression.CurrentRun != null) return Finish("FAIL a run is active; run ChallengeReworkChecks without a loaded world");
+        if (MetaProgression.RunActive) return Finish("FAIL a run is active; run ChallengeReworkChecks without a loaded world");
         string previousDirectory = MetaProgression.TestDirectory;
         var previousClock = MetaProgression.ChallengeTestUtc;
         var previousSettings = MetaProgression.ChallengeSettingsOverride;

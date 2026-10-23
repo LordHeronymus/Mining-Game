@@ -69,6 +69,8 @@ public static partial class MetaProgression
     public static string ProfilePath => Path.Combine(DirectoryPath, "meta-progression.json");
     public static MetaProfile Profile { get { EnsureLoaded(); return profile; } }
     public static MetaRunState CurrentRun { get { EnsureLoaded(); return run; } }
+    // Whether a world is active, without loading a profile (Edit-Mode checks ask this before isolating theirs).
+    public static bool RunActive => run != null;
     public static MetaLoadout CurrentLoadout => CurrentRun?.loadout ?? neutralLoadout;
     public static int Level => MetaProgressionCatalog.LevelForXp(Profile.totalXp);
     public static long TotalXp => Profile.totalXp;
@@ -132,7 +134,8 @@ public static partial class MetaProgression
         } else if (best != null) {
             profile = best; recovered = bestPath != path;
             // Legacy cell keys are folded into chunk records once and written at once (main file now, .bak on the next write).
-            if (WriteChunks && CompactLedgers(profile)) { MarkDirty(); RequestSave(); }
+            // Not from Edit-Mode scripts: a check that only peeks at the shared user profile must never rewrite it.
+            if (WriteChunks && (Application.isPlaying || Isolated) && CompactLedgers(profile)) { MarkDirty(); RequestSave(); }
         } else {
             profile = new MetaProfile(); writeBlocked = any;
             if (any) LastError = "Das Fortschrittsprofil konnte nicht gelesen werden. Die Dateien bleiben erhalten.";
@@ -242,11 +245,15 @@ public static partial class MetaProgression
     }
     static MetaProgressionSettings CurrentSettings()
         => (GpsSettings.Preferences.metaProgression ?? new MetaProgressionSettings()).Sanitized();
-    public static MetaRunState CaptureRunState()
+    // World saves pass background: the worker writes the profile, so saving the world never waits for it. Level-ups and
+    // payouts are already on disk (MarkChanged); leaving a world (EndRun) still writes synchronously.
+    public static MetaRunState CaptureRunState(bool background = false)
     {
         EnsureLoaded();
         if (run == null) return null;
-        FlushCells(); Save(); return CopyRun(run);
+        FlushCells();
+        if (background) RequestSave(); else Save();
+        return CopyRun(run);
     }
     public static void EndRun()
     {

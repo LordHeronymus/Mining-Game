@@ -27,7 +27,7 @@ public static class ProgressionChecks
         lines.Clear(); passed = failed = crashes = seq = 0;
         Directory.CreateDirectory("Temp");
         if (Application.isPlaying) return Finish("FAIL Edit Mode only: stop Play Mode before running ProgressionChecks");
-        if (MetaProgression.CurrentRun != null) return Finish("FAIL a run is active; run ProgressionChecks without a loaded world");
+        if (MetaProgression.RunActive) return Finish("FAIL a run is active; run ProgressionChecks without a loaded world");
         string previousDirectory = MetaProgression.TestDirectory;
         var previousClock = MetaProgression.ChallengeTestUtc;
         var previousSettings = MetaProgression.ChallengeSettingsOverride;

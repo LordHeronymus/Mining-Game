@@ -89,7 +89,8 @@ Ein einziger Schreiber mit zwei Wegen: `RequestSave` schreibt eine Kopie des Pro
 | Level-Wechsel, Entdeckung, exotisches Rezept, jede Challenge-Auszahlung, jeder Meilenstein | sofort, Hintergrund (`MarkChanged`) |
 | Läuft gerade ein Hintergrund-Schreibvorgang | Nachschreiben im nächsten Frame nach dessen Ende (`PumpSaves`, jeden Frame, auch in Menüs und bei gesperrter Eingabe) |
 | Spielzeit | alle 5 s, Hintergrund |
-| Welt speichern/Autosave (`CaptureRunState`), `BeginRun`, `EndRun`, Game Over, Sieg, Ausbau, Beenden, App-Pause | synchron |
+| Welt speichern/Autosave (`CaptureRunState(background: true)`, seit Schritt 3) | Hintergrund: Das Speichern der Welt wartet nie auf das Profil |
+| `BeginRun`, `EndRun` (Welt verlassen), Game Over, Sieg, Ausbau, Beenden, App-Pause | synchron |
 
 **Absturzfenster:** Ein Level-Up oder eine Auszahlung geht nur verloren, wenn der Prozess innerhalb der wenigen Millisekunden des sofort gestarteten Schreibvorgangs endet. Gewöhnliche XP ohne Level-Wechsel sind höchstens 5 s alt.
 
@@ -139,7 +140,7 @@ Fund F-01 der Prüfung vom 23.10.2026: Bisher stand für jede aufgedeckte, abgeb
 **Migration:**
 
 - Beim Anhängen eines Runs (`BeginRun`, auch mit Spielstand) faltet das Spiel alte Zellschlüssel in das Ledger: `revealed:`, `mined:`, `l2-block:`, `l3-block:`, `xxl-layer:4:`, `xxl-layer:5:`, `surface-block:` und `item:x:y`, auch mit den Minus-Schreibweisen anderer Sprachen. Mehrere Blöcke derselben Zellen werden vereinigt.
-- Mit eingeschaltetem Schreiber verdichtet `EnsureLoaded` ein beschreibbares Profil einmalig (`CompactLedgers`) und schreibt es sofort im Hintergrund. Die Hauptdatei ist danach klein, die `.bak` nach dem nächsten Schreiben. Gesperrte Profile werden nicht verdichtet.
+- Mit eingeschaltetem Schreiber verdichtet `EnsureLoaded` ein beschreibbares Profil einmalig (`CompactLedgers`) und schreibt es sofort im Hintergrund. Die Hauptdatei ist danach klein, die `.bak` nach dem nächsten Schreiben. Gesperrte Profile werden nicht verdichtet, und Edit-Mode-Skripte verdichten das gemeinsame Benutzerprofil nie (nur im Spiel oder mit `TestDirectory`); Prüfskripte fragen vor dem Isolieren `MetaProgression.RunActive` statt `CurrentRun`, damit sie das Benutzerprofil gar nicht laden.
 - **Rettung:** Die Lesegrenze eines Runs steigt von 2 auf 6 Millionen Einträge (`MaxLedgerEntries`). Ein Profil, das bisher wegen mehr als 2 Millionen Einträgen abgelehnt wurde, lädt ab Schritt 1 wieder. Ab Schritt 2 wird es beim Laden verdichtet; erst danach lesen es auch ältere Builds.
 - Spielstand-Dateien werden beim Laden nicht umgeschrieben; erst ihr nächstes Speichern ist kompakt.
 
@@ -147,7 +148,7 @@ Fund F-01 der Prüfung vom 23.10.2026: Bisher stand für jede aufgedeckte, abgeb
 
 1. **Schritt 1 (diese Version, `CellChunkWriter = false`):** Das Spiel liest Blöcke, behält sie unverändert und nutzt das Ledger für jede Abfrage. Neue Zellen schreibt es weiter als alte Schlüssel in der bisherigen Schreibweise, beim Laden wird nichts verdichtet. Format und Grösse der Dateien bleiben wie bisher.
 2. **Schritt 2 (geplant, eine Zeile):** `CellChunkWriter = true`, sobald Schritt 1 in `main` ist. Dann schreibt das Spiel nur noch Blöcke und verdichtet alte Profile beim Laden. Erst damit wird das Profil klein.
-3. **Schritt 3 (eigener PR, nur nach Freigabe):** Der Profil-Schreibvorgang beim Speichern der Welt läuft im Hintergrund.
+3. **Schritt 3 (umgesetzt, Freigabe 23.10.2026):** Der Profil-Schreibvorgang beim Speichern der Welt läuft im Hintergrund.
 
 **Lücke beim Downgrade:** Ein Build ohne Leser (vor Schritt 1) sieht Zellen nicht, die nur in Blöcken stehen. Lädt man dort einen älteren Spielstand, können erneut abgebaute oder aufgedeckte Zellen nochmals zählen (Erz-XP, Blöcke, Zellen). Verloren geht nichts: Der neue Build vereinigt beim nächsten Laden alle Blöcke und Schlüssel wieder. Darum kommt der Leser vor dem Schreiber.
 
