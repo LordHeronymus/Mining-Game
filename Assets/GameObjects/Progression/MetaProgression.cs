@@ -32,8 +32,8 @@ public static partial class MetaProgression
     static MetaCellLedger cells;
     // Read limit of a run ledger (older builds: 2,000,000). Covers every run a 64 MiB profile can hold; this build writes a few thousand.
     const int MaxLedgerEntries = 6000000;
-    // Step 1 ships false (chunks are read and kept, new cells are still written as legacy keys); Step 2 sets true.
-    static readonly bool CellChunkWriter = false;
+    // Step 1 shipped false (chunks are read and kept, new cells are still written as legacy keys); Step 2 sets true.
+    static readonly bool CellChunkWriter = true;
     public static bool? CellChunkWriterOverride { get; set; }   // tests; honoured only in isolated profiles
     static bool WriteChunks => Isolated && CellChunkWriterOverride.HasValue ? CellChunkWriterOverride.Value : CellChunkWriter;
     // The writer mode of the current run's ledger (fixed when the run was attached), else the mode the next run gets.

@@ -62,14 +62,14 @@ totalXp = periodRewardXp
 | --- | --- | --- |
 | Neue Maximaltiefe | je 25 Blöcke min(150, 30 + 5·Stufe) | nur Zuwachs über `maxDepth` |
 | Gebiet erkundet (12×12 Zellen, ab 24 aufgedeckten) | 16·Tiefenfaktor | `regions` |
-| Erz | Gewicht·(n_neu^e − n_alt^e)·Tiefenfaktor pro Erzart, e = 1 | Erz-Zelle im Zellen-Ledger (bis Schritt 2 schreibt das Spiel neue Erz-Zellen weiter als `item:x:y`); andere Quellen-IDs als Schlüssel `item:quelle` |
+| Erz | Gewicht·(n_neu^e − n_alt^e)·Tiefenfaktor pro Erzart, e = 1 | Erz-Zelle im Zellen-Ledger (Blöcke `#1O<Item>:`; alte `item:x:y` werden gefaltet); andere Quellen-IDs als Schlüssel `item:quelle` |
 | Entdeckung (Altar, Artefakt, Findling, Exotic) | 180·Tiefenfaktor | `discoveries` |
 | Run-Ziele (3 pro Welt, „run-exotic“ ab Level 5) | 180–500 | `completedObjectives` |
 | Alte permanente Meilensteine | 250–8000 | `completedMilestones` |
 | Runden, Projekt, Boni, neue Meilensteinstufen | siehe `Docs/Challenges.md` | Rundenstatus (`done`, `paid`, `stagesPaid`, `bonusPaid`), Marker |
 
 - **Mengen ohne Quellen-ID** (Verkauf, Herstellen, platzierte Fackeln und Leitern) schützt ein Tally: gutgeschrieben wird nur Wachstum über den Höchststand, der nie sinkt. Jeder Höchststand steht zusätzlich als `tp:`-Marker im Ledger.
-- **Zellen** (aufgedeckt, abgebaut, Erz) prüft das Zellen-Ledger der Welt (`MetaCellLedger`): ein Bit pro Zelle, ein Eintrag pro Block von 32×16 Zellen und Art. Bis Schritt 2 schreibt das Spiel neue Zellen zusätzlich als alte Schlüssel, siehe „Grösse des Profils“.
+- **Zellen** (aufgedeckt, abgebaut, Erz) prüft das Zellen-Ledger der Welt (`MetaCellLedger`): ein Bit pro Zelle, ein Eintrag pro Block von 32×16 Zellen und Art. Seit Schritt 2 schreibt das Spiel nur noch Blöcke.
 
 ## Level und Punkte (`MetaProgressionCatalog.cs`)
 
@@ -146,8 +146,8 @@ Fund F-01 der Prüfung vom 23.10.2026: Bisher stand für jede aufgedeckte, abgeb
 
 **Rollout** (`MetaProgression.CellChunkWriter`):
 
-1. **Schritt 1 (diese Version, `CellChunkWriter = false`):** Das Spiel liest Blöcke, behält sie unverändert und nutzt das Ledger für jede Abfrage. Neue Zellen schreibt es weiter als alte Schlüssel in der bisherigen Schreibweise, beim Laden wird nichts verdichtet. Format und Grösse der Dateien bleiben wie bisher.
-2. **Schritt 2 (geplant, eine Zeile):** `CellChunkWriter = true`, sobald Schritt 1 in `main` ist. Dann schreibt das Spiel nur noch Blöcke und verdichtet alte Profile beim Laden. Erst damit wird das Profil klein.
+1. **Schritt 1 (PR #51, `CellChunkWriter = false`):** Das Spiel liest Blöcke, behält sie unverändert und nutzt das Ledger für jede Abfrage. Neue Zellen schreibt es weiter als alte Schlüssel in der bisherigen Schreibweise, beim Laden wird nichts verdichtet. Format und Grösse der Dateien bleiben wie bisher.
+2. **Schritt 2 (umgesetzt, Freigabe 23.10.2026):** `CellChunkWriter = true`. Dann schreibt das Spiel nur noch Blöcke und verdichtet alte Profile beim Laden. Erst damit wird das Profil klein.
 3. **Schritt 3 (umgesetzt, Freigabe 23.10.2026):** Der Profil-Schreibvorgang beim Speichern der Welt läuft im Hintergrund.
 
 **Lücke beim Downgrade:** Ein Build ohne Leser (vor Schritt 1) sieht Zellen nicht, die nur in Blöcken stehen. Lädt man dort einen älteren Spielstand, können erneut abgebaute oder aufgedeckte Zellen nochmals zählen (Erz-XP, Blöcke, Zellen). Verloren geht nichts: Der neue Build vereinigt beim nächsten Laden alle Blöcke und Schlüssel wieder. Darum kommt der Leser vor dem Schreiber.
