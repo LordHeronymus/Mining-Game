@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Traglast-Anzeige im HUD (ein-/ausschaltbar in Einstellungen → Anzeige) | `claude/hud-carry-weight` | Cloud | `CompactHud.cs` (neue Plakette links oben), `PlayerSettings.cs`, `SettingsPanel.cs` (Anzeige-Seite), neues Prüfskript | nein | 23.10.2026 15:50 |
 
 ## Zuletzt abgeschlossen
 
