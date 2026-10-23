@@ -7,7 +7,8 @@ using UnityEngine.UI;
 // (g, p, y) or an umlaut moves the caption; "Middle" uses the font's line box, which ignores the text but is not
 // optically centred either. This places the middle between baseline and cap height on the centre of the button's
 // visible inner frame and limits the font size so that Ä and g always stay inside the gold rim.
-// Offset and minimum gap: GPS → UI → Knopftexte. Captions without letters or digits (+, −, ×, arrows) centre their glyphs.
+// Horizontally, centred lines are placed by their visible ink instead of their advance widths.
+// Offset, minimum gap and ink centring: GPS → UI → Knopftexte. Captions without letters or digits (+, −, ×, arrows) centre their glyphs.
 [DisallowMultipleComponent]
 public sealed class ButtonTextCentering : MonoBehaviour
 {
@@ -27,6 +28,7 @@ public sealed class ButtonTextCentering : MonoBehaviour
 
     public Image Frame => frame;
     public float AppliedShift { get; private set; }
+    public float AppliedShiftX { get; private set; }
 
     // Centres every caption of the button: vertically centred labels whose box covers the middle of the frame.
     // Counts, hotkey numbers and card titles sit elsewhere in the button and keep their own alignment.
@@ -204,6 +206,8 @@ public sealed class ButtonTextCentering : MonoBehaviour
         }
         target += GpsSettings.Preferences.buttonTextOffset * head.pointSize;
         float shift = target - (top + bottom) / 2;
+        AppliedShiftX = 0;
+        if (GpsSettings.Preferences.buttonTextInkCenterX) CentreInk(info);
         if (Mathf.Abs(shift) < .001f) return;
         AppliedShift = shift;
         var offset = new Vector3(0, shift, 0);
@@ -223,6 +227,44 @@ public sealed class ButtonTextCentering : MonoBehaviour
         {
             ref var line = ref info.lineInfo[l];
             line.baseline += shift; line.ascender += shift; line.descender += shift;
+        }
+    }
+
+    // TMP centres a line by its advance widths, which include the side bearings of the first and last glyph
+    // (the space right of "n" is wider than left of "W"). Each centred line moves so that its visible ink sits
+    // where TMP put the middle of its advances.
+    void CentreInk(TMP_TextInfo info)
+    {
+        if (text.horizontalAlignment != HorizontalAlignmentOptions.Center) return;
+        for (int l = 0; l < info.lineCount; l++)
+        {
+            var line = info.lineInfo[l];
+            float inkLeft = float.MaxValue, inkRight = float.MinValue, advanceLeft = float.MaxValue, advanceRight = float.MinValue;
+            for (int i = line.firstVisibleCharacterIndex; i >= 0 && i <= line.lastVisibleCharacterIndex && i < info.characterCount; i++)
+            {
+                var c = info.characterInfo[i];
+                if (!c.isVisible || c.textElement == null) continue;
+                var m = c.textElement.glyph.metrics;
+                inkLeft = Mathf.Min(inkLeft, c.origin + m.horizontalBearingX * c.scale);
+                inkRight = Mathf.Max(inkRight, c.origin + (m.horizontalBearingX + m.width) * c.scale);
+                advanceLeft = Mathf.Min(advanceLeft, c.origin);
+                advanceRight = Mathf.Max(advanceRight, c.xAdvance);
+            }
+            if (inkLeft > inkRight) continue;
+            float shift = (advanceLeft + advanceRight) / 2 - (inkLeft + inkRight) / 2;
+            if (Mathf.Abs(shift) < .001f) continue;
+            if (l == 0) AppliedShiftX = shift;
+            var offset = new Vector3(shift, 0, 0);
+            for (int i = line.firstCharacterIndex; i <= line.lastCharacterIndex && i < info.characterCount; i++)
+            {
+                ref var c = ref info.characterInfo[i];
+                c.bottomLeft += offset; c.topLeft += offset; c.topRight += offset; c.bottomRight += offset;
+                c.origin += shift; c.xAdvance += shift;
+                if (!c.isVisible) continue;
+                var vertices = info.meshInfo[c.materialReferenceIndex].vertices;
+                if (vertices == null) continue;
+                for (int v = 0; v < 4; v++) vertices[c.vertexIndex + v] += offset;
+            }
         }
     }
 }
