@@ -36,6 +36,9 @@ public sealed class MapLighting : MonoBehaviour
     public const int SurfaceLightRows = 12;
     // By day the surface rows fade out over this many cells above the terrain (no hard edge).
     const float SurfaceLightDayFade = 1.5f;
+    // The surface background is not lit by Light2D (it is tinted by MoonlightController), so a glow
+    // overlay brightens it with the same field: above the near hills and the underground background.
+    const int SurfaceGlowSortingOrder = 32;
 
     static readonly int TerrainOcclusionTexId = Shader.PropertyToID("_TerrainOcclusionTex");
     static readonly int TerrainOcclusionRectId = Shader.PropertyToID("_TerrainOcclusionRect");
@@ -64,6 +67,10 @@ public sealed class MapLighting : MonoBehaviour
     Color32[] torchLightPixels;
     Color32[] torchUploadPatchPixels;
     Light2D torchLight;
+    GameObject surfaceGlow;
+    Material surfaceGlowMaterial;
+    Mesh surfaceGlowMesh;
+    MoonlightController moonlight;
     Material material;
     Mesh mesh;
     GameObject overlay;
@@ -139,6 +146,7 @@ public sealed class MapLighting : MonoBehaviour
             if (miner) headlamp = miner.headlamp;
         }
         sky = FindFirstObjectByType<SkyController>();
+        moonlight = FindFirstObjectByType<MoonlightController>();
         map.GenerationCompleted += RequestRebuild;
         Tilemap.tilemapPositionsChanged += TilesChanged;
         PlacedTorch.Changed += OnTorchChanged;
@@ -259,6 +267,7 @@ public sealed class MapLighting : MonoBehaviour
         {
             if (overlay) overlay.SetActive(false);
             if (torchLight) torchLight.enabled = false;
+            if (surfaceGlow) surfaceGlow.SetActive(false);
             if (surfaceHeadlamp) surfaceHeadlamp.enabled = false;
             SetUltroniumLightsActive(false);
             return;
@@ -295,6 +304,7 @@ public sealed class MapLighting : MonoBehaviour
     {
         UpdateTorchLighting();
         if (torchLight) torchLight.enabled = torchSources.Count > 0 || headlampSourceActive;
+        UpdateSurfaceGlow();
         UpdateSurfaceHeadlamp();
         UploadLightingTexture();
         if (!material) return;
@@ -482,6 +492,22 @@ public sealed class MapLighting : MonoBehaviour
         UploadTorchLightTexture();
         if (torchLight) torchLight.enabled = torchSources.Count > 0 || headlampSourceActive;
     }
+
+    void UpdateSurfaceGlow()
+    {
+        if (!surfaceGlow || !torchLight) return;
+        bool active = torchLight.enabled;
+        if (surfaceGlow.activeSelf != active) surfaceGlow.SetActive(active);
+        if (!active) return;
+        // Light2D multiplies the albedo; the background shows albedo × tint, so divide the tint out.
+        float night = sky && sky.isActiveAndEnabled ? sky.NightBlend : 0f;
+        Color tint = moonlight ? Color.Lerp(Color.white, moonlight.backgroundNightTint, night) : Color.white;
+        Color light = torchLight.color * torchLight.intensity;
+        surfaceGlowMaterial.SetColor("_GlowColor", new Color(light.r / Mathf.Max(.05f, tint.r),
+            light.g / Mathf.Max(.05f, tint.g), light.b / Mathf.Max(.05f, tint.b), 1f));
+    }
+
+    public bool SurfaceGlowActive => surfaceGlow && surfaceGlow.activeInHierarchy;
 
     // Cell 1 is the first row above the terrain. At night the field light continues unchanged.
     internal static float SurfaceLightScale(int cellsAboveTerrain, float night)
@@ -838,6 +864,7 @@ public sealed class MapLighting : MonoBehaviour
         torchLight.color = new Color(1f, .58f, .24f, 1f);
         torchLight.intensity = 1.25f;
         torchLight.shadowsEnabled = false;
+        CreateSurfaceGlow(lightHeight);
         material.SetTexture(TerrainOcclusionTexId, texture);
         material.SetVector(TerrainOcclusionRectId, new Vector4(bounds.min.x, bounds.min.y,
             1f / Mathf.Max(bounds.size.x, .001f), 1f / Mathf.Max(bounds.size.y, .001f)));
@@ -849,6 +876,42 @@ public sealed class MapLighting : MonoBehaviour
         dirtyTextureChunks.Clear();
         rebuild = false;
         progress?.Invoke(1f);
+    }
+
+    void CreateSurfaceGlow(int lightHeight)
+    {
+        surfaceGlowMaterial = new Material(darknessShader) { name = "Surface light glow", hideFlags = HideFlags.DontSave };
+        surfaceGlowMaterial.EnableKeyword("_SURFACE_GLOW");
+        surfaceGlowMaterial.SetFloat("_SrcBlend", (float)BlendMode.DstColor);
+        surfaceGlowMaterial.SetFloat("_DstBlend", (float)BlendMode.One);
+        surfaceGlowMaterial.mainTexture = torchLightTexture;
+        // From the bottom of the top terrain row to the top of the surface rows. The glow fades in
+        // over the top terrain row, where the hills of the surface background show through a shaft.
+        int left = -width / 2;
+        float bottomV = (height - 1f) / lightHeight;
+        surfaceGlowMesh = new Mesh { name = "Surface light glow", hideFlags = HideFlags.DontSave };
+        surfaceGlowMesh.vertices = new[] {
+            tiles.CellToLocal(new Vector3Int(left, 0, 0)),
+            tiles.CellToLocal(new Vector3Int(left + width, 0, 0)),
+            tiles.CellToLocal(new Vector3Int(left, 1 + SurfaceLightRows, 0)),
+            tiles.CellToLocal(new Vector3Int(left + width, 1 + SurfaceLightRows, 0)) };
+        surfaceGlowMesh.uv = new[] { new Vector2(0f, bottomV), new Vector2(1f, bottomV), Vector2.up, Vector2.one };
+        surfaceGlowMesh.uv2 = new[] { Vector2.zero, Vector2.zero,
+            new Vector2(0f, SurfaceLightRows + 1f), new Vector2(1f, SurfaceLightRows + 1f) };
+        surfaceGlowMesh.triangles = new[] { 0, 2, 1, 2, 3, 1 };
+        surfaceGlowMesh.RecalculateBounds();
+        surfaceGlow = new GameObject("Surface light glow") { hideFlags = HideFlags.DontSave, layer = gameObject.layer };
+        surfaceGlow.transform.SetParent(transform, false);
+        surfaceGlow.AddComponent<MeshFilter>().sharedMesh = surfaceGlowMesh;
+        var renderer = surfaceGlow.AddComponent<MeshRenderer>();
+        renderer.sharedMaterial = surfaceGlowMaterial;
+        renderer.sortingLayerName = "Background";
+        renderer.sortingOrder = SurfaceGlowSortingOrder;
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
+        renderer.lightProbeUsage = LightProbeUsage.Off;
+        renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+        surfaceGlow.SetActive(false);
     }
 
     void UpdatePixel(int index, float light)
@@ -959,6 +1022,12 @@ public sealed class MapLighting : MonoBehaviour
     void ReleaseResources()
     {
         if (torchLight) Destroy(torchLight.gameObject);
+        if (surfaceGlow) Destroy(surfaceGlow);
+        if (surfaceGlowMaterial) Destroy(surfaceGlowMaterial);
+        if (surfaceGlowMesh) Destroy(surfaceGlowMesh);
+        surfaceGlow = null;
+        surfaceGlowMaterial = null;
+        surfaceGlowMesh = null;
         if (torchLightSprite) Destroy(torchLightSprite);
         if (torchLightTexture) Destroy(torchLightTexture);
         if (overlay) { overlay.SetActive(false); Destroy(overlay); }

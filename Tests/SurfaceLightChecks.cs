@@ -53,6 +53,14 @@ public static class SurfaceLightChecks
             Check(Mathf.Approximately(spriteRows, map.GeneratedHeight + MapLighting.SurfaceLightRows),
                 $"Light sprite must cover the surface rows: {spriteRows} rows for map height {map.GeneratedHeight}");
 
+            Check(lighting.SurfaceGlowActive, "The surface background must receive the glow while the field shines.");
+            var glowObject = GameObject.Find("Surface light glow");
+            var glow = glowObject ? glowObject.GetComponent<MeshRenderer>() : null;
+            Check(glow && glow.sortingLayerName == "Background", "Surface glow must draw on the background layer.");
+            Color glowColor = glow.sharedMaterial.GetColor("_GlowColor");
+            Check(glowColor.r > torchLight.color.r * torchLight.intensity,
+                $"At night the glow must make up for the darkened background: {glowColor}");
+
             float top = Light(0), above = Light(1), higher = Light(4), far = Light(MapLighting.SurfaceLightRows + 2);
             Check(top > .05f, $"Top shaft cell must be lit: {top}");
             Check(above > .3f * top, $"Light must continue above the terrain without a hard edge: top {top}, above {above}");
