@@ -157,7 +157,7 @@ public class InventoryManager : MonoBehaviour
         return true;
     }
 
-    bool UnlockPowerup(ItemSO item, bool notify = true)
+    bool UnlockPowerup(ItemSO item, bool notify = true, bool announce = true)
     {
         if (!item || item.category != ItemCategory.Powerup || !_unlockedPowerups.Add(item.item)) return false;
         if (IsPickaxe(item)) SelectBestUnlockedPickaxe();
@@ -172,7 +172,7 @@ public class InventoryManager : MonoBehaviour
         if (notify)
         {
             OnInventoryChanged?.Invoke();
-            OnItemGained?.Invoke(item, 1);
+            if (announce) OnItemGained?.Invoke(item, 1);
         }
         return true;
     }
@@ -189,10 +189,11 @@ public class InventoryManager : MonoBehaviour
     // Explicitly configured starting resources are granted even when their weight exceeds
     // the normal carrying limit. The player can still be overweight after the run begins.
     // A powerup is unlocked once; a starting entry copied in F1 keeps the amount of the entry it came from.
-    public bool AddStartingItem(ItemSO item, int amount = 1)
+    // Without announce the item skips the item-gained feed, e.g. while a saved run replaces the inventory anyway.
+    public bool AddStartingItem(ItemSO item, int amount = 1, bool announce = true)
     {
         if (item && item.category == ItemCategory.Powerup) amount = Mathf.Min(1, amount);
-        return AddInternal(item, amount, enforceWeightLimit: false);
+        return AddInternal(item, amount, enforceWeightLimit: false, announce: announce);
     }
 
     // Moving items out of the storage hut is a transfer, not a find, so it skips the item-gained feed.
@@ -204,7 +205,7 @@ public class InventoryManager : MonoBehaviour
     bool AddInternal(ItemSO item, int amount, bool enforceWeightLimit, bool announce = true)
     {
         if (item && item.category == ItemCategory.Powerup)
-            return amount == 1 && UnlockPowerup(item);
+            return amount == 1 && UnlockPowerup(item, announce: announce);
         if (!item || amount <= 0 || GetCount(item) > int.MaxValue - amount ||
             (enforceWeightLimit && !CanFitWeight(item.EffectiveWeight * (double)amount))) return false;
 
