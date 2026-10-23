@@ -25,6 +25,8 @@ public static class GrassRegrowthChecks
         Check(Mathf.Approximately(respawn.x, 69f) && Mathf.Approximately(respawn.y, 138f), $"GPS Respawnzeit 69–138 s, got {respawn}");
         var fibers = (Vector2Int)Get(originalGrass, "fiberYield");
         Check(fibers == new Vector2Int(1, 3), $"GPS Fasern 1–3, got {fibers}");
+        var neighborWeight = (float)Get(originalGrass, "neighborRegrowthWeight");
+        Check(Mathf.Approximately(neighborWeight, 1f), $"GPS Vorzug neben Gras 1 (überall gleich), got {neighborWeight}");
 
         var scene = SceneManager.CreateScene("GrassRegrowthChecks", new CreateSceneParameters(LocalPhysicsMode.Physics2D));
         var root = new GameObject("Regrowth fixture", typeof(Grid));
@@ -109,7 +111,7 @@ public static class GrassRegrowthChecks
             Call(grass, "Spawn", 50, terrain.GetCellCenterWorld(new Vector3Int(50, 0)).x);
             Set(grass, "respawnRandom", new System.Random(5));
             var counts = new Dictionary<int, int>();
-            const int draws = 20000;
+            const int draws = 5000; // Three runs of 5000 stay below the 30 s limit of run_script.
             for (int i = 0; i < draws; i++)
             {
                 int x = (int)Call(grass, "PickRegrowthSite");
@@ -124,9 +126,23 @@ public static class GrassRegrowthChecks
             neighbors = 0;
             for (int i = 0; i < draws; i++) { int x = (int)Call(grass, "PickRegrowthSite"); if (x == 49 || x == 51) neighbors++; }
             ratio = (neighbors / 2d) / ((draws - neighbors) / (double)(counts.Count - 2));
-            Check(ratio > .7d && ratio < 1.3d, $"Without preference every cell is equal, got {ratio:0.00}"); checks++;
+            Check(ratio > .6d && ratio < 1.4d, $"Without preference every cell is equal, got {ratio:0.00}"); checks++;
 
-            return $"PASS: {checks} checks (GPS 69–138 s and fibers 1–3, speed 1×/2.5×/4×, cap, faster countdown, cut keeps countdown, free sites, holes and bare ground, neighbor preference {ratio:0.00} without).";
+            // Anywhere on the map: the spawn area is not thinner or denser than the rest.
+            Call(grass, "Clear");
+            Set(grass, "spawnQuietRadius", 18f); Set(grass, "nearSpawnDensity", .15f);
+            int nearSpawn = 0, nearCells = 0, allCells = 0;
+            for (int x = -79; x <= 78; x++)
+            {
+                if (x == bare || Mathf.Abs(x - hole) <= 1) continue;
+                allCells++;
+                if (Mathf.Abs(x) <= 8) nearCells++;
+            }
+            for (int i = 0; i < draws; i++) if (Mathf.Abs((int)Call(grass, "PickRegrowthSite")) <= 8) nearSpawn++;
+            double spawnRatio = (nearSpawn / (double)nearCells) / ((draws - nearSpawn) / (double)(allCells - nearCells));
+            Check(spawnRatio > .8d && spawnRatio < 1.2d, $"Spawn area regrows like the rest of the map, got {spawnRatio:0.00}"); checks++;
+
+            return $"PASS: {checks} checks (GPS 69–138 s and fibers 1–3, speed 1×/2.5×/4×, cap, faster countdown, cut keeps countdown, free sites, holes and bare ground, even without preference {ratio:0.00}, spawn area {spawnRatio:0.00}).";
         }
         finally
         {

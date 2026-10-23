@@ -58,6 +58,7 @@ public class BuyPage : MonoBehaviour
             .Concat(Resources.LoadAll<CraftingRecipe>("WorkbenchRecipes")).Where(r => r && r.output).Distinct().ToArray();
         foreach (Transform child in transform) child.gameObject.SetActive(false);
         moneyText = transform.parent.Find("CurrentMoney/Amount")?.GetComponent<TextMeshProUGUI>();
+        MoneyDisplay.Bind(moneyText);
         coin = Resources.LoadAll<Sprite>("GameOverCoin").FirstOrDefault();
         Build();
         Add(Item.Medkit, "MedkitRecipe");
@@ -149,7 +150,6 @@ public class BuyPage : MonoBehaviour
     }
     void Refresh()
     {
-        if (moneyText) moneyText.text = ShopMoneyFormatter.Format(observedStats ? observedStats.Money : 0);
         string query = SearchQuery.Trim();
         // Upgrade lines only show the bought steps and the next one (RecipeUnlocks.IsShopAvailable).
         var ordered = cards.Where(c => RecipeUnlocks.IsShopAvailable(c.recipe)).Where(c => query.Length == 0 || NameComparison.IndexOf(

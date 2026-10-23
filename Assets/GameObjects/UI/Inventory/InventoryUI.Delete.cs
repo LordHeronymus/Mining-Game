@@ -137,5 +137,6 @@ public partial class InventoryUI
     void OnDestroy()
     {
         foreach (var sprite in deleteSprites) if (sprite) Destroy(sprite);
+        DestroyEquipmentAssets();
     }
 }

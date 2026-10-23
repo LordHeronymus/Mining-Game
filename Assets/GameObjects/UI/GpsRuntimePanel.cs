@@ -310,6 +310,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
             return;
         }
         if (DrawOreFactors(node, label, path, indent, commit)) return;
+        if (DrawArtifactChances(record, root, node, spec, path, indent, commit)) return;
         if (node.name=="layerIndices" && node.kind==GpsValueKind.Array)
         {
             Label(content,label,new Vector2(20+Indent(indent),-rowY),new Vector2(600,32),21); rowY+=37;
@@ -338,6 +339,8 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
             {
                 var child = node.children[i];
                 if (GpsSchema.HideChild(type, child.name)) continue;
+                // Shown as its own row above the list (GpsRuntimePanel.Artifacts).
+                if (type == typeof(ArtifactDistributionSetting) && child.name == "chancePercent") continue;
                 var childSpec = node.kind == GpsValueKind.Array ? GpsSchema.ArraySpec(child,spec,i) : GpsSchema.ChildSpec(child, type);
                 DrawValue(record, root, child, childSpec, childSpec.label, path + "/" + i, indent + 1, node, commit);
                 if (node.kind == GpsValueKind.Array)
