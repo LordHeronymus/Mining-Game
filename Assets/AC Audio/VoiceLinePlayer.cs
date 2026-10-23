@@ -241,8 +241,8 @@ public sealed class VoiceLinePlayer : MonoBehaviour
         var take = library ? library.Take(play.trigger, play.line, play.take) : null;
         if (take == null || !take.clip) { director.Finished(now); return; }
         activeTake = take; activeClip = take.clip; source.clip = activeClip;
-        // Only forced test lines (F1) start during the full pause; they play through it.
-        testLine = GamePause.IsPaused; source.ignoreListenerPause = testLine;
+        // Only forced test lines (F1) play through the full pause; a regular line (e.g. after an interrupt fade) is held.
+        testLine = play.forced && GamePause.IsPaused; source.ignoreListenerPause = testLine;
         if (activeClip.loadState == AudioDataLoadState.Loaded) { StartClip(); return; }
         if (activeClip.loadState != AudioDataLoadState.Loading) activeClip.LoadAudioData();
         loading = true; loadingStart = now;
