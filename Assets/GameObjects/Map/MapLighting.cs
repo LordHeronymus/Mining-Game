@@ -28,6 +28,8 @@ public sealed class MapLighting : MonoBehaviour
     public Color ultroniumParticleColor = new Color(.53f, .34f, 1f, 1f);
     [SerializeField] Shader darknessShader;
     [SerializeField] Light2D headlamp;
+    // Height (in cells) above the terrain over which the surface lamp fades out towards the shaft.
+    const float SurfaceHeadlampFade = .5f;
 
     static readonly int TerrainOcclusionTexId = Shader.PropertyToID("_TerrainOcclusionTex");
     static readonly int TerrainOcclusionRectId = Shader.PropertyToID("_TerrainOcclusionRect");
@@ -69,6 +71,10 @@ public sealed class MapLighting : MonoBehaviour
     bool headlampSourceStateKnown, headlampSourceActive;
     float headlampSourceX = -1f, headlampSourceY = -1f;
     float headlampSourceIntensity;
+    // The light field only covers the terrain; above it a copy of the helmet light shines at night.
+    Light2D surfaceHeadlamp;
+    SkyController sky;
+    float headlampHeightAboveMap = float.NegativeInfinity;
     readonly HashSet<Vector3Int> changed = new HashSet<Vector3Int>();
     readonly Stopwatch timer = new Stopwatch();
     public bool IsReady => field != null;
@@ -125,6 +131,7 @@ public sealed class MapLighting : MonoBehaviour
             var miner = FindFirstObjectByType<MinerPlayerVisual>();
             if (miner) headlamp = miner.headlamp;
         }
+        sky = FindFirstObjectByType<SkyController>();
         map.GenerationCompleted += RequestRebuild;
         Tilemap.tilemapPositionsChanged += TilesChanged;
         PlacedTorch.Changed += OnTorchChanged;
@@ -138,6 +145,8 @@ public sealed class MapLighting : MonoBehaviour
         PlacedTorch.Changed -= OnTorchChanged;
         ReleaseResources();
         ReleaseUltroniumLights();
+        if (surfaceHeadlamp) Destroy(surfaceHeadlamp.gameObject);
+        surfaceHeadlamp = null;
     }
 
     void OnValidate()
@@ -243,6 +252,7 @@ public sealed class MapLighting : MonoBehaviour
         {
             if (overlay) overlay.SetActive(false);
             if (torchLight) torchLight.enabled = false;
+            if (surfaceHeadlamp) surfaceHeadlamp.enabled = false;
             SetUltroniumLightsActive(false);
             return;
         }
@@ -278,6 +288,7 @@ public sealed class MapLighting : MonoBehaviour
     {
         UpdateTorchLighting();
         if (torchLight) torchLight.enabled = torchSources.Count > 0 || headlampSourceActive;
+        UpdateSurfaceHeadlamp();
         UploadLightingTexture();
         if (!material) return;
         UpdateUltroniumLights();
@@ -513,18 +524,22 @@ public sealed class MapLighting : MonoBehaviour
         bool active = headlamp && headlamp.gameObject.activeInHierarchy &&
             headlamp.intensity > 0f && tiles && headlampField != null;
         float sourceX = -1f, sourceY = -1f;
+        headlampHeightAboveMap = float.NegativeInfinity;
         if (active)
         {
             Vector3 worldPosition = headlamp.transform.position;
             Vector3Int cell = tiles.WorldToCell(worldPosition);
             int cellX = cell.x + width / 2, cellY = -cell.y;
+            Vector3 right = tiles.transform.TransformVector(Vector3.right * tiles.layoutGrid.cellSize.x);
+            Vector3 up = tiles.transform.TransformVector(Vector3.up * tiles.layoutGrid.cellSize.y);
+            float rightSize = Mathf.Max(right.sqrMagnitude, .000001f);
+            float upSize = Mathf.Max(up.sqrMagnitude, .000001f);
+            // Row 0 is the top terrain row; its upper edge is where the light field ends.
+            if (cellX >= 0 && cellX < width && cellY < 0)
+                headlampHeightAboveMap = Vector3.Dot(worldPosition - tiles.CellToWorld(new Vector3Int(0, 1, 0)), up) / upSize;
             active = cellX >= 0 && cellX < width && cellY >= 0 && cellY < height;
             if (active)
             {
-                Vector3 right = tiles.transform.TransformVector(Vector3.right * tiles.layoutGrid.cellSize.x);
-                Vector3 up = tiles.transform.TransformVector(Vector3.up * tiles.layoutGrid.cellSize.y);
-                float rightSize = Mathf.Max(right.sqrMagnitude, .000001f);
-                float upSize = Mathf.Max(up.sqrMagnitude, .000001f);
                 if (tiles.HasTile(cell))
                 {
                     Vector3 playerPosition = headlamp.transform.parent
@@ -582,6 +597,33 @@ public sealed class MapLighting : MonoBehaviour
         headlampSourceY = sourceY;
         headlampSourceIntensity = intensity;
     }
+
+    void UpdateSurfaceHeadlamp()
+    {
+        float night = sky && sky.isActiveAndEnabled ? sky.NightBlend : 0f;
+        float fade = Mathf.Clamp01(headlampHeightAboveMap / SurfaceHeadlampFade);
+        float intensity = headlamp ? headlamp.intensity * night * fade : 0f;
+        if (intensity <= 0f || !headlamp || !headlamp.gameObject.activeInHierarchy)
+        {
+            if (surfaceHeadlamp) surfaceHeadlamp.enabled = false;
+            return;
+        }
+        if (!surfaceHeadlamp)
+        {
+            var copy = Instantiate(headlamp.gameObject, headlamp.transform.parent);
+            copy.name = "Surface headlamp";
+            copy.hideFlags = HideFlags.DontSave;
+            surfaceHeadlamp = copy.GetComponent<Light2D>();
+        }
+        surfaceHeadlamp.transform.position = headlamp.transform.position;
+        surfaceHeadlamp.color = headlamp.color;
+        surfaceHeadlamp.intensity = intensity;
+        surfaceHeadlamp.enabled = true;
+    }
+
+    public bool SurfaceHeadlampActive => surfaceHeadlamp && surfaceHeadlamp.enabled;
+    public float SurfaceHeadlampIntensity => SurfaceHeadlampActive ? surfaceHeadlamp.intensity : 0f;
+    public bool HeadlampFieldActive => headlampSourceActive;
 
     public void ApplyBackgroundLighting(MaterialPropertyBlock properties)
     {

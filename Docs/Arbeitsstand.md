@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Stirnlampe nachts an der Oberfläche | `claude/stirnlampe-oberflaeche` | Cloud | `MapLighting.cs` (Stirnlampe), `Tests/SurfaceHeadlampChecks.cs` | ja (Testbank) | 23.10.2026 15:45 |
 
 ## Zuletzt abgeschlossen
 
