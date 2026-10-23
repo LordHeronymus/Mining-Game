@@ -22,6 +22,7 @@ public class TileMiner : MonoBehaviour
     public Vector2 cursorPulseAlphaRange = new(.76f, 1f);
     [Min(1f)] public float cursorPulseSize = 1.05f;
     [FormerlySerializedAs("cursorBrightness"), Range(0f, 3f)] public float cursorGlowStrength = 1f;
+    [Range(0f, 3f)] public float smartCursorGlowStrength = 1.31f;
 
     private Dictionary<Vector3Int, float> progress = new();
     private readonly Dictionary<Vector3Int, float> lastMiningHitTime = new();
@@ -504,9 +505,10 @@ public class TileMiner : MonoBehaviour
     void UpdateHighlightPulse()
     {
         if (!highlightMap || !highlightedCell.HasValue) return;
-        float glowStrength = Mathf.Clamp(cursorGlowStrength, 0f, 3f);
+        // Below 1 the frame fades out (0 = invisible), above 1 it gets brighter. Normal and smart frame separately.
+        float glowStrength = Mathf.Clamp(highlightedSmartCursor ? smartCursorGlowStrength : cursorGlowStrength, 0f, 3f);
         if (highlightMaterial && highlightMaterial.HasProperty("_Color"))
-            highlightMaterial.SetColor("_Color", Color.white * glowStrength);
+            highlightMaterial.SetColor("_Color", Color.white * Mathf.Max(1f, glowStrength));
         float interval = Mathf.Max(.05f, cursorPulseInterval);
         float pulse = .5f + .5f * Mathf.Sin(Time.unscaledTime * (Mathf.PI * 2f / interval));
         float minAlpha = Mathf.Clamp01(Mathf.Min(cursorPulseAlphaRange.x, cursorPulseAlphaRange.y));
@@ -514,7 +516,7 @@ public class TileMiner : MonoBehaviour
         float alpha = Mathf.Lerp(minAlpha, maxAlpha, pulse);
         float size = Mathf.Lerp(1f, Mathf.Clamp(cursorPulseSize, 1f, 1.5f), pulse);
         highlightMap.SetColor(highlightedCell.Value,
-            new Color(1f, 1f, 1f, alpha * Mathf.Lerp(.3f, 1f, Mathf.Clamp01(glowStrength))));
+            new Color(1f, 1f, 1f, alpha * Mathf.Clamp01(glowStrength)));
         highlightMap.SetTransformMatrix(highlightedCell.Value, Matrix4x4.Scale(new Vector3(size, size, 1f)));
     }
 
