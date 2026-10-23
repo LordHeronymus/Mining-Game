@@ -793,6 +793,9 @@ public static class ChallengePanelPreviewChecks
         if (overflow.Count > 0) Info("HUD names shortened with ellipsis: " + string.Join(", ", overflow));
         panel.gameObject.SetActive(false);
         Render(hud, "ChallengeTracker-HUD");
+        hud.gameObject.SetActive(false);
+        Section("Tracker variants", () => TrackerVariants(canvas));
+        hud.gameObject.SetActive(true);
         panel.gameObject.SetActive(true);
 
         // Persistence: marks survive save and reload.
@@ -820,6 +823,45 @@ public static class ChallengePanelPreviewChecks
             "Daily marks end with their round: " + string.Join(", ", left));
         MetaProgression.ChallengeTestUtc = Now;
         Object.DestroyImmediate(hud.gameObject);
+    }
+    // One image per ChallengeTrackerHud.Variant, over a landscape with the counter frame above it as in the game.
+    static void TrackerVariants(Canvas canvas)
+    {
+        int previous = ChallengeTrackerHud.Variant;
+        var stage = new GameObject("Tracker Variant Stage", typeof(RectTransform)).GetComponent<RectTransform>();
+        stage.SetParent(canvas.transform, false); HomeUi.Stretch(stage);
+        try
+        {
+            var backdrop = new GameObject("Backdrop", typeof(RectTransform)).AddComponent<RawImage>();
+            backdrop.transform.SetParent(stage, false); HomeUi.Stretch(backdrop.rectTransform);
+            backdrop.texture = Resources.Load<Texture2D>("Homescreen/Layer1"); backdrop.color = backdrop.texture ? Color.white : new Color32(120, 150, 185, 255);
+            var counters = new GameObject("Counters Mock", typeof(RectTransform)).AddComponent<Image>();
+            counters.transform.SetParent(stage, false);
+            var rect = counters.rectTransform; rect.anchorMin = rect.anchorMax = rect.pivot = Vector2.one;
+            rect.sizeDelta = new Vector2(596, 106); rect.anchoredPosition = new Vector2(-18, -14);
+            counters.sprite = Resources.Load<Sprite>("HUDv1/Vitals"); counters.type = Image.Type.Sliced;
+            if (counters.sprite) { counters.pixelsPerUnitMultiplier = counters.sprite.rect.height / 85f; counters.material = HudV1Art.DarkWood(counters.sprite); }
+            for (int v = 0; v < ChallengeTrackerHud.VariantCount; v++)
+            {
+                var holder = new GameObject("Variant " + v, typeof(RectTransform)).GetComponent<RectTransform>();
+                holder.SetParent(stage, false); HomeUi.Stretch(holder);
+                ChallengeTrackerHud.Variant = v;
+                var tracker = ChallengeTrackerHud.Attach(holder);
+                tracker.Refresh(); Refresh(tracker);
+                Check(tracker.ShownCount == MetaProgression.TrackedShown, "Variant " + v + " shows " + tracker.ShownCount + " rows");
+                var frame = tracker.transform.Find("Tracker Panel") as RectTransform;
+                var corners = new Vector3[4]; frame.GetWorldCorners(corners);
+                var screen = new Vector3[4]; stage.GetWorldCorners(screen);
+                Check(corners[2].x < screen[2].x && corners[1].y <= screen[1].y, "Variant " + v + " stays on screen");
+                Render(stage, "ChallengeTracker-Variant-" + (v + 1));
+                Object.DestroyImmediate(holder.gameObject);
+            }
+        }
+        finally
+        {
+            ChallengeTrackerHud.Variant = previous;
+            Object.DestroyImmediate(stage.gameObject);
+        }
     }
     static List<string> HudNames(Component tracker) => tracker.GetComponentsInChildren<Transform>()
         .Where(t => t.name.StartsWith("Tracked ")).Select(t => t.Find("Name")?.GetComponent<TMP_Text>()?.text).ToList();
