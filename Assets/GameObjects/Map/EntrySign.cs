@@ -14,10 +14,12 @@ public sealed class EntrySign : MonoBehaviour
     public Button Button { get; private set; }
     public CanvasGroup Group { get; private set; }
     public TextMeshProUGUI Label { get; private set; }
+    // Optical axis as 0..1 of the sprite rect width (e.g. the roof peak), or negative for the visible-art centre.
+    public float Axis => axis;
     RectTransform rect;
     Material fontMaterial;
     SpriteRenderer source;
-    float baseY, parentScale = 1;
+    float baseY, parentScale = 1, axis = -1;
     Vector3 fittedScale, fittedPosition;
 
     // The building artwork is the largest sprite; smaller ones are signboards, lanterns or crystals.
@@ -45,6 +47,15 @@ public sealed class EntrySign : MonoBehaviour
         var max = new Vector3(Mathf.Lerp(bounds.min.x, bounds.max.x, xMax), Mathf.Lerp(bounds.min.y, bounds.max.y, yMax), bounds.max.z);
         bounds.SetMinMax(min, max);
         return bounds;
+    }
+
+    // World x the sign centres on. Hand-drawn buildings are not always symmetric (the workshop's left eave reaches
+    // further out than its right one), so a building may name the x of its roof peak instead of the visible centre.
+    public static float CentreX(SpriteRenderer renderer, float axis)
+    {
+        if (axis < 0 || !renderer.sprite) return VisibleBounds(renderer).center.x;
+        var bounds = renderer.bounds;
+        return Mathf.Lerp(bounds.min.x, bounds.max.x, renderer.flipX ? 1 - axis : axis);
     }
 
     static readonly System.Collections.Generic.Dictionary<Sprite, Rect> opaqueRects = new();
@@ -89,11 +100,12 @@ public sealed class EntrySign : MonoBehaviour
             (offset.x + (right + 1) / shrink) / spriteWidth, (offset.y + (top + 1) / shrink) / spriteHeight);
     }
 
-    public static EntrySign Create(Transform building, SpriteRenderer sprite, string caption, UnityAction onClick, int layer)
+    public static EntrySign Create(Transform building, SpriteRenderer sprite, string caption, UnityAction onClick, int layer, float axis = -1)
     {
         var canvasObject = new GameObject("EntrySign", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster), typeof(CanvasGroup));
         canvasObject.layer = layer;
         var sign = canvasObject.AddComponent<EntrySign>();
+        sign.axis = axis;
         sign.Build(building, sprite, caption, onClick);
         return sign;
     }
@@ -159,10 +171,11 @@ public sealed class EntrySign : MonoBehaviour
     {
         var building = rect.parent;
         parentScale = Mathf.Max(.0001f, Mathf.Abs(building.lossyScale.x));
-        // Centred over the visible artwork, with a fixed gap between the roof (or chimney) and the plaque.
+        // Centred over the visible artwork (or the building's roof peak), with a fixed gap between the roof
+        // (or chimney) and the plaque.
         var visible = VisibleBounds(source);
         baseY = visible.max.y + RoofGap + Height * WorldScale / 2;
-        rect.position = new Vector3(visible.center.x, baseY, building.position.z);
+        rect.position = new Vector3(CentreX(source, axis), baseY, building.position.z);
         rect.localScale = Vector3.one * (WorldScale / parentScale);
         fittedScale = building.lossyScale; fittedPosition = building.position;
     }

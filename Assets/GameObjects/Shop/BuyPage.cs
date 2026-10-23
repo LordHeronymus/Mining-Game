@@ -151,7 +151,8 @@ public class BuyPage : MonoBehaviour
     {
         if (moneyText) moneyText.text = ShopMoneyFormatter.Format(observedStats ? observedStats.Money : 0);
         string query = SearchQuery.Trim();
-        var ordered = cards.Where(c => query.Length == 0 || NameComparison.IndexOf(
+        // Upgrade lines only show the bought steps and the next one (RecipeUnlocks.IsShopAvailable).
+        var ordered = cards.Where(c => RecipeUnlocks.IsShopAvailable(c.recipe)).Where(c => query.Length == 0 || NameComparison.IndexOf(
                 c.recipe.output.displayName, query, CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) >= 0)
             .OrderBy(c => c.isUnlocked()).ThenBy(c => c.price).ToArray();
         var visible = new HashSet<RecipeCard>(ordered);
