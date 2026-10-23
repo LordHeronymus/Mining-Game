@@ -37,6 +37,7 @@ public sealed class MapLighting : MonoBehaviour
     const int MaximumUltroniumLights = 32;
     readonly List<TorchLightField.Source> torchSources = new List<TorchLightField.Source>();
     readonly HashSet<int> changedTorchCells = new HashSet<int>();
+    readonly HashSet<Vector2Int> torchFlameCells = new HashSet<Vector2Int>();
     readonly Vector4[] ultroniumSources = new Vector4[MaximumUltroniumLights];
     readonly List<Light2D> ultroniumLights = new List<Light2D>();
     readonly List<Vector3Int> visibleUltronium = new List<Vector3Int>();
@@ -196,9 +197,14 @@ public sealed class MapLighting : MonoBehaviour
         }
         overlay.SetActive(true);
         UpdateHeadlamp();
-        preparedForStreamingGeneration = true;
+        ExpectStreamedGenerationCompleted();
         progress?.Invoke(1f);
     }
+
+    // Only a streamed new map reports GenerationCompleted after this preparation; a restored
+    // save reported it earlier, so a kept flag would swallow the next "Map generieren".
+    void ExpectStreamedGenerationCompleted()
+        => preparedForStreamingGeneration = map && map.IsGenerationStreaming;
 
     public void NotifyTileChanged(Vector3Int cell)
     {
@@ -237,10 +243,13 @@ public sealed class MapLighting : MonoBehaviour
         foreach (var cell in changed)
         {
             bool solid = tiles.HasTile(cell);
-            field.SetSolid(cell.x + width / 2, -cell.y, solid);
-            if (torchField.SetSolid(cell.x + width / 2, -cell.y, solid))
+            int x = cell.x + width / 2, y = -cell.y;
+            field.SetSolid(x, y, solid);
+            // Torch light only changes if the last rebuild read this cell or it moves a torch light.
+            if (torchField.SetSolid(x, y, solid) &&
+                (torchField.CanChangeLight(x, y) || torchFlameCells.Contains(new Vector2Int(x, y))))
                 torchFieldDirty = true;
-            if (headlampField.SetSolid(cell.x + width / 2, -cell.y, solid))
+            if (headlampField.SetSolid(x, y, solid))
                 headlampFieldDirty = true;
             UpdateSolidityPixel(cell, solid);
         }
@@ -384,12 +393,15 @@ public sealed class MapLighting : MonoBehaviour
         {
             torchFieldDirty = false;
             torchSources.Clear();
+            torchFlameCells.Clear();
             foreach (var torch in PlacedTorch.Active)
             {
                 if (!torch || torch.OwnerMap != map) continue;
                 Vector3Int cell = tiles.WorldToCell(torch.LightPosition);
                 torchSources.Add(new TorchLightField.Source(
                     cell.x + width / 2, -cell.y, torch.Intensity));
+                Vector3Int flame = torch.FlameCell;
+                torchFlameCells.Add(new Vector2Int(flame.x + width / 2, -flame.y));
             }
             foreach (int index in torchField.Rebuild(torchSources))
                 changedTorchCells.Add(index);
@@ -857,6 +869,7 @@ public sealed class MapLighting : MonoBehaviour
         torchUploadPatch = null;
         torchUploadPatchPixels = null;
         torchSources.Clear();
+        torchFlameCells.Clear();
         changedTorchCells.Clear();
         torchFieldDirty = true;
         headlampFieldDirty = true;

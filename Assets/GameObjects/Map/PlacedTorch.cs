@@ -29,16 +29,20 @@ public sealed class PlacedTorch : MonoBehaviour
     public Vector3Int Cell => cell;
     public ItemSO Item => item;
     public bool IsLavaLamp => item && item.item == global::Item.LavaLamp;
+    Vector3 FlameLocalPosition => new Vector3(map ? map.torchFlameOffsetX : 0f,
+        map ? map.torchFlameOffsetY + LightAboveFlameEmitter : .42f, 0f);
+    // The only terrain cell the light position depends on: a tile here moves it into the holder cell.
+    public Vector3Int FlameCell => !IsLavaLamp && map && map.Terrain
+        ? map.Terrain.WorldToCell(transform.TransformPoint(FlameLocalPosition)) : cell;
     public Vector3 LightLocalPosition
     {
         get
         {
             if (IsLavaLamp) return Vector3.zero;
-            var offset = new Vector3(map ? map.torchFlameOffsetX : 0f,
-                map ? map.torchFlameOffsetY + LightAboveFlameEmitter : .42f, 0f);
+            var offset = FlameLocalPosition;
             if (!map || !map.Terrain) return offset;
             var terrain = map.Terrain;
-            if (!terrain.HasTile(terrain.WorldToCell(transform.TransformPoint(offset)))) return offset;
+            if (!terrain.HasTile(FlameCell)) return offset;
             Vector3 center = transform.InverseTransformPoint(terrain.GetCellCenterWorld(cell));
             float halfWidth = terrain.transform.TransformVector(
                 Vector3.right * terrain.layoutGrid.cellSize.x).magnitude * .5f;
