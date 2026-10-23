@@ -28,7 +28,13 @@
       "name": "BughuntExoticsChecks"
     },
     {
+      "name": "BughuntFallTunnelChecks"
+    },
+    {
       "name": "BughuntFocusPauseChecks"
+    },
+    {
+      "name": "BughuntGpsBoundsChecks"
     },
     {
       "name": "BughuntGpsFieldChecks"
