@@ -36,7 +36,7 @@ public sealed class LoadingScreen : MonoBehaviour
         GameplayInputBlocker.SetBlocked(curtainInput, true); Time.timeScale = 0;
         yield return FadeCurtain(1f, .25f);
         TransitionPhase = "BlackPreparation";
-        yield return new WaitForEndOfFrame();
+        yield return LoadingProgress.EndOfFrame;
         yield return null;
     }
 
@@ -159,7 +159,7 @@ public sealed class LoadingScreen : MonoBehaviour
     IEnumerator Load(string scene, bool byIndex)
     {
         if (!curtain || !curtain.gameObject.activeSelf || curtain.alpha < 1f) yield return FadeToBlack();
-        yield return new WaitForEndOfFrame();
+        yield return LoadingProgress.EndOfFrame;
         yield return null;
         TransitionPhase = "BlackSceneLoad";
         var operation = byIndex ? SceneManager.LoadSceneAsync(int.Parse(scene)) : SceneManager.LoadSceneAsync(scene);
@@ -168,7 +168,7 @@ public sealed class LoadingScreen : MonoBehaviour
             if (LoadingProgress.Stage == 0) LoadingProgress.Report(Mathf.Clamp01(operation.progress / .9f));
             yield return null;
         }
-        yield return new WaitForEndOfFrame();
+        yield return LoadingProgress.EndOfFrame;
         yield return null;
         // Start methods, native UI setup and asset integration can extend beyond
         // isDone. Render these settling frames behind the opaque curtain.

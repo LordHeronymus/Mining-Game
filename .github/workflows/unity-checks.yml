@@ -26,7 +26,8 @@ permissions:
   issues: write
 
 concurrency:
-  group: unity-checks-${{ github.ref }}
+  # Runs of different suites on the same branch may run side by side; a new run of the same selection replaces the old one.
+  group: unity-checks-${{ github.ref }}-${{ inputs.suite }}-${{ inputs.checks }}
   cancel-in-progress: true
 
 jobs:

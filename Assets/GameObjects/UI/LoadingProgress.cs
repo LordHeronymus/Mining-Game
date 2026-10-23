@@ -21,6 +21,10 @@ public static class LoadingProgress
     public static float Target { get; private set; }
     public static bool Ready { get; private set; }
     public static bool Active { get; private set; }
+    // The batchmode editor (cloud checks, Docs/Cloud-Tests.md) never renders a Game view, so WaitForEndOfFrame
+    // would never resume there; the next frame is close enough for loading and fades.
+    static readonly WaitForEndOfFrame endOfFrame = new();
+    public static object EndOfFrame => Application.isBatchMode ? null : endOfFrame;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetSession()
