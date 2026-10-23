@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Progression Folgeaufgaben: Testmodus ohne Challenges, Ausbauten in allen Welten, XP-Tiefenfaktor und Erz ohne Abnahme, Lebenszeit-Zähler je Welt, Challenge-Uhr mit Internetzeit und Selbstheilung; danach Zell-Ledger Schritt 2 und Profil-Schreiben im Hintergrund (Schritt 3) | claude/progression-followups | Cloud | Assets/GameObjects/Progression/* (MetaProgression*, MetaChallengeRounds, NetworkClock), GpsSchema.Fields, Tests/ProgressionChecks, MetaProgressionCoreChecks, ChallengeReworkChecks, MetaCellLedgerChecks, Docs/Progression.md, Docs/Challenges.md; Schritt 3 zusätzlich Save/GameSaveSystem | nein | 23.10.2026 12:10 |
 
 ## Zuletzt abgeschlossen
 

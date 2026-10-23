@@ -155,7 +155,8 @@ Ist eine Stufe nach dem Runden nicht grösser als die nächstniedrigere angebote
 **Determinismus:**
 
 - Der Zufall hängt nur vom Start des Zeitraums und vom Zeitraum ab, mit je einem eigenen `System.Random` für XXL, Projekt und Aufgaben. Unitys Zufallszustand bleibt unberührt.
-- Die Uhr zurückzustellen bringt nichts, weil die Profiluhr nur vorwärts läuft.
+- Die Uhr zurückzustellen bringt nichts: Bezahlte Runden bleiben über ihre Marker bezahlt. Massgebend ist die Internetzeit (ohne Netz die PC-Uhr); eine falsch in die Zukunft gestellte Uhr friert die Runden nicht ein (Details in `Docs/Progression.md`, „Challenge-Uhr“).
+- Im GPS-Testmodus zählen und zahlen Challenges nicht.
 - Nach einem Zeitzonenwechsel beginnt die nächste Runde frühestens dort, wo die alte endete.
 
 ## 3. Zählweise

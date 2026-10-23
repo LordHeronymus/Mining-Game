@@ -1024,7 +1024,7 @@ public static class MetaCellLedgerChecks
             startMoney = 50, startingTorches = 3, startingLadders = 4, buildReachBonus = .5f, carryCapacityBonus = 2.5f };
         if (type == typeof(MetaProgressionSettings)) return new MetaProgressionSettings { xpMultiplier = 2f, depthStep = 30, depthBaseXp = 31f, depthIncrementXp = 6f,
             depthMaxXp = 151f, explorationRegionSize = 16, explorationCellThreshold = 30, explorationXp = 17f, resourceXpMultiplier = 1.5f, discoveryXp = 181f,
-            efficiencyMaxBonus = .125f, efficiencyReferenceXpPerMinute = 101f };
+            efficiencyMaxBonus = .125f, efficiencyReferenceXpPerMinute = 101f, depthXpMaxFactor = 2.5f, depthXpFullDepth = 800, resourceXpExponent = .75f };
         return null;
     }
     static void CopyRunParityIn(bool writes)

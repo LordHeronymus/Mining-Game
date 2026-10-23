@@ -83,6 +83,7 @@ public static partial class MetaProgression
     {
         ClearSession(); testDirectory = null; Changed = null; ChallengeTestUtc = null;
         ChallengeSettingsOverride = null; ChallengeTimeZoneOverride = null; CreditedBlocks = 0; CellChunkWriterOverride = null;
+        CurrentDepth = 0; ChallengeTestModeOverride = null; NetworkClock.Reset();
     }
     static void ClearSession()
     {
@@ -219,17 +220,19 @@ public static partial class MetaProgression
         if (saved != null && (!ValidateRun(saved) || saved.runId != runId)) throw new ArgumentException("Invalid progression run snapshot.", nameof(saved));
         if (run != null) Save();
         var existing = profile.runs.Find(value => value.runId == runId);
+        var knownShares = Shares(existing);
         if (existing == null) {
-            existing = saved == null ? new MetaRunState { runId = runId, loadout = CreateLoadout(), settings = CurrentSettings() } : CopyRun(saved);
+            existing = saved == null ? new MetaRunState { runId = runId, settings = CurrentSettings() } : CopyRun(saved);
             existing.resourceSources.RemoveAll(IsPayoutMarker);
             profile.runs.Add(existing);
         } else if (saved != null) {
             MergeLedger(existing, saved);
-            // The world save controls its build. A profile ledger must never restore later
-            // inventory, learned recipes, starting supplies or a different loadout.
-            existing.loadout = Clone(saved.loadout);
             existing.ended = saved.ended;
         }
+        // Bought upgrades act in every world, also in worlds started earlier. Starting supplies (money, torches, ladders)
+        // are only handed out when a world is created, so loading a world never repeats them.
+        existing.loadout = CreateLoadout();
+        RestoreShares(knownShares, existing);
         run = existing;
         MarkTallyAware(run);
         if (run.objectiveIds.Count == 0) SelectObjectives(run);
@@ -311,8 +314,7 @@ public static partial class MetaProgression
         if (!regions.Add(id)) return;
         run.regions.Add(id);
         RecordChallenge("regions", 1);
-        double depthFactor = 1d + Math.Min(1d, Math.Max(0, depth) / 1000d) * .6d;
-        AwardProgress(run.settings.explorationXp * depthFactor); CheckChallenges(); MarkChanged(false);
+        AwardProgress(run.settings.explorationXp * DepthFactor(depth)); CheckChallenges(); MarkChanged(false);
     }
     // Natural world events should ALWAYS supply a stable source ID (normally the tile cell).
     // The amount-only overload is for an authoritative aggregate producer, never inventory changes.
@@ -325,12 +327,12 @@ public static partial class MetaProgression
         if (sourceId != null) {
             if (sourceId.Length == 0 || sourceId.Length > 144) return;
             // "x:y" is the cell of a mined ore block (same identity as the Vector3Int overload); other ids stay string keys.
-            bool fresh = MetaCellLedger.TryParseCell(sourceId, 0, out int x, out int y)
-                ? MarkCell(MetaCellLedger.OreKind((int)item), x, y, (int)item, sourceId)
-                : AddLedgerKey((int)item + ":" + sourceId);
+            bool cell = MetaCellLedger.TryParseCell(sourceId, 0, out int x, out int y);
+            bool fresh = cell ? MarkCell(MetaCellLedger.OreKind((int)item), x, y, (int)item, sourceId) : AddLedgerKey((int)item + ":" + sourceId);
             if (!fresh) return;
+            if (cell) { CreditResource(item, count, weight, -y); return; }
         }
-        CreditResource(item, count, weight);
+        CreditResource(item, count, weight, CurrentDepth);
     }
     // A mined ore block: the cell is the replay guard (the old key was "<item>:x:y").
     public static void RecordResource(Item item, int count, Vector3Int cell)
@@ -338,16 +340,17 @@ public static partial class MetaProgression
         if (!HasRun() || run.ended || count <= 0) return;
         double weight = MetaProgressionCatalog.ResourceWeight(item);
         if (weight <= 0d || !MarkCell(MetaCellLedger.OreKind((int)item), cell.x, cell.y, (int)item)) return;
-        CreditResource(item, count, weight);
+        CreditResource(item, count, weight, -cell.y);
     }
-    static void CreditResource(Item item, int count, double weight)
+    static void CreditResource(Item item, int count, double weight, int depth)
     {
         if (!resourceCounts.TryGetValue((int)item, out var counter)) {
             counter = new MetaResourceCount { item = (int)item };
             resourceCounts.Add(counter.item, counter); run.resources.Add(counter);
         }
         int next = (int)Math.Min(10000000L, counter.count + (long)count);
-        double reward = weight * (Math.Pow(next, .8d) - Math.Pow(counter.count, .8d)) * run.settings.resourceXpMultiplier;
+        double exponent = run.settings.resourceXpExponent;
+        double reward = weight * (Math.Pow(next, exponent) - Math.Pow(counter.count, exponent)) * run.settings.resourceXpMultiplier * DepthFactor(depth);
         long gained = next - counter.count;
         if (gained > 0) {
             RecordChallenge("resources", gained);
@@ -395,7 +398,7 @@ public static partial class MetaProgression
     {
         if (!HasRun() || run.ended || string.IsNullOrWhiteSpace(id) || id.Length > 160 || !discoveries.Add(id)) return;
         run.discoveries.Add(id); RecordChallenge("discoveries", 1);
-        AwardProgress(run.settings.discoveryXp); CheckChallenges(); MarkChanged(true);
+        AwardProgress(run.settings.discoveryXp * DepthFactor(CurrentDepth)); CheckChallenges(); MarkChanged(true);
     }
     public static void RecordCraft(Item item)
     {
@@ -407,6 +410,11 @@ public static partial class MetaProgression
         if (!HasRun() || run.ended || run.exoticCrafts.Contains((int)item)) return;
         run.exoticCrafts.Add((int)item); CheckChallenges(); MarkChanged(true);
     }
+    // Blocks below the surface where the player stands (MetaProgressionRuntime); depth of events without a cell of their own.
+    public static int CurrentDepth { get; set; }
+    // Deeper work pays more: 1 at the surface, rising linearly to depthXpMaxFactor at depthXpFullDepth (GPS, frozen per world).
+    static double DepthFactor(int depth)
+        => 1d + (run.settings.depthXpMaxFactor - 1d) * Math.Min(1d, Math.Max(0, depth) / (double)run.settings.depthXpFullDepth);
     static void AwardProgress(double amount)
     {
         if (amount <= 0d || double.IsNaN(amount) || double.IsInfinity(amount)) return;

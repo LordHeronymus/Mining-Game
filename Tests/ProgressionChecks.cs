@@ -49,6 +49,11 @@ public static class ProgressionChecks
             Section("run end", RunEnd);
             Section("journal", Journal);
             Section("save warning", SaveWarning);
+            Section("test mode", TestMode);
+            Section("depth factor", DepthFactor);
+            Section("upgrades in every world", UpgradesEverywhere);
+            Section("lifetime shares", LifetimeShares);
+            Section("network clock", NetworkClockParse);
             Section("catalog freeze", CatalogFreeze);
         } finally {
             try { MetaProgression.EndRun(); } catch (Exception e) { Check(false, "cleanup: EndRun threw " + Describe(e)); }
@@ -56,6 +61,7 @@ public static class ProgressionChecks
             MetaProgression.ChallengeTestUtc = previousClock;
             MetaProgression.ChallengeSettingsOverride = previousSettings;
             MetaProgression.ChallengeTimeZoneOverride = previousZone;
+            MetaProgression.ChallengeTestModeOverride = null; MetaProgression.CurrentDepth = 0;
             GpsSettings.Preferences.metaProgression = previousMeta;
             try { if (Directory.Exists(root)) Directory.Delete(root, true); } catch (Exception e) { lines.Add("INFO temporary profiles kept in " + root + ": " + e.Message); }
         }
@@ -467,6 +473,113 @@ public static class ProgressionChecks
         Check(MetaProgression.ProfileWarning != null && !string.IsNullOrEmpty(MetaProgression.LastError), "warning: a profile that cannot be written shows a warning (" + MetaProgression.ProfileWarning + ")");
         Check(File.ReadAllText(obstruction) == "preserve", "warning: the obstructing file is untouched");
         MetaProgression.EndRun();
+    }
+
+    // GPS "Testmodus aktiviert": challenge rounds and lifetime counters stand still, world XP still counts.
+    static long RoundProgress() => P.challengeRounds.Where(r => r != null).Sum(r => r.tasks.Sum(t => (long)t.progress));
+    static void TestMode()
+    {
+        Fresh("test-mode");
+        MetaProgression.BeginRun("test-mode-world");
+        MetaProgression.GetChallenges(ChallengePeriod.Daily);
+        long progress = RoundProgress(), period = P.periodRewardXp, sales = Counter("sales");
+        double world = Run.progressXp;
+        MetaProgression.ChallengeTestModeOverride = true;
+        Check(MetaProgression.ChallengesPaused, "test mode: the override pauses the challenges");
+        MetaProgression.RecordSale(5000); MetaProgression.RecordDepth(100); MetaProgression.RecordResource(Item.Iron, 5, "3:-40");
+        MetaProgression.RecordDiscovery("artifact:3:-41"); MetaProgression.RecordExploration(0, 3, 40);
+        Check(RoundProgress() == progress && P.periodRewardXp == period && Counter("sales") == sales,
+            "test mode: no challenge progress, no challenge XP and no lifetime count (" + (RoundProgress() - progress) + " progress, " + (Counter("sales") - sales) + " sales)");
+        Check(Run.progressXp > world, "test mode: world XP still counts");
+        MetaProgression.ChallengeTestModeOverride = false;
+        MetaProgression.RecordSale(5000); MetaProgression.RecordResource(Item.Iron, 5, "4:-40");
+        Check(Counter("sales") == sales + 5000, "test mode: switched off, lifetime counters count again (" + (Counter("sales") - sales) + ")");
+        MetaProgression.ChallengeTestModeOverride = null;
+        MetaProgression.EndRun();
+    }
+
+    // Deeper work pays more: ore, exploration and discoveries x1 at the surface up to x3 at 1000 blocks; ore never pays less.
+    static void DepthFactor()
+    {
+        Fresh("depth-factor");
+        MetaProgression.BeginRun("depth-factor-world");
+        Check(Run.settings.depthXpMaxFactor == 3f && Run.settings.depthXpFullDepth == 1000 && Run.settings.resourceXpExponent == 1f, "depth: defaults frozen in the world");
+        double Gain(Action award) { double before = Run.progressXp; award(); return Run.progressXp - before; }
+        double surface = Gain(() => MetaProgression.RecordResource(Item.Iron, 10, "5:0"));
+        double middle = Gain(() => MetaProgression.RecordResource(Item.Iron, 10, "6:-500"));
+        double deep = Gain(() => MetaProgression.RecordResource(Item.Iron, 10, "7:-1000"));
+        double deeper = Gain(() => MetaProgression.RecordResource(Item.Iron, 10, new Vector3Int(8, -3000, 0)));
+        Check(surface > 0 && Math.Abs(middle / surface - 2d) < 1e-9 && Math.Abs(deep / surface - 3d) < 1e-9 && Math.Abs(deeper / surface - 3d) < 1e-9,
+            "depth: the same ore pays x1 at the surface, x2 at 500 and x3 from 1000 blocks (" + surface + ", " + middle + ", " + deep + ", " + deeper + ")");
+        double again = Gain(() => MetaProgression.RecordResource(Item.Iron, 10, "9:0"));
+        Check(Math.Abs(again - surface) < 1e-9, "depth: later ore of the same kind pays as much as the first (continuing is not worse than a new world)");
+        double flat = Gain(() => MetaProgression.RecordExploration(0, 0, 0));
+        double low = Gain(() => MetaProgression.RecordExploration(0, 90, 1080));
+        Check(flat > 0 && Math.Abs(low / flat - 3d) < 1e-9, "depth: exploration x3 deep down (" + flat + ", " + low + ")");
+        double near = Gain(() => MetaProgression.RecordDiscovery("artifact:1:-1"));
+        MetaProgression.CurrentDepth = 1000;
+        double far = Gain(() => MetaProgression.RecordDiscovery("artifact:2:-1000"));
+        MetaProgression.CurrentDepth = 0;
+        Check(near > 0 && Math.Abs(far / near - 3d) < 1e-9, "depth: discoveries x3 at the player's depth (" + near + ", " + far + ")");
+        MetaProgression.EndRun();
+    }
+
+    // Bought upgrades act in every world, also in one created before the purchase.
+    static void UpgradesEverywhere()
+    {
+        Fresh("upgrades-everywhere");
+        Seed("upgrades-xp", 10000);
+        MetaProgression.BeginRun("upgrades-old-world");
+        var save = MetaProgression.CaptureRunState();
+        MetaProgression.EndRun();
+        Check(MetaProgression.Spend("health") && MetaProgression.GetRank("health") == 1, "upgrades: health bought between runs");
+        MetaProgression.BeginRun("upgrades-old-world", save);
+        Check(MetaProgression.GetRunRank("health") == 1 && MetaProgression.CurrentLoadout.healthMultiplier > 1f && Run.loadout.startMoney == 0,
+            "upgrades: an older world gets the bought rank, starting supplies are not handed out again");
+        var resaved = MetaProgression.CaptureRunState();
+        MetaProgression.EndRun();
+        Check(MetaProgression.RefundAll(), "upgrades: refund between runs");
+        MetaProgression.BeginRun("upgrades-old-world", resaved);
+        Check(MetaProgression.GetRunRank("health") == 0 && MetaProgression.CurrentLoadout.healthMultiplier == 1f, "upgrades: after a refund the world follows the profile again");
+        MetaProgression.EndRun();
+    }
+
+    // Each world keeps its share of the lifetime counters, so a profile that falls back to an older copy (or is lost)
+    // gets the counts back from the world saves, and nothing counts twice.
+    static void LifetimeShares()
+    {
+        Fresh("lifetime");
+        MetaProgression.BeginRun("lifetime-world");
+        MetaProgression.RecordSale(1000);
+        MetaProgression.CaptureRunState(); WaitForWriter();
+        string older = Path.Combine(root, "lifetime-older.json");
+        File.Copy(MetaProgression.ProfilePath, older, true);
+        MetaProgression.RecordSale(500);
+        var world = MetaProgression.CaptureRunState();
+        Check(Counter("sales") == 1500 && world.resourceSources.Contains("tp:lt:sales:1500"), "lifetime: the world save holds its share (1500)");
+        MetaProgression.EndRun(); WaitForWriter();
+        MetaProgression.Reload();
+        File.Copy(older, MetaProgression.ProfilePath, true);
+        foreach (string extra in new[] { ".bak", ".tmp" }) if (File.Exists(MetaProgression.ProfilePath + extra)) File.Delete(MetaProgression.ProfilePath + extra);
+        Check(Counter("sales") == 1000, "lifetime: the older profile only knows 1000 (" + Counter("sales") + ")");
+        MetaProgression.BeginRun("lifetime-world", world);
+        Check(Counter("sales") == 1500, "lifetime: loading the world restores the lost 500 (" + Counter("sales") + ")");
+        MetaProgression.EndRun();
+        MetaProgression.BeginRun("lifetime-world", world);
+        Check(Counter("sales") == 1500, "lifetime: loading it again adds nothing (" + Counter("sales") + ")");
+        MetaProgression.EndRun();
+        Fresh("lifetime-lost");
+        MetaProgression.BeginRun("lifetime-world", world);
+        Check(Counter("sales") == 1500, "lifetime: a lost profile gets the world's share back (" + Counter("sales") + ")");
+        MetaProgression.EndRun();
+    }
+
+    static void NetworkClockParse()
+    {
+        Check(NetworkClock.TryParse("Fri, 23 Oct 2026 12:34:56 GMT", out var utc) && utc == new DateTime(2026, 10, 23, 12, 34, 56, DateTimeKind.Utc) && utc.Kind == DateTimeKind.Utc,
+            "network clock: an HTTP Date header is read as UTC");
+        Check(!NetworkClock.TryParse(null, out _) && !NetworkClock.TryParse("gestern", out _), "network clock: a missing or broken header is ignored");
+        Check(!NetworkClock.Known || Math.Abs((NetworkClock.UtcNow - DateTime.UtcNow).TotalDays) < 400, "network clock: offset unknown in Edit Mode or plausible");
     }
 
     // Profiles and world saves are validated against these catalog values. Lowering or removing any of them makes

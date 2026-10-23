@@ -55,13 +55,15 @@ totalXp = periodRewardXp
 
 - Welt-Ereignisse kommen über `MetaProgressionRuntime` oder Aufrufer, die `MetaProgressionRuntime.RewardsAllowed` prüfen. Ausgeschaltet beim Laden, beim Szenenwechsel und in den Debugmodi (Fly, NoClip, God, NoEnergy, InfiniteMoney, NoWeight, Abbau- oder Bewegungsfaktor über 1).
 - Ein beendeter Run (`ended`) nimmt nichts mehr an.
+- **Tiefenfaktor:** Erz, Erkundung und Entdeckungen zählen tiefer mehr: ×1 an der Oberfläche, linear steigend bis ×3 ab 1000 Blöcken (GPS `depthXpMaxFactor`, `depthXpFullDepth`). Erz nimmt die Tiefe seiner Zelle, Entdeckungen die Tiefe des Spielers (`MetaProgression.CurrentDepth`).
+- **Weiterspielen lohnt sich:** Erz-XP nehmen pro Welt nicht mehr ab (GPS `resourceXpExponent` = 1; früher 0,8, das 1000. Kohlestück gab nur noch etwa ein Viertel). Eine neue Welt bringt so keinen Vorsprung mehr, tiefes Weiterspielen dagegen bis dreimal so viel.
 
 | Ereignis | XP (Standard) | Schutz vor Doppelzählung |
 | --- | --- | --- |
 | Neue Maximaltiefe | je 25 Blöcke min(150, 30 + 5·Stufe) | nur Zuwachs über `maxDepth` |
-| Gebiet erkundet (12×12 Zellen, ab 24 aufgedeckten) | 16·(1 + 0,6·min(1, Tiefe/1000)) | `regions` |
-| Erz | Gewicht·(n_neu^0,8 − n_alt^0,8) pro Erzart | Erz-Zelle im Zellen-Ledger (bis Schritt 2 schreibt das Spiel neue Erz-Zellen weiter als `item:x:y`); andere Quellen-IDs als Schlüssel `item:quelle` |
-| Entdeckung (Altar, Artefakt, Findling, Exotic) | 180 | `discoveries` |
+| Gebiet erkundet (12×12 Zellen, ab 24 aufgedeckten) | 16·Tiefenfaktor | `regions` |
+| Erz | Gewicht·(n_neu^e − n_alt^e)·Tiefenfaktor pro Erzart, e = 1 | Erz-Zelle im Zellen-Ledger (bis Schritt 2 schreibt das Spiel neue Erz-Zellen weiter als `item:x:y`); andere Quellen-IDs als Schlüssel `item:quelle` |
+| Entdeckung (Altar, Artefakt, Findling, Exotic) | 180·Tiefenfaktor | `discoveries` |
 | Run-Ziele (3 pro Welt, „run-exotic“ ab Level 5) | 180–500 | `completedObjectives` |
 | Alte permanente Meilensteine | 250–8000 | `completedMilestones` |
 | Runden, Projekt, Boni, neue Meilensteinstufen | siehe `Docs/Challenges.md` | Rundenstatus (`done`, `paid`, `stagesPaid`, `bonusPaid`), Marker |
@@ -74,7 +76,7 @@ totalXp = periodRewardXp
 - **Kurve:** Ein Level kostet `round(1000 + 5000·(1 − e^(−(L−1)/25)))` XP, also 1000 XP für Level 1→2 und gegen 6000 XP später. Höchstes Level 1000 (5'866'493 XP).
 - **Punkte:** ein Powerup-Punkt pro Level bis Level 200 (höchstens 199), ab Level 200 ein Komfortpunkt je 5 Level.
 - **Ausgeben nur im Hauptmenü** (`Spend`, `RefundAll`); synchron gespeichert, bei einem Fehler zurückgerollt.
-- **Loadout pro Welt:** Eine neue Welt übernimmt die aktuellen Ränge. Eine geladene Welt behält ihr gespeichertes Loadout (bewusst: Ausgeben verändert keine laufende Welt).
+- **Ausbauten wirken überall:** Jede Welt, neu oder geladen, bekommt beim Start die aktuellen Ränge des Profils (`BeginRun` → `CreateLoadout`). Startgeld, Fackeln und Leitern gibt es nur beim Erstellen einer Welt, Laden wiederholt sie nicht.
 - **Anzeige:** `GameplayLevelUpPresentation` zeigt mehrere Level-Ups als eine Medaille (von → bis), nur im laufenden Run.
 - **Katalog eingefroren:** Profile und Weltstände werden beim Laden gegen den Katalog geprüft (Meilenstein- und Run-Ziel-XP, IDs, Ränge, Schritte, Kosten, Levelkurve, Erzgewichte). Wer davon etwas senkt, entfernt oder umbenennt, macht bestehende Profile ungültig. Änderungen nur mit Migration; `ProgressionChecks` („catalog freeze“) schlägt sonst an. Neue Werte nur anhängen.
 
@@ -102,7 +104,8 @@ Ein einziger Schreiber mit zwei Wegen: `RequestSave` schreibt eine Kopie des Pro
 ## Challenges (Kurzfassung)
 
 - Je eine Runde täglich, wöchentlich (ab Montag) und monatlich in `profile.challengeRounds`, Grenzen in Ortszeit. Eine neue Runde wird beim ersten Zugriff nach Ablauf der alten gezogen.
-- `challengeClockUtc` läuft nur vorwärts: Die Uhr zurückzustellen öffnet keine bezahlte Runde wieder.
+- **Challenge-Uhr:** Massgebend ist die Internetzeit (`NetworkClock`: Date-Kopf eines bekannten Servers, einmal pro Sitzung, ohne Netz die PC-Uhr). `challengeClockUtc` merkt sich die späteste gesehene Zeit: Geht die Uhr bis zu 1 h zurück, verlängert das keine Runde. Liegt die gemerkte Zeit mehr als 1 h in der Zukunft (PC-Uhr war falsch gestellt), wird sie vergessen und eine Runde aus der Zukunft ersetzt; so friert keine Runde ein. Bezahlte Runden bleiben über ihre Marker bezahlt und werden an ihrem echten Tag nachgebaut.
+- **Testmodus:** Solange in den GPS „Testmodus aktiviert“ an ist (`GameplayTestSettings.IsActive`, nur Editor und Development-Build), zählen weder Challenge-Runden noch Lebenszeit-Zähler, und es gibt keine Challenge-XP (`MetaProgression.ChallengesPaused`). Welt-XP zählen weiter.
 - Auszahlungen gehen nach `periodRewardXp` (Haupt-Progression) und hinterlassen Marker im Ledger der laufenden Welt; ältere Builds bauen damit verlorene Runden und Stufen nach, ohne erneut zu zahlen.
 - Fortschritt gibt es nur während eines Runs.
 
@@ -111,7 +114,8 @@ Ein einziger Schreiber mit zwei Wegen: `RequestSave` schreibt eine Kopie des Pro
 - **Lesen:** Von Hauptdatei, `.bak` und `.tmp` gewinnt die gültige Datei mit der höchsten `revision`. Eine kurz gesperrte Hauptdatei wird bis zu dreimal erneut gelesen, bevor auf `.bak` ausgewichen wird.
 - **Abgebrochener erster Schreibvorgang:** Eine kaputte `.tmp` allein (ohne Haupt- und Backupdatei) sperrt nichts; das Profil startet neu.
 - **Ersetzen scheitert:** Die vollständig geschriebene `.tmp` bleibt liegen und wird beim nächsten Start wiederhergestellt. Nach einem zurückgerollten Ausbau wird sie verworfen.
-- **Gesperrtes Profil** (neuere Version oder unlesbar): Das Profil wird nie überschrieben. Der Fortschritt läuft aber im Ledger der Welt weiter, landet mit dem Weltstand auf der Platte und wird beim nächsten Laden mit lesbarem Profil übernommen. Profilweite Daten (Runden, Zähler, Meilensteinstufen) bleiben gesperrt.
+- **Gesperrtes Profil** (neuere Version oder unlesbar): Das Profil wird nie überschrieben. Der Fortschritt läuft aber im Ledger der Welt weiter, landet mit dem Weltstand auf der Platte und wird beim nächsten Laden mit lesbarem Profil übernommen. Profilweite Daten (Runden, Meilensteinstufen) bleiben gesperrt; Lebenszeit-Zähler zählen als Anteil der Welt weiter (siehe unten).
+- **Lebenszeit-Zähler:** Jede Welt führt ihren Anteil an jedem Zähler als Run-Tally `lt:<id>` (mit `tp:`-Marker, den ältere Builds behalten). Fällt das Profil auf eine ältere Kopie zurück oder geht es verloren, ergänzt `BeginRun` beim Laden einer Welt, was deren Spielstand mehr weiss als das Profil (`RestoreShares`). Doppelt zählt nichts.
 - **Run-Ende:** Tod und Sieg beenden den Run immer, auch bei gesperrtem Profil oder ohne Belohnung (Debug-Sieg, `MarkRunEnded`); sonst öffnete „Weiter“ die Ergebnisanzeige nicht.
 - **Warnung:** Ist das Profil gesperrt oder scheitert das Speichern dauerhaft, zeigt das Pausemenü „Fortschritt wird nicht gespeichert …“ bzw. „Fortschritt konnte nicht gespeichert werden.“ (`MetaProgression.ProfileWarning`).
 - **Grösse des Profils:** siehe Abschnitt unten.
@@ -152,14 +156,14 @@ Fund F-01 der Prüfung vom 23.10.2026: Bisher stand für jede aufgedeckte, abgeb
 ## Testverzeichnisse und GPS
 
 - **Profil isolieren:** `MetaProgression.TestDirectory`, im Editor zusätzlich `GameSaveSystem.TestDirectory/MetaProfile`. `Reload()` verwirft den Speicherzustand (ein geändertes Profil wird vorher gespeichert).
-- `ChallengeTestUtc`, `ChallengeSettingsOverride` und `ChallengeTimeZoneOverride` wirken nur mit `MetaProgression.TestDirectory`; Spielstände des Benutzers werden dann nicht gelesen.
-- **GPS:** `metaProgression` (XP-Werte, ab neuer Welt, eingefroren in `run.settings`), `challenges` (ab der nächsten Runde), `levelUpAnimationOffsetSeconds`.
+- `ChallengeTestUtc`, `ChallengeSettingsOverride`, `ChallengeTimeZoneOverride` und `ChallengeTestModeOverride` wirken nur mit `MetaProgression.TestDirectory`; Spielstände des Benutzers werden dann nicht gelesen.
+- **GPS:** `metaProgression` (XP-Werte inkl. Tiefenfaktor und Erz-Exponent, ab neuer Welt, eingefroren in `run.settings`; Welten von vor diesen Feldern erhalten die Standardwerte), `challenges` (ab der nächsten Runde), `levelUpAnimationOffsetSeconds`.
 
 ## Prüfskripte
 
 | Skript | Modus | Inhalt |
 | --- | --- | --- |
-| `ProgressionChecks` | Edit, Cloud | Soll-Punkte 1–3, Absturz ohne Speichern, älterer Weltstand, Run-Ziele, Tallies, Marker, gesperrtes Profil, Run-Ende, Journal, Warnung, Katalog |
+| `ProgressionChecks` | Edit, Cloud | Soll-Punkte 1–3, Absturz ohne Speichern, älterer Weltstand, Run-Ziele, Tallies, Marker, gesperrtes Profil, Run-Ende, Journal, Warnung, Testmodus, Tiefenfaktor, Ausbauten in allen Welten, Lebenszeit-Anteile, Internetzeit, Katalog |
 | `MetaProgressionCoreChecks` | Edit, Cloud | Kurve, Belohnungen, Replay, Ausbau, Speichern, Validierung |
 | `MetaCellLedgerChecks` | Edit, Cloud | Zellen-Ledger: Kodierung, Faltung alter Schlüssel, Verdichtung, Rettung, Downgrade, beide Schreibermodi, Grösse |
 | `ChallengeReworkChecks`, `ChallengeCoreChecks`, `ChallengeSettingsChecks`, `ChallengeMigrationChecks` | Edit, Cloud | Runden, Zählstellen, Uhr, Zeitzonen, Meilensteine, Downgrade, Migration |
