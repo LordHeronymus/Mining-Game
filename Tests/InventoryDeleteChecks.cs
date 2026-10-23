@@ -57,6 +57,10 @@ public sealed class InventoryDeleteProbe : MonoBehaviour
             Check(slider.handleRect.parent.GetSiblingIndex() > slider.fillRect.parent.GetSiblingIndex(), "Handle number is drawn above the fill.");
             var frame = window.GetComponent<Image>();
             Check(frame.sprite && frame.sprite.texture.name == "BuyFrames-v2", "Window uses the opaque shop card frame.");
+            var box = (RectTransform)window; var tabs = ui.transform.Find("Inventory Layout/Filter Alle") as RectTransform;
+            var footer = ui.transform.Find("Inventory Layout/Selection Footer") as RectTransform;
+            Check(-box.anchoredPosition.y >= -tabs.anchoredPosition.y + tabs.rect.height && -box.anchoredPosition.y + box.rect.height <= -footer.anchoredPosition.y,
+                "Window fits between the filter tabs and the info bar.");
             var red = confirm.GetComponent<Image>().sprite;
             Check(red && red.name == "DeleteButton" && red.texture.name == "SelectionButtons-Red", "Delete button uses the red filled artwork.");
             slider.value = 6; yield return new WaitForSecondsRealtime(.4f);

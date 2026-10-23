@@ -66,24 +66,27 @@ public partial class InventoryUI
     void BuildDeleteDialog()
     {
         deleteRoot = Rect("Delete Dialog", layout, 0, 0, 1672, 941);
-        var dim = Panel("Delete Dim", deleteRoot, 0, 0, 1672, 941, null);
+        // Larger than the layout so the whole screen darkens, not only the inventory frame.
+        var dim = Panel("Delete Dim", deleteRoot, -2000, -1500, 5672, 3941, null);
         dim.color = new Color(0, 0, 0, .68f); dim.raycastTarget = true;
         var dimButton = dim.gameObject.AddComponent<Button>(); dimButton.transition = Selectable.Transition.None;
         dimButton.navigation = new Navigation { mode = Navigation.Mode.None }; dimButton.onClick.AddListener(CloseDeleteDialog);
         // Opaque shop card frame (gold border, corner rivets), so nothing of the grid shows through.
         var frame = DeleteFrame(Resources.Load<Texture2D>("Shop/BuyFrames-v2"), "Delete Window", 40, 110, 1175, 325);
-        var window = Panel("Delete Window", deleteRoot, 516, 160, 640, 620, frame ? frame : rowSprite);
+        // Between the filter tabs (bottom 222) and the info bar (top 754); the backing stops faint see-through.
+        Panel("Delete Backing", deleteRoot, 530, 250, 612, 484, null).color = new Color32(46, 27, 14, 255);
+        var window = Panel("Delete Window", deleteRoot, 516, 236, 640, 512, frame ? frame : rowSprite);
         window.raycastTarget = true; if (frame) window.pixelsPerUnitMultiplier = 2.2f;
         var w = window.transform;
-        deleteIcon = Panel("Item Icon", w, 220, 40, 200, 150, null); deleteIcon.preserveAspect = true;
-        deleteName = Label(w, "", 40, 200, 560, 60, 44, TextAlignmentOptions.Midline);
-        deleteInfo = Label(w, "", 40, 256, 560, 40, 26, TextAlignmentOptions.Midline); deleteInfo.color = Muted;
-        var line = Panel("Line", w, 90, 314, 460, 3, null); line.color = Gold;
-        Label(w, "Wie viel löschen?", 40, 336, 560, 44, 30, TextAlignmentOptions.Midline);
+        deleteIcon = Panel("Item Icon", w, 240, 34, 160, 110, null); deleteIcon.preserveAspect = true;
+        deleteName = Label(w, "", 40, 146, 560, 50, 40, TextAlignmentOptions.Midline);
+        deleteInfo = Label(w, "", 40, 194, 560, 34, 24, TextAlignmentOptions.Midline); deleteInfo.color = Muted;
+        var line = Panel("Line", w, 90, 236, 460, 3, null); line.color = Gold;
+        Label(w, "Wie viel löschen?", 40, 248, 560, 40, 28, TextAlignmentOptions.Midline);
         BuildDeleteSlider(w);
-        var cancel = Button("Cancel", w, "Abbrechen", 56, 502, 250, 72, CloseDeleteDialog);
+        var cancel = Button("Cancel", w, "Abbrechen", 56, 392, 250, 72, CloseDeleteDialog);
         cancel.GetComponent<Image>().sprite = actionSprite;
-        deleteConfirm = Button("Delete Selected", w, "1 löschen", 330, 502, 254, 72, ConfirmDelete);
+        deleteConfirm = Button("Delete Selected", w, "1 löschen", 330, 392, 254, 72, ConfirmDelete);
         deleteConfirmText = deleteConfirm.GetComponentInChildren<TextMeshProUGUI>();
         deleteConfirm.GetComponent<GoldButtonFeedback>().SetArtwork(
             HomeUi.Sprite("DeleteButton"), HomeUi.Sprite("DeleteActive"), HomeUi.Sprite("DeleteSelected"));
@@ -97,7 +100,7 @@ public partial class InventoryUI
         Sprite card = DeleteFrame(sheet, "Delete Rail", 40, 110, 1175, 325),
             selected = DeleteFrame(sheet, "Delete Handle", 35, 490, 1185, 340),
             action = DeleteFrame(sheet, "Delete Fill", 38, 890, 1178, 275);
-        var row = Rect("Delete Amount", parent, 30, 392, 580, 76);
+        var row = Rect("Delete Amount", parent, 30, 292, 580, 76);
         Label(row, "1", 8, 0, 40, 76, 32).color = Muted;
         var max = Label(row, "Max", 500, 0, 76, 76, 32, TextAlignmentOptions.MidlineRight); max.color = Muted;
         var area = Rect("Amount Slider", row, 56, 0, 440, 76);
