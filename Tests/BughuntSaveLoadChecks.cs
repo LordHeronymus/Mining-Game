@@ -11,8 +11,9 @@ using UnityEngine.Tilemaps;
 using Object = UnityEngine.Object;
 
 // Bughunt save/load (Edit Mode, isolated save directory): ladder towers above the surface keep a run loadable and
-// are never written unloadable, a load from the recovery copy keeps that run in the main file, GPS rejects world
-// sizes that cannot be saved, and the figure's facing is a saveable property instead of the transform scale.
+// are never written unloadable, a load from the recovery copy keeps that run in the main file, renaming a slot keeps
+// its loadable recovery copy, GPS rejects world sizes that cannot be saved, and the figure's facing is a saveable
+// property instead of the transform scale.
 public static class BughuntSaveLoadChecks
 {
     const string Report = "Temp/BughuntSaveLoadChecks.txt";
@@ -145,6 +146,19 @@ public static class BughuntSaveLoadChecks
             Check(summary != null && !summary.recovered && summary.name == "Sicherung" && summary.lastOpenedUtc >= before, "Hauptdatei enthält danach den geladenen Stand mit neuer Öffnungszeit");
             File.Delete(main + ".bak");
             Check(GameSaveSystem.PrepareLoad(2, out error) && Member<RunSaveState>(Pending, "state").stats.money == 777, "Hauptdatei allein ist ladbar: " + error);
+            GameSaveSystem.CancelPendingLoad();
+
+            // R2-extra-renamebak: renaming without loading keeps the loadable recovery copy behind an unloadable main file.
+            Write(3, "Sicherung", Payload(777, empty, empty));
+            Write(3, "Beschädigt", Payload(5, new BoundsInt(0, 6, 0, 1, 1, 1), empty));
+            Check(GameSaveSystem.RenameSlot(3, "Umbenannt", out error), "Umbenennen mit unladbarer Hauptdatei gelingt: " + error);
+            summary = GameSaveSystem.GetSummary(3);
+            Check(summary != null && !summary.recovered && summary.name == "Umbenannt", "Liste zeigt den neuen Namen");
+            Check(GameSaveSystem.PrepareLoad(3, out error) && Member<RunSaveState>(Pending, "state").stats.money == 777,
+                "Nach dem Umbenennen lädt der Slot weiterhin aus der Sicherung: " + error);
+            GameSaveSystem.CancelPendingLoad();
+            Check(GameSaveSystem.RenameSlot(3, "Nochmals", out error) && GameSaveSystem.PrepareLoad(3, out error) &&
+                Member<RunSaveState>(Pending, "state").stats.money == 777, "Auch wiederholtes Umbenennen behält die Sicherung: " + error);
             GameSaveSystem.CancelPendingLoad();
 
             // A-save-core-7: GPS rejects a world larger than a save can hold, before it is generated.

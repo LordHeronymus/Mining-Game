@@ -210,13 +210,15 @@ public static class GameSaveSystem
         if (slot == ActiveSlot) ActiveRunName = name.Trim();
         return true;
     }
-    // Without a source, the first file with a valid envelope is rewritten. A loaded run passes its own file instead:
-    // after a fallback to the recovery copy, its payload becomes the main file and the rejected one the recovery copy.
+    // Without a source, the first file with a valid envelope is rewritten and the recovery copy is kept, since that file's
+    // payload may not load. A loaded run passes its own file instead: after a fallback to the recovery copy, its payload
+    // becomes the main file and the rejected one the recovery copy.
     static bool UpdateMetadata(int slot, Action<Summary> change, out string error, string source = null)
     {
         error = "Spielstand konnte nicht aktualisiert werden.";
         if (slot < 1 || slot > MaxSlots) return false;
         SettleAutosave();
+        bool loaded = source != null;
         try
         {
             if (source == null)
@@ -228,7 +230,7 @@ public static class GameSaveSystem
             if (header.slot != slot) return false;
             NormalizeDates(header); change(header); header.recovered = false;
             string path = source.EndsWith(".bak", StringComparison.Ordinal) ? source.Substring(0, source.Length - 4) : source;
-            WriteEnvelopeAtomic(path, JsonUtility.ToJson(header), payload, false);
+            WriteEnvelope(path, JsonUtility.ToJson(header), payload, false, loaded);
             error = null; SlotsChanged?.Invoke(); return true;
         }
         catch (Exception ex) { Debug.LogWarning("Tiefenhall: Metadatenänderung fehlgeschlagen: " + ex.Message); return false; }
@@ -834,7 +836,9 @@ public static class GameSaveSystem
         using var hash = SHA256.Create(); byte[] prefix = Encoding.UTF8.GetBytes(header);
         hash.TransformBlock(prefix, 0, prefix.Length, null, 0); hash.TransformFinalBlock(payload, 0, payload.Length); return hash.Hash;
     }
-    static void WriteEnvelopeAtomic(string path, string header, byte[] compressed, bool createOnly)
+    static void WriteEnvelopeAtomic(string path, string header, byte[] compressed, bool createOnly) =>
+        WriteEnvelope(path, header, compressed, createOnly, true);
+    static void WriteEnvelope(string path, string header, byte[] compressed, bool createOnly, bool rotateBackup)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path));
         if (createOnly && (File.Exists(path) || File.Exists(path + ".bak") || File.Exists(path + ".tmp")))
@@ -843,9 +847,9 @@ public static class GameSaveSystem
         using (var file = new FileStream(temporary, createOnly ? FileMode.CreateNew : FileMode.Create, FileAccess.Write, FileShare.None))
         using (var writer = new BinaryWriter(file, Encoding.UTF8, true))
         { writer.Write(Magic); writer.Write(header); writer.Write(compressed.Length); writer.Write(Digest(header, compressed)); writer.Write(compressed); writer.Flush(); file.Flush(true); }
-        // Replacement is atomic; retain the previous completed write as a recovery copy.
+        // Replacement is atomic; retain the previous completed write as a recovery copy unless the existing one is kept.
         if (createOnly) File.Move(temporary, path);
-        else if (File.Exists(path)) File.Replace(temporary, path, path + ".bak");
+        else if (File.Exists(path)) File.Replace(temporary, path, rotateBackup ? path + ".bak" : null);
         else File.Move(temporary, path);
     }
     static void ReadEnvelope(string path, out Summary summary, out byte[] compressed)
