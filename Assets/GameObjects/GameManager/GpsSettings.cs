@@ -59,22 +59,18 @@ public static class GpsSettings
 #if !UNITY_EDITOR
         bool existing=File.Exists(FilePath) || File.Exists(FilePath+".bak");
         document=GpsFileStore.Load(FilePath,document,out var warning,out bool legacyFormat); Warning=warning;
-        if(!existing && profile)
-        {
-            GpsLegacyImport.Import(document,profile,Application.persistentDataPath);
-            try { GpsFileStore.Save(FilePath,document); } catch(Exception ex) { Warning="GPS speichern fehlgeschlagen: "+ex.Message; }
-        }
-        else if(legacyFormat && warning==null)
-        {
+        if(!existing && profile) GpsLegacyImport.Import(document,profile,Application.persistentDataPath);
+        // The first start stores the import; an old full copy is converted to overrides.
+        bool rewrite=(!existing && profile) || (legacyFormat && warning==null);
 #if !DEVELOPMENT_BUILD
-            // Release players can only change personal preferences; every other value in an old full
-            // copy is a stale shipped value and must not hide the current profile.
-            var shipped=ShippedDocument();
-            foreach(string field in PersonalPreferences) GpsCodec.Set(shipped.preferences,field,GpsCodec.Get(document.preferences,field));
-            document=shipped;
+        // Release players can only change personal preferences; every other value in the file (an old full copy,
+        // F1 values of a development build on the same PC, imported debug files) must not hide the current profile.
+        var personal=KeepPersonalPreferences(document,ShippedDocument());
+        rewrite|=profile && warning==null && JsonUtility.ToJson(personal)!=JsonUtility.ToJson(document);
+        document=personal;
 #endif
+        if(rewrite)
             try { GpsFileStore.Save(FilePath,document); } catch(Exception ex) { Warning="GPS speichern fehlgeschlagen: "+ex.Message; }
-        }
 #else
         LoadPersonalPreferences(document);
 #endif
@@ -93,6 +89,12 @@ public static class GpsSettings
     }
     // Volume is chosen per player. In the editor it lives in EditorPrefs so it never ships in the profile asset.
     static readonly string[] PersonalPreferences = { nameof(GpsPreferences.masterVolume), nameof(GpsPreferences.musicVolume) };
+    // Takes only the personal values of a loaded player document over into the shipped one.
+    static GpsDocument KeepPersonalPreferences(GpsDocument loaded, GpsDocument shipped)
+    {
+        foreach (string field in PersonalPreferences) GpsCodec.Set(shipped.preferences, field, GpsCodec.Get(loaded.preferences, field));
+        return shipped;
+    }
     // The profile as loaded, before player overrides. Edit-mode changes write through to the asset, so the
     // live documentJson is not a stable baseline there.
     public static GpsDocument ShippedDocument()
