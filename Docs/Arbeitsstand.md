@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Chance je Artefakt einzeln in F1 (eigene Zeile pro Artefakt, deutsche Beschriftung) | `claude/artefakt-chancen-f1` | Cloud-Container | `GpsSchema.Catalog.cs` (Abschnitt Artefakte), `GpsRuntimePanel` (neue Datei `.Artifacts.cs`), neues Prüfskript | ja (Testbank) | 23.10.2026 21:05 |
 
 ## Zuletzt abgeschlossen
 
