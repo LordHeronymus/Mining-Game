@@ -1,6 +1,6 @@
 # Editor-Warteschlange
 
-Anmeldeliste mit Warteschlange für den Unity Editor, damit sich Chats (Claude Code, Codex, Cowork) und der Benutzer beim Testen nicht in die Quere kommen. Jeder Arbeitsordner (`Mining Game`, `Mining Game 2`) hat seinen eigenen Editor und damit seine eigene Warteschlange.
+Anmeldeliste mit Warteschlange für den Unity Editor, damit sich Chats (Claude Code, Codex, Cowork) und der Benutzer beim Testen nicht in die Quere kommen. Jeder Arbeitsordner (`Mining Game`, `Mining Game 2`, `Mining Game 3`) hat seinen eigenen Editor und damit seine eigene Warteschlange; dazu kommt die gemeinsame Warteschlange `Testbank`, die Chats auf die freien Testbänke verteilt.
 
 ## Dateien (ausserhalb von Git)
 
@@ -34,27 +34,50 @@ PowerShell: `powershell -NoProfile -ExecutionPolicy Bypass -File Tools/editor-qu
 - `wait` prüft alle 15 s (`-PollSeconds`), setzt dabei das eigene Lebenszeichen und räumt verwaiste Einträge ab. Exit-Codes: `0` oben, `2` Zeitlimit erreicht (Eintrag bleibt, erneut `wait`), `3` Eintrag nicht mehr vorhanden (neu `join`). Im Bash-Tool wegen des 10-Minuten-Limits `-TimeoutMinutes 9` verwenden oder im Hintergrund laufen lassen.
 - `status` zeigt Warteschlange und Editorzustand.
 
-## Testbank „Mining Game 2“ (Editor der Chats)
+## Testbänke „Mining Game 2“ und „Mining Game 3“ (Editoren der Chats)
 
-Der Editor von `Mining Game` gehört dem Benutzer. Chats testen im Editor von `Mining Game 2`, der **Testbank**: Dort ist kein fester Branch ausgecheckt, jeder Chat holt seinen eigenen Stand losgelöst (`git switch --detach`) hinein, testet und gibt sie wieder frei. Der Branch darf dabei im eigenen Arbeitsordner ausgecheckt bleiben.
+Der Editor von `Mining Game` gehört dem Benutzer. Chats testen auf einer der beiden **Testbänke** `Mining Game 2` und `Mining Game 3` (je ein eigener Arbeitsordner mit eigenem Editor, Testbank 2 auf Desktop 2, Testbank 3 auf Desktop 3). Dort ist kein fester Branch ausgecheckt, jeder Chat holt seinen eigenen Stand losgelöst (`git switch --detach`) hinein, testet und gibt sie wieder frei. Der Branch darf dabei im eigenen Arbeitsordner ausgecheckt bleiben.
+
+**Regel: Chats melden sich immer bei der gemeinsamen Warteschlange `Testbank` an**, nie direkt bei einer Testbank. Sie teilt jedem Wartenden automatisch die nächste freie Testbank zu (der Reihe nach; Testbänke mit offenem Editor zuerst). So verteilen sich die Chats auf beide Editoren.
 
 ```bash
 git commit -am "WIP: Stand zum Testen"                                       # im eigenen Arbeitsordner
-Tools/editor-queue.sh join -Project "Mining Game 2" -Who "Claude Code: <Aufgabe>" -Purpose "<Zweck>"
-Tools/editor-queue.sh wait -Project "Mining Game 2" -Id <id> -TimeoutMinutes 9
-Tools/editor-bench.sh checkout <branch> -Id <id> -Discard                    # nur als oberster Eintrag; -Discard verwirft Reste
-unity command --project-path "C:\IT\GameDev\Git Repos\Mining Game 2" run_script --file Tests/<Name>Checks.cs
-Tools/editor-bench.sh release                                                # -Discard verwirft Testspuren
-Tools/editor-queue.sh leave -Project "Mining Game 2" -Id <id>
+Tools/editor-queue.sh join -Project Testbank -Who "Claude Code: <Aufgabe>" -Purpose "<Zweck>"
+Tools/editor-queue.sh wait -Project Testbank -Id <id> -TimeoutMinutes 9      # bis "Du bist oben: Testbank '<Ordner>'" und "TESTBANK=<Ordner>"
+Tools/editor-bench.sh checkout <branch> -Id <id> -Discard                    # findet die zugeteilte Testbank selbst
+unity command --project-path "C:\IT\GameDev\Git Repos\<Ordner>" run_script --file Tests/<Name>Checks.cs
+Tools/editor-bench.sh release -Id <id>                                       # -Discard verwirft Testspuren
+Tools/editor-queue.sh leave -Project Testbank -Id <id>
 ```
 
-- `checkout` verweigert, wenn der Aufrufer nicht oben in der Warteschlange von `Mining Game 2` steht (Exit 4) oder die Testbank noch Änderungen hat (Exit 5); `-Discard` verwirft solche Reste vorher. Unity schreibt beim Laden selbst Importspuren (Sprite-IDs in `.meta`, neu erzeugtes `OreVeins/CopperRockTiles/Combined.asset`, Zeilenenden), die gelten als Testspuren. `status` zeigt Stand, Herkunft und Änderungen.
+- `join`/`wait` mit `-Project Testbank` melden die Zuteilung mit „Du bist oben: Testbank '<Ordner>' …“, der Zeile `TESTBANK=<Ordner>` und dem Ordnerpfad. Ab dann steht der Eintrag als Inhaber in der Warteschlange dieser Testbank (`<Ordner>.json`); alles Weitere (Fristen, Verdrängung, Bitte abschliessen, Hook) gilt dort wie bisher. Ist keine frei, wartet man in `Testbank.json` (Exit 2 bei Zeitlimit wie gewohnt). `heartbeat`, `leave` und `notice` mit `-Project Testbank` finden den Eintrag auch nach der Zuteilung; erneutes `join` mit derselben Id nennt die zugeteilte Testbank.
+- In der Warteschlange `Testbank` nutzt niemand einen Editor: Platz 1 ist nicht gesperrt (`move` auf jede Position), Wartende ohne Lebenszeichen fallen nach 4 Minuten weg, `request-release` richtet sich an eine Testbank selbst (`-Project "Mining Game 2"` bzw. `"Mining Game 3"`). Protokoll der Zuteilungen: `Testbank.log` („ZUGETEILT …“).
+- `editor-bench` wählt die Testbank so: `-Bench "<Ordner>"`, sonst die, in deren Warteschlange `-Id` (bzw. die Claude-Code-Sitzung) oben steht, sonst `Mining Game 2`. `status` ohne `-Id` zeigt alle Testbänke.
+- `Tools/editor-dialog.sh` arbeitet ohne Angabe mit `Mining Game 2`; für Testbank 3 `-Project "Mining Game 3"` angeben.
+- Direkt bei einer Testbank anmelden (`-Project "Mining Game 2"`) geht weiterhin, z. B. für den Benutzer oder ältere Branches, deren Skripte die Warteschlange `Testbank` noch nicht kennen (dann bei `editor-bench` `-Bench "C:\IT\GameDev\Git Repos\Mining Game 3"` mit vollem Pfad angeben).
+- `checkout` verweigert, wenn der Aufrufer nicht oben in der Warteschlange seiner Testbank steht (Exit 4) oder die Testbank noch Änderungen hat (Exit 5); `-Discard` verwirft solche Reste vorher. Unity schreibt beim Laden selbst Importspuren (Sprite-IDs in `.meta`, neu erzeugtes `OreVeins/CopperRockTiles/Combined.asset`, Zeilenenden), die gelten als Testspuren. `status` zeigt Stand, Herkunft und Änderungen.
 - `release` verweigert bei Änderungen (Exit 5): Gewollte Änderungen (z. B. Szenen) auf der Testbank committen, dann zeigt `release` den Befehl `git merge --ff-only <commit>` zum Übernehmen in den eigenen Branch; Testspuren mit `-Discard` verwerfen. Nicht versionierte Dateien (`Library`, `.mcp.json`) bleiben unberührt.
-- Die Unity-Werkzeuge (MCP) eines Chats zeigen auf den Editor aus der nicht versionierten `.mcp.json` seines Ordners (heute in `Mining Game` noch auf den Editor des Benutzers). Deshalb vor MCP-Nutzung `editor_status` prüfen (`projectPath` muss `Mining Game 2` sein), sonst `unity command --project-path "…Mining Game 2"` verwenden.
-- Zustand der Testbank: `Git Repos/EditorQueue/Mining Game 2.bench.json`.
+- Die Unity-Werkzeuge (MCP) eines Chats zeigen auf den Editor aus der nicht versionierten `.mcp.json` seines Ordners (heute in `Mining Game` noch auf den Editor des Benutzers). Deshalb bei Testbank-Tests `unity command --project-path "…<zugeteilte Testbank>"` verwenden; MCP nur, wenn `editor_status` als `projectPath` genau die zugeteilte Testbank meldet.
+- Zustand je Testbank: `Git Repos/EditorQueue/<Ordner>.bench.json`.
 - `checkout` und `release -Discard` schliessen vor jeder Dateiänderung die offene Szene im Testbank-Editor ohne Speichern (beenden dabei auch den Play-Mode, per `unity command eval_file`) und öffnen danach `Assets/Scenes/SampleScene.unity` frisch (mit `AssetDatabase.Refresh`, asynchron, weil Unity einzelne Befehle nach 5 s Hauptthread-Zeit abbricht; `checkout` wartet bis zu 3 min, bis die Szene offen ist). So erscheint kein Dialog „The open scene(s) have been modified externally“. Ist der Editor beschäftigt (Import, Kompilieren), wartet es und setzt dabei alle 30 s ein Lebenszeichen; rückt währenddessen jemand anderes nach oben, bricht es ab (Exit 4) und fasst den Editor nicht mehr an. Läuft der Editor nicht, geht es ohne; blockiert ihn ein unbekannter Dialog, bricht `checkout` mit Exit 6 ab (siehe unten). `-NoEditor` lässt den Editor ganz in Ruhe. `release` fasst den Editor nur als oberster Eintrag an.
-- **Ton:** Der Editor der Testbank läuft immer stumm (`Assets/Editor/TestBenchAudioMute.cs` setzt „Mute Audio“, nur im Ordner `<Projekt> 2`; der Editor des Benutzers bleibt unberührt). Unity speichert „Mute Audio“ als gemeinsame EditorPrefs-Einstellung `AudioMasterMute` aller Editoren; das Skript schaltet nur den laufenden Testbank-Editor stumm und hält die gespeicherte Einstellung einige Sekunden auf ihrem vorherigen Wert, weil Unity sie verzögert schreibt. Nur für Audio-Tests als oberster Eintrag `Tools/editor-bench.sh audio-on -Id <id>` (oder Unity-Menü **Tools → Testbank → Ton an**), danach `audio-off`; `checkout` und `release` schalten ebenfalls wieder stumm. Schalter: `Git Repos/EditorQueue/Mining Game 2.audio-on`.
-- **Eigener Desktop:** Beim Start legt der Testbank-Editor sein Hauptfenster selbst auf den zweiten virtuellen Windows-Desktop (`Assets/Editor/TestBenchDesktop.cs`, nur im Ordner `<Projekt> 2`). Windows erlaubt `IVirtualDesktopManager.MoveWindowToDesktop` nur für eigene Fenster, darum erledigt es der Testbank-Prozess; ein Wechsel per Strg+Win+Pfeil scheitert am Fokus-Wächter. Einmal pro Editor-Sitzung (danach von Hand verschiebbar), Ziel-Desktop als Zahl in `Git Repos/EditorQueue/Mining Game 2.desktop` (fehlt: 2, `0` schaltet ab), gibt es weniger Desktops, bleibt das Fenster. Von Hand: Unity-Menü **Tools → Testbank → Auf eigenen Desktop verschieben**.
+- **Welche Ordner Testbänke sind:** `<Projekt> 2` und `<Projekt> 3` (nie Worktrees), eine Regel für alle: `Assets/Editor/TestBenchNames.cs`, `$BenchPattern` in `Tools/editor-queue.ps1` und `Tools/editor-bench.ps1`, `Test-Bench` im Dienst. Neue Arbeitsordner der Chats deshalb erst ab `Mining Game 4` nummerieren. Stände ohne `TestBenchNames.cs` (Branches älter als diese Änderung) kennen nur Testbank 2: Auf Testbank 3 bleibt der laufende Editor trotzdem stumm und auf Desktop 3, nur „Ton an“ wirkt dann nicht (`checkout` weist darauf hin; für Audio-Tests `origin/main` in den Branch holen).
+- **Ton:** Die Editoren der Testbänke laufen immer stumm (`Assets/Editor/TestBenchAudioMute.cs` setzt „Mute Audio“, nur in Testbänken; der Editor des Benutzers bleibt unberührt). Unity speichert „Mute Audio“ als gemeinsame EditorPrefs-Einstellung `AudioMasterMute` aller Editoren; das Skript schaltet nur den laufenden Testbank-Editor stumm und hält die gespeicherte Einstellung einige Sekunden auf ihrem vorherigen Wert, weil Unity sie verzögert schreibt. Nur für Audio-Tests als oberster Eintrag `Tools/editor-bench.sh audio-on -Id <id>` (oder Unity-Menü **Tools → Testbank → Ton an**), danach `audio-off -Id <id>`; `checkout` und `release` schalten ebenfalls wieder stumm. Schalter: `Git Repos/EditorQueue/<Ordner>.audio-on`.
+- **Eigener Desktop:** Beim Start legt jeder Testbank-Editor sein Hauptfenster selbst auf den virtuellen Windows-Desktop mit seiner Nummer (`Mining Game 2` → Desktop 2, `Mining Game 3` → Desktop 3; `Assets/Editor/TestBenchDesktop.cs`). Windows erlaubt `IVirtualDesktopManager.MoveWindowToDesktop` nur für eigene Fenster, darum erledigt es der Testbank-Prozess; ein Wechsel per Strg+Win+Pfeil scheitert am Fokus-Wächter. Einmal pro Editor-Sitzung (danach von Hand verschiebbar), Ziel-Desktop als Zahl in `Git Repos/EditorQueue/<Ordner>.desktop` (fehlt: Nummer der Testbank, `0` schaltet ab), gibt es weniger Desktops, bleibt das Fenster. Von Hand: Unity-Menü **Tools → Testbank → Auf eigenen Desktop verschieben**. „Editoren starten“ heisst: alle drei mit `unity open` starten, die Testbänke platzieren sich selbst.
+
+### Neue Testbank einrichten (so entstand `Mining Game 3`)
+
+```bash
+git worktree add --detach "../Mining Game 3" <branch mit TestBenchNames.cs>     # im Ordner Mining Game, ändert dort keine versionierte Datei
+```
+
+Dazu eine nicht versionierte `.mcp.json` mit dem eigenen Projektpfad, ein virtueller Desktop mit der Nummer der Testbank (Win+Strg+D), dann `unity open "<Ordner>"` (der erste Import der Library dauert). Der Dienst (`editor-queue-server.ps1`) erkennt neue Testbänke beim Start (Dialog- und Fokus-Wächter); nach dem Anlegen einmal neu starten.
+
+### Tests kürzer machen
+
+- **Gezielte Prüfskripte statt vollem Lauf:** pro Aufgabe nur die betroffenen `Tests/<Name>Checks.cs` laufen lassen; mehrere Skripte direkt nacheinander in derselben Belegung, statt sich für jedes neu anzumelden.
+- **Edit-Mode, wo möglich:** Logik-, Daten- und Layout-Prüfungen ohne Play-Start schreiben (kein MainMenu, kein Laden der Welt); Play-Skripte nur für Bewegung, Physik und Spielablauf.
+- **Erst fertig, dann testen:** Alles kompilierfähig committen, dann anmelden. Der grösste Teil der Wartezeit ist Import und Kompilieren nach `checkout`; jeder Zwischenstand kostet das erneut.
+- **Kleinere Spielstarts:** Play-Skripte mit kleiner Testwelt bzw. festem Seed und isoliertem Profil starten statt der vollen Welt.
 
 ## Lebenszeichen: nur echte Editor-Nutzung zählt
 
@@ -100,7 +123,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File Tools/editor-queue-server.ps
 
 ## Dialoge im Testbank-Editor
 
-Ein modaler Unity-Dialog (z. B. „The open scene(s) have been modified externally“ nach einem Git-Wechsel) hält den ganzen Editor an: `unity command`, MCP und Play-Mode-Tests laufen dann in eine Zeitüberschreitung. `Tools/editor-dialog.sh` (PowerShell: `Tools/editor-dialog.ps1`) erkennt solche Dialoge über Windows (Fenster des Unity-Prozesses der Testbank mit Titel, Text und Knöpfen) und klickt Knöpfe per `BM_CLICK`. Es arbeitet nur mit dem Editor der Testbank (`<Projekt> 2`, Prozess über das Aktivitätssignal bzw. `-projectpath`), nie mit dem Editor des Benutzers.
+Ein modaler Unity-Dialog (z. B. „The open scene(s) have been modified externally“ nach einem Git-Wechsel) hält den ganzen Editor an: `unity command`, MCP und Play-Mode-Tests laufen dann in eine Zeitüberschreitung. `Tools/editor-dialog.sh` (PowerShell: `Tools/editor-dialog.ps1`) erkennt solche Dialoge über Windows (Fenster des Unity-Prozesses der Testbank mit Titel, Text und Knöpfen) und klickt Knöpfe per `BM_CLICK`. Es arbeitet nur mit Editoren der Testbänke (ohne Angabe `<Projekt> 2`, sonst `-Project "Mining Game 3"`; Prozess über das Aktivitätssignal bzw. `-projectpath`), nie mit dem Editor des Benutzers.
 
 ```bash
 Tools/editor-dialog.sh list                      # offene Dialoge: Titel, Text, Knöpfe; Exit 6 = Dialog offen, 3 = Editor läuft nicht
@@ -128,14 +151,14 @@ Tools/editor-dialog.sh list -All                 # alle sichtbaren Fenster des E
 
 ## Testbank auf eigenem Desktop: Fokus-Wächter
 
-Liegt der Testbank-Editor auf einem zweiten virtuellen Windows-Desktop, springt Windows auf diesen Desktop, sobald sich die Testbank selbst nach vorne holt (z. B. Play-Start eines Chats). Zwei Gegenmittel:
+Liegt ein Testbank-Editor auf einem eigenen virtuellen Windows-Desktop (2 bzw. 3), springt Windows auf diesen Desktop, sobald sich die Testbank selbst nach vorne holt (z. B. Play-Start eines Chats). Zwei Gegenmittel:
 
-- **An der Quelle:** `Assets/Editor/TestBenchPlayUnfocused.cs` stellt im Testbank-Editor (nur `<Projekt> 2`) alle Game-Fenster auf „Play Unfocused“: Der Play-Mode startet, ohne dass Unity das Game-Fenster nach vorne holt. Der Editor des Benutzers bleibt unberührt. Unsere Werkzeuge (`editor-bench`, `unity command`, `editor-dialog`) holen das Fenster nie selbst nach vorne.
-- **Fokus-Wächter** (`Tools/editor-focus.ps1`, läuft im lokalen Dienst als eigener Thread): Er reagiert sofort auf jeden Fensterwechsel (`SetWinEventHook(EVENT_SYSTEM_FOREGROUND)`, kein Abfragen). Kommt ein Fenster des Testbank-Editors (Prozess über das Aktivitätssignal bzw. `-projectpath`) nach vorne, ohne dass der Benutzer es wollte, aktiviert er sofort wieder das zuletzt benutzte Fenster; Windows wechselt dabei auf dessen Desktop zurück. Das Testbank-Fenster wird nie minimiert.
+- **An der Quelle:** `Assets/Editor/TestBenchPlayUnfocused.cs` stellt in den Testbank-Editoren (nur Testbänke) alle Game-Fenster auf „Play Unfocused“: Der Play-Mode startet, ohne dass Unity das Game-Fenster nach vorne holt. Der Editor des Benutzers bleibt unberührt. Unsere Werkzeuge (`editor-bench`, `unity command`, `editor-dialog`) holen das Fenster nie selbst nach vorne.
+- **Fokus-Wächter** (`Tools/editor-focus.ps1`, läuft im lokalen Dienst als ein Thread für alle Testbänke): Er reagiert sofort auf jeden Fensterwechsel (`SetWinEventHook(EVENT_SYSTEM_FOREGROUND)`, kein Abfragen). Kommt ein Fenster des Testbank-Editors (Prozess über das Aktivitätssignal bzw. `-projectpath`) nach vorne, ohne dass der Benutzer es wollte, aktiviert er sofort wieder das zuletzt benutzte Fenster; Windows wechselt dabei auf dessen Desktop zurück. Das Testbank-Fenster wird nie minimiert.
   - **Absicht des Benutzers** (dann bleibt die Testbank vorne): Mausklick in den letzten 1,5 s auf ein Testbank-Fenster oder auf Taskleiste/Task-Ansicht/Startmenü, oder in den letzten 2,5 s eine Wechsel-Taste (Win…, z. B. Win+Strg+Pfeil oder Win+Tab, Alt+Tab, Alt+Esc). Der Wächter liest dazu nur, wann und wohin geklickt bzw. ob eine solche Taste gedrückt wurde (Low-Level-Hooks), keine Texteingaben.
   - Windows erlaubt Hintergrundprozessen das Aktivieren nur eingeschränkt; der Wächter versucht es direkt, dann mit `AttachThreadInput`, zuletzt mit einem kurzen Alt-Tastendruck (mit unbelegter Zwischentaste, damit kein Menü aufgeht). Holt sich die Testbank den Fokus mehr als 6-mal in 20 s, pausiert er 60 s.
   - **Protokoll:** Jeder Eingriff steht mit `FOKUS` in `<Ordner>.log` (Testbank), z. B. „Testbank kam von selbst nach vorne ('Game' (Unity)), zurück zu '…' (direkt, 3 ms, Desktop des Benutzers aktiv)“ oder „Testbank bewusst geöffnet (Klick auf die Testbank vor 120 ms), bleibt vorne“.
-  - **Ein-/Ausschalten:** `Tools/editor-focus.ps1 off` (legt `Git Repos/EditorQueue/Mining Game 2.focus-guard-off` an, wirkt sofort) bzw. `on`; `status` zeigt Zustand und letzte Eingriffe. Dienst ganz ohne Wächter: `-NoFocusGuard`.
+  - **Ein-/Ausschalten:** `Tools/editor-focus.ps1 off` (legt je Testbank `Git Repos/EditorQueue/<Ordner>.focus-guard-off` an, wirkt sofort; `-Project "<Ordner>"` für nur eine) bzw. `on`; `status` zeigt Zustand und letzte Eingriffe. Dienst ganz ohne Wächter: `-NoFocusGuard`.
   - Ohne Dienst bzw. zur Fehlersuche: `powershell -NoProfile -ExecutionPolicy Bypass -File Tools/editor-focus.ps1 watch -Trace` (zeigt jeden Fensterwechsel; `-DryRun` nur beobachten). Läuft der Wächter schon im Dienst, verweigert `watch` (Exit 4).
 
 ## Verdrängung verwaister Belegungen
