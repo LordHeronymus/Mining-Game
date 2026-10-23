@@ -23,6 +23,7 @@ public sealed class SettingsPanel : MonoBehaviour
     GameObject audioPage, keyPage, displayPage;
     TMP_FontAsset font;
     GameAction? capturing;
+    RectTransform captureButton;
     int captureSlot, captureFrame;
     float previousTimeScale = 1f;
     bool open;
@@ -99,6 +100,8 @@ public sealed class SettingsPanel : MonoBehaviour
         open = true;
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;
+        // The clicked menu button stays selected otherwise, and arrows/Enter would trigger the hidden menu.
+        ClearSelection();
         transform.SetAsLastSibling();
         SetVisible(true);
         GameplayInputBlocker.SetBlocked(this, true);
@@ -118,6 +121,11 @@ public sealed class SettingsPanel : MonoBehaviour
         Time.timeScale = previousTimeScale;
         GamePause.Set(this, false);
         InfoPanel.Instance?.ShowPanel(true);
+        ClearSelection();
+    }
+
+    static void ClearSelection()
+    {
         if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null);
     }
 
@@ -238,10 +246,12 @@ public sealed class SettingsPanel : MonoBehaviour
             for (int slot = 0; slot < 2; slot++)
             {
                 int capturedSlot = slot;
+                RectTransform buttonRect = null;
                 var button = Button("Bind " + entry.action + " " + slot, content,
                     GameBindings.Display(GameBindings.Get(entry.action, slot)),
                     slot == 0 ? 360 : 668, y + 6, 250, 44,
-                    () => BeginCapture(entry.action, capturedSlot));
+                    () => BeginCapture(entry.action, capturedSlot, buttonRect));
+                buttonRect = (RectTransform)button.transform;
                 bindingTexts.Add(button.GetComponentInChildren<TextMeshProUGUI>());
             }
         }
@@ -266,10 +276,23 @@ public sealed class SettingsPanel : MonoBehaviour
         scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
     }
 
-    void BeginCapture(GameAction action, int slot)
+    void BeginCapture(GameAction action, int slot, RectTransform button)
     {
-        capturing = action; captureSlot = slot; captureFrame = Time.frameCount;
+        capturing = action; captureSlot = slot; captureFrame = Time.frameCount; captureButton = button;
         RefreshBindingTexts();
+    }
+
+    // A click outside the capturing button (or any click for the settings action) cancels instead of binding it.
+    internal static bool CancelsCapture(GameAction action, KeyCode key, bool pointerOverButton) =>
+        GameBindings.IsMouseButton(key) && (action == GameAction.Settings || !pointerOverButton);
+
+    bool PointerOverCaptureButton()
+    {
+        if (!captureButton) return false;
+        var canvas = captureButton.GetComponentInParent<Canvas>();
+        if (canvas) canvas = canvas.rootCanvas;
+        var camera = canvas && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+        return RectTransformUtility.RectangleContainsScreenPoint(captureButton, Input.mousePosition, camera);
     }
 
     void CaptureKey()
@@ -286,6 +309,7 @@ public sealed class SettingsPanel : MonoBehaviour
             if (key == KeyCode.None || key == KeyCode.Escape || key == KeyCode.Backspace || key == KeyCode.Delete) continue;
             if (!Input.GetKeyDown(key)) continue;
             var action = capturing.Value;
+            if (CancelsCapture(action, key, PointerOverCaptureButton())) { capturing = null; RefreshBindingTexts(); return; }
             GameBindings.Set(action, captureSlot, key);
             capturing = null;
             RefreshBindingTexts();

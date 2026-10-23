@@ -69,13 +69,20 @@ public static class GameBindings
             keys[i, 0] = Read(entry.action, 0, entry.first);
             keys[i, 1] = Read(entry.action, 1, entry.second);
         }
+        // A discarded mouse binding must not leave the settings without any key.
+        int settings = (int)GameAction.Settings;
+        if (keys[settings, 0] == KeyCode.None && keys[settings, 1] == KeyCode.None) keys[settings, 0] = KeyCode.Escape;
     }
 
     static KeyCode Read(GameAction action, int slot, KeyCode fallback)
     {
         string value = PlayerPrefs.GetString(Preference(action, slot), fallback.ToString());
-        return Enum.TryParse(value, out KeyCode key) && Enum.IsDefined(typeof(KeyCode), key) ? key : fallback;
+        return Enum.TryParse(value, out KeyCode key) && Enum.IsDefined(typeof(KeyCode), key) && Allowed(action, key) ? key : fallback;
     }
+
+    public static bool IsMouseButton(KeyCode key) => key >= KeyCode.Mouse0 && key <= KeyCode.Mouse6;
+    // Settings on a mouse button would open the window on every click and close it on the next one.
+    static bool Allowed(GameAction action, KeyCode key) => action != GameAction.Settings || !IsMouseButton(key);
 
     public static KeyCode Get(GameAction action, int slot) { Load(); return keys[(int)action, slot]; }
 
@@ -83,7 +90,8 @@ public static class GameBindings
     {
         Load();
         slot = Mathf.Clamp(slot, 0, 1);
-        if (action == GameAction.Settings && key == KeyCode.None && keys[(int)action, 1 - slot] == KeyCode.None)
+        if (!Allowed(action, key) ||
+            (action == GameAction.Settings && key == KeyCode.None && keys[(int)action, 1 - slot] == KeyCode.None))
             return;
         keys[(int)action, slot] = key;
         PlayerPrefs.SetString(Preference(action, slot), key.ToString());
