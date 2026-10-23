@@ -5,6 +5,7 @@ public class PlayerMovement : MonoBehaviour
 {
     const float JumpBufferDuration = .12f;
     const float JumpGraceDuration = .08f;
+    const float LedgeSkin = .02f;
     public static event System.Action<float, bool> FallDamaged; // (appliedDamage, big)
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -19,6 +20,14 @@ public class PlayerMovement : MonoBehaviour
     public float decelTime = 2f;      // Zeit zum Abbremsen
     public float directionChangeDecelTime = .25f;
     public float groundedCoeff = 0.3f;
+
+    [Header("Ledge assist")]
+    // A side niche one cell up is barely taller than the player: the fall passes the gap in one or two physics steps.
+    // Near the ledge top the player is lifted (or lowered) onto it and carried in while holding towards it.
+    public bool ledgeAssist = true;
+    public float ledgeAssistUpCells = .35f;   // feet may be this far below the ledge top
+    public float ledgeAssistDownCells = .15f; // or this far above it
+    public float ledgeAssistSpeedFactor = .5f; // push-in speed as a share of the run speed
 
     Rigidbody2D rb;
     Collider2D col;
@@ -40,6 +49,12 @@ public class PlayerMovement : MonoBehaviour
     bool hasGroundedForFall;
     bool trackingFall;
     float fallPeakY;
+    float ledgeAssistDir;
+    float ledgeAssistStartX;
+    float ledgeAssistDistance;
+    float ledgeAssistRemaining;
+    readonly Collider2D[] ledgeOverlaps = new Collider2D[4];
+    readonly RaycastHit2D[] ledgeHits = new RaycastHit2D[4];
 
     private bool moving;
     public bool IsMoving => moving;
@@ -47,6 +62,7 @@ public class PlayerMovement : MonoBehaviour
     public bool IsFlying => flying;
     public bool IsClimbing => ladder && ladder.IsClimbing;
     public bool IsOnGround => col && IsGrounded();
+    public bool IsLedgeAssisting => ledgeAssistRemaining > 0f;
 
 
     float Accel => stats.EffectiveMoveSpeed / Mathf.Max(0.0001f, accelTime);
@@ -122,6 +138,7 @@ public class PlayerMovement : MonoBehaviour
             jumpRequested = false;
             jumpBufferRemaining = 0f;
             jumpGraceRemaining = 0f;
+            ledgeAssistRemaining = 0f;
             PauseFallTrackingForLadder();
             return;
         }
@@ -129,6 +146,12 @@ public class PlayerMovement : MonoBehaviour
 
         bool grounded=IsGrounded();
         TrackLanding(grounded);
+        if (ContinueLedgeAssist(grounded) || TryStartLedgeAssist(grounded))
+        {
+            previousRunVelocity=rb.linearVelocity.x;
+            jumpRequested = false;
+            return;
+        }
         bool supported=grounded;
         if(supported&&rb.linearVelocity.y<=.1f)jumpGraceRemaining=JumpGraceDuration;
         else jumpGraceRemaining=Mathf.Max(0f,jumpGraceRemaining-Time.fixedDeltaTime);
@@ -172,11 +195,103 @@ public class PlayerMovement : MonoBehaviour
         if (!jumpMap) jumpMap = Object.FindFirstObjectByType<MapGenerator>();
         float blockHeight = jumpMap && jumpMap.Terrain
             ? Mathf.Abs((jumpMap.Terrain.CellToWorld(Vector3Int.up) - jumpMap.Terrain.CellToWorld(Vector3Int.zero)).y) : 1f;
-        float weightScaledJumpHeight = Mathf.Clamp(stats.JumpHeightBlocks, 0f, 100f) *
-            Mathf.Sqrt(Mathf.Clamp01(stats.MovementWeightFactor));
+        float weightScaledJumpHeight = LoadedJumpHeightBlocks(stats.JumpHeightBlocks, stats.MovementWeightFactor,
+            GpsSettings.Preferences.carryMinJumpBlocks);
         float height = Mathf.Max(0f, weightScaledJumpHeight * blockHeight - TakeoffClearance());
         float speed = CalculateJumpSpeed(height, -Physics2D.gravity.y * rb.gravityScale, rb.linearDamping, Time.fixedDeltaTime);
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, speed);
+    }
+
+    // A load lowers the jump, but never below the GPS minimum (one cell up must always work);
+    // a base jump that is lower than that minimum stays as it is.
+    public static float LoadedJumpHeightBlocks(float baseBlocks, float weightFactor, float minimumBlocks)
+    {
+        float unloaded = float.IsNaN(baseBlocks) ? 0f : Mathf.Clamp(baseBlocks, 0f, 100f);
+        float minimum = float.IsNaN(minimumBlocks) ? 0f : Mathf.Clamp(minimumBlocks, 0f, 100f);
+        float factor = float.IsNaN(weightFactor) ? 1f : Mathf.Clamp01(weightFactor);
+        return Mathf.Max(unloaded * Mathf.Sqrt(factor), Mathf.Min(unloaded, minimum));
+    }
+
+    bool TryStartLedgeAssist(bool grounded)
+    {
+        if (!ledgeAssist || grounded || flying || noClip || inputX == 0f || !col || !col.enabled || col.isTrigger ||
+            rb.gravityScale <= 0f || rb.linearVelocity.y > .5f) return false;
+        float cell = GetBlockHeightWorld();
+        float up = Mathf.Max(0f, ledgeAssistUpCells) * cell, down = Mathf.Max(0f, ledgeAssistDownCells) * cell;
+        if (up + down <= 0f) return false;
+        var box = col.bounds;
+        float dir = Mathf.Sign(inputX);
+        float front = dir > 0f ? box.max.x : box.min.x;
+
+        // Highest ledge point across one player width in front of the feet, within the window around them.
+        var strip = new Vector2(box.size.x - 2f * LedgeSkin, .002f);
+        var probe = new Vector2(front + dir * box.size.x * .5f, box.min.y + up + LedgeSkin);
+        if (OverlapsGround(probe, strip)) return false;
+        if (!CastGround(probe, strip, Vector2.down, up + down + LedgeSkin, out var top) || top.normal.y < .5f) return false;
+        float lift = top.point.y + LedgeSkin - box.min.y;
+
+        // Only a real step: flat ground under the player must not turn a fall into a glide.
+        float stepDepth = box.min.y - (top.point.y - .25f * cell);
+        if (stepDepth > 0f && CastGround(new Vector2(box.center.x, box.min.y + LedgeSkin), Vector2.one * .002f, Vector2.down, stepDepth + LedgeSkin, out _))
+            return false;
+
+        // Room to move onto the ledge height in place, then fully onto the ledge.
+        var size = (Vector2)box.size - Vector2.one * (2f * LedgeSkin);
+        var lifted = (Vector2)box.center + Vector2.up * lift;
+        float distance = box.size.x;
+        if (OverlapsGround(lifted, size) || CastGround(lifted, size, Vector2.right * dir, distance, out _)) return false;
+
+        rb.position += Vector2.up * lift;
+        ledgeAssistDir = dir;
+        ledgeAssistStartX = rb.position.x;
+        ledgeAssistDistance = distance;
+        ledgeAssistRemaining = Mathf.Min(1f, distance / LedgeAssistSpeed + .1f);
+        HoldLedgeAssistVelocity();
+        return true;
+    }
+
+    bool ContinueLedgeAssist(bool grounded)
+    {
+        if (ledgeAssistRemaining <= 0f) return false;
+        ledgeAssistRemaining -= Time.fixedDeltaTime;
+        float travelled = (rb.position.x - ledgeAssistStartX) * ledgeAssistDir;
+        if (ledgeAssistRemaining <= 0f || flying || noClip || inputX * ledgeAssistDir <= 0f || travelled >= ledgeAssistDistance ||
+            (grounded && travelled >= ledgeAssistDistance * .5f))
+        {
+            ledgeAssistRemaining = 0f;
+            return false;
+        }
+        HoldLedgeAssistVelocity();
+        return true;
+    }
+
+    // The next step adds gravity before it moves, so this upward speed keeps the height exactly.
+    void HoldLedgeAssistVelocity()
+    {
+        rb.linearVelocity = new Vector2(ledgeAssistDir * LedgeAssistSpeed, -Physics2D.gravity.y * rb.gravityScale * Time.fixedDeltaTime);
+    }
+
+    float LedgeAssistSpeed => Mathf.Max(.5f, Mathf.Clamp(ledgeAssistSpeedFactor, 0f, 2f) * (stats ? stats.EffectiveMoveSpeed : 1f));
+
+    bool OverlapsGround(Vector2 center, Vector2 size)
+    {
+        var filter = new ContactFilter2D { useTriggers = false };
+        filter.SetLayerMask(groundLayer);
+        int count = gameObject.scene.GetPhysicsScene2D().OverlapBox(center, size, 0f, filter, ledgeOverlaps);
+        for (int i = 0; i < count; i++) if (ledgeOverlaps[i] != col) return true;
+        return false;
+    }
+
+    bool CastGround(Vector2 center, Vector2 size, Vector2 direction, float distance, out RaycastHit2D nearest)
+    {
+        var filter = new ContactFilter2D { useTriggers = false };
+        filter.SetLayerMask(groundLayer);
+        int count = gameObject.scene.GetPhysicsScene2D().BoxCast(center, size, 0f, direction, distance, filter, ledgeHits);
+        nearest = default;
+        bool found = false;
+        for (int i = 0; i < count; i++)
+            if (ledgeHits[i].collider != col && (!found || ledgeHits[i].distance < nearest.distance)) { nearest = ledgeHits[i]; found = true; }
+        return found;
     }
 
     float TakeoffClearance()
@@ -343,6 +458,7 @@ public class PlayerMovement : MonoBehaviour
         jumpBufferRemaining=0f;
         jumpGraceRemaining=0f;
         previousRunVelocity=0;
+        ledgeAssistRemaining=0f;
         ResetFallTracking();
     }
 

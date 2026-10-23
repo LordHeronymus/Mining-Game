@@ -39,7 +39,7 @@ public sealed class BlueprintCollectionProbe:MonoBehaviour
         var panel=Object.FindFirstObjectByType<BlueprintCollectionPanel>();var scroll=panel.GetComponentInChildren<ScrollRect>();
         foreach(var recipe in ExoticCatalog.Recipes){
             string state=scroll.content.Find("Blueprint "+recipe.exoticId+"/State").GetComponent<TMP_Text>().text;
-            Check(state==(recipe.metaUnlockLevel<=15?"Im Fundpool":"Gesperrt"),recipe.exoticId+" matches level gate without teaching recipe");
+            Check(state==(recipe.metaUnlockLevel<=15?"Freigeschaltet":"Gesperrt"),recipe.exoticId+" matches level gate without teaching recipe");
         }
         Check(panel.GetComponentsInChildren<Button>().Length==1,"Collection has only Back; no crafting or unlock side effects");
         yield return new WaitForEndOfFrame();

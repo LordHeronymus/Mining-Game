@@ -50,8 +50,15 @@ public sealed class CompactHud : MonoBehaviour
     const float DamageFadeSeconds = 1.4f;
     const float HealthFlashSeconds = .55f;
     const float HeartbeatFadeSeconds = .32f;
+    // Health and energy values right of the gem rows: red below a quarter, pulsing with the heartbeat and the
+    // low-energy beep.
+    public const float LowVitalFraction = .25f;
+    const float VitalValueX = 500f, VitalPulseScale = .18f, EnergyBeepPulseSeconds = .2f;
+    float energyBeepPulseTime;
+    int lastEnergyBeepCount = -1;
     TextMeshProUGUI healthValue, energyValue, moneyValue, pointsValue, depthValue, carryValue;
     RectTransform carryPlaque;
+    Material outlinedTextMaterial;
     float lastCarryCapacity = float.NaN;
     bool lastCarryUnlimited, carryDirty = true;
     readonly Image[] icons = new Image[8], selections = new Image[9];
@@ -71,7 +78,9 @@ public sealed class CompactHud : MonoBehaviour
         lastHealth = int.MinValue, lastMaxHealth = int.MinValue, lastEnergy = int.MinValue, lastMax = int.MinValue;
     static readonly Color Cream = new Color32(255,245,229,255);
     // Same carry stages and colours as the inventory's cargo line.
-    static readonly Color OverweightYellow = new Color32(255,211,86,255), OverweightRed = new Color32(255,91,75,255);
+    // Above the carrying capacity the HUD turns orange (the inventory keeps its yellow), red in the inventory's
+    // top stage (InventoryManager.CarryStage decides where the stages start).
+    static readonly Color OverweightOrange = new Color32(255,150,40,255), OverweightRed = new Color32(255,91,75,255);
     static readonly CultureInfo German = CultureInfo.GetCultureInfo("de-DE");
 
     void Awake()
@@ -210,11 +219,21 @@ public sealed class CompactHud : MonoBehaviour
         }
         float flash = healthFlashTime / HealthFlashSeconds;
         if (healthFill) healthFill.FlashAmount = flash;
-        if (healthValue) healthValue.color = Color.Lerp(Cream, Color.white, flash);
+        if (healthValue)
+        {
+            healthValue.color = Color.Lerp(VitalValueColor(healthFraction), Color.white, flash);
+            float beat = heartbeatPulseTime / HeartbeatFadeSeconds;
+            healthValue.rectTransform.localScale = Vector3.one * PulseScale(beat * beat);
+        }
+        energyBeepPulseTime = Mathf.Max(0f, energyBeepPulseTime - Time.unscaledDeltaTime);
         if (energy && energy.stats)
         {
             float max = Mathf.Max(1, energy.stats.MaxEnergy);
             energyFill.FillAmount = Mathf.Clamp01(energy.energy / max);
+            TrackEnergyBeep(energy.LowEnergyBeepCount);
+            float beep = energyBeepPulseTime / EnergyBeepPulseSeconds;
+            energyValue.color = VitalValueColor(energy.energy / max);
+            energyValue.rectTransform.localScale = Vector3.one * PulseScale(beep * beep);
             int current = Mathf.CeilToInt(energy.energy), maximum = Mathf.CeilToInt(max);
             if (current != lastEnergy || maximum != lastMax)
             { lastEnergy = current; lastMax = maximum; energyValue.text = Format(current) + " / " + Format(maximum); }
@@ -225,6 +244,15 @@ public sealed class CompactHud : MonoBehaviour
         if (DepthMeters != lastDepth) { lastDepth = DepthMeters; depthValue.text = Format(DepthMeters) + " m"; }
         if (carryPlaque && carryPlaque.gameObject.activeSelf) RefreshCarryWeight();
     }
+    void TrackEnergyBeep(int count)
+    {
+        if (lastEnergyBeepCount >= 0 && count != lastEnergyBeepCount) energyBeepPulseTime = EnergyBeepPulseSeconds;
+        lastEnergyBeepCount = count;
+    }
+    // Cream, red below a quarter (same red as the top carry stage).
+    public static Color VitalValueColor(float fraction) => fraction < LowVitalFraction ? OverweightRed : Cream;
+    // 1 at rest, slightly larger at the peak of a heartbeat or beep (pulse 0..1).
+    public static float PulseScale(float pulse) => 1f + VitalPulseScale * Mathf.Clamp01(pulse);
     void RefreshCarryWeight()
     {
         // The weight is summed only after an inventory change (RefreshItems); capacity and test mode are cheap to poll.
@@ -245,7 +273,7 @@ public sealed class CompactHud : MonoBehaviour
     public static Color CarryWeightColor(double weight, float capacity, bool unlimited)
     {
         int stage = unlimited ? 0 : InventoryManager.CarryStage(weight, capacity);
-        return stage == 2 ? OverweightRed : stage == 1 ? OverweightYellow : Cream;
+        return stage == 2 ? OverweightRed : stage == 1 ? OverweightOrange : Cream;
     }
     public void RefreshCarryWeightVisibility()
     {
@@ -580,6 +608,16 @@ public sealed class CompactHud : MonoBehaviour
         counters.anchoredPosition = new Vector2(-18 * scale, -14 * scale);
         hotbar.anchoredPosition = new Vector2(0, 26 * scale);
     }
+    static Sprite CarryIcon()
+    {
+        var catalog = Resources.Load<ItemCatalog>("ItemCatalog");
+        var backpack = catalog ? Array.Find(catalog.items, item => item && item.item == Item.Backpack) : null;
+        return backpack ? backpack.icon : null;
+    }
+    void OnDestroy()
+    {
+        if (outlinedTextMaterial) { if (Application.isPlaying) Destroy(outlinedTextMaterial); else DestroyImmediate(outlinedTextMaterial); }
+    }
     RectTransform Rect(string name, Transform parent, float x, float y, float w, float h)
     {
         var r = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
@@ -614,8 +652,11 @@ public sealed class CompactHud : MonoBehaviour
         fill.RoundJewels=true;
         fill.DecorativeEndCaps=false;
         fill.raycastTarget=false;
-        text=Text(name+" Value",top,value,330,y,92,24,14,TextAlignmentOptions.MidlineRight);
-        text.gameObject.SetActive(false);
+        // "80 / 100" right of the chain, same size and look as the carry weight line (material set in Build).
+        text=Text(name+" Value",top,value,VitalValueX,y,220,50,32,TextAlignmentOptions.MidlineLeft);
+        text.enableAutoSizing=false;
+        text.rectTransform.pivot=new Vector2(0,.5f);
+        text.rectTransform.anchoredPosition=new Vector2(VitalValueX,-(y+25));
         return fill;
     }
     Image Frame(string name, Transform parent, float width, float height, string art, float cornerHeight)
@@ -661,11 +702,29 @@ public sealed class CompactHud : MonoBehaviour
         top.anchorMin=top.anchorMax=top.pivot=new Vector2(0,1);
         healthFill=Bar("Health",2,heartSprite,new Color(.92f,.055f,.075f),"100 / 100",out healthValue);
         energyFill=Bar("Energy",56,boltSprite,new Color(1,.68f,.035f),"",out energyValue);
-        // Carried weight / carrying capacity on a small plaque below the vitals (Einstellungen → Anzeige → Traglast im HUD).
-        carryPlaque=Rect("Carry Weight",top,49,114,250,46);
-        Frame("Carry Frame",carryPlaque,250,46,"Vitals",196).raycastTarget=false;
-        Text("Carry Label",carryPlaque,"Last",14,0,64,46,22,TextAlignmentOptions.MidlineLeft);
-        carryValue=Text("Carry Value",carryPlaque,"",74,0,162,46,26,TextAlignmentOptions.MidlineRight);
+        // Carried weight / carrying capacity as a third row below the vitals, without a frame: backpack in the icon
+        // column, "12,5 / 40 kg" next to it (Einstellungen → Anzeige → Traglast im HUD).
+        carryPlaque=Rect("Carry Weight",top,0,114,400,46);
+        var backpack=Image("Carry Icon",carryPlaque,2,0,44,46,CarryIcon(),Color.white); backpack.preserveAspect=true;
+        carryValue=Text("Carry Value",carryPlaque,"",58,0,330,46,32,TextAlignmentOptions.MidlineLeft);
+        carryValue.enableAutoSizing=false;
+        // Own material with a dark outline and shadow so the number stays readable on the bright sky (released in OnDestroy).
+        outlinedTextMaterial=new Material(carryValue.fontSharedMaterial){name="HUD Outlined Value",hideFlags=HideFlags.DontSave};
+        outlinedTextMaterial.SetFloat(ShaderUtilities.ID_FaceDilate,.12f);
+        outlinedTextMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth,.22f);
+        outlinedTextMaterial.SetColor(ShaderUtilities.ID_OutlineColor,new Color(.10f,.055f,.025f,1));
+        outlinedTextMaterial.EnableKeyword("OUTLINE_ON");
+        outlinedTextMaterial.EnableKeyword("UNDERLAY_ON");
+        outlinedTextMaterial.SetColor(ShaderUtilities.ID_UnderlayColor,new Color(0,0,0,.8f));
+        outlinedTextMaterial.SetFloat(ShaderUtilities.ID_UnderlayOffsetX,.7f);
+        outlinedTextMaterial.SetFloat(ShaderUtilities.ID_UnderlayOffsetY,-.8f);
+        outlinedTextMaterial.SetFloat(ShaderUtilities.ID_UnderlayDilate,.35f);
+        outlinedTextMaterial.SetFloat(ShaderUtilities.ID_UnderlaySoftness,.35f);
+        foreach (var value in new[] {carryValue, healthValue, energyValue})
+        {
+            value.fontSharedMaterial=outlinedTextMaterial;
+            value.UpdateMeshPadding();
+        }
         RefreshCarryWeightVisibility();
         counters=Rect("Counters",transform,0,0,596,106);
         counters.anchorMin=counters.anchorMax=counters.pivot=new Vector2(1,1);

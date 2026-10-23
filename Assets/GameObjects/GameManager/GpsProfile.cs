@@ -46,6 +46,11 @@ public sealed class GpsProfile : ScriptableObject
     // horizontal centring by the visible ink instead of the advance widths.
     public float buttonTextOffset, buttonTextPadding = 1f;
     public bool buttonTextInkCenterX = true;
+    // Carrying (InventoryManager, PlayerMovement): maximum load as a multiple of the capacity, speed factor at that
+    // maximum (linear from 1 at the capacity), and the jump height in blocks a load can never push below.
+    public float carryOverloadMaxMultiplier = 2f, carryOverloadMinSpeed = 1f / 3f, carryMinJumpBlocks = 1.2f;
+    // Red carrying stage (inventory/HUD colour, voice line "Traglast Stufe 2") from this share of the maximum load.
+    public float carryRedStageFraction = .9f;
 }
 [Serializable] public sealed class GpsRecord
 {
