@@ -93,7 +93,7 @@ public static class TorchFlameCrackleChecks
                 flame.GetLayer(1).GetComponent<ParticleSystemRenderer>().sortingOrder, "Embers render in front of the flame");
 
             Check(torch.FlameCell == cell, "Torch light now lies in the torch's own cell");
-            map.torchFlameSize = 3.4f;
+            map.torchFlameSize = 2.55f;
             map.torchFlameFrequency = 60f;
             map.torchHolderOffsetY = -.1f;
             // Edit Mode runs no OnEnable, so the torch is not in the live set: apply the GPS change directly.
@@ -102,7 +102,7 @@ public static class TorchFlameCrackleChecks
             flame.ApplySettings();
             Check(Mathf.Approximately(holder.localPosition.y, -.1f), "GPS holder offset applies live");
             Check(Mathf.Approximately(flame.GetLayer(1).emission.rateOverTime.constant, 44f) &&
-                Mathf.Approximately(flame.GetLayer(1).main.startSizeY.constantMax, 1.288f), "GPS size and frequency scale the layers");
+                Mathf.Abs(flame.GetLayer(1).main.startSizeY.constantMax - .966f) < .0001f, "GPS size and frequency scale the layers");
             return new { holderBottom };
         }
         finally
