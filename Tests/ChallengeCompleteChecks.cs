@@ -17,11 +17,11 @@ public static class ChallengeCompleteChecks {
 }
 public sealed class ChallengeCompleteProbe:MonoBehaviour {
  const string Report="Temp/ChallengeCompleteChecks.txt";
- string save,meta,gps;bool clean;int checks;float oldScale;
+ string save,meta,gps;bool clean;int checks;float oldScale,tickX,tickY;
  ChallengeCompletePresentation view;CanvasGroup group;AudioSource sound;
  void Check(bool condition,string name){if(!condition)throw new Exception(name);File.AppendAllText(Report,"PASS "+(++checks)+" "+name+"\n");}
  IEnumerator Start(){
-  save=GameSaveSystem.TestDirectory;meta=MetaProgression.TestDirectory;gps=JsonUtility.ToJson(GpsSettings.Tests);oldScale=Time.timeScale;
+  save=GameSaveSystem.TestDirectory;meta=MetaProgression.TestDirectory;gps=JsonUtility.ToJson(GpsSettings.Tests);oldScale=Time.timeScale;tickX=GpsSettings.Preferences.sealCheckOffsetX;tickY=GpsSettings.Preferences.sealCheckOffsetY;GpsSettings.Preferences.sealCheckOffsetX=GpsSettings.Preferences.sealCheckOffsetY=0;
   GameSaveSystem.TestDirectory=Path.GetFullPath("Temp/ChallengeComplete-"+DateTime.UtcNow.Ticks);MetaProgression.TestDirectory=Path.Combine(GameSaveSystem.TestDirectory,"Profile");
   GpsSettings.Document.tests.testModeDisabled=true;File.WriteAllText(Report,"");
   var routine=Run();while(true){bool more=false;object next=null;Exception error=null;try{more=routine.MoveNext();if(more)next=routine.Current;}catch(Exception e){error=e;}
@@ -71,6 +71,16 @@ public sealed class ChallengeCompleteProbe:MonoBehaviour {
   Check(Mathf.Abs(sound.time-view.Elapsed)<.1f,"Seal impact matches the audible hit");
   Check(group.alpha>.99f,"Banner fully visible at the hit");
   yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot("Temp/ChallengeComplete-Treffer.png");yield return null;
+  // F1 → UI → Challenge-Siegel: the tick layer stays off at 0, follows the offset in seal image pixels, and is clamped.
+  var tick=Part("Seal Check");var prefs=GpsSettings.Preferences;
+  Check(tick.transform.parent==seal.transform&&tick.sprite&&tick.sprite.rect.size==new Vector2(262,253)&&!tick.enabled,"Seal tick layer exists and is off at offset 0");
+  float unit=Mathf.Min(seal.rectTransform.rect.width/262f,seal.rectTransform.rect.height/253f);
+  prefs.sealCheckOffsetX=2;prefs.sealCheckOffsetY=-1.5f;yield return null;
+  Check(tick.enabled&&Vector2.Distance(tick.rectTransform.anchoredPosition,new Vector2(2,-1.5f)*unit)<.01f&&tick.color==seal.color,"Seal tick follows the GPS offset");
+  prefs.sealCheckOffsetX=-50;prefs.sealCheckOffsetY=50;yield return null;
+  Check(Vector2.Distance(tick.rectTransform.anchoredPosition,new Vector2(-1,1)*ChallengeSealCheck.MaxOffset*unit)<.01f,"Seal tick offset is clamped");
+  prefs.sealCheckOffsetX=prefs.sealCheckOffsetY=0;yield return null;
+  Check(!tick.enabled,"Seal tick layer turns off again at 0");
 
   float age=view.Elapsed;GameplayInputBlocker.SetBlocked(this,true);Time.timeScale=0;yield return new WaitForSecondsRealtime(.3f);
   Check(group.alpha==0&&Mathf.Abs(view.Elapsed-age)<.05f&&!sound.isPlaying,"Pause hides the banner and suspends animation and audio");
@@ -107,7 +117,7 @@ public sealed class ChallengeCompleteProbe:MonoBehaviour {
   Check(!view.IsShowing&&group.alpha==0&&!sound.isPlaying,"Scene exit clears the banner");
   File.AppendAllText(Report,"COMPLETE "+checks+" checks\n");
  }
- void Cleanup(){if(clean)return;clean=true;GameplayInputBlocker.SetBlocked(this,false);Time.timeScale=oldScale;MetaProgression.EndRun();MetaProgression.TestDirectory=meta;GameSaveSystem.TestDirectory=save;JsonUtility.FromJsonOverwrite(gps,GpsSettings.Document.tests);Object.Destroy(gameObject);}
+ void Cleanup(){if(clean)return;clean=true;GameplayInputBlocker.SetBlocked(this,false);Time.timeScale=oldScale;MetaProgression.EndRun();MetaProgression.TestDirectory=meta;GameSaveSystem.TestDirectory=save;JsonUtility.FromJsonOverwrite(gps,GpsSettings.Document.tests);GpsSettings.Preferences.sealCheckOffsetX=tickX;GpsSettings.Preferences.sealCheckOffsetY=tickY;Object.Destroy(gameObject);}
  void OnDestroy(){if(!clean)Cleanup();}
 }
 public sealed class MetaChallengeDefinitionView{public string name;public int xp;}
