@@ -28,6 +28,9 @@ public static class SurfaceHeadlampChecks
         Vector3 oldPosition = lamp.transform.position;
         bool wasNight = sky.IsNight;
         Vector3 up = tiles.transform.TransformVector(Vector3.up * tiles.layoutGrid.cellSize.y);
+        // Underground check: an open cell just below the surface; a fresh map has none, so one is opened temporarily.
+        var air = new Vector3Int(0, -2, 0);
+        var oldTile = tiles.GetTile(air);
         Vector3 top = tiles.CellToWorld(new Vector3Int(0, 1, 0)) + tiles.transform.TransformVector(Vector3.right * tiles.layoutGrid.cellSize.x * .5f);
         try
         {
@@ -51,7 +54,7 @@ public static class SurfaceHeadlampChecks
             Check(!lighting.SurfaceHeadlampActive, "Surface lamp must stay off during the day.");
 
             Night(true);
-            Vector3Int air = FindAirCell(tiles);
+            if (oldTile) tiles.SetTile(air, null);
             Place(tiles.GetCellCenterWorld(air));
             Check(!lighting.SurfaceHeadlampActive, "Surface lamp must be off underground.");
             Check(lighting.HeadlampFieldActive, $"Underground light field must take over in air cell {air}.");
@@ -61,19 +64,9 @@ public static class SurfaceHeadlampChecks
         {
             sky.SetNight(wasNight);
             sky.AdvanceFade(1000f);
+            if (oldTile && !tiles.HasTile(air)) tiles.SetTile(air, oldTile);
             lamp.transform.position = oldPosition;
             lighting.SendMessage("UpdateHeadlamp");
         }
-    }
-
-    static Vector3Int FindAirCell(UnityEngine.Tilemaps.Tilemap tiles)
-    {
-        for (int depth = 0; depth < 40; depth++)
-            for (int x = -30; x <= 30; x++)
-            {
-                var cell = new Vector3Int(x, -depth, 0);
-                if (!tiles.HasTile(cell)) return cell;
-            }
-        throw new Exception("No open cell in the upper terrain to test the underground lamp.");
     }
 }
