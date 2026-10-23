@@ -1079,16 +1079,16 @@ MonoBehaviour:
     \"name\": \"weight\",\n                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
-    0.5,\n                    \"flag\": false,\n                   
-    \"vector\": {\n                        \"x\": 0.0,\n                        \"y\":
-    0.0,\n                        \"z\": 0.0,\n                        \"w\": 0.0\n                   
-    },\n                    \"color\": {\n                        \"r\": 0.0,\n                       
-    \"g\": 0.0,\n                        \"b\": 0.0,\n                        \"a\":
-    0.0\n                    },\n                    \"curve\": {\n                       
-    \"preWrap\": 0,\n                        \"postWrap\": 0,\n                       
-    \"keys\": []\n                    },\n                    \"children\": []\n               
-    },\n                {\n                    \"name\": \"worth\",\n                   
-    \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
+    0.5,\n                    \"flag\": false,\n                    \"vector\": {\n                       
+    \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
+    0.0,\n                        \"w\": 0.0\n                    },\n                   
+    \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
+    0.0,\n                        \"b\": 0.0,\n                        \"a\": 0.0\n                   
+    },\n                    \"curve\": {\n                        \"preWrap\": 0,\n                       
+    \"postWrap\": 0,\n                        \"keys\": []\n                    },\n                   
+    \"children\": []\n                },\n                {\n                   
+    \"name\": \"worth\",\n                    \"type\": \"System.Int32, mscorlib,
+    Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
     0.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
     \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
@@ -1840,9 +1840,9 @@ MonoBehaviour:
     \"name\": \"worth\",\n                    \"type\": \"System.Int32, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    10.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
-    \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
-    0.0,\n                        \"w\": 0.0\n                    },\n                   
+    10.0,\n                    \"flag\": false,\n                    \"vector\":
+    {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
+    \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
     0.0,\n                        \"b\": 0.0,\n                        \"a\": 0.0\n                   
     },\n                    \"curve\": {\n                        \"preWrap\": 0,\n                       
@@ -8638,7 +8638,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    20000.0,\n                    \"flag\": false,\n                    \"vector\":
+    125000.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -9676,7 +9676,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    10000.0,\n                    \"flag\": false,\n                    \"vector\":
+    45000.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -10132,7 +10132,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    5000.0,\n                    \"flag\": false,\n                    \"vector\":
+    15000.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -10816,7 +10816,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    600.0,\n                    \"flag\": false,\n                    \"vector\":
+    750.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -11086,7 +11086,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    1250.0,\n                    \"flag\": false,\n                    \"vector\":
+    2000.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -11584,7 +11584,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    2500.0,\n                    \"flag\": false,\n                    \"vector\":
+    5000.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -13810,7 +13810,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    4200.0,\n                    \"flag\": false,\n                    \"vector\":
+    65000.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -14308,7 +14308,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    700.0,\n                    \"flag\": false,\n                    \"vector\":
+    1200.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -14974,7 +14974,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    2400.0,\n                    \"flag\": false,\n                    \"vector\":
+    25000.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -15514,7 +15514,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    900.0,\n                    \"flag\": false,\n                    \"vector\":
+    3000.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -16180,7 +16180,7 @@ MonoBehaviour:
     ]\n                },\n                {\n                    \"name\": \"shopPrice\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    1400.0,\n                    \"flag\": false,\n                    \"vector\":
+    10000.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
     \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -21278,7 +21278,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.4517619907855988,\n                                    \"flag\":
+    \"number\": 0.45176199078559878,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -21502,7 +21502,7 @@ MonoBehaviour:
     \"volume\",\n                                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.234050527215004,\n                                    \"flag\":
+    \"number\": 0.23405052721500398,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -21950,7 +21950,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.2918954193592072,\n                                    \"flag\":
+    \"number\": 0.29189541935920718,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -22062,7 +22062,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.2130849063396454,\n                                    \"flag\":
+    \"number\": 0.21308490633964539,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -22734,7 +22734,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.21769607067108158,\n                                    \"flag\":
+    \"number\": 0.21769607067108155,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -22958,7 +22958,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.275728851556778,\n                                    \"flag\":
+    \"number\": 0.27572885155677798,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -23518,7 +23518,7 @@ MonoBehaviour:
     \"volume\",\n                                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.12410057336091997,\n                                    \"flag\":
+    \"number\": 0.12410057336091995,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -24638,7 +24638,7 @@ MonoBehaviour:
     \"volume\",\n                                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.20963022112846378,\n                                    \"flag\":
+    \"number\": 0.20963022112846375,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -25422,7 +25422,7 @@ MonoBehaviour:
     \"volume\",\n                                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.4680504500865937,\n                                    \"flag\":
+    \"number\": 0.46805045008659365,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -27214,7 +27214,7 @@ MonoBehaviour:
     \"volume\",\n                                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.19689278304576877,\n                                    \"flag\":
+    \"number\": 0.19689278304576875,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -27326,7 +27326,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.2537821233272553,\n                                    \"flag\":
+    \"number\": 0.25378212332725527,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -27886,19 +27886,19 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 1.0,\n                                    \"flag\":
-    false,\n                                    \"vector\": {\n                                       
-    \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
-    \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
-    },\n                                    \"color\": {\n                                       
-    \"r\": 0.0,\n                                        \"g\": 0.0,\n                                       
-    \"b\": 0.0,\n                                        \"a\": 0.0\n                                   
-    },\n                                    \"curve\": {\n                                       
-    \"preWrap\": 0,\n                                        \"postWrap\": 0,\n                                       
-    \"keys\": []\n                                    },\n                                   
-    \"children\": []\n                                },\n                               
-    {\n                                    \"name\": \"pitch\",\n                                   
-    \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"number\": 1.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"pitch\",\n                                    \"type\": \"System.Single, mscorlib,
+    Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
     \"number\": 1.0,\n                                    \"flag\": false,\n                                   
     \"vector\": {\n                                        \"x\": 0.0,\n                                       
@@ -29454,7 +29454,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.24311907589435576,\n                                    \"flag\":
+    \"number\": 0.24311907589435578,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -29790,7 +29790,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.2074638605117798,\n                                    \"flag\":
+    \"number\": 0.20746386051177979,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -30014,7 +30014,7 @@ MonoBehaviour:
     \"volume\",\n                                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.2360373288393021,\n                                    \"flag\":
+    \"number\": 0.23603732883930207,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -30238,7 +30238,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.309778779745102,\n                                    \"flag\":
+    \"number\": 0.30977877974510195,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -30574,7 +30574,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.3111422955989838,\n                                    \"flag\":
+    \"number\": 0.31114229559898379,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -52922,8 +52922,568 @@ MonoBehaviour:
     \"curve\": {\n                                        \"preWrap\": 0,\n                                       
     \"postWrap\": 0,\n                                        \"keys\": []\n                                   
     },\n                                    \"children\": []\n                               
+    }\n                            ]\n                        },\n                       
+    {\n                            \"name\": \"292\",\n                           
+    \"type\": \"AudioClipTuningEntry, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null\",\n                            \"text\": \"\",\n                           
+    \"kind\": 9,\n                            \"number\": 0.0,\n                           
+    \"flag\": false,\n                            \"vector\": {\n                               
+    \"x\": 0.0,\n                                \"y\": 0.0,\n                               
+    \"z\": 0.0,\n                                \"w\": 0.0\n                           
+    },\n                            \"color\": {\n                               
+    \"r\": 0.0,\n                                \"g\": 0.0,\n                               
+    \"b\": 0.0,\n                                \"a\": 0.0\n                           
+    },\n                            \"curve\": {\n                               
+    \"preWrap\": 0,\n                                \"postWrap\": 0,\n                               
+    \"keys\": []\n                            },\n                            \"children\":
+    [\n                                {\n                                    \"name\":
+    \"clip\",\n                                    \"type\": \"UnityEngine.AudioClip,
+    UnityEngine.AudioModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null\",\n                                   
+    \"text\": \"aba6973268fc458eaee72c78b3115584:8300000\",\n                                   
+    \"kind\": 5,\n                                    \"number\": 0.0,\n                                   
+    \"flag\": false,\n                                    \"vector\": {\n                                       
+    \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
+    \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
+    },\n                                    \"color\": {\n                                       
+    \"r\": 0.0,\n                                        \"g\": 0.0,\n                                       
+    \"b\": 0.0,\n                                        \"a\": 0.0\n                                   
+    },\n                                    \"curve\": {\n                                       
+    \"preWrap\": 0,\n                                        \"postWrap\": 0,\n                                       
+    \"keys\": []\n                                    },\n                                   
+    \"children\": []\n                                },\n                               
+    {\n                                    \"name\": \"category\",\n                                   
+    \"type\": \"System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"Shop und UI\",\n                                    \"kind\": 3,\n                                   
+    \"number\": 0.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"displayName\",\n                                    \"type\": \"System.String,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"LevelUp-ChargeTreasure\",\n                                    \"kind\":
+    3,\n                                    \"number\": 0.0,\n                                   
+    \"flag\": false,\n                                    \"vector\": {\n                                       
+    \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
+    \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
+    },\n                                    \"color\": {\n                                       
+    \"r\": 0.0,\n                                        \"g\": 0.0,\n                                       
+    \"b\": 0.0,\n                                        \"a\": 0.0\n                                   
+    },\n                                    \"curve\": {\n                                       
+    \"preWrap\": 0,\n                                        \"postWrap\": 0,\n                                       
+    \"keys\": []\n                                    },\n                                   
+    \"children\": []\n                                },\n                               
+    {\n                                    \"name\": \"volume\",\n                                   
+    \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 1.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"pitch\",\n                                    \"type\": \"System.Single, mscorlib,
+    Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 1.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"pitchSpread\",\n                                    \"type\": \"System.Single,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 0.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"volumeSpread\",\n                                    \"type\": \"System.Single,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 0.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    }\n                            ]\n                        },\n                       
+    {\n                            \"name\": \"293\",\n                           
+    \"type\": \"AudioClipTuningEntry, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null\",\n                            \"text\": \"\",\n                           
+    \"kind\": 9,\n                            \"number\": 0.0,\n                           
+    \"flag\": false,\n                            \"vector\": {\n                               
+    \"x\": 0.0,\n                                \"y\": 0.0,\n                               
+    \"z\": 0.0,\n                                \"w\": 0.0\n                           
+    },\n                            \"color\": {\n                               
+    \"r\": 0.0,\n                                \"g\": 0.0,\n                               
+    \"b\": 0.0,\n                                \"a\": 0.0\n                           
+    },\n                            \"curve\": {\n                               
+    \"preWrap\": 0,\n                                \"postWrap\": 0,\n                               
+    \"keys\": []\n                            },\n                            \"children\":
+    [\n                                {\n                                    \"name\":
+    \"clip\",\n                                    \"type\": \"UnityEngine.AudioClip,
+    UnityEngine.AudioModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null\",\n                                   
+    \"text\": \"04a5fde616b1466287659ec25b2b7e03:8300000\",\n                                   
+    \"kind\": 5,\n                                    \"number\": 0.0,\n                                   
+    \"flag\": false,\n                                    \"vector\": {\n                                       
+    \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
+    \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
+    },\n                                    \"color\": {\n                                       
+    \"r\": 0.0,\n                                        \"g\": 0.0,\n                                       
+    \"b\": 0.0,\n                                        \"a\": 0.0\n                                   
+    },\n                                    \"curve\": {\n                                       
+    \"preWrap\": 0,\n                                        \"postWrap\": 0,\n                                       
+    \"keys\": []\n                                    },\n                                   
+    \"children\": []\n                                },\n                               
+    {\n                                    \"name\": \"category\",\n                                   
+    \"type\": \"System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"Bauen und Pflanzen\",\n                                    \"kind\":
+    3,\n                                    \"number\": 0.0,\n                                   
+    \"flag\": false,\n                                    \"vector\": {\n                                       
+    \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
+    \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
+    },\n                                    \"color\": {\n                                       
+    \"r\": 0.0,\n                                        \"g\": 0.0,\n                                       
+    \"b\": 0.0,\n                                        \"a\": 0.0\n                                   
+    },\n                                    \"curve\": {\n                                       
+    \"preWrap\": 0,\n                                        \"postWrap\": 0,\n                                       
+    \"keys\": []\n                                    },\n                                   
+    \"children\": []\n                                },\n                               
+    {\n                                    \"name\": \"displayName\",\n                                   
+    \"type\": \"System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"TorchCrackle 01\",\n                                    \"kind\":
+    3,\n                                    \"number\": 0.0,\n                                   
+    \"flag\": false,\n                                    \"vector\": {\n                                       
+    \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
+    \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
+    },\n                                    \"color\": {\n                                       
+    \"r\": 0.0,\n                                        \"g\": 0.0,\n                                       
+    \"b\": 0.0,\n                                        \"a\": 0.0\n                                   
+    },\n                                    \"curve\": {\n                                       
+    \"preWrap\": 0,\n                                        \"postWrap\": 0,\n                                       
+    \"keys\": []\n                                    },\n                                   
+    \"children\": []\n                                },\n                               
+    {\n                                    \"name\": \"volume\",\n                                   
+    \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 1.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"pitch\",\n                                    \"type\": \"System.Single, mscorlib,
+    Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 1.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"pitchSpread\",\n                                    \"type\": \"System.Single,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 0.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"volumeSpread\",\n                                    \"type\": \"System.Single,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 0.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    }\n                            ]\n                        },\n                       
+    {\n                            \"name\": \"294\",\n                           
+    \"type\": \"AudioClipTuningEntry, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null\",\n                            \"text\": \"\",\n                           
+    \"kind\": 9,\n                            \"number\": 0.0,\n                           
+    \"flag\": false,\n                            \"vector\": {\n                               
+    \"x\": 0.0,\n                                \"y\": 0.0,\n                               
+    \"z\": 0.0,\n                                \"w\": 0.0\n                           
+    },\n                            \"color\": {\n                               
+    \"r\": 0.0,\n                                \"g\": 0.0,\n                               
+    \"b\": 0.0,\n                                \"a\": 0.0\n                           
+    },\n                            \"curve\": {\n                               
+    \"preWrap\": 0,\n                                \"postWrap\": 0,\n                               
+    \"keys\": []\n                            },\n                            \"children\":
+    [\n                                {\n                                    \"name\":
+    \"clip\",\n                                    \"type\": \"UnityEngine.AudioClip,
+    UnityEngine.AudioModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null\",\n                                   
+    \"text\": \"30b9fdeca92b49c0b6bdc871efd062b9:8300000\",\n                                   
+    \"kind\": 5,\n                                    \"number\": 0.0,\n                                   
+    \"flag\": false,\n                                    \"vector\": {\n                                       
+    \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
+    \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
+    },\n                                    \"color\": {\n                                       
+    \"r\": 0.0,\n                                        \"g\": 0.0,\n                                       
+    \"b\": 0.0,\n                                        \"a\": 0.0\n                                   
+    },\n                                    \"curve\": {\n                                       
+    \"preWrap\": 0,\n                                        \"postWrap\": 0,\n                                       
+    \"keys\": []\n                                    },\n                                   
+    \"children\": []\n                                },\n                               
+    {\n                                    \"name\": \"category\",\n                                   
+    \"type\": \"System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"Shop und UI\",\n                                    \"kind\": 3,\n                                   
+    \"number\": 0.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"displayName\",\n                                    \"type\": \"System.String,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"Knopf-Hover-Klick\",\n                                    \"kind\":
+    3,\n                                    \"number\": 0.0,\n                                   
+    \"flag\": false,\n                                    \"vector\": {\n                                       
+    \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
+    \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
+    },\n                                    \"color\": {\n                                       
+    \"r\": 0.0,\n                                        \"g\": 0.0,\n                                       
+    \"b\": 0.0,\n                                        \"a\": 0.0\n                                   
+    },\n                                    \"curve\": {\n                                       
+    \"preWrap\": 0,\n                                        \"postWrap\": 0,\n                                       
+    \"keys\": []\n                                    },\n                                   
+    \"children\": []\n                                },\n                               
+    {\n                                    \"name\": \"volume\",\n                                   
+    \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 0.20000000298023225,\n                                    \"flag\":
+    false,\n                                    \"vector\": {\n                                       
+    \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
+    \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
+    },\n                                    \"color\": {\n                                       
+    \"r\": 0.0,\n                                        \"g\": 0.0,\n                                       
+    \"b\": 0.0,\n                                        \"a\": 0.0\n                                   
+    },\n                                    \"curve\": {\n                                       
+    \"preWrap\": 0,\n                                        \"postWrap\": 0,\n                                       
+    \"keys\": []\n                                    },\n                                   
+    \"children\": []\n                                },\n                               
+    {\n                                    \"name\": \"pitch\",\n                                   
+    \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 1.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"pitchSpread\",\n                                    \"type\": \"System.Single,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 0.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"volumeSpread\",\n                                    \"type\": \"System.Single,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 0.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    }\n                            ]\n                        },\n                       
+    {\n                            \"name\": \"295\",\n                           
+    \"type\": \"AudioClipTuningEntry, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null\",\n                            \"text\": \"\",\n                           
+    \"kind\": 9,\n                            \"number\": 0.0,\n                           
+    \"flag\": false,\n                            \"vector\": {\n                               
+    \"x\": 0.0,\n                                \"y\": 0.0,\n                               
+    \"z\": 0.0,\n                                \"w\": 0.0\n                           
+    },\n                            \"color\": {\n                               
+    \"r\": 0.0,\n                                \"g\": 0.0,\n                               
+    \"b\": 0.0,\n                                \"a\": 0.0\n                           
+    },\n                            \"curve\": {\n                               
+    \"preWrap\": 0,\n                                \"postWrap\": 0,\n                               
+    \"keys\": []\n                            },\n                            \"children\":
+    [\n                                {\n                                    \"name\":
+    \"clip\",\n                                    \"type\": \"UnityEngine.AudioClip,
+    UnityEngine.AudioModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null\",\n                                   
+    \"text\": \"30978c62ae7b40f7adcc5455f7d3579d:8300000\",\n                                   
+    \"kind\": 5,\n                                    \"number\": 0.0,\n                                   
+    \"flag\": false,\n                                    \"vector\": {\n                                       
+    \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
+    \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
+    },\n                                    \"color\": {\n                                       
+    \"r\": 0.0,\n                                        \"g\": 0.0,\n                                       
+    \"b\": 0.0,\n                                        \"a\": 0.0\n                                   
+    },\n                                    \"curve\": {\n                                       
+    \"preWrap\": 0,\n                                        \"postWrap\": 0,\n                                       
+    \"keys\": []\n                                    },\n                                   
+    \"children\": []\n                                },\n                               
+    {\n                                    \"name\": \"category\",\n                                   
+    \"type\": \"System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"Weitere Clips\",\n                                    \"kind\": 3,\n                                   
+    \"number\": 0.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"displayName\",\n                                    \"type\": \"System.String,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"NightAmbience\",\n                                    \"kind\": 3,\n                                   
+    \"number\": 0.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"volume\",\n                                    \"type\": \"System.Single, mscorlib,
+    Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 1.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"pitch\",\n                                    \"type\": \"System.Single, mscorlib,
+    Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 1.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"pitchSpread\",\n                                    \"type\": \"System.Single,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 0.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"volumeSpread\",\n                                    \"type\": \"System.Single,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 0.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    }\n                            ]\n                        },\n                       
+    {\n                            \"name\": \"296\",\n                           
+    \"type\": \"AudioClipTuningEntry, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null\",\n                            \"text\": \"\",\n                           
+    \"kind\": 9,\n                            \"number\": 0.0,\n                           
+    \"flag\": false,\n                            \"vector\": {\n                               
+    \"x\": 0.0,\n                                \"y\": 0.0,\n                               
+    \"z\": 0.0,\n                                \"w\": 0.0\n                           
+    },\n                            \"color\": {\n                               
+    \"r\": 0.0,\n                                \"g\": 0.0,\n                               
+    \"b\": 0.0,\n                                \"a\": 0.0\n                           
+    },\n                            \"curve\": {\n                               
+    \"preWrap\": 0,\n                                \"postWrap\": 0,\n                               
+    \"keys\": []\n                            },\n                            \"children\":
+    [\n                                {\n                                    \"name\":
+    \"clip\",\n                                    \"type\": \"UnityEngine.AudioClip,
+    UnityEngine.AudioModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null\",\n                                   
+    \"text\": \"353e244c15d040d4814ef0c2b7301471:8300000\",\n                                   
+    \"kind\": 5,\n                                    \"number\": 0.0,\n                                   
+    \"flag\": false,\n                                    \"vector\": {\n                                       
+    \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
+    \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
+    },\n                                    \"color\": {\n                                       
+    \"r\": 0.0,\n                                        \"g\": 0.0,\n                                       
+    \"b\": 0.0,\n                                        \"a\": 0.0\n                                   
+    },\n                                    \"curve\": {\n                                       
+    \"preWrap\": 0,\n                                        \"postWrap\": 0,\n                                       
+    \"keys\": []\n                                    },\n                                   
+    \"children\": []\n                                },\n                               
+    {\n                                    \"name\": \"category\",\n                                   
+    \"type\": \"System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"Weitere Clips\",\n                                    \"kind\": 3,\n                                   
+    \"number\": 0.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"displayName\",\n                                    \"type\": \"System.String,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"ChallengeComplete\",\n                                    \"kind\":
+    3,\n                                    \"number\": 0.0,\n                                   
+    \"flag\": false,\n                                    \"vector\": {\n                                       
+    \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
+    \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
+    },\n                                    \"color\": {\n                                       
+    \"r\": 0.0,\n                                        \"g\": 0.0,\n                                       
+    \"b\": 0.0,\n                                        \"a\": 0.0\n                                   
+    },\n                                    \"curve\": {\n                                       
+    \"preWrap\": 0,\n                                        \"postWrap\": 0,\n                                       
+    \"keys\": []\n                                    },\n                                   
+    \"children\": []\n                                },\n                               
+    {\n                                    \"name\": \"volume\",\n                                   
+    \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 1.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"pitch\",\n                                    \"type\": \"System.Single, mscorlib,
+    Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 1.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"pitchSpread\",\n                                    \"type\": \"System.Single,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 0.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
+    },\n                                {\n                                    \"name\":
+    \"volumeSpread\",\n                                    \"type\": \"System.Single,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
+    \"text\": \"\",\n                                    \"kind\": 0,\n                                   
+    \"number\": 0.0,\n                                    \"flag\": false,\n                                   
+    \"vector\": {\n                                        \"x\": 0.0,\n                                       
+    \"y\": 0.0,\n                                        \"z\": 0.0,\n                                       
+    \"w\": 0.0\n                                    },\n                                   
+    \"color\": {\n                                        \"r\": 0.0,\n                                       
+    \"g\": 0.0,\n                                        \"b\": 0.0,\n                                       
+    \"a\": 0.0\n                                    },\n                                   
+    \"curve\": {\n                                        \"preWrap\": 0,\n                                       
+    \"postWrap\": 0,\n                                        \"keys\": []\n                                   
+    },\n                                    \"children\": []\n                               
     }\n                            ]\n                        }\n                   
-    ,{\"name\": \"292\", \"type\": \"AudioClipTuningEntry, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null\", \"text\": \"\", \"kind\": 9, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": [{\"name\": \"clip\", \"type\": \"UnityEngine.AudioClip, UnityEngine.AudioModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null\", \"text\": \"aba6973268fc458eaee72c78b3115584:8300000\", \"kind\": 5, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"category\", \"type\": \"System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"Shop und UI\", \"kind\": 3, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"displayName\", \"type\": \"System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"LevelUp-ChargeTreasure\", \"kind\": 3, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"volume\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 1.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"pitch\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 1.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"pitchSpread\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"volumeSpread\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}]}, {\"name\": \"293\", \"type\": \"AudioClipTuningEntry, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null\", \"text\": \"\", \"kind\": 9, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": [{\"name\": \"clip\", \"type\": \"UnityEngine.AudioClip, UnityEngine.AudioModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null\", \"text\": \"04a5fde616b1466287659ec25b2b7e03:8300000\", \"kind\": 5, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"category\", \"type\": \"System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"Bauen und Pflanzen\", \"kind\": 3, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"displayName\", \"type\": \"System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"TorchCrackle 01\", \"kind\": 3, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"volume\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 1.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"pitch\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 1.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"pitchSpread\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"volumeSpread\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}]}, {\"name\": \"294\", \"type\": \"AudioClipTuningEntry, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null\", \"text\": \"\", \"kind\": 9, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": [{\"name\": \"clip\", \"type\": \"UnityEngine.AudioClip, UnityEngine.AudioModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null\", \"text\": \"30b9fdeca92b49c0b6bdc871efd062b9:8300000\", \"kind\": 5, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"category\", \"type\": \"System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"Shop und UI\", \"kind\": 3, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"displayName\", \"type\": \"System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"Knopf-Hover-Klick\", \"kind\": 3, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"volume\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.2, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"pitch\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 1.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"pitchSpread\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"volumeSpread\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}]}]\n                },\n                {\n                    \"name\": \"catalogVersion\",\n                   
+    ]\n                },\n                {\n                    \"name\": \"catalogVersion\",\n                   
     \"type\": \"System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
     1.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
@@ -53175,6 +53735,17 @@ MonoBehaviour:
     },\n                    \"curve\": {\n                        \"preWrap\": 0,\n                       
     \"postWrap\": 0,\n                        \"keys\": []\n                    },\n                   
     \"children\": []\n                },\n                {\n                   
+    \"name\": \"healthRegenAboveLimitInterval\",\n                    \"type\": \"System.Single,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
+    \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
+    10.0,\n                    \"flag\": false,\n                    \"vector\":
+    {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
+    \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
+    \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
+    0.0,\n                        \"b\": 0.0,\n                        \"a\": 0.0\n                   
+    },\n                    \"curve\": {\n                        \"preWrap\": 0,\n                       
+    \"postWrap\": 0,\n                        \"keys\": []\n                    },\n                   
+    \"children\": []\n                },\n                {\n                   
     \"name\": \"bloodEdgeIntensity\",\n                    \"type\": \"System.Single,
     mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
@@ -53329,7 +53900,18 @@ MonoBehaviour:
     0.0\n                    },\n                    \"curve\": {\n                       
     \"preWrap\": 0,\n                        \"postWrap\": 0,\n                       
     \"keys\": []\n                    },\n                    \"children\": []\n               
-    }, {\"name\": \"smartCursorGlowStrength\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 1.309999942779541, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}\n            ]\n        },\n        {\n            \"key\": \"component:MinerPlayerVisual\",\n           
+    },\n                {\n                    \"name\": \"smartCursorGlowStrength\",\n                   
+    \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
+    \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
+    1.309999942779541,\n                    \"flag\": false,\n                   
+    \"vector\": {\n                        \"x\": 0.0,\n                        \"y\":
+    0.0,\n                        \"z\": 0.0,\n                        \"w\": 0.0\n                   
+    },\n                    \"color\": {\n                        \"r\": 0.0,\n                       
+    \"g\": 0.0,\n                        \"b\": 0.0,\n                        \"a\":
+    0.0\n                    },\n                    \"curve\": {\n                       
+    \"preWrap\": 0,\n                        \"postWrap\": 0,\n                       
+    \"keys\": []\n                    },\n                    \"children\": []\n               
+    }\n            ]\n        },\n        {\n            \"key\": \"component:MinerPlayerVisual\",\n           
     \"type\": \"MinerPlayerVisual, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
     PublicKeyToken=null\",\n            \"assetKey\": \"\",\n            \"name\":
     \"\",\n            \"fields\": [\n                {\n                    \"name\":
@@ -53453,14 +54035,57 @@ MonoBehaviour:
     0.0\n                    },\n                    \"curve\": {\n                       
     \"preWrap\": 0,\n                        \"postWrap\": 0,\n                       
     \"keys\": []\n                    },\n                    \"children\": []\n               
-    }, {\"name\": \"ledgeAssist\", \"type\": \"System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 2, \"number\": 0.0, \"flag\": true, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"ledgeAssistUpCells\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.3499999940395355, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"ledgeAssistDownCells\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.15000000596046448, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"ledgeAssistSpeedFactor\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.5, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}\n            ]\n        },\n        {\n            \"key\": \"component:PlayerLadder\",\n           
-    \"type\": \"PlayerLadder, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-    PublicKeyToken=null\",\n            \"assetKey\": \"\",\n            \"name\":
-    \"\",\n            \"fields\": [\n                {\n                    \"name\":
-    \"climbSpeed\",\n                    \"type\": \"System.Single, mscorlib, Version=4.0.0.0,
-    Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                    \"text\":
-    \"\",\n                    \"kind\": 0,\n                    \"number\": 2.0,\n                   
-    \"flag\": false,\n                    \"vector\": {\n                       
+    },\n                {\n                    \"name\": \"ledgeAssist\",\n                   
+    \"type\": \"System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
+    \"text\": \"\",\n                    \"kind\": 2,\n                    \"number\":
+    0.0,\n                    \"flag\": true,\n                    \"vector\": {\n                       
+    \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
+    0.0,\n                        \"w\": 0.0\n                    },\n                   
+    \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
+    0.0,\n                        \"b\": 0.0,\n                        \"a\": 0.0\n                   
+    },\n                    \"curve\": {\n                        \"preWrap\": 0,\n                       
+    \"postWrap\": 0,\n                        \"keys\": []\n                    },\n                   
+    \"children\": []\n                },\n                {\n                   
+    \"name\": \"ledgeAssistUpCells\",\n                    \"type\": \"System.Single,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
+    \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
+    0.3499999940395355,\n                    \"flag\": false,\n                   
+    \"vector\": {\n                        \"x\": 0.0,\n                        \"y\":
+    0.0,\n                        \"z\": 0.0,\n                        \"w\": 0.0\n                   
+    },\n                    \"color\": {\n                        \"r\": 0.0,\n                       
+    \"g\": 0.0,\n                        \"b\": 0.0,\n                        \"a\":
+    0.0\n                    },\n                    \"curve\": {\n                       
+    \"preWrap\": 0,\n                        \"postWrap\": 0,\n                       
+    \"keys\": []\n                    },\n                    \"children\": []\n               
+    },\n                {\n                    \"name\": \"ledgeAssistDownCells\",\n                   
+    \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
+    \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
+    0.15000000596046449,\n                    \"flag\": false,\n                   
+    \"vector\": {\n                        \"x\": 0.0,\n                        \"y\":
+    0.0,\n                        \"z\": 0.0,\n                        \"w\": 0.0\n                   
+    },\n                    \"color\": {\n                        \"r\": 0.0,\n                       
+    \"g\": 0.0,\n                        \"b\": 0.0,\n                        \"a\":
+    0.0\n                    },\n                    \"curve\": {\n                       
+    \"preWrap\": 0,\n                        \"postWrap\": 0,\n                       
+    \"keys\": []\n                    },\n                    \"children\": []\n               
+    },\n                {\n                    \"name\": \"ledgeAssistSpeedFactor\",\n                   
+    \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
+    \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
+    0.5,\n                    \"flag\": false,\n                    \"vector\": {\n                       
+    \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
+    0.0,\n                        \"w\": 0.0\n                    },\n                   
+    \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
+    0.0,\n                        \"b\": 0.0,\n                        \"a\": 0.0\n                   
+    },\n                    \"curve\": {\n                        \"preWrap\": 0,\n                       
+    \"postWrap\": 0,\n                        \"keys\": []\n                    },\n                   
+    \"children\": []\n                }\n            ]\n        },\n        {\n           
+    \"key\": \"component:PlayerLadder\",\n            \"type\": \"PlayerLadder, Assembly-CSharp,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null\",\n            \"assetKey\":
+    \"\",\n            \"name\": \"\",\n            \"fields\": [\n               
+    {\n                    \"name\": \"climbSpeed\",\n                    \"type\":
+    \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
+    \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
+    2.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
     \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
     0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -58966,12 +59591,44 @@ MonoBehaviour:
     0.0\n                    },\n                    \"curve\": {\n                       
     \"preWrap\": 0,\n                        \"postWrap\": 0,\n                       
     \"keys\": []\n                    },\n                    \"children\": []\n               
-    }, {\"name\": \"torchHolderOffsetY\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": -0.2199999988079071, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"torchSoundVolume\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 0.5, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}, {\"name\": \"torchSoundRangeTiles\", \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\", \"text\": \"\", \"kind\": 0, \"number\": 4.0, \"flag\": false, \"vector\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0, \"w\": 0.0}, \"color\": {\"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0}, \"curve\": {\"preWrap\": 0, \"postWrap\": 0, \"keys\": []}, \"children\": []}\n            ]\n        },\n        {\n            \"key\": \"component:SurfaceTallGrass\",\n           
-    \"type\": \"SurfaceTallGrass, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-    PublicKeyToken=null\",\n            \"assetKey\": \"\",\n            \"name\":
-    \"\",\n            \"fields\": [\n                {\n                    \"name\":
-    \"healingHerbSpawnAreaSize\",\n                    \"type\": \"System.Single,
+    },\n                {\n                    \"name\": \"torchHolderOffsetY\",\n                   
+    \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
+    \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
+    -0.2199999988079071,\n                    \"flag\": false,\n                   
+    \"vector\": {\n                        \"x\": 0.0,\n                        \"y\":
+    0.0,\n                        \"z\": 0.0,\n                        \"w\": 0.0\n                   
+    },\n                    \"color\": {\n                        \"r\": 0.0,\n                       
+    \"g\": 0.0,\n                        \"b\": 0.0,\n                        \"a\":
+    0.0\n                    },\n                    \"curve\": {\n                       
+    \"preWrap\": 0,\n                        \"postWrap\": 0,\n                       
+    \"keys\": []\n                    },\n                    \"children\": []\n               
+    },\n                {\n                    \"name\": \"torchSoundVolume\",\n                   
+    \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
+    \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
+    0.5,\n                    \"flag\": false,\n                    \"vector\": {\n                       
+    \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
+    0.0,\n                        \"w\": 0.0\n                    },\n                   
+    \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
+    0.0,\n                        \"b\": 0.0,\n                        \"a\": 0.0\n                   
+    },\n                    \"curve\": {\n                        \"preWrap\": 0,\n                       
+    \"postWrap\": 0,\n                        \"keys\": []\n                    },\n                   
+    \"children\": []\n                },\n                {\n                   
+    \"name\": \"torchSoundRangeTiles\",\n                    \"type\": \"System.Single,
     mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
+    \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
+    4.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
+    \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
+    0.0,\n                        \"w\": 0.0\n                    },\n                   
+    \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
+    0.0,\n                        \"b\": 0.0,\n                        \"a\": 0.0\n                   
+    },\n                    \"curve\": {\n                        \"preWrap\": 0,\n                       
+    \"postWrap\": 0,\n                        \"keys\": []\n                    },\n                   
+    \"children\": []\n                }\n            ]\n        },\n        {\n           
+    \"key\": \"component:SurfaceTallGrass\",\n            \"type\": \"SurfaceTallGrass,
+    Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null\",\n           
+    \"assetKey\": \"\",\n            \"name\": \"\",\n            \"fields\": [\n               
+    {\n                    \"name\": \"healingHerbSpawnAreaSize\",\n                   
+    \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
     18.0,\n                    \"flag\": false,\n                    \"vector\":
     {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
@@ -59206,6 +59863,17 @@ MonoBehaviour:
     mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
     1.5,\n                    \"flag\": false,\n                    \"vector\": {\n                       
+    \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
+    0.0,\n                        \"w\": 0.0\n                    },\n                   
+    \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
+    0.0,\n                        \"b\": 0.0,\n                        \"a\": 0.0\n                   
+    },\n                    \"curve\": {\n                        \"preWrap\": 0,\n                       
+    \"postWrap\": 0,\n                        \"keys\": []\n                    },\n                   
+    \"children\": []\n                },\n                {\n                   
+    \"name\": \"maximumRegrowthSpeed\",\n                    \"type\": \"System.Single,
+    mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
+    \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
+    4.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
     \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
     0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
@@ -60508,9 +61176,9 @@ MonoBehaviour:
     \"name\": \"woodYieldMin\",\n                    \"type\": \"System.Int32, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 1,\n                    \"number\":
-    8.0,\n                    \"flag\": false,\n                    \"vector\":
-    {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
-    \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
+    8.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
+    \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
+    0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
     0.0,\n                        \"b\": 0.0,\n                        \"a\": 0.0\n                   
     },\n                    \"curve\": {\n                        \"preWrap\": 0,\n                       
@@ -60541,9 +61209,9 @@ MonoBehaviour:
     \"name\": \"growthSpeedPercentPerMinute\",\n                    \"type\": \"System.Single,
     mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
-    0.375,\n                    \"flag\": false,\n                    \"vector\": {\n                       
-    \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
-    0.0,\n                        \"w\": 0.0\n                    },\n                   
+    0.375,\n                    \"flag\": false,\n                    \"vector\":
+    {\n                        \"x\": 0.0,\n                        \"y\": 0.0,\n                       
+    \"z\": 0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
     0.0,\n                        \"b\": 0.0,\n                        \"a\": 0.0\n                   
     },\n                    \"curve\": {\n                        \"preWrap\": 0,\n                       
@@ -64166,7 +64834,21 @@ MonoBehaviour:
     \"postWrap\": 0,\n                                        \"keys\": []\n                                   
     },\n                                    \"children\": []\n                               
     }\n                            ]\n                        }\n                   
-    ]\n                }\n            ]\n        }\n    ],\n    \"preferences\":
+    ]\n                }\n            ]\n        },\n        {\n            \"key\":
+    \"component:SurfaceAmbience\",\n            \"type\": \"SurfaceAmbience, Assembly-CSharp,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null\",\n            \"assetKey\":
+    \"\",\n            \"name\": \"\",\n            \"fields\": [\n               
+    {\n                    \"name\": \"nightFadeSeconds\",\n                    \"type\":
+    \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
+    \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
+    8.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
+    \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
+    0.0,\n                        \"w\": 0.0\n                    },\n                   
+    \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
+    0.0,\n                        \"b\": 0.0,\n                        \"a\": 0.0\n                   
+    },\n                    \"curve\": {\n                        \"preWrap\": 0,\n                       
+    \"postWrap\": 0,\n                        \"keys\": []\n                    },\n                   
+    \"children\": []\n                }\n            ]\n        }\n    ],\n    \"preferences\":
     {\n        \"startingResources\": {\n            \"version\": 1,\n           
     \"money\": 100,\n            \"items\": [\n                {\n                   
     \"itemId\": 5,\n                    \"amount\": 5\n                },\n               
@@ -64177,52 +64859,60 @@ MonoBehaviour:
     12,\n            \"explorationCellThreshold\": 24,\n            \"explorationXp\":
     16.0,\n            \"resourceXpMultiplier\": 1.0,\n            \"discoveryXp\":
     180.0,\n            \"efficiencyMaxBonus\": 0.20000000298023225,\n           
-    \"efficiencyReferenceXpPerMinute\": 100.0, \"depthXpMaxFactor\": 3.0, \"depthXpFullDepth\": 1000, \"resourceXpExponent\": 1.0\n        },\n        \"challenges\":
-    {\n            \"daily\": {\n                \"xpEasy\": 300,\n               
-    \"xpMedium\": 600,\n                \"xpHard\": 1200,\n                \"xpXxl\":
-    3000,\n                \"countEasy\": 3,\n                \"countMedium\": 3,\n               
-    \"countHard\": 1,\n                \"xxlChancePercent\": 5.0,\n               
-    \"completionBonusXp\": 1000\n            },\n            \"weekly\": {\n               
-    \"xpEasy\": 1500,\n                \"xpMedium\": 3000,\n                \"xpHard\":
-    5000,\n                \"xpXxl\": 10000,\n                \"countEasy\": 3,\n               
-    \"countMedium\": 3,\n                \"countHard\": 2,\n                \"xxlChancePercent\":
-    5.0,\n                \"completionBonusXp\": 5000\n            },\n           
-    \"monthly\": {\n                \"xpEasy\": 5000,\n                \"xpMedium\":
-    10000,\n                \"xpHard\": 20000,\n                \"xpXxl\": 0,\n               
-    \"countEasy\": 2,\n                \"countMedium\": 2,\n                \"countHard\":
-    2,\n                \"xxlChancePercent\": 0.0,\n                \"completionBonusXp\":
-    15000\n            },\n            \"projectStage1Xp\": 5000,\n            \"projectStage2Xp\":
-    10000,\n            \"projectStage3Xp\": 20000,\n            \"diligenceDays\":
-    5,\n            \"diligenceDailyTasks\": 3,\n            \"xxlMinLayer\": 3,\n           
-    \"growthPercentPerLayer\": 10.0,\n            \"growthPercentPer10Levels\": 2.0,\n           
-    \"maxGrowthPercent\": 60.0,\n            \"returnMinDepth\": 30,\n           
-    \"fullBagMinDepth\": 10,\n            \"fullBagPercent\": 90.0,\n           
-    \"fullBagGainPercent\": 50.0,\n            \"fullBagCapKg\": 150,\n           
-    \"tripMinNewBlocks\": 10\n        },\n        \"veinRichness\": {\n           
-    \"enabled\": true,\n            \"minimumSize\": 4,\n            \"thin\": {\n               
-    \"mediumPercent\": 33.0,\n                \"richPercent\": 4.0\n            },\n           
-    \"medium\": {\n                \"mediumPercent\": 40.0,\n                \"richPercent\":
-    8.0\n            },\n            \"thick\": {\n                \"mediumPercent\":
-    38.0,\n                \"richPercent\": 13.0\n            },\n            \"variationPercent\":
-    25.0,\n            \"spreadPercent\": 50.0,\n            \"thicknessPreference\":
-    0.6499999761581421,\n            \"ores\": []\n        },\n        \"panelBackdropAlpha\":
-    0.550000011920929,\n        \"panelElementAlpha\": 1.0,\n        \"loadingTwinkleFrequency\":
-    1.0,\n        \"levelUpAnimationOffsetSeconds\": 0.0,\n        \"hotbarVerticalOffset\":
-    0.0,\n        \"hotbarHoldDuration\": 0.10000000149011612,\n        \"masterVolume\":
-    1.0,\n        \"musicVolume\": 1.0,\n        \"musicCeiling\": 0.20000000298023224,\n        \"autosaveIntervalMinutes\": 3.0,\n       
-    \"dragPopScale\": 1.2799999713897706,\n        \"dragCarryScale\": 1.1200000047683716,\n       
-    \"dragPopDuration\": 0.23999999463558198,\n        \"workbenchUsesStorage\":
-    true,\n        \"workbenchStorageFirst\": false,\n        \"workbenchComponentsToStorage\": true,\n        \"shopSellsFromStorage\": true,\n        \"shopNextStepOnly\": true,\n        \"buttonTextOffset\":
-    0.0,\n        \"buttonTextPadding\": 1.0, \"buttonTextInkCenterX\": true\n    },\n    \"tests\": {\n        \"version\":
-    9,\n        \"diggingMultiplier\": 1.0,\n        \"movementMultiplier\": 5.0,\n       
-    \"diggingMultiplierEnabled\": true,\n        \"movementMultiplierEnabled\": true,\n       
-    \"hasMiningHitOffsetOverride\": false,\n        \"miningHitOffsetMs\": 100.0,\n       
-    \"smartCursorStrokeWidth\": 0.5,\n        \"godMode\": false,\n        \"noEnergyConsume\":
-    true,\n        \"flyMode\": true,\n        \"noClip\": true,\n        \"noWeight\":
-    true,\n        \"infiniteMoney\": false,\n        \"globalLighting\": true,\n       
-    \"cameraFollow\": true,\n        \"testModeDisabled\": true,\n        \"discardPlayedMap\":
-    false,\n        \"dayNightMode\": 0,\n        \"homescreenBackground\": 0\n   
-    }\n}"
+    \"efficiencyReferenceXpPerMinute\": 100.0,\n            \"depthXpMaxFactor\":
+    3.0,\n            \"depthXpFullDepth\": 1000,\n            \"resourceXpExponent\":
+    1.0\n        },\n        \"challenges\": {\n            \"daily\": {\n               
+    \"xpEasy\": 300,\n                \"xpMedium\": 600,\n                \"xpHard\":
+    1200,\n                \"xpXxl\": 3000,\n                \"countEasy\": 3,\n               
+    \"countMedium\": 3,\n                \"countHard\": 1,\n                \"xxlChancePercent\":
+    5.0,\n                \"completionBonusXp\": 1000\n            },\n           
+    \"weekly\": {\n                \"xpEasy\": 1500,\n                \"xpMedium\":
+    3000,\n                \"xpHard\": 5000,\n                \"xpXxl\": 10000,\n               
+    \"countEasy\": 3,\n                \"countMedium\": 3,\n                \"countHard\":
+    2,\n                \"xxlChancePercent\": 5.0,\n                \"completionBonusXp\":
+    5000\n            },\n            \"monthly\": {\n                \"xpEasy\":
+    5000,\n                \"xpMedium\": 10000,\n                \"xpHard\": 20000,\n               
+    \"xpXxl\": 0,\n                \"countEasy\": 2,\n                \"countMedium\":
+    2,\n                \"countHard\": 2,\n                \"xxlChancePercent\":
+    0.0,\n                \"completionBonusXp\": 15000\n            },\n           
+    \"projectStage1Xp\": 5000,\n            \"projectStage2Xp\": 10000,\n           
+    \"projectStage3Xp\": 20000,\n            \"diligenceDays\": 5,\n            \"diligenceDailyTasks\":
+    3,\n            \"xxlMinLayer\": 3,\n            \"growthPercentPerLayer\": 10.0,\n           
+    \"growthPercentPer10Levels\": 2.0,\n            \"maxGrowthPercent\": 60.0,\n           
+    \"returnMinDepth\": 30,\n            \"fullBagMinDepth\": 10,\n            \"fullBagPercent\":
+    90.0,\n            \"fullBagGainPercent\": 50.0,\n            \"fullBagCapKg\":
+    150,\n            \"tripMinNewBlocks\": 10\n        },\n        \"veinRichness\":
+    {\n            \"enabled\": true,\n            \"minimumSize\": 4,\n           
+    \"thin\": {\n                \"mediumPercent\": 33.0,\n                \"richPercent\":
+    4.0\n            },\n            \"medium\": {\n                \"mediumPercent\":
+    40.0,\n                \"richPercent\": 8.0\n            },\n            \"thick\":
+    {\n                \"mediumPercent\": 38.0,\n                \"richPercent\":
+    13.0\n            },\n            \"variationPercent\": 25.0,\n            \"spreadPercent\":
+    50.0,\n            \"thicknessPreference\": 0.6499999761581421,\n           
+    \"ores\": []\n        },\n        \"panelBackdropAlpha\": 0.550000011920929,\n       
+    \"panelElementAlpha\": 1.0,\n        \"loadingTwinkleFrequency\": 1.0,\n       
+    \"levelUpAnimationOffsetSeconds\": 0.0,\n        \"hotbarVerticalOffset\": 0.0,\n       
+    \"hotbarHoldDuration\": 0.10000000149011612,\n        \"masterVolume\": 1.0,\n       
+    \"musicVolume\": 1.0,\n        \"musicCeiling\": 0.20000000298023225,\n       
+    \"autosaveIntervalMinutes\": 3.0,\n        \"dragPopScale\": 1.2799999713897706,\n       
+    \"dragCarryScale\": 1.1200000047683716,\n        \"dragPopDuration\": 0.23999999463558198,\n       
+    \"moneyCountSeconds\": 0.6000000238418579,\n        \"workbenchUsesStorage\":
+    true,\n        \"workbenchStorageFirst\": false,\n        \"workbenchComponentsToStorage\":
+    true,\n        \"shopSellsFromStorage\": true,\n        \"shopNextStepOnly\":
+    true,\n        \"buttonTextOffset\": 0.0,\n        \"buttonTextPadding\": 1.0,\n       
+    \"buttonTextInkCenterX\": true,\n        \"sealCheckOffsetX\": 0.0,\n       
+    \"sealCheckOffsetY\": 0.0,\n        \"carryOverloadMaxMultiplier\": 2.0,\n       
+    \"carryOverloadMinSpeed\": 0.3333333432674408,\n        \"carryMinJumpBlocks\":
+    1.2000000476837159,\n        \"carryRedStageFraction\": 0.8999999761581421\n   
+    },\n    \"tests\": {\n        \"version\": 9,\n        \"diggingMultiplier\":
+    1.0,\n        \"movementMultiplier\": 5.0,\n        \"diggingMultiplierEnabled\":
+    true,\n        \"movementMultiplierEnabled\": true,\n        \"hasMiningHitOffsetOverride\":
+    false,\n        \"miningHitOffsetMs\": 100.0,\n        \"smartCursorStrokeWidth\":
+    0.5,\n        \"godMode\": false,\n        \"noEnergyConsume\": true,\n       
+    \"flyMode\": true,\n        \"noClip\": true,\n        \"noWeight\": true,\n       
+    \"infiniteMoney\": false,\n        \"globalLighting\": true,\n        \"cameraFollow\":
+    true,\n        \"testModeDisabled\": true,\n        \"discardPlayedMap\": false,\n       
+    \"dayNightMode\": 0,\n        \"homescreenBackground\": 0\n    }\n}"
   assets:
   - key: f557a84e75d990345a1618e999c55e45:11400000
     asset: {fileID: 11400000, guid: f557a84e75d990345a1618e999c55e45, type: 2}
@@ -65078,3 +65768,7 @@ MonoBehaviour:
     asset: {fileID: 8300000, guid: aba6973268fc458eaee72c78b3115584, type: 3}
   - key: 04a5fde616b1466287659ec25b2b7e03:8300000
     asset: {fileID: 8300000, guid: 04a5fde616b1466287659ec25b2b7e03, type: 3}
+  - key: 30978c62ae7b40f7adcc5455f7d3579d:8300000
+    asset: {fileID: 8300000, guid: 30978c62ae7b40f7adcc5455f7d3579d, type: 3}
+  - key: 353e244c15d040d4814ef0c2b7301471:8300000
+    asset: {fileID: 8300000, guid: 353e244c15d040d4814ef0c2b7301471, type: 3}

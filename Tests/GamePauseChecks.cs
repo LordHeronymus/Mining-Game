@@ -109,8 +109,10 @@ public sealed class GamePauseProbe : MonoBehaviour
         AudioSource ambience = null;
         if (surface)
         {
-            var sources = Field<AudioSource[]>(surface, "sources");
-            ambience = sources[Field<int>(surface, "current")];
+            // Day (meadow) and night (crickets) loop separately; take the one that is playing now.
+            var loop = Field<object>(surface, surface.NightMix >= .5f ? "night" : "day");
+            var sources = (AudioSource[])loop.GetType().GetField("sources").GetValue(loop);
+            ambience = sources[(int)loop.GetType().GetField("current").GetValue(loop)];
         }
         Note(ambience && ambience.isPlaying ? "Surface ambience playing" : "NOTE surface ambience not playing, ambience checks skipped");
         if (ambience && !ambience.isPlaying) ambience = null;
