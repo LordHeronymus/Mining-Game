@@ -36,7 +36,10 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
     public Vector4 LightSource => root && hasLayout ? new Vector4(AltarPosition.x,AltarPosition.y+AltarVisualY(CellSize*1.35f),CellSize*14f*AltarScale,maskIntensity) : Vector4.zero;
     public float CellSize => map ? Mathf.Abs(map.Terrain.CellToWorld(Vector3Int.right).x-map.Terrain.CellToWorld(Vector3Int.zero).x) : 1f;
     float AltarScale => map ? Mathf.Clamp(map.altarSize,.25f,3f) : 1f;
-    float AltarVisualY(float unscaledY) => -.2f*CellSize+(unscaledY+.2f*CellSize)*AltarScale;
+    float AltarVisualY(float unscaledY) => VisualY(unscaledY,CellSize,AltarScale);
+    static float VisualY(float unscaledY,float cellSize,float scale) => -.2f*cellSize+(unscaledY+.2f*cellSize)*scale;
+    // The interaction range stays fixed, so large GPS altar sizes must not lift the deposit button out of view.
+    internal static float DepositButtonY(float cellSize,float scale) => Mathf.Min(VisualY(cellSize*4.4f,cellSize,scale),cellSize*6f);
 
     MapGenerator map;
     GameObject root;
@@ -483,7 +486,7 @@ public sealed class UltroniumAltarChamber : MonoBehaviour
     {
         var go=new GameObject("Altar interaction",typeof(RectTransform),typeof(Canvas),typeof(CanvasGroup),typeof(GraphicRaycaster));
         go.transform.SetParent(root.transform,false);
-        go.transform.position=AltarPosition+Vector3.up*AltarVisualY(CellSize*4.4f); go.transform.localScale=Vector3.one*(CellSize/110f);
+        go.transform.position=AltarPosition+Vector3.up*DepositButtonY(CellSize,AltarScale); go.transform.localScale=Vector3.one*(CellSize/110f);
         var canvas=go.GetComponent<Canvas>(); canvas.renderMode=RenderMode.WorldSpace; canvas.worldCamera=Camera.main;
         canvas.sortingLayerName="UI"; canvas.sortingOrder=200;
         var rect=(RectTransform)go.transform; rect.sizeDelta=new Vector2(280,140);

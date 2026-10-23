@@ -1,6 +1,9 @@
 {
   "checks": [
     {
+      "name": "BughuntAltarChecks"
+    },
+    {
       "name": "BughuntAutosaveRaceChecks"
     },
     {
