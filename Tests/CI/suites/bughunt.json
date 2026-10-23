@@ -50,6 +50,9 @@
       "name": "BughuntHotbarChecks"
     },
     {
+      "name": "BughuntItemDataChecks"
+    },
+    {
       "name": "BughuntKeyBindingChecks"
     },
     {

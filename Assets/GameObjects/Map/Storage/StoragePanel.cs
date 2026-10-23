@@ -347,9 +347,12 @@ public sealed class StoragePanel : MonoBehaviour
         if (!entered || slot == null || !slot.item) { SetHint(null); return; }
         var item = slot.item;
         string weight = item.EffectiveWeight > 0 ? $" · {Kg(item.EffectiveWeight)} kg je Stück" : "";
-        string worth = item.worth > 0 ? $" · Wert {ShopMoneyFormatter.Format(item.worth)} je Stück" : "";
-        SetHint($"{item.displayName} · {slot.amount} Stück{weight}{worth}");
+        SetHint($"{item.displayName} · {slot.amount} Stück{weight}{WorthHint(item)}");
     }
+
+    // Value is what the shop pays, so unsellable items (tools, placeables) show none and add nothing.
+    internal static string WorthHint(ItemSO item) => ShopManager.IsSellable(item) ? $" · Wert {ShopMoneyFormatter.Format(item.worth)} je Stück" : "";
+    internal static long SellableWorth(IEnumerable<KeyValuePair<ItemSO, int>> items) => items.Where(e => ShopManager.IsSellable(e.Key)).Sum(e => (long)e.Key.worth * e.Value);
 
     public void SetHint(string hint)
     {
@@ -375,7 +378,7 @@ public sealed class StoragePanel : MonoBehaviour
         Populate(storageSlots, storageContent, stored, true);
         int kinds = Storage ? Storage.StoredItems.Count(e => e.Key && e.Value > 0) : 0;
         storageSummary.text = kinds == 0 ? "leer" : kinds == 1 ? "1 Sorte" : $"{kinds} Sorten";
-        long worth = Storage ? Storage.StoredItems.Where(e => e.Key).Sum(e => (long)e.Key.worth * e.Value) : 0;
+        long worth = Storage ? SellableWorth(Storage.StoredItems) : 0;
         valueText.text = $"Wert <color=#{ColorUtility.ToHtmlStringRGB(Gold)}>{ShopMoneyFormatter.Format(worth)}</color>";
         RefreshWeight(inventory);
         if (hoverHint == null) SetHint(null);

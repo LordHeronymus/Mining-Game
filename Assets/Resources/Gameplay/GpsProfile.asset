@@ -1079,7 +1079,7 @@ MonoBehaviour:
     \"name\": \"weight\",\n                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
-    0.800000011920929,\n                    \"flag\": false,\n                   
+    0.5,\n                    \"flag\": false,\n                   
     \"vector\": {\n                        \"x\": 0.0,\n                        \"y\":
     0.0,\n                        \"z\": 0.0,\n                        \"w\": 0.0\n                   
     },\n                    \"color\": {\n                        \"r\": 0.0,\n                       
@@ -1829,7 +1829,7 @@ MonoBehaviour:
     \"name\": \"weight\",\n                    \"type\": \"System.Single, mscorlib,
     Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
-    2.0,\n                    \"flag\": false,\n                    \"vector\": {\n                       
+    1.5,\n                    \"flag\": false,\n                    \"vector\": {\n                       
     \"x\": 0.0,\n                        \"y\": 0.0,\n                        \"z\":
     0.0,\n                        \"w\": 0.0\n                    },\n                   
     \"color\": {\n                        \"r\": 0.0,\n                        \"g\":
