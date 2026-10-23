@@ -34,7 +34,7 @@ GPS-Fenster bzw. F1 → **Erzverteilung → Erz-Anteile → „Medium und Rich n
 | Dicke Stellen bevorzugen | 0–1 | 0,65 |
 | Faktor je Erz | Liste: Erz, Faktor 0–5 | leer (alle 1) |
 
-Im F1-Fenster zeigt „Faktor je Erz (N)“ eine Zeile je Eintrag: Erz (Anzeigename), × Faktor, ↑ ↓ −. Wählbar sind nur Blöcke mit Small/Medium/Rich-Overlays (Erze, Edelsteine, Kohle, Ultronium), keine Gesteinsschichten, und jedes Erz nur einmal; „+ Erz“ fügt das nächste noch fehlende Erz mit Faktor 1 hinzu. Ältere Einträge auf einem Nicht-Erz (z. B. Stein) bleiben erhalten, wirken nicht und zeigen „— Erz wählen —“. Dieselbe Erz-Auswahl gilt für „Erzverteilung → Erz“ (`[OreOnly]`, `GpsRuntimePanel.Ores.cs`).
+Im F1-Fenster listet „Faktor je Erz“ fest alle Erze (Blöcke mit Small/Medium/Rich-Overlays: Erze, Edelsteine, Kohle, Ultronium; keine Gesteinsschichten) mit Anzeigename und × Faktor; Hinzufügen oder Entfernen gibt es nicht. Ein Erz ohne Eintrag zeigt 1 und bekommt beim ersten Ändern einen Eintrag; Erze mit Faktor ≠ 1 sind hervorgehoben, der Titel zeigt ihre Anzahl. Ältere Einträge auf einem Nicht-Erz (z. B. Stein) bleiben in den Daten, wirken nicht und werden nicht angezeigt. Die Erz-Auswahl unter „Erzverteilung → Erz“ bietet ebenfalls nur Erze (`[OreOnly]`, `GpsRuntimePanel.Ores.cs`).
 
 Herkunft der Startwerte: Dünn, Streuung und „Dicke Stellen“ übernehmen die Werte, die der Benutzer am 23.10.2026 für dünne Adern eingestellt hat (1 Medium je 3 Blöcke ≈ 33 %, gemessen 32,6 %), plus 4 % Rich-Chance. Mittel und dick steigen davon aus leicht an, damit dünnere Adern immer weniger Medium und Rich haben als dickere; der Wert der mittleren Adern bleibt nahe am bisherigen.
 
