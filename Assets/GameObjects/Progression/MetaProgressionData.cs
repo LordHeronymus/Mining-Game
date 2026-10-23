@@ -30,6 +30,11 @@ using UnityEngine;
     [Min(0f)] public float explorationXp = 16f, resourceXpMultiplier = 1f, discoveryXp = 180f;
     [Range(0f, .2f)] public float efficiencyMaxBonus = .2f;
     [Min(1f)] public float efficiencyReferenceXpPerMinute = 100f;
+    // Depth factor on ore, exploration and discovery XP: 1 at the surface, rising linearly to depthXpMaxFactor at depthXpFullDepth.
+    [Min(1f)] public float depthXpMaxFactor = 3f;
+    [Min(1)] public int depthXpFullDepth = 1000;
+    // Ore XP per world is weight · n^exponent: 1 = every ore pays the same, below 1 later ore of a kind pays less (old value .8).
+    [Range(.5f, 1f)] public float resourceXpExponent = 1f;
 
     public MetaProgressionSettings Sanitized()
     {
@@ -45,7 +50,11 @@ using UnityEngine;
             resourceXpMultiplier = Finite(resourceXpMultiplier, 1f, 0f, 100f),
             discoveryXp = Finite(discoveryXp, 180f, 0f, 100000f),
             efficiencyMaxBonus = Finite(efficiencyMaxBonus, .2f, 0f, .2f),
-            efficiencyReferenceXpPerMinute = Finite(efficiencyReferenceXpPerMinute, 100f, 1f, 100000f)
+            efficiencyReferenceXpPerMinute = Finite(efficiencyReferenceXpPerMinute, 100f, 1f, 100000f),
+            // 0 = a world frozen before these fields existed: it gets the defaults.
+            depthXpMaxFactor = depthXpMaxFactor <= 0f ? 3f : Finite(depthXpMaxFactor, 3f, 1f, 10f),
+            depthXpFullDepth = depthXpFullDepth <= 0 ? 1000 : Mathf.Clamp(depthXpFullDepth, 1, 100000),
+            resourceXpExponent = resourceXpExponent <= 0f ? 1f : Finite(resourceXpExponent, 1f, .5f, 1f)
         };
     }
     static float Finite(float value, float fallback, float minimum, float maximum)

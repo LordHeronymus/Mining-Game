@@ -27,6 +27,12 @@ public static partial class MetaProgression
     public static ChallengeSettings ChallengeSettingsOverride { get; set; }
     public static TimeZoneInfo ChallengeTimeZoneOverride { get; set; }
     static bool Isolated => !string.IsNullOrWhiteSpace(testDirectory);
+    // GPS "Testmodus aktiviert": challenge rounds and lifetime counters neither count nor pay (world XP still does).
+    public static bool? ChallengeTestModeOverride { get; set; }   // tests; honoured only in isolated profiles
+    public static bool ChallengesPaused => Isolated && ChallengeTestModeOverride.HasValue ? ChallengeTestModeOverride.Value
+        : Application.isPlaying && GameplayTestSettings.IsActive;
+    // A stored challenge clock further ahead than this is a wrong (future) clock and is forgotten.
+    static readonly long ClockTolerance = TimeSpan.TicksPerHour;
     public static ChallengeSettings CurrentChallengeSettings =>
         ((Isolated ? ChallengeSettingsOverride : GpsSettings.Preferences.challenges) ?? new ChallengeSettings()).Sanitized();
     static TimeZoneInfo ChallengeZone => Isolated && ChallengeTimeZoneOverride != null ? ChallengeTimeZoneOverride : TimeZoneInfo.Local;
@@ -36,8 +42,14 @@ public static partial class MetaProgression
     static DateTime ChallengeNow()
     {
         EnsureLoaded();
-        DateTime now = Isolated && ChallengeTestUtc.HasValue ? DateTime.SpecifyKind(ChallengeTestUtc.Value, DateTimeKind.Utc) : DateTime.UtcNow;
-        // Moving the OS clock backwards must not reopen an already rewarded period.
+        DateTime now = Isolated && ChallengeTestUtc.HasValue ? DateTime.SpecifyKind(ChallengeTestUtc.Value, DateTimeKind.Utc) : NetworkClock.UtcNow;
+        // A clock that goes back a little never lengthens a round. A clock that was once set into the future must not freeze
+        // the rounds until that date, so a stored clock more than ClockTolerance ahead is forgotten; rewarded rounds stay
+        // rewarded through their run markers (NewRound rebuilds them when their day really comes).
+        if (profile.challengeClockUtc > now.Ticks + ClockTolerance) {
+            if (!writeBlocked) { profile.challengeClockUtc = now.Ticks; MarkDirty(); }
+            return now;
+        }
         return new DateTime(Math.Max(now.Ticks, profile.challengeClockUtc), DateTimeKind.Utc);
     }
 
@@ -49,11 +61,13 @@ public static partial class MetaProgression
         DateTime now = ChallengeNow();
         MetaChallengeRound old = null;
         foreach (var round in profile.challengeRounds) if (round != null && round.period == (int)period) { old = round; break; }
-        if (old != null && now.Ticks < old.endUtc) return old;
+        // A round that starts later than the clock tolerance allows came from a wrong future clock: it is replaced.
+        bool future = old != null && old.startUtc > now.Ticks + ClockTolerance;
+        if (old != null && !future && now.Ticks < old.endUtc) return old;
         var zone = ChallengeZone;
         ChallengeEngine.Bounds(period, now, zone, out long start, out long end, out int day);
         // After a time-zone change the next round starts where the old one ended, never overlapping it.
-        if (old != null && start < old.endUtc) {
+        if (old != null && !future && start < old.endUtc) {
             start = old.endUtc;
             if (start >= end && end > 0 && end < DateTime.MaxValue.Ticks) {
                 ChallengeEngine.Bounds(period, new DateTime(end, DateTimeKind.Utc), zone, out long next, out end, out day);
@@ -291,7 +305,7 @@ public static partial class MetaProgression
     // Feeds one event to the daily, weekly and monthly round and books the XP. The caller calls MarkChanged.
     static ChallengeGain RecordRounds(RoundRecorder record)
     {
-        if (!HasRun() || run.ended) return default;
+        if (!HasRun() || run.ended || ChallengesPaused) return default;
         var total = default(ChallengeGain);
         MetaChallengeRound daily = null, weekly = null;
         foreach (var period in RoundPeriods) {
@@ -327,18 +341,61 @@ public static partial class MetaProgression
 
     static bool AddLifetime(string id, long amount)
     {
-        if (amount <= 0 || run == null || writeBlocked) return false;
+        if (amount <= 0 || run == null || ChallengesPaused) return false;
+        // A locked profile is never written, but the world save keeps the share; the next readable profile adds it.
+        if (writeBlocked) { RecordShare(id, amount); return false; }
+        long added = AddCounter(id, amount);
+        if (added <= 0) return false;
+        RecordShare(id, added);
+        CheckMilestoneStages(id);
+        return true;
+    }
+    static long AddCounter(string id, long amount)
+    {
         var counters = profile.lifetimeCounters ??= new List<MetaLifetimeCounter>();
         var counter = counters.Find(value => value != null && value.id == id);
         if (counter == null) {
-            if (counters.Count >= MaxLifetimeCounters) return false;
+            if (counters.Count >= MaxLifetimeCounters) return 0;
             counters.Add(counter = new MetaLifetimeCounter { id = id });
         }
-        long next = Math.Min(MaxLifetimeValue, counter.value + amount);
-        if (next == counter.value) return false;
-        counter.value = next; MarkDirty();
-        CheckMilestoneStages(id);
-        return true;
+        long next = Math.Min(MaxLifetimeValue, counter.value + amount), added = next - counter.value;
+        if (added > 0) { counter.value = next; MarkDirty(); }
+        return added;
+    }
+    // Each world also keeps its share of every lifetime counter as the run tally "lt:<id>" (peak = share, mirrored in a
+    // "tp:" marker that older builds keep). A profile that fell back to its backup, or was lost, gets the missing counts
+    // back from the world saves when they are loaded (RestoreShares).
+    const string SharePrefix = "lt:";
+    static void RecordShare(string id, long amount)
+    {
+        var tally = RunTally(SharePrefix + id);
+        if (tally == null || amount <= 0) return;
+        long share = Math.Min(MaxTallyValue, tally.peak + amount);
+        tally.value = share; RaisePeak(tally, share);
+    }
+    static Dictionary<string, long> Shares(MetaRunState state)
+    {
+        var shares = new Dictionary<string, long>();
+        if (state == null) return shares;
+        void Note(string id, long value)
+        {
+            if (id == null || id.Length <= SharePrefix.Length || !id.StartsWith(SharePrefix, StringComparison.Ordinal)) return;
+            string key = id.Substring(SharePrefix.Length);
+            if (!shares.TryGetValue(key, out long known) || value > known) shares[key] = value;
+        }
+        if (state.tallies != null) foreach (var tally in state.tallies) if (tally != null) Note(tally.id, Math.Max(tally.peak, tally.value));
+        // Older builds drop the tallies but keep their "tp:" markers.
+        foreach (var peak in SavedTallyPeaks(state.resourceSources)) Note(peak.Key, peak.Value);
+        return shares;
+    }
+    // Adds what the run now knows beyond the profile's earlier copy of it (empty for a run the profile never saw).
+    static void RestoreShares(Dictionary<string, long> known, MetaRunState state)
+    {
+        if (writeBlocked) return;
+        foreach (var share in Shares(state)) {
+            long missing = share.Value - (known.TryGetValue(share.Key, out long value) ? value : 0);
+            if (missing > 0) AddCounter(share.Key, missing);
+        }
     }
     static HashSet<string> AwardedStages() => awardedStages ??= new HashSet<string>(profile.milestoneAwards.Where(award => award != null).Select(award => award.id));
     static bool StageReached(ChallengeMilestoneStage stage) => stage.legacy ? profile.completedMilestones.Contains(stage.id) : AwardedStages().Contains(stage.id);

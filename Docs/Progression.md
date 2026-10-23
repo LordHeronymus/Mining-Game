@@ -55,26 +55,28 @@ totalXp = periodRewardXp
 
 - Welt-Ereignisse kommen über `MetaProgressionRuntime` oder Aufrufer, die `MetaProgressionRuntime.RewardsAllowed` prüfen. Ausgeschaltet beim Laden, beim Szenenwechsel und in den Debugmodi (Fly, NoClip, God, NoEnergy, InfiniteMoney, NoWeight, Abbau- oder Bewegungsfaktor über 1).
 - Ein beendeter Run (`ended`) nimmt nichts mehr an.
+- **Tiefenfaktor:** Erz, Erkundung und Entdeckungen zählen tiefer mehr: ×1 an der Oberfläche, linear steigend bis ×3 ab 1000 Blöcken (GPS `depthXpMaxFactor`, `depthXpFullDepth`). Erz nimmt die Tiefe seiner Zelle, Entdeckungen die Tiefe des Spielers (`MetaProgression.CurrentDepth`).
+- **Weiterspielen lohnt sich:** Erz-XP nehmen pro Welt nicht mehr ab (GPS `resourceXpExponent` = 1; früher 0,8, das 1000. Kohlestück gab nur noch etwa ein Viertel). Eine neue Welt bringt so keinen Vorsprung mehr, tiefes Weiterspielen dagegen bis dreimal so viel.
 
 | Ereignis | XP (Standard) | Schutz vor Doppelzählung |
 | --- | --- | --- |
 | Neue Maximaltiefe | je 25 Blöcke min(150, 30 + 5·Stufe) | nur Zuwachs über `maxDepth` |
-| Gebiet erkundet (12×12 Zellen, ab 24 aufgedeckten) | 16·(1 + 0,6·min(1, Tiefe/1000)) | `regions` |
-| Erz | Gewicht·(n_neu^0,8 − n_alt^0,8) pro Erzart | Erz-Zelle im Zellen-Ledger (bis Schritt 2 schreibt das Spiel neue Erz-Zellen weiter als `item:x:y`); andere Quellen-IDs als Schlüssel `item:quelle` |
-| Entdeckung (Altar, Artefakt, Findling, Exotic) | 180 | `discoveries` |
+| Gebiet erkundet (12×12 Zellen, ab 24 aufgedeckten) | 16·Tiefenfaktor | `regions` |
+| Erz | Gewicht·(n_neu^e − n_alt^e)·Tiefenfaktor pro Erzart, e = 1 | Erz-Zelle im Zellen-Ledger (Blöcke `#1O<Item>:`; alte `item:x:y` werden gefaltet); andere Quellen-IDs als Schlüssel `item:quelle` |
+| Entdeckung (Altar, Artefakt, Findling, Exotic) | 180·Tiefenfaktor | `discoveries` |
 | Run-Ziele (3 pro Welt, „run-exotic“ ab Level 5) | 180–500 | `completedObjectives` |
 | Alte permanente Meilensteine | 250–8000 | `completedMilestones` |
 | Runden, Projekt, Boni, neue Meilensteinstufen | siehe `Docs/Challenges.md` | Rundenstatus (`done`, `paid`, `stagesPaid`, `bonusPaid`), Marker |
 
 - **Mengen ohne Quellen-ID** (Verkauf, Herstellen, platzierte Fackeln und Leitern) schützt ein Tally: gutgeschrieben wird nur Wachstum über den Höchststand, der nie sinkt. Jeder Höchststand steht zusätzlich als `tp:`-Marker im Ledger.
-- **Zellen** (aufgedeckt, abgebaut, Erz) prüft das Zellen-Ledger der Welt (`MetaCellLedger`): ein Bit pro Zelle, ein Eintrag pro Block von 32×16 Zellen und Art. Bis Schritt 2 schreibt das Spiel neue Zellen zusätzlich als alte Schlüssel, siehe „Grösse des Profils“.
+- **Zellen** (aufgedeckt, abgebaut, Erz) prüft das Zellen-Ledger der Welt (`MetaCellLedger`): ein Bit pro Zelle, ein Eintrag pro Block von 32×16 Zellen und Art. Seit Schritt 2 schreibt das Spiel nur noch Blöcke.
 
 ## Level und Punkte (`MetaProgressionCatalog.cs`)
 
 - **Kurve:** Ein Level kostet `round(1000 + 5000·(1 − e^(−(L−1)/25)))` XP, also 1000 XP für Level 1→2 und gegen 6000 XP später. Höchstes Level 1000 (5'866'493 XP).
 - **Punkte:** ein Powerup-Punkt pro Level bis Level 200 (höchstens 199), ab Level 200 ein Komfortpunkt je 5 Level.
 - **Ausgeben nur im Hauptmenü** (`Spend`, `RefundAll`); synchron gespeichert, bei einem Fehler zurückgerollt.
-- **Loadout pro Welt:** Eine neue Welt übernimmt die aktuellen Ränge. Eine geladene Welt behält ihr gespeichertes Loadout (bewusst: Ausgeben verändert keine laufende Welt).
+- **Ausbauten wirken überall:** Jede Welt, neu oder geladen, bekommt beim Start die aktuellen Ränge des Profils (`BeginRun` → `CreateLoadout`). Startgeld, Fackeln und Leitern gibt es nur beim Erstellen einer Welt, Laden wiederholt sie nicht.
 - **Anzeige:** `GameplayLevelUpPresentation` zeigt mehrere Level-Ups als eine Medaille (von → bis), nur im laufenden Run.
 - **Katalog eingefroren:** Profile und Weltstände werden beim Laden gegen den Katalog geprüft (Meilenstein- und Run-Ziel-XP, IDs, Ränge, Schritte, Kosten, Levelkurve, Erzgewichte). Wer davon etwas senkt, entfernt oder umbenennt, macht bestehende Profile ungültig. Änderungen nur mit Migration; `ProgressionChecks` („catalog freeze“) schlägt sonst an. Neue Werte nur anhängen.
 
@@ -87,7 +89,8 @@ Ein einziger Schreiber mit zwei Wegen: `RequestSave` schreibt eine Kopie des Pro
 | Level-Wechsel, Entdeckung, exotisches Rezept, jede Challenge-Auszahlung, jeder Meilenstein | sofort, Hintergrund (`MarkChanged`) |
 | Läuft gerade ein Hintergrund-Schreibvorgang | Nachschreiben im nächsten Frame nach dessen Ende (`PumpSaves`, jeden Frame, auch in Menüs und bei gesperrter Eingabe) |
 | Spielzeit | alle 5 s, Hintergrund |
-| Welt speichern/Autosave (`CaptureRunState`), `BeginRun`, `EndRun`, Game Over, Sieg, Ausbau, Beenden, App-Pause | synchron |
+| Welt speichern/Autosave (`CaptureRunState(background: true)`, seit Schritt 3) | Hintergrund: Das Speichern der Welt wartet nie auf das Profil |
+| `BeginRun`, `EndRun` (Welt verlassen), Game Over, Sieg, Ausbau, Beenden, App-Pause | synchron |
 
 **Absturzfenster:** Ein Level-Up oder eine Auszahlung geht nur verloren, wenn der Prozess innerhalb der wenigen Millisekunden des sofort gestarteten Schreibvorgangs endet. Gewöhnliche XP ohne Level-Wechsel sind höchstens 5 s alt.
 
@@ -102,7 +105,8 @@ Ein einziger Schreiber mit zwei Wegen: `RequestSave` schreibt eine Kopie des Pro
 ## Challenges (Kurzfassung)
 
 - Je eine Runde täglich, wöchentlich (ab Montag) und monatlich in `profile.challengeRounds`, Grenzen in Ortszeit. Eine neue Runde wird beim ersten Zugriff nach Ablauf der alten gezogen.
-- `challengeClockUtc` läuft nur vorwärts: Die Uhr zurückzustellen öffnet keine bezahlte Runde wieder.
+- **Challenge-Uhr:** Massgebend ist die Internetzeit (`NetworkClock`: Date-Kopf eines bekannten Servers, einmal pro Sitzung, ohne Netz die PC-Uhr). `challengeClockUtc` merkt sich die späteste gesehene Zeit: Geht die Uhr bis zu 1 h zurück, verlängert das keine Runde. Liegt die gemerkte Zeit mehr als 1 h in der Zukunft (PC-Uhr war falsch gestellt), wird sie vergessen und eine Runde aus der Zukunft ersetzt; so friert keine Runde ein. Bezahlte Runden bleiben über ihre Marker bezahlt und werden an ihrem echten Tag nachgebaut.
+- **Testmodus:** Solange in den GPS „Testmodus aktiviert“ an ist (`GameplayTestSettings.IsActive`, nur Editor und Development-Build), zählen weder Challenge-Runden noch Lebenszeit-Zähler, und es gibt keine Challenge-XP (`MetaProgression.ChallengesPaused`). Welt-XP zählen weiter.
 - Auszahlungen gehen nach `periodRewardXp` (Haupt-Progression) und hinterlassen Marker im Ledger der laufenden Welt; ältere Builds bauen damit verlorene Runden und Stufen nach, ohne erneut zu zahlen.
 - Fortschritt gibt es nur während eines Runs.
 
@@ -111,7 +115,8 @@ Ein einziger Schreiber mit zwei Wegen: `RequestSave` schreibt eine Kopie des Pro
 - **Lesen:** Von Hauptdatei, `.bak` und `.tmp` gewinnt die gültige Datei mit der höchsten `revision`. Eine kurz gesperrte Hauptdatei wird bis zu dreimal erneut gelesen, bevor auf `.bak` ausgewichen wird.
 - **Abgebrochener erster Schreibvorgang:** Eine kaputte `.tmp` allein (ohne Haupt- und Backupdatei) sperrt nichts; das Profil startet neu.
 - **Ersetzen scheitert:** Die vollständig geschriebene `.tmp` bleibt liegen und wird beim nächsten Start wiederhergestellt. Nach einem zurückgerollten Ausbau wird sie verworfen.
-- **Gesperrtes Profil** (neuere Version oder unlesbar): Das Profil wird nie überschrieben. Der Fortschritt läuft aber im Ledger der Welt weiter, landet mit dem Weltstand auf der Platte und wird beim nächsten Laden mit lesbarem Profil übernommen. Profilweite Daten (Runden, Zähler, Meilensteinstufen) bleiben gesperrt.
+- **Gesperrtes Profil** (neuere Version oder unlesbar): Das Profil wird nie überschrieben. Der Fortschritt läuft aber im Ledger der Welt weiter, landet mit dem Weltstand auf der Platte und wird beim nächsten Laden mit lesbarem Profil übernommen. Profilweite Daten (Runden, Meilensteinstufen) bleiben gesperrt; Lebenszeit-Zähler zählen als Anteil der Welt weiter (siehe unten).
+- **Lebenszeit-Zähler:** Jede Welt führt ihren Anteil an jedem Zähler als Run-Tally `lt:<id>` (mit `tp:`-Marker, den ältere Builds behalten). Fällt das Profil auf eine ältere Kopie zurück oder geht es verloren, ergänzt `BeginRun` beim Laden einer Welt, was deren Spielstand mehr weiss als das Profil (`RestoreShares`). Doppelt zählt nichts.
 - **Run-Ende:** Tod und Sieg beenden den Run immer, auch bei gesperrtem Profil oder ohne Belohnung (Debug-Sieg, `MarkRunEnded`); sonst öffnete „Weiter“ die Ergebnisanzeige nicht.
 - **Warnung:** Ist das Profil gesperrt oder scheitert das Speichern dauerhaft, zeigt das Pausemenü „Fortschritt wird nicht gespeichert …“ bzw. „Fortschritt konnte nicht gespeichert werden.“ (`MetaProgression.ProfileWarning`).
 - **Grösse des Profils:** siehe Abschnitt unten.
@@ -135,15 +140,15 @@ Fund F-01 der Prüfung vom 23.10.2026: Bisher stand für jede aufgedeckte, abgeb
 **Migration:**
 
 - Beim Anhängen eines Runs (`BeginRun`, auch mit Spielstand) faltet das Spiel alte Zellschlüssel in das Ledger: `revealed:`, `mined:`, `l2-block:`, `l3-block:`, `xxl-layer:4:`, `xxl-layer:5:`, `surface-block:` und `item:x:y`, auch mit den Minus-Schreibweisen anderer Sprachen. Mehrere Blöcke derselben Zellen werden vereinigt.
-- Mit eingeschaltetem Schreiber verdichtet `EnsureLoaded` ein beschreibbares Profil einmalig (`CompactLedgers`) und schreibt es sofort im Hintergrund. Die Hauptdatei ist danach klein, die `.bak` nach dem nächsten Schreiben. Gesperrte Profile werden nicht verdichtet.
+- Mit eingeschaltetem Schreiber verdichtet `EnsureLoaded` ein beschreibbares Profil einmalig (`CompactLedgers`) und schreibt es sofort im Hintergrund. Die Hauptdatei ist danach klein, die `.bak` nach dem nächsten Schreiben. Gesperrte Profile werden nicht verdichtet, und Edit-Mode-Skripte verdichten das gemeinsame Benutzerprofil nie (nur im Spiel oder mit `TestDirectory`); Prüfskripte fragen vor dem Isolieren `MetaProgression.RunActive` statt `CurrentRun`, damit sie das Benutzerprofil gar nicht laden.
 - **Rettung:** Die Lesegrenze eines Runs steigt von 2 auf 6 Millionen Einträge (`MaxLedgerEntries`). Ein Profil, das bisher wegen mehr als 2 Millionen Einträgen abgelehnt wurde, lädt ab Schritt 1 wieder. Ab Schritt 2 wird es beim Laden verdichtet; erst danach lesen es auch ältere Builds.
 - Spielstand-Dateien werden beim Laden nicht umgeschrieben; erst ihr nächstes Speichern ist kompakt.
 
 **Rollout** (`MetaProgression.CellChunkWriter`):
 
-1. **Schritt 1 (diese Version, `CellChunkWriter = false`):** Das Spiel liest Blöcke, behält sie unverändert und nutzt das Ledger für jede Abfrage. Neue Zellen schreibt es weiter als alte Schlüssel in der bisherigen Schreibweise, beim Laden wird nichts verdichtet. Format und Grösse der Dateien bleiben wie bisher.
-2. **Schritt 2 (geplant, eine Zeile):** `CellChunkWriter = true`, sobald Schritt 1 in `main` ist. Dann schreibt das Spiel nur noch Blöcke und verdichtet alte Profile beim Laden. Erst damit wird das Profil klein.
-3. **Schritt 3 (eigener PR, nur nach Freigabe):** Der Profil-Schreibvorgang beim Speichern der Welt läuft im Hintergrund.
+1. **Schritt 1 (PR #51, `CellChunkWriter = false`):** Das Spiel liest Blöcke, behält sie unverändert und nutzt das Ledger für jede Abfrage. Neue Zellen schreibt es weiter als alte Schlüssel in der bisherigen Schreibweise, beim Laden wird nichts verdichtet. Format und Grösse der Dateien bleiben wie bisher.
+2. **Schritt 2 (umgesetzt, Freigabe 23.10.2026):** `CellChunkWriter = true`. Dann schreibt das Spiel nur noch Blöcke und verdichtet alte Profile beim Laden. Erst damit wird das Profil klein.
+3. **Schritt 3 (umgesetzt, Freigabe 23.10.2026):** Der Profil-Schreibvorgang beim Speichern der Welt läuft im Hintergrund.
 
 **Lücke beim Downgrade:** Ein Build ohne Leser (vor Schritt 1) sieht Zellen nicht, die nur in Blöcken stehen. Lädt man dort einen älteren Spielstand, können erneut abgebaute oder aufgedeckte Zellen nochmals zählen (Erz-XP, Blöcke, Zellen). Verloren geht nichts: Der neue Build vereinigt beim nächsten Laden alle Blöcke und Schlüssel wieder. Darum kommt der Leser vor dem Schreiber.
 
@@ -152,14 +157,14 @@ Fund F-01 der Prüfung vom 23.10.2026: Bisher stand für jede aufgedeckte, abgeb
 ## Testverzeichnisse und GPS
 
 - **Profil isolieren:** `MetaProgression.TestDirectory`, im Editor zusätzlich `GameSaveSystem.TestDirectory/MetaProfile`. `Reload()` verwirft den Speicherzustand (ein geändertes Profil wird vorher gespeichert).
-- `ChallengeTestUtc`, `ChallengeSettingsOverride` und `ChallengeTimeZoneOverride` wirken nur mit `MetaProgression.TestDirectory`; Spielstände des Benutzers werden dann nicht gelesen.
-- **GPS:** `metaProgression` (XP-Werte, ab neuer Welt, eingefroren in `run.settings`), `challenges` (ab der nächsten Runde), `levelUpAnimationOffsetSeconds`.
+- `ChallengeTestUtc`, `ChallengeSettingsOverride`, `ChallengeTimeZoneOverride` und `ChallengeTestModeOverride` wirken nur mit `MetaProgression.TestDirectory`; Spielstände des Benutzers werden dann nicht gelesen.
+- **GPS:** `metaProgression` (XP-Werte inkl. Tiefenfaktor und Erz-Exponent, ab neuer Welt, eingefroren in `run.settings`; Welten von vor diesen Feldern erhalten die Standardwerte), `challenges` (ab der nächsten Runde), `levelUpAnimationOffsetSeconds`.
 
 ## Prüfskripte
 
 | Skript | Modus | Inhalt |
 | --- | --- | --- |
-| `ProgressionChecks` | Edit, Cloud | Soll-Punkte 1–3, Absturz ohne Speichern, älterer Weltstand, Run-Ziele, Tallies, Marker, gesperrtes Profil, Run-Ende, Journal, Warnung, Katalog |
+| `ProgressionChecks` | Edit, Cloud | Soll-Punkte 1–3, Absturz ohne Speichern, älterer Weltstand, Run-Ziele, Tallies, Marker, gesperrtes Profil, Run-Ende, Journal, Warnung, Testmodus, Tiefenfaktor, Ausbauten in allen Welten, Lebenszeit-Anteile, Internetzeit, Katalog |
 | `MetaProgressionCoreChecks` | Edit, Cloud | Kurve, Belohnungen, Replay, Ausbau, Speichern, Validierung |
 | `MetaCellLedgerChecks` | Edit, Cloud | Zellen-Ledger: Kodierung, Faltung alter Schlüssel, Verdichtung, Rettung, Downgrade, beide Schreibermodi, Grösse |
 | `ChallengeReworkChecks`, `ChallengeCoreChecks`, `ChallengeSettingsChecks`, `ChallengeMigrationChecks` | Edit, Cloud | Runden, Zählstellen, Uhr, Zeitzonen, Meilensteine, Downgrade, Migration |
