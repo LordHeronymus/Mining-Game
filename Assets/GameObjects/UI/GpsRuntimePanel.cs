@@ -490,6 +490,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         if (Header("test-overlays", "Overlays", 0))
         {
             ActionRow("Level-up-Animation testen", () => { Close(); GpsTestActions.PreviewLevelUp(); });
+            ActionRow("Challenge-erfüllt-Banner testen", () => { Close(); GpsTestActions.PreviewChallengeComplete(); });
             ActionRow("Endscreen testen", () => { Close(); GpsTestActions.EndScreen(); });
             ActionRow("Ladekalibrierung zurücksetzen", LoadingProgress.ResetCalibration);
             foreach (var artifact in GpsSchema.Choices(typeof(ArtifactTile)))
