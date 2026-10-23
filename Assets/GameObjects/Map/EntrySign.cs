@@ -149,6 +149,7 @@ public sealed class EntrySign : MonoBehaviour
         rect.localScale = Vector3.one * (WorldScale / parentScale);
         // Apply after sizing: GoldButtonFeedback picks the wide button artwork from the final aspect ratio.
         GoldButtonFeedback.Apply(Button, null, null);
+        ButtonTextCentering.Apply(Label, Button.GetComponent<Image>());
 
         Group = GetComponent<CanvasGroup>();
         Group.alpha = 0;

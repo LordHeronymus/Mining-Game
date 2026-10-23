@@ -85,6 +85,7 @@ public sealed class ProgressionTimeline : MonoBehaviour, IScrollHandler, IBeginD
         var home=badge.gameObject.AddComponent<Button>(); home.targetGraphic=badge; home.transition=Selectable.Transition.None;
         home.onClick.AddListener(()=>Focus(displayedLevel));
         levelLabel=ProgressionArt.Text("Current Level",badge.transform,"",Vector2.zero,new Vector2(176,52),34);
+        ButtonTextCentering.Apply(levelLabel,badge);
         // Center the entire heading in the space from the XP tip to the board's inner content edge.
         float trackEnd = track.rectTransform.anchoredPosition.x + track.rectTransform.rect.xMax;
         float titleCenter = (trackEnd + ((RectTransform)transform).rect.xMax) * .5f;

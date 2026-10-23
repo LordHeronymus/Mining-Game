@@ -70,6 +70,7 @@ public static class UpgradeTileArt
         tab.GetComponent<HomeButtonFeedback>().enabled=false;
         tab.gameObject.AddComponent<UpgradeTabVisual>();
         var text=tab.GetComponentInChildren<TMPro.TextMeshProUGUI>();text.rectTransform.sizeDelta=new Vector2(210,34);text.fontSizeMax=text.fontSize=26;
+        ButtonTextCentering.Apply(text,tab.GetComponent<Image>());
     }
 
     public static void PointIcon(Transform parent,Vector2 position,bool comfort)
