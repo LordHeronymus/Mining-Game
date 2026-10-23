@@ -50,7 +50,10 @@ public sealed class CompactHud : MonoBehaviour
     const float DamageFadeSeconds = 1.4f;
     const float HealthFlashSeconds = .55f;
     const float HeartbeatFadeSeconds = .32f;
-    TextMeshProUGUI healthValue, energyValue, moneyValue, pointsValue, depthValue;
+    TextMeshProUGUI healthValue, energyValue, moneyValue, pointsValue, depthValue, carryValue;
+    RectTransform carryPlaque;
+    float lastCarryCapacity = float.NaN;
+    bool lastCarryUnlimited, carryDirty = true;
     readonly Image[] icons = new Image[8], selections = new Image[9];
     readonly TextMeshProUGUI[] counts = new TextMeshProUGUI[8], keyLabels = new TextMeshProUGUI[8];
     int keyLabelVersion;
@@ -67,6 +70,8 @@ public sealed class CompactHud : MonoBehaviour
     int lastMoney = int.MinValue, lastPoints = int.MinValue, lastDepth = int.MinValue,
         lastHealth = int.MinValue, lastMaxHealth = int.MinValue, lastEnergy = int.MinValue, lastMax = int.MinValue;
     static readonly Color Cream = new Color32(255,245,229,255);
+    // Same carry stages and colours as the inventory's cargo line.
+    static readonly Color OverweightYellow = new Color32(255,211,86,255), OverweightRed = new Color32(255,91,75,255);
     static readonly CultureInfo German = CultureInfo.GetCultureInfo("de-DE");
 
     void Awake()
@@ -82,6 +87,7 @@ public sealed class CompactHud : MonoBehaviour
         Build(); BuildDamageOverlay(); RefreshItems();
         var canvas = GetComponentInParent<Canvas>();
         hotbarOverlayParent = canvas ? canvas.rootCanvas.transform : null;
+        ChallengeTrackerHud.Attach(this);
     }
     void OnDisable()
     {
@@ -217,6 +223,36 @@ public sealed class CompactHud : MonoBehaviour
         float surface = map && map.Terrain ? map.Terrain.CellToWorld(Vector3Int.up).y : 0;
         DepthMeters = player ? Mathf.Max(0, Mathf.FloorToInt(surface - player.transform.position.y)) : 0;
         if (DepthMeters != lastDepth) { lastDepth = DepthMeters; depthValue.text = Format(DepthMeters) + " m"; }
+        if (carryPlaque && carryPlaque.gameObject.activeSelf) RefreshCarryWeight();
+    }
+    void RefreshCarryWeight()
+    {
+        // The weight is summed only after an inventory change (RefreshItems); capacity and test mode are cheap to poll.
+        var inv = InventoryManager.Instance;
+        float capacity = inv ? inv.CarryingCapacity : 0f;
+        bool unlimited = GameplayTestSettings.NoWeight;
+        if (!carryDirty && capacity == lastCarryCapacity && unlimited == lastCarryUnlimited) return;
+        carryDirty = false; lastCarryCapacity = capacity; lastCarryUnlimited = unlimited;
+        double weight = inv ? inv.TotalWeight : 0d;
+        carryValue.text = CarryWeightText(weight, capacity, unlimited);
+        carryValue.color = CarryWeightColor(weight, capacity, unlimited);
+    }
+    // "12,5 / 40 kg"; in the weightless test mode only the carried weight.
+    public static string CarryWeightText(double weight, float capacity, bool unlimited) => unlimited
+        ? Kilograms(weight) + " kg"
+        : Kilograms(weight) + " / " + Kilograms(capacity) + " kg";
+    static string Kilograms(double value) => Math.Max(0d, value).ToString("#,##0.##", German);
+    public static Color CarryWeightColor(double weight, float capacity, bool unlimited)
+    {
+        int stage = unlimited ? 0 : InventoryManager.CarryStage(weight, capacity);
+        return stage == 2 ? OverweightRed : stage == 1 ? OverweightYellow : Cream;
+    }
+    public void RefreshCarryWeightVisibility()
+    {
+        if (!carryPlaque) return;
+        bool show = PlayerSettings.ShowCarryWeight;
+        carryPlaque.gameObject.SetActive(show);
+        if (show) { carryDirty = true; RefreshCarryWeight(); }
     }
     void UpdateHeartbeatPulse(StatsManager stats)
     {
@@ -460,6 +496,7 @@ public sealed class CompactHud : MonoBehaviour
     static string Format(int value) => value < 1000000 ? value.ToString("N0", German) : ShopMoneyFormatter.Format(value);
     void RefreshItems()
     {
+        carryDirty = true;
         if (!selections[0]) return;
         if (SelectedSlot > 0 && !IsKnownHotbarItem(slots[SelectedSlot - 1]))
         {
@@ -624,6 +661,12 @@ public sealed class CompactHud : MonoBehaviour
         top.anchorMin=top.anchorMax=top.pivot=new Vector2(0,1);
         healthFill=Bar("Health",2,heartSprite,new Color(.92f,.055f,.075f),"100 / 100",out healthValue);
         energyFill=Bar("Energy",56,boltSprite,new Color(1,.68f,.035f),"",out energyValue);
+        // Carried weight / carrying capacity on a small plaque below the vitals (Einstellungen → Anzeige → Traglast im HUD).
+        carryPlaque=Rect("Carry Weight",top,49,114,250,46);
+        Frame("Carry Frame",carryPlaque,250,46,"Vitals",196).raycastTarget=false;
+        Text("Carry Label",carryPlaque,"Last",14,0,64,46,22,TextAlignmentOptions.MidlineLeft);
+        carryValue=Text("Carry Value",carryPlaque,"",74,0,162,46,26,TextAlignmentOptions.MidlineRight);
+        RefreshCarryWeightVisibility();
         counters=Rect("Counters",transform,0,0,596,106);
         counters.anchorMin=counters.anchorMax=counters.pivot=new Vector2(1,1);
         Frame("Counter Frame",counters,596,106,"Vitals",85);

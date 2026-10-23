@@ -6,6 +6,9 @@ public sealed class WorkbenchBuilding : MonoBehaviour
 {
     // Legacy "Enter" sign from the prefab; replaced at runtime by the shared gold EntrySign.
     [SerializeField] CanvasGroup entryButton;
+    // Roof peak of Workshop.png (x 847 of 1536 px). The left eave reaches further out than the right one, so the
+    // centre of the visible art sits about 17 px left of the peak and the sign looked off-centre.
+    [SerializeField, Range(-1, 1)] float signAxis = .552f;
     readonly HashSet<Collider2D> visitors = new();
     WorkbenchPanel panel;
     EntrySign entrySign;
@@ -19,7 +22,7 @@ public sealed class WorkbenchBuilding : MonoBehaviour
         int layer = legacyCanvas ? legacyCanvas.gameObject.layer : gameObject.layer;
         if (legacyCanvas) legacyCanvas.gameObject.SetActive(false);
         var sprite = EntrySign.MainSprite(transform);
-        if (sprite) entrySign = EntrySign.Create(transform, sprite, "Werkbank öffnen", Open, layer);
+        if (sprite) entrySign = EntrySign.Create(transform, sprite, "Werkbank öffnen", Open, layer, signAxis);
     }
 
     void OnTriggerEnter2D(Collider2D other)

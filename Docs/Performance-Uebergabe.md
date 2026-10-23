@@ -36,7 +36,11 @@ Stand mit Cursor-Cache und erweitertem `GameplayAssetPreload` (Commit 359a3ad + 
 | Abbau schnell | 15,0 | 18,4 | 22,5 | 112,5 |
 | Erkunden | 15,9 | 17,5 | 18,6 | 22,4 |
 
-Ladestufen max: 0 = 737 ms (Szenenstart, Punkt 1), 1 = 62 ms, 2 = 20, 3 = 24, 4 = 26, 5 = 31, 6 = 20, 7 = 138 ms. `CursorHighlightEquivalenceChecks`: Cursor-Texturen bitgleich (524'288 Pixel). Die Vergleichsmessung ohne die Änderungen (Lauf #157) brach am Zeitlimit ab (Build ohne Cache).
+Vorher-Lauf ohne die Änderungen (#162, Runner rund 30 % langsamer, erkennbar am Stillstand): auf gleiche Geschwindigkeit umgerechnet war der Szenenstart rund 200 ms länger; alle übrigen Phasen und Spitzen gleich innerhalb der Schwankung, keine anhaltenden Ruckler beim schnellen Abbau durch das Vorladen.
+
+**UI-Panels vorladen (Branch `claude/ui-panel-startup`):** WorkbenchPanel, BuyPage, ShopVisualTheme, CompactHud und SettingsPanel lesen im Awake rund 25 Bilder synchron, die meisten unkomprimiert 1254² (22 Bauplan-Bilder, Rahmen, Hintergründe, Münze; zusammen über 150 MB). `GameplayAssetPreload.BeginSceneStart` fordert sie schon im Hauptmenü im Hintergrund an. Gleichzeitig gestartete Läufe auf gleich schnellen Runnern: Szenenstart-Frame 682 ms (#171) statt 1089 ms auf `main` (#172), Stufe 0 3,0 s statt 3,3 s, alle anderen Phasen gleich. Wer sofort nach dem Start „Neues Spiel“ wählt, profitiert weniger (die Anfragen laufen dann noch). Nebenwirkung: die Bilder liegen schon im Hauptmenü im Speicher (im Spiel ohnehin). Möglicher nächster Schritt mit Freigabe: die Bauplan-Bilder komprimieren oder verkleinern (ändert die Optik leicht).
+
+Ladestufen max (#156): 0 = 737 ms (Szenenstart, Punkt 1), 1 = 62 ms, 2 = 20, 3 = 24, 4 = 26, 5 = 31, 6 = 20, 7 = 138 ms. `CursorHighlightEquivalenceChecks`: Cursor-Texturen bitgleich (524'288 Pixel). Die Vergleichsmessung ohne die Änderungen (Lauf #157) brach am Zeitlimit ab (Build ohne Cache).
 
 ## Offene Punkte (nach Priorität)
 

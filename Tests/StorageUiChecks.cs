@@ -111,12 +111,15 @@ public sealed class StorageUiProbe : MonoBehaviour
             var visible = EntrySign.VisibleBounds(main);
             Check(signRect.TransformPoint(signRect.rect.min).y > visible.max.y + .3f, sign.Label.text + ": floats above the roof");
             float signCentre = (signRect.TransformPoint(signRect.rect.min).x + signRect.TransformPoint(signRect.rect.max).x) / 2;
-            Check(Mathf.Abs(signCentre - visible.center.x) < .02f && visible.size.x < main.bounds.size.x + .001f,
-                sign.Label.text + $": centred over the visible building (off by {signCentre - visible.center.x:0.000}, sprite-rect centre {main.bounds.center.x - visible.center.x:0.000})");
+            float target = EntrySign.CentreX(main, sign.Axis);
+            Check(Mathf.Abs(signCentre - target) < .02f && visible.size.x < main.bounds.size.x + .001f,
+                sign.Label.text + $": centred over the building (off by {signCentre - target:0.000}, sprite-rect centre {main.bounds.center.x - visible.center.x:0.000})");
         }
         {
             var workshopMain = EntrySign.MainSprite(workshopSign.transform.parent);
             Check(EntrySign.VisibleBounds(workshopMain).center.x - workshopMain.bounds.center.x > .1f, "Workshop: visible art sits right of its image centre and the sign follows it");
+            float peak = Mathf.Lerp(workshopMain.bounds.min.x, workshopMain.bounds.max.x, 847.5f / 1536);
+            Check(Mathf.Abs(workshopSign.transform.position.x - peak) < .02f, "Workshop: sign sits over the roof peak, not the wider left eave");
         }
         Check(!Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None).Any(c => c.name == "EnterButtonCanvas" && c.gameObject.activeInHierarchy), "Old Enter signs are hidden");
         Check(entry.GetComponent<GoldButtonFeedback>(), "Entry sign uses the gold wood button style");

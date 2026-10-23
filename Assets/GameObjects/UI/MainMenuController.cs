@@ -31,6 +31,7 @@ public sealed class MainMenuController : MonoBehaviour
         GameSaveSystem.MigrateLegacyAutomaticSave();
         IsVisible = true; Time.timeScale = 1; HomeUi.EnsureEventSystem();
         LoadingAudio.StartHome();
+        GameplayAssetPreload.BeginSceneStart();
         Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto); Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
         var canvas = GameObject.Find("ScreenCanvas");
         if (!canvas)

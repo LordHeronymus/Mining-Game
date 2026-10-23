@@ -26,7 +26,7 @@ using System.Linq;
 // data never rejects a profile (it is repaired or dropped); the only rejection is the XP integrity check.
 public static partial class MetaProgression
 {
-    const int MaxLifetimeCounters = 128, MaxMilestoneAwards = 256, MaxRunTallies = 64, MaxChallengeId = 64;
+    const int MaxLifetimeCounters = 128, MaxMilestoneAwards = 256, MaxRunTallies = 64, MaxChallengeId = 64, MaxTrackedChallenges = 32;
     const long MaxLifetimeValue = 1000000000000000L, MaxTallyValue = 1000000000000L;
     static readonly long ClockLimit = new DateTime(9000, 1, 1).Ticks;
 
@@ -140,6 +140,7 @@ public static partial class MetaProgression
             // One round per period; the newest start wins.
             value.challengeRounds = rounds.GroupBy(round => round.period).Select(group => group.OrderByDescending(round => round.startUtc).First()).OrderBy(round => round.period).ToList();
             value.lifetimeCounters = RepairCounters(value.lifetimeCounters);
+            value.trackedChallenges = RepairTracked(value.trackedChallenges);
             value.milestoneAwards = RepairAwards(value.milestoneAwards);
             long paid = value.milestoneAwards.Sum(award => (long)award.xp);
             foreach (var round in value.challengeRounds) paid += Math.Max(0, ChallengeEngine.PaidXp(round));
@@ -245,6 +246,15 @@ public static partial class MetaProgression
             if (counter == null || !ValidChallengeId(counter.id) || !ids.Add(counter.id)) continue;
             counter.value = Math.Min(MaxLifetimeValue, Math.Max(0, counter.value)); result.Add(counter);
         }
+        return result;
+    }
+    // Keeps the marking order; drops empty, duplicate and overlong keys and the oldest marks beyond the limit.
+    static List<string> RepairTracked(List<string> values)
+    {
+        var result = new List<string>();
+        if (values != null) foreach (var key in values)
+            if (!string.IsNullOrEmpty(key) && key.Length <= 160 && !result.Contains(key)) result.Add(key);
+        if (result.Count > MaxTrackedChallenges) result.RemoveRange(0, result.Count - MaxTrackedChallenges);
         return result;
     }
     static List<MetaMilestoneAward> RepairAwards(List<MetaMilestoneAward> values)

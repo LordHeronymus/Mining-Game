@@ -699,7 +699,7 @@ public static partial class MetaProgression
             // Converted legacy rounds can hold the same template twice.
             string id = period + "-" + task.id + (task.subject >= 0 ? "-" + task.subject : "");
             if (!ids.Add(id)) ids.Add(id += "-" + i);
-            result.Add(TaskView(task, id, 0));
+            result.Add(TaskView(task, id, 0, round.startUtc));
         }
         return result.ToArray();
     }
@@ -708,7 +708,7 @@ public static partial class MetaProgression
         EnsureLoaded();
         var task = Round(ChallengePeriod.Monthly).tasks.Find(value => value != null && IsProject(value));
         if (task?.stageTargets == null || task.stageXp == null || task.stageTargets.Length == 0 || task.stageXp.Length != task.stageTargets.Length) return null;
-        var view = TaskView(task, "Monthly-" + task.id, 1);
+        var view = TaskView(task, "Monthly-" + task.id, 1, Round(ChallengePeriod.Monthly).startUtc);
         int last = task.stageTargets.Length - 1;
         view.target = task.stageTargets[last];
         view.xp = task.stageXp[Math.Min(Math.Max(0, task.stagesPaid), last)];
@@ -716,12 +716,12 @@ public static partial class MetaProgression
         view.stagesDone = task.stagesPaid;
         return view;
     }
-    static MetaChallengeProgress TaskView(MetaChallengeTask task, string id, int kind)
+    static MetaChallengeProgress TaskView(MetaChallengeTask task, string id, int kind, long roundStart)
     {
         var template = ChallengeCatalog.Template(task.id);
         string unit = string.IsNullOrEmpty(task.unit) ? ChallengeCatalog.Unit(task.id, task.metric, task.subject) : task.unit;
         return new MetaChallengeProgress {
-            id = id, name = string.IsNullOrEmpty(task.name) ? ChallengeCatalog.Name(task.id, task.subject) : task.name, metric = task.metric,
+            id = id, track = id + "@" + roundStart, name = string.IsNullOrEmpty(task.name) ? ChallengeCatalog.Name(task.id, task.subject) : task.name, metric = task.metric,
             subject = unit, unit = unit, icon = ChallengeCatalog.Icon(task.id, task.metric, task.subject),
             family = template != null ? ChallengeCatalog.FamilyName(template.family) : "", tier = task.tier, kind = kind,
             current = task.progress, target = task.target, xp = task.xp, completed = task.done
@@ -736,7 +736,7 @@ public static partial class MetaProgression
             int reached = stages.Count(StageReached);
             var shown = stages.FirstOrDefault(stage => !StageReached(stage)) ?? stages[stages.Length - 1];
             result.Add(new MetaChallengeProgress {
-                id = line.id, name = line.name, metric = line.metric, subject = line.unit, unit = line.unit, icon = line.icon, kind = 2, permanent = true,
+                id = line.id, track = "Lifetime-" + line.id, name = line.name, metric = line.metric, subject = line.unit, unit = line.unit, icon = line.icon, kind = 2, permanent = true,
                 current = (int)Math.Min(int.MaxValue, Math.Max(0, LifetimeValue(line))), target = shown.target, xp = shown.xp, completed = reached == stages.Length,
                 medal = reached, stage = reached, stages = stages.Length, stagesDone = reached,
                 stageTargets = stages.Select(stage => stage.target).ToArray(), stageXp = stages.Select(stage => stage.xp).ToArray()
@@ -747,7 +747,7 @@ public static partial class MetaProgression
             bool completed = run.completedObjectives.Contains(definition.id);
             string unit = ChallengeCatalog.Unit(null, definition.metric, -1);
             result.Add(new MetaChallengeProgress {
-                id = definition.id, name = definition.name, metric = definition.metric, subject = unit, unit = unit,
+                id = definition.id, track = "Run-" + run.runId + "-" + definition.id, name = definition.name, metric = definition.metric, subject = unit, unit = unit,
                 icon = ChallengeCatalog.Icon(null, definition.metric, -1), kind = 3,
                 current = Math.Min(definition.target, completed ? definition.target : Metric(definition.metric, run)),
                 target = definition.target, xp = definition.xp, completed = completed

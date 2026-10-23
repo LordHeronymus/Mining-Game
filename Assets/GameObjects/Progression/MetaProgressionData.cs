@@ -96,6 +96,8 @@ using UnityEngine;
     public List<MetaChallengeRound> challengeRounds = new();
     public List<MetaMilestoneAward> milestoneAwards = new();
     public List<MetaLifetimeCounter> lifetimeCounters = new();
+    // Challenges marked with the star, in marking order (MetaProgression.TrackKey). Older builds ignore the field.
+    public List<string> trackedChallenges = new();
     public int version = 1;
     public long revision, totalXp;
     public List<MetaUpgradeRank> upgrades = new();
@@ -114,6 +116,7 @@ public sealed class MetaChallengeProgress
     public int kind;                 // 0 period task, 1 monthly project, 2 lifetime milestone line, 3 run objective
     public int medal, stage, stages; // milestone lines: reached stages (medal 1 Bronze .. 4 Platin)
     public string unit, icon, family;
+    public string track;             // key for the HUD tracker; unique across periods and rounds
     public int[] stageTargets, stageXp;
     public int stagesDone;
 }

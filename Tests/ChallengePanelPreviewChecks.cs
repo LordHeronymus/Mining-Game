@@ -75,6 +75,7 @@ public static class ChallengePanelPreviewChecks
                 Section("Lifetime tab without run", () => { MetaProgression.EndRun(); ShowTab(panel, ChallengePeriod.Lifetime, false, "ChallengePanel-Lifetime-NoRun"); });
                 Section("Catalog text widths", () => MeasureCatalog(panel));
                 Section("Ledger", () => Ledger("End"));
+                Section("Tracking", () => Tracking(panel, canvas));
                 Section("Back button", () => CloseWithBack(panel));
             }
         }
@@ -741,6 +742,125 @@ public static class ChallengePanelPreviewChecks
         Info(label + ": " + count + " strings, " + shrunk + " auto-sized below " + text.fontSizeMax.ToString("0.#") + ", box " + text.rectTransform.rect.width.ToString("0") + " px");
         foreach (var w in widest.OrderByDescending(w => w.width).Take(3)) Info("  widest '" + w.value + "' " + w.width.ToString("0") + " px at size " + w.size.ToString("0.#"));
     }
+
+    // ---------- star marks and HUD tracker (MetaChallengeTracking, ChallengeTrackerHud) ----------
+    static void Tracking(ChallengePanel panel, Canvas canvas)
+    {
+        var rebuild = typeof(ChallengePanel).GetMethod("Rebuild", BindingFlags.Instance | BindingFlags.NonPublic);
+        if (!Check(rebuild != null, "ChallengePanel.Rebuild exists") || !Click(panel, "Challenge Tab Daily")) return;
+        Refresh(panel);
+        var scroll = panel.GetComponentInChildren<ScrollRect>(true);
+        var daily = MetaProgression.GetChallenges(ChallengePeriod.Daily);
+        foreach (var view in daily)
+        {
+            var tile = Active(scroll.content, "Challenge " + view.id);
+            var star = tile ? tile.Find("Track Star") : null;
+            Check(!string.IsNullOrEmpty(view.track) && view.track.StartsWith(view.id + "@"), view.id + ": track key '" + view.track + "' carries the round start");
+            Check(view.completed ? star == null : star != null && !star.GetComponentInChildren<ChallengeStar>().Filled, view.id + ": star " + (view.completed ? "hidden (done)" : "shown, empty"));
+        }
+        var open = daily.Where(v => !v.completed).Concat(MetaProgression.GetChallenges(ChallengePeriod.Weekly).Where(v => !v.completed)).ToList();
+        if (!Check(open.Count >= 6, "At least six unfinished daily/weekly tasks to mark (" + open.Count + ")")) return;
+        var first = open[0];
+        var button = Active(scroll.content, "Challenge " + first.id)?.Find("Track Star")?.GetComponent<Button>();
+        if (!Check(button, first.id + ": star button")) return;
+        button.onClick.Invoke();
+        Check(MetaProgression.IsTracked(first.track), "Star click marks " + first.id);
+        rebuild.Invoke(panel, null); Refresh(panel);
+        var filled = Active(scroll.content, "Challenge " + first.id)?.Find("Track Star")?.GetComponentInChildren<ChallengeStar>();
+        Check(filled && filled.Filled, "Marked tile shows a filled star after the rebuild");
+        Render(panel, "ChallengePanel-Daily-Tracked");
+        for (int i = 1; i < 6; i++) MetaProgression.SetTracked(open[i].track, true);
+        MetaProgression.SetTracked(open[1].track, true); // second mark of the same key is ignored
+        var tracked = MetaProgression.TrackedChallenges();
+        Check(tracked.Select(v => v.track).SequenceEqual(open.Take(6).Select(v => v.track)), "Six marks kept once each, in marking order");
+
+        // HUD: a stretched 1920×1080 parent like CompactHud; at most four rows in marking order.
+        var hud = new GameObject("Tracker HUD", typeof(RectTransform)).GetComponent<RectTransform>();
+        hud.SetParent(canvas.transform, false); HomeUi.Stretch(hud);
+        var tracker = ChallengeTrackerHud.Attach(hud);
+        if (!Check(tracker, "ChallengeTrackerHud attached")) return;
+        Check(ChallengeTrackerHud.Attach(hud) == tracker, "Attach twice reuses the tracker");
+        tracker.Refresh(); Refresh(tracker);
+        Check(tracker.ShownCount == MetaProgression.TrackedShown && HudNames(tracker).SequenceEqual(open.Take(4).Select(v => v.name)),
+            "HUD shows the first four marks: " + string.Join(", ", HudNames(tracker)));
+        Check(tracker.GetComponentsInChildren<Graphic>(true).All(g => !g.raycastTarget), "HUD tracker never takes clicks");
+        var frame = tracker.transform.Find("Tracker Panel") as RectTransform;
+        var corners = new Vector3[4]; frame.GetWorldCorners(corners);
+        var screen = new Vector3[4]; hud.GetWorldCorners(screen);
+        Check(corners[2].x <= screen[2].x + .01f && corners[0].x > (screen[0].x + screen[2].x) * .5f && corners[0].y >= screen[0].y,
+            "HUD tracker sits inside the right half of the screen");
+        var overflow = tracker.GetComponentsInChildren<TMP_Text>().Where(t => { t.ForceMeshUpdate(); return t.isTextOverflowing; }).Select(t => t.text).ToList();
+        if (overflow.Count > 0) Info("HUD names shortened with ellipsis: " + string.Join(", ", overflow));
+        panel.gameObject.SetActive(false);
+        Render(hud, "ChallengeTracker-HUD");
+        hud.gameObject.SetActive(false);
+        Section("Tracker in game layout", () => TrackerInGame(canvas));
+        hud.gameObject.SetActive(true);
+        panel.gameObject.SetActive(true);
+
+        // Persistence: marks survive save and reload.
+        Check(MetaProgression.Save(), "Profile with marks saved");
+        MetaProgression.Reload();
+        Check(MetaProgression.Profile.trackedChallenges != null && MetaProgression.Profile.trackedChallenges.SequenceEqual(open.Take(6).Select(v => v.track)), "Marks survive a reload");
+
+        // A finished mark leaves the HUD and the fifth one moves up.
+        var round = MetaProgression.Profile.challengeRounds.Find(r => r != null && r.period == (int)ChallengePeriod.Daily);
+        var task = round?.tasks.FirstOrDefault(t => t != null && ChallengePeriod.Daily + "-" + t.id + (t.subject >= 0 ? "-" + t.subject : "") == first.id);
+        if (Check(task != null, "Task of " + first.id + " found"))
+        {
+            task.progress = task.target; task.done = true;
+            tracker.Refresh(); Refresh(tracker);
+            Check(tracker.ShownCount == 4 && HudNames(tracker).SequenceEqual(open.Skip(1).Take(4).Select(v => v.name)),
+                "Finished mark drops out, the fifth moves up: " + string.Join(", ", HudNames(tracker)));
+        }
+        MetaProgression.SetTracked(open[2].track, false);
+        Check(!MetaProgression.IsTracked(open[2].track), "Second star click removes the mark");
+
+        // A new day ends the daily marks; weekly marks of the same week stay.
+        MetaProgression.ChallengeTestUtc = Now.AddDays(1);
+        var left = MetaProgression.TrackedChallenges().Select(v => v.track).ToList();
+        Check(left.All(k => k.StartsWith("Weekly-")) && MetaProgression.Profile.trackedChallenges.All(k => k.StartsWith("Weekly-")),
+            "Daily marks end with their round: " + string.Join(", ", left));
+        MetaProgression.ChallengeTestUtc = Now;
+        Object.DestroyImmediate(hud.gameObject);
+    }
+    // The tracker over a landscape with the counter frame above it, as in the game.
+    static void TrackerInGame(Canvas canvas)
+    {
+        var stage = new GameObject("Tracker Stage", typeof(RectTransform)).GetComponent<RectTransform>();
+        stage.SetParent(canvas.transform, false); HomeUi.Stretch(stage);
+        try
+        {
+            var backdrop = new GameObject("Backdrop", typeof(RectTransform)).AddComponent<RawImage>();
+            backdrop.transform.SetParent(stage, false); HomeUi.Stretch(backdrop.rectTransform);
+            backdrop.texture = Resources.Load<Texture2D>("Homescreen/Layer1"); backdrop.color = backdrop.texture ? Color.white : new Color32(120, 150, 185, 255);
+            var counters = new GameObject("Counters Mock", typeof(RectTransform)).AddComponent<Image>();
+            counters.transform.SetParent(stage, false);
+            var rect = counters.rectTransform; rect.anchorMin = rect.anchorMax = rect.pivot = Vector2.one;
+            rect.sizeDelta = new Vector2(596, 106); rect.anchoredPosition = new Vector2(-18, -14);
+            counters.sprite = Resources.Load<Sprite>("HUDv1/Vitals"); counters.type = Image.Type.Sliced;
+            if (counters.sprite) { counters.pixelsPerUnitMultiplier = counters.sprite.rect.height / 85f; counters.material = HudV1Art.DarkWood(counters.sprite); }
+            var holder = new GameObject("Tracker HUD", typeof(RectTransform)).GetComponent<RectTransform>();
+            holder.SetParent(stage, false); HomeUi.Stretch(holder);
+            var tracker = ChallengeTrackerHud.Attach(holder);
+            tracker.Refresh(); Refresh(tracker);
+            var frame = tracker.transform.Find("Tracker Panel") as RectTransform;
+            var corners = new Vector3[4]; frame.GetWorldCorners(corners);
+            var top = new Vector3[4]; rect.GetWorldCorners(top);
+            var screen = new Vector3[4]; stage.GetWorldCorners(screen);
+            Check(corners[2].x < screen[2].x && Mathf.Abs(corners[2].x - top[2].x) < .01f && corners[1].y < top[0].y,
+                "Tracker sits on screen, right-aligned below the counter frame");
+            var title = frame.Find("Title");
+            Check(title && frame.GetComponentsInChildren<ChallengeGem>().Count(g => g.name == "Title Gem") == 2, "Title between two gold rules with gems");
+            Render(stage, "ChallengeTracker-Game");
+        }
+        finally
+        {
+            Object.DestroyImmediate(stage.gameObject);
+        }
+    }
+    static List<string> HudNames(Component tracker) => tracker.GetComponentsInChildren<Transform>()
+        .Where(t => t.name.StartsWith("Tracked ")).Select(t => t.Find("Name")?.GetComponent<TMP_Text>()?.text).ToList();
 
     static void CloseWithBack(ChallengePanel panel)
     {
