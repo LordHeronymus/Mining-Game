@@ -150,6 +150,9 @@
     },
     {
       "name": "VoiceLineChecks"
+    },
+    {
+      "name": "ThinVeinMediumChecks"
     }
   ]
 }
