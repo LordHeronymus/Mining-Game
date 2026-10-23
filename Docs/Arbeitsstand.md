@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Sprung in Seitennische: Kantenhilfe, damit man in eine 1 Zelle höhere, knapp spielerhohe Nische springen kann | `claude/nischen-sprung` | Cloud-Klon | `PlayerMovement` (neue Kantenhilfe in `FixedUpdate`, `LaunchJump` unverändert), `GpsSchema.Catalog.cs`/`GpsProfile.asset` (Bereich Bewegung), neues `Tests/LedgeAssistChecks.cs` | ja (Testbank, kurz) | 23.10.2026 17:20 |
 
 ## Zuletzt abgeschlossen
 
