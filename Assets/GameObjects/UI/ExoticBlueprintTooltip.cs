@@ -28,7 +28,7 @@ public sealed class ExoticBlueprintTooltip : MonoBehaviour, IPointerEnterHandler
         HomeUi.Image("Backing",tip,Vector2.zero,new Vector2(410,210)).color=new Color32(20,13,9,255);
         var frame=HomeUi.Image("Frame",tip,Vector2.zero,tip.sizeDelta,"SelectionCardNormal");frame.pixelsPerUnitMultiplier=5.5f;
         var title=ProgressionArt.Text("Name",tip,Entry.Name,new Vector2(0,74),new Vector2(365,40),29);title.color=ExoticDesign.Cyan;
-        var level=ProgressionArt.Text("Level",tip,"Level "+Entry.Level+(Entry.Preview?" · Vorschau":" · Exotisch"),new Vector2(0,34),new Vector2(365,28),21);level.color=ProgressionArt.Gold;
+        var level=ProgressionArt.Text("Level",tip,"Level "+Entry.Level+(Entry.Preview?" · Vorschau":ExoticCatalog.IsAvailable(Entry.Recipe)?" · in Höhlen findbar":" · Exotisch"),new Vector2(0,34),new Vector2(365,28),21);level.color=ProgressionArt.Gold;
         var description=ProgressionArt.Text("Description",tip,Entry.Description,new Vector2(0,-43),new Vector2(360,110),23);
         description.textWrappingMode=TextWrappingModes.Normal;description.alignment=TextAlignmentOptions.TopLeft;description.richText=false;
         Position();

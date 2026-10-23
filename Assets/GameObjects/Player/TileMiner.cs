@@ -22,6 +22,7 @@ public class TileMiner : MonoBehaviour
     public Vector2 cursorPulseAlphaRange = new(.76f, 1f);
     [Min(1f)] public float cursorPulseSize = 1.05f;
     [FormerlySerializedAs("cursorBrightness"), Range(0f, 3f)] public float cursorGlowStrength = 1f;
+    [Range(0f, 3f)] public float smartCursorGlowStrength = 1.31f;
 
     private Dictionary<Vector3Int, float> progress = new();
     private readonly Dictionary<Vector3Int, float> lastMiningHitTime = new();
@@ -504,9 +505,10 @@ public class TileMiner : MonoBehaviour
     void UpdateHighlightPulse()
     {
         if (!highlightMap || !highlightedCell.HasValue) return;
-        float glowStrength = Mathf.Clamp(cursorGlowStrength, 0f, 3f);
+        // Below 1 the frame fades out (0 = invisible), above 1 it gets brighter. Normal and smart frame separately.
+        float glowStrength = Mathf.Clamp(highlightedSmartCursor ? smartCursorGlowStrength : cursorGlowStrength, 0f, 3f);
         if (highlightMaterial && highlightMaterial.HasProperty("_Color"))
-            highlightMaterial.SetColor("_Color", Color.white * glowStrength);
+            highlightMaterial.SetColor("_Color", Color.white * Mathf.Max(1f, glowStrength));
         float interval = Mathf.Max(.05f, cursorPulseInterval);
         float pulse = .5f + .5f * Mathf.Sin(Time.unscaledTime * (Mathf.PI * 2f / interval));
         float minAlpha = Mathf.Clamp01(Mathf.Min(cursorPulseAlphaRange.x, cursorPulseAlphaRange.y));
@@ -514,7 +516,7 @@ public class TileMiner : MonoBehaviour
         float alpha = Mathf.Lerp(minAlpha, maxAlpha, pulse);
         float size = Mathf.Lerp(1f, Mathf.Clamp(cursorPulseSize, 1f, 1.5f), pulse);
         highlightMap.SetColor(highlightedCell.Value,
-            new Color(1f, 1f, 1f, alpha * Mathf.Lerp(.3f, 1f, Mathf.Clamp01(glowStrength))));
+            new Color(1f, 1f, 1f, alpha * Mathf.Clamp01(glowStrength)));
         highlightMap.SetTransformMatrix(highlightedCell.Value, Matrix4x4.Scale(new Vector3(size, size, 1f)));
     }
 
@@ -559,28 +561,14 @@ public class TileMiner : MonoBehaviour
 
     void EnsureHighlightSorting()
     {
-        if (!highlightRenderer || !tilemap) return;
-        var terrainRenderer = tilemap.GetComponent<TilemapRenderer>();
-        if (!terrainRenderer) return;
-        // Terrain and ore occupy the next two orders; the cursor stays above them.
-        int layer = terrainRenderer.sortingLayerID;
-        int order = terrainRenderer.sortingOrder + 2;
-        void Above(Renderer renderer, int extra = 0)
-        {
-            if (!renderer) return;
-            int value = SortingLayer.GetLayerValueFromID(renderer.sortingLayerID);
-            int current = SortingLayer.GetLayerValueFromID(layer);
-            if (value > current) { layer = renderer.sortingLayerID; order = renderer.sortingOrder + extra; }
-            else if (value == current) order = Mathf.Max(order, renderer.sortingOrder + extra);
-        }
-        if (map)
-        {
-            Above(map.OreOverlay ? map.OreOverlay.GetComponent<TilemapRenderer>() : null, 1);
-            Above(map.ArtifactOverlay ? map.ArtifactOverlay.GetComponent<TilemapRenderer>() : null);
-        }
-        highlightRenderer.sortingLayerID = layer;
-        highlightRenderer.sortingOrder = order + 1;
+        if (!highlightRenderer) return;
+        // The frame glows on its own: it is drawn above the darkness overlay (MapLighting, order 32760) and the
+        // ore glints (32761), so it stays visible in total darkness. It is unlit and no Light2D: it lights nothing.
+        highlightRenderer.sortingLayerID = SortingLayer.layers[SortingLayer.layers.Length - 1].id;
+        highlightRenderer.sortingOrder = AboveDarknessOrder;
     }
+
+    const int AboveDarknessOrder = 32762;
 
     // The two cursor textures (512² pixels each) took most of TileMiner.Awake (~130 ms at every scene start).
     // They do not depend on the scene, so they are built once per session and kept (HideAndDontSave).
@@ -591,8 +579,8 @@ public class TileMiner : MonoBehaviour
         ref var cached = ref cornersOnly ? ref cornerCursorTexture : ref normalCursorTexture;
         if (!cached) cached = CreateHighlightTexture(name, cornersOnly);
         var texture = cached;
-        // The gold outline spans 85% of the texture; the remaining space holds its soft halo.
-        float pixelsPerUnit = texture.width * .85f * frameScale;
+        // The gold outline spans FrameSpan of the texture; the remaining space holds its glow.
+        float pixelsPerUnit = texture.width * FrameSpan * frameScale;
         var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
             new Vector2(.5f, .5f), pixelsPerUnit, 0, SpriteMeshType.FullRect);
         sprite.name = name;
@@ -607,6 +595,7 @@ public class TileMiner : MonoBehaviour
     }
 
     const int HighlightResolution = 512;
+    const float FrameSpan = .62f;
 
     static Texture2D CreateHighlightTexture(string name, bool cornersOnly)
     {
@@ -625,31 +614,13 @@ public class TileMiner : MonoBehaviour
     static Color[] HighlightPixels(bool cornersOnly)
     {
         const int resolution = HighlightResolution, half = resolution / 2;
-        const float halfFrame = .425f;
-        const float armLength = .85f * .22f;
         var pixels = new Color[resolution * resolution];
         // Each pixel depends only on its mirrored distance to the centre: compute one quadrant, mirror it exactly.
         for (int y = 0; y < half; y++)
         for (int x = 0; x < half; x++)
         {
-            var p = new Vector2(Mathf.Abs((x + .5f) / resolution - .5f),
-                Mathf.Abs((y + .5f) / resolution - .5f));
-            float end = cornersOnly ? halfFrame - armLength : 0f;
-            var horizontal = new Vector2(Mathf.Clamp(p.x, end, halfFrame), halfFrame);
-            var vertical = new Vector2(halfFrame, Mathf.Clamp(p.y, end, halfFrame));
-            float horizontalDistance = Vector2.Distance(p, horizontal);
-            float verticalDistance = Vector2.Distance(p, vertical);
-            bool nearestHorizontal = horizontalDistance < verticalDistance;
-            float distance = Mathf.Min(horizontalDistance, verticalDistance);
-            float taper = cornersOnly ? Mathf.SmoothStep(0f, 1f,
-                ((nearestHorizontal ? horizontal.x : vertical.y) - end) / armLength) : 1f;
-            float width = cornersOnly ? Mathf.Lerp(.0006f, .006f, taper) : .0045f;
-            float core = 1f - Mathf.SmoothStep(0f, 1f,
-                Mathf.InverseLerp(width - .001f, width + .001f, distance));
-            float halo = Mathf.Exp(-distance * distance / (.012f * .012f)) * .28f;
-            float alpha = Mathf.Max(core * .98f, halo) * (cornersOnly ? taper : 1f);
-            var color = Color.Lerp(new Color(1f, .57f, .12f), new Color(1f, .86f, .4f), core);
-            color.a = alpha;
+            var color = HighlightPixel(new Vector2(Mathf.Abs((x + .5f) / resolution - .5f),
+                Mathf.Abs((y + .5f) / resolution - .5f)), cornersOnly);
             int mirrorX = resolution - 1 - x, mirrorY = resolution - 1 - y;
             pixels[y * resolution + x] = color;
             pixels[y * resolution + mirrorX] = color;
@@ -657,6 +628,31 @@ public class TileMiner : MonoBehaviour
             pixels[mirrorY * resolution + mirrorX] = color;
         }
         return pixels;
+    }
+
+    // p: distance from the texture centre (0..0.5). Bright gold core with a warm glow inside and outside.
+    static Color HighlightPixel(Vector2 p, bool cornersOnly)
+    {
+        const float halfFrame = FrameSpan * .5f;
+        const float armLength = FrameSpan * .22f;
+        float end = cornersOnly ? halfFrame - armLength : 0f;
+        var horizontal = new Vector2(Mathf.Clamp(p.x, end, halfFrame), halfFrame);
+        var vertical = new Vector2(halfFrame, Mathf.Clamp(p.y, end, halfFrame));
+        float horizontalDistance = Vector2.Distance(p, horizontal);
+        float verticalDistance = Vector2.Distance(p, vertical);
+        bool nearestHorizontal = horizontalDistance < verticalDistance;
+        float distance = Mathf.Min(horizontalDistance, verticalDistance) / FrameSpan; // in cell widths
+        float taper = cornersOnly ? Mathf.SmoothStep(0f, 1f,
+            ((nearestHorizontal ? horizontal.x : vertical.y) - end) / armLength) : 1f;
+        float width = cornersOnly ? Mathf.Lerp(.003f, .014f, taper) : .012f;
+        float core = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(width - .003f, width + .003f, distance));
+        float glow = Mathf.Exp(-distance * distance / (.06f * .06f)) * .7f
+            + Mathf.Exp(-distance * distance / (.16f * .16f)) * .22f;
+        float alpha = Mathf.Clamp01(core + glow) * taper;
+        float heat = Mathf.Clamp01(core * .75f + glow * .25f);
+        var color = Color.Lerp(new Color(1f, .55f, .1f), new Color(1f, .95f, .78f), heat);
+        color.a = alpha;
+        return color;
     }
 
     static void DestroyHighlightTile(Tile tile)

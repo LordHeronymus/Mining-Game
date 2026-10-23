@@ -23,6 +23,8 @@ public sealed class GameplayLevelUpProbe:MonoBehaviour {
   save=GameSaveSystem.TestDirectory;meta=MetaProgression.TestDirectory;gps=JsonUtility.ToJson(GpsSettings.Tests);oldScale=Time.timeScale;
   GameSaveSystem.TestDirectory=Path.GetFullPath("Temp/LevelUp-"+DateTime.UtcNow.Ticks);MetaProgression.TestDirectory=Path.Combine(GameSaveSystem.TestDirectory,"Profile");
   GpsSettings.Document.tests.testModeDisabled=true;File.WriteAllText(Report,"");
+  // Discoveries here can finish challenges; their banner would hold the level-up. This check covers the level-up alone.
+  if(ChallengeCompletePresentation.Instance)ChallengeCompletePresentation.Instance.enabled=false;
   var routine=Run();while(true){bool more=false;object next=null;Exception error=null;try{more=routine.MoveNext();if(more)next=routine.Current;}catch(Exception e){error=e;}
    if(error!=null){File.AppendAllText(Report,"FAILED "+error+"\n");break;}if(!more)break;yield return next;}
   GameplayInputBlocker.SetBlocked(this,false);Time.timeScale=1;
@@ -45,10 +47,15 @@ public sealed class GameplayLevelUpProbe:MonoBehaviour {
   Check(!view.IsShowing&&group.alpha==0&&view.AudioPlayCount==0,"Restored initial level stays silent");
   Check(!group.blocksRaycasts&&!group.interactable&&!view.GetComponent<GraphicRaycaster>()&&view.GetComponentsInChildren<Graphic>().All(g=>!g.raycastTarget),"Entire decoration ignores pointer input");
   Check(MetaProgressionRuntime.RewardsAllowed,"Real gameplay reward gate open");
+  float s=view.SoundSyncSeconds;var assets=Resources.Load<LevelUpPresentationAssets>("Progression/LevelUpPresentation");
+  Check(Mathf.Abs(s-(assets.soundPeakSeconds-assets.impactSeconds))<.001f&&s>1.5f,"Medallion delay derived from audio peak");
   AwardTo(25);yield return null;yield return new WaitForSecondsRealtime(.35f);
   Check(view.IsShowing&&view.FromLevel==24&&view.ToLevel==25,"Live XP event shows 24 to 25");
   Check(Label("Reward").text=="+1 Powerup-Punkt","Actual power point reward");
-  Check(sound.clip==Resources.Load<LevelUpPresentationAssets>("Progression/LevelUpPresentation").sound&&sound.clip.name=="LevelUp-ElevenLabs"&&Mathf.Abs(sound.clip.length-2.205f)<.01f&&sound.isPlaying&&view.AudioPlayCount==1,"Selected trimmed ElevenLabs audio plays once with live level-up");
+  Check(sound.clip==assets.sound&&sound.clip.name=="LevelUp-ChargeTreasure"&&Mathf.Abs(sound.clip.length-5.04f)<.05f&&sound.isPlaying&&view.AudioPlayCount==1,"Charge-up treasure audio plays once with live level-up");
+  Check(group.alpha==0&&view.Elapsed<0,"Medallion waits during the charge-up");
+  yield return new WaitForSecondsRealtime(s-.35f+.25f);
+  Check(Mathf.Abs(sound.time-(view.Elapsed+s))<.1f,"Medallion impact lands on the audible hit");
   Check(Time.timeScale==1&&!GameplayInputBlocker.IsBlocked,"Celebration does not pause or block gameplay");
   Check(group.alpha>.99f&&Label("Level").text=="25","Medallion readable at full opacity");
   Check(view.GetComponentsInChildren<Image>().Any(i=>i.sprite&&i.sprite.name=="LevelUpMedallion"),"Generated medallion sprite loaded");
@@ -62,30 +69,30 @@ public sealed class GameplayLevelUpProbe:MonoBehaviour {
   Check(Label("Reward").text=="+4 Powerup-Punkte","Merged reward total correct");
   MetaProgression.RecordDiscovery("levelup-check-"+sequence);yield return null;
   Check(view.AudioPlayCount==1&&view.ToLevel==28,"Duplicate discovery does not replay");
-  yield return new WaitForSecondsRealtime(3.1f);
+  yield return new WaitForSecondsRealtime(3.4f);
   Check(!view.IsShowing&&group.alpha==0,"Visual fades after duration");
-  Check(!sound.isPlaying,"Short selected audio finishes naturally before visual ends");
+  Check(!sound.isPlaying,"Selected audio finishes naturally after the visual");
   AwardTo(29);yield return new WaitForSecondsRealtime(.4f);
   Check(view.IsShowing&&view.ToLevel==29&&view.AudioPlayCount==2&&view.GetComponents<AudioSource>().Length==1,"New level plays selected audio on the same single source");
   bool saved=false;yield return GameSaveSystem.Save(GameSaveSystem.ActiveSlot,this,(ok,message)=>saved=ok);Check(saved,"Isolated world saves");
   Check(RunNavigation.LoadGame(GameSaveSystem.ActiveSlot,out _),"Real save reload accepted");yield return Ready();CameraCheck("Reload");
   Check(!view.IsShowing&&group.alpha==0&&!sound.isPlaying&&view.AudioPlayCount==2,"Loading saved XP never replays celebration");
   AwardTo(199);yield return new WaitForSecondsRealtime(.3f);Check(view.ToLevel==199,"Large award groups all levels");
-  yield return new WaitForSecondsRealtime(3f);AwardTo(205);yield return new WaitForSecondsRealtime(.4f);
+  yield return new WaitForSecondsRealtime(3f+s);AwardTo(205);yield return new WaitForSecondsRealtime(.4f);
   Check(view.FromLevel==199&&view.ToLevel==205&&Label("Reward").text=="+1 Powerup-Punkt\n+1 Komfortpunkt","Power and comfort boundary uses actual reward rules");
   Canvas.ForceUpdateCanvases();Check(!Label("Reward").isTextTruncated,"Both reward lines fit");
-  yield return new WaitForSecondsRealtime(3f);AwardTo(206);yield return new WaitForSecondsRealtime(.4f);
+  yield return new WaitForSecondsRealtime(3f+s);AwardTo(206);yield return new WaitForSecondsRealtime(.4f);
   Check(view.ToLevel==206&&Label("Reward").text=="","Levels without points do not invent a reward");
-  yield return new WaitForSecondsRealtime(3f);AwardTo(1000);yield return new WaitForSecondsRealtime(.4f);Canvas.ForceUpdateCanvases();
+  yield return new WaitForSecondsRealtime(3f+s);AwardTo(1000);yield return new WaitForSecondsRealtime(.4f);Canvas.ForceUpdateCanvases();
   Check(view.ToLevel==1000&&!Label("Level").isTextTruncated,"Level 1000 fits medallion");
-  int plays=view.AudioPlayCount;yield return new WaitForSecondsRealtime(3f);MetaProgression.RecordDiscovery("at-cap");yield return null;
+  int plays=view.AudioPlayCount;yield return new WaitForSecondsRealtime(3f+s);MetaProgression.RecordDiscovery("at-cap");yield return null;
   Check(!view.IsShowing&&view.AudioPlayCount==plays,"XP at level cap stays silent");
   RunNavigation.MainMenu();yield return Ready();Check(group.alpha==0&&!sound.isPlaying,"Scene exit clears all presentation");
-  Check(GameplayLevelUpPresentation.Preview(),"Testsettings preview starts");yield return new WaitForSecondsRealtime(.2f);
-  Check(group.alpha>.9f&&sound.isPlaying&&sound.clip.name=="LevelUp-ElevenLabs","Preview also uses selected audio when animation appears");
+  Check(GameplayLevelUpPresentation.Preview(),"Testsettings preview starts");yield return new WaitForSecondsRealtime(.2f+s);
+  Check(group.alpha>.9f&&sound.isPlaying&&sound.clip.name=="LevelUp-ChargeTreasure","Preview also uses selected audio when animation appears");
   view.enabled=false;view.enabled=true;
   File.AppendAllText(Report,"COMPLETE "+checks+" checks\n");
  }
- void Cleanup(){if(clean)return;clean=true;GameplayInputBlocker.SetBlocked(this,false);Time.timeScale=oldScale;MetaProgression.EndRun();MetaProgression.TestDirectory=meta;GameSaveSystem.TestDirectory=save;JsonUtility.FromJsonOverwrite(gps,GpsSettings.Document.tests);Object.Destroy(gameObject);}
+ void Cleanup(){if(clean)return;clean=true;if(ChallengeCompletePresentation.Instance)ChallengeCompletePresentation.Instance.enabled=true;GameplayInputBlocker.SetBlocked(this,false);Time.timeScale=oldScale;MetaProgression.EndRun();MetaProgression.TestDirectory=meta;GameSaveSystem.TestDirectory=save;JsonUtility.FromJsonOverwrite(gps,GpsSettings.Document.tests);Object.Destroy(gameObject);}
  void OnDestroy(){if(!clean)Cleanup();}
 }

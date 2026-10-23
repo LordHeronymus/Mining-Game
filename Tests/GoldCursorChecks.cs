@@ -64,22 +64,39 @@ public static class GoldCursorChecks
                 var actual = highlight.GetTile<Tile>(Vector3Int.zero);
                 var expected = (Tile)type.GetField(smart ? "smartHighlightTile" : "normalHighlightTile", flags).GetValue(miner);
                 if (actual != expected) throw new Exception("Incorrect cursor mode mapping");
-                float width = actual.sprite.bounds.size.x * 2.2f * .85f;
+                float width = actual.sprite.bounds.size.x * 2.2f * .62f;
                 if (Mathf.Abs(width - 1.1f) > .005f) throw new Exception("Outline does not match the cell: " + width);
                 var raw = new Texture2D(2,2);
                 raw.LoadImage(File.ReadAllBytes("Assets/Resources/Cursor/" + (smart ? "Smart" : "Normal") + "CursorFrame.png"));
                 if (raw.GetPixel(raw.width/2, raw.height/2).a > .01f) throw new Exception("Opaque cursor center");
                 if (smart && raw.GetPixel(raw.width/2, Mathf.RoundToInt(raw.height*.07f)).a > .01f) throw new Exception("Smart cursor has connecting edge");
                 UnityEngine.Object.DestroyImmediate(raw);
+                var renderer = highlight.GetComponent<TilemapRenderer>();
+                if (renderer.sortingLayerID != SortingLayer.layers[SortingLayer.layers.Length - 1].id || renderer.sortingOrder <= 32761)
+                    throw new Exception("Cursor is not drawn above the darkness: order " + renderer.sortingOrder);
+                if (grid.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>(true).Length > 0)
+                    throw new Exception("Cursor created a light source");
+                if (renderer.sharedMaterial.shader.name != "Universal Render Pipeline/2D/Sprite-Unlit-Default")
+                    throw new Exception("Cursor material is lit: " + renderer.sharedMaterial.shader.name);
                 camera.Render(); RenderTexture.active = target;
                 pixels.ReadPixels(new Rect(0,0,600,600),0,0); pixels.Apply();
                 File.WriteAllBytes("Design/Cursor/" + (smart ? "Smart" : "Normal") + "-implemented.png", pixels.EncodeToPNG());
+            }
+            // Separate strength per frame: smart at 0 is invisible while the normal frame stays visible.
+            miner.cursorGlowStrength = 1; miner.smartCursorGlowStrength = 0;
+            foreach (bool smart in new[] { true, false })
+            {
+                type.GetMethod("ClearHighlight", flags).Invoke(miner, null);
+                type.GetField("smartCursor", flags).SetValue(miner, smart);
+                type.GetMethod("ShowHighlight", flags).Invoke(miner, new object[] { Vector3Int.zero, Vector3Int.zero });
+                float a = highlight.GetColor(Vector3Int.zero).a;
+                if (smart ? a > .001f : a < .99f) throw new Exception((smart ? "Smart" : "Normal") + " strength not applied: alpha " + a);
             }
             type.GetMethod("ClearHighlight", flags).Invoke(miner,null);
             if (highlight.HasTile(Vector3Int.zero)) throw new Exception("Highlight did not clear");
             UnityEngine.Object.DestroyImmediate(tile.sprite);
             UnityEngine.Object.DestroyImmediate(tile);
-            return "PASS: normal/full frame, smart/open corners; both 1.1 cell width, transparent centers, mode switch and clear. Two Unity renders saved in Design/Cursor.";
+            return "PASS: normal/full frame, smart/open corners; both 1.1 cell width, transparent centers, above the darkness, unlit and no light source, separate strength normal/smart, mode switch and clear. Two Unity renders saved in Design/Cursor.";
         }
         finally
         {

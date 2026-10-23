@@ -13,7 +13,7 @@ public static class ShopSellStyleChecks
     public static object Main()
     {
         new GameObject("Sell style checks").AddComponent<ShopSellStyleProbe>();
-        return "Checking shared chrome, wide cards, search, live sale counts, revenue and tab preservation.";
+        return "Checking shared chrome, wide cards, search, amount slider, live sale counts, revenue and tab preservation.";
     }
 }
 public sealed class ShopSellStyleProbe : MonoBehaviour
@@ -26,13 +26,12 @@ public sealed class ShopSellStyleProbe : MonoBehaviour
         var sell=Object.FindFirstObjectByType<SellPage>(FindObjectsInactive.Include);
         var inventory=InventoryManager.Instance; var stats=StatsManager.Instance;
         var snapshot=inventory.GetSnapshot().ToDictionary(x=>x.Key,x=>x.Value); int money=stats.Money;
-        var noWeight=typeof(GameplayTestSettings).GetField("noWeight",BindingFlags.NonPublic|BindingFlags.Static);
-        var infinite=typeof(GameplayTestSettings).GetField("infiniteMoney",BindingFlags.NonPublic|BindingFlags.Static);
-        bool previousWeight=(bool)noWeight.GetValue(null),previousInfinite=(bool)infinite.GetValue(null);
+        var tests=GpsSettings.Tests;
+        bool previousWeight=tests.noWeight,previousInfinite=tests.infiniteMoney;
         string result="FAILED: incomplete";
         try
         {
-            noWeight.SetValue(null,true); infinite.SetValue(null,false); inventory.ResetAll();
+            tests.noWeight=true; tests.infiniteMoney=false; inventory.ResetAll();
             var catalog=Resources.Load<ItemCatalog>("ItemCatalog").items;
             var ores=catalog.Where(x=>x && x.category==ItemCategory.Ore && x.worth>0).Take(10).ToArray();
             Check(ores.Length==10,"Need ten actual ores for overflow test.");
@@ -70,25 +69,42 @@ public sealed class ShopSellStyleProbe : MonoBehaviour
             Check(inventory.GetCount(iron)==count && sell.SelectedItem==iron,"Plain card click only selects.");
             var details=root.Find("Ore Details"); var action=details.Find("Sell Selected").GetComponent<Button>();
             Check(action.GetComponentInChildren<TextMeshProUGUI>().text=="1 "+iron.displayName+" verkaufen","Default sells one.");
+            Check(details.Find("Sell All")==null,"Sell-all button replaced by the amount slider.");
+            var slider=sell.AmountSlider;
+            Check(slider && slider.wholeNumbers && slider.minValue==1 && slider.maxValue==count && slider.value==1,"Slider spans 1 to the whole stock.");
             Check(details.Find("Proceeds").GetComponentsInChildren<TextMeshProUGUI>()[1].text==ShopMoneyFormatter.Format(iron.worth),"Revenue follows one-item action.");
             int beforeMoney=stats.Money; action.onClick.Invoke();
             Check(inventory.GetCount(iron)==count-1 && stats.Money==beforeMoney+iron.worth,"One-item button sells exact amount/value.");
+            Check(slider.maxValue==count-1,"Slider maximum follows the remaining stock.");
+            slider.value=6; yield return new WaitForSecondsRealtime(.3f);
+            ScreenCapture.CaptureScreenshot("Temp/verkaufsregler-shop.png"); yield return null; yield return null;
+            Check(sell.SaleAmount==6 && slider.handleRect.GetComponentInChildren<TextMeshProUGUI>().text=="6","Handle shows the chosen amount.");
+            Check(action.GetComponentInChildren<TextMeshProUGUI>().text=="6 "+iron.displayName+" verkaufen","Button names the chosen amount.");
+            Check(details.Find("Proceeds").GetComponentsInChildren<TextMeshProUGUI>()[1].text==ShopMoneyFormatter.Format(iron.worth*6),"Revenue follows the slider.");
+            action.onClick.Invoke();
+            Check(inventory.GetCount(iron)==count-7 && stats.Money==beforeMoney+iron.worth*7,"Button sells the slider amount.");
+            Check(sell.SaleAmount==6 && slider.maxValue==count-7,"Amount stays after a sale, limited to the stock.");
+            beforeMoney+=iron.worth*6; count-=6;
             typeof(SellPage).GetMethod("Sell",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(sell,new object[]{10});
             Check(inventory.GetCount(iron)==count-11 && stats.Money==beforeMoney+iron.worth*11,"Ten-item transaction preserved.");
             typeof(SellPage).GetMethod("SellMax",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(sell,null);
             Check(inventory.GetCount(iron)==0 && stats.Money==beforeMoney+iron.worth*count,"All of selected ore sells exact remainder.");
             Check(!details.gameObject.activeSelf,"Exhausted filtered stock clears actionable details.");
             sell.SetSearch(""); Check(sell.SelectedItem && sell.SelectedItem!=iron,"Selection advances to another owned ore.");
-            details.Find("Sell All").GetComponent<Button>().onClick.Invoke();
-            Check(ores.All(x=>inventory.GetCount(x)==0),"Sell-all action preserved.");
+            var next=sell.SelectedItem; int nextCount=inventory.GetCount(next);
+            Check(sell.SaleAmount==1 && slider.value==1 && slider.maxValue==nextCount,"New ore starts at 1.");
+            slider.value=slider.maxValue; yield return null;
+            Check(action.GetComponentInChildren<TextMeshProUGUI>().text==nextCount+" "+next.displayName+" verkaufen","Max selects the whole stock.");
+            action.onClick.Invoke();
+            Check(inventory.GetCount(next)==0 && sell.SelectedItem!=next,"Max sells the whole stock of the ore.");
             sell.SetSearch("no-match"); Check(!details.gameObject.activeSelf,"Empty search stays safe.");
-            result="PASS: shared panel/tab bounds, 8 visible wide cards, overflow, owned ores, search/empty state, selection-only click, live revenue, one/ten/all-selected/all sales and buy search.";
+            result="PASS: shared panel/tab bounds, 8 visible wide cards, overflow, owned ores, search/empty state, selection-only click, live revenue, one/ten/all-selected sales, amount slider (1..Max, handle number, revenue, sale) and buy search.";
         }
         finally
         {
             sell.SetSearch(""); shop.ShowPanel(false); inventory.ResetAll();
             foreach(var entry in snapshot) inventory.AddStartingItem(entry.Key,entry.Value);
-            stats.AddMoney(money-stats.Money); noWeight.SetValue(null,previousWeight); infinite.SetValue(null,previousInfinite);
+            stats.AddMoney(money-stats.Money); tests.noWeight=previousWeight; tests.infiniteMoney=previousInfinite;
             File.WriteAllText("Temp/ShopSellStyleChecks-result.txt",result); Destroy(gameObject);
         }
     }

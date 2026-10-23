@@ -116,7 +116,8 @@ public sealed class GameplayLevelUpPresentation : MonoBehaviour
         }
         if(soundPaused){sound.UnPause();soundPaused=false;}
         if(sound.clip)sound.volume=AudioManager.TunedVolume(sound.clip,1f,sound);
-        if(!IsShowing && pendingTo>0)
+        // A challenge banner that is showing or queued goes first (its XP is often what caused this level).
+        if(!IsShowing && pendingTo>0 && (previewing || !ChallengeCompletePresentation.HoldsLevelUp))
         {
             // Fade a previous long tail before replaying on the same source; never stack booms.
             if(sound.isPlaying && replayFade<.12f)
@@ -128,7 +129,7 @@ public sealed class GameplayLevelUpPresentation : MonoBehaviour
         if(!IsShowing){if(previewing && pendingTo==0 && !soundPending && !sound.isPlaying)previewing=false;return;}
         elapsed+=step;totalElapsed+=step;
         if(elapsed<0){group.alpha=0;return;}
-        float impact=assets?Mathf.Clamp(assets.impactSeconds,.04f,.4f):.16f;
+        float impact=Impact;
         float intro=Mathf.Clamp01(elapsed/impact);
         float settling=Mathf.Clamp01((elapsed-impact)/.28f);
         float scale=elapsed<impact?Mathf.Lerp(.68f,1.07f,intro*intro):Mathf.Lerp(1.07f,1f,1-Mathf.Pow(1-settling,3));
@@ -139,12 +140,15 @@ public sealed class GameplayLevelUpPresentation : MonoBehaviour
         backGlow.Animate(elapsed,impact);frontGlow.Animate(elapsed,impact);
         if(elapsed>=Duration || totalElapsed>=6f+visualWait){IsShowing=false;group.alpha=0;}
     }
+    float Impact => assets?Mathf.Clamp(assets.impactSeconds,.04f,.4f):.16f;
+    // The medallion waits for the clip's charge-up so its impact lands on the audible hit.
+    public float SoundSyncSeconds => assets && assets.sound ? Mathf.Clamp(assets.soundPeakSeconds-Impact,0,assets.sound.length) : 0;
     void Begin()
     {
         FromLevel=pendingFrom;ToLevel=pendingTo;pendingFrom=pendingTo=0;
         float offset=GpsSettings.Preferences.levelUpAnimationOffsetSeconds;
         if(float.IsNaN(offset)||float.IsInfinity(offset))offset=0;
-        offset=Mathf.Clamp(offset,-5,5);
+        offset=Mathf.Clamp(offset,-5,5)+SoundSyncSeconds;
         visualWait=Mathf.Max(0,offset);soundWait=Mathf.Max(0,-offset);
         elapsed=-visualWait;totalElapsed=replayFade=0;IsShowing=true;RefreshReward();
         sound.Stop();soundPending=false;soundPaused=false;

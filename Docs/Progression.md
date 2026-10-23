@@ -78,6 +78,8 @@ totalXp = periodRewardXp
 - **Ausgeben nur im Hauptmenü** (`Spend`, `RefundAll`); synchron gespeichert, bei einem Fehler zurückgerollt.
 - **Ausbauten wirken überall:** Jede Welt, neu oder geladen, bekommt beim Start die aktuellen Ränge des Profils (`BeginRun` → `CreateLoadout`). Startgeld, Fackeln und Leitern gibt es nur beim Erstellen einer Welt, Laden wiederholt sie nicht.
 - **Anzeige:** `GameplayLevelUpPresentation` zeigt mehrere Level-Ups als eine Medaille (von → bis), nur im laufenden Run.
+- **Ton und Timing:** Clip `Assets/AC Audio/UI/LevelUp-ChargeTreasure.wav` (5 s: Aufladen, Schatz-Treffer bei 1,9 s). Der Ton startet sofort, die Medaille wartet, bis ihr Aufprall (`impactSeconds`) auf den Treffer (`soundPeakSeconds` in `Resources/Progression/LevelUpPresentation.asset`) fällt. Bei einem neuen Clip nur diese zwei Werte anpassen. Der GPS-Wert „Animationsversatz zur Audio“ verschiebt zusätzlich (+ = Medaille später).
+- **Challenge erfüllt:** `ChallengeCompletePresentation` zeigt oben in der Mitte ein Banner mit Name und XP; Ton `Resources/Progression/ChallengeComplete.wav`, das Siegel landet auf dem Haupttreffer (`SoundPeakSeconds` = 0,98 s). Bei einem neuen Clip `FirstHitSeconds`/`SoundPeakSeconds` anpassen. Ein wartender Level-Aufstieg kommt erst nach dem Banner.
 - **Katalog eingefroren:** Profile und Weltstände werden beim Laden gegen den Katalog geprüft (Meilenstein- und Run-Ziel-XP, IDs, Ränge, Schritte, Kosten, Levelkurve, Erzgewichte). Wer davon etwas senkt, entfernt oder umbenennt, macht bestehende Profile ungültig. Änderungen nur mit Migration; `ProgressionChecks` („catalog freeze“) schlägt sonst an. Neue Werte nur anhängen.
 
 ## Speicherzeitpunkte

@@ -6,7 +6,7 @@ Beschriftungen auf Knöpfen sitzen optisch mittig im sichtbaren Goldrahmen, unab
 
 - **Mitte:** Die Mitte zwischen Grundlinie und Versalhöhe liegt auf der Mitte des sichtbaren inneren Goldrahmens (nicht der ganzen Knopfgrafik). TMP „Midline“ wird nicht verwendet, weil es nach den tatsächlichen Glyphen zentriert und Texte mit Unterlängen nach oben schiebt.
 - **Schriftgrösse:** Wird so begrenzt, dass Ä (höchster Umlaut) und g (tiefste Unterlänge) immer innerhalb des Rahmens bleiben, mit dem Mindestabstand aus GPS. Grössere eingestellte Werte werden nur verkleinert, nie vergrössert.
-- **Waagrecht:** Mittig ausgerichtete Zeilen werden nach den sichtbaren Buchstaben zentriert. TMP zentriert nach den Schrittweiten; dabei zählt der Leerraum neben dem ersten und letzten Buchstaben mit (rechts vom „n“ mehr als links vom „W“), der Text rutschte dadurch 1–3 px nach links.
+- **Waagrecht:** Mittig ausgerichtete Zeilen werden nach den sichtbaren Buchstaben zentriert. TMP zentriert nach den Schrittweiten; dabei zählt der Leerraum neben dem ersten und letzten Buchstaben mit (rechts vom „n“ mehr als links vom „W“), der Text rutschte dadurch 1–3 px nach links. Ziel ist die Mitte des Textkastens zwischen seinen Rändern (nicht die Mitte der Schrittweiten: bei fetter Schrift enthält die letzte Schrittweite den Fett-Abstand, den TMP beim Zentrieren weglässt; Inventarknöpfe sassen dadurch rund 1 px rechts).
 - **Seiten:** Die Beschriftung bleibt innerhalb der Endkappen des Rahmens (Innenrand per TMP-Margin).
 - **Symbole:** Captions ohne Buchstaben/Ziffern (+, −, ×, Pfeile) werden nach ihren Glyphen zentriert.
 - Zähler, Hotkey-Ziffern und Kartentitel, die nicht in der Knopfmitte liegen, behalten ihre eigene Ausrichtung.

@@ -42,9 +42,9 @@ public sealed class WorkbenchPanel : MonoBehaviour
     readonly List<IngredientRow> ingredientRows = new();
     CanvasGroup group;
     RectTransform layout, recipeContent, ingredientContent, details, quantityControls;
-    Image outputIcon, favoriteFilter;
+    Image outputIcon, favoriteFilter, craftableFilter;
     readonly List<Image> categoryTabs = new();
-    WorkbenchGlyph craftableCheck, favoriteFilterStar;
+    WorkbenchGlyph favoriteFilterStar;
     TMP_InputField searchField;
     ScrollRect recipeScroll, ingredientScroll;
     TextMeshProUGUI outputName, resultText, quantityText, craftText, emptyText;
@@ -262,9 +262,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
     {
         if (!layout) return;
         for (int i = 0; i < categoryTabs.Count; i++) GoldButtonFeedback.Select(categoryTabs[i], i == (int)SelectedCategory);
-        craftableCheck.filled = OnlyCraftable;
-        GoldButtonFeedback.Select(craftableCheck.transform.parent.GetComponent<Image>(), OnlyCraftable);
-        craftableCheck.SetVerticesDirty();
+        GoldButtonFeedback.Select(craftableFilter, OnlyCraftable);
         GoldButtonFeedback.Select(favoriteFilter, OnlyFavorites);
         favoriteFilterStar.filled = OnlyFavorites;
         favoriteFilterStar.SetVerticesDirty();
@@ -408,11 +406,9 @@ public sealed class WorkbenchPanel : MonoBehaviour
         favoriteFilter = Button("Favorites", layout, "", 1166, 137, 49, 49, () => SetFavoritesOnly(!OnlyFavorites)).GetComponent<Image>();
         favoriteFilterStar = Glyph(favoriteFilter.transform, WorkbenchGlyph.Shape.Star, 11, 11, 27);
         favoriteFilterStar.color = new Color32(255, 199, 70, 255);
-        var craftable = Button("Craftable", layout, "", 1230, 137, 222, 49, () => SetFilter(!OnlyCraftable));
-        craftable.GetComponent<Image>().color = Color.clear;
-        Panel("Checkbox", craftable.transform, 8, 10, 29, 29, rowSprite);
-        craftableCheck = Glyph(craftable.transform, WorkbenchGlyph.Shape.Check, 10, 12, 25);
-        Label(craftable.transform, "Herstellbar", 47, 0, 165, 49, 28);
+        // Active filter shows only through the orange selected frame, like the category tabs.
+        craftableFilter = Button("Craftable", layout, "Herstellbar", 1230, 137, 222, 49, () => SetFilter(!OnlyCraftable)).GetComponent<Image>();
+        craftableFilter.GetComponentInChildren<TextMeshProUGUI>().fontSizeMax = 28;
         recipeContent = ScrollArea("Recipes", layout, 179, 230, GridWidth, GridHeight, GridWidth);
         recipeScroll = recipeContent.parent.GetComponent<ScrollRect>();
         AddScrollbar(recipeScroll, layout, 944, 230, 13, GridHeight);

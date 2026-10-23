@@ -236,6 +236,10 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    // Works without a running AudioManager (the asset sits in Resources), so placed torches crackle in any scene.
+    public static AudioClip TorchCrackleClip => Instance ? Instance.TorchAudioClips?.crackleLoop
+        : Resources.Load<TorchAudioClipsAsset>("Audio/TorchAudioClips")?.crackleLoop;
+
     public void PlayTorchSound(bool placed)
     {
         var clip = TorchAudioClips;

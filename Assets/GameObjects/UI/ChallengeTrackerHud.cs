@@ -151,7 +151,7 @@ public sealed class ChallengeTrackerHud : MonoBehaviour
         return challenge.tier >= 0 && challenge.tier < TierColors.Length ? TierColors[challenge.tier] : Muted;
     }
 
-    static Sprite Icon(MetaChallengeProgress challenge)
+    internal static Sprite Icon(MetaChallengeProgress challenge)
     {
         var sprite = ChallengeArt.Icon(challenge.icon);
         if (!sprite && !string.IsNullOrEmpty(challenge.metric)) sprite = ChallengeArt.Icon(ChallengeCatalog.Icon(null, challenge.metric, -1));

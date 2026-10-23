@@ -1253,7 +1253,7 @@ public static class ChallengeReworkChecks
             if (i < length && (i == 0 || i == 3 || i == 14)) { progress = WeeklyTargets[i]; done = true; paid = WeeklyRewards[i]; }
             else if (i < length && i == 1) progress = 100;
             if (i < length) { w.counters[i] = progress; w.rewarded[i] = done; if (!missingAward) w.awardedXp[i] = paid; }
-            fx.weeklyTasks.Add(new ExpTask { index = i, target = WeeklyTargets[i], progress = progress, done = done, paid = paid, xp = done ? paid : WeeklyRewards[i],
+            fx.weeklyTasks.Add(new ExpTask { index = i, target = i == 1 ? 300 : WeeklyTargets[i], progress = progress, done = done, paid = paid, xp = done ? paid : WeeklyRewards[i],
                 tier = WeeklyRewards[i] < 1000 ? 0 : WeeklyRewards[i] < 1500 ? 1 : 2, name = WeeklyNames[i], map = Map(i, w, 0) });
             xp += paid;
         }
@@ -1326,6 +1326,23 @@ public static class ChallengeReworkChecks
 
         var periods = Legacy(91, 52, Selections[0], false, 2, false, 0, 0, 0);
         Check(ValidatePeriods(periods.profile) && periods.profile.challengePeriods.Count == 0 && periods.profile.challengeRounds.Count == 2, "migration: ValidatePeriods converts legacy states directly");
+
+        // "Ruf der Tiefe" of the legacy week: an open task drops from 750 to 300 blocks, a finished one stays as paid.
+        var deep = Legacy(93, 52, Selections[0], false, 2, false, 0, 0, 0);
+        deep.weekly.counters[1] = 500;
+        Check(ValidatePeriods(deep.profile) && deep.profile.challengeRounds.Find(r => r.period == 1)?.tasks[1] is MetaChallengeTask open &&
+            open.target == 300 && open.progress == 299 && !open.done && open.paid == 0, "migration: open legacy depth task above 300 waits one block short of 300");
+        var reached = Legacy(94, 52, Selections[0], false, 2, false, 0, 0, 0);
+        reached.weekly.counters[1] = 750; reached.weekly.rewarded[1] = true; reached.weekly.awardedXp[1] = 1000;
+        reached.profile.periodRewardXp += 1000; reached.profile.totalXp += 1000;
+        Check(ValidatePeriods(reached.profile) && reached.profile.challengeRounds.Find(r => r.period == 1)?.tasks[1] is MetaChallengeTask paidDepth &&
+            paidDepth.target == 750 && paidDepth.progress == 750 && paidDepth.done && paidDepth.paid == 1000, "migration: a paid legacy depth task keeps 750/750");
+        var stored = new MetaProfile { periodRewardXp = 0, totalXp = 0 };
+        var storedWeek = new MetaChallengeRound { period = 1, format = 1, startUtc = Utc(2026, 10, 19).Ticks, endUtc = Utc(2026, 10, 26).Ticks };
+        storedWeek.tasks.Add(new MetaChallengeTask { id = "legacy-depth-gain", name = "Ruf der Tiefe", unit = "Blöcke Tiefe", metric = "depth-gain", tier = 1, target = 750, progress = 93, xp = 1000 });
+        stored.challengeRounds.Add(storedWeek);
+        Check(ValidatePeriods(stored) && stored.challengeRounds[0].tasks[0] is MetaChallengeTask kept && kept.target == 300 && kept.progress == 93 && kept.xp == 1000 && kept.tier == 1,
+            "migration: an already converted week shows 93/300 with the same reward");
 
         var corrupt = Legacy(92, 52, Selections[0], false, 2, false, 0, 0, 0);
         corrupt.daily.counters[0] = DailyTargets[0] + 5;
