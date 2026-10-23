@@ -12,10 +12,10 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
-| Claude Code (Cloud, Projekt-Thread „Cloud Play-, Optik- und Performance-Tests“) | Bauplan-Bilder im Shop: 512 px, BC7 (Freigabe Benutzer 23.10.) | claude/blueprint-compression | Cloud (Test lokal auf Testbank) | Assets/Resources/Shop/*Recipe.png.meta, Tests/BlueprintTextureChecks.cs | ja (Testbank) | 23.10.2026 15:00 |
 
 ## Zuletzt abgeschlossen
 
+- 23.10.2026, Claude Code (Cloud): Bauplan-Bilder im Shop mit 512 px und BC7 statt unkomprimiert (rund 270 MB weniger im Speicher), lokal auf der Testbank geprüft, kein sichtbarer Unterschied.
 - 23.10.2026, Claude Code (Cloud): Knopf „Werkbank öffnen“ steht über der Dachspitze der Werkstatt statt über der Mitte des ganzen Bildes (das Bild ist leicht asymmetrisch, Abweichung etwa 17 px von 1536), `EntrySign` mit optionaler Achse, `WorkbenchBuilding.signAxis`; Cloud-Lauf #186 grün (`BughuntEntrySignChecks` mit neuer Achsen-Prüfung); Branch `claude/werkbank-knopf-mitte`, PR bereit für `main` (Freigabe und Sichtprüfung Benutzer).
 - 23.10.2026, Claude Code (Cloud): Traglast-Anzeige im HUD: Plakette „Last 12,5 / 40 kg“ links oben unter den Balken (Farben wie im Inventar), ein-/ausschaltbar in Einstellungen → Anzeige → „Traglast im HUD“ (gespeichert, Standard Ein); Prüfskript `Tests/CarryWeightHudChecks.cs` in der Cloud grün (#174); Branch `claude/hud-carry-weight`, PR bereit für `main` (Freigabe und Optik-Abnahme Benutzer).
 - 23.10.2026, Claude Code (Cloud): HUD-Challenges schöner: Titel zwischen Goldlinien (Variante 2 von 4, Wahl Benutzer), mehr Rand rechts; Branch `claude/challenge-tracker-style`, PR bereit für `main` (lokale Abnahme Benutzer).
@@ -25,4 +25,3 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 - 23.10.2026, Claude Code (Cloud): Play-Mode-Checks laufen in der Cloud (Suite `play`, 4 Checks grün), Vorschaubilder aus Cloud-Läufen auf Branch `ci-previews` (Suite `visual`, `Tools/ci-previews.sh`), Cursor-Texturen einmal pro Sitzung (Szenenstart rund 200 ms kürzer, bitgleich); mit Freigabe des Benutzers per PR #62 in `main`, siehe Docs/Cloud-Tests.md.
 - 23.10.2026, Claude Code: Nacharbeiten gemalte Erze: `OreOverlayChecks` (Testfehler bei Seed/Kartengrösse aus GPS, zwei veraltete Balancing-Werte) und `OreVeinRuntimeChecks` (entfernte `OreVeinField`-API) repariert, `OreSparkleChecks` besteht unverändert; auf der Testbank alle grün; Cloud-Suite `smoke` (CaveGeneration/MetaProgressionCore) war schon seit 22.10. grün; Branch `claude/painted-ore-followups`, mit Freigabe des Benutzers per PR #60 in `main`.
 - 23.10.2026, Claude Code (Cloud): Fehlersuche über das ganze Spiel in vier Runden (161 Funde, 104 behoben, 15 bewusst offen, je Behebung ein Prüfskript in der Suite `bughunt`, Cloud-Läufe grün), Bericht `Docs/Fehlersuche-2026-10.md`; Branch `claude/bughunt`, PR bereit für `main` (Freigabe und lokale Abnahme Benutzer).
-- 23.10.2026, Claude Code: Unity-Importspuren bereinigt: `nameFileIdTable` in 11 Sprite-.meta versioniert (alle IDs = vorhandene internalIDs, Referenzen unverändert), Testbank nach erzwungenem Neuimport sauber; Branch `claude/sprite-meta-ids`, mit Freigabe des Benutzers per PR #61 in `main`.
