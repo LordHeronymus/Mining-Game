@@ -7,6 +7,7 @@ summary and carries the full status as base64 JSON in a hidden HTML comment.
   progress.py start                     creates the comment
   progress.py watch                     updates it every 15 s from Artifacts/*.log (background)
   progress.py final --conclusion X      writes the results and stops the watcher
+  progress.py skipped                   one final comment for a run the budget skipped (Tests/CI/budget.py)
 
 Errors are printed but never fail the job: the live status must not break the tests.
 """
@@ -27,11 +28,12 @@ TOKEN = os.environ.get("GITHUB_TOKEN", "")
 RUN_ID = os.environ.get("GITHUB_RUN_ID", "0")
 RUN_NUMBER = os.environ.get("GITHUB_RUN_NUMBER", "?")
 REF = os.environ.get("GITHUB_HEAD_REF") or os.environ.get("GITHUB_REF_NAME", "")
-SUITE = os.environ.get("SUITE", "")
+SUITE = os.environ.get("CI_SUITE") or os.environ.get("SUITE", "")
 CHECKS = os.environ.get("CHECKS", "")
 LABEL = "cloud-status"
 TEMP = Path(os.environ.get("RUNNER_TEMP", "/tmp"))
 STATE = TEMP / "cloud-status-comment.json"
+BUDGET = TEMP / "budget.json"  # written by Tests/CI/budget.py
 STOP = TEMP / "cloud-status-stop"
 ART = Path("Artifacts")
 INTERVAL = 15
@@ -101,6 +103,13 @@ def total_assets():
         return sum(1 for _ in Path("Assets").rglob("*.meta"))
     except OSError:
         return 0
+
+
+def budget():
+    try:
+        return json.loads(read(BUDGET) or "null")
+    except ValueError:
+        return None
 
 
 def build(final=None, conclusion=None):
@@ -189,11 +198,22 @@ def build(final=None, conclusion=None):
         "log_tail": tail,
         "conclusion": conclusion,
         "results": results,
+        "budget": budget(),
         "previews": sorted(str(path.relative_to(ART / "previews")) for path in (ART / "previews").rglob("*.png")) if final else [],
     }
 
 
 ICONS = {"pending": "⏳", "running": "▶️", "PASS": "✅", "FAIL": "❌"}
+LEVEL_ICONS = {"green": "🟢", "yellow": "🟡", "red": "🔴", "unknown": "⚪"}
+
+
+def budget_line(data):
+    if not data:
+        return ""
+    used = f"{data['percent']:g} % verbraucht, Budget-Linie {data['line']:g} %" if data.get("percent") is not None else "Verbrauch unbekannt"
+    free = " · öffentlich, kostenlos" if data.get("public") else ""
+    reason = f" · {data['reason']}" if data.get("reason") else ""
+    return f"{LEVEL_ICONS.get(data.get('level'), '')} Drosselung {data.get('level_text', '?')} ({used}){free}{reason}\n\n"
 
 
 def render(status):
@@ -216,7 +236,7 @@ def render_once(status):
     table = "| | Check | Modus |\n| --- | --- | --- |\n" + rows if rows else ""
     data = base64.b64encode(json.dumps(status, ensure_ascii=False).encode()).decode()
     shots = f"\n\nVorschaubilder: {len(status['previews'])} (Branch `ci-previews`, `runs/{status['run_number']}/`, abholen mit `Tools/ci-previews.sh {status['run_number']}`)" if status.get("previews") else ""
-    return f"{head}{title}\n\nAktualisiert {status['updated']}\n\n{table}{shots}\n\n<!-- cloud-status-data {data} -->"
+    return f"{head}{title}\n\n{budget_line(status.get('budget'))}Aktualisiert {status['updated']}\n\n{table}{shots}\n\n<!-- cloud-status-data {data} -->"
 
 
 def save(status):
@@ -250,16 +270,25 @@ def final(conclusion):
     save(build(final=True, conclusion=conclusion))
 
 
+def skipped():
+    status = build(final=True, conclusion="skipped")
+    status["phase_text"] = "Übersprungen (Drosselung)"
+    status["problem"] = (status.get("budget") or {}).get("reason") or None
+    issue = find_issue()
+    api("POST", f"/repos/{REPO}/issues/{issue}/comments", {"body": render(status)})
+    print(f"Live status: skipped run noted in issue #{issue}")
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["start", "watch", "final"])
+    parser.add_argument("command", choices=["start", "watch", "final", "skipped"])
     parser.add_argument("--conclusion", default="")
     args = parser.parse_args()
     if not (REPO and TOKEN):
         print("GITHUB_REPOSITORY/GITHUB_TOKEN missing, live status disabled.")
         return
     try:
-        {"start": start, "watch": watch, "final": lambda: final(args.conclusion)}[args.command]()
+        {"start": start, "watch": watch, "final": lambda: final(args.conclusion), "skipped": skipped}[args.command]()
     except Exception as error:
         print(f"Live status {args.command} failed: {error}", file=sys.stderr)
 

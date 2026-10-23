@@ -41,6 +41,7 @@ Die vollständige Änderungshistorie steht in `Docs/Changelog.md`. Dort nur bei 
 - Ohne lokalen Editor (Cloud-Sessions): Checks über den GitHub-Workflow „Unity Checks“ ausführen, siehe `Docs/Cloud-Tests.md`.
 - **Cloud nur für Passendes:** In der Cloud nur Code-Änderungen, Logik-/Daten-Checks, CPU-Messungen (Suite `performance`, ohne Zeichnen) und Screenshot-Vergleiche von Standbildern (z. B. Gebäude, Erz-Overlays). Bewegung, Animation, Partikel, Bildraten und Spielgefühl nur lokal im Editor prüfen bzw. den Benutzer zur Abnahme bitten. Solche Checks im Skript mit `// CI: local-only` markieren; die Cloud lehnt sie dann sofort ab.
 - **Grafikänderungen in der Cloud:** Nach Änderungen an Erz-, Terrain- oder Overlay-Grafik die Suite `visual` laufen lassen, die Bilder mit `Tools/ci-previews.sh <Nr>` holen und selbst ansehen (Vorher/Nachher). Die endgültige Optik nimmt der Benutzer lokal ab.
+- **Drosselung Cloud:** Der Workflow drosselt sich nach dem Verbrauch der Actions-Minuten selbst (grün/gelb/rot, `Docs/Cloud-Tests.md` → Drosselung). Übersprungene Läufe nicht umgehen; die Eingabe `force` nur mit ausdrücklicher Freigabe des Benutzers setzen, das Label `cloud-check` erst für den einen Lauf am Schluss eines PR.
 - **Zeitlimit Cloud:** Ein Lauf hat höchstens 20 Minuten. Bricht er mit „Abgebrochen: …“ ab (Zeitlimit oder `local-only`), denselben Lauf nicht erneut starten, sondern den Grund dem Benutzer melden und den Check verkleinern oder lokal ausführen.
 
 ## Zusammenarbeit mehrerer Agenten
