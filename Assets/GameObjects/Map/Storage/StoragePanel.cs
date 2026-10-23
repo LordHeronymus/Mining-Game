@@ -128,7 +128,7 @@ public sealed class StoragePanel : MonoBehaviour
     void Update()
     {
         if (!IsOpen) return;
-        if (!Storage || GameBindings.Down(GameAction.Settings)) { Hide(); return; }
+        if (!Storage || GameBindings.CloseDown()) { Hide(); return; }
         if (inventory != InventoryManager.Instance) Subscribe(Storage);
         weightWarning = Mathf.Max(0, weightWarning - Time.unscaledDeltaTime);
     }

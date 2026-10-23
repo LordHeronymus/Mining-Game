@@ -286,6 +286,9 @@ public sealed class SettingsPanel : MonoBehaviour
     internal static bool CancelsCapture(GameAction action, KeyCode key, bool pointerOverButton) =>
         GameBindings.IsMouseButton(key) && (action == GameAction.Settings || !pointerOverButton);
 
+    // Escape cancels a capture, except for "Einstellungen": Esc is its default key and must stay bindable there.
+    internal static bool EscapeCancelsCapture(GameAction action) => action != GameAction.Settings;
+
     bool PointerOverCaptureButton()
     {
         if (!captureButton) return false;
@@ -298,7 +301,8 @@ public sealed class SettingsPanel : MonoBehaviour
     void CaptureKey()
     {
         if (Time.frameCount <= captureFrame + 1) return;
-        if (Input.GetKeyDown(KeyCode.Escape)) { capturing = null; RefreshBindingTexts(); return; }
+        bool escapeCancels = EscapeCancelsCapture(capturing.Value);
+        if (escapeCancels && Input.GetKeyDown(KeyCode.Escape)) { capturing = null; RefreshBindingTexts(); return; }
         if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete))
         {
             GameBindings.Set(capturing.Value, captureSlot, KeyCode.None);
@@ -306,7 +310,7 @@ public sealed class SettingsPanel : MonoBehaviour
         }
         foreach (var key in KeyCodes)
         {
-            if (key == KeyCode.None || key == KeyCode.Escape || key == KeyCode.Backspace || key == KeyCode.Delete) continue;
+            if (key == KeyCode.None || (key == KeyCode.Escape && escapeCancels) || key == KeyCode.Backspace || key == KeyCode.Delete) continue;
             if (!Input.GetKeyDown(key)) continue;
             var action = capturing.Value;
             if (CancelsCapture(action, key, PointerOverCaptureButton())) { capturing = null; RefreshBindingTexts(); return; }

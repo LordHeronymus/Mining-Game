@@ -40,6 +40,9 @@
       "name": "BughuntHotbarChecks"
     },
     {
+      "name": "BughuntKeyBindingChecks"
+    },
+    {
       "name": "BughuntLadderEscapeChecks"
     },
     {

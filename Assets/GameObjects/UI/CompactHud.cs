@@ -52,7 +52,8 @@ public sealed class CompactHud : MonoBehaviour
     const float HeartbeatFadeSeconds = .32f;
     TextMeshProUGUI healthValue, energyValue, moneyValue, pointsValue, depthValue;
     readonly Image[] icons = new Image[8], selections = new Image[9];
-    readonly TextMeshProUGUI[] counts = new TextMeshProUGUI[8];
+    readonly TextMeshProUGUI[] counts = new TextMeshProUGUI[8], keyLabels = new TextMeshProUGUI[8];
+    int keyLabelVersion;
     readonly Button[] buttons = new Button[8];
     readonly HotbarSlotDrag[] slotDrags = new HotbarSlotDrag[8];
     InventoryManager inventory;
@@ -102,6 +103,7 @@ public sealed class CompactHud : MonoBehaviour
     }
     void Update()
     {
+        if (keyLabelVersion != GameBindings.Version) RefreshKeyLabels();
         if (inventory != InventoryManager.Instance)
         {
             if (inventory) inventory.OnInventoryChanged -= RefreshItems;
@@ -656,7 +658,7 @@ public sealed class CompactHud : MonoBehaviour
             buttons[i].onClick.AddListener(()=> { if (!slotDrags[slot].ConsumeClick()) ActivateHotbarSlot(index); });
             selections[i+1]=Image("Selection",bg.transform,0,0,SocketSize,SocketSize,selectedSprite,Color.white);
             icons[i]=Image("Item",bg.transform,12,12,86,86,null,Color.white); icons[i].preserveAspect=true;
-            Text("Key",bg.transform,(i+1).ToString(),10,5,26,29,27,TextAlignmentOptions.TopLeft);
+            keyLabels[i]=Text("Key",bg.transform,"",10,5,26,29,27,TextAlignmentOptions.TopLeft);
             var badge=Image("Count Badge",bg.transform,0,0,40,27,null,new Color(0,0,0,0));
             badge.rectTransform.anchorMin=badge.rectTransform.anchorMax=badge.rectTransform.pivot=new Vector2(1,0);
             badge.rectTransform.anchoredPosition=new Vector2(-9,8);
@@ -667,7 +669,20 @@ public sealed class CompactHud : MonoBehaviour
             counts[i].rectTransform.offsetMin=new Vector2(4,0);
             counts[i].rectTransform.offsetMax=new Vector2(-4,0);
         }
+        RefreshKeyLabels();
         Fit();
+    }
+    // Socket labels follow the current hotbar bindings; Update refreshes them only after a binding change.
+    void RefreshKeyLabels()
+    {
+        keyLabelVersion = GameBindings.Version;
+        for (int i = 0; i < 8; i++) if (keyLabels[i]) keyLabels[i].text = HotbarKeyLabel((GameAction)((int)GameAction.Slot1 + i));
+    }
+    internal static string HotbarKeyLabel(GameAction action)
+    {
+        var key = GameBindings.Get(action, 0);
+        if (key == KeyCode.None) key = GameBindings.Get(action, 1);
+        return key == KeyCode.None ? "" : GameBindings.Display(key);
     }
 }
 

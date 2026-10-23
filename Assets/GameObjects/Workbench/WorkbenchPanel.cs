@@ -86,7 +86,7 @@ public sealed class WorkbenchPanel : MonoBehaviour
         if (IsOpen)
         {
             if (glowMaterial) glowMaterial.SetFloat("_AnimationTime", Time.unscaledTime);
-            if (GameBindings.Down(GameAction.Settings) || (GameBindings.Down(GameAction.Workbench) && !searchField.isFocused)) ShowPanel(false);
+            if (GameBindings.CloseDown() || (GameBindings.Down(GameAction.Workbench) && !searchField.isFocused)) ShowPanel(false);
             else if (SubscribeInventory()) Refresh();
         }
         else if (allowKeyboardOpen && GameBindings.Down(GameAction.Workbench) && !GameplayInputBlocker.IsBlocked)

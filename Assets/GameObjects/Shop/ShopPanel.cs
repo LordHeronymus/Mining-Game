@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using TMPro;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class ShopPanel : MonoBehaviour
@@ -35,7 +36,7 @@ public class ShopPanel : MonoBehaviour
 
     void Update()
     {
-        if (panelVisible && GameBindings.Down(GameAction.Settings)) ShowPanel(false);
+        if (panelVisible && GameBindings.CloseDown()) ShowPanel(false);
     }
 
     void OnEnable()
@@ -55,6 +56,14 @@ public class ShopPanel : MonoBehaviour
             AudioManager.Instance.Play(SoundType.UI_Click);
             AudioManager.Instance?.Play(SoundType.DoorOpen);
         }
+        else ReleaseSelection(EventSystem.current, transform);
+    }
+
+    // A search field left selected would count as typing and swallow the hotbar/inventory keys after closing.
+    internal static void ReleaseSelection(EventSystem events, Transform root)
+    {
+        if (events && events.currentSelectedGameObject && events.currentSelectedGameObject.transform.IsChildOf(root))
+            events.SetSelectedGameObject(null);
     }
 
     public IEnumerator FadePanel(bool enabled)

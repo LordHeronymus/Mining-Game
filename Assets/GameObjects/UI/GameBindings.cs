@@ -1,5 +1,7 @@
 using System;
+using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public enum GameAction
 {
@@ -54,6 +56,8 @@ public static class GameBindings
 
     static readonly KeyCode[,] keys = new KeyCode[Entries.Length, 2];
     static bool loaded;
+    // Counts binding changes, so key labels (hotbar) refresh without polling the bindings every frame.
+    public static int Version { get; private set; }
     static string Preference(GameAction action, int slot) => "settings.binding." + action + "." + slot;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -96,6 +100,7 @@ public static class GameBindings
         keys[(int)action, slot] = key;
         PlayerPrefs.SetString(Preference(action, slot), key.ToString());
         PlayerPrefs.Save();
+        Version++;
     }
 
     public static void RestoreDefaults()
@@ -108,6 +113,7 @@ public static class GameBindings
         PlayerPrefs.Save();
         loaded = false;
         Load();
+        Version++;
     }
 
     public static bool Held(GameAction action)
@@ -124,6 +130,16 @@ public static class GameBindings
         int i = (int)action;
         return (keys[i, 0] != KeyCode.None && Input.GetKeyDown(keys[i, 0])) ||
                (keys[i, 1] != KeyCode.None && Input.GetKeyDown(keys[i, 1]));
+    }
+
+    // Closes an open window. While a text field is focused only Escape does, so a letter on "Einstellungen" stays typeable.
+    public static bool CloseDown() => Down(GameAction.Settings) && CloseAllowed(Input.GetKeyDown(KeyCode.Escape), EventSystem.current);
+    internal static bool CloseAllowed(bool escape, EventSystem events) => escape || !TextFieldFocused(events);
+
+    internal static bool TextFieldFocused(EventSystem events)
+    {
+        var selected = events ? events.currentSelectedGameObject : null;
+        return selected && selected.TryGetComponent(out TMP_InputField field) && field.isFocused;
     }
 
     public static string Display(KeyCode key) => key switch
