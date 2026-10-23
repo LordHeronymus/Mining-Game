@@ -18,10 +18,12 @@ Im Play-Modus sind Standardwerte schreibgeschützt; dort dient F1 zum Ausprobier
 | Aufladen | Kosten je Energieeinheit | EnergyMonolyth; Rundung auf ganze Münzen erfolgt in der bestehenden Spiellogik. |
 | Map | Breite, Tiefe, Seed | MapGenerator. X wird zentriert, Y wächst ab 0 nach unten; neue Werte gelten bei nächstem Spielstart. |
 | Erzverteilung | Priorität im Katalog, Noise an/aus, Skalierung, Seed-Versatz, Tiefenkurve | Aktive BlockRegistry und ihre Block-Assets. |
+| Erz-Anteile | Medium und Rich nach Aderdicke: an/aus, Mindestgrösse, Medium-/Rich-Anteil für dünn/mittel/dick, Schwankung je Ader, Streuung entlang dünner Adern, dicke Stellen bevorzugen, Faktor je Erz | GPS/F1 → Erzverteilung → Erz-Anteile (`GpsPreferences.veinRichness`, `VeinRichnessSettings`). Gilt ab der nächsten neuen Welt; siehe `Docs/Erz-Reichhaltigkeit.md`. |
 | Abbau & Belohnung | Härte, Punkte, Beute-Gegenstand | Je Block-Asset; pro abgebautem Block wird ein Beute-Exemplar vergeben. |
 | Wirtschaft | Verkaufspreis je Stück, Kategorie der zugeordneten Beute | ItemSO; 0 ist nicht verkaufbar, im Verkaufsfenster werden nur Ore-Items angezeigt. |
 | Debug | JSON-Status, Speicherort, Override zurücksetzen | gameplay-settings.json in Application.persistentDataPath. Zurücksetzen bewahrt eine .bak-Datei. |
 | Licht | Tageslichtstärke, Grundhelligkeit, Verlust nach unten, seitlich/aufwärts und durch Blöcke | MapLighting an der Tilemap. Abbau aktualisiert die Lichtwege automatisch. |
+| Herausforderungen | XP je Stufe und Zeitraum, Anzahl je Stufe, XXL-Chance, Abschlussbonus, Monatsprojekt-Etappen, Fleiss, Mengenwachstum, Schwellen für Rückkehr und volle Taschen | GPS/F1 → Upgrades → Herausforderungen (`GpsPreferences.challenges`, `ChallengeSettings`). Gilt ab dem nächsten Tages-, Wochen- bzw. Monatswechsel; die Schwellen für Rückkehr und volle Taschen sofort. Siehe unten und `Docs/Challenges.md`. |
 
 ## Tageslicht
 
@@ -49,6 +51,49 @@ Eine gemeinsame Lichttextur verdunkelt die Spielwelt. Die Berechnung läuft bei
 Änderungen mit begrenztem Aufwand pro Frame; HUD und Map Overview bleiben unbeeinflusst.
 Der Solver-Test liegt unter `Tests/LightingChecks.cs` und kann über
 `unity command run_script --file Tests/LightingChecks.cs` ausgeführt werden.
+
+## Herausforderungen
+
+Pfad: GPS-Fenster bzw. F1 → **Upgrades → Herausforderungen → „XP, Anzahl und Mengen“**
+(`GpsPreferences.challenges`, Klasse `ChallengeSettings`). Werte ausserhalb des Bereichs werden
+begrenzt (`Sanitized()`). Die Standardwerte stehen im Code, bis der Abschnitt in GPS gespeichert wird.
+
+**Wann Änderungen wirken:** Jede Runde speichert XP, Anzahl, Mengen, XXL-Wurf, Bonus, Projekt-XP
+und die Fleiss-Einstellungen beim Ziehen. Änderungen daran gelten deshalb erst **ab dem nächsten Tages-,
+Wochen- bzw. Monatswechsel**. Die laufende Runde bleibt unverändert. Sofort, also ab der nächsten
+Rückkehr, wirken nur die Rückkehr- und Taschenschwellen sowie „Fleiss: Tagesaufgaben pro Tag“ bei
+der Anrechnung eines Tages.
+
+Je Zeitraum (Gruppen „Täglich“, „Wöchentlich“, „Monatlich“):
+
+| Feld | Einheit / Bereich | Standard T / W / M |
+| --- | --- | --- |
+| XP leicht / mittel / schwer / XXL | XP, 0–1'000'000 | 300/600/1'200/3'000 · 1'500/3'000/5'000/10'000 · 5'000/10'000/20'000/0 |
+| Anzahl leicht / mittel / schwer | Aufgaben, 0–10 (höchstens 16 pro Runde) | 3/3/1 · 3/3/2 · 2/2/2 |
+| XXL-Chance (%) | %, 0–100 | 5 · 5 · 0 |
+| Bonus alle erledigt (XP) | XP, 0–1'000'000 | 1'000 · 5'000 · 15'000 |
+
+Monatlich haben „XP XXL“ und „XXL-Chance“ keine Wirkung, weil es keine monatlichen XXL-Mengen gibt.
+
+Allgemein:
+
+| Feld | Einheit / Bereich | Standard |
+| --- | --- | --- |
+| Monatsprojekt Etappe 1 / 2 / 3 (XP) | XP, 0–1'000'000 | 5'000 / 10'000 / 20'000 |
+| Fleiss: Tage pro Woche (0 = aus) | Tage, 0–7 | 5 |
+| Fleiss: Tagesaufgaben pro Tag | Aufgaben, 1–10 | 3 |
+| XXL ab Schicht | Schicht, 1–5 | 3 |
+| Mengenwachstum pro Schicht (%) | %, 0–500 | 10 |
+| Mengenwachstum pro 10 Level (%) | %, 0–500 | 2 |
+| Max. Mengenwachstum (%) | %, 0–500 | 60 |
+| Rückkehr: Mindesttiefe (Blöcke) | Blockreihen, 1–1'200 | 30 |
+| Rückkehr: neue Blöcke pro Tour | Blöcke, 0–200 | 10 |
+| Volle Taschen: Mindesttiefe (Blöcke) | Blockreihen, 1–1'200 | 10 |
+| Volle Taschen: Ladung (% Tragkraft) | %, 10–300 | 90 |
+| Volle Taschen: Zuwachs (% Tragkraft) | %, 0–300 | 50 |
+| Volle Taschen: Bezugs-Tragkraft max. (kg) | kg, 10–2'000 | 150 |
+
+Bedeutung der Felder, Auswahlregeln und Zählweise: `Docs/Challenges.md`, Abschnitte 2, 3 und 5.
 
 ## Map-Generierung im Detail
 

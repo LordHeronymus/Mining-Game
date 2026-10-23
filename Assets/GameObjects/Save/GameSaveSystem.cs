@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -26,6 +27,16 @@ public static class GameSaveSystem
     public static float PlayedSeconds { get; set; }
     public static event Action SlotsChanged;
     static LoadedRun pending;
+    // Directory the active run belongs to; automatic saves never follow a later TestDirectory switch into another profile.
+    static string activeDirectory;
+    // The autosave runs beside the game and never blocks other saves, loads, menus or navigation:
+    // they drop its unfinished capture or wait for its file write first (SettleAutosave).
+    sealed class AutosaveJob { public MonoBehaviour owner; public RunSnapshot snapshot; public Task write; public bool cancelled; }
+    static AutosaveJob autosave;
+    const double AutosaveFrameMilliseconds = 1;
+    // Until its coroutine has finished; once its owner is gone, until its file write has finished.
+    public static bool IsAutoSaving => autosave != null &&
+        (autosave.owner && autosave.owner.isActiveAndEnabled || autosave.write is { IsCompleted: false });
     public static bool HasPendingLoad => pending != null;
 #if UNITY_EDITOR
     public static string TestDirectory;
@@ -63,7 +74,8 @@ public static class GameSaveSystem
     static void Reset()
     {
         IsBusy = false; pending = null; PlayedSeconds = 0; SlotsChanged = null;
-        ActiveSlot = -1; ActiveRunName = null; HasPendingNewRun = false; InitialSaveError = null;
+        autosave?.snapshot?.Dispose(); autosave = null;
+        ActiveSlot = -1; activeDirectory = null; ActiveRunName = null; HasPendingNewRun = false; InitialSaveError = null;
 #if UNITY_EDITOR
         TestDirectory = null;
 #endif
@@ -108,15 +120,16 @@ public static class GameSaveSystem
     }
     public static bool BeginNewRun(string name = null)
     {
+        SettleAutosave();
         int slot = NextFreeSlot();
         if (slot < 1 || IsBusy) return false;
         CancelPendingLoad(); PlayedSeconds = 0;
-        ActiveSlot = slot; HasPendingNewRun = true; InitialSaveError = null;
+        ActiveSlot = slot; activeDirectory = DirectoryPath; HasPendingNewRun = true; InitialSaveError = null;
         ActiveRunName = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
         MetaProgression.BeginRun(Guid.NewGuid().ToString("N"));
         return true;
     }
-    public static void LeaveRun() { MetaProgression.EndRun(); ActiveSlot = -1; ActiveRunName = null; HasPendingNewRun = false; }
+    public static void LeaveRun() { MetaProgression.EndRun(); ActiveSlot = -1; activeDirectory = null; ActiveRunName = null; HasPendingNewRun = false; }
 
     public static IEnumerator SaveNewRunForLoading(MonoBehaviour owner)
     {
@@ -151,6 +164,7 @@ public static class GameSaveSystem
     {
         error = "Spielstand konnte nicht gelöscht werden.";
         if (slot < 1 || slot > MaxSlots || IsBusy || RunNavigation.IsTransitioning) return false;
+        SettleAutosave();
         try
         {
             string path = SlotPath(slot);
@@ -161,9 +175,11 @@ public static class GameSaveSystem
         catch (Exception exception) { Debug.LogWarning("Tiefenhall: Löschen fehlgeschlagen: " + exception.Message); return false; }
     }
 
-    public static Summary GetSummary(int slot)
+    public static Summary GetSummary(int slot) => ReadSummary(SlotPath(slot), slot);
+    // Also used on the save worker thread: reads only the given file and its recovery copy.
+    static Summary ReadSummary(string slotPath, int slot)
     {
-        foreach (string path in new[] { SlotPath(slot), SlotPath(slot) + ".bak" })
+        foreach (string path in new[] { slotPath, slotPath + ".bak" })
             try
             {
                 if (!File.Exists(path)) continue;
@@ -193,6 +209,7 @@ public static class GameSaveSystem
     {
         error = "Spielstand konnte nicht aktualisiert werden.";
         if (slot < 1 || slot > MaxSlots) return false;
+        SettleAutosave();
         try
         {
             var summary = GetSummary(slot); if (summary == null) return false;
@@ -243,6 +260,7 @@ public static class GameSaveSystem
         using var measurement = new Unity.Profiling.ProfilerMarker("Loading.ValidateSave").Auto();
         error = "Spielstand konnte nicht geladen werden.";
         if (IsBusy || slot < 1 || slot > MaxSlots) return false;
+        SettleAutosave();
         foreach (string path in new[] { SlotPath(slot), SlotPath(slot) + ".bak" })
             try
             {
@@ -272,8 +290,10 @@ public static class GameSaveSystem
                 var layers = new Layer[4];
                 for (int i = 0; i < layers.Length; i++) layers[i] = ReadLayer(reader, catalog, state);
                 if (expanded.Position != expanded.Length) throw new InvalidDataException();
-                pending = new LoadedRun { state = state, layers = layers };
-                ActiveSlot = slot; HasPendingNewRun = false; InitialSaveError = null;
+                var ores = layers[1];
+                PaintedOreMigration.Apply(ores.tiles, ores.flags, ores.custom, ores.bounds, state.seed, state.width);
+                pending =new LoadedRun { state = state, layers = layers };
+                ActiveSlot = slot; activeDirectory = DirectoryPath; HasPendingNewRun = false; InitialSaveError = null;
                 ActiveRunName = summary.name;
                 error = null; return true;
             }
@@ -324,79 +344,115 @@ public static class GameSaveSystem
 
     public static IEnumerator Save(int slot, MonoBehaviour owner, Action<bool, string> complete)
         => SaveRun(slot, owner, complete, false, false);
+    // Saves the active run while the game keeps running: no pause, no input block, nothing waits for it.
+    public static IEnumerator Autosave(MonoBehaviour owner, Action<bool, string> complete)
+        => SaveRun(ActiveSlot, owner, complete, false, false, true);
 
-    static IEnumerator SaveRun(int slot, MonoBehaviour owner, Action<bool, string> complete, bool createOnly, bool allowLoading)
+    // Other saves, loads and slot changes come first: an unfinished autosave capture is dropped,
+    // a running autosave file write is awaited (it may touch the same files).
+    static void SettleAutosave()
     {
-        if (slot < 1 || slot > MaxSlots || IsBusy || !CanCaptureRun || (!allowLoading && LoadingProgress.Active))
+        var job = autosave; if (job == null) return;
+        autosave = null; job.cancelled = true; job.snapshot?.Dispose();
+        try { job.write?.Wait(); } catch (Exception) { } // Its coroutine reports a failed write.
+    }
+    // The autosave's owner goes away (scene change): drop an unfinished capture; a running file write completes on its own.
+    public static void StopAutosave() { if (autosave != null && autosave.write == null) SettleAutosave(); }
+
+    // True while the running game has a slot of its own in the current save directory and can be captured.
+    public static bool CanAutoSave => ActiveSlot >= 1 && !HasPendingNewRun && activeDirectory == DirectoryPath && CanSave;
+
+    // Saves the active run without returning to the frame loop, for play-mode stop and application quit.
+    public static bool SaveActiveRunNow(MonoBehaviour owner)
+    {
+        if (!CanAutoSave) return false;
+        bool saved = false;
+        var routine = SaveRun(ActiveSlot, owner, (ok, _) => saved = ok, false, false);
+        while (routine.MoveNext()) { }
+        return saved;
+    }
+
+    // A normal save pauses the game and blocks gameplay input until the file is written. An autosave (background)
+    // leaves the game running: it is the autosave job instead of IsBusy and quietly gives up when it is superseded
+    // or the run can no longer be saved. Both capture the tile layers over several frames (RunSnapshot).
+    static IEnumerator SaveRun(int slot, MonoBehaviour owner, Action<bool, string> complete, bool createOnly, bool allowLoading,
+        bool background = false)
+    {
+        if (!background) SettleAutosave();
+        if (slot < 1 || slot > MaxSlots || IsBusy || IsAutoSaving || !CanCaptureRun || (!allowLoading && LoadingProgress.Active))
         { complete?.Invoke(false, "Speichern ist gerade nicht möglich."); yield break; }
         if (createOnly && HasSlotData(slot)) { complete?.Invoke(false, "Speicherplatz ist bereits belegt."); yield break; }
-        IsBusy = true;
+        // Fix the target before the first yield: a directory switch during the save must not redirect it.
+        string path = SlotPath(slot), directory = DirectoryPath;
+        AutosaveJob job = null;
         float previousScale = Time.timeScale;
-        Time.timeScale = 0; GameplayInputBlocker.SetBlocked(owner, true);
-        yield return null; // Render the busy state before capturing the world.
-        Task task = null; string error = null;
-        using var payload = new MemoryStream();
-        using var writer = new BinaryWriter(payload, Encoding.UTF8, true);
-        RunSaveState state = null;
-        IEnumerator capture = null;
-        Task<byte[]> serialize = null;
+        if (background) autosave = job = new AutosaveJob { owner = owner };
+        else
+        {
+            IsBusy = true;
+            Time.timeScale = 0; GameplayInputBlocker.SetBlocked(owner, true);
+            yield return null; // Render the busy state before capturing the world.
+        }
+        Task task = null; string error = null; bool skipped = false;
+        var watch = new System.Diagnostics.Stopwatch(); var budget = new LoadingWorkBudget();
+        Func<bool> expired = job != null ? () => watch.Elapsed.TotalMilliseconds >= AutosaveFrameMilliseconds : () => budget.Expired;
+        var catalog = Resources.Load<SaveAssetCatalog>("SaveAssetCatalog");
+        RunSnapshot snapshot = null;
         try
         {
-            state = Capture();
-            // Capture owns independent managed state, including discovery arrays.
-            // Unity's plain-data JSON serializer supports background threads; the text is also encoded there,
-            // exactly as BinaryWriter.Write(string) stores it, because a run's JSON takes several MB.
-            serialize = Task.Run(() =>
-            {
-                using var encoded = new MemoryStream();
-                using (var text = new BinaryWriter(encoded, Encoding.UTF8, true)) text.Write(JsonUtility.ToJson(state));
-                return encoded.ToArray();
-            });
-            var map = UnityEngine.Object.FindFirstObjectByType<MapGenerator>();
-            capture = WriteLayers(writer, map, Resources.Load<SaveAssetCatalog>("SaveAssetCatalog"));
+            if (!catalog) throw new InvalidDataException("Spielstand-Katalog fehlt.");
+            snapshot = new RunSnapshot(UnityEngine.Object.FindFirstObjectByType<MapGenerator>());
+            if (job != null) job.snapshot = snapshot;
         }
         catch (Exception ex) { error = ex.Message; }
-        if (serialize != null)
-        {
-            while (!serialize.IsCompleted) yield return null;
-            try { writer.Write(serialize.GetAwaiter().GetResult()); }
-            catch (Exception ex) { error = ex.Message; }
-        }
-        while (error == null && capture != null)
+        while (error == null)
         {
             bool more = false;
-            try { more = capture.MoveNext(); } catch (Exception ex) { error = ex.Message; }
+            watch.Restart();
+            try { more = snapshot.Step(expired); } catch (Exception ex) { error = ex.Message; }
             if (!more || error != null) break;
-            yield return capture.Current;
+            yield return null;
+            if (job != null && job.cancelled) { skipped = true; break; }
         }
-        if (error == null)
+        // An autosave gives up when the run can no longer be saved here (died, won, left, other directory).
+        if (job != null && error == null && !skipped)
+            skipped = !CanAutoSave || ActiveSlot != slot || DirectoryPath != directory || RunNavigation.IsTransitioning;
+        if (error == null && !skipped)
         {
+            // One final frame: the run and every tile row changed meanwhile, so the save shows a single moment.
+            // Capture owns independent managed state (including discovery arrays), so the worker can serialize it.
             try
             {
-                writer.Flush(); byte[] bytes = payload.ToArray();
+                var state = Capture();
+                snapshot.Finish(catalog);
                 var summary = new Summary { slot = slot, name = ActiveRunName, savedUtc = state.savedUtc, money = state.stats.money,
                     points = state.stats.points, playedSeconds = state.playedSeconds,
                     depth = UnityEngine.Object.FindFirstObjectByType<CompactHud>()?.DepthMeters ?? 0,
                     homeLayer = HomeLandscape.LayerAtDepth(state.progression?.maxDepth ?? 0, state.generationSettings) };
-                var previous = createOnly ? null : GetSummary(slot);
-                summary.createdUtc = previous?.createdUtc ?? state.savedUtc;
-                summary.lastOpenedUtc = previous?.lastOpenedUtc ?? state.savedUtc;
-                string header = JsonUtility.ToJson(summary), path = SlotPath(slot);
-                task = Task.Run(() => WriteAtomic(path, header, bytes, createOnly));
+                task = Task.Run(() => WriteRun(path, slot, state, summary, snapshot, createOnly));
+                if (job != null) job.write = task;
             }
             catch (Exception ex) { error = ex.Message; }
         }
+        snapshot?.Dispose();
         if (task != null)
         {
             while (!task.IsCompleted) yield return null;
             if (task.IsFaulted) error = task.Exception.GetBaseException().Message;
         }
-        IsBusy = false; Time.timeScale = previousScale;
-        // An open pause/slot panel owns its own input gate; do not release it here.
-        if (!(owner is RunPauseMenu) && !(owner is SaveSlotPanel)) GameplayInputBlocker.SetBlocked(owner, false);
-        if (error == null) { ActiveSlot = slot; SlotsChanged?.Invoke(); }
-        else Debug.LogError("Tiefenhall: Speichern fehlgeschlagen: " + error);
-        complete?.Invoke(error == null, error == null ? "Gespeichert" : "Spielstand konnte nicht gespeichert werden.");
+        bool saved = task != null && error == null;
+        if (job != null) { if (autosave == job) autosave = null; }
+        else
+        {
+            IsBusy = false; Time.timeScale = previousScale;
+            // An open pause/slot panel owns its own input gate; do not release it here.
+            if (!(owner is RunPauseMenu) && !(owner is SaveSlotPanel)) GameplayInputBlocker.SetBlocked(owner, false);
+            if (saved) { ActiveSlot = slot; activeDirectory = directory; }
+        }
+        // A save that superseded this autosave reports its own change.
+        if (saved && job?.cancelled != true) SlotsChanged?.Invoke();
+        if (error != null) Debug.LogError("Tiefenhall: Speichern fehlgeschlagen: " + error);
+        complete?.Invoke(saved, saved ? "Gespeichert" : error == null ? "Speichern ist gerade nicht möglich." : "Spielstand konnte nicht gespeichert werden.");
     }
 
     static RunSaveState Capture()
@@ -409,7 +465,6 @@ public static class GameSaveSystem
             exotics = ExoticWorldContent.Ensure(map).CaptureState(),
             placedLights = PlacedTorch.Capture(map),
             generationSettings = GpsSettings.CaptureGeneration(map),
-            copperVisuals = map.GetComponent<OreOverlayAppearance>().CopperPlans.Capture(),
             savedUtc = DateTime.UtcNow.Ticks, playedSeconds = PlayedSeconds, playerPosition = player.transform.position,
             playerVelocity = player.GetComponent<Rigidbody2D>().linearVelocity, facingLeft = player.transform.localScale.x < 0,
             inventory = InventoryManager.Instance.CaptureRunState(), stats = StatsManager.Instance.CaptureRunState(),
@@ -427,45 +482,151 @@ public static class GameSaveSystem
     static string StorageKey(Transform t) => t.name + "@" + t.position.x.ToString("R", System.Globalization.CultureInfo.InvariantCulture) +
         "," + t.position.y.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
 
-    static IEnumerator WriteLayers(BinaryWriter writer, MapGenerator map, SaveAssetCatalog catalog)
+    // The run's tile layers, captured row by row over several frames while the game may keep running. Rows changed after
+    // their capture are reported by Tilemap.tilemapPositionsChanged (raised synchronously by every tile change) and captured
+    // again; the last of them are captured in the final frame together with the rest of the run.
+    sealed class RunSnapshot : IDisposable
     {
-        if (!catalog) throw new InvalidDataException("Spielstand-Katalog fehlt.");
-        var ladders = map.GetComponent<LadderMap>();
-        foreach (var tiles in new[] { map.Terrain, map.EnsureOreOverlay(), map.EnsureArtifactOverlay(), ladders ? ladders.EnsureTiles() : null })
+        const int FinalRows = 8; // Changed rows left for the final frame; more are caught up beforehand.
+        // The captured rows of every layer share one buffer that all saves reuse, so capturing allocates almost nothing
+        // (per-row arrays used to trigger a garbage collection hitch). Saves never overlap: a capture starts only after
+        // the previous file write has finished (IsBusy, IsAutoSaving, SettleAutosave).
+        public static readonly MemoryStream Rows = new();
+        public static readonly BinaryWriter RowWriter = new(Rows);
+        readonly LayerSnapshot[] layers;
+        bool tracking;
+        public RunSnapshot(MapGenerator map)
         {
-            var bounds = tiles ? tiles.cellBounds : new BoundsInt(0, 0, 0, 0, 0, 1);
-            if ((long)bounds.size.x * bounds.size.y > MaxCells) throw new InvalidDataException("Welt ist zu groß.");
-            var palette = tiles ? new TileBase[tiles.GetUsedTilesCount()] : Array.Empty<TileBase>();
-            if (tiles) tiles.GetUsedTilesNonAlloc(palette);
-            var ids = new Dictionary<TileBase, int>();
-            for (int index = 0; index < palette.Length; index++) ids.Add(palette[index], index);
-            writer.Write(bounds.xMin); writer.Write(bounds.yMin); writer.Write(bounds.size.x); writer.Write(bounds.size.y);
-            writer.Write(palette.Length); foreach (var tile in palette) writer.Write(catalog.Key(tile));
-            var budget = new LoadingWorkBudget();
-            int rowsPerBatch = Mathf.Max(1, 1024 / Mathf.Max(1, bounds.size.x));
-            for (int row = 0; row < bounds.size.y; row += rowsPerBatch)
-            {
-                int rows = Mathf.Min(rowsPerBatch, bounds.size.y - row);
-                var batch = new BoundsInt(bounds.xMin, bounds.yMin + row, 0, bounds.size.x, rows, 1);
-                var data = tiles.GetTilesBlock(batch);
-                int i = 0;
-                foreach (var cell in batch.allPositionsWithin)
-                {
-                    var tile = data[i++]; writer.Write(tile ? ids[tile] : -1);
-                    if (tile)
-                    {
-                        var color = tiles.GetColor(cell); var matrix = tiles.GetTransformMatrix(cell);
-                        writer.Write((int)tiles.GetTileFlags(cell));
-                        bool custom = color != Color.white || matrix != Matrix4x4.identity; writer.Write(custom);
-                        if (custom)
-                        { writer.Write(color.r); writer.Write(color.g); writer.Write(color.b); writer.Write(color.a); for (int n = 0; n < 16; n++) writer.Write(matrix[n]); }
-                    }
-                    if ((i & 127) == 0 && budget.Expired) { yield return null; budget.Restart(); }
-                }
-                if (budget.Expired) { yield return null; budget.Restart(); }
-            }
-            yield return null;
+            Rows.SetLength(0);
+            var ladders = map.GetComponent<LadderMap>();
+            layers = new[] { map.Terrain, map.EnsureOreOverlay(), map.EnsureArtifactOverlay(), ladders ? ladders.EnsureTiles() : null }
+                .Select(tiles => new LayerSnapshot(tiles)).ToArray();
+            Tilemap.tilemapPositionsChanged += Changed; tracking = true;
         }
+        void Changed(Tilemap source, NativeArray<Vector3Int> positions)
+        {
+            foreach (var layer in layers) if (ReferenceEquals(layer.tiles, source)) layer.MarkChanged(positions);
+        }
+        // Captures rows until the budget is used; false once only the final frame's work is left.
+        public bool Step(Func<bool> expired)
+        {
+            while (true)
+            {
+                LayerSnapshot work = null; int changed = 0;
+                foreach (var layer in layers) { if (work == null && layer.Incomplete) work = layer; changed += layer.ChangedRows; }
+                if (work == null && changed > FinalRows) foreach (var layer in layers) if (work == null && layer.ChangedRows > 0) work = layer;
+                if (work == null) return false;
+                work.Advance();
+                if (expired()) return true;
+            }
+        }
+        public void Finish(SaveAssetCatalog catalog)
+        {
+            foreach (var layer in layers) layer.Finish(catalog);
+            Dispose();
+        }
+        // Worker thread: writes captured data only.
+        public void Write(BinaryWriter writer) { foreach (var layer in layers) layer.Write(writer); }
+        public void Dispose()
+        {
+            if (tracking) Tilemap.tilemapPositionsChanged -= Changed;
+            tracking = false;
+        }
+    }
+    sealed class LayerSnapshot
+    {
+        public readonly Tilemap tiles;
+        BoundsInt bounds = new BoundsInt(0, 0, 0, 0, 0, 1);
+        // Where each captured row lies in RunSnapshot.Rows; a recaptured row is appended again.
+        int[] offsets = Array.Empty<int>(), lengths = Array.Empty<int>();
+        bool[] changed = Array.Empty<bool>();
+        int next, scan;
+        TileBase[] row = Array.Empty<TileBase>();
+        readonly List<TileBase> palette = new();
+        readonly Dictionary<TileBase, int> ids = new();
+        string[] keys = Array.Empty<string>();
+        public int ChangedRows { get; private set; }
+        public LayerSnapshot(Tilemap tiles) { this.tiles = tiles; if (tiles) Restart(); }
+        // Bounds grow when a tile is placed outside them; the layer is then captured again.
+        bool Moved => tiles && tiles.cellBounds != bounds;
+        public bool Incomplete => next < offsets.Length || Moved;
+        public void Advance()
+        {
+            if (Moved) Restart();
+            else if (next < offsets.Length) { Capture(next); next++; }
+            else Recapture();
+        }
+        void Restart()
+        {
+            bounds = tiles.cellBounds;
+            if ((long)bounds.size.x * bounds.size.y > MaxCells) throw new InvalidDataException("Welt ist zu groß.");
+            offsets = new int[bounds.size.y]; lengths = new int[bounds.size.y]; changed = new bool[bounds.size.y];
+            next = scan = 0; ChangedRows = 0;
+            if (row.Length != bounds.size.x) row = new TileBase[bounds.size.x];
+        }
+        public void MarkChanged(NativeArray<Vector3Int> positions)
+        {
+            foreach (var position in positions)
+            {
+                // Rows not captured yet are read with the change anyway.
+                int index = position.y - bounds.yMin;
+                if (index >= 0 && index < next && !changed[index]) { changed[index] = true; ChangedRows++; }
+            }
+        }
+        void Recapture()
+        {
+            while (!changed[scan]) scan = (scan + 1) % changed.Length;
+            Capture(scan); changed[scan] = false; ChangedRows--;
+        }
+        public void Finish(SaveAssetCatalog catalog)
+        {
+            while (Incomplete) Advance();
+            while (ChangedRows > 0) Recapture();
+            keys = palette.Select(catalog.Key).ToArray();
+        }
+        void Capture(int index)
+        {
+            int width = bounds.size.x, y = bounds.yMin + index, start = (int)RunSnapshot.Rows.Length;
+            var writer = RunSnapshot.RowWriter;
+            tiles.GetTilesBlockNonAlloc(new BoundsInt(bounds.xMin, y, 0, width, 1, 1), row);
+            for (int x = 0; x < width; x++)
+            {
+                var tile = row[x];
+                if (!tile) { writer.Write(-1); continue; }
+                if (!ids.TryGetValue(tile, out int id)) { ids.Add(tile, id = palette.Count); palette.Add(tile); }
+                writer.Write(id);
+                var cell = new Vector3Int(bounds.xMin + x, y, 0);
+                var color = tiles.GetColor(cell); var matrix = tiles.GetTransformMatrix(cell);
+                writer.Write((int)tiles.GetTileFlags(cell));
+                bool custom = color != Color.white || matrix != Matrix4x4.identity; writer.Write(custom);
+                if (custom)
+                { writer.Write(color.r); writer.Write(color.g); writer.Write(color.b); writer.Write(color.a); for (int n = 0; n < 16; n++) writer.Write(matrix[n]); }
+            }
+            offsets[index] = start; lengths[index] = (int)RunSnapshot.Rows.Length - start;
+        }
+        public void Write(BinaryWriter output)
+        {
+            output.Write(bounds.xMin); output.Write(bounds.yMin); output.Write(bounds.size.x); output.Write(bounds.size.y);
+            output.Write(keys.Length); foreach (string key in keys) output.Write(key);
+            byte[] data = RunSnapshot.Rows.GetBuffer();
+            for (int i = 0; i < offsets.Length; i++) output.Write(data, offsets[i], lengths[i]);
+        }
+    }
+    // Worker thread: uses only captured data and precomputed paths.
+    static void WriteRun(string path, int slot, RunSaveState state, Summary summary, RunSnapshot snapshot, bool createOnly)
+    {
+        byte[] compressed;
+        using (var output = new MemoryStream())
+        {
+            using (var zip = new GZipStream(output, System.IO.Compression.CompressionLevel.Fastest, true))
+            using (var writer = new BinaryWriter(zip, Encoding.UTF8))
+            { writer.Write(JsonUtility.ToJson(state)); snapshot.Write(writer); }
+            compressed = output.ToArray();
+        }
+        var previous = createOnly ? null : ReadSummary(path, slot);
+        summary.createdUtc = previous?.createdUtc ?? state.savedUtc;
+        summary.lastOpenedUtc = previous?.lastOpenedUtc ?? state.savedUtc;
+        WriteEnvelopeAtomic(path, JsonUtility.ToJson(summary), compressed, createOnly);
     }
     static Layer ReadLayer(BinaryReader reader, SaveAssetCatalog catalog, RunSaveState state)
     {
@@ -542,7 +703,6 @@ public static class GameSaveSystem
         var appearance = map.GetComponent<UniformStoneAppearance>();
         if (appearance && appearance.isActiveAndEnabled) yield return appearance.PrepareForLoading(data);
         yield return map.FinishSavedMapRestoreSteps(data.terrainTiles);
-        map.GetComponent<OreOverlayAppearance>().RestoreCopperPlans(run.state.copperVisuals);
         var surface = map.GetComponent<DirtSurfaceAppearance>();
         if (surface && surface.isActiveAndEnabled) yield return surface.PrepareForLoading();
         InventoryManager.Instance.RestoreRunState(run.state.inventory);
@@ -631,14 +791,6 @@ public static class GameSaveSystem
         using var hash = SHA256.Create(); byte[] prefix = Encoding.UTF8.GetBytes(header);
         hash.TransformBlock(prefix, 0, prefix.Length, null, 0); hash.TransformFinalBlock(payload, 0, payload.Length); return hash.Hash;
     }
-    static void WriteAtomic(string path, string header, byte[] bytes, bool createOnly = false)
-    {
-        Directory.CreateDirectory(Path.GetDirectoryName(path));
-        byte[] compressed;
-        using (var output = new MemoryStream())
-        { using (var zip = new GZipStream(output, System.IO.Compression.CompressionLevel.Fastest, true)) zip.Write(bytes, 0, bytes.Length); compressed = output.ToArray(); }
-        WriteEnvelopeAtomic(path, header, compressed, createOnly);
-    }
     static void WriteEnvelopeAtomic(string path, string header, byte[] compressed, bool createOnly)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path));
@@ -655,7 +807,8 @@ public static class GameSaveSystem
     }
     static void ReadEnvelope(string path, out Summary summary, out byte[] compressed)
     {
-        using var file = File.OpenRead(path);
+        // Readers never block the atomic replacement of a save that is written meanwhile.
+        using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         if (file.Length > MaxFileBytes || file.Length < 40) throw new InvalidDataException();
         using var reader = new BinaryReader(file, Encoding.UTF8, true);
         if (reader.ReadInt32() != Magic) throw new InvalidDataException("Unbekanntes Spielstandformat.");

@@ -829,7 +829,8 @@ public class MapGenerator : MonoBehaviour
             progress: loading ? LoadingProgress.Report : null);
         while (veinSteps.MoveNext()) yield return null;
         OreRichness[] richness = null;
-        var richnessSteps = OreVeins.BuildSteps(blocks, mapWidth, mapHeight, usedSeed, value => richness = value);
+        var richnessSteps = OreVeins.BuildSteps(blocks, mapWidth, mapHeight, usedSeed, value => richness = value,
+            VeinRichnessSettings.Current);
         while (richnessSteps.MoveNext()) yield return null;
         if (loading) LoadingProgress.SetStage(4);
         yield return null;

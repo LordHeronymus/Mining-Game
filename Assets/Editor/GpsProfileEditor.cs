@@ -16,10 +16,17 @@ public static class GpsProfileEditor
     {
         EditorApplication.delayCall += () => { if (!EditorApplication.isPlayingOrWillChangePlaymode) Install(); };
         Undo.undoRedoPerformed += () => { if (Resources.Load<GpsProfile>(GpsSettings.ResourceName)) GpsSettings.Reload(); };
+        // Debug-menu edits are stored a moment after the last change; flush them before anything can revert or reload them.
+        EditorApplication.update += GpsSettings.CommitPending;
+        AssemblyReloadEvents.beforeAssemblyReload += GpsSettings.CommitPendingNow;
+        EditorApplication.quitting += GpsSettings.CommitPendingNow;
         EditorApplication.playModeStateChanged += state =>
         {
+            if (state == PlayModeStateChange.ExitingEditMode || state == PlayModeStateChange.ExitingPlayMode) GpsSettings.CommitPendingNow();
             if (state == PlayModeStateChange.ExitingEditMode)
             {
+                // Mit Überschreibungs-Schicht stehen Edit-Mode-Änderungen nicht im Profil; ohne Speichern gingen sie beim Play-Start verloren.
+                if (GpsUserOverrides.Active && GpsSettings.HasUnsavedChanges) GpsSettings.Save(out _);
                 if (!Resources.Load<GpsProfile>(GpsSettings.ResourceName) || GpsSettings.Document.records.Count==0) Install();
                 GpsSettings.ApplyLoadedComponents();
                 var source=Resources.Load<GpsProfile>(GpsSettings.ResourceName);
@@ -36,7 +43,9 @@ public static class GpsProfileEditor
             throw new InvalidOperationException("GPS benötigt ein gespeichertes Asset: " + asset.name);
         string key = guid + ":" + localId;
         profile.assets.Add(new GpsAssetReference { key = key, asset = asset });
-        EditorUtility.SetDirty(profile); return key;
+        // Im Benutzerordner bleibt das versionierte Profil sauber; die Zuordnung gilt dann nur im Speicher.
+        if (!GpsUserOverrides.Active) EditorUtility.SetDirty(profile);
+        return key;
     }
     [MenuItem("Mining Game/GPS-Profil aktualisieren", false, 201)]
     public static void Install()
@@ -101,6 +110,7 @@ public static class GpsProfileEditor
             if (created || before != JsonUtility.ToJson(data) || assetCount != profile.assets.Count)
             {
                 if (!wasUnsaved) { GpsSettings.Save(out error); if (error != null) throw new InvalidOperationException(error); }
+                else if (GpsUserOverrides.Active) GpsSettings.NotifyConfigurationChanged();
                 else { profile.documentJson = GpsSettings.AssetJson(data); EditorUtility.SetDirty(profile); GpsSettings.NotifyConfigurationChanged(); }
             }
         }

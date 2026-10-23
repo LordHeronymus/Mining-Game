@@ -14,7 +14,7 @@ public sealed partial class GpsEditorView
                 var value=GpsSettings.GetValue(pair.record.key,pair.field.name);var spec=pair.field;
                 Theme.Row(spec.label,out var rect);EditorGUI.BeginChangeCheck();
                 float number=EditorGUI.FloatField(rect,(float)value.number*spec.factor,Theme.Field);
-                if(EditorGUI.EndChangeCheck()) { value.number=Mathf.Clamp(number/spec.factor,spec.min,spec.max);GpsSettings.SetValue(pair.record.key,value,out _); }
+                if(EditorGUI.EndChangeCheck()) { value.number=Mathf.Clamp(number/spec.factor,spec.min,spec.max);GpsSettings.SetValueAndCommit(pair.record.key,value,out _); }
             }
             using(new EditorGUILayout.HorizontalScope())
             {
@@ -34,6 +34,7 @@ public sealed partial class GpsEditorView
             {
                 bool open=Foldout("Audio/Catalog/"+category,category+" ("+entries.Length+")");
                 if(!open && string.IsNullOrWhiteSpace(audioSearch))continue;
+                using var clipIndent=new EditorGUI.IndentLevelScope();
                 foreach(var entry in entries)
                 {
                     string key=entry.children.Find(v=>v.name=="clip").text;
@@ -55,7 +56,7 @@ public sealed partial class GpsEditorView
                             Theme.Row(spec.label,out var rect);
                             EditorGUI.BeginChangeCheck();
                             float number=EditorGUI.FloatField(rect,(float)value.number*spec.factor,Theme.Field);
-                            if(EditorGUI.EndChangeCheck() && !GpsAudio.Change(key,field,Mathf.Clamp(number/spec.factor,spec.min,spec.max),out string error))window.SetStatus(error);
+                            if(EditorGUI.EndChangeCheck() && !GpsAudio.Change(key,field,Mathf.Clamp(number/spec.factor,spec.min,spec.max),out string error,true))window.SetStatus(error);
                         }
                 }
             }

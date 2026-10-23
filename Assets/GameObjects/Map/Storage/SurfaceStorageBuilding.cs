@@ -2,17 +2,27 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(BoxCollider2D))]
 public sealed class SurfaceStorageBuilding : MonoBehaviour
 {
+    static readonly List<SurfaceStorageBuilding> active = new();
     readonly Dictionary<ItemSO, int> stored = new();
     readonly HashSet<Collider2D> visitors = new();
-    Vector2 inventoryScroll;
-    Vector2 storageScroll;
-    bool open;
+    EntrySign entrySign;
 
-    public bool IsOpen => open;
+    // Enabled storage huts in the order they appeared; the workbench takes materials from them in this order.
+    public static IReadOnlyList<SurfaceStorageBuilding> Active => active;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => active.Clear();
+
+    public bool IsOpen => StoragePanel.Instance && StoragePanel.Instance.IsOpen && StoragePanel.Instance.Storage == this;
+    public bool HasVisitor => visitors.Count > 0;
+    public EntrySign EntrySign => entrySign;
+    public Button EntryButton => entrySign ? entrySign.Button : null;
+    public CanvasGroup EntryGroup => entrySign ? entrySign.Group : null;
     public IReadOnlyDictionary<ItemSO, int> StoredItems => stored;
     public event Action StorageChanged;
 
@@ -41,6 +51,8 @@ public sealed class SurfaceStorageBuilding : MonoBehaviour
         return root.AddComponent<SurfaceStorageBuilding>();
     }
 
+    void Start() => BuildEntryButton();
+
     void OnTriggerEnter2D(Collider2D other)
     {
         if (other.GetComponentInParent<PlayerMovement>()) visitors.Add(other);
@@ -55,27 +67,48 @@ public sealed class SurfaceStorageBuilding : MonoBehaviour
     void Update()
     {
         visitors.RemoveWhere(c => !c || !c.enabled || !c.gameObject.activeInHierarchy);
-        if (open && (visitors.Count == 0 || Input.GetKeyDown(KeyCode.Escape))) Close();
+        if (IsOpen && visitors.Count == 0) Close();
+    }
+
+    void LateUpdate()
+    {
+        if (entrySign) entrySign.Visible = visitors.Count > 0 && !GameplayInputBlocker.IsBlocked;
+    }
+
+    void BuildEntryButton()
+    {
+        if (entrySign) return;
+        var sprite = EntrySign.MainSprite(transform);
+        if (!sprite) return;
+        var shop = FindFirstObjectByType<ShopBuilding>();
+        var shopCanvas = shop ? shop.GetComponentInChildren<Canvas>(true) : null;
+        entrySign = EntrySign.Create(transform, sprite, "Lager öffnen", Open, shopCanvas ? shopCanvas.gameObject.layer : gameObject.layer);
     }
 
     public void Open()
     {
-        if (open || visitors.Count == 0 || GameplayInputBlocker.IsBlocked) return;
-        open = true;
-        GameplayInputBlocker.SetBlocked(this, true);
+        if (IsOpen || visitors.Count == 0 || GameplayInputBlocker.IsBlocked) return;
+        var panel = StoragePanel.Ensure();
+        if (panel) panel.Show(this);
     }
 
     public void Close()
     {
-        open = false;
-        GameplayInputBlocker.SetBlocked(this, false);
+        if (IsOpen) StoragePanel.Instance.Hide();
+    }
+
+    void OnEnable()
+    {
+        if (!active.Contains(this)) active.Add(this);
     }
 
     void OnDisable()
     {
+        active.Remove(this);
         Close();
         visitors.Clear();
     }
+
 
     public int GetStoredCount(ItemSO item) => item && stored.TryGetValue(item, out int count) ? count : 0;
 
@@ -105,11 +138,52 @@ public sealed class SurfaceStorageBuilding : MonoBehaviour
         var inventory = InventoryManager.Instance;
         int count = GetStoredCount(item);
         if (amount <= 0 || count < amount || !inventory || !inventory.CanAdd(item, amount)) return false;
-        if (!inventory.Add(item, amount)) return false;
+        if (!inventory.AddTransferred(item, amount)) return false;
         if (count == amount) stored.Remove(item);
         else stored[item] = count - amount;
         StorageChanged?.Invoke();
         return true;
+    }
+
+    // The player can carry up to the maximum weight (three times the carrying capacity); above the
+    // capacity they only move slower, so withdrawals are limited by the maximum, not the capacity.
+    public int MaxWithdrawable(ItemSO item)
+    {
+        var inventory = InventoryManager.Instance;
+        int count = GetStoredCount(item);
+        if (!inventory || count <= 0) return 0;
+        int amount = Mathf.Min(count, int.MaxValue - inventory.GetCount(item));
+        double weight = item.EffectiveWeight;
+        if (!GameplayTestSettings.NoWeight && weight > 0)
+            amount = (int)Math.Min(amount, Math.Max(0, Math.Floor((inventory.MaximumWeight - inventory.TotalWeight + .00001d) / weight)));
+        // Floating point rounding can leave the estimate one item above what CanAdd accepts.
+        for (int i = 0; i < 3 && amount > 0 && !inventory.CanAdd(item, amount); i++) amount--;
+        return amount > 0 && inventory.CanAdd(item, amount) ? amount : 0;
+    }
+
+    // Crafting consumes stored materials directly; they never pass through the inventory.
+    public int TakeForCrafting(ItemSO item, int amount)
+    {
+        int count = GetStoredCount(item);
+        amount = Mathf.Min(amount, count);
+        if (amount <= 0) return 0;
+        if (count == amount) stored.Remove(item);
+        else stored[item] = count - amount;
+        StorageChanged?.Invoke();
+        return amount;
+    }
+
+    public void ReturnFromCrafting(ItemSO item, int amount)
+    {
+        if (!item || amount <= 0) return;
+        stored[item] = (int)Math.Min(int.MaxValue, (long)GetStoredCount(item) + amount);
+        StorageChanged?.Invoke();
+    }
+
+    public int WithdrawUpTo(ItemSO item, int amount)
+    {
+        amount = Mathf.Min(amount, MaxWithdrawable(item));
+        return amount > 0 && TryWithdraw(item, amount) ? amount : 0;
     }
 
     public void ResetForNewRun()
@@ -117,61 +191,5 @@ public sealed class SurfaceStorageBuilding : MonoBehaviour
         if (stored.Count == 0) return;
         stored.Clear();
         StorageChanged?.Invoke();
-    }
-
-    void OnGUI()
-    {
-        if (!Application.isPlaying) return;
-        if (!open)
-        {
-            if (visitors.Count == 0 || GameplayInputBlocker.IsBlocked || !Camera.main) return;
-            Vector3 screen = Camera.main.WorldToScreenPoint(transform.position + Vector3.up * 3.8f);
-            if (screen.z > 0f && GUI.Button(new Rect(screen.x - 75f, Screen.height - screen.y - 22f, 150f, 44f), "Lager öffnen"))
-                Open();
-            return;
-        }
-
-        float width = Mathf.Min(660f, Screen.width - 24f);
-        float height = Mathf.Min(600f, Screen.height - 24f);
-        GUILayout.BeginArea(new Rect((Screen.width - width) * .5f, (Screen.height - height) * .5f,
-            width, height), GUI.skin.window);
-        GUILayout.BeginHorizontal();
-        GUILayout.Label("Lager", GUILayout.ExpandWidth(true));
-        if (GUILayout.Button("Schließen", GUILayout.Width(100f))) Close();
-        GUILayout.EndHorizontal();
-
-        var inventory = InventoryManager.Instance;
-        GUILayout.Label("Inventar");
-        inventoryScroll = GUILayout.BeginScrollView(inventoryScroll, GUILayout.Height((height - 100f) * .5f));
-        if (inventory)
-            foreach (var entry in inventory.GetSnapshot().Where(e => e.Key && e.Value > 0 &&
-                         e.Key.category != ItemCategory.Powerup).OrderBy(e => e.Key.displayName).ToArray())
-                DrawRow(entry.Key, entry.Value, false);
-        GUILayout.EndScrollView();
-
-        GUILayout.Label("Eingelagert");
-        storageScroll = GUILayout.BeginScrollView(storageScroll, GUILayout.Height((height - 100f) * .5f));
-        foreach (var entry in stored.Where(e => e.Key && e.Value > 0)
-                     .OrderBy(e => e.Key.displayName).ToArray())
-            DrawRow(entry.Key, entry.Value, true);
-        GUILayout.EndScrollView();
-        GUILayout.EndArea();
-    }
-
-    void DrawRow(ItemSO item, int count, bool withdraw)
-    {
-        GUILayout.BeginHorizontal();
-        GUILayout.Label(item.displayName + "  × " + count, GUILayout.ExpandWidth(true));
-        if (GUILayout.Button(withdraw ? "Entnehmen 1" : "Einlagern 1", GUILayout.Width(112f)))
-        {
-            if (withdraw) TryWithdraw(item, 1);
-            else TryDeposit(item, 1);
-        }
-        if (GUILayout.Button("Alle", GUILayout.Width(58f)))
-        {
-            if (withdraw) TryWithdraw(item, count);
-            else TryDeposit(item, count);
-        }
-        GUILayout.EndHorizontal();
     }
 }

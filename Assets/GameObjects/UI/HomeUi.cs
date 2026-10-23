@@ -251,7 +251,7 @@ public sealed class HomeButtonFeedback : MonoBehaviour, IPointerEnterHandler, IP
     public bool pressOnlySelection;
     public string normalPart = "Button", activePart = "Active";
     public bool animateScale = true;
-    bool hovered, selected, pointerHeld;
+    bool hovered, selected, pointerHeld, labelsCentred;
     float amount, glow, pressed, fill;
     Button button; Image image, highlight, chosenImage;
     void Awake()
@@ -275,6 +275,8 @@ public sealed class HomeButtonFeedback : MonoBehaviour, IPointerEnterHandler, IP
     void OnDisable() { pointerHeld = hovered = selected = false; amount = glow = pressed = fill = 0; transform.localScale = Vector3.one; if (highlight) highlight.color = new Color(1, 1, 1, 0); if (chosenImage) chosenImage.color = new Color(1, 1, 1, 0); }
     void Update()
     {
+        // Captions and sizes are final once the button has been built and styled.
+        if (!labelsCentred) { labelsCentred = true; ButtonTextCentering.Apply(button, image); }
         float target = button.interactable && (hovered || selected) ? 1 : 0;
         amount = GoldButtonFeedback.Approach(amount, target, 12);
         pressed = Mathf.Max(0, pressed - Time.unscaledDeltaTime);

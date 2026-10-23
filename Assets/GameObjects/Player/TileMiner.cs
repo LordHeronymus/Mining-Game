@@ -531,8 +531,7 @@ public class TileMiner : MonoBehaviour
         if (!highlightRenderer || !tilemap) return;
         var terrainRenderer = tilemap.GetComponent<TilemapRenderer>();
         if (!terrainRenderer) return;
-        // Terrain, ore and the copper surface occupy the next two orders.
-        // Reserve the cursor above them even before the surface is constructed.
+        // Terrain and ore occupy the next two orders; the cursor stays above them.
         int layer = terrainRenderer.sortingLayerID;
         int order = terrainRenderer.sortingOrder + 2;
         void Above(Renderer renderer, int extra = 0)
@@ -547,7 +546,6 @@ public class TileMiner : MonoBehaviour
         {
             Above(map.OreOverlay ? map.OreOverlay.GetComponent<TilemapRenderer>() : null, 1);
             Above(map.ArtifactOverlay ? map.ArtifactOverlay.GetComponent<TilemapRenderer>() : null);
-            Above(map.GetComponent<OreOverlayAppearance>()?.CopperSurface);
         }
         highlightRenderer.sortingLayerID = layer;
         highlightRenderer.sortingOrder = order + 1;
@@ -701,7 +699,7 @@ public class TileMiner : MonoBehaviour
             (!inventory || !inventory.CanAdd(block.itemDrop, amount))) return false;
         if (block && block.itemDrop && amount > 0) inventory.Add(block.itemDrop, amount);
         MetaProgressionRuntime.RecordMining(cell, block && block.itemDrop ? block.itemDrop : null, amount, artifact,
-            block, map ? map.layers : null, ore != null);
+            block, map ? map.layers : null, ore != null, explosive, map);
         int points = BlockRegistry.GetPoints(block, ore);
         Vector2 minedPosition = tilemap.GetCellCenterWorld(cell);
         OnBlockMined?.Invoke(minedPosition, points);

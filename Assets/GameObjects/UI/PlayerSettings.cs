@@ -7,10 +7,11 @@ public static class PlayerSettings
 {
     const string AmbienceKey = "settings.audio.ambience";
     const string SfxKey = "settings.audio.sfx";
+    const string VoiceKey = "settings.audio.voice";
     const string FullscreenKey = "settings.display.fullscreen";
     const string UiScaleKey = "settings.display.uiScale";
     const string HudScaleKey = "settings.display.hudScale";
-    public const float DefaultHudScale = .8f;
+    public const float DefaultHudScale = .8f, MinHudScale = .3f;
     static readonly Dictionary<CanvasScaler, Vector2> References = new();
 
     public static float Master
@@ -25,14 +26,15 @@ public static class PlayerSettings
     }
     public static float Ambience { get => PlayerPrefs.GetFloat(AmbienceKey, 1f); set { PlayerPrefs.SetFloat(AmbienceKey, Mathf.Clamp01(value)); PlayerPrefs.Save(); } }
     public static float Sfx { get => PlayerPrefs.GetFloat(SfxKey, 1f); set { PlayerPrefs.SetFloat(SfxKey, Mathf.Clamp01(value)); PlayerPrefs.Save(); } }
+    public static float Voice { get => PlayerPrefs.GetFloat(VoiceKey, 1f); set { PlayerPrefs.SetFloat(VoiceKey, Mathf.Clamp01(value)); PlayerPrefs.Save(); } }
     public static bool Fullscreen { get => PlayerPrefs.HasKey(FullscreenKey) ? PlayerPrefs.GetInt(FullscreenKey) != 0 : Screen.fullScreen; set { PlayerPrefs.SetInt(FullscreenKey, value ? 1 : 0); Screen.fullScreen = value; PlayerPrefs.Save(); } }
     public static float UiScale { get => PlayerPrefs.GetFloat(UiScaleKey, 1f); set { PlayerPrefs.SetFloat(UiScaleKey, Mathf.Clamp(value, .8f, 1.2f)); ApplyUiScale(); PlayerPrefs.Save(); } }
     public static float HudScale
     {
-        get => Mathf.Clamp(PlayerPrefs.GetFloat(HudScaleKey, DefaultHudScale), .5f, 1f);
+        get => Mathf.Clamp(PlayerPrefs.GetFloat(HudScaleKey, DefaultHudScale), MinHudScale, 1f);
         set
         {
-            PlayerPrefs.SetFloat(HudScaleKey, Mathf.Clamp(value, .5f, 1f));
+            PlayerPrefs.SetFloat(HudScaleKey, Mathf.Clamp(value, MinHudScale, 1f));
             ApplyHudScale();
             PlayerPrefs.Save();
         }
@@ -71,6 +73,11 @@ public static class PlayerSettings
         var dead = new List<CanvasScaler>();
         foreach (var entry in References) if (!entry.Key) dead.Add(entry.Key);
         foreach (var scaler in dead) References.Remove(scaler);
+        // Building overlays (shop, workbench, storage) keep their size; UI-Größe only affects the rest of the UI.
+        if (!Application.isPlaying) return;
+        foreach (var panel in Object.FindObjectsByType<ShopPanel>(FindObjectsInactive.Include, FindObjectsSortMode.None)) UiScaleExempt.Attach(panel);
+        foreach (var panel in Object.FindObjectsByType<WorkbenchPanel>(FindObjectsInactive.Include, FindObjectsSortMode.None)) UiScaleExempt.Attach(panel);
+        foreach (var panel in Object.FindObjectsByType<StoragePanel>(FindObjectsInactive.Include, FindObjectsSortMode.None)) UiScaleExempt.Attach(panel);
     }
 
     public static float Music
@@ -87,7 +94,7 @@ public static class PlayerSettings
 
     public static void RestoreDefaults()
     {
-        Master=1; Music=1; PlayerPrefs.DeleteKey(AmbienceKey); PlayerPrefs.DeleteKey(SfxKey);
+        Master=1; Music=1; PlayerPrefs.DeleteKey(AmbienceKey); PlayerPrefs.DeleteKey(SfxKey); PlayerPrefs.DeleteKey(VoiceKey);
         PlayerPrefs.DeleteKey(FullscreenKey); PlayerPrefs.DeleteKey(UiScaleKey);
         PlayerPrefs.DeleteKey(HudScaleKey);
         PlayerPrefs.Save();

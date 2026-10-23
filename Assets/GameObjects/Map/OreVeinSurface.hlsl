@@ -81,19 +81,10 @@ half4 VeinOreSample(float2 uv)
     return c;
 }
 
-#include "CopperCarpetSurface.hlsl"
-#include "CopperEarthTiles.hlsl"
-
 half4 ConnectedOreFragment(Varyings i, float2 cellPosition, float2 cellData)
 {
     float2 cell = floor(cellPosition), anchor = VeinAnchor(cell);
     int type = (int)cellData.x - 1;
-    half4 output=0;
-    if(type==2 && ((CopperCarpetHost(i.positionWS.xy) && _CopperCarpetEnabled>.5) ||
-        CopperEarthTileHost(i.positionWS.xy)))
-        output=0; // The complete copper surface is drawn once above the ore tilemap.
-    else
-    {
     bool coal = type == 7;
     bool gem = type == 8 || type == 16 || type == 18 || type == 19 || type == 13;
     half3 tint = VeinTint(type);
@@ -196,8 +187,6 @@ half4 ConnectedOreFragment(Varyings i, float2 cellPosition, float2 cellData)
     lit.rgb += tint * glow * exposure * (core*(1-ore.a)*.8 + facet*crystalAlpha*.4);
     if(type==13) lit.rgb += (saturatedOre*.48h+_UltroniumGlowColor.rgb*facet*.12h) *
         _UltroniumGlow * exposure * crystalAlpha;
-    output=lit;
-    }
-    return output;
+    return lit;
 }
 #endif

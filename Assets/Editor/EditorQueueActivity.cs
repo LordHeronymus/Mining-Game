@@ -47,6 +47,11 @@ public static class EditorQueueActivity
         public bool isCompiling;
         public bool closed;
         public int processId;
+        // Stand gegenueber origin/main (nur im Ordner des Benutzers, siehe MainAutoUpdate), sonst leer.
+        public string mainState;
+        public string mainText;
+        public int mainBehind;
+        public string mainChecked;
     }
 
     static EditorQueueActivity()
@@ -79,6 +84,61 @@ public static class EditorQueueActivity
         Selection.selectionChanged += () => Mark("Auswahl geaendert");
     }
 
+    const int QueueServicePort = 47615;
+    const double ServiceCheckSeconds = 60;
+    static double lastServiceCheck = double.NegativeInfinity;
+
+    // Startet Tools/editor-queue-server.ps1 ueber die Verknuepfung, die "-Install" in EditorQueue/bin anlegt,
+    // falls er noch nicht laeuft. Ein zweiter Editor findet den laufenden Dienst und tut nichts; ein doppelter
+    // Start beendet sich selbst, weil der Port belegt ist.
+    static void EnsureQueueService()
+    {
+        try
+        {
+            RefreshInstalledScripts();
+            string shortcut = Path.Combine(queueDir, "bin", "editor-queue-server.lnk");
+            if (!File.Exists(shortcut) || QueueServiceRunning()) return;
+            Process.Start(new ProcessStartInfo(shortcut) { UseShellExecute = true, WindowStyle = ProcessWindowStyle.Hidden });
+            Debug.Log("Editor-Warteschlange: lokaler Dienst fuer PrivOrg gestartet (http://localhost:" + QueueServicePort + ").");
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("Editor-Warteschlange: lokaler Dienst konnte nicht gestartet werden: " + e.Message);
+        }
+    }
+
+    // Der Dienst ruft bei jeder Abfrage die Kopien in EditorQueue/bin auf. Im Ordner des Benutzers (main,
+    // MainAutoUpdate) werden sie nach einem Update aufgefrischt, damit PrivOrg neue Felder ohne erneutes
+    // "-Install" sieht. Die Testbank und Worktrees kopieren nie: sie koennen aeltere Branch-Staende haben.
+    static void RefreshInstalledScripts()
+    {
+        if (!MainAutoUpdate.Tracked || MainAutoUpdate.State != "aktuell") return;   // nur auf aktuellem main
+        string bin = Path.Combine(queueDir, "bin");
+        if (!Directory.Exists(bin)) return;
+        foreach (string name in new[] { "editor-queue.ps1", "editor-dialog.ps1", "editor-queue-server.ps1" })
+        {
+            string source = Path.Combine(projectRoot, "Tools", name), target = Path.Combine(bin, name);
+            if (!File.Exists(source) || !File.Exists(target)) continue;
+            byte[] next = File.ReadAllBytes(source);
+            if (next.AsSpan().SequenceEqual(File.ReadAllBytes(target))) continue;
+            File.WriteAllBytes(target, next);
+            Debug.Log("Editor-Warteschlange: " + name + " in " + bin + " aktualisiert.");
+        }
+    }
+
+    static bool QueueServiceRunning()
+    {
+        try
+        {
+            using (var client = new System.Net.Sockets.TcpClient())
+            {
+                var connect = client.ConnectAsync("127.0.0.1", QueueServicePort);
+                return connect.Wait(300) && client.Connected;
+            }
+        }
+        catch { return false; }
+    }
+
     static void Mark(string evt, bool immediate = false)
     {
         lastEvent = evt;
@@ -86,6 +146,10 @@ public static class EditorQueueActivity
         dirty = true;
         if (immediate) Write();
     }
+
+    // Neuer Inhalt (z. B. Stand gegenueber main) ohne Benutzeraktivitaet: beim naechsten Update schreiben,
+    // ohne lastActivity zu verschieben (sonst haelt ein Hintergrund-fetch den Editor kuenstlich "in Benutzung").
+    public static void RequestWrite() => dirty = true;
 
     static void OnUpdate()
     {
@@ -96,6 +160,14 @@ public static class EditorQueueActivity
         double t = EditorApplication.timeSinceStartup;
         if ((dirty && t - lastWrite >= MinWriteSeconds) || t - lastWrite >= HeartbeatSeconds)
             Write();
+
+        // Der lokale Dienst fuer PrivOrg startet mit dem ersten Editor (nicht mit Windows) und wird
+        // jede Minute geprueft, damit ein abgestuerzter Dienst wieder anlaeuft.
+        if (t - lastServiceCheck >= ServiceCheckSeconds)
+        {
+            lastServiceCheck = t;
+            EnsureQueueService();
+        }
     }
 
     static void OnQuit()
@@ -121,6 +193,10 @@ public static class EditorQueueActivity
             isCompiling = EditorApplication.isCompiling || EditorApplication.isUpdating,
             closed = closed,
             processId = Process.GetCurrentProcess().Id,
+            mainState = MainAutoUpdate.Tracked ? MainAutoUpdate.State : "",
+            mainText = MainAutoUpdate.Tracked ? MainAutoUpdate.StatusText : "",
+            mainBehind = MainAutoUpdate.Tracked ? MainAutoUpdate.Behind : -1,
+            mainChecked = MainAutoUpdate.Tracked ? MainAutoUpdate.CheckedUtc : "",
         };
         try
         {

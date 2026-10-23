@@ -41,7 +41,7 @@ public sealed class TiefenhallUiProbe : MonoBehaviour
         Check(RunNavigation.LoadGame(GameSaveSystem.MostRecentSlot(), out _), "Isolated saved run loads");
         while (RunNavigation.IsTransitioning || LoadingProgress.Active) yield return null;
         var pause = FindFirstObjectByType<RunPauseMenu>(); pause.Open();
-        Click(FindButton(pause.transform, "Save")); yield return null;
+        SaveSlotPanel.Show(pause.transform.parent, true); yield return null;
         var slots = FindFirstObjectByType<SaveSlotPanel>(); Check(slots && SaveSlotPanel.IsOpen, "Save opens slots");
         Click(FindButton(slots.transform, "Slot 2"));
         while (GameSaveSystem.IsBusy) yield return null;
@@ -58,7 +58,8 @@ public sealed class TiefenhallUiProbe : MonoBehaviour
         Check(GameSaveSystem.GetSummary(2).savedUtc > date && File.Exists(GameSaveSystem.SlotPath(2) + ".bak"), "Confirmed overwrite keeps backup");
         Click(FindButton(slots.transform, "Back")); yield return null;
         Check(!SaveSlotPanel.IsOpen && RunPauseMenu.IsOpen && Time.timeScale == 0, "Back restores paused menu");
-        Click(FindButton(pause.transform, "Load")); yield return null;
+        // The pause menu no longer offers loading; the slot panel's load mode is still checked directly.
+        SaveSlotPanel.Show(pause.transform.parent, false); yield return null;
         slots = FindFirstObjectByType<SaveSlotPanel>();
         Click(FindButton(slots.transform, "Slot 2")); yield return null;
         Click(FindButton(slots.transform, "Start Save")); yield return null;

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -16,6 +17,16 @@ public sealed class MetaProgressionRuntime : MonoBehaviour
     float nextSample, nextSave;
     bool bound, altarDiscovered;
     string boundRun;
+    // One excursion from the surface. Position metrics count only during a trip that started at the surface,
+    // so loading a deep save completes nothing. Blocked input and open panels skip samples but keep the trip.
+    bool tripKnown, tripFromSurface;
+    int tripPeakDepth, tripPeakLayer, tripStartBlocks;
+    double tripStartWeight;
+    public const string TorchesPlaced = "torches-placed", LaddersPlaced = "ladders-placed";
+    const int VeinLimit = 1024;
+    static readonly HashSet<Vector3Int> veinSeen = new();
+    static readonly Queue<Vector3Int> veinOpen = new();
+    static readonly Vector3Int[] veinSteps = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right };
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics() => instance = null;
@@ -44,7 +55,7 @@ public sealed class MetaProgressionRuntime : MonoBehaviour
     {
         if (discovery) discovery.CellChanged -= CellDiscovered;
         map = null; player = null; discovery = null;
-        bound = false; boundRun = null; altarDiscovered = false;
+        bound = false; boundRun = null; altarDiscovered = false; tripKnown = false;
         seen.Clear(); regions.Clear(); reported.Clear();
     }
 
@@ -57,6 +68,7 @@ public sealed class MetaProgressionRuntime : MonoBehaviour
 
     void Update()
     {
+        MetaProgression.PumpSaves();
         if (LoadingProgress.Active || RunNavigation.IsTransitioning ||
             SceneManager.GetActiveScene().name != RunNavigation.GameScene) return;
         if (MetaProgression.CurrentRun == null) return;
@@ -81,35 +93,83 @@ public sealed class MetaProgressionRuntime : MonoBehaviour
             }
             boundRun = MetaProgression.CurrentRun.runId;
             bound = true;
+            // Placements already in the world (restored saves, debug sessions) only raise the high-water marks.
+            MetaProgression.SyncPlacedCount(TorchesPlaced, PlacedTorch.CountTorches(map));
+            var ladders = map.GetComponent<LadderMap>();
+            if (ladders) MetaProgression.SyncPlacedCount(LaddersPlaced, ladders.RecountPlaced());
         }
         if (Time.unscaledTime >= nextSave)
         {
             nextSave = Time.unscaledTime + 5f;
             MetaProgression.RequestSave();
         }
-        if (!RewardsAllowed || GameplayInputBlocker.IsBlocked || Time.timeScale <= 0f ||
+        if (!RewardsAllowed) { tripKnown = false; return; }
+        if (GameplayInputBlocker.IsBlocked || Time.timeScale <= 0f ||
             GameOverPanel.IsOpen || GameVictoryPanel.IsOpen || !StatsManager.Instance ||
             StatsManager.Instance.Health <= 0f) return;
         if (Application.isFocused) MetaProgression.TickActive(Mathf.Min(Time.unscaledDeltaTime, .25f));
         if (Time.unscaledTime < nextSample) return;
         nextSample = Time.unscaledTime + .25f;
         var cell = map.Terrain.WorldToCell(player.transform.position);
-        if (cell.x >= -map.GeneratedWidth / 2 && cell.x < map.GeneratedWidth - map.GeneratedWidth / 2 &&
-            cell.y <= 0 && -cell.y < map.GeneratedHeight)
+        bool inside = cell.x >= -map.GeneratedWidth / 2 && cell.x < map.GeneratedWidth - map.GeneratedWidth / 2 &&
+            -cell.y < map.GeneratedHeight;
+        int miningLayer = cell.y <= 0 ? MiningLayerAt(cell, map.layers) : 0;
+        if (inside && cell.y <= 0)
         {
             MetaProgression.RecordDepth(Mathf.Max(0, -cell.y));
-            MetaProgression.RecordReachedMiningLayer(MiningLayerAt(cell, map.layers));
+            MetaProgression.RecordReachedMiningLayer(miningLayer);
         }
         bool atSurface = cell.y >= 0;
-        int visitedLayer = atSurface ? 1 : MiningLayerAt(cell, map.layers);
-        if (cell.x >= -map.GeneratedWidth / 2 && cell.x < map.GeneratedWidth - map.GeneratedWidth / 2 && -cell.y < map.GeneratedHeight && visitedLayer > 0)
+        int visitedLayer = atSurface ? 1 : miningLayer;
+        if (inside && visitedLayer > 0)
             MetaProgression.RecordExplorationPosition(visitedLayer, atSurface);
-        if (!altarDiscovered && map.AltarChamber && map.AltarChamber.CaptureState().placed &&
-            Vector2.Distance(player.transform.position, map.AltarChamber.AltarPosition) <= 8f)
+        bool firstSample = !tripKnown;
+        if (firstSample) { tripKnown = true; tripFromSurface = atSurface; }
+        bool tripping = tripFromSurface && !atSurface && inside;
+        bool nearAltar = (!altarDiscovered || tripping) && NearAltar();
+        if (!altarDiscovered && nearAltar)
         {
             altarDiscovered = true;
             MetaProgression.RecordDiscovery("altar");
         }
+        if (tripping)
+        {
+            int depth = -cell.y;
+            tripPeakDepth = Mathf.Max(tripPeakDepth, depth);
+            tripPeakLayer = Mathf.Max(tripPeakLayer, visitedLayer);
+            MetaProgression.RecordDepthReached(depth);
+            if (visitedLayer > 0) MetaProgression.RecordLayerVisited(visitedLayer);
+            if (nearAltar) MetaProgression.RecordAltarReached();
+        }
+        else if (atSurface)
+        {
+            var inventory = InventoryManager.Instance;
+            double weight = inventory ? inventory.TotalWeight : 0d;
+            if (!firstSample && tripFromSurface && tripPeakDepth > 0) FinishTrip(inventory, weight);
+            tripFromSurface = true; tripPeakDepth = 0; tripPeakLayer = 1;
+            tripStartWeight = weight; tripStartBlocks = MetaProgression.CreditedBlocks;
+        }
+    }
+
+    bool NearAltar()
+    {
+        var altar = map.AltarChamber;
+        return altar && Vector2.Distance(player.transform.position, altar.AltarPosition) <= 8f && altar.CaptureState().placed;
+    }
+
+    void FinishTrip(InventoryManager inventory, double weight)
+    {
+        var settings = MetaProgression.CurrentChallengeSettings;
+        bool fullBag = false;
+        if (inventory)
+        {
+            double reference = Math.Min(inventory.CarryingCapacity, settings.fullBagCapKg);
+            fullBag = reference > 0d && weight >= reference * settings.fullBagPercent / 100d &&
+                weight - tripStartWeight >= reference * settings.fullBagGainPercent / 100d &&
+                tripPeakDepth >= settings.fullBagMinDepth;
+        }
+        MetaProgression.RecordReturn(tripPeakDepth, tripPeakLayer, fullBag,
+            Mathf.Max(0, MetaProgression.CreditedBlocks - tripStartBlocks));
     }
 
     void CellDiscovered(int x, int depth) => TrackCell(x, depth, RewardsAllowed && !GameplayInputBlocker.IsBlocked);
@@ -160,36 +220,83 @@ public sealed class MetaProgressionRuntime : MonoBehaviour
         long depth = -(long)cell.y;
         return depth >= ordered[2].startDepth && (ordered.Length < 4 || depth < ordered[3].startDepth);
     }
+    // Runs per mined cell and per sample: counts the layers starting above the cell instead of sorting them.
     public static int MiningLayerAt(Vector3Int cell, MapLayer[] layers)
     {
         if (cell.y > 0 || layers == null) return 0;
-        var ordered = layers.Where(layer => layer != null).OrderBy(layer => layer.startDepth).ToArray();
-        if (ordered.Length == 0 || ordered[0].startDepth != 0) return 0;
         long depth = -(long)cell.y;
-        int result = 0;
-        for (int i = 0; i < ordered.Length; i++) if (depth >= ordered[i].startDepth) result = i + 1;
-        return result;
+        int first = int.MaxValue, result = 0;
+        foreach (var layer in layers)
+        {
+            if (layer == null) continue;
+            first = Mathf.Min(first, layer.startDepth);
+            if (depth >= layer.startDepth) result++;
+        }
+        return first == 0 ? result : 0;
     }
     public static void RecordMining(Vector3Int cell, ItemSO item, int count, ArtifactTile artifact,
-        Block block = null, MapLayer[] layers = null, bool hasOre = false)
+        Block block = null, MapLayer[] layers = null, bool hasOre = false, bool explosive = false, MapGenerator map = null)
     {
         if (!RewardsAllowed) return;
-        string source = cell.x + ":" + cell.y;
-        if (item && item.category == ItemCategory.Ore && count > 0)
-            MetaProgression.RecordResource(item.item, count, source);
+        bool ore = item && item.category == ItemCategory.Ore && count > 0;
+        // The cell is the ore's replay guard (cell ledger), the same identity as the old "x:y" source id.
+        if (ore) MetaProgression.RecordResource(item.item, count, cell);
+        if (ore && hasOre && block && map) RecordVein(map, cell, block, item.item);
         if (artifact) {
+            string source = cell.x + ":" + cell.y;
             MetaProgression.RecordDiscovery("artifact:" + source);
             MetaProgression.RecordArtifact(cell, artifact.name);
         }
-        if ((block || artifact || hasOre) && IsLayerTwoExcavation(cell, layers)) MetaProgression.RecordLayerTwoBlock(cell);
-        if ((block || artifact || hasOre) && IsLayerThreeExcavation(cell, layers)) MetaProgression.RecordLayerThreeBlock(cell);
-        if (block || artifact || hasOre) MetaProgression.RecordXxlLayerBlock(cell, MiningLayerAt(cell, layers));
-        if (IsSurfaceExcavation(cell, block, layers, hasOre, artifact != null)) MetaProgression.RecordSurfaceBlock(cell);
+        if (block || artifact || hasOre) MetaProgression.RecordMinedBlock(cell, MiningLayerAt(cell, layers), explosive);
+    }
+
+    // Called before the cell is removed. The vein is the 4-connected set of cells that still hold this ore block or
+    // were mined in this run (ore ledger); it is cleared when none of them holds ore any more. Restored cells hold
+    // ore again, so reloading never clears a vein early, and the representative cell keeps the glue key stable.
+    static void RecordVein(MapGenerator map, Vector3Int start, Block block, Item item)
+    {
+        try
+        {
+            var terrain = map.Terrain;
+            if (!terrain) return;
+            veinSeen.Add(start); veinOpen.Enqueue(start);
+            var representative = start;
+            while (veinOpen.Count > 0)
+            {
+                var cell = veinOpen.Dequeue();
+                foreach (var step in veinSteps)
+                {
+                    var next = cell + step;
+                    if (veinSeen.Contains(next)) continue;
+                    if (terrain.HasTile(next))
+                    {
+                        var ore = map.GetOreAt(next);
+                        if (ore && ore.block == block) return;
+                        continue;
+                    }
+                    if (!MetaProgression.HasMinedOre(item, next)) continue;
+                    if (veinSeen.Count >= VeinLimit) return;
+                    veinSeen.Add(next); veinOpen.Enqueue(next);
+                    if (next.y < representative.y || (next.y == representative.y && next.x < representative.x)) representative = next;
+                }
+            }
+            if (veinSeen.Count >= 2) MetaProgression.RecordVeinCleared((int)item, representative, veinSeen.Count);
+        }
+        catch (Exception exception) { Debug.LogException(exception); }
+        finally { veinSeen.Clear(); veinOpen.Clear(); }
+    }
+
+    // Placements made while rewards are off only raise the high-water mark, so they are never credited later.
+    public static void RecordPlaced(string metric, int count)
+    {
+        if (RewardsAllowed) MetaProgression.RecordPlacedCount(metric, count);
+        else MetaProgression.SyncPlacedCount(metric, count);
     }
 
     public static void RecordVictory()
     {
         if (RewardsAllowed) MetaProgression.RecordVictory();
+        else MetaProgression.MarkRunEnded();
         MetaProgression.Save();
     }
 }

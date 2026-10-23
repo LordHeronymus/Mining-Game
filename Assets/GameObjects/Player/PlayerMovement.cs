@@ -5,6 +5,10 @@ public class PlayerMovement : MonoBehaviour
 {
     const float JumpBufferDuration = .12f;
     const float JumpGraceDuration = .08f;
+    public static event System.Action<float, bool> FallDamaged; // (appliedDamage, big)
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStaticState() => FallDamaged = null;
 
     [Header("References")]
     [SerializeField] StatsManager stats;
@@ -239,8 +243,13 @@ public class PlayerMovement : MonoBehaviour
                 if (damage > 0f)
                 {
                     float healthBeforeDamage = stats.Health;
-                    if (stats.ApplyDamage(damage) && healthBeforeDamage - stats.Health > 30f)
-                        AudioManager.Instance?.Play(SoundType.BoneBreaking1);
+                    if (stats.ApplyDamage(damage))
+                    {
+                        float applied = healthBeforeDamage - stats.Health;
+                        bool big = applied > stats.bigFallDamageThreshold;
+                        if (big) AudioManager.Instance?.Play(SoundType.BoneBreaking1);
+                        if (stats.Health > 0f) FallDamaged?.Invoke(applied, big);
+                    }
                 }
             }
 

@@ -10,7 +10,7 @@ public static class GpsAudio
     sealed class Sample { public AudioClip clip; public float volumeRandom, pitchRandom; }
     static ConditionalWeakTable<AudioSource, Sample> samples = new();
     static AudioClipTuningSettingsAsset settings;
-    public static readonly string[] Categories = { "Homescreen", "Ladebildschirm", "Abbau", "Geröll", "Bauen und Pflanzen", "Spieler und Gesundheit", "Shop und UI", "Tiere", "Umgebung", "Untergrund-Details", "Altar", "Weitere Clips", "Archiv" };
+    public static readonly string[] Categories = { "Homescreen", "Ladebildschirm", "Abbau", "Geröll", "Bauen und Pflanzen", "Spieler und Gesundheit", "Shop und UI", "Tiere", "Umgebung", "Untergrund-Details", "Altar", "Weitere Clips", "Stimme", "Archiv" };
     public static readonly string[] Fields = { "volume", "volumeSpread", "pitch", "pitchSpread" };
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void Reset() { settings=null; samples=new(); }
@@ -44,12 +44,12 @@ public static class GpsAudio
     public static AudioClip Clip(GpsValue entry) => GpsSettings.Profile.Resolve(entry.children.Find(v=>v.name=="clip")?.text) as AudioClip;
     public static bool Matches(GpsValue entry,string query) => string.IsNullOrWhiteSpace(query) ||
         (Name(entry)+" "+Category(entry)+" "+Clip(entry)?.name).IndexOf(query.Trim(),StringComparison.CurrentCultureIgnoreCase)>=0;
-    public static bool Change(string clipKey,string field,double number,out string error)
+    public static bool Change(string clipKey,string field,double number,out string error,bool commit=false)
     {
         var record=Record; var root=GpsSettings.GetValue(record.key,"clips");
         var entry=root.children.Find(e=>e.children.Find(v=>v.name=="clip")?.text==clipKey);
         var value=entry?.children.Find(v=>v.name==field);
         if(value==null || !Fields.Contains(field)){error="Audioclip fehlt.";return false;}
-        value.number=number;return GpsSettings.SetValue(record.key,root,out error);
+        value.number=number;return commit ? GpsSettings.SetValueAndCommit(record.key,root,out error) : GpsSettings.SetValue(record.key,root,out error);
     }
 }

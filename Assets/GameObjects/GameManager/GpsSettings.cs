@@ -12,6 +12,13 @@ public static class GpsSettings
     static GpsDocument document;
     static string savedJson, shippedJson;
     static bool applying, dirty;
+    // Debug-menu edits are committed field by field shortly after the last change, so a slider drag writes once.
+    static readonly List<(string key, string field)> pendingCommits = new();
+    static double commitAt;
+    const double CommitDelaySeconds = .35;
+    // Checks switch this off (or use a save test directory) so driving the menu never writes the real profile.
+    public static bool AutoCommit = true;
+    static bool CanAutoCommit => AutoCommit && string.IsNullOrEmpty(GameSaveSystem.TestDirectory) && string.IsNullOrEmpty(MetaProgression.TestDirectory);
     public static event Action Changed;
     public static event Action Saved;
     public static string Warning { get; private set; }
@@ -26,13 +33,14 @@ public static class GpsSettings
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void Reset()
-    { profile = null; document = null; savedJson = null; shippedJson = null; Warning = null; Changed = null; Saved = null; applying = false; dirty=false; }
+    { profile = null; document = null; savedJson = null; shippedJson = null; Warning = null; Changed = null; Saved = null; applying = false; dirty=false; pendingCommits.Clear(); AutoCommit = true; }
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void StartRuntime()
     {
         EnsureLoaded();
         ApplyAssets();
         ApplyLoadedComponents();
+        Application.quitting -= CommitPendingNow; Application.quitting += CommitPendingNow;
         if (!Object.FindFirstObjectByType<GpsRuntimeHost>(FindObjectsInactive.Include))
         { var host = new GameObject("Ingame GPS"); Object.DontDestroyOnLoad(host); host.AddComponent<GpsRuntimeHost>(); }
     }
@@ -67,9 +75,13 @@ public static class GpsSettings
         LoadPersonalPreferences(document);
 #endif
         ItemIconLayout.Migrate(document, profile);
+#if UNITY_EDITOR
+        if (GpsUserOverrides.Active) ApplyUserOverrides();
+#endif
         savedJson = JsonUtility.ToJson(document);
 #if UNITY_EDITOR
-        var committed = UnityEditor.SessionState.GetString("GPS.Committed", "");
+        // Mit eigener Überschreibungs-Schicht ist Profil + Datei immer der gespeicherte Stand.
+        var committed = GpsUserOverrides.Active ? "" : UnityEditor.SessionState.GetString("GPS.Committed", "");
         if (!string.IsNullOrEmpty(committed)) savedJson = JsonUtility.ToJson(JsonUtility.FromJson<GpsDocument>(committed));
 #endif
         dirty = savedJson != JsonUtility.ToJson(document);
@@ -116,6 +128,54 @@ public static class GpsSettings
         foreach (string field in PersonalPreferences)
             UnityEditor.EditorPrefs.SetFloat(PersonalPreferenceKey(field), (float)GpsCodec.Get(data.preferences, field));
     }
+    // Eigene Werte (UserSettings/GpsOverrides.json) über das geladene Profil legen. Was inzwischen dem Standard entspricht
+    // oder dessen Stelle es nicht mehr gibt, fällt aus der Datei; Letzteres steht mit Wert in der Konsole.
+    static void ApplyUserOverrides()
+    {
+        var list = GpsUserOverrides.Entries.ToList();
+        if (list.Count == 0) return;
+        var stale = new List<GpsUserOverrides.Entry>();
+        GpsUserOverrides.Apply(document, profile, list, stale);
+        foreach (var entry in stale)
+            Debug.LogWarning("Eigener GPS-Wert passt nicht mehr zum Profil und wurde entfernt: " + entry.record + " / " + entry.path +
+                " = " + GpsUserOverrides.Describe(entry.value) + " (alte Datei: " + GpsUserOverrides.FilePath + ".bak)");
+        var effective = GpsUserOverrides.Diff(document, ShippedDocument(), profile);
+        if (stale.Count > 0 || effective.Count != list.Count)
+        {
+            int same = list.Count - stale.Count - effective.Count;
+            if (same > 0) Debug.Log(same + " eigene GPS-Werte entsprechen jetzt dem Standard und wurden aus der Überschreibung entfernt.");
+            try { GpsUserOverrides.Write(effective); } catch (Exception ex) { Warning = "Eigene GPS-Werte speichern fehlgeschlagen: " + ex.Message; }
+        }
+    }
+    // Nach einer Aktualisierung von main: Profil neu einlesen, eigene Werte wieder darüberlegen.
+    public static void ReloadFromProfile()
+    {
+        CommitPendingNow();
+        pendingCommits.Clear(); document = null; savedJson = null; shippedJson = null;
+        EnsureLoaded(); ApplyAssets();
+        if (!Application.isPlaying) ApplyLoadedComponents();
+        Changed?.Invoke();
+    }
+    // Setzt Felder auf die Standardwerte des Profils zurück und speichert nur diese Felder.
+    public static bool ResetToDefaults(IEnumerable<(string key, string field)> fields, out string error)
+    {
+        error = null;
+        var shipped = ShippedDocument(); var list = fields.ToList();
+        foreach (var (key, field) in list)
+        {
+            GpsValue node;
+            if (key == "preferences" || key == "tests")
+            {
+                object target = key == "preferences" ? shipped.preferences : shipped.tests;
+                node = GpsCodec.Read(field, GpsCodec.MemberType(target.GetType(), field), GpsCodec.Get(target, field), Profile.Key);
+            }
+            else node = shipped.records.Find(record => record.key == key)?.fields.Find(value => value.name == field)?.Copy();
+            if (node != null && !SetValue(key, node, out error)) return false;
+        }
+        pendingCommits.RemoveAll(list.Contains);
+        if (!CommitFields(list, out error)) return false;
+        Changed?.Invoke(); return true;
+    }
 #endif
     public static bool IsValidOverride(GpsRecord record, GpsValue node)
     {
@@ -128,12 +188,14 @@ public static class GpsSettings
     public static void UseProfile(GpsProfile source, GpsDocument data)
     {
         profile = source; document = data; shippedJson = source ? source.documentJson : null;
-        savedJson = JsonUtility.ToJson(data); Warning = null; dirty=false;
+        savedJson = JsonUtility.ToJson(data); Warning = null; dirty=false; pendingCommits.Clear();
     }
     public static void ReloadCommitted()
     {
 #if UNITY_EDITOR
         profile = Resources.Load<GpsProfile>(ResourceName);
+        // Mit Überschreibungs-Schicht bleibt das Profil unverändert; der gespeicherte Stand kommt aus Profil + Datei.
+        if (GpsUserOverrides.Active) { Reload(); return; }
         string json = UnityEditor.SessionState.GetString("GPS.Committed", profile ? profile.documentJson : "");
         if (profile && !string.IsNullOrEmpty(json)) profile.documentJson = AssetJson(JsonUtility.FromJson<GpsDocument>(json));
 #endif
@@ -180,7 +242,8 @@ public static class GpsSettings
         var previous=GetValue(key,node.name);
         if (previous!=null && JsonUtility.ToJson(previous)==JsonUtility.ToJson(node)) return true;
 #if UNITY_EDITOR
-        if (!Application.isPlaying && profile) UnityEditor.Undo.RecordObject(profile, "GPS ändern");
+        bool writeThrough = !Application.isPlaying && profile && !GpsUserOverrides.Active;
+        if (writeThrough) UnityEditor.Undo.RecordObject(profile, "GPS ändern");
 #endif
         if (key == "preferences" || key == "tests") GpsCodec.Set(key == "preferences" ? Preferences : (object)Tests, node.name, GpsCodec.Write(node, Profile.Resolve));
         else
@@ -198,7 +261,7 @@ public static class GpsSettings
         }
         if (key == "tests") ApplyTestConfiguration();
 #if UNITY_EDITOR
-        if (!Application.isPlaying && profile)
+        if (writeThrough)
         { profile.documentJson = AssetJson(document); UnityEditor.EditorUtility.SetDirty(profile); }
 #endif
         dirty=true;
@@ -226,20 +289,63 @@ public static class GpsSettings
     }
     public static bool Save(out string error)
     {
-        if (!ValidateDocument(Document, out error)) return false;
-        if (!Persist(document,out error)) return false;
-        savedJson = JsonUtility.ToJson(document); Warning = null; dirty=false;
-        Saved?.Invoke(); Changed?.Invoke(); return true;
+        pendingCommits.Clear();
+        if (!Commit(Document, out error)) return false;
+        Changed?.Invoke(); return true;
     }
     public static bool SavePreference(string field, out string error)
     {
         if (!GpsSchema.Fields(typeof(GpsPreferences)).Any(spec=>spec.name==field)) { error="Unbekannte GPS-Einstellung."; return false; }
-        var committed=JsonUtility.FromJson<GpsDocument>(CommittedJson);
-        var node=GpsCodec.Read(field,GpsCodec.MemberType(typeof(GpsPreferences),field),GpsCodec.Get(Preferences,field),Profile.Key);
-        GpsCodec.Set(committed.preferences,field,GpsCodec.Write(node,Profile.Resolve));
-        if (!ValidateDocument(committed,out error) || !Persist(committed,out error)) return false;
-        savedJson=JsonUtility.ToJson(committed);Warning=null;dirty=savedJson!=JsonUtility.ToJson(document);
-        Saved?.Invoke();Changed?.Invoke();return true;
+        if (!CommitFields(new[] { ("preferences", field) }, out error)) return false;
+        Changed?.Invoke(); return true;
+    }
+    // Debug-menu edit: applies like SetValue and is stored for good a moment later, so it survives play-mode and editor restarts.
+    public static bool SetValueAndCommit(string key, GpsValue node, out string error)
+    {
+        if (!SetValue(key, node, out error)) return false;
+        QueueCommit(key, node.name);
+        return true;
+    }
+    public static void QueueCommit(string key, string field)
+    {
+        if (!CanAutoCommit || string.IsNullOrEmpty(key) || string.IsNullOrEmpty(field)) return;
+        if (!pendingCommits.Contains((key, field))) pendingCommits.Add((key, field));
+        commitAt = Time.realtimeSinceStartupAsDouble + CommitDelaySeconds;
+    }
+    public static bool HasPendingCommits => pendingCommits.Count > 0;
+    public static void CommitPending() { if (pendingCommits.Count > 0 && Time.realtimeSinceStartupAsDouble >= commitAt) CommitPendingNow(); }
+    public static void CommitPendingNow()
+    {
+        if (pendingCommits.Count == 0) return;
+        var fields = pendingCommits.ToArray(); pendingCommits.Clear();
+        if (document == null || !CanAutoCommit) return;
+        // Edit mode writes every change through to the asset already, so the whole document is the user's state there.
+        // In play mode only the edited fields are stored: runtime-only changes stay temporary as before.
+        bool ok = Application.isPlaying ? CommitFields(fields, out string error) : Commit(document, out error);
+        if (!ok) { Warning = error; Debug.LogWarning(error); }
+    }
+    // Copies the current values of the given fields onto the committed state and persists only that.
+    public static bool CommitFields(IEnumerable<(string key, string field)> fields, out string error)
+    {
+        var committed = JsonUtility.FromJson<GpsDocument>(CommittedJson);
+        foreach (var (key, field) in fields)
+        {
+            var node = GetValue(key, field); if (node == null) continue;
+            if (key == "preferences" || key == "tests")
+                GpsCodec.Set(key == "preferences" ? committed.preferences : (object)committed.tests, field, GpsCodec.Write(node, Profile.Resolve));
+            else
+            {
+                int index = committed.records.Find(record => record.key == key)?.fields.FindIndex(value => value.name == field) ?? -1;
+                if (index >= 0) committed.records.Find(record => record.key == key).fields[index] = node;
+            }
+        }
+        return Commit(committed, out error);
+    }
+    static bool Commit(GpsDocument data, out string error)
+    {
+        if (!ValidateDocument(data, out error) || !Persist(data, out error)) return false;
+        savedJson = JsonUtility.ToJson(data); Warning = null; dirty = savedJson != JsonUtility.ToJson(document);
+        Saved?.Invoke(); return true;
     }
     public static void PreviewMasterVolume(float value)
     {
@@ -264,6 +370,15 @@ public static class GpsSettings
         {
 #if UNITY_EDITOR
             if (!profile) throw new InvalidOperationException("GPS-Profil fehlt.");
+            if (GpsUserOverrides.Active)
+            {
+                // Benutzerordner: nur die Abweichungen vom Profil in die nicht versionierte Datei, das Profil bleibt unberührt.
+                var entries = GpsUserOverrides.Diff(data, ShippedDocument(), profile);
+                GpsUserOverrides.Write(GpsUserOverrides.Hold ? GpsUserOverrides.Merge(entries, GpsUserOverrides.Entries) : entries);
+                SavePersonalPreferences(data);
+                UnityEditor.SessionState.SetString("GPS.Committed", json);
+                return true;
+            }
             UnityEditor.Undo.RecordObject(profile, "GPS speichern");
             profile.documentJson = AssetJson(data);
             SavePersonalPreferences(data);

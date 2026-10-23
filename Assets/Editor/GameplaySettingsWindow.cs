@@ -24,12 +24,12 @@ public class GameplaySettingsWindow : EditorWindow
     [MenuItem("Mining Game/Debug Settings")]
     public static void Open()
     { var window = GetWindow<GameplaySettingsWindow>("Debug Settings"); window.minSize = new Vector2(760,640); window.Show(); }
-    void OnEnable() { titleContent = new GUIContent("Debug Settings"); view = new GpsEditorView(this); GpsSettings.Changed += Repaint; EditorApplication.playModeStateChanged += PlayModeChanged; }
-    void PlayModeChanged(PlayModeStateChange state) { GpsSettings.Changed -= Repaint; GpsSettings.Changed += Repaint; Repaint(); }
+    void OnEnable() { titleContent = new GUIContent("Debug Settings"); view = new GpsEditorView(this); GpsSettings.Changed += Repaint; GpsSettings.Saved += Repaint; EditorApplication.playModeStateChanged += PlayModeChanged; }
+    void PlayModeChanged(PlayModeStateChange state) { GpsSettings.Changed -= Repaint; GpsSettings.Changed += Repaint; GpsSettings.Saved -= Repaint; GpsSettings.Saved += Repaint; Repaint(); }
     void OnDisable()
     {
         HomeAudioEditorPreview.Stop();
-        GpsSettings.Changed -= Repaint;
+        GpsSettings.Changed -= Repaint; GpsSettings.Saved -= Repaint;
         EditorApplication.playModeStateChanged -= PlayModeChanged;
         foreach (var curve in curves.Values) if (curve) DestroyImmediate(curve);
         curves.Clear();
@@ -63,6 +63,19 @@ public class GameplaySettingsWindow : EditorWindow
             { if(!Application.isPlaying)EditorApplication.delayCall+=GpsProfileEditor.Install; Repaint(); }
             var refresh=GUILayoutUtility.GetLastRect();GpsEditorTheme.Icon("Aktualisieren",new Rect(refresh.x+13,refresh.y+7,17,17),GpsEditorTheme.Ink);
             GUILayout.FlexibleSpace();
+            if(GpsUserOverrides.Active)
+            {
+                // Benutzerordner: eigene Werte liegen in UserSettings/GpsOverrides.json, nicht im versionierten Profil.
+                int count=GpsUserOverrides.Count;
+                GUILayout.Label(count==0?"Keine eigenen Werte":count+(count==1?" eigener Wert":" eigene Werte")+" (nur lokal)",Theme.Small,GUILayout.Height(30));
+                using(new EditorGUI.DisabledScope(count==0))
+                {
+                    if(GUILayout.Button("Zurücksetzen",Theme.Tab,GUILayout.Width(130),GUILayout.Height(30)) &&
+                        EditorUtility.DisplayDialog("Eigene GPS-Werte","Alle "+count+" eigenen Werte auf die Standardwerte von main zurücksetzen?\nDie bisherige Datei bleibt als GpsOverrides.json.bak erhalten.","Zurücksetzen","Abbrechen"))
+                    { GUI.FocusControl(null);status=GpsSettings.ResetToDefaults(GpsUserOverrides.OverriddenRoots().ToList(),out string error)?"Eigene Werte zurückgesetzt":error; }
+                    if(GUILayout.Button("Als Standard vorschlagen",Theme.Tab,GUILayout.Width(190),GUILayout.Height(30))) GpsUserOverrides.Propose?.Invoke();
+                }
+            }
         }
         GUILayout.Space(10);
         int columns=Mathf.Clamp((int)((position.width-52)/165),1,8);

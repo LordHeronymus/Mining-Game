@@ -1,0 +1,12 @@
+{
+  "checks": [
+    { "name": "ChallengeCoreChecks" },
+    { "name": "ChallengeReworkChecks" },
+    { "name": "ChallengeSettingsChecks" },
+    { "name": "ChallengeMigrationChecks" },
+    { "name": "ChallengePanelPreviewChecks" },
+    { "name": "MetaProgressionCoreChecks" },
+    { "name": "ProgressionChecks" },
+    { "name": "MetaCellLedgerChecks" }
+  ]
+}

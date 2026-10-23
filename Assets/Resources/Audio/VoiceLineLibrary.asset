@@ -1,0 +1,569 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4661c13d9e68474c8a5d0278877c42f5, type: 3}
+  m_Name: VoiceLineLibrary
+  m_EditorClassIdentifier: 
+  sets:
+  - trigger: 0
+    lines:
+    - id: Energie_33_01_Noch_gehts
+      takes:
+      - clip: {fileID: 8300000, guid: fdba67228fc54eb2b0827064d1bd26ef, type: 3}
+        gain: 0.944
+      - clip: {fileID: 8300000, guid: f490cae5afcc4c94af3813c2fcd17e1f, type: 3}
+        gain: 0.966
+    - id: Energie_33_02_Wenig_Energie
+      takes:
+      - clip: {fileID: 8300000, guid: 20f45abd082d489d82f3fe5fd8ecabdd, type: 3}
+        gain: 0.716
+      - clip: {fileID: 8300000, guid: f2d3b140e03d473aac94f2f1f2ac66a9, type: 3}
+        gain: 0.75
+    - id: Energie_33_03_Rueckweg
+      takes:
+      - clip: {fileID: 8300000, guid: 753f135d045d4dbda9c8a6c291740ef0, type: 3}
+        gain: 0.759
+      - clip: {fileID: 8300000, guid: be77f74dd1314ac8a44111d3044474e8, type: 3}
+        gain: 0.813
+  - trigger: 1
+    lines:
+    - id: Energie_15_01_Jetzt_wirds_knapp
+      takes:
+      - clip: {fileID: 8300000, guid: ba7afcabe9c04e85962774941f886f95, type: 3}
+        gain: 0.75
+      - clip: {fileID: 8300000, guid: efe6002b793e4ec2898d80abf9648fb2, type: 3}
+        gain: 0.871
+    - id: Energie_15_02_Muede_Beine
+      takes:
+      - clip: {fileID: 8300000, guid: 806005381db34160992fdc5b36550e6d, type: 3}
+        gain: 0.977
+      - clip: {fileID: 8300000, guid: 062abc174cf8487f9659cce35b9898aa, type: 3}
+        gain: 1
+    - id: Energie_15_03_Paar_Schritte
+      takes:
+      - clip: {fileID: 8300000, guid: 456500716e9645bebcc26de4b9fdb125, type: 3}
+        gain: 1
+      - clip: {fileID: 8300000, guid: aee4636b352e4072b0454eec29fdec13, type: 3}
+        gain: 1
+    - id: Energie_15_04_Dringend_Energie
+      takes:
+      - clip: {fileID: 8300000, guid: fe4d50fb48de4695b075a74e364a3f12, type: 3}
+        gain: 0.617
+      - clip: {fileID: 8300000, guid: 018d90d7b0bd4263bc2cdbbb0e213cc9, type: 3}
+        gain: 0.708
+  - trigger: 2
+    lines:
+    - id: Energie_Aufgefuellt_01_Das_tut_gut
+      takes:
+      - clip: {fileID: 8300000, guid: 17505be9c1894bff87efafbfb4006ea5, type: 3}
+        gain: 1
+    - id: Energie_Aufgefuellt_02_Wieder_Kraft
+      takes:
+      - clip: {fileID: 8300000, guid: 9cd2f972335d490d9a7ffc7e29357c2f, type: 3}
+        gain: 0.716
+      - clip: {fileID: 8300000, guid: 052ad94e6fb14ed1968ce43d54e5b189, type: 3}
+        gain: 0.785
+    - id: Energie_Aufgefuellt_03_Weiter_gehts
+      takes:
+      - clip: {fileID: 8300000, guid: 25a7f16efb4e4087982138852704c959, type: 3}
+        gain: 0.624
+      - clip: {fileID: 8300000, guid: 09f42dfbf628404bb0dc58997721d671, type: 3}
+        gain: 0.767
+    - id: Energie_Aufgefuellt_04_Leichter_von_der_Hand
+      takes:
+      - clip: {fileID: 8300000, guid: 452e61053468420dbaf6b00806048fd9, type: 3}
+        gain: 0.638
+      - clip: {fileID: 8300000, guid: ca562498c5a648368100cd20e00c2a3d, type: 3}
+        gain: 0.832
+    - id: Energie_Aufgefuellt_05_Neue_Schaetze
+      takes:
+      - clip: {fileID: 8300000, guid: c1bd7f253ff84df0825814b3ac59f191, type: 3}
+        gain: 0.55
+      - clip: {fileID: 8300000, guid: 89826eb08f104af0b2205da7d7f24dd8, type: 3}
+        gain: 0.603
+    - id: Energie_Aufgefuellt_06_Was_da_unten_wartet
+      takes:
+      - clip: {fileID: 8300000, guid: 37a45304189246cf933f2198d88bca8c, type: 3}
+        gain: 0.596
+      - clip: {fileID: 8300000, guid: 906d05cc3581415db7ae23a26f61b48e, type: 3}
+        gain: 0.617
+  - trigger: 3
+    lines:
+    - id: Traglast_Stufe1_01_Gut_gefuellt
+      takes:
+      - clip: {fileID: 8300000, guid: 6906141ebf6f40b8814bbb03827c0b3d, type: 3}
+        gain: 0.851
+      - clip: {fileID: 8300000, guid: 8c66256e6127461ea2839b3cb130df5e, type: 3}
+        gain: 0.841
+    - id: Traglast_Stufe1_02_Traegt_sich_gut
+      takes:
+      - clip: {fileID: 8300000, guid: c109e8205b99483d9fe279cd5130f0c5, type: 3}
+        gain: 0.75
+      - clip: {fileID: 8300000, guid: 98728c65266f41b59cd3dd58b092ee90, type: 3}
+        gain: 0.851
+    - id: Traglast_Stufe1_03_Etwas_langsamer
+      takes:
+      - clip: {fileID: 8300000, guid: 1e79845b81934381ace84b85fca1608a, type: 3}
+        gain: 0.741
+      - clip: {fileID: 8300000, guid: 3d3d51ecd91a480a99d3cdeb4b6c43f6, type: 3}
+        gain: 0.977
+    - id: Traglast_Stufe1_04_Jeder_Stein
+      takes:
+      - clip: {fileID: 8300000, guid: 4c4adc9ef1974e98bb39a33b5385e327, type: 3}
+        gain: 0.733
+      - clip: {fileID: 8300000, guid: 5bd224b3dd5547c2b78c4b5d138a20a2, type: 3}
+        gain: 1
+    - id: Traglast_Stufe1_05_Passt_noch
+      takes:
+      - clip: {fileID: 8300000, guid: 2b9cd77764b745219817612302c85b9f, type: 3}
+        gain: 0.861
+      - clip: {fileID: 8300000, guid: 9ed25b9ccc4349b3bc50bea81056f95b, type: 3}
+        gain: 0.767
+  - trigger: 4
+    lines:
+    - id: Traglast_Stufe2_01_Rucksack_schwer
+      takes:
+      - clip: {fileID: 8300000, guid: 59f1f9c4f52d4dba9cf8f35940b85fae, type: 3}
+        gain: 1
+      - clip: {fileID: 8300000, guid: ea843e61fc144ed88e81e8b790f36500, type: 3}
+        gain: 1
+    - id: Traglast_Stufe2_02_Kaum_vorankommen
+      takes:
+      - clip: {fileID: 8300000, guid: 24d3fc22899a4db2b373475da213a229, type: 3}
+        gain: 0.684
+      - clip: {fileID: 8300000, guid: dac64a587f6f41d089273b7aa19ceb8d, type: 3}
+        gain: 0.861
+    - id: Traglast_Stufe2_03_Erze_verkaufen
+      takes:
+      - clip: {fileID: 8300000, guid: bd664e49a12b42b9aec56ee4aa02040b, type: 3}
+        gain: 0.861
+      - clip: {fileID: 8300000, guid: 894247c4f46b4973aa5aa2361bf7768e, type: 3}
+        gain: 0.989
+    - id: Traglast_Stufe2_04_Nicht_vom_Fleck
+      takes:
+      - clip: {fileID: 8300000, guid: 307ede7585544cff9beb5f323e2b6636, type: 3}
+        gain: 0.596
+      - clip: {fileID: 8300000, guid: d62b236f8b0143eb8635554f1c66a021, type: 3}
+        gain: 0.61
+    - id: Traglast_Stufe2_05_Jeden_Stein
+      takes:
+      - clip: {fileID: 8300000, guid: 2e9572c07263400d8fef2d6b101e6231, type: 3}
+        gain: 0.767
+      - clip: {fileID: 8300000, guid: 365f43e9fa9b440ab21645969859f1aa, type: 3}
+        gain: 0.912
+    - id: Traglast_Stufe2_06_Rucksack_leichter
+      takes:
+      - clip: {fileID: 8300000, guid: 3fb727a9831f4a5a8e34c490bf92ad95, type: 3}
+        gain: 0.813
+      - clip: {fileID: 8300000, guid: 22db81c2d37b4d02a75e14c971267507, type: 3}
+        gain: 0.912
+  - trigger: 5
+    lines:
+    - id: Sturz_Klein_01_Bloeder_Absatz
+      takes:
+      - clip: {fileID: 8300000, guid: 877efd329d4343b098936022792920e3, type: 3}
+        gain: 0.871
+      - clip: {fileID: 8300000, guid: ebc6553a56bf46cb8ffcae157d2c54c4, type: 3}
+        gain: 1
+    - id: Sturz_Klein_02_Unsanft
+      takes:
+      - clip: {fileID: 8300000, guid: f52d32b1bd09459eb86ed94581c81297, type: 3}
+        gain: 1
+      - clip: {fileID: 8300000, guid: b40bcf7841de4f24a0eca650b725ec29, type: 3}
+        gain: 0.989
+    - id: Sturz_Klein_03_Besser_aufpassen
+      takes:
+      - clip: {fileID: 8300000, guid: 2ccd017321fb4fb6ad9e0122aee56215, type: 3}
+        gain: 1
+      - clip: {fileID: 8300000, guid: 8a63375c591a49a49209520d6ab1f444, type: 3}
+        gain: 1
+    - id: Sturz_Klein_04_Aufs_Knie
+      takes:
+      - clip: {fileID: 8300000, guid: 47da6f2db27345e891989459220911a0, type: 3}
+        gain: 0.75
+    - id: Sturz_Klein_05_Schritt_unterschaetzt
+      takes:
+      - clip: {fileID: 8300000, guid: 7af69f76b85a415683062c7ea751d064, type: 3}
+        gain: 0.944
+      - clip: {fileID: 8300000, guid: ae4b70da9f234a9291b97bfaff6eb4ae, type: 3}
+        gain: 1
+  - trigger: 6
+    lines:
+    - id: Sturz_Gross_01_Ordentlich_wehgetan
+      takes:
+      - clip: {fileID: 8300000, guid: 45ac1fa9dc9645f79485f0880b8f161e, type: 3}
+        gain: 0.944
+      - clip: {fileID: 8300000, guid: bb0844ae41f3467785ee3349b82f04d5, type: 3}
+        gain: 1
+    - id: Sturz_Gross_02_Zu_tief
+      takes:
+      - clip: {fileID: 8300000, guid: 4831b946e56d423695ab7abb874fe832, type: 3}
+        gain: 1
+      - clip: {fileID: 8300000, guid: 0c0566ae913240d3a7de593edc07473d, type: 3}
+        gain: 1
+    - id: Sturz_Gross_03_Einen_Moment
+      takes:
+      - clip: {fileID: 8300000, guid: c3cb1127d86941b1b9e17e73c9e46a7c, type: 3}
+        gain: 1
+      - clip: {fileID: 8300000, guid: 134d719ad35242ff961d9dc6f3c7837d, type: 3}
+        gain: 0.989
+    - id: Sturz_Gross_04_Viel_zu_knapp
+      takes:
+      - clip: {fileID: 8300000, guid: 67123485db6e43d79f7cf1c3a9930226, type: 3}
+        gain: 0.891
+      - clip: {fileID: 8300000, guid: fee4f931d8da46bd9e7a1b3faac986a9, type: 3}
+        gain: 1
+    - id: Sturz_Gross_05_Noch_spueren
+      takes:
+      - clip: {fileID: 8300000, guid: c589e71cf1c942f4bd96ad6406defee4, type: 3}
+        gain: 0.977
+      - clip: {fileID: 8300000, guid: f8be99bae14b44e98c23dd7ec827b86a, type: 3}
+        gain: 1
+    - id: Sturz_Gross_06_Auf_die_Beine
+      takes:
+      - clip: {fileID: 8300000, guid: 3df57542ce0647e4bfb70302cc432da6, type: 3}
+        gain: 0.881
+      - clip: {fileID: 8300000, guid: 6ee92b1d786b4f9ebfad0de9bf22d306, type: 3}
+        gain: 0.804
+  - trigger: 7
+    lines:
+    - id: Shop_Verkauf_01_Die_Schlepperei_hat_sich_gelohnt
+      takes:
+      - clip: {fileID: 8300000, guid: ae8d708d2ea7428286b48900415804c6, type: 3}
+        gain: 0.692
+      - clip: {fileID: 8300000, guid: e0cbbc1347d6411186acde313ca2cfbb, type: 3}
+        gain: 0.684
+    - id: Shop_Verkauf_02_Ein_guter_Fang_heute
+      takes:
+      - clip: {fileID: 8300000, guid: 690c7f80c4a24cf6b43a54878028c8c4, type: 3}
+        gain: 0.955
+      - clip: {fileID: 8300000, guid: fa37c409a44147639020833b9809ce5d, type: 3}
+        gain: 0.804
+    - id: Shop_Verkauf_03_Damit_laesst_sich_weiterarbeiten
+      takes:
+      - clip: {fileID: 8300000, guid: 6a448d0991644d1d96337b4f9c0009e5, type: 3}
+        gain: 0.881
+      - clip: {fileID: 8300000, guid: 65933aab123443108ebed7206da54918, type: 3}
+        gain: 0.822
+      - clip: {fileID: 8300000, guid: 2db93dfc93c543aeb5490023a1e13627, type: 3}
+        gain: 0.804
+    - id: Shop_Verkauf_04_Der_Rucksack_ist_wieder_leichter
+      takes:
+      - clip: {fileID: 8300000, guid: 1e9e79294eca40d88cba67a8e5f419a7, type: 3}
+        gain: 0.955
+      - clip: {fileID: 8300000, guid: 54431c39185b453283c47da69fa63c33, type: 3}
+        gain: 0.684
+  - trigger: 8
+    lines:
+    - id: Shop_Bauplan_01_Bauplan_1
+      takes:
+      - clip: {fileID: 8300000, guid: b04459033c1f4b78bb0b2f138924382a, type: 3}
+        gain: 0.813
+    - id: Shop_Bauplan_02_Bauplan_2
+      takes:
+      - clip: {fileID: 8300000, guid: 743edf35ffa44dfaba4f2fb596b84937, type: 3}
+        gain: 0.832
+    - id: Shop_Bauplan_03_Bauplan_3
+      takes:
+      - clip: {fileID: 8300000, guid: 06b728349d8c495ba11e4ad2941fe1f7, type: 3}
+        gain: 1
+    - id: Shop_Bauplan_04_Bauplan_4
+      takes:
+      - clip: {fileID: 8300000, guid: 0557efc9fad64a98b3a1d613af293d60, type: 3}
+        gain: 0.684
+    - id: Shop_Bauplan_05_Bauplan_5
+      takes:
+      - clip: {fileID: 8300000, guid: 7c103fddd500426dba052a31d445a1f8, type: 3}
+        gain: 0.75
+    - id: Shop_Bauplan_06_Bauplan_6
+      takes:
+      - clip: {fileID: 8300000, guid: 8a10048735b1493c9ec4604f48c5722d, type: 3}
+        gain: 0.832
+    - id: Shop_Bauplan_07_Bauplan_7
+      takes:
+      - clip: {fileID: 8300000, guid: f0d7bfd0a79743a8a084c8352f2c32ea, type: 3}
+        gain: 0.881
+    - id: Shop_Bauplan_08_Bauplan_8
+      takes:
+      - clip: {fileID: 8300000, guid: a44106828bf141e2bf4a17b6a7ce4a71, type: 3}
+        gain: 0.692
+    - id: Shop_Bauplan_09_Bauplan_9
+      takes:
+      - clip: {fileID: 8300000, guid: 8323a27c1f334982b3276920da79f92c, type: 3}
+        gain: 0.741
+  - trigger: 9
+    lines:
+    - id: Werkbank_Axt_01_Holzfaellen
+      takes:
+      - clip: {fileID: 8300000, guid: b83a3d64039748118a9c773a4c2adcc7, type: 3}
+        gain: 0.661
+      - clip: {fileID: 8300000, guid: 9f479b55cae645938af45db5b74b48ce, type: 3}
+        gain: 0.794
+    - id: Werkbank_Axt_02_Richtiges_Werkzeug
+      takes:
+      - clip: {fileID: 8300000, guid: 11537189fd7943c685dd680d29593887, type: 3}
+        gain: 0.692
+      - clip: {fileID: 8300000, guid: 25ec9e748faf47bd96535827d88f1a40, type: 3}
+        gain: 0.75
+    - id: Werkbank_Axt_03_Ab_in_den_Wald
+      takes:
+      - clip: {fileID: 8300000, guid: d9a5932586c6475f867ffaaf0ea02e46, type: 3}
+        gain: 0.61
+      - clip: {fileID: 8300000, guid: 4758eb9b1469498887bbcc48c07194c7, type: 3}
+        gain: 0.638
+    - id: Werkbank_Axt_04_Spitzhacke_Pause
+      takes:
+      - clip: {fileID: 8300000, guid: 09a191e95ec14274bf8b351e9f732dbc, type: 3}
+        gain: 0.668
+      - clip: {fileID: 8300000, guid: 7b069269c6154992b2c3e02533a84483, type: 3}
+        gain: 0.785
+    - id: Werkbank_Axt_05_Ordentlich_Holz
+      takes:
+      - clip: {fileID: 8300000, guid: b83262ec83794a06902b8136fb488562, type: 3}
+        gain: 0.692
+      - clip: {fileID: 8300000, guid: 29d94d26c67042f7870170fef458a399, type: 3}
+        gain: 0.776
+    - id: Werkbank_Axt_06_Dreimal_so_schnell
+      takes:
+      - clip: {fileID: 8300000, guid: 13d8d405382a4b3c8ed1260e142ac391, type: 3}
+        gain: 0.631
+      - clip: {fileID: 8300000, guid: 12f849611aed4890bad66f0917521b89, type: 3}
+        gain: 0.7
+  - trigger: 10
+    lines:
+    - id: Werkbank_Sense_01_Gras_schneiden
+      takes:
+      - clip: {fileID: 8300000, guid: 4e39cc4d7356405b93d7b3722e101466, type: 3}
+        gain: 0.692
+      - clip: {fileID: 8300000, guid: cb7eadc195ca4b8eb1a672b30360b734, type: 3}
+        gain: 0.785
+    - id: Werkbank_Sense_02_Pflanzenfasern
+      takes:
+      - clip: {fileID: 8300000, guid: 865082e345b64860b044dfc75eb6ae85, type: 3}
+        gain: 0.653
+      - clip: {fileID: 8300000, guid: 9db6ea7dfbeb4a3b8bd99a673586f26c, type: 3}
+        gain: 0.794
+    - id: Werkbank_Sense_03_Ab_auf_die_Wiese
+      takes:
+      - clip: {fileID: 8300000, guid: a70c5be8b44246988a6d011a214868d7, type: 3}
+        gain: 0.668
+      - clip: {fileID: 8300000, guid: 27e7ba2d53024a8b90705dcecd9de98f, type: 3}
+        gain: 0.759
+    - id: Werkbank_Sense_04_Fasern_verarbeiten
+      takes:
+      - clip: {fileID: 8300000, guid: ea3c1b452f784571a237ec67e370c0e1, type: 3}
+        gain: 0.891
+      - clip: {fileID: 8300000, guid: 7b418e740efe407ba338fe719d8ffd80, type: 3}
+        gain: 1
+    - id: Werkbank_Sense_05_Hohes_Gras
+      takes:
+      - clip: {fileID: 8300000, guid: de8849cd0fd64f06b0a5f24a5e9fc445, type: 3}
+        gain: 0.668
+      - clip: {fileID: 8300000, guid: 1fe7013a9b6c4e169e4579144680b506, type: 3}
+        gain: 0.75
+    - id: Werkbank_Sense_06_Material_zum_Weiterbauen
+      takes:
+      - clip: {fileID: 8300000, guid: 3d9c7c5a3e644d9085d3adbb04a836ca, type: 3}
+        gain: 0.631
+      - clip: {fileID: 8300000, guid: e2a20c7da8174ab0922a165896b63d9d, type: 3}
+        gain: 0.7
+  - trigger: 11
+    lines:
+    - id: Werkbank_MedKit_01_Auf_die_Beine
+      takes:
+      - clip: {fileID: 8300000, guid: c0a48b2d88774a4ba4404d3c113b8e7f, type: 3}
+        gain: 0.692
+      - clip: {fileID: 8300000, guid: d252cd9b812649afb954a1eb020da6f4, type: 3}
+        gain: 0.759
+    - id: Werkbank_MedKit_02_Ausruhen_reicht_nicht
+      takes:
+      - clip: {fileID: 8300000, guid: c32c2cabf85a4160af94cd70302a025c, type: 3}
+        gain: 0.785
+    - id: Werkbank_MedKit_03_Lieber_einpacken
+      takes:
+      - clip: {fileID: 8300000, guid: 7a80d346c82b4ac0a2ba20b1d0a52b97, type: 3}
+        gain: 0.684
+      - clip: {fileID: 8300000, guid: e5dc83abf3e64011aac0660cab2eeef9, type: 3}
+        gain: 0.759
+    - id: Werkbank_MedKit_04_Verletzungen_versorgen
+      takes:
+      - clip: {fileID: 8300000, guid: 0c46b2f63bdd4fb8bb6e26b0a81a5629, type: 3}
+        gain: 0.653
+      - clip: {fileID: 8300000, guid: 94581577c6984c368da834ea783f7d57, type: 3}
+        gain: 0.759
+    - id: Werkbank_MedKit_05_Besser_vorbereitet
+      takes:
+      - clip: {fileID: 8300000, guid: 2b62fbfd37004f6fb9ed54741f2f7da8, type: 3}
+        gain: 0.75
+      - clip: {fileID: 8300000, guid: 06d84bab9ec444519501f714ebcecd52, type: 3}
+        gain: 0.776
+    - id: Werkbank_MedKit_06_Gutes_Gefuehl
+      takes:
+      - clip: {fileID: 8300000, guid: 381c3a2afd1544fa877bbeacead9a6a1, type: 3}
+        gain: 0.977
+      - clip: {fileID: 8300000, guid: 6d67f2a0d9c442bf96fae1e70610e4aa, type: 3}
+        gain: 0.871
+  - trigger: 12
+    lines:
+    - id: Werkbank_Fackeln_01_Wo_ich_hintrete
+      takes:
+      - clip: {fileID: 8300000, guid: 94a8b56d30804474aed1bf49836e8b46, type: 3}
+        gain: 0.661
+      - clip: {fileID: 8300000, guid: 504697663db447e38cb4bba3a6fdfa6f, type: 3}
+        gain: 0.708
+    - id: Werkbank_Fackeln_02_Mehr_Fackeln
+      takes:
+      - clip: {fileID: 8300000, guid: 016e9c4562394ec5b971d6ca3c8f7f31, type: 3}
+        gain: 0.638
+      - clip: {fileID: 8300000, guid: 4392ceabc6c541548db97b54eb02833b, type: 3}
+        gain: 0.767
+    - id: Werkbank_Fackeln_03_Was_sich_verbirgt
+      takes:
+      - clip: {fileID: 8300000, guid: 0b944d5057bf445f9778f0b33d832306, type: 3}
+        gain: 0.944
+      - clip: {fileID: 8300000, guid: 0ee13d5df9524511a29282b96ca0b6b5, type: 3}
+        gain: 1
+    - id: Werkbank_Fackeln_04_Gemuetlicher
+      takes:
+      - clip: {fileID: 8300000, guid: 2d9236fd64804b9da6ae7d431a1a5c45, type: 3}
+        gain: 0.804
+      - clip: {fileID: 8300000, guid: 0e70724a625148d7a6b3490dd2a5de22, type: 3}
+        gain: 0.881
+  - trigger: 13
+    lines:
+    - id: Werkbank_Spitzhacke_01_Kann_sich_sehen_lassen
+      takes:
+      - clip: {fileID: 8300000, guid: 4e07439ab4aa457aa57ffdd2d5aa60ec, type: 3}
+        gain: 0.692
+      - clip: {fileID: 8300000, guid: 986a6c95b2b446d6a75a31cb788bc167, type: 3}
+        gain: 0.684
+    - id: Werkbank_Spitzhacke_02_Fels_an_den_Kragen
+      takes:
+      - clip: {fileID: 8300000, guid: ef4bbca835db4691a3334f9ae9b6f0a1, type: 3}
+        gain: 0.733
+      - clip: {fileID: 8300000, guid: 8ed908fd75284140be22fb1e9902b53b, type: 3}
+        gain: 0.813
+    - id: Werkbank_Spitzhacke_03_Liegt_gut_in_der_Hand
+      takes:
+      - clip: {fileID: 8300000, guid: e53d14bc6d5849529e9b38f92ce7d085, type: 3}
+        gain: 0.724
+      - clip: {fileID: 8300000, guid: 738a8a2c4ca4410bba95a4636babfcc8, type: 3}
+        gain: 0.684
+    - id: Werkbank_Spitzhacke_04_Ein_Stueck_tiefer
+      takes:
+      - clip: {fileID: 8300000, guid: 70ca6b74577a490da93052f57501770e, type: 3}
+        gain: 0.716
+      - clip: {fileID: 8300000, guid: 912150c1d7114257b1438e7cccef71e6, type: 3}
+        gain: 0.776
+    - id: Werkbank_Spitzhacke_05_Selbst_gebaut
+      takes:
+      - clip: {fileID: 8300000, guid: 385c287f7254468dbdde6c8c7f0f7594, type: 3}
+        gain: 0.871
+      - clip: {fileID: 8300000, guid: 50e5d98ab99048eebe24b50e7af72556, type: 3}
+        gain: 0.776
+    - id: Werkbank_Spitzhacke_06_Was_du_draufhast
+      takes:
+      - clip: {fileID: 8300000, guid: c7127402d38a4adba0ee53b5c77114aa, type: 3}
+        gain: 0.804
+      - clip: {fileID: 8300000, guid: a1f9953f885347ec912b21ece637d0a7, type: 3}
+        gain: 0.841
+  - trigger: 14
+    lines:
+    - id: Upgrade_Energie_01_Laenger_durchhalten
+      takes:
+      - clip: {fileID: 8300000, guid: c0caca46401549959b4ee6f04cb5f974, type: 3}
+        gain: 0.668
+      - clip: {fileID: 8300000, guid: 81cdbd1d48f5455f8f56e2ffd7382d5e, type: 3}
+        gain: 0.75
+    - id: Upgrade_Energie_02_Laengere_Touren
+      takes:
+      - clip: {fileID: 8300000, guid: 1a1171bbeddb49d3abea1272d5d909ab, type: 3}
+        gain: 0.624
+      - clip: {fileID: 8300000, guid: fd52fc29905b4d57aee7b88e64d6cd80, type: 3}
+        gain: 0.603
+    - id: Upgrade_Energie_03_Energie_reicht_laenger
+      takes:
+      - clip: {fileID: 8300000, guid: dfdad73b6930413bb839eb07dcc3492e, type: 3}
+        gain: 0.668
+      - clip: {fileID: 8300000, guid: 8521d0d0993f456cbc675829daa8014f, type: 3}
+        gain: 0.684
+    - id: Upgrade_Energie_04_Mehr_Schlaege
+      takes:
+      - clip: {fileID: 8300000, guid: fa01f71e737244e69f085674370481fb, type: 3}
+        gain: 0.684
+      - clip: {fileID: 8300000, guid: e53f33bc231043cbbed386c36b94c817, type: 3}
+        gain: 0.653
+    - id: Upgrade_Energie_05_Mehr_Ausdauer
+      takes:
+      - clip: {fileID: 8300000, guid: 4f9e1e0c3e9b4361bfbc8971b4d3a2da, type: 3}
+        gain: 0.7
+      - clip: {fileID: 8300000, guid: 056e05015a8342a0b286bb183716b37e, type: 3}
+        gain: 0.596
+    - id: Upgrade_Energie_06_Mehr_Zeit
+      takes:
+      - clip: {fileID: 8300000, guid: d9f2a138e01b4a4cb0c62d566a8fb2b4, type: 3}
+        gain: 0.653
+      - clip: {fileID: 8300000, guid: 2270d6fdd0d3474cb3a8887f0b125efd, type: 3}
+        gain: 0.741
+  - trigger: 15
+    lines:
+    - id: Upgrade_Traglast_01_Mehr_rein
+      takes:
+      - clip: {fileID: 8300000, guid: 8277f405a60841489e64ac426cc87a95, type: 3}
+        gain: 0.684
+      - clip: {fileID: 8300000, guid: 076612db68cd43959bd9eb66e79827ce, type: 3}
+        gain: 0.851
+    - id: Upgrade_Traglast_02_Mehr_heimbringen
+      takes:
+      - clip: {fileID: 8300000, guid: 962c1632d78a48f1b7cd89dc4ebf6e42, type: 3}
+        gain: 0.638
+      - clip: {fileID: 8300000, guid: e3611089909d46748bded7ae5098e56a, type: 3}
+        gain: 0.776
+    - id: Upgrade_Traglast_03_Gute_Funde
+      takes:
+      - clip: {fileID: 8300000, guid: 613d7c29b66842c9ac837674138bd679, type: 3}
+        gain: 0.684
+      - clip: {fileID: 8300000, guid: 3f99d6e95e6c48d1ae863dde71144f08, type: 3}
+        gain: 0.708
+    - id: Upgrade_Traglast_04_Weniger_schwer
+      takes:
+      - clip: {fileID: 8300000, guid: 8395a9259f6d4fa291114e54e9f2a1b0, type: 3}
+        gain: 0.661
+      - clip: {fileID: 8300000, guid: 55849213a31b4eb38c88750752c33fff, type: 3}
+        gain: 0.733
+    - id: Upgrade_Traglast_05_Ausflug
+      takes:
+      - clip: {fileID: 8300000, guid: af2d58a0e470480fab2c4f22a2c4dfb9, type: 3}
+        gain: 0.638
+      - clip: {fileID: 8300000, guid: d76f8ed315b94db59daa28beb1f38e81, type: 3}
+        gain: 0.776
+    - id: Upgrade_Traglast_06_Weniger_liegen_lassen
+      takes:
+      - clip: {fileID: 8300000, guid: 2302d50fd5ad4c818ed2e79428282370, type: 3}
+        gain: 0.624
+      - clip: {fileID: 8300000, guid: 9acc17dc274b4fea952c4bf90ce062b0, type: 3}
+        gain: 0.603
+  - trigger: 16
+    lines:
+    - id: Neue_Welt_01_Neue_Welt_A
+      takes:
+      - clip: {fileID: 8300000, guid: 5b97e3edef8f4f9f90c718f9f4936b0d, type: 3}
+        gain: 0.631
+      - clip: {fileID: 8300000, guid: 180ff0cc224344f1b981f0b0dc2fb085, type: 3}
+        gain: 0.61
+    - id: Neue_Welt_02_Neue_Welt_B
+      takes:
+      - clip: {fileID: 8300000, guid: 1a483dd7272541f3ab1d8d289cedb6f5, type: 3}
+        gain: 0.646
+    - id: Neue_Welt_03_Neue_Welt_C
+      takes:
+      - clip: {fileID: 8300000, guid: 4cc65fead7274702998642a3af57f601, type: 3}
+        gain: 0.638

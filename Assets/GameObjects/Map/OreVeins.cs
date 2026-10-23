@@ -133,16 +133,19 @@ public static class OreVeins
 
     // Distance from the actual boundary includes holes and competing ore types.
     // Normalize each connected vein separately to make its core richer than its rim.
-    public static OreRichness[] Build(Block[] blocks, int width, int height, int seed)
+    // With VeinRichnessSettings one share rule per vein thickness decides instead (VeinRichness); null keeps
+    // the previous fixed thresholds.
+    public static OreRichness[] Build(Block[] blocks, int width, int height, int seed,
+        VeinRichnessSettings rule = null)
     {
         OreRichness[] result = null;
-        var steps = BuildSteps(blocks, width, height, seed, value => result = value);
+        var steps = BuildSteps(blocks, width, height, seed, value => result = value, rule);
         while (steps.MoveNext()) { }
         return result;
     }
 
     public static System.Collections.IEnumerator BuildSteps(Block[] blocks, int width, int height, int seed,
-        Action<OreRichness[]> complete)
+        Action<OreRichness[]> complete, VeinRichnessSettings rule = null)
     {
         if (width <= 0 || height <= 0 || blocks.Length != checked(width * height))
             throw new ArgumentException("Invalid vein grid dimensions.");
@@ -177,6 +180,7 @@ public static class OreVeins
         }
 
         var visited = new bool[count];
+        var shares = rule != null && rule.enabled ? new VeinRichness(rule) : null;
         float offset = (Hash(seed, 0, 0, 0x314159u) & 0xffff) * .01f;
         for (int start = 0; start < count; start++)
         {
@@ -194,6 +198,12 @@ public static class OreVeins
                 if (x + 1 < width) Connect(i, i + 1);
                 if (y > 0) Connect(i, i - width);
                 if (y + 1 < height) Connect(i, i + width);
+            }
+            if (shares != null)
+            {
+                // queue[0] is start, the vein's lowest index.
+                shares.Apply(queue, tail, maxDistance, distance, blocks, result, width, height, seed);
+                continue;
             }
             for (int n = 0; n < tail; n++)
             {

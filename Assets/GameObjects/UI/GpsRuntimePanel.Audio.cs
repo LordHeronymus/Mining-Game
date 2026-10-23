@@ -10,7 +10,7 @@ public sealed partial class GpsRuntimePanel
         {
             var value=GpsSettings.GetValue(pair.record.key,pair.field.name);var spec=pair.field;
             DrawValue(pair.record.key,value,value,spec,spec.label,"Audio/"+spec.name,0,null,
-                ()=> { committing=true;try{GpsSettings.SetValue(pair.record.key,value,out _);}finally{committing=false;} });
+                ()=> { committing=true;try{GpsSettings.SetValueAndCommit(pair.record.key,value,out _);}finally{committing=false;} });
         }
         Label(content,"Clips suchen",new Vector2(0,-rowY),new Vector2(200,32),20);
         Input(content,new Vector2(250,-rowY),new Vector2(1250,32),audioSearch,text=>{audioSearch=text;BuildPage();scroll.verticalNormalizedPosition=1;});
@@ -34,7 +34,7 @@ public sealed partial class GpsRuntimePanel
                     var value=entry.children.Find(v=>v.name==field)?.Copy();if(value==null)continue;
                     var spec=GpsSchema.ChildSpec(value,typeof(AudioClipTuningEntry));
                     DrawValue(GpsAudio.Record.key,value,value,spec,spec.label,"Audio/Clip/"+key+"/"+field,2,null,()=>
-                    { committing=true;try { if(!GpsAudio.Change(key,field,value.number,out var error))status.text=error; }finally{committing=false;} });
+                    { committing=true;try { if(!GpsAudio.Change(key,field,value.number,out var error,true))status.text=error; }finally{committing=false;} });
                 }
             }
         }
