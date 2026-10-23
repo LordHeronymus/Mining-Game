@@ -32,6 +32,8 @@ public sealed class GpsProfile : ScriptableObject
     public float autosaveIntervalMinutes = 3f;
     public float dragPopScale = 1.28f, dragCarryScale = 1.12f, dragPopDuration = .24f;
     public bool workbenchUsesStorage = true, workbenchStorageFirst;
+    // Button captions (ButtonTextCentering): offset as a fraction of the font size (+ = up), minimum gap to the gold rim.
+    public float buttonTextOffset, buttonTextPadding = 1f;
 }
 [Serializable] public sealed class GpsRecord
 {
