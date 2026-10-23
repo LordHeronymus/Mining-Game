@@ -22,6 +22,7 @@ public sealed class HotbarSlotDrag : MonoBehaviour, IPointerDownHandler, IDragHa
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        hold.Press();
         if (eventData.button != PointerEventData.InputButton.Left || !hud || !hud.CanReorderSlot(slotIndex)) return;
         hold.Down(eventData.position);
     }

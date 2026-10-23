@@ -194,6 +194,8 @@ public sealed partial class GpsEditorView
                     int next=Theme.Select(control,Mathf.Max(0,selected),choices.Select(entry=>GpsSchema.DisplayName(entry.asset)).ToArray());
                     if (next>=0 && next<choices.Count) node.number=(int)((ItemSO)choices[next].asset).item;
                 }
+                // Width and depth are checked against each other: typing "3000" must not store 3, 30 and 300 on the way.
+                else if (node.kind==GpsValueKind.Integer && (node.name=="mapWidth" || node.name=="mapHeight")) node.number=Mathf.Clamp(EditorGUI.DelayedIntField(control,(int)node.number,Theme.Field),spec.min,spec.max);
                 else if (node.kind==GpsValueKind.Integer) node.number=Mathf.Clamp(EditorGUI.IntField(control,(int)node.number,Theme.Field),spec.min,spec.max);
                 else node.number=Mathf.Clamp(EditorGUI.FloatField(control,(float)node.number*spec.factor,Theme.Field)/spec.factor,spec.min,spec.max);
                 break;

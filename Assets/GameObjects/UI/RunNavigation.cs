@@ -105,7 +105,7 @@ public sealed class RunNavigation : MonoBehaviour
         if (follow)
         {
             follow.enabled = true; follow.target = player;
-            camera.transform.position = player.position + follow.offset + Vector3.up * follow.GetDepthYOffset(player.position.y);
+            camera.transform.position = player.position + follow.EffectiveOffset + Vector3.up * follow.GetDepthYOffset(player.position.y);
         }
         var clamp = camera.GetComponent<CameraWorldBorderClamp>(); if (clamp) clamp.enabled = true;
     }

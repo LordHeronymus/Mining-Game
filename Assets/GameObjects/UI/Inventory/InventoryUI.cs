@@ -54,8 +54,9 @@ public class InventoryUI : MonoBehaviour
     }
     void Update()
     {
-        if (GameBindings.Down(GameAction.Inventory)) { if (IsOpen) HidePanel(); else if (!GameplayInputBlocker.IsBlocked) ShowPanel(); }
-        else if (IsOpen && GameBindings.Down(GameAction.Settings)) HidePanel();
+        bool keys = !RunPauseMenu.OwnsInput; // a focus pause (RunFocusPause) can lie over the open inventory and owns the keys
+        if (keys && GameBindings.Down(GameAction.Inventory)) { if (IsOpen) HidePanel(); else if (!GameplayInputBlocker.IsBlocked) ShowPanel(); }
+        else if (keys && IsOpen && GameBindings.Down(GameAction.Settings)) HidePanel();
         if (IsOpen && inventory != InventoryManager.Instance) Subscribe();
         if (draggedItem) MoveDraggedIcon(Input.mousePosition);
         if (hotbarWarning)

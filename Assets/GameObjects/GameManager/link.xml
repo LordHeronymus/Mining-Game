@@ -1,4 +1,17 @@
 <linker>
   <!-- GPS uses the serialized field catalog in player builds, including private fields. -->
   <assembly fullname="Assembly-CSharp" preserve="all" />
+  <!-- Engine properties in the GPS catalog are only reached by name. Without these entries IL2CPP strips them and
+       every GPS document fails validation. Tests/BughuntReleaseChecks.cs keeps this list complete. -->
+  <assembly fullname="UnityEngine.CoreModule">
+    <type fullname="UnityEngine.Camera">
+      <property name="orthographicSize" />
+    </type>
+  </assembly>
+  <assembly fullname="UnityEngine.Physics2DModule">
+    <type fullname="UnityEngine.Rigidbody2D">
+      <property name="gravityScale" />
+      <property name="mass" />
+    </type>
+  </assembly>
 </linker>

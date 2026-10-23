@@ -28,6 +28,11 @@ public sealed class VoiceLinePlayer : MonoBehaviour
     int blockedScene;
 
     static double Now => Time.realtimeSinceStartupAsDouble;
+#if UNITY_EDITOR
+    static bool IsolatedTest => !string.IsNullOrEmpty(GameSaveSystem.TestDirectory);
+#else
+    static bool IsolatedTest => false; // GameSaveSystem.TestDirectory exists in the editor only.
+#endif
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics() { Instance = null; DuckFactor = 1f; }
@@ -173,7 +178,7 @@ public sealed class VoiceLinePlayer : MonoBehaviour
         bool stopping = GameAudioLifecycle.IsStopping;
         bool canStart = director.PendingForced ? !stopping
             : Armed && !stopping && Time.timeScale > 0f && !endScreen &&
-              string.IsNullOrEmpty(GameSaveSystem.TestDirectory) && PlayerSettings.Voice > 0f;
+              !IsolatedTest && PlayerSettings.Voice > 0f;
         if (director.Update(now, config, canStart, out var play))
         {
             energyWatcher.Acknowledge(play.trigger); carryWatcher.Acknowledge(play.trigger);
@@ -236,8 +241,8 @@ public sealed class VoiceLinePlayer : MonoBehaviour
         var take = library ? library.Take(play.trigger, play.line, play.take) : null;
         if (take == null || !take.clip) { director.Finished(now); return; }
         activeTake = take; activeClip = take.clip; source.clip = activeClip;
-        // Only forced test lines (F1) start during the full pause; they play through it.
-        testLine = GamePause.IsPaused; source.ignoreListenerPause = testLine;
+        // Only forced test lines (F1) play through the full pause; a regular line (e.g. after an interrupt fade) is held.
+        testLine = play.forced && GamePause.IsPaused; source.ignoreListenerPause = testLine;
         if (activeClip.loadState == AudioDataLoadState.Loaded) { StartClip(); return; }
         if (activeClip.loadState != AudioDataLoadState.Loading) activeClip.LoadAudioData();
         loading = true; loadingStart = now;

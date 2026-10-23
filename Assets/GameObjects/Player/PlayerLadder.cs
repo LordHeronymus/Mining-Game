@@ -17,6 +17,9 @@ public sealed class PlayerLadder : MonoBehaviour
     CompactHud hotbar;
     float gravity, reattachAt;
     static bool IsLadder(ItemSO item) => item && (item.item == Item.Ladder || item.item == Item.IronLadder);
+    // Esc (or the settings key) first only leaves ladder build mode. RunPauseMenu decides this because it updates before
+    // SettingsPanel, the other panels and this component: the press neither pauses nor counts when it closes a panel or menu.
+    internal static bool LeavesBuildModeOnEscape(bool menuOpen, bool blocked, ItemSO selected) => !menuOpen && !blocked && IsLadder(selected);
 
     void Awake()
     {
@@ -37,11 +40,6 @@ public sealed class PlayerLadder : MonoBehaviour
             int ladderSlot = System.Array.FindIndex(hotbar.slots, item => IsLadder(item) && InventoryManager.Instance && InventoryManager.Instance.GetCount(item) > 0) + 1;
             if (ladderSlot > 0) hotbar.SelectSlot(hotbar.SelectedSlot == ladderSlot ? 0 : ladderSlot);
             selected = hotbar.SelectedItem;
-        }
-        if (GameBindings.Down(GameAction.Settings) && hotbar && IsLadder(selected))
-        {
-            hotbar.SelectSlot(0);
-            selected = null;
         }
         if (!view || !stats || TileMiner.IsPointerOverUi(Input.mousePosition)) { HidePreview(); return; }
         Vector3 world = view.ScreenToWorldPoint(Input.mousePosition);
@@ -107,9 +105,7 @@ public sealed class PlayerLadder : MonoBehaviour
         if (!IsClimbing)
         {
             if (Time.time < reattachAt || Mathf.Abs(vertical) < .1f || Mathf.Abs(horizontal) > .1f || jump) return false;
-            gravity = body.gravityScale;
-            body.gravityScale = 0;
-            IsClimbing = true;
+            Attach();
         }
         var tiles = ladders.Tiles;
         float effectiveClimbSpeed = climbSpeed * GameplayTestSettings.MovementMultiplier * stats.MovementWeightFactor;
@@ -125,6 +121,27 @@ public sealed class PlayerLadder : MonoBehaviour
         body.linearVelocity = new Vector2(vx, vy);
         return true;
     }
+
+    // Save restores: the climb itself is not saved, so a player loaded at a ladder hangs on instead of sliding down until Up/Down.
+    public bool AttachIfContact()
+    {
+        var movement = GetComponent<PlayerMovement>();
+        if (IsClimbing || !enabled || (movement && movement.IsFlying) || !ladders || !body || !bodyCollider ||
+            !ladders.FindContact(bodyCollider.bounds, out _)) return false;
+        Attach();
+        body.linearVelocity = Vector2.zero;
+        return true;
+    }
+
+    void Attach()
+    {
+        gravity = body.gravityScale;
+        body.gravityScale = 0;
+        IsClimbing = true;
+    }
+
+    // A live GPS gravity change while hanging only replaces the value Detach restores; the body stays weightless.
+    internal bool HoldGravity(float value) { if (!IsClimbing) return false; gravity = value; return true; }
 
     public void Detach()
     {

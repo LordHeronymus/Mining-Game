@@ -1,5 +1,7 @@
 using System;
+using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public enum GameAction
 {
@@ -54,6 +56,8 @@ public static class GameBindings
 
     static readonly KeyCode[,] keys = new KeyCode[Entries.Length, 2];
     static bool loaded;
+    // Counts binding changes, so key labels (hotbar) refresh without polling the bindings every frame.
+    public static int Version { get; private set; }
     static string Preference(GameAction action, int slot) => "settings.binding." + action + "." + slot;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -69,13 +73,20 @@ public static class GameBindings
             keys[i, 0] = Read(entry.action, 0, entry.first);
             keys[i, 1] = Read(entry.action, 1, entry.second);
         }
+        // A discarded mouse binding must not leave the settings without any key.
+        int settings = (int)GameAction.Settings;
+        if (keys[settings, 0] == KeyCode.None && keys[settings, 1] == KeyCode.None) keys[settings, 0] = KeyCode.Escape;
     }
 
     static KeyCode Read(GameAction action, int slot, KeyCode fallback)
     {
         string value = PlayerPrefs.GetString(Preference(action, slot), fallback.ToString());
-        return Enum.TryParse(value, out KeyCode key) && Enum.IsDefined(typeof(KeyCode), key) ? key : fallback;
+        return Enum.TryParse(value, out KeyCode key) && Enum.IsDefined(typeof(KeyCode), key) && Allowed(action, key) ? key : fallback;
     }
+
+    public static bool IsMouseButton(KeyCode key) => key >= KeyCode.Mouse0 && key <= KeyCode.Mouse6;
+    // Settings on a mouse button would open the window on every click and close it on the next one.
+    static bool Allowed(GameAction action, KeyCode key) => action != GameAction.Settings || !IsMouseButton(key);
 
     public static KeyCode Get(GameAction action, int slot) { Load(); return keys[(int)action, slot]; }
 
@@ -83,11 +94,13 @@ public static class GameBindings
     {
         Load();
         slot = Mathf.Clamp(slot, 0, 1);
-        if (action == GameAction.Settings && key == KeyCode.None && keys[(int)action, 1 - slot] == KeyCode.None)
+        if (!Allowed(action, key) ||
+            (action == GameAction.Settings && key == KeyCode.None && keys[(int)action, 1 - slot] == KeyCode.None))
             return;
         keys[(int)action, slot] = key;
         PlayerPrefs.SetString(Preference(action, slot), key.ToString());
         PlayerPrefs.Save();
+        Version++;
     }
 
     public static void RestoreDefaults()
@@ -100,6 +113,7 @@ public static class GameBindings
         PlayerPrefs.Save();
         loaded = false;
         Load();
+        Version++;
     }
 
     public static bool Held(GameAction action)
@@ -116,6 +130,17 @@ public static class GameBindings
         int i = (int)action;
         return (keys[i, 0] != KeyCode.None && Input.GetKeyDown(keys[i, 0])) ||
                (keys[i, 1] != KeyCode.None && Input.GetKeyDown(keys[i, 1]));
+    }
+
+    // Closes an open window. While a text field is focused only Escape does, so a letter on "Einstellungen" stays typeable.
+    // Under a focus pause the press belongs to the pause menu (RunPauseMenu.OwnsInput).
+    public static bool CloseDown() => !RunPauseMenu.OwnsInput && Down(GameAction.Settings) && CloseAllowed(Input.GetKeyDown(KeyCode.Escape), EventSystem.current);
+    internal static bool CloseAllowed(bool escape, EventSystem events) => escape || !TextFieldFocused(events);
+
+    internal static bool TextFieldFocused(EventSystem events)
+    {
+        var selected = events ? events.currentSelectedGameObject : null;
+        return selected && selected.TryGetComponent(out TMP_InputField field) && field.isFocused;
     }
 
     public static string Display(KeyCode key) => key switch

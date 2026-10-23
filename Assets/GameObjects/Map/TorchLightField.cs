@@ -37,6 +37,7 @@ public sealed class TorchLightField
     readonly Queue<int> pending = new Queue<int>();
     readonly List<int> litCells = new List<int>();
     readonly HashSet<int> affected = new HashSet<int>();
+    readonly HashSet<int> sourceCells = new HashSet<int>();
 
     public TorchLightField(int width, int height, bool[] solid, float cellWidth,
         float cellHeight, float falloffDistance)
@@ -66,9 +67,22 @@ public sealed class TorchLightField
         return true;
     }
 
+    // Rebuild reads solidity only at source cells and in the 3x3 around lit cells, so a
+    // change elsewhere leaves the last rebuilt field exactly as a new Rebuild would.
+    public bool CanChangeLight(int x, int y)
+    {
+        if (x < 0 || x >= width || y < 0 || y >= height) return false;
+        if (sourceCells.Contains(y * width + x)) return true;
+        for (int dy = -1; dy <= 1; dy++)
+            for (int dx = -1; dx <= 1; dx++)
+                if (Get(x + dx, y + dy) > 0f) return true;
+        return false;
+    }
+
     public IEnumerable<int> Rebuild(IReadOnlyList<Source> sources)
     {
         affected.Clear();
+        sourceCells.Clear();
         foreach (int index in litCells)
         {
             light[index] = 0f;
@@ -81,6 +95,7 @@ public sealed class TorchLightField
             if (source.x < 0 || source.x >= width || source.y < 0 || source.y >= height)
                 continue;
             int index = source.y * width + source.x;
+            sourceCells.Add(index);
             if (!solid[index]) Improve(index, source.intensity, true);
         }
 

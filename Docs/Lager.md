@@ -8,7 +8,7 @@ Die Lagerhütte neben dem Shop funktioniert wie eine Kiste in Minecraft: Items a
 - **Fenster:** links der Rucksack, rechts das Lager, je ein Raster mit 4 Spalten (scrollbar). Oben Suche und Filter (Alle, Erze, Werkzeuge, Verbrauch, Material) für beide Seiten.
 - **Verschieben:** Klick = 1 Stück, Shift+Klick = ganzer Stapel, Rechtsklick = Hälfte, Ziehen auf die andere Seite = ganzer Stapel.
 - **Schnellknöpfe:** „Erze einlagern“, „Alles einlagern“ (Items in der Schnellleiste bleiben im Rucksack), „Alles entnehmen“ (berücksichtigt den gewählten Filter, so viel wie tragbar).
-- Unten zeigt eine Zeile die Bedienung bzw. Name, Anzahl, Gewicht und Wert des Items unter der Maus. Rechts unten steht der Gesamtwert des Lagers.
+- Unten zeigt eine Zeile die Bedienung bzw. Name, Anzahl, Gewicht und Wert des Items unter der Maus. Rechts unten steht der Gesamtwert des Lagers. Wert und Gesamtwert zählen nur, was der Shop kauft (Erze mit Wert, `ShopManager.IsSellable`); Werkzeuge und Platzierbares zeigen keinen Wert.
 
 ## Gewicht
 

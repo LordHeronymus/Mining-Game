@@ -52,7 +52,8 @@ public sealed class CompactHud : MonoBehaviour
     const float HeartbeatFadeSeconds = .32f;
     TextMeshProUGUI healthValue, energyValue, moneyValue, pointsValue, depthValue;
     readonly Image[] icons = new Image[8], selections = new Image[9];
-    readonly TextMeshProUGUI[] counts = new TextMeshProUGUI[8];
+    readonly TextMeshProUGUI[] counts = new TextMeshProUGUI[8], keyLabels = new TextMeshProUGUI[8];
+    int keyLabelVersion;
     readonly Button[] buttons = new Button[8];
     readonly HotbarSlotDrag[] slotDrags = new HotbarSlotDrag[8];
     InventoryManager inventory;
@@ -102,6 +103,7 @@ public sealed class CompactHud : MonoBehaviour
     }
     void Update()
     {
+        if (keyLabelVersion != GameBindings.Version) RefreshKeyLabels();
         if (inventory != InventoryManager.Instance)
         {
             if (inventory) inventory.OnInventoryChanged -= RefreshItems;
@@ -110,26 +112,44 @@ public sealed class CompactHud : MonoBehaviour
             RefreshItems();
         }
         if (!inventoryPanel) inventoryPanel = UnityEngine.Object.FindFirstObjectByType<InventoryUI>(FindObjectsInactive.Include);
-        bool inventoryOpen = inventoryPanel && inventoryPanel.IsOpen && !GameOverPanel.IsOpen;
+        bool inventoryOpen = ShowsInventoryHotbar(inventoryPanel);
         bool blocked = GameplayInputBlocker.IsBlocked;
         SetInventoryHotbarVisible(inventoryOpen);
-        visibility.alpha = blocked && !GameplayDebugPanel.IsOpen && !GameOverPanel.IsOpen && !inventoryOpen ? 0 : 1;
+        visibility.alpha = HidesHud(inventoryPanel, inventoryOpen) ? 0 : 1;
         visibility.blocksRaycasts = visibility.interactable = !blocked || inventoryOpen;
         var selected = EventSystem.current ? EventSystem.current.currentSelectedGameObject : null;
         bool typing = selected && selected.GetComponent<TMP_InputField>();
-        if (!typing && (!blocked || inventoryOpen) && GameBindings.Down(GameAction.UseMedkit))
+        if (!typing && (!blocked || inventoryOpen) && !RunPauseMenu.OwnsInput && GameBindings.Down(GameAction.UseMedkit))
             StatsManager.Instance?.TryUseMedkit();
         if (blocked || typing) return;
         for (int i = 0; i < 8; i++)
             if (GameBindings.Down((GameAction)((int)GameAction.Slot1 + i))) SelectSlot(i + 1);
-        if (GameBindings.Down(GameAction.PreviousSlot)) SelectSlot((SelectedSlot + 8) % 9);
-        if (GameBindings.Down(GameAction.NextSlot)) SelectSlot((SelectedSlot + 1) % 9);
+        if (GameBindings.Down(GameAction.PreviousSlot)) SelectSlot(AdjacentSlot(SelectedSlot, -1, i => IsKnownHotbarItem(slots[i - 1])));
+        if (GameBindings.Down(GameAction.NextSlot)) SelectSlot(AdjacentSlot(SelectedSlot, 1, i => IsKnownHotbarItem(slots[i - 1])));
         if (ladder && ladder.BuildMode != wasBuilding)
         {
             wasBuilding = ladder.BuildMode;
             if (wasBuilding)
                 for (int i = 0; i < 8; i++) if (IsKnownHotbarItem(slots[i]) && (slots[i].item == Item.Ladder || slots[i].item == Item.IronLadder)) { SelectedSlot = i + 1; RefreshItems(); break; }
         }
+    }
+    // The inventory's tool tray overlay stays off while an end-of-run screen is up, so it never covers its buttons.
+    static bool ShowsInventoryHotbar(InventoryUI panel) => panel && panel.IsOpen &&
+        !GameOverPanel.IsOpen && !GameVictoryPanel.IsOpen && !ExpeditionResultPanel.IsOpen;
+    // Only other panels hide the HUD; the inventory still blocks input during its fade-out after IsOpen turned false.
+    static bool HidesHud(Behaviour inventoryPanel, bool inventoryOpen) =>
+        (inventoryPanel ? GameplayInputBlocker.IsBlockedExcept(inventoryPanel) : GameplayInputBlocker.IsBlocked) &&
+        !GameplayDebugPanel.IsOpen && !GameOverPanel.IsOpen && !inventoryOpen;
+    // Q/E step over empty slots; slot 0 (pickaxe) is always selectable, so the search always ends.
+    static int AdjacentSlot(int selected, int direction, Func<int, bool> selectable)
+    {
+        int index = selected;
+        for (int step = 0; step < 9; step++)
+        {
+            index = (index + direction + 9) % 9;
+            if (index == 0 || selectable(index)) return index;
+        }
+        return 0;
     }
     void LateUpdate()
     {
@@ -249,7 +269,7 @@ public sealed class CompactHud : MonoBehaviour
         var item = slots[index - 1];
         if (item && item.item == Item.Medkit)
         {
-            bool inventoryOpen = inventoryPanel && inventoryPanel.IsOpen && !GameOverPanel.IsOpen;
+            bool inventoryOpen = ShowsInventoryHotbar(inventoryPanel);
             if (GameplayInputBlocker.IsBlocked && !inventoryOpen) return;
             if (!GameplayInputBlocker.IsBlocked) SelectSlot(index);
             StatsManager.Instance?.TryUseMedkit(item);
@@ -289,6 +309,13 @@ public sealed class CompactHud : MonoBehaviour
     {
         if (index < 1 || index > 8) throw new ArgumentOutOfRangeException(nameof(index));
         if (item && !IsHotbarItem(item)) throw new ArgumentException("Item cannot be used from the hotbar.", nameof(item));
+        // Each item occupies one slot: assigning an item that is already on the hotbar moves it, with its selection.
+        for (int i = 0; item && i < slots.Length; i++)
+            if (i != index - 1 && slots[i] && slots[i].item == item.item)
+            {
+                slots[i] = null;
+                if (SelectedSlot == i + 1) SelectedSlot = index;
+            }
         slots[index - 1] = item;
         if (SelectedSlot == index && ladder) ladder.SetBuildMode(IsKnownHotbarItem(item) && (item.item == Item.Ladder || item.item == Item.IronLadder));
         if (persist) SaveSlotLayout();
@@ -303,6 +330,7 @@ public sealed class CompactHud : MonoBehaviour
                 (inventoryPanel && inventoryPanel.IsOpen && !GameplayInputBlocker.IsBlockedExcept(inventoryPanel));
         }
     }
+    public bool IsDraggingItem => draggedSlot > 0;
     public bool CanReorderSlot(int index) => CanReorderHotbar && index >= 1 && index <= 8 &&
         IsKnownHotbarItem(slots[index - 1]);
     public static bool IsHotbarItem(ItemSO item) => item &&
@@ -630,7 +658,8 @@ public sealed class CompactHud : MonoBehaviour
             buttons[i].onClick.AddListener(()=> { if (!slotDrags[slot].ConsumeClick()) ActivateHotbarSlot(index); });
             selections[i+1]=Image("Selection",bg.transform,0,0,SocketSize,SocketSize,selectedSprite,Color.white);
             icons[i]=Image("Item",bg.transform,12,12,86,86,null,Color.white); icons[i].preserveAspect=true;
-            Text("Key",bg.transform,(i+1).ToString(),10,5,26,29,27,TextAlignmentOptions.TopLeft);
+            keyLabels[i]=Text("Key",bg.transform,"",10,5,KeyLabelWidth,29,27,TextAlignmentOptions.TopLeft);
+            keyLabels[i].fontSizeMin=KeyLabelMinSize;
             var badge=Image("Count Badge",bg.transform,0,0,40,27,null,new Color(0,0,0,0));
             badge.rectTransform.anchorMin=badge.rectTransform.anchorMax=badge.rectTransform.pivot=new Vector2(1,0);
             badge.rectTransform.anchoredPosition=new Vector2(-9,8);
@@ -641,7 +670,39 @@ public sealed class CompactHud : MonoBehaviour
             counts[i].rectTransform.offsetMin=new Vector2(4,0);
             counts[i].rectTransform.offsetMax=new Vector2(-4,0);
         }
+        RefreshKeyLabels();
         Fit();
+    }
+    // Socket labels follow the current hotbar bindings; Update refreshes them only after a binding change.
+    void RefreshKeyLabels()
+    {
+        keyLabelVersion = GameBindings.Version;
+        for (int i = 0; i < 8; i++) if (keyLabels[i]) keyLabels[i].text = HotbarKeyLabel((GameAction)((int)GameAction.Slot1 + i));
+    }
+    internal static string HotbarKeyLabel(GameAction action)
+    {
+        var key = GameBindings.Get(action, 0);
+        if (key == KeyCode.None) key = GameBindings.Get(action, 1);
+        return key == KeyCode.None ? "" : ShortKey(key);
+    }
+    // The socket label has room for about three characters; long key names get a short form.
+    internal const float KeyLabelWidth = 26, KeyLabelMinSize = 12;
+    internal static string ShortKey(KeyCode key)
+    {
+        if (key >= KeyCode.Keypad0 && key <= KeyCode.Keypad9) return "N" + ((int)key - (int)KeyCode.Keypad0);
+        if (key >= KeyCode.Mouse0 && key <= KeyCode.Mouse6) return "M" + ((int)key - (int)KeyCode.Mouse0 + 1);
+        var text = key switch
+        {
+            KeyCode.Space => "Lt", KeyCode.LeftShift or KeyCode.RightShift => "Sh",
+            KeyCode.LeftControl or KeyCode.RightControl => "Str", KeyCode.LeftAlt or KeyCode.RightAlt => "Alt",
+            KeyCode.KeypadPlus => "N+", KeyCode.KeypadMinus => "N-", KeyCode.KeypadMultiply => "N*", KeyCode.KeypadDivide => "N/",
+            KeyCode.KeypadPeriod => "N.", KeyCode.KeypadEnter => "NE", KeyCode.KeypadEquals => "N=", KeyCode.Numlock => "NL",
+            KeyCode.LeftWindows or KeyCode.RightWindows => "Win", KeyCode.LeftCommand or KeyCode.RightCommand => "Cmd",
+            KeyCode.LeftBracket => "[", KeyCode.RightBracket => "]", KeyCode.BackQuote => "`", KeyCode.Backslash => "\\",
+            KeyCode.PageUp => "PgU", KeyCode.PageDown => "PgD", KeyCode.Return => "Ent",
+            _ => GameBindings.Display(key)
+        };
+        return text.Length <= 3 ? text : text.Substring(0, 3);
     }
 }
 
