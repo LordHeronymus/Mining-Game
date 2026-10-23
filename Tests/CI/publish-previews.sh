@@ -27,5 +27,10 @@ cd "$work"
 git checkout -q --orphan publish
 git add -A
 git -c user.name="github-actions" -c user.email="github-actions@users.noreply.github.com" commit -qm "Previews of run #$RUN"
-git push -q --force origin publish:ci-previews
+# Larger pushes timed out once with HTTP 408 (run #159): one request body, up to three attempts.
+for attempt in 1 2 3; do
+  git -c http.postBuffer=157286400 push -q --force origin publish:ci-previews && break
+  [ $attempt -eq 3 ] && exit 1
+  echo "Push failed (attempt $attempt), retrying in $((attempt * 10)) s"; sleep $((attempt * 10))
+done
 echo "Previews: branch ci-previews, runs/$RUN ($(find "runs/$RUN" -name '*.png' | wc -l) images)"

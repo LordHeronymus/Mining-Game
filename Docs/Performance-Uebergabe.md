@@ -24,6 +24,20 @@ Stand 18.10.2026, Branch `claude/performance` (main ist eingemergt). Ziel unver�
 - Exakt der committete Stand (Audio + Budget, ohne Preload-Experiment) wurde nicht mehr separat gemessen. Bitte als Erstes nachmessen.
 - Durchschnittswerte schwanken von Lauf zu Lauf um ±15 %. Jeder Lauf erzeugt eine neue Karte (zufälliger Seed).
 
+## Cloud-Messung 23.10.2026 (Suite `performance`, ohne Zeichnen)
+
+Stand mit Cursor-Cache und erweitertem `GameplayAssetPreload` (Commit 359a3ad + Build-Korrektur), Lauf #156. CPU-Framezeiten, nur mit anderen Cloud-Läufen vergleichbar.
+
+| Phase | Ø ms | p95 | p99 | max |
+| --- | --- | --- | --- | --- |
+| Laden gesamt | 17,1 | 19,1 | 24,1 | 737 (Stufe 0) |
+| Stillstand | 12,7 | 14,0 | 15,4 | 15,9 |
+| Abbau normal | 12,5 | 13,7 | 15,1 | 61,8 |
+| Abbau schnell | 15,0 | 18,4 | 22,5 | 112,5 |
+| Erkunden | 15,9 | 17,5 | 18,6 | 22,4 |
+
+Ladestufen max: 0 = 737 ms (Szenenstart, Punkt 1), 1 = 62 ms, 2 = 20, 3 = 24, 4 = 26, 5 = 31, 6 = 20, 7 = 138 ms. `CursorHighlightEquivalenceChecks`: Cursor-Texturen bitgleich (524'288 Pixel). Die Vergleichsmessung ohne die Änderungen (Lauf #157) brach am Zeitlimit ab (Build ohne Cache).
+
 ## Offene Punkte (nach Priorität)
 
 ### 1. Szenenstart hinter der Schwarzblende (0,2–1,3 s in einem Frame)
