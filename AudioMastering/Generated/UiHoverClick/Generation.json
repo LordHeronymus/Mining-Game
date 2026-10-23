@@ -1,0 +1,13 @@
+{
+  "rate": 44100,
+  "channels": 1,
+  "duration": 0.09,
+  "sample_peak": -6.0,
+  "source_window_seconds": [0.10, 0.19],
+  "fade_out_seconds": 0.04,
+  "subtype": "PCM_16",
+  "generation_id": "UF44nvbtaML428b0EEI9",
+  "model": "eleven_text_to_sound_v2",
+  "prompt": "A single small computer mouse button click, close-up, quiet and soft. One short crisp plastic click of a PC mouse, recorded dry, no reverb, no background noise.",
+  "note": "Variante F aus Runde 2 (Wahl Benutzer 23.10.2026): erster Klick aus dem Original ausgeschnitten, auf -6 dB Spitze angeglichen."
+}

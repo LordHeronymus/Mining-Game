@@ -54,7 +54,8 @@ public sealed class ProgressionTimeline : MonoBehaviour, IScrollHandler, IBeginD
 {
     RectTransform rewards;
     TextMeshProUGUI levelLabel;
-    Image xpFill;
+    RectTransform xpFill;
+    float xpFraction;
     Button previous, next;
     readonly List<int> visibleLevels = new();
     readonly List<int> milestones = new();
@@ -63,7 +64,7 @@ public sealed class ProgressionTimeline : MonoBehaviour, IScrollHandler, IBeginD
     bool resultMode;
     Vector2 dragPoint;
     public int DisplayedLevel => displayedLevel;
-    public float XpFraction => xpFill ? xpFill.fillAmount : 0;
+    public float XpFraction => xpFraction;
     public IReadOnlyList<int> VisibleLevels => visibleLevels;
 
     public static ProgressionTimeline Create(Transform parent, Vector2 position, long xp, bool result = false, int newFrom = 1000)
@@ -76,10 +77,14 @@ public sealed class ProgressionTimeline : MonoBehaviour, IScrollHandler, IBeginD
     }
     void Build()
     {
-        // Track first, badge second: the badge's right lip overlaps the track's left cap.
-        var track = ProgressionArt.Image("XP Track",transform,new Vector2(-355,230),new Vector2(405,38),5);
-        xpFill=ProgressionArt.Image("XP Fill",transform,new Vector2(-355,230),new Vector2(379,20),6);
-        xpFill.type=Image.Type.Filled; xpFill.fillMethod=Image.FillMethod.Horizontal; xpFill.fillOrigin=0;
+        // The track's left point docks onto the badge's right point (1 unit overlap, badge drawn on top), so the whole
+        // groove stays visible. The gold fill matches the challenge bars: it follows the groove's left point and ends round.
+        var track = ProgressionArt.Image("XP Track",transform,new Vector2(-344,230),new Vector2(383,38),5);
+        // Groove interior at this size: tips 175 units from the centre, 22 high, the point 15 units deep at ±10.
+        var interior=HomeUi.Rect("XP Interior",track.transform,Vector2.zero,new Vector2(346,20));
+        xpFill=HomeUi.Rect("XP Fill",interior,Vector2.zero,Vector2.zero);
+        xpFill.anchorMin=Vector2.zero; xpFill.anchorMax=new Vector2(0,1); xpFill.offsetMin=xpFill.offsetMax=Vector2.zero;
+        var gold=xpFill.gameObject.AddComponent<ChallengeGoldFill>(); gold.raycastTarget=false; gold.Pointed=true; gold.Chevron=14.5f;
         var badge=ProgressionArt.Image("Level Badge",transform,new Vector2(-642,230),new Vector2(215,72),4);
         badge.raycastTarget=true;
         var home=badge.gameObject.AddComponent<Button>(); home.targetGraphic=badge; home.transition=Selectable.Transition.None;
@@ -117,7 +122,8 @@ public sealed class ProgressionTimeline : MonoBehaviour, IScrollHandler, IBeginD
         bool changed=level!=displayedLevel; displayedXp=xp; displayedLevel=level;
         levelLabel.text="Level "+level;
         long cost=MetaProgressionCatalog.LevelCost(level);
-        xpFill.fillAmount=cost==0 ? 1 : Mathf.Clamp01((float)((double)(xp-MetaProgressionCatalog.XpForLevel(level))/cost));
+        xpFraction=cost==0 ? 1 : Mathf.Clamp01((float)((double)(xp-MetaProgressionCatalog.XpForLevel(level))/cost));
+        xpFill.anchorMax=new Vector2(xpFraction,1); xpFill.offsetMax=Vector2.zero;
         if (changed || recenter) Focus(level);
     }
     public void Focus(int level)

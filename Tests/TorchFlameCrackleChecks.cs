@@ -91,6 +91,10 @@ public static class TorchFlameCrackleChecks
                 holder.GetComponent<SpriteRenderer>().sortingOrder, "Smoke renders behind the holder");
             Check(flame.GetLayer(4).GetComponent<ParticleSystemRenderer>().sortingOrder >
                 flame.GetLayer(1).GetComponent<ParticleSystemRenderer>().sortingOrder, "Embers render in front of the flame");
+            int Order(int i) => flame.GetLayer(i).GetComponent<ParticleSystemRenderer>().sortingOrder;
+            Check(Order(0) < Order(1) && Order(0) < Order(2) && Order(0) < Order(3), "Smoke renders behind every flame layer");
+            Check(Order(3) < Order(2), "Blue base renders behind the flame core (no dot in front)");
+            Check(Order(4) > Order(2), "Embers render in front of the flame core");
 
             Check(torch.FlameCell == cell, "Torch light now lies in the torch's own cell");
             map.torchFlameSize = 2.55f;
