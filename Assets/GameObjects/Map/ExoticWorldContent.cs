@@ -77,10 +77,28 @@ public sealed class ExoticWorldContent : MonoBehaviour
         }
         finally { generating = false; }
     }
+    // Debug map regeneration (F1): drop the previous map's finds, boulders and charges, then place new ones.
+    public void Regenerate()
+    {
+        PlacedDynamite.Clear(map);
+        ClearVisuals();
+        state = null;
+        Generate();
+    }
+    // Cells behind the side walls of MapWorldBorders are unreachable. Skipping them keeps the search order,
+    // so every find inside the walls stays the same for a seed.
+    internal static bool InsideBorders(int x, int size, int width, int padding)
+    {
+        padding = Mathf.Clamp(padding, 0, Mathf.Max(0, (width - 1) / 2));
+        int xMin = -width / 2;
+        return x >= xMin + padding && x + size <= xMin + width - padding;
+    }
     IEnumerator FindFloorSteps(int depth, int size, System.Random random, Action<Vector3Int> found)
     {
         var budget = new LoadingWorkBudget();
         int width = map.GeneratedWidth, start = random.Next(Math.Max(1, width - size));
+        var borders = map.GetComponent<MapWorldBorders>();
+        int padding = borders ? borders.sidePaddingCells : 0;
         for (int dy = 0; dy < 36; dy++)
         {
             int y = -depth - dy;
@@ -89,6 +107,7 @@ public sealed class ExoticWorldContent : MonoBehaviour
             {
                 if ((n & 127) == 0 && budget.Expired) { yield return null; budget.Restart(); }
                 int x = -width / 2 + 1 + (start + n) % Math.Max(1, width - size - 2);
+                if (!InsideBorders(x, size, width, padding)) continue;
                 var cell = new Vector3Int(x, y, 0);
                 if (!map.IsGeneratedCaveCell(cell) || !map.Terrain.HasTile(cell + Vector3Int.down)) continue;
                 bool valid = true;
@@ -164,11 +183,15 @@ public sealed class ExoticWorldContent : MonoBehaviour
         state.pendingCache = -1; state.pendingChoices = null;
         return true;
     }
-    void BuildVisuals()
+    void ClearVisuals()
     {
         foreach (var visual in cacheVisuals) if (visual) Destroy(visual.gameObject);
         foreach (var boulder in boulders) if (boulder) { boulder.gameObject.SetActive(false); Destroy(boulder.gameObject); }
         cacheVisuals.Clear(); boulders.Clear();
+    }
+    void BuildVisuals()
+    {
+        ClearVisuals();
         if (state.caches == null) state.caches = Array.Empty<SavedBlueprintCache>();
         if (state.boulders == null) state.boulders = Array.Empty<SavedBoulder>();
         for (int i = 0; i < state.caches.Length; i++)

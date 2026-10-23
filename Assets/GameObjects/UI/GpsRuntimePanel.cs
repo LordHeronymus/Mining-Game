@@ -511,6 +511,7 @@ public sealed partial class GpsRuntimePanel : MonoBehaviour
         if (!GpsSettings.ValidateDocument(GpsSettings.Document,out var error)) { status.text=error; return; }
         GpsSettings.ApplyGeneration(map);
         map.GenerateMap();
+        ExoticWorldContent.Ensure(map).Regenerate();
     }
     static bool TryNumber(string text, out float value) => float.TryParse(text.Replace(',', '.'), NumberStyles.Float, Culture, out value) && GpsCodec.Finite(value);
     static RectTransform Rect(string name, Transform parent, Vector2 position, Vector2 size)
