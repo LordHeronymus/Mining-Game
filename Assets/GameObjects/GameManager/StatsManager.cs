@@ -289,7 +289,7 @@ public class StatsManager : MonoBehaviour
         if (!artifactCollectedSound)
             artifactCollectedSound = Resources.Load<AudioClip>("Audio/ArtifactCollected");
         AudioManager.Instance.PlayClip(artifactCollectedSound,
-            AudioManager.Instance.GetVolume(AudioVolumeSetting.DingLight), 0f);
+            AudioManager.Instance.GetVolume(AudioVolumeSetting.ArtifactFound), 0f);
     }
 
     // Not named Reset: Unity calls Reset() on components in the editor, before baseStats exists.

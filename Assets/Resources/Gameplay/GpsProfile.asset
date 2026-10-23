@@ -27886,7 +27886,7 @@ MonoBehaviour:
     {\n                                    \"name\": \"volume\",\n                                   
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                                   
     \"text\": \"\",\n                                    \"kind\": 0,\n                                   
-    \"number\": 0.1699211746454239,\n                                    \"flag\":
+    \"number\": 1.0,\n                                    \"flag\":
     false,\n                                    \"vector\": {\n                                       
     \"x\": 0.0,\n                                        \"y\": 0.0,\n                                       
     \"z\": 0.0,\n                                        \"w\": 0.0\n                                   
@@ -59831,6 +59831,17 @@ MonoBehaviour:
     \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
     \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
     0.3499999940395355,\n                    \"flag\": false,\n                   
+    \"vector\": {\n                        \"x\": 0.0,\n                        \"y\":
+    0.0,\n                        \"z\": 0.0,\n                        \"w\": 0.0\n                   
+    },\n                    \"color\": {\n                        \"r\": 0.0,\n                       
+    \"g\": 0.0,\n                        \"b\": 0.0,\n                        \"a\":
+    0.0\n                    },\n                    \"curve\": {\n                       
+    \"preWrap\": 0,\n                        \"postWrap\": 0,\n                       
+    \"keys\": []\n                    },\n                    \"children\": []\n               
+    },\n                {\n                    \"name\": \"artifactFoundVolume\",\n                   
+    \"type\": \"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\",\n                   
+    \"text\": \"\",\n                    \"kind\": 0,\n                    \"number\":
+    0.6000000238418579,\n                    \"flag\": false,\n                   
     \"vector\": {\n                        \"x\": 0.0,\n                        \"y\":
     0.0,\n                        \"z\": 0.0,\n                        \"w\": 0.0\n                   
     },\n                    \"color\": {\n                        \"r\": 0.0,\n                       

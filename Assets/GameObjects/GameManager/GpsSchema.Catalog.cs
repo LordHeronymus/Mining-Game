@@ -244,6 +244,8 @@ public static partial class GpsSchema
         new GpsSectionSpec("Audio", "Ding Light", typeof(AudioManager), "",
             new GpsFieldSpec("dingLightVolume", "Lautstärke (%)", factor: 100f),
             new GpsFieldSpec("dingLightOffsetSeconds", "Zeitversatz (s)", min: -10f, max: 10f)),
+        new GpsSectionSpec("Audio", "Artefakt-Fund", typeof(AudioManager), "",
+            new GpsFieldSpec("artifactFoundVolume", "Lautstärke (%)", factor: 100f)),
         new GpsSectionSpec("Audio", "Untergrund-Details", typeof(FirstLayerAmbience), "",
             new GpsFieldSpec("detailsPerMinuteByLayer", "Ereignisse pro Minute je Layer"),
             new GpsFieldSpec("detailsStartDepth", "Ab Tiefe (Blöcke)", min: 0),

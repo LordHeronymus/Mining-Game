@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Artefakt-Fund: eigener Lautstärke-Regler (F1 → Audio → Artefakt-Fund), lauterer Standard | `claude/artefakt-fund-lautstaerke` | Cloud-Klon | `AudioManager`, `StatsManager.CollectArtifact`, `GpsSchema.Catalog`, `GpsProfile.asset`, `AudioClipTuningSettings.asset` | ja (Testbank) | 23.10.2026 21:15 |
 
 ## Zuletzt abgeschlossen
 
