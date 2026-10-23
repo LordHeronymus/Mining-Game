@@ -122,6 +122,9 @@
       "name": "BughuntWorkbenchRecipeRefreshChecks"
     },
     {
+      "name": "BughuntWorldLiveChecks"
+    },
+    {
       "name": "MiningCrackChecks"
     },
     {

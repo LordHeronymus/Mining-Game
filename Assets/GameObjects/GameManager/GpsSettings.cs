@@ -605,6 +605,17 @@ public static class GpsSettings
         foreach (var record in Document.records.Where(record => !string.IsNullOrEmpty(record.assetKey)))
             foreach (var target in Targets(record)) foreach (var field in record.fields) ApplyField(target, field, false);
     }
+    // Asset fields marked NewRun (exotic recipes, their level) change only between runs, so a run's offers stay stable.
+    public static void ApplyNewRunAssets()
+    {
+        var sections = GpsSchema.Sections.Where(section => section.fields.Any(field => field.applyTime == GpsApplyTime.NewRun)).ToArray();
+        foreach (var record in Document.records.Where(record => !string.IsNullOrEmpty(record.assetKey) && sections.Any(section => section.Matches(record))))
+            foreach (var field in record.fields.Where(field => GpsSchema.Spec(record, field.name)?.applyTime == GpsApplyTime.NewRun))
+                foreach (var target in Targets(record)) ApplyField(target, field, false);
+        ExoticCatalog.ResetCache();
+        // The blueprint collection caches the recipe levels; its reset belongs to the progression catalog.
+        typeof(ExoticBlueprintCatalog).GetMethod("Reset", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)?.Invoke(null, null);
+    }
     public static void ApplyLoadedComponents()
     {
         foreach (var record in Document.records.Where(record => string.IsNullOrEmpty(record.assetKey)))
@@ -666,7 +677,7 @@ public static class GpsSettings
                 if (node.name == "artifactEmbeddingStrength" && map.ArtifactOverlay)
                     ArtifactOverlayAppearance.ApplyTo(map.ArtifactOverlay.GetComponent<UnityEngine.Tilemaps.TilemapRenderer>(), map.artifactEmbeddingStrength);
             }
-            if (target is SurfaceTallGrass grass && (node.name=="grassSizeMultiplier" || node.name=="healingHerbSizeMultiplier")) grass.ApplyPatchSizes();
+            if (target is SurfaceTallGrass grass) grass.ApplySetting(node.name);
             if (target is SurfaceTrees forest) forest.ApplySettings();
             if (target is MinerPlayerVisual visual && node.name=="height") visual.Refresh();
             if (target is UniformStoneAppearance appearance) appearance.RefreshAppearance();

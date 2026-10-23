@@ -155,6 +155,16 @@ public sealed class SurfaceTallGrass : MonoBehaviour
         healingHerbSizeMultiplier = Mathf.Clamp(healingHerbSizeMultiplier, .25f, 3f);
     }
 
+    // Distribution values are only read by Rebuild; a GPS change in the run lays the grassland out again (seed-stable,
+    // System.Random and hashes only). Cut patches grow back at the new sites.
+    static readonly string[] LayoutSettings = { "maximumPatches", "minimumSpacing", "clusterPercent", "clusterSize",
+        "randomness", "spawnQuietRadius", "nearSpawnDensity", "healingHerbRarityPercent" };
+    internal void ApplySetting(string field)
+    {
+        if (field == "grassSizeMultiplier" || field == "healingHerbSizeMultiplier") ApplyPatchSizes();
+        else if (System.Array.IndexOf(LayoutSettings, field) >= 0) RequestRebuild();
+    }
+
     public void ApplyPatchSizes()
     {
         foreach (var patch in patches.Values)

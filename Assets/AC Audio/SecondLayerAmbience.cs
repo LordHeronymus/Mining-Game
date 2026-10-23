@@ -38,9 +38,12 @@ public sealed class SecondLayerAmbience : MonoBehaviour
     int tribalSongScheduledLayer = -1;
     bool tribalSongPlaying;
     double nextTribalSongTime, tribalSongStartTime;
+    // Mean the pending time was drawn with; NaN while nothing is scheduled.
+    float tribalSongScheduledMean = float.NaN;
     MapLighting mapLighting;
-    bool ghostWhisperScheduled, ghostWhisperPlaying;
+    bool ghostWhisperPlaying;
     double nextGhostWhisperTime;
+    float ghostWhisperScheduledMean = float.NaN;
 
     float Crossfade => clip ? Mathf.Min(crossfadeSeconds, clip.length * .25f) : .01f;
     float SegmentDuration(AudioSource source) => clip.length / Mathf.Max(.1f, Mathf.Abs(source.pitch));
@@ -202,8 +205,10 @@ public sealed class SecondLayerAmbience : MonoBehaviour
         if (tribalSongScheduledLayer != layer)
         {
             tribalSongScheduledLayer = layer;
-            nextTribalSongTime = now + NextTribalSongDelay(layer);
+            tribalSongScheduledMean = float.NaN;
         }
+        Schedule(ref nextTribalSongTime, ref tribalSongScheduledMean,
+            layer == FirstCaveLayer ? tribalSongLayer2MeanMinutes : tribalSongLayer3MeanMinutes, now, windRandom);
         if (now < nextTribalSongTime) return;
 
         tribalSongSource.time = 0f;
@@ -214,17 +219,21 @@ public sealed class SecondLayerAmbience : MonoBehaviour
         tribalSongStartTime = now;
     }
 
-    double NextTribalSongDelay(int layer)
+    // Draws the next exponential time when none is pending or the mean changed since (F1 tuning applies at once).
+    // The distribution is memoryless, so drawing again from now keeps it exact.
+    internal static bool Schedule(ref double next, ref float scheduledMean, float meanMinutes, double now, System.Random random)
     {
-        float meanMinutes = layer == FirstCaveLayer ? tribalSongLayer2MeanMinutes : tribalSongLayer3MeanMinutes;
-        return -System.Math.Log(1d - windRandom.NextDouble()) * meanMinutes * 60d;
+        if (scheduledMean == meanMinutes) return false;
+        scheduledMean = meanMinutes;
+        next = now - System.Math.Log(1d - random.NextDouble()) * meanMinutes * 60d;
+        return true;
     }
 
     void UpdateGhostWhispers()
     {
         if (!CanPlayGhostWhispers())
         {
-            ghostWhisperScheduled = false;
+            ghostWhisperScheduledMean = float.NaN;
             ghostWhisperPlaying = false;
             if (ghostWhisperSource) { ghostWhisperSource.Stop(); ghostWhisperSource.volume = 0f; }
             return;
@@ -240,13 +249,9 @@ public sealed class SecondLayerAmbience : MonoBehaviour
         if (ghostWhisperPlaying)
         {
             ghostWhisperPlaying = false;
-            ghostWhisperScheduled = false;
+            ghostWhisperScheduledMean = float.NaN;
         }
-        if (!ghostWhisperScheduled)
-        {
-            ghostWhisperScheduled = true;
-            nextGhostWhisperTime = now + NextGhostWhisperDelay();
-        }
+        Schedule(ref nextGhostWhisperTime, ref ghostWhisperScheduledMean, ghostWhisperMeanMinutes, now, windRandom);
         if (now < nextGhostWhisperTime) return;
 
         var clip = ghostWhisperClips[windRandom.Next(ghostWhisperClips.Length)];
@@ -270,11 +275,6 @@ public sealed class SecondLayerAmbience : MonoBehaviour
         if (!mapLighting) mapLighting = map.GetComponent<MapLighting>();
         return mapLighting && mapLighting.lightingEnabled &&
             mapLighting.GetBrightness(cell) <= ghostWhisperDarknessThreshold;
-    }
-
-    double NextGhostWhisperDelay()
-    {
-        return -System.Math.Log(1d - windRandom.NextDouble()) * ghostWhisperMeanMinutes * 60d;
     }
 
     void UpdateWind(float layerGain)

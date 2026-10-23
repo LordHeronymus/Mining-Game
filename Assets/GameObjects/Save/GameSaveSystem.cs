@@ -128,6 +128,7 @@ public static class GameSaveSystem
         SettleAutosave();
         int slot = NextFreeSlot();
         if (slot < 1 || IsBusy) return false;
+        GpsSettings.ApplyNewRunAssets();
         CancelPendingLoad(); PlayedSeconds = 0;
         ActiveSlot = slot; activeDirectory = DirectoryPath; HasPendingNewRun = true; InitialSaveError = null;
         ActiveRunName = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
