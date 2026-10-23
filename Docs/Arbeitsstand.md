@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Spielstand-Kachel zeigt maximale Tiefe | `claude/spielstand-max-tiefe` | Cloud + Testbank | `GameSaveSystem`, `RunSaveState`, `SaveSlotPanel`, `CompactHud`, `Tests/SaveMaxDepthChecks.cs` | ja (Testbank) | 23.10.2026 19:45 |
 
 ## Zuletzt abgeschlossen
 
