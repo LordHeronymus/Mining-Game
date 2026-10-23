@@ -12,6 +12,7 @@ Die Belegung steht nicht mehr hier, sondern in der Warteschlange ausserhalb von 
 
 | Agent | Aufgabe | Branch | Ordner | Dateien / Systeme | Editor | Start |
 | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (Cloud) | Nacht-Ambiente ohne Vögel (Grillen-Loop nachts an der Oberfläche) | `claude/nacht-ambiente` | Cloud | `SurfaceAmbience.cs`, `Resources/Audio/NightAmbience.wav`, `GpsSchema.Catalog.cs`, `GpsProfile.asset` (Clip-Katalog, neuer Abschnitt) | ja (Testbank) | 23.10.2026 19:45 |
 
 ## Zuletzt abgeschlossen
 

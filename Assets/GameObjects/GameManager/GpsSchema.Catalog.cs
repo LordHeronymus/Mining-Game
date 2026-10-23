@@ -253,6 +253,8 @@ public static partial class GpsSchema
             new GpsFieldSpec("tribalSongLayer3MeanMinutes", "Ø Minuten in Layer ", min: .01f, max: 240f)),
         new GpsSectionSpec("Audio", "Geisterflüstern", typeof(SecondLayerAmbience), "",
             new GpsFieldSpec("ghostWhisperMeanMinutes", "Ø Minuten", min: .01f, max: 120f)),
+        new GpsSectionSpec("Audio", "Nacht-Ambiente", typeof(SurfaceAmbience), "",
+            new GpsFieldSpec("nightFadeSeconds", "Überblendung Tag/Nacht (s)", min: 0f, max: 60f)),
         new GpsSectionSpec("Audio", "Vogelgezwitscher", typeof(SurfaceBirds), "",
             new GpsFieldSpec("chirpVolume", "Lautstärke (%)", factor: 100f),
             new GpsFieldSpec("chirpsPerMinute", "Rufe pro Minute", min: 0f, max: 120f),
