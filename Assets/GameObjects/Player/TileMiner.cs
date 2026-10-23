@@ -371,7 +371,11 @@ public class TileMiner : MonoBehaviour
         SoundType hit = GetMiningHitSound(map ? map.layers : null, block, isOre, substrate, out int hitLayer);
         if (hitLayer >= 0) AudioManager.Instance?.PlayLayerMiningSound(hitLayer, hit, false);
         else AudioManager.Instance?.Play(hit, true);
+        if (PlaysOreHitOverStone(isOre, hitLayer)) AudioManager.Instance?.Play(block.digSound, true);
     }
+
+    // Deep ores sound like their host stone with the shallow ore hit layered on top.
+    static bool PlaysOreHitOverStone(bool isOre, int hitLayer) => isOre && hitLayer >= 2;
 
     // Ore cells report the ore block, so deep ores take their layer from the host stone.
     // Ores above layer three keep their own dig sound.
@@ -381,9 +385,7 @@ public class TileMiner : MonoBehaviour
         if (block == null) return SoundType.DigMedium;
         hitLayer = GetTerrainLayerIndex(layers, isOre ? substrate : block);
         if (isOre && hitLayer < 2) hitLayer = -1;
-        return hitLayer >= 2
-            ? (isOre ? SoundType.DigDeepOreHit : SoundType.DigDeepStone)
-            : block.digSound;
+        return hitLayer >= 2 ? SoundType.DigDeepStone : block.digSound;
     }
 
     void ShowMiningCracks(Vector3Int cell, float amount)
