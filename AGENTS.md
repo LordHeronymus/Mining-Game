@@ -3,6 +3,7 @@
 # Mining Game – Projektanweisungen
 
 2D-Mining-Spiel in Unity 6 (URP 17, 2D-Renderer, Tilemaps). Hauptszene: `Assets/Scenes/SampleScene.unity`.
+**Orientierung:** `Docs/Systemuebersicht.md` zeigt, welches System in welchen Dateien steckt; dort zuerst nachsehen, dann gezielt suchen. Bei neuen Systemen oder Umzügen nachführen.
 
 **Grosse Dateien nie komplett laden, nur gezielt suchen (grep) und Ausschnitte lesen:** `Docs/Changelog.md` (vollständige Änderungshistorie), `Assets/Resources/Gameplay/GpsProfile.asset` (alle F1/GPS-Werte, mehrere MB), Szenen (`*.unity`), Prefabs und Unity-Logs.
 
